@@ -11,24 +11,25 @@ import org.junit.Test
  * Expected to FAIL until CloudGatewayService and DTOs are implemented.
  */
 class CreateCompletionContractTest {
-
     @Test
     fun `completion request should have required fields`() {
         // Arrange: Create a completion request with all required fields
-        val request = mapOf(
-            "model" to "gpt-4o-mini",
-            "messages" to listOf(
-                mapOf("role" to "user", "content" to "Hello, AI!")
+        val request =
+            mapOf(
+                "model" to "gpt-4o-mini",
+                "messages" to
+                    listOf(
+                        mapOf("role" to "user", "content" to "Hello, AI!"),
+                    ),
             )
-        )
 
         // Assert: Verify required fields are present
         assertThat(request).containsKey("model")
         assertThat(request).containsKey("messages")
-        
+
         val messages = request["messages"] as List<*>
         assertThat(messages).isNotEmpty()
-        
+
         val firstMessage = messages[0] as Map<*, *>
         assertThat(firstMessage).containsKey("role")
         assertThat(firstMessage).containsKey("content")
@@ -111,21 +112,23 @@ class CreateCompletionContractTest {
     @Test
     fun `completion request should support optional stream parameter`() {
         // Arrange: stream parameter is optional, defaults to false
-        val requestWithStream = mapOf(
-            "model" to "gpt-4o-mini",
-            "messages" to listOf(mapOf("role" to "user", "content" to "Test")),
-            "stream" to true
-        )
-        
-        val requestWithoutStream = mapOf(
-            "model" to "gpt-4o-mini",
-            "messages" to listOf(mapOf("role" to "user", "content" to "Test"))
-        )
+        val requestWithStream =
+            mapOf(
+                "model" to "gpt-4o-mini",
+                "messages" to listOf(mapOf("role" to "user", "content" to "Test")),
+                "stream" to true,
+            )
+
+        val requestWithoutStream =
+            mapOf(
+                "model" to "gpt-4o-mini",
+                "messages" to listOf(mapOf("role" to "user", "content" to "Test")),
+            )
 
         // Assert: Both requests are valid
         assertThat(requestWithStream).containsKey("stream")
         assertThat(requestWithoutStream).doesNotContainKey("stream")
-        
+
         // Default value assertion (will be handled by DTO)
         val streamValue = requestWithStream["stream"] as Boolean
         assertThat(streamValue).isTrue()
@@ -134,35 +137,38 @@ class CreateCompletionContractTest {
     @Test
     fun `completion response should have required fields`() {
         // Arrange: Create a mock response structure per OpenAPI spec
-        val response = mapOf(
-            "id" to "chatcmpl-123",
-            "created" to 1234567890,
-            "model" to "gpt-4o-mini",
-            "choices" to listOf(
-                mapOf(
-                    "index" to 0,
-                    "message" to mapOf(
-                        "role" to "assistant",
-                        "content" to "Hello! How can I help you?"
+        val response =
+            mapOf(
+                "id" to "chatcmpl-123",
+                "created" to 1234567890,
+                "model" to "gpt-4o-mini",
+                "choices" to
+                    listOf(
+                        mapOf(
+                            "index" to 0,
+                            "message" to
+                                mapOf(
+                                    "role" to "assistant",
+                                    "content" to "Hello! How can I help you?",
+                                ),
+                            "finish_reason" to "stop",
+                        ),
                     ),
-                    "finish_reason" to "stop"
-                )
             )
-        )
 
         // Assert: Response has required fields
         assertThat(response).containsKey("id")
         assertThat(response).containsKey("created")
         assertThat(response).containsKey("choices")
-        
+
         val choices = response["choices"] as List<*>
         assertThat(choices).isNotEmpty()
-        
+
         val firstChoice = choices[0] as Map<*, *>
         assertThat(firstChoice).containsKey("index")
         assertThat(firstChoice).containsKey("message")
         assertThat(firstChoice).containsKey("finish_reason")
-        
+
         val message = firstChoice["message"] as Map<*, *>
         assertThat(message).containsKey("role")
         assertThat(message).containsKey("content")
@@ -185,22 +191,25 @@ class CreateCompletionContractTest {
     @Test
     fun `completion response should include optional usage field`() {
         // Arrange: usage field is optional but follows specific structure
-        val responseWithUsage = mapOf(
-            "id" to "chatcmpl-123",
-            "created" to 1234567890,
-            "choices" to listOf<Map<String, Any>>(),
-            "usage" to mapOf(
-                "prompt_tokens" to 10,
-                "completion_tokens" to 20,
-                "total_tokens" to 30
+        val responseWithUsage =
+            mapOf(
+                "id" to "chatcmpl-123",
+                "created" to 1234567890,
+                "choices" to listOf<Map<String, Any>>(),
+                "usage" to
+                    mapOf(
+                        "prompt_tokens" to 10,
+                        "completion_tokens" to 20,
+                        "total_tokens" to 30,
+                    ),
             )
-        )
-        
-        val responseWithoutUsage = mapOf(
-            "id" to "chatcmpl-123",
-            "created" to 1234567890,
-            "choices" to listOf<Map<String, Any>>()
-        )
+
+        val responseWithoutUsage =
+            mapOf(
+                "id" to "chatcmpl-123",
+                "created" to 1234567890,
+                "choices" to listOf<Map<String, Any>>(),
+            )
 
         // Assert: Usage field structure when present
         assertThat(responseWithUsage).containsKey("usage")
@@ -208,7 +217,7 @@ class CreateCompletionContractTest {
         assertThat(usage).containsKey("prompt_tokens")
         assertThat(usage).containsKey("completion_tokens")
         assertThat(usage).containsKey("total_tokens")
-        
+
         // Assert: Response is valid without usage
         assertThat(responseWithoutUsage).doesNotContainKey("usage")
     }
@@ -216,13 +225,15 @@ class CreateCompletionContractTest {
     @Test
     fun `completion request should support optional metadata field`() {
         // Arrange: metadata allows provider-specific options
-        val requestWithMetadata = mapOf(
-            "model" to "gemini-pro",
-            "messages" to listOf(mapOf("role" to "user", "content" to "Test")),
-            "metadata" to mapOf(
-                "safety_settings" to mapOf("harm_category" to "HARM_CATEGORY_DANGEROUS_CONTENT")
+        val requestWithMetadata =
+            mapOf(
+                "model" to "gemini-pro",
+                "messages" to listOf(mapOf("role" to "user", "content" to "Test")),
+                "metadata" to
+                    mapOf(
+                        "safety_settings" to mapOf("harm_category" to "HARM_CATEGORY_DANGEROUS_CONTENT"),
+                    ),
             )
-        )
 
         // Assert: Metadata field can contain arbitrary provider options
         assertThat(requestWithMetadata).containsKey("metadata")

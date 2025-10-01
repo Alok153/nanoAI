@@ -14,7 +14,7 @@ import dagger.hilt.android.AndroidEntryPoint
 
 /**
  * Main entry point for the nanoAI application.
- * 
+ *
  * This activity hosts the entire Compose UI and sets up the navigation scaffold.
  */
 @AndroidEntryPoint
@@ -22,12 +22,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        
+
         setContent {
             NanoAITheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                    color = MaterialTheme.colorScheme.background,
                 ) {
                     NavigationScaffold()
                 }

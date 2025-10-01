@@ -12,5 +12,5 @@ data class GenerationOptions(
     val maxOutputTokens: Int? = null,
     val localModelPreference: String? = null,
     val cloudModel: String? = null,
-    val metadata: JsonObject? = null
+    val metadata: JsonObject? = null,
 )

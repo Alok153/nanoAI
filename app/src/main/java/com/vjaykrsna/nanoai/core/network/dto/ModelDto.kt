@@ -8,7 +8,7 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class ModelListResponseDto(
-    val data: List<RemoteModelDto>
+    val data: List<RemoteModelDto>,
 )
 
 @Serializable
@@ -18,5 +18,5 @@ data class RemoteModelDto(
     val capabilities: List<String>? = null,
     @SerialName("input_formats") val inputFormats: List<String>? = null,
     @SerialName("output_formats") val outputFormats: List<String>? = null,
-    @SerialName("context_window") val contextWindow: Int? = null
+    @SerialName("context_window") val contextWindow: Int? = null,
 )

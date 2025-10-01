@@ -13,12 +13,11 @@ import kotlinx.coroutines.flow.Flow
 
 /**
  * Data Access Object for ModelPackage entities.
- * 
+ *
  * Provides methods to manage AI model catalog and installation states.
  */
 @Dao
 interface ModelPackageDao {
-
     /**
      * Insert or update a model package.
      */
@@ -102,19 +101,28 @@ interface ModelPackageDao {
      * Update install state for a model.
      */
     @Query("UPDATE model_packages SET install_state = :state WHERE model_id = :modelId")
-    suspend fun updateInstallState(modelId: String, state: InstallState)
+    suspend fun updateInstallState(
+        modelId: String,
+        state: InstallState,
+    )
 
     /**
      * Update download task ID for a model.
      */
     @Query("UPDATE model_packages SET download_task_id = :taskId WHERE model_id = :modelId")
-    suspend fun updateDownloadTaskId(modelId: String, taskId: String?)
+    suspend fun updateDownloadTaskId(
+        modelId: String,
+        taskId: String?,
+    )
 
     /**
      * Update checksum after successful download.
      */
     @Query("UPDATE model_packages SET checksum = :checksum WHERE model_id = :modelId")
-    suspend fun updateChecksum(modelId: String, checksum: String)
+    suspend fun updateChecksum(
+        modelId: String,
+        checksum: String,
+    )
 
     /**
      * Get total size of all installed models.

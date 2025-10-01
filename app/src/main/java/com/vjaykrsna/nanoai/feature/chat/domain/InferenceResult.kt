@@ -10,13 +10,13 @@ sealed class InferenceResult {
         val text: String,
         val source: MessageSource,
         val latencyMs: Long,
-        val metadata: Map<String, Any?> = emptyMap()
+        val metadata: Map<String, Any?> = emptyMap(),
     ) : InferenceResult()
 
     data class Error(
         val errorCode: String,
         val message: String? = null,
         val cause: Throwable? = null,
-        val metadata: Map<String, Any?> = emptyMap()
+        val metadata: Map<String, Any?> = emptyMap(),
     ) : InferenceResult()
 }

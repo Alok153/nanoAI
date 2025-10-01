@@ -11,7 +11,7 @@ import kotlinx.datetime.Instant
 
 /**
  * Room entity representing a single message in a chat thread.
- * 
+ *
  * Messages are ordered by creation timestamp and belong to a specific thread.
  * Foreign key cascade ensures messages are deleted when their thread is deleted.
  *
@@ -33,42 +33,33 @@ import kotlinx.datetime.Instant
             entity = ChatThreadEntity::class,
             parentColumns = ["thread_id"],
             childColumns = ["thread_id"],
-            onDelete = ForeignKey.CASCADE
-        )
+            onDelete = ForeignKey.CASCADE,
+        ),
     ],
     indices = [
-        Index(value = ["thread_id", "created_at"])
-    ]
+        Index(value = ["thread_id", "created_at"]),
+    ],
 )
 data class MessageEntity(
     @PrimaryKey
     @ColumnInfo(name = "message_id")
     val messageId: String,
-
     @ColumnInfo(name = "thread_id")
     val threadId: String,
-
     @ColumnInfo(name = "role")
     val role: Role,
-
     @ColumnInfo(name = "text")
     val text: String?,
-
     @ColumnInfo(name = "audio_uri")
     val audioUri: String? = null,
-
     @ColumnInfo(name = "image_uri")
     val imageUri: String? = null,
-
     @ColumnInfo(name = "source")
     val source: MessageSource,
-
     @ColumnInfo(name = "latency_ms")
     val latencyMs: Long? = null,
-
     @ColumnInfo(name = "created_at")
     val createdAt: Instant,
-
     @ColumnInfo(name = "error_code")
-    val errorCode: String? = null
+    val errorCode: String? = null,
 )

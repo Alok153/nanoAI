@@ -2,8 +2,8 @@ package com.vjaykrsna.nanoai.core.data.repository
 
 import com.vjaykrsna.nanoai.core.domain.model.ChatThread
 import com.vjaykrsna.nanoai.core.domain.model.Message
-import java.util.UUID
 import kotlinx.coroutines.flow.Flow
+import java.util.UUID
 
 /**
  * Repository for conversation management.
@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.Flow
  * models.
  */
 interface ConversationRepository {
-
     /** Get a specific chat thread by ID. */
     suspend fun getThread(threadId: UUID): ChatThread?
 
@@ -53,8 +52,14 @@ interface ConversationRepository {
     suspend fun getCurrentPersonaForThread(threadId: java.util.UUID): java.util.UUID?
 
     /** Create a brand-new thread seeded with the provided persona. */
-    suspend fun createNewThread(personaId: java.util.UUID, title: String? = null): java.util.UUID
+    suspend fun createNewThread(
+        personaId: java.util.UUID,
+        title: String? = null,
+    ): java.util.UUID
 
     /** Update a thread's persona association. */
-    suspend fun updateThreadPersona(threadId: java.util.UUID, personaId: java.util.UUID?)
+    suspend fun updateThreadPersona(
+        threadId: java.util.UUID,
+        personaId: java.util.UUID?,
+    )
 }

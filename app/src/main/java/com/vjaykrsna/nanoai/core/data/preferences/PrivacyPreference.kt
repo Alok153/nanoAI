@@ -4,7 +4,7 @@ import kotlinx.datetime.Instant
 
 /**
  * Data class representing privacy and consent preferences.
- * 
+ *
  * Stored using DataStore for reactive updates. Acts as a singleton preference set.
  *
  * @property exportWarningsDismissed Whether user has dismissed export warnings
@@ -16,7 +16,7 @@ data class PrivacyPreference(
     val exportWarningsDismissed: Boolean = false,
     val telemetryOptIn: Boolean = false,
     val consentAcknowledgedAt: Instant? = null,
-    val retentionPolicy: RetentionPolicy = RetentionPolicy.INDEFINITE
+    val retentionPolicy: RetentionPolicy = RetentionPolicy.INDEFINITE,
 )
 
 /**
@@ -31,5 +31,5 @@ enum class RetentionPolicy {
     /**
      * Only purge data when user explicitly requests it.
      */
-    MANUAL_PURGE_ONLY
+    MANUAL_PURGE_ONLY,
 }

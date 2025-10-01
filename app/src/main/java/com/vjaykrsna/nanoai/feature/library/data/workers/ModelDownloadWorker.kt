@@ -21,137 +21,145 @@ import java.io.FileOutputStream
 
 /**
  * WorkManager worker for downloading AI model files.
- * 
+ *
  * Handles background download with progress tracking,
  * resume capability, and checksum verification.
  */
 @HiltWorker
-class ModelDownloadWorker @AssistedInject constructor(
-    @Assisted appContext: Context,
-    @Assisted workerParams: WorkerParameters,
-    private val downloadTaskDao: DownloadTaskDao,
-    private val modelPackageDao: ModelPackageDao,
-    private val okHttpClient: OkHttpClient
-) : CoroutineWorker(appContext, workerParams) {
-    
-    override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
-        val taskId = inputData.getString("TASK_ID") ?: return@withContext Result.failure()
-        val modelId = inputData.getString("MODEL_ID") ?: return@withContext Result.failure()
-        
-        try {
-            // Get model package info
-            val modelPackage = modelPackageDao.getById(modelId)
-                ?: return@withContext Result.failure(
-                    workDataOf("ERROR" to "Model not found: $modelId")
-                )
-            
-            // Update status to downloading
-            downloadTaskDao.updateStatus(taskId, DownloadStatus.DOWNLOADING)
-            
-            // Update started_at time by fetching and updating entity
-            val task = downloadTaskDao.getById(taskId)
-            if (task != null) {
-                downloadTaskDao.update(task.copy(startedAt = Clock.System.now()))
-            }
-            
-            // Create download directory
-            val downloadDir = File(applicationContext.filesDir, "models")
-            downloadDir.mkdirs()
-            
-            val outputFile = File(downloadDir, "${modelId}.bin")
-            
-            // TODO: Get actual download URL from model package or remote catalog
-            val downloadUrl = "https://example.com/models/${modelId}.bin" // Placeholder
-            
-            // Execute download with progress tracking
-            val request = Request.Builder()
-                .url(downloadUrl)
-                .build()
-            
-            val response = okHttpClient.newCall(request).execute()
-            
-            if (!response.isSuccessful) {
-                throw Exception("Download failed with code: ${response.code}")
-            }
-            
-            val totalBytes = response.body?.contentLength() ?: 0L
-            val inputStream = response.body?.byteStream() 
-                ?: throw Exception("Empty response body")
-            
-            FileOutputStream(outputFile).use { outputStream ->
-                val buffer = ByteArray(8192)
-                var bytesRead: Int
-                var totalBytesDownloaded = 0L
-                
-                while (inputStream.read(buffer).also { bytesRead = it } != -1) {
-                    // Check if cancelled
-                    if (isStopped) {
-                        inputStream.close()
-                        outputFile.delete()
-                        downloadTaskDao.updateStatus(taskId, DownloadStatus.CANCELLED)
-                        return@withContext Result.failure(
-                            workDataOf("ERROR" to "Download cancelled")
-                        )
+class ModelDownloadWorker
+    @AssistedInject
+    constructor(
+        @Assisted appContext: Context,
+        @Assisted workerParams: WorkerParameters,
+        private val downloadTaskDao: DownloadTaskDao,
+        private val modelPackageDao: ModelPackageDao,
+        private val okHttpClient: OkHttpClient,
+    ) : CoroutineWorker(appContext, workerParams) {
+        override suspend fun doWork(): Result =
+            withContext(Dispatchers.IO) {
+                val taskId = inputData.getString("TASK_ID") ?: return@withContext Result.failure()
+                val modelId = inputData.getString("MODEL_ID") ?: return@withContext Result.failure()
+
+                try {
+                    // Get model package info
+                    val modelPackage =
+                        modelPackageDao.getById(modelId)
+                            ?: return@withContext Result.failure(
+                                workDataOf("ERROR" to "Model not found: $modelId"),
+                            )
+
+                    // Update status to downloading
+                    downloadTaskDao.updateStatus(taskId, DownloadStatus.DOWNLOADING)
+
+                    // Update started_at time by fetching and updating entity
+                    val task = downloadTaskDao.getById(taskId)
+                    if (task != null) {
+                        downloadTaskDao.update(task.copy(startedAt = Clock.System.now()))
                     }
-                    
-                    outputStream.write(buffer, 0, bytesRead)
-                    totalBytesDownloaded += bytesRead
-                    
-                    // Update progress
-                    val progress = if (totalBytes > 0) {
-                        (totalBytesDownloaded.toFloat() / totalBytes.toFloat())
-                    } else {
-                        0f
+
+                    // Create download directory
+                    val downloadDir = File(applicationContext.filesDir, "models")
+                    downloadDir.mkdirs()
+
+                    val outputFile = File(downloadDir, "$modelId.bin")
+
+                    // TODO: Get actual download URL from model package or remote catalog
+                    val downloadUrl = "https://example.com/models/$modelId.bin" // Placeholder
+
+                    // Execute download with progress tracking
+                    val request =
+                        Request
+                            .Builder()
+                            .url(downloadUrl)
+                            .build()
+
+                    val response = okHttpClient.newCall(request).execute()
+
+                    if (!response.isSuccessful) {
+                        throw Exception("Download failed with code: ${response.code}")
                     }
-                    
-                    downloadTaskDao.updateProgress(taskId, progress, totalBytesDownloaded)
-                    
-                    // Set progress for WorkManager
-                    setProgress(workDataOf(
-                        "PROGRESS" to progress,
-                        "BYTES_DOWNLOADED" to totalBytesDownloaded,
-                        "TOTAL_BYTES" to totalBytes
-                    ))
+
+                    val totalBytes = response.body?.contentLength() ?: 0L
+                    val inputStream =
+                        response.body?.byteStream()
+                            ?: throw Exception("Empty response body")
+
+                    FileOutputStream(outputFile).use { outputStream ->
+                        val buffer = ByteArray(8192)
+                        var bytesRead: Int
+                        var totalBytesDownloaded = 0L
+
+                        while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                            // Check if cancelled
+                            if (isStopped) {
+                                inputStream.close()
+                                outputFile.delete()
+                                downloadTaskDao.updateStatus(taskId, DownloadStatus.CANCELLED)
+                                return@withContext Result.failure(
+                                    workDataOf("ERROR" to "Download cancelled"),
+                                )
+                            }
+
+                            outputStream.write(buffer, 0, bytesRead)
+                            totalBytesDownloaded += bytesRead
+
+                            // Update progress
+                            val progress =
+                                if (totalBytes > 0) {
+                                    (totalBytesDownloaded.toFloat() / totalBytes.toFloat())
+                                } else {
+                                    0f
+                                }
+
+                            downloadTaskDao.updateProgress(taskId, progress, totalBytesDownloaded)
+
+                            // Set progress for WorkManager
+                            setProgress(
+                                workDataOf(
+                                    "PROGRESS" to progress,
+                                    "BYTES_DOWNLOADED" to totalBytesDownloaded,
+                                    "TOTAL_BYTES" to totalBytes,
+                                ),
+                            )
+                        }
+                    }
+
+                    inputStream.close()
+
+                    // TODO: Verify checksum
+                    // val calculatedChecksum = calculateSHA256(outputFile)
+                    // if (calculatedChecksum != modelPackage.checksum) {
+                    //     throw Exception("Checksum mismatch")
+                    // }
+
+                    // Update task as completed
+                    downloadTaskDao.updateStatus(taskId, DownloadStatus.COMPLETED)
+
+                    // Update finished_at time by fetching and updating entity
+                    val completedTask = downloadTaskDao.getById(taskId)
+                    if (completedTask != null) {
+                        downloadTaskDao.update(completedTask.copy(finishedAt = Clock.System.now()))
+                    }
+
+                    // Update model install state
+                    modelPackageDao.updateInstallState(modelId, InstallState.INSTALLED)
+
+                    Result.success(workDataOf("FILE_PATH" to outputFile.absolutePath))
+                } catch (e: Exception) {
+                    // Update task as failed
+                    downloadTaskDao.updateStatusWithError(
+                        taskId,
+                        DownloadStatus.FAILED,
+                        e.message ?: "Unknown error",
+                    )
+
+                    // Update finished_at time by fetching and updating entity
+                    val failedTask = downloadTaskDao.getById(taskId)
+                    if (failedTask != null) {
+                        downloadTaskDao.update(failedTask.copy(finishedAt = Clock.System.now()))
+                    }
+
+                    Result.failure(workDataOf("ERROR" to (e.message ?: "Unknown error")))
                 }
             }
-            
-            inputStream.close()
-            
-            // TODO: Verify checksum
-            // val calculatedChecksum = calculateSHA256(outputFile)
-            // if (calculatedChecksum != modelPackage.checksum) {
-            //     throw Exception("Checksum mismatch")
-            // }
-            
-            // Update task as completed
-            downloadTaskDao.updateStatus(taskId, DownloadStatus.COMPLETED)
-            
-            // Update finished_at time by fetching and updating entity
-            val completedTask = downloadTaskDao.getById(taskId)
-            if (completedTask != null) {
-                downloadTaskDao.update(completedTask.copy(finishedAt = Clock.System.now()))
-            }
-            
-            // Update model install state
-            modelPackageDao.updateInstallState(modelId, InstallState.INSTALLED)
-            
-            Result.success(workDataOf("FILE_PATH" to outputFile.absolutePath))
-            
-        } catch (e: Exception) {
-            // Update task as failed
-            downloadTaskDao.updateStatusWithError(
-                taskId,
-                DownloadStatus.FAILED,
-                e.message ?: "Unknown error"
-            )
-            
-            // Update finished_at time by fetching and updating entity
-            val failedTask = downloadTaskDao.getById(taskId)
-            if (failedTask != null) {
-                downloadTaskDao.update(failedTask.copy(finishedAt = Clock.System.now()))
-            }
-            
-            Result.failure(workDataOf("ERROR" to (e.message ?: "Unknown error")))
-        }
     }
-}

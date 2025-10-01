@@ -16,7 +16,7 @@ data class CompletionRequestDto(
     @SerialName("top_p") val topP: Double? = null,
     @SerialName("max_tokens") val maxTokens: Int? = null,
     val stream: Boolean = false,
-    val metadata: JsonObject? = null
+    val metadata: JsonObject? = null,
 ) {
     init {
         require(messages.isNotEmpty()) { "messages must not be empty" }
@@ -31,7 +31,7 @@ data class CompletionRequestDto(
 @Serializable
 data class CompletionMessageDto(
     val role: CompletionRole,
-    val content: String
+    val content: String,
 )
 
 /**
@@ -46,7 +46,7 @@ enum class CompletionRole {
     USER,
 
     @SerialName("assistant")
-    ASSISTANT
+    ASSISTANT,
 }
 
 @Serializable
@@ -55,20 +55,20 @@ data class CompletionResponseDto(
     val created: Long,
     val model: String? = null,
     val choices: List<CompletionChoiceDto>,
-    val usage: CompletionUsageDto? = null
+    val usage: CompletionUsageDto? = null,
 )
 
 @Serializable
 data class CompletionChoiceDto(
     val index: Int,
     val message: CompletionChoiceMessageDto,
-    @SerialName("finish_reason") val finishReason: String? = null
+    @SerialName("finish_reason") val finishReason: String? = null,
 )
 
 @Serializable
 data class CompletionChoiceMessageDto(
     val role: CompletionResponseRole = CompletionResponseRole.ASSISTANT,
-    val content: String
+    val content: String,
 )
 
 /**
@@ -77,14 +77,14 @@ data class CompletionChoiceMessageDto(
 @Serializable
 enum class CompletionResponseRole {
     @SerialName("assistant")
-    ASSISTANT
+    ASSISTANT,
 }
 
 @Serializable
 data class CompletionUsageDto(
     @SerialName("prompt_tokens") val promptTokens: Int,
     @SerialName("completion_tokens") val completionTokens: Int,
-    @SerialName("total_tokens") val totalTokens: Int
+    @SerialName("total_tokens") val totalTokens: Int,
 )
 
 /**
@@ -94,5 +94,5 @@ data class CompletionUsageDto(
 data class GatewayErrorDto(
     val error: JsonElement? = null,
     val message: String? = null,
-    val code: String? = null
+    val code: String? = null,
 )

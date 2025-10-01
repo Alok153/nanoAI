@@ -14,7 +14,7 @@ Legend:
 
 ---
 
-T001 - Setup: Local verification and CI sandbox
+T001 [X] - Setup: Local verification and CI sandbox
 - Description: Ensure developer environment can run lint & unit tests locally and reproduce current failures. Capture exact failing output for targeted fixes.
 - Actions:
   1. Run the project's static analysis and unit test commands (as defined in the feature plan) and capture outputs to `specs/002-disclaimer-and-fixes/logs/initial-ci-output.log`.

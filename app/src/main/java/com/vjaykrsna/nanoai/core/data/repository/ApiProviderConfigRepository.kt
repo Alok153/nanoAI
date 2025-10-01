@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.Flow
  * Manages cloud API providers for fallback when local models are unavailable.
  */
 interface ApiProviderConfigRepository {
-
     /** Get all API providers. */
     suspend fun getAllProviders(): List<APIProviderConfig>
 

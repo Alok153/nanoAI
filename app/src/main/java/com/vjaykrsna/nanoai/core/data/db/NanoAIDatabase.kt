@@ -20,12 +20,12 @@ import com.vjaykrsna.nanoai.feature.library.data.entities.ModelPackageEntity
 
 /**
  * Room database for nanoAI application.
- * 
+ *
  * Contains all entities for chat threads, messages, personas, models, downloads,
  * API configurations, and persona switch logging.
- * 
+ *
  * Version 1: Initial schema with all core entities.
- * 
+ *
  * Foreign keys are enabled to ensure referential integrity and cascade deletes.
  * TypeConverters handle UUID, Instant, Set<String>, and enum conversions.
  */
@@ -37,23 +37,27 @@ import com.vjaykrsna.nanoai.feature.library.data.entities.ModelPackageEntity
         PersonaSwitchLogEntity::class,
         ModelPackageEntity::class,
         DownloadTaskEntity::class,
-        ApiProviderConfigEntity::class
+        ApiProviderConfigEntity::class,
     ],
     version = 1,
-    exportSchema = true
+    exportSchema = true,
 )
 @TypeConverters(com.vjaykrsna.nanoai.core.data.db.TypeConverters::class)
 abstract class NanoAIDatabase : RoomDatabase() {
-
     // Core DAOs
     abstract fun chatThreadDao(): ChatThreadDao
+
     abstract fun messageDao(): MessageDao
+
     abstract fun personaProfileDao(): PersonaProfileDao
+
     abstract fun personaSwitchLogDao(): PersonaSwitchLogDao
+
     abstract fun apiProviderConfigDao(): ApiProviderConfigDao
 
     // Library feature DAOs
     abstract fun modelPackageDao(): ModelPackageDao
+
     abstract fun downloadTaskDao(): DownloadTaskDao
 
     companion object {

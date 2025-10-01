@@ -7,27 +7,25 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import javax.inject.Singleton
 import kotlinx.serialization.json.Json
+import javax.inject.Singleton
 
 /** Provides shared network-layer dependencies. */
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class NetworkModule {
-
     @Binds
     @Singleton
-    abstract fun bindConnectivityStatusProvider(
-        impl: AndroidConnectivityStatusProvider
-    ): ConnectivityStatusProvider
+    abstract fun bindConnectivityStatusProvider(impl: AndroidConnectivityStatusProvider): ConnectivityStatusProvider
 
     companion object {
         @Provides
         @Singleton
-        fun provideJson(): Json = Json {
-            ignoreUnknownKeys = true
-            encodeDefaults = true
-            explicitNulls = false
-        }
+        fun provideJson(): Json =
+            Json {
+                ignoreUnknownKeys = true
+                encodeDefaults = true
+                explicitNulls = false
+            }
     }
 }

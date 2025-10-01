@@ -2,8 +2,8 @@ package com.vjaykrsna.nanoai.feature.library.data
 
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
-import java.util.UUID
 import kotlinx.coroutines.flow.Flow
+import java.util.UUID
 
 /**
  * Repository for model catalog management.
@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.Flow
  * Provides access to available AI models, their installation status, and metadata.
  */
 interface ModelCatalogRepository {
-
     /** Get all available models in the catalog. */
     suspend fun getAllModels(): List<ModelPackage>
 
@@ -28,17 +27,28 @@ interface ModelCatalogRepository {
     suspend fun getModelsByState(state: InstallState): List<ModelPackage>
 
     /** Update model installation state. */
-    suspend fun updateModelState(modelId: String, state: InstallState)
+    suspend fun updateModelState(
+        modelId: String,
+        state: InstallState,
+    )
 
     /** Update model installation state (alias for updateModelState). */
-    suspend fun updateInstallState(modelId: String, state: InstallState) =
-        updateModelState(modelId, state)
+    suspend fun updateInstallState(
+        modelId: String,
+        state: InstallState,
+    ) = updateModelState(modelId, state)
 
     /** Associate a download task with a model. */
-    suspend fun updateDownloadTaskId(modelId: String, taskId: UUID?)
+    suspend fun updateDownloadTaskId(
+        modelId: String,
+        taskId: UUID?,
+    )
 
     /** Persist checksum for a model package. */
-    suspend fun updateChecksum(modelId: String, checksum: String)
+    suspend fun updateChecksum(
+        modelId: String,
+        checksum: String,
+    )
 
     /** Insert or update a model in the catalog. */
     suspend fun upsertModel(model: ModelPackage)

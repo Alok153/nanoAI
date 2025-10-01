@@ -25,7 +25,7 @@ data class LocalGenerationRequest(
     val systemPrompt: String? = null,
     val temperature: Float? = null,
     val topP: Float? = null,
-    val maxOutputTokens: Int? = null
+    val maxOutputTokens: Int? = null,
 )
 
 /**
@@ -34,5 +34,5 @@ data class LocalGenerationRequest(
 data class LocalGenerationResult(
     val text: String,
     val latencyMs: Long,
-    val metadata: Map<String, Any?> = emptyMap()
+    val metadata: Map<String, Any?> = emptyMap(),
 )

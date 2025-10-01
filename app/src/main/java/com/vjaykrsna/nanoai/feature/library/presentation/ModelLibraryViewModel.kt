@@ -8,8 +8,6 @@ import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
 import com.vjaykrsna.nanoai.feature.library.domain.ModelDownloadsAndExportUseCase
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import java.util.UUID
-import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -19,138 +17,176 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.util.UUID
+import javax.inject.Inject
 
 @HiltViewModel
-class ModelLibraryViewModel @Inject constructor(
-    private val modelDownloadsAndExportUseCase: ModelDownloadsAndExportUseCase,
-    private val modelCatalogRepository: ModelCatalogRepository
-) : ViewModel() {
+class ModelLibraryViewModel
+    @Inject
+    constructor(
+        private val modelDownloadsAndExportUseCase: ModelDownloadsAndExportUseCase,
+        private val modelCatalogRepository: ModelCatalogRepository,
+    ) : ViewModel() {
+        private val _isLoading = MutableStateFlow(false)
+        val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+        private val _errorEvents = MutableSharedFlow<LibraryError>()
+        val errorEvents = _errorEvents.asSharedFlow()
 
-    private val _errorEvents = MutableSharedFlow<LibraryError>()
-    val errorEvents = _errorEvents.asSharedFlow()
+        private val _selectedFilter = MutableStateFlow<InstallStateFilter>(InstallStateFilter.ALL)
+        val selectedFilter: StateFlow<InstallStateFilter> = _selectedFilter.asStateFlow()
 
-    private val _selectedFilter = MutableStateFlow<InstallStateFilter>(InstallStateFilter.ALL)
-    val selectedFilter: StateFlow<InstallStateFilter> = _selectedFilter.asStateFlow()
+        val allModels: StateFlow<List<ModelPackage>> =
+            modelCatalogRepository
+                .observeAllModels()
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val allModels: StateFlow<List<ModelPackage>> = modelCatalogRepository.observeAllModels()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        val installedModels: StateFlow<List<ModelPackage>> =
+            modelCatalogRepository
+                .observeInstalledModels()
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val installedModels: StateFlow<List<ModelPackage>> = modelCatalogRepository.observeInstalledModels()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        val filteredModels: StateFlow<List<ModelPackage>> =
+            combine(allModels, _selectedFilter) { models, filter ->
+                when (filter) {
+                    InstallStateFilter.ALL -> models
+                    InstallStateFilter.INSTALLED -> models.filter { it.installState == InstallState.INSTALLED }
+                    InstallStateFilter.DOWNLOADING ->
+                        models.filter {
+                            it.installState == InstallState.DOWNLOADING || it.installState == InstallState.PAUSED
+                        }
+                    InstallStateFilter.AVAILABLE -> models.filter { it.installState == InstallState.NOT_INSTALLED }
+                }
+            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val filteredModels: StateFlow<List<ModelPackage>> = combine(allModels, _selectedFilter) { models, filter ->
-        when (filter) {
-            InstallStateFilter.ALL -> models
-            InstallStateFilter.INSTALLED -> models.filter { it.installState == InstallState.INSTALLED }
-            InstallStateFilter.DOWNLOADING -> models.filter { 
-                it.installState == InstallState.DOWNLOADING || it.installState == InstallState.PAUSED 
-            }
-            InstallStateFilter.AVAILABLE -> models.filter { it.installState == InstallState.NOT_INSTALLED }
-        }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        val queuedDownloads: StateFlow<List<DownloadTask>> =
+            modelDownloadsAndExportUseCase
+                .getQueuedDownloads()
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val queuedDownloads: StateFlow<List<DownloadTask>> = modelDownloadsAndExportUseCase
-        .getQueuedDownloads()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    fun downloadModel(modelId: String) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            try {
-                modelDownloadsAndExportUseCase.downloadModel(modelId)
-                    .onFailure { error ->
-                        _errorEvents.emit(LibraryError.DownloadFailed(modelId, error.message ?: "Unknown error"))
-                    }
-            } catch (e: Exception) {
-                _errorEvents.emit(LibraryError.UnexpectedError(e.message ?: "Unexpected error"))
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
-
-    fun pauseDownload(taskId: UUID) {
-        viewModelScope.launch {
-            try {
-                modelDownloadsAndExportUseCase.pauseDownload(taskId)
-            } catch (e: Exception) {
-                _errorEvents.emit(LibraryError.PauseFailed(taskId.toString(), e.message ?: "Failed to pause"))
-            }
-        }
-    }
-
-    fun resumeDownload(taskId: UUID) {
-        viewModelScope.launch {
-            try {
-                modelDownloadsAndExportUseCase.resumeDownload(taskId)
-            } catch (e: Exception) {
-                _errorEvents.emit(LibraryError.ResumeFailed(taskId.toString(), e.message ?: "Failed to resume"))
+        fun downloadModel(modelId: String) {
+            viewModelScope.launch {
+                _isLoading.value = true
+                try {
+                    modelDownloadsAndExportUseCase
+                        .downloadModel(modelId)
+                        .onFailure { error ->
+                            _errorEvents.emit(LibraryError.DownloadFailed(modelId, error.message ?: "Unknown error"))
+                        }
+                } catch (e: Exception) {
+                    _errorEvents.emit(LibraryError.UnexpectedError(e.message ?: "Unexpected error"))
+                } finally {
+                    _isLoading.value = false
+                }
             }
         }
-    }
 
-    fun cancelDownload(taskId: UUID) {
-        viewModelScope.launch {
-            try {
-                modelDownloadsAndExportUseCase.cancelDownload(taskId)
-            } catch (e: Exception) {
-                _errorEvents.emit(LibraryError.CancelFailed(taskId.toString(), e.message ?: "Failed to cancel"))
+        fun pauseDownload(taskId: UUID) {
+            viewModelScope.launch {
+                try {
+                    modelDownloadsAndExportUseCase.pauseDownload(taskId)
+                } catch (e: Exception) {
+                    _errorEvents.emit(LibraryError.PauseFailed(taskId.toString(), e.message ?: "Failed to pause"))
+                }
             }
         }
-    }
 
-    fun retryDownload(taskId: UUID) {
-        viewModelScope.launch {
-            try {
-                modelDownloadsAndExportUseCase.retryFailedDownload(taskId)
-            } catch (e: Exception) {
-                _errorEvents.emit(LibraryError.RetryFailed(taskId.toString(), e.message ?: "Failed to retry"))
+        fun resumeDownload(taskId: UUID) {
+            viewModelScope.launch {
+                try {
+                    modelDownloadsAndExportUseCase.resumeDownload(taskId)
+                } catch (e: Exception) {
+                    _errorEvents.emit(LibraryError.ResumeFailed(taskId.toString(), e.message ?: "Failed to resume"))
+                }
             }
         }
-    }
 
-    fun deleteModel(modelId: String) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            try {
-                modelDownloadsAndExportUseCase.deleteModel(modelId)
-                    .onFailure { error ->
-                        _errorEvents.emit(LibraryError.DeleteFailed(modelId, error.message ?: "Unknown error"))
-                    }
-            } catch (e: Exception) {
-                _errorEvents.emit(LibraryError.UnexpectedError(e.message ?: "Unexpected error"))
-            } finally {
-                _isLoading.value = false
+        fun cancelDownload(taskId: UUID) {
+            viewModelScope.launch {
+                try {
+                    modelDownloadsAndExportUseCase.cancelDownload(taskId)
+                } catch (e: Exception) {
+                    _errorEvents.emit(LibraryError.CancelFailed(taskId.toString(), e.message ?: "Failed to cancel"))
+                }
             }
         }
-    }
 
-    fun observeDownloadProgress(taskId: UUID): StateFlow<Float> {
-        return modelDownloadsAndExportUseCase.getDownloadProgress(taskId)
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0f)
-    }
+        fun retryDownload(taskId: UUID) {
+            viewModelScope.launch {
+                try {
+                    modelDownloadsAndExportUseCase.retryFailedDownload(taskId)
+                } catch (e: Exception) {
+                    _errorEvents.emit(LibraryError.RetryFailed(taskId.toString(), e.message ?: "Failed to retry"))
+                }
+            }
+        }
 
-    fun setFilter(filter: InstallStateFilter) {
-        _selectedFilter.value = filter
+        fun deleteModel(modelId: String) {
+            viewModelScope.launch {
+                _isLoading.value = true
+                try {
+                    modelDownloadsAndExportUseCase
+                        .deleteModel(modelId)
+                        .onFailure { error ->
+                            _errorEvents.emit(LibraryError.DeleteFailed(modelId, error.message ?: "Unknown error"))
+                        }
+                } catch (e: Exception) {
+                    _errorEvents.emit(LibraryError.UnexpectedError(e.message ?: "Unexpected error"))
+                } finally {
+                    _isLoading.value = false
+                }
+            }
+        }
+
+        fun observeDownloadProgress(taskId: UUID): StateFlow<Float> =
+            modelDownloadsAndExportUseCase
+                .getDownloadProgress(taskId)
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0f)
+
+        fun setFilter(filter: InstallStateFilter) {
+            _selectedFilter.value = filter
+        }
     }
-}
 
 enum class InstallStateFilter {
     ALL,
     INSTALLED,
     DOWNLOADING,
-    AVAILABLE
+    AVAILABLE,
 }
 
 sealed class LibraryError {
-    data class DownloadFailed(val modelId: String, val message: String) : LibraryError()
-    data class PauseFailed(val taskId: String, val message: String) : LibraryError()
-    data class ResumeFailed(val taskId: String, val message: String) : LibraryError()
-    data class CancelFailed(val taskId: String, val message: String) : LibraryError()
-    data class RetryFailed(val taskId: String, val message: String) : LibraryError()
-    data class DeleteFailed(val modelId: String, val message: String) : LibraryError()
-    data class UnexpectedError(val message: String) : LibraryError()
+    data class DownloadFailed(
+        val modelId: String,
+        val message: String,
+    ) : LibraryError()
+
+    data class PauseFailed(
+        val taskId: String,
+        val message: String,
+    ) : LibraryError()
+
+    data class ResumeFailed(
+        val taskId: String,
+        val message: String,
+    ) : LibraryError()
+
+    data class CancelFailed(
+        val taskId: String,
+        val message: String,
+    ) : LibraryError()
+
+    data class RetryFailed(
+        val taskId: String,
+        val message: String,
+    ) : LibraryError()
+
+    data class DeleteFailed(
+        val modelId: String,
+        val message: String,
+    ) : LibraryError()
+
+    data class UnexpectedError(
+        val message: String,
+    ) : LibraryError()
 }

@@ -28,5 +28,5 @@ enum class ProviderType {
     /**
      * Cloud-based API (not a local model).
      */
-    CLOUD_API
+    CLOUD_API,
 }

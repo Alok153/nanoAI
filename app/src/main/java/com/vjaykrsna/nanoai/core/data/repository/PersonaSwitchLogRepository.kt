@@ -9,7 +9,6 @@ import java.util.UUID
  * Tracks when users switch personas in threads for analytics and UI context.
  */
 interface PersonaSwitchLogRepository {
-
     /** Log a persona switch event. */
     suspend fun logSwitch(log: PersonaSwitchLog)
 

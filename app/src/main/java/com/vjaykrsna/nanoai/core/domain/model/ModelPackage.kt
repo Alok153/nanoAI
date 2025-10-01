@@ -8,7 +8,7 @@ import java.util.UUID
 
 /**
  * Domain model for a model package in the catalog.
- * 
+ *
  * Clean architecture: Separate from database entities.
  * Used by repositories, use cases, ViewModels, and UI.
  */
@@ -22,37 +22,39 @@ data class ModelPackage(
     val installState: InstallState,
     val downloadTaskId: UUID? = null,
     val checksum: String? = null,
-    val updatedAt: Instant
+    val updatedAt: Instant,
 )
 
 /**
  * Extension function to convert entity to domain model.
  */
-fun ModelPackageEntity.toDomain(): ModelPackage = ModelPackage(
-    modelId = modelId,
-    displayName = displayName,
-    version = version,
-    providerType = providerType,
-    sizeBytes = sizeBytes,
-    capabilities = capabilities,
-    installState = installState,
-    downloadTaskId = downloadTaskId?.let(UUID::fromString),
-    checksum = checksum,
-    updatedAt = updatedAt
-)
+fun ModelPackageEntity.toDomain(): ModelPackage =
+    ModelPackage(
+        modelId = modelId,
+        displayName = displayName,
+        version = version,
+        providerType = providerType,
+        sizeBytes = sizeBytes,
+        capabilities = capabilities,
+        installState = installState,
+        downloadTaskId = downloadTaskId?.let(UUID::fromString),
+        checksum = checksum,
+        updatedAt = updatedAt,
+    )
 
 /**
  * Extension function to convert domain model to entity.
  */
-fun ModelPackage.toEntity(): ModelPackageEntity = ModelPackageEntity(
-    modelId = modelId,
-    displayName = displayName,
-    version = version,
-    providerType = providerType,
-    sizeBytes = sizeBytes,
-    capabilities = capabilities,
-    installState = installState,
-    downloadTaskId = downloadTaskId?.toString(),
-    checksum = checksum,
-    updatedAt = updatedAt
-)
+fun ModelPackage.toEntity(): ModelPackageEntity =
+    ModelPackageEntity(
+        modelId = modelId,
+        displayName = displayName,
+        version = version,
+        providerType = providerType,
+        sizeBytes = sizeBytes,
+        capabilities = capabilities,
+        installState = installState,
+        downloadTaskId = downloadTaskId?.toString(),
+        checksum = checksum,
+        updatedAt = updatedAt,
+    )

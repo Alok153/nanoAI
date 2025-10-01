@@ -1,8 +1,8 @@
 package com.vjaykrsna.nanoai.core.data.repository
 
 import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
-import java.util.UUID
 import kotlinx.coroutines.flow.Flow
+import java.util.UUID
 
 /**
  * Repository for persona profile management.
@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.Flow
  * models.
  */
 interface PersonaRepository {
-
     /** Get all personas. */
     suspend fun getAllPersonas(): List<PersonaProfile>
 

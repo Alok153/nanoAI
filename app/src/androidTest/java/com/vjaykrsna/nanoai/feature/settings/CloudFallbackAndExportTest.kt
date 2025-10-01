@@ -7,7 +7,6 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreference
 import com.vjaykrsna.nanoai.core.data.preferences.RetentionPolicy
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
@@ -16,7 +15,6 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.datetime.Clock
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -35,7 +33,6 @@ import org.junit.runner.RunWith
  */
 @RunWith(AndroidJUnit4::class)
 class CloudFallbackAndExportTest {
-
     @get:Rule
     val composeTestRule = createComposeRule()
 
@@ -48,14 +45,15 @@ class CloudFallbackAndExportTest {
     fun setup() {
         viewModel = mockk(relaxed = true)
         apiProvidersFlow = MutableStateFlow(emptyList())
-        privacyPreferencesFlow = MutableStateFlow(
-            PrivacyPreference(
-                exportWarningsDismissed = false,
-                telemetryOptIn = false,
-                consentAcknowledgedAt = null,
-                retentionPolicy = RetentionPolicy.INDEFINITE
+        privacyPreferencesFlow =
+            MutableStateFlow(
+                PrivacyPreference(
+                    exportWarningsDismissed = false,
+                    telemetryOptIn = false,
+                    consentAcknowledgedAt = null,
+                    retentionPolicy = RetentionPolicy.INDEFINITE,
+                ),
             )
-        )
         isLoadingFlow = MutableStateFlow(false)
 
         coEvery { viewModel.apiProviders } returns apiProvidersFlow
@@ -66,28 +64,29 @@ class CloudFallbackAndExportTest {
     @Test
     fun apiProviderList_shouldDisplayConfiguredProviders() {
         // Arrange
-        val providers = listOf(
-            APIProviderConfig(
-                providerId = "openai",
-                providerName = "OpenAI",
-                baseUrl = "https://api.openai.com/v1",
-                apiKey = "sk-test***",
-                apiType = APIType.OPENAI_COMPATIBLE,
-                isEnabled = true,
-                quotaResetAt = null,
-                lastStatus = ProviderStatus.OK
-            ),
-            APIProviderConfig(
-                providerId = "google",
-                providerName = "Google Gemini",
-                baseUrl = "https://generativelanguage.googleapis.com/v1",
-                apiKey = "AIza***",
-                apiType = APIType.GEMINI,
-                isEnabled = false,
-                quotaResetAt = Instant.now().plusSeconds(3600),
-                lastStatus = ProviderStatus.RATE_LIMITED
+        val providers =
+            listOf(
+                APIProviderConfig(
+                    providerId = "openai",
+                    providerName = "OpenAI",
+                    baseUrl = "https://api.openai.com/v1",
+                    apiKey = "sk-test***",
+                    apiType = APIType.OPENAI_COMPATIBLE,
+                    isEnabled = true,
+                    quotaResetAt = null,
+                    lastStatus = ProviderStatus.OK,
+                ),
+                APIProviderConfig(
+                    providerId = "google",
+                    providerName = "Google Gemini",
+                    baseUrl = "https://generativelanguage.googleapis.com/v1",
+                    apiKey = "AIza***",
+                    apiType = APIType.GEMINI,
+                    isEnabled = false,
+                    quotaResetAt = Instant.now().plusSeconds(3600),
+                    lastStatus = ProviderStatus.RATE_LIMITED,
+                ),
             )
-        )
 
         uiState.value = uiState.value.copy(apiProviders = providers)
 
@@ -104,16 +103,17 @@ class CloudFallbackAndExportTest {
     @Test
     fun cloudBadge_shouldShowStatusForEnabledProvider() {
         // Arrange
-        val provider = APIProviderConfig(
-            providerId = "openai",
-            providerName = "OpenAI",
-            baseUrl = "https://api.openai.com/v1",
-            apiKey = "sk-test***",
-            apiType = APIType.OPENAI_COMPATIBLE,
-            isEnabled = true,
-            quotaResetAt = null,
-            lastStatus = ProviderStatus.OK
-        )
+        val provider =
+            APIProviderConfig(
+                providerId = "openai",
+                providerName = "OpenAI",
+                baseUrl = "https://api.openai.com/v1",
+                apiKey = "sk-test***",
+                apiType = APIType.OPENAI_COMPATIBLE,
+                isEnabled = true,
+                quotaResetAt = null,
+                lastStatus = ProviderStatus.OK,
+            )
 
         uiState.value = uiState.value.copy(apiProviders = listOf(provider))
 
@@ -130,16 +130,17 @@ class CloudFallbackAndExportTest {
     @Test
     fun quotaChip_shouldDisplayWhenRateLimited() {
         // Arrange
-        val rateLimitedProvider = APIProviderConfig(
-            providerId = "openai",
-            providerName = "OpenAI",
-            baseUrl = "https://api.openai.com/v1",
-            apiKey = "sk-test***",
-            apiType = APIType.OPENAI_COMPATIBLE,
-            isEnabled = true,
-            quotaResetAt = Instant.now().plusSeconds(1800), // 30 minutes
-            lastStatus = ProviderStatus.RATE_LIMITED
-        )
+        val rateLimitedProvider =
+            APIProviderConfig(
+                providerId = "openai",
+                providerName = "OpenAI",
+                baseUrl = "https://api.openai.com/v1",
+                apiKey = "sk-test***",
+                apiType = APIType.OPENAI_COMPATIBLE,
+                isEnabled = true,
+                quotaResetAt = Instant.now().plusSeconds(1800), // 30 minutes
+                lastStatus = ProviderStatus.RATE_LIMITED,
+            )
 
         uiState.value = uiState.value.copy(apiProviders = listOf(rateLimitedProvider))
 
@@ -156,16 +157,17 @@ class CloudFallbackAndExportTest {
     @Test
     fun quotaChip_shouldShowErrorStatus() {
         // Arrange
-        val errorProvider = APIProviderConfig(
-            providerId = "google",
-            providerName = "Google Gemini",
-            baseUrl = "https://generativelanguage.googleapis.com/v1",
-            apiKey = "AIza***",
-            apiType = APIType.GEMINI,
-            isEnabled = true,
-            quotaResetAt = null,
-            lastStatus = ProviderStatus.ERROR
-        )
+        val errorProvider =
+            APIProviderConfig(
+                providerId = "google",
+                providerName = "Google Gemini",
+                baseUrl = "https://generativelanguage.googleapis.com/v1",
+                apiKey = "AIza***",
+                apiType = APIType.GEMINI,
+                isEnabled = true,
+                quotaResetAt = null,
+                lastStatus = ProviderStatus.ERROR,
+            )
 
         uiState.value = uiState.value.copy(apiProviders = listOf(errorProvider))
 
@@ -205,9 +207,10 @@ class CloudFallbackAndExportTest {
 
         // Assert
         composeTestRule.onNodeWithText("Unencrypted Export").assertIsDisplayed()
-        composeTestRule.onNodeWithText(
-            "This export will not be encrypted. Store it securely."
-        ).assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText(
+                "This export will not be encrypted. Store it securely.",
+            ).assertIsDisplayed()
     }
 
     @Test
@@ -250,7 +253,8 @@ class CloudFallbackAndExportTest {
         composeTestRule.onNodeWithText("Export Backup").performClick()
 
         // Act: Enable chat history checkbox
-        composeTestRule.onNodeWithContentDescription("Include chat history toggle")
+        composeTestRule
+            .onNodeWithContentDescription("Include chat history toggle")
             .performClick()
         composeTestRule.onNodeWithText("Export").performClick()
 
@@ -269,7 +273,8 @@ class CloudFallbackAndExportTest {
         }
 
         // Assert
-        composeTestRule.onNodeWithContentDescription("Export in progress")
+        composeTestRule
+            .onNodeWithContentDescription("Export in progress")
             .assertIsDisplayed()
         composeTestRule.onNodeWithText("Creating backup...").assertIsDisplayed()
     }
@@ -277,13 +282,14 @@ class CloudFallbackAndExportTest {
     @Test
     fun privacyDashboard_shouldDisplayConsentTimestamp() {
         // Arrange
-        val preferences = PrivacyPreference(
-            preferenceId = 1,
-            exportWarningsDismissed = false,
-            telemetryOptIn = false,
-            consentAcknowledgedAt = Instant.now().minusSeconds(86400), // 1 day ago
-            retentionPolicy = RetentionPolicy.INDEFINITE
-        )
+        val preferences =
+            PrivacyPreference(
+                preferenceId = 1,
+                exportWarningsDismissed = false,
+                telemetryOptIn = false,
+                consentAcknowledgedAt = Instant.now().minusSeconds(86400), // 1 day ago
+                retentionPolicy = RetentionPolicy.INDEFINITE,
+            )
 
         uiState.value = uiState.value.copy(privacyPreferences = preferences)
 
@@ -300,13 +306,14 @@ class CloudFallbackAndExportTest {
     @Test
     fun privacyDashboard_shouldShowTelemetryToggle() {
         // Arrange
-        val preferences = PrivacyPreference(
-            preferenceId = 1,
-            exportWarningsDismissed = false,
-            telemetryOptIn = false,
-            consentAcknowledgedAt = Instant.now(),
-            retentionPolicy = RetentionPolicy.INDEFINITE
-        )
+        val preferences =
+            PrivacyPreference(
+                preferenceId = 1,
+                exportWarningsDismissed = false,
+                telemetryOptIn = false,
+                consentAcknowledgedAt = Instant.now(),
+                retentionPolicy = RetentionPolicy.INDEFINITE,
+            )
 
         uiState.value = uiState.value.copy(privacyPreferences = preferences)
 
@@ -317,20 +324,22 @@ class CloudFallbackAndExportTest {
 
         // Assert
         composeTestRule.onNodeWithText("Share anonymous usage data").assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription("Telemetry toggle")
+        composeTestRule
+            .onNodeWithContentDescription("Telemetry toggle")
             .assertIsDisplayed()
     }
 
     @Test
     fun telemetryToggle_whenDisabled_shouldNotCollectData() {
         // Arrange
-        val preferences = PrivacyPreference(
-            preferenceId = 1,
-            exportWarningsDismissed = false,
-            telemetryOptIn = false,
-            consentAcknowledgedAt = Instant.now(),
-            retentionPolicy = RetentionPolicy.INDEFINITE
-        )
+        val preferences =
+            PrivacyPreference(
+                preferenceId = 1,
+                exportWarningsDismissed = false,
+                telemetryOptIn = false,
+                consentAcknowledgedAt = Instant.now(),
+                retentionPolicy = RetentionPolicy.INDEFINITE,
+            )
 
         uiState.value = uiState.value.copy(privacyPreferences = preferences)
 
@@ -347,13 +356,14 @@ class CloudFallbackAndExportTest {
     @Test
     fun telemetryToggle_whenClicked_shouldUpdatePreference() {
         // Arrange
-        val preferences = PrivacyPreference(
-            preferenceId = 1,
-            exportWarningsDismissed = false,
-            telemetryOptIn = false,
-            consentAcknowledgedAt = Instant.now(),
-            retentionPolicy = RetentionPolicy.INDEFINITE
-        )
+        val preferences =
+            PrivacyPreference(
+                preferenceId = 1,
+                exportWarningsDismissed = false,
+                telemetryOptIn = false,
+                consentAcknowledgedAt = Instant.now(),
+                retentionPolicy = RetentionPolicy.INDEFINITE,
+            )
 
         uiState.value = uiState.value.copy(privacyPreferences = preferences)
 
@@ -362,7 +372,8 @@ class CloudFallbackAndExportTest {
         }
 
         // Act
-        composeTestRule.onNodeWithContentDescription("Telemetry toggle")
+        composeTestRule
+            .onNodeWithContentDescription("Telemetry toggle")
             .performClick()
 
         // Assert
@@ -377,7 +388,8 @@ class CloudFallbackAndExportTest {
         }
 
         // Act: Acknowledge privacy consent
-        composeTestRule.onNodeWithText("Acknowledge Privacy Policy")
+        composeTestRule
+            .onNodeWithText("Acknowledge Privacy Policy")
             .performClick()
 
         // Assert
@@ -387,13 +399,14 @@ class CloudFallbackAndExportTest {
     @Test
     fun exportWarning_firstTime_shouldShowFullWarning() {
         // Arrange: First export, warning not dismissed
-        val preferences = PrivacyPreference(
-            preferenceId = 1,
-            exportWarningsDismissed = false,
-            telemetryOptIn = false,
-            consentAcknowledgedAt = Instant.now(),
-            retentionPolicy = RetentionPolicy.INDEFINITE
-        )
+        val preferences =
+            PrivacyPreference(
+                preferenceId = 1,
+                exportWarningsDismissed = false,
+                telemetryOptIn = false,
+                consentAcknowledgedAt = Instant.now(),
+                retentionPolicy = RetentionPolicy.INDEFINITE,
+            )
 
         uiState.value = uiState.value.copy(privacyPreferences = preferences)
 
@@ -406,9 +419,10 @@ class CloudFallbackAndExportTest {
 
         // Assert
         composeTestRule.onNodeWithText("Important Security Notice").assertIsDisplayed()
-        composeTestRule.onNodeWithText(
-            "Your export contains API keys and sensitive data in plain text."
-        ).assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText(
+                "Your export contains API keys and sensitive data in plain text.",
+            ).assertIsDisplayed()
     }
 
     @Test
@@ -421,7 +435,8 @@ class CloudFallbackAndExportTest {
         composeTestRule.onNodeWithText("Export Backup").performClick()
 
         // Act
-        composeTestRule.onNodeWithText("Don't show this again")
+        composeTestRule
+            .onNodeWithText("Don't show this again")
             .performClick()
 
         // Assert
@@ -431,16 +446,17 @@ class CloudFallbackAndExportTest {
     @Test
     fun unauthorizedProvider_shouldShowRefreshButton() {
         // Arrange
-        val unauthorizedProvider = APIProviderConfig(
-            providerId = "openai",
-            providerName = "OpenAI",
-            baseUrl = "https://api.openai.com/v1",
-            apiKey = "sk-invalid",
-            apiType = APIType.OPENAI_COMPATIBLE,
-            isEnabled = true,
-            quotaResetAt = null,
-            lastStatus = ProviderStatus.UNAUTHORIZED
-        )
+        val unauthorizedProvider =
+            APIProviderConfig(
+                providerId = "openai",
+                providerName = "OpenAI",
+                baseUrl = "https://api.openai.com/v1",
+                apiKey = "sk-invalid",
+                apiType = APIType.OPENAI_COMPATIBLE,
+                isEnabled = true,
+                quotaResetAt = null,
+                lastStatus = ProviderStatus.UNAUTHORIZED,
+            )
 
         uiState.value = uiState.value.copy(apiProviders = listOf(unauthorizedProvider))
 
@@ -451,7 +467,8 @@ class CloudFallbackAndExportTest {
 
         // Assert
         composeTestRule.onNodeWithText("Unauthorized").assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription("Update API key")
+        composeTestRule
+            .onNodeWithContentDescription("Update API key")
             .assertIsDisplayed()
     }
 
@@ -475,16 +492,17 @@ class CloudFallbackAndExportTest {
     @Test
     fun talkbackLabels_shouldDescribeCloudStatus() {
         // Arrange
-        val provider = APIProviderConfig(
-            providerId = "openai",
-            providerName = "OpenAI",
-            baseUrl = "https://api.openai.com/v1",
-            apiKey = "sk-test***",
-            apiType = APIType.OPENAI_COMPATIBLE,
-            isEnabled = true,
-            quotaResetAt = null,
-            lastStatus = ProviderStatus.OK
-        )
+        val provider =
+            APIProviderConfig(
+                providerId = "openai",
+                providerName = "OpenAI",
+                baseUrl = "https://api.openai.com/v1",
+                apiKey = "sk-test***",
+                apiType = APIType.OPENAI_COMPATIBLE,
+                isEnabled = true,
+                quotaResetAt = null,
+                lastStatus = ProviderStatus.OK,
+            )
 
         uiState.value = uiState.value.copy(apiProviders = listOf(provider))
 
@@ -494,7 +512,8 @@ class CloudFallbackAndExportTest {
         }
 
         // Assert
-        composeTestRule.onNodeWithContentDescription("OpenAI provider status: Active")
+        composeTestRule
+            .onNodeWithContentDescription("OpenAI provider status: Active")
             .assertExists()
     }
 
@@ -508,8 +527,9 @@ class CloudFallbackAndExportTest {
         composeTestRule.onNodeWithText("Export Backup").performClick()
 
         // Assert
-        composeTestRule.onNodeWithContentDescription(
-            "Security warning: Export will not be encrypted"
-        ).assertExists()
+        composeTestRule
+            .onNodeWithContentDescription(
+                "Security warning: Export will not be encrypted",
+            ).assertExists()
     }
 }

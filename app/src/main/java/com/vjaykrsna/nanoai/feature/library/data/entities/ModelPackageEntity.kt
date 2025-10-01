@@ -9,7 +9,7 @@ import kotlinx.datetime.Instant
 
 /**
  * Room entity representing an AI model package.
- * 
+ *
  * Models can be local (downloaded) or cloud-based. Tracks installation state,
  * capabilities, and associated download tasks.
  *
@@ -29,31 +29,22 @@ data class ModelPackageEntity(
     @PrimaryKey
     @ColumnInfo(name = "model_id")
     val modelId: String,
-
     @ColumnInfo(name = "display_name")
     val displayName: String,
-
     @ColumnInfo(name = "version")
     val version: String,
-
     @ColumnInfo(name = "provider_type")
     val providerType: ProviderType,
-
     @ColumnInfo(name = "size_bytes")
     val sizeBytes: Long,
-
     @ColumnInfo(name = "capabilities")
     val capabilities: Set<String>,
-
     @ColumnInfo(name = "install_state")
     val installState: InstallState,
-
     @ColumnInfo(name = "download_task_id")
     val downloadTaskId: String? = null,
-
     @ColumnInfo(name = "checksum")
     val checksum: String? = null,
-
     @ColumnInfo(name = "updated_at")
-    val updatedAt: Instant
+    val updatedAt: Instant,
 )

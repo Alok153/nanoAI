@@ -12,14 +12,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Send
-import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -35,7 +33,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -52,7 +49,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import java.util.UUID
 import com.vjaykrsna.nanoai.core.domain.model.Message
 import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
 import com.vjaykrsna.nanoai.feature.chat.presentation.ChatError
@@ -60,11 +56,12 @@ import com.vjaykrsna.nanoai.feature.chat.presentation.ChatViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import java.util.UUID
 
 @Composable
 fun ChatScreen(
     modifier: Modifier = Modifier,
-    viewModel: ChatViewModel = hiltViewModel()
+    viewModel: ChatViewModel = hiltViewModel(),
 ) {
     val messages by viewModel.messages.collectAsState()
     val currentThread by viewModel.currentThread.collectAsState()
@@ -75,28 +72,31 @@ fun ChatScreen(
 
     LaunchedEffect(Unit) {
         viewModel.errorEvents.collectLatest { error ->
-            val message = when (error) {
-                is ChatError.InferenceFailed -> "Inference failed: ${error.message}"
-                is ChatError.PersonaSwitchFailed -> "Persona switch failed: ${error.message}"
-                is ChatError.ThreadCreationFailed -> "Thread creation failed: ${error.message}"
-                is ChatError.ThreadArchiveFailed -> "Archive failed: ${error.message}"
-                is ChatError.ThreadDeletionFailed -> "Delete failed: ${error.message}"
-                is ChatError.UnexpectedError -> "Error: ${error.message}"
-            }
+            val message =
+                when (error) {
+                    is ChatError.InferenceFailed -> "Inference failed: ${error.message}"
+                    is ChatError.PersonaSwitchFailed -> "Persona switch failed: ${error.message}"
+                    is ChatError.ThreadCreationFailed -> "Thread creation failed: ${error.message}"
+                    is ChatError.ThreadArchiveFailed -> "Archive failed: ${error.message}"
+                    is ChatError.ThreadDeletionFailed -> "Delete failed: ${error.message}"
+                    is ChatError.UnexpectedError -> "Error: ${error.message}"
+                }
             snackbarHostState.showSnackbar(message)
         }
     }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        modifier = modifier.semantics {
-            contentDescription = "Chat screen with message history and input"
-        }
+        modifier =
+            modifier.semantics {
+                contentDescription = "Chat screen with message history and input"
+            },
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
         ) {
             // Top bar with thread info and persona selector
             ChatTopBar(
@@ -106,16 +106,17 @@ fun ChatScreen(
                 onPersonaSelected = { persona, action ->
                     viewModel.switchPersona(persona.personaId, action)
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
 
             // Messages list
             MessagesList(
                 messages = messages,
                 isLoading = isLoading,
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
             )
 
             // Input area
@@ -126,7 +127,7 @@ fun ChatScreen(
                     }
                 },
                 enabled = !isLoading && currentThread != null,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
         }
     }
@@ -139,31 +140,32 @@ private fun ChatTopBar(
     availablePersonas: List<PersonaProfile>,
     currentPersonaId: UUID?,
     onPersonaSelected: (PersonaProfile, com.vjaykrsna.nanoai.core.model.PersonaSwitchAction) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(16.dp)
+        modifier =
+            modifier
+                .background(MaterialTheme.colorScheme.surface)
+                .padding(16.dp),
     ) {
         Text(
             text = threadTitle,
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             // Persona selector
             var expanded by remember { mutableStateOf(false) }
-            
+
             ExposedDropdownMenuBox(
                 expanded = expanded,
-                onExpandedChange = { expanded = !expanded }
+                onExpandedChange = { expanded = !expanded },
             ) {
                 val currentPersona = availablePersonas.find { it.personaId == currentPersonaId }
                 OutlinedTextField(
@@ -172,14 +174,15 @@ private fun ChatTopBar(
                     readOnly = true,
                     label = { Text("Persona") },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                    modifier = Modifier
-                        .menuAnchor()
-                        .semantics { contentDescription = "Persona selector dropdown" }
+                    modifier =
+                        Modifier
+                            .menuAnchor()
+                            .semantics { contentDescription = "Persona selector dropdown" },
                 )
 
                 ExposedDropdownMenu(
                     expanded = expanded,
-                    onDismissRequest = { expanded = false }
+                    onDismissRequest = { expanded = false },
                 ) {
                     availablePersonas.forEach { persona ->
                         DropdownMenuItem(
@@ -187,7 +190,7 @@ private fun ChatTopBar(
                             onClick = {
                                 onPersonaSelected(persona, com.vjaykrsna.nanoai.core.model.PersonaSwitchAction.CONTINUE_THREAD)
                                 expanded = false
-                            }
+                            },
                         )
                     }
                 }
@@ -200,7 +203,7 @@ private fun ChatTopBar(
 private fun MessagesList(
     messages: List<Message>,
     isLoading: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
 
@@ -215,14 +218,15 @@ private fun MessagesList(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
         reverseLayout = false,
-        modifier = modifier.semantics {
-            contentDescription = "Message history list"
-        }
+        modifier =
+            modifier.semantics {
+                contentDescription = "Message history list"
+            },
     ) {
         items(
             items = messages,
             key = { it.messageId.toString() },
-            contentType = { it.role }
+            contentType = { it.role },
         ) { message ->
             MessageBubble(message = message)
         }
@@ -231,12 +235,13 @@ private fun MessagesList(
             item {
                 Box(
                     modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     CircularProgressIndicator(
-                        modifier = Modifier
-                            .size(24.dp)
-                            .semantics { contentDescription = "Loading response" }
+                        modifier =
+                            Modifier
+                                .size(24.dp)
+                                .semantics { contentDescription = "Loading response" },
                     )
                 }
             }
@@ -247,50 +252,53 @@ private fun MessagesList(
 @Composable
 private fun MessageBubble(
     message: Message,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val isUser = message.role == com.vjaykrsna.nanoai.core.model.Role.USER
-    val backgroundColor = if (isUser) {
-        MaterialTheme.colorScheme.primaryContainer
-    } else {
-        MaterialTheme.colorScheme.secondaryContainer
-    }
+    val backgroundColor =
+        if (isUser) {
+            MaterialTheme.colorScheme.primaryContainer
+        } else {
+            MaterialTheme.colorScheme.secondaryContainer
+        }
 
     val alignment = if (isUser) Alignment.End else Alignment.Start
 
     Column(
         horizontalAlignment = alignment,
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth(),
     ) {
         Card(
             colors = CardDefaults.cardColors(containerColor = backgroundColor),
             shape = RoundedCornerShape(12.dp),
-            modifier = Modifier
-                .fillMaxWidth(0.85f)
-                .semantics {
-                    contentDescription = "${message.role} message: ${message.text ?: ""}"
-                }
+            modifier =
+                Modifier
+                    .fillMaxWidth(0.85f)
+                    .semantics {
+                        contentDescription = "${message.role} message: ${message.text ?: ""}"
+                    },
         ) {
             Column(
-                modifier = Modifier.padding(12.dp)
+                modifier = Modifier.padding(12.dp),
             ) {
                 message.text?.let { text ->
                     Text(
                         text = text,
-                        style = MaterialTheme.typography.bodyLarge
+                        style = MaterialTheme.typography.bodyLarge,
                     )
                 }
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                val timestamp = message.createdAt
-                    .toLocalDateTime(TimeZone.currentSystemDefault())
-                    .let { "${it.hour}:${it.minute.toString().padStart(2, '0')}" }
+                val timestamp =
+                    message.createdAt
+                        .toLocalDateTime(TimeZone.currentSystemDefault())
+                        .let { "${it.hour}:${it.minute.toString().padStart(2, '0')}" }
 
                 Text(
                     text = timestamp,
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -301,25 +309,27 @@ private fun MessageBubble(
 private fun MessageInputArea(
     onSendMessage: (String) -> Unit,
     enabled: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     var messageText by rememberSaveable { mutableStateOf("") }
 
     Row(
-        modifier = modifier
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(16.dp),
+        modifier =
+            modifier
+                .background(MaterialTheme.colorScheme.surface)
+                .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         TextField(
             value = messageText,
             onValueChange = { messageText = it },
             placeholder = { Text("Type a message...") },
             enabled = enabled,
-            modifier = Modifier
-                .weight(1f)
-                .semantics { contentDescription = "Message input field" }
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .semantics { contentDescription = "Message input field" },
         )
 
         IconButton(
@@ -330,13 +340,14 @@ private fun MessageInputArea(
                 }
             },
             enabled = enabled && messageText.isNotBlank(),
-            modifier = Modifier.semantics {
-                contentDescription = "Send message button"
-            }
+            modifier =
+                Modifier.semantics {
+                    contentDescription = "Send message button"
+                },
         ) {
             Icon(
                 imageVector = Icons.Default.Send,
-                contentDescription = "Send"
+                contentDescription = "Send",
             )
         }
     }

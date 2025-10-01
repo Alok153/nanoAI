@@ -7,7 +7,7 @@ import kotlinx.datetime.Instant
 
 /**
  * Room entity representing a chat conversation thread.
- * 
+ *
  * A thread contains multiple messages and maintains context for a conversation
  * with a specific persona and model configuration.
  *
@@ -24,22 +24,16 @@ data class ChatThreadEntity(
     @PrimaryKey
     @ColumnInfo(name = "thread_id")
     val threadId: String,
-
     @ColumnInfo(name = "title")
     val title: String? = null,
-
     @ColumnInfo(name = "persona_id")
     val personaId: String? = null,
-
     @ColumnInfo(name = "active_model_id")
     val activeModelId: String,
-
     @ColumnInfo(name = "created_at")
     val createdAt: Instant,
-
     @ColumnInfo(name = "updated_at")
     val updatedAt: Instant,
-
     @ColumnInfo(name = "is_archived")
-    val isArchived: Boolean = false
+    val isArchived: Boolean = false,
 )

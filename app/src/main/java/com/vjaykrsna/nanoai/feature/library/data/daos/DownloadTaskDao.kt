@@ -12,12 +12,11 @@ import kotlinx.coroutines.flow.Flow
 
 /**
  * Data Access Object for DownloadTask entities.
- * 
+ *
  * Provides methods to manage model download tasks and progress tracking.
  */
 @Dao
 interface DownloadTaskDao {
-
     /**
      * Insert or update a download task.
      */
@@ -112,19 +111,30 @@ interface DownloadTaskDao {
      * Update task status.
      */
     @Query("UPDATE download_tasks SET status = :status WHERE task_id = :taskId")
-    suspend fun updateStatus(taskId: String, status: DownloadStatus)
+    suspend fun updateStatus(
+        taskId: String,
+        status: DownloadStatus,
+    )
 
     /**
      * Update task status with error message.
      */
     @Query("UPDATE download_tasks SET status = :status, error_message = :errorMessage WHERE task_id = :taskId")
-    suspend fun updateStatusWithError(taskId: String, status: DownloadStatus, errorMessage: String)
+    suspend fun updateStatusWithError(
+        taskId: String,
+        status: DownloadStatus,
+        errorMessage: String,
+    )
 
     /**
      * Update download progress.
      */
     @Query("UPDATE download_tasks SET progress = :progress, bytes_downloaded = :bytesDownloaded WHERE task_id = :taskId")
-    suspend fun updateProgress(taskId: String, progress: Float, bytesDownloaded: Long)
+    suspend fun updateProgress(
+        taskId: String,
+        progress: Float,
+        bytesDownloaded: Long,
+    )
 
     /**
      * Delete tasks by status (e.g., cleanup completed tasks).

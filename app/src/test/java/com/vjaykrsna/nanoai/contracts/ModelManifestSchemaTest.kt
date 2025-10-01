@@ -16,7 +16,6 @@ import java.io.File
  * Expected to FAIL if schema file is missing or malformed.
  */
 class ModelManifestSchemaTest {
-
     private lateinit var schemaFile: File
 
     @Before
@@ -24,7 +23,7 @@ class ModelManifestSchemaTest {
         // Schema is in specs/001-foundation/contracts/model-manifest.json
         val projectRoot = File(System.getProperty("user.dir")).parentFile
         schemaFile = File(projectRoot, "specs/001-foundation/contracts/model-manifest.json")
-        
+
         // Verify schema file exists (will fail if not found - expected in TDD)
         assertThat(schemaFile.exists()).isTrue()
     }
@@ -32,7 +31,8 @@ class ModelManifestSchemaTest {
     @Test
     fun `valid manifest should pass schema validation`() {
         // Arrange: Create a valid manifest
-        val validManifest = """
+        val validManifest =
+            """
             {
                 "model_id": "gemini-2.0-flash-lite",
                 "display_name": "Gemini 2.0 Flash Lite",
@@ -47,7 +47,7 @@ class ModelManifestSchemaTest {
                 "capabilities": ["TEXT_GEN", "CODE_GEN"],
                 "min_ram_mb": 2048
             }
-        """.trimIndent()
+            """.trimIndent()
 
         // Act: Validate against schema
         val errors = validateManifest(validManifest)
@@ -59,7 +59,8 @@ class ModelManifestSchemaTest {
     @Test
     fun `manifest with missing required field should fail validation`() {
         // Arrange: Manifest missing 'runtime' field
-        val invalidManifest = """
+        val invalidManifest =
+            """
             {
                 "model_id": "test-model",
                 "version": "1.0",
@@ -67,7 +68,7 @@ class ModelManifestSchemaTest {
                 "size_bytes": 1000000,
                 "capabilities": ["TEXT_GEN"]
             }
-        """.trimIndent()
+            """.trimIndent()
 
         // Act: Validate against schema
         val errors = validateManifest(invalidManifest)
@@ -81,7 +82,8 @@ class ModelManifestSchemaTest {
     @Test
     fun `manifest with invalid runtime enum should fail validation`() {
         // Arrange: Manifest with invalid runtime value
-        val invalidManifest = """
+        val invalidManifest =
+            """
             {
                 "model_id": "test-model",
                 "version": "1.0",
@@ -90,7 +92,7 @@ class ModelManifestSchemaTest {
                 "size_bytes": 1000000,
                 "capabilities": ["TEXT_GEN"]
             }
-        """.trimIndent()
+            """.trimIndent()
 
         // Act: Validate against schema
         val errors = validateManifest(invalidManifest)
@@ -115,7 +117,8 @@ class ModelManifestSchemaTest {
     @Test
     fun `manifest with invalid checksum algorithm should fail validation`() {
         // Arrange: Manifest with invalid checksum algorithm
-        val invalidManifest = """
+        val invalidManifest =
+            """
             {
                 "model_id": "test-model",
                 "version": "1.0",
@@ -128,7 +131,7 @@ class ModelManifestSchemaTest {
                 },
                 "capabilities": ["TEXT_GEN"]
             }
-        """.trimIndent()
+            """.trimIndent()
 
         // Act: Validate against schema
         val errors = validateManifest(invalidManifest)
@@ -140,7 +143,8 @@ class ModelManifestSchemaTest {
     @Test
     fun `manifest checksum value should match pattern`() {
         // Arrange: Manifest with invalid checksum value (wrong length/format)
-        val invalidManifest = """
+        val invalidManifest =
+            """
             {
                 "model_id": "test-model",
                 "version": "1.0",
@@ -153,7 +157,7 @@ class ModelManifestSchemaTest {
                 },
                 "capabilities": ["TEXT_GEN"]
             }
-        """.trimIndent()
+            """.trimIndent()
 
         // Act: Validate against schema
         val errors = validateManifest(invalidManifest)
@@ -165,7 +169,8 @@ class ModelManifestSchemaTest {
     @Test
     fun `manifest with invalid capability enum should fail validation`() {
         // Arrange: Manifest with invalid capability
-        val invalidManifest = """
+        val invalidManifest =
+            """
             {
                 "model_id": "test-model",
                 "version": "1.0",
@@ -174,7 +179,7 @@ class ModelManifestSchemaTest {
                 "size_bytes": 1000000,
                 "capabilities": ["TEXT_GEN", "INVALID_CAPABILITY"]
             }
-        """.trimIndent()
+            """.trimIndent()
 
         // Act: Validate against schema
         val errors = validateManifest(invalidManifest)
@@ -199,7 +204,8 @@ class ModelManifestSchemaTest {
     @Test
     fun `manifest size_bytes should be positive integer`() {
         // Arrange: Manifest with invalid size
-        val invalidManifest = """
+        val invalidManifest =
+            """
             {
                 "model_id": "test-model",
                 "version": "1.0",
@@ -208,7 +214,7 @@ class ModelManifestSchemaTest {
                 "size_bytes": 0,
                 "capabilities": ["TEXT_GEN"]
             }
-        """.trimIndent()
+            """.trimIndent()
 
         // Act: Validate against schema
         val errors = validateManifest(invalidManifest)
@@ -220,7 +226,8 @@ class ModelManifestSchemaTest {
     @Test
     fun `manifest min_ram_mb should be at least 1024`() {
         // Arrange: Manifest with too low min_ram_mb
-        val invalidManifest = """
+        val invalidManifest =
+            """
             {
                 "model_id": "test-model",
                 "version": "1.0",
@@ -230,7 +237,7 @@ class ModelManifestSchemaTest {
                 "capabilities": ["TEXT_GEN"],
                 "min_ram_mb": 512
             }
-        """.trimIndent()
+            """.trimIndent()
 
         // Act: Validate against schema
         val errors = validateManifest(invalidManifest)
@@ -242,7 +249,8 @@ class ModelManifestSchemaTest {
     @Test
     fun `manifest model_id should match pattern`() {
         // Arrange: Manifest with invalid model_id (uppercase, spaces)
-        val invalidManifest = """
+        val invalidManifest =
+            """
             {
                 "model_id": "Invalid Model ID!",
                 "version": "1.0",
@@ -251,7 +259,7 @@ class ModelManifestSchemaTest {
                 "size_bytes": 1000000,
                 "capabilities": ["TEXT_GEN"]
             }
-        """.trimIndent()
+            """.trimIndent()
 
         // Act: Validate against schema
         val errors = validateManifest(invalidManifest)
@@ -265,16 +273,18 @@ class ModelManifestSchemaTest {
     private fun validateManifest(manifestJson: String): Set<ValidationMessage> {
         val factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7)
         val schema = factory.getSchema(schemaFile.toURI())
-        
-        val jsonNode = com.fasterxml.jackson.databind.ObjectMapper()
-            .readTree(manifestJson)
-        
+
+        val jsonNode =
+            com.fasterxml.jackson.databind
+                .ObjectMapper()
+                .readTree(manifestJson)
+
         return schema.validate(jsonNode)
     }
 
     private fun createMinimalManifest(
         runtime: String = "MEDIA_PIPE",
-        capabilities: List<String> = listOf("TEXT_GEN")
+        capabilities: List<String> = listOf("TEXT_GEN"),
     ): String {
         val capabilitiesJson = capabilities.joinToString(",") { "\"$it\"" }
         return """
@@ -286,6 +296,6 @@ class ModelManifestSchemaTest {
                 "size_bytes": 1000000,
                 "capabilities": [$capabilitiesJson]
             }
-        """.trimIndent()
+            """.trimIndent()
     }
 }

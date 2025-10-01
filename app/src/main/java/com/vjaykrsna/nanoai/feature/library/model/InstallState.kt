@@ -27,5 +27,5 @@ enum class InstallState {
     /**
      * Download or installation encountered an error.
      */
-    ERROR
+    ERROR,
 }

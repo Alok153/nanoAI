@@ -27,5 +27,5 @@ enum class ProviderStatus {
     /**
      * Status has not been checked yet or is unknown.
      */
-    UNKNOWN
+    UNKNOWN,
 }

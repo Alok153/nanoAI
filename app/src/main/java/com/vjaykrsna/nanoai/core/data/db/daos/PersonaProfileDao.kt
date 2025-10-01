@@ -11,12 +11,11 @@ import kotlinx.coroutines.flow.Flow
 
 /**
  * Data Access Object for PersonaProfile entities.
- * 
+ *
  * Provides methods to manage AI assistant persona configurations.
  */
 @Dao
 interface PersonaProfileDao {
-
     /**
      * Insert a new persona profile. Replaces if persona with same ID exists.
      */

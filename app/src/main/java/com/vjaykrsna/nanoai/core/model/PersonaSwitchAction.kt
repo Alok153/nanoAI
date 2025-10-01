@@ -14,5 +14,5 @@ enum class PersonaSwitchAction {
      * Start a new thread with the new persona.
      * Previous context is not carried over.
      */
-    START_NEW_THREAD
+    START_NEW_THREAD,
 }

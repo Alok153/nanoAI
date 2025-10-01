@@ -28,12 +28,9 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
-
     @Binds
     @Singleton
-    abstract fun bindConversationRepository(
-            impl: ConversationRepositoryImpl
-    ): ConversationRepository
+    abstract fun bindConversationRepository(impl: ConversationRepositoryImpl): ConversationRepository
 
     @Binds
     @Singleton
@@ -41,27 +38,21 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
-    abstract fun bindPersonaSwitchLogRepository(
-            impl: PersonaSwitchLogRepositoryImpl
-    ): PersonaSwitchLogRepository
+    abstract fun bindPersonaSwitchLogRepository(impl: PersonaSwitchLogRepositoryImpl): PersonaSwitchLogRepository
 
     @Binds
     @Singleton
-    abstract fun bindApiProviderConfigRepository(
-            impl: ApiProviderConfigRepositoryImpl
-    ): ApiProviderConfigRepository
+    abstract fun bindApiProviderConfigRepository(impl: ApiProviderConfigRepositoryImpl): ApiProviderConfigRepository
 
     @Binds
     @Singleton
-    abstract fun bindModelCatalogRepository(
-            impl: ModelCatalogRepositoryImpl
-    ): ModelCatalogRepository
+    abstract fun bindModelCatalogRepository(impl: ModelCatalogRepositoryImpl): ModelCatalogRepository
 
-        @Binds
-        @Singleton
-        abstract fun bindDownloadManager(impl: DownloadManagerImpl): DownloadManager
+    @Binds
+    @Singleton
+    abstract fun bindDownloadManager(impl: DownloadManagerImpl): DownloadManager
 
-        @Binds
-        @Singleton
-        abstract fun bindExportService(impl: ExportServiceImpl): ExportService
+    @Binds
+    @Singleton
+    abstract fun bindExportService(impl: ExportServiceImpl): ExportService
 }

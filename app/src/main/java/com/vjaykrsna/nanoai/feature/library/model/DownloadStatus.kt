@@ -32,5 +32,5 @@ enum class DownloadStatus {
     /**
      * Download was cancelled by user.
      */
-    CANCELLED
+    CANCELLED,
 }

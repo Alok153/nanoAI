@@ -11,13 +11,12 @@ import kotlinx.coroutines.flow.Flow
 
 /**
  * Data Access Object for ChatThread entities.
- * 
+ *
  * Provides methods to query, insert, update, and delete chat threads.
  * All methods are suspend functions for use with Kotlin coroutines.
  */
 @Dao
 interface ChatThreadDao {
-
     /**
      * Insert a new chat thread. Replaces if thread with same ID exists.
      */
@@ -113,5 +112,9 @@ interface ChatThreadDao {
      * Update the persona associated with a thread.
      */
     @Query("UPDATE chat_threads SET persona_id = :personaId, updated_at = :updatedAt WHERE thread_id = :threadId")
-    suspend fun updatePersona(threadId: String, personaId: String?, updatedAt: kotlinx.datetime.Instant)
+    suspend fun updatePersona(
+        threadId: String,
+        personaId: String?,
+        updatedAt: kotlinx.datetime.Instant,
+    )
 }

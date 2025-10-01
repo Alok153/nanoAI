@@ -34,7 +34,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -61,7 +60,7 @@ import java.util.UUID
 @Composable
 fun ModelLibraryScreen(
     modifier: Modifier = Modifier,
-    viewModel: ModelLibraryViewModel = hiltViewModel()
+    viewModel: ModelLibraryViewModel = hiltViewModel(),
 ) {
     val allModels by viewModel.allModels.collectAsState()
     val installedModels by viewModel.installedModels.collectAsState()
@@ -73,35 +72,39 @@ fun ModelLibraryScreen(
 
     LaunchedEffect(Unit) {
         viewModel.errorEvents.collectLatest { error ->
-            val message = when (error) {
-                is LibraryError.DownloadFailed -> "Download failed for ${error.modelId}: ${error.message}"
-                is LibraryError.DeleteFailed -> "Delete failed for ${error.modelId}: ${error.message}"
-                is LibraryError.PauseFailed -> "Pause failed: ${error.message}"
-                is LibraryError.ResumeFailed -> "Resume failed: ${error.message}"
-                is LibraryError.CancelFailed -> "Cancel failed: ${error.message}"
-                is LibraryError.RetryFailed -> "Retry failed: ${error.message}"
-                is LibraryError.UnexpectedError -> "Error: ${error.message}"
-            }
+            val message =
+                when (error) {
+                    is LibraryError.DownloadFailed -> "Download failed for ${error.modelId}: ${error.message}"
+                    is LibraryError.DeleteFailed -> "Delete failed for ${error.modelId}: ${error.message}"
+                    is LibraryError.PauseFailed -> "Pause failed: ${error.message}"
+                    is LibraryError.ResumeFailed -> "Resume failed: ${error.message}"
+                    is LibraryError.CancelFailed -> "Cancel failed: ${error.message}"
+                    is LibraryError.RetryFailed -> "Retry failed: ${error.message}"
+                    is LibraryError.UnexpectedError -> "Error: ${error.message}"
+                }
             snackbarHostState.showSnackbar(message)
         }
     }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        modifier = modifier.semantics {
-            contentDescription = "Model library screen with available and installed models"
-        }
+        modifier =
+            modifier.semantics {
+                contentDescription = "Model library screen with available and installed models"
+            },
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
         ) {
             // Header
             LibraryHeader(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
             )
 
             // Filter chips
@@ -109,7 +112,7 @@ fun ModelLibraryScreen(
                 onFilterChanged = { filter ->
                     viewModel.setFilter(filter)
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
 
             // Download queue section
@@ -120,9 +123,10 @@ fun ModelLibraryScreen(
                     onResume = { viewModel.resumeDownload(it) },
                     onCancel = { viewModel.cancelDownload(it) },
                     onRetry = { viewModel.retryDownload(it) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -132,12 +136,13 @@ fun ModelLibraryScreen(
             if (isLoading) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     CircularProgressIndicator(
-                        modifier = Modifier.semantics {
-                            contentDescription = "Loading models"
-                        }
+                        modifier =
+                            Modifier.semantics {
+                                contentDescription = "Loading models"
+                            },
                     )
                 }
             } else {
@@ -146,9 +151,10 @@ fun ModelLibraryScreen(
                     installedModels = installedModels,
                     onDownload = { viewModel.downloadModel(it.modelId) },
                     onDelete = { viewModel.deleteModel(it.modelId) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
                 )
             }
         }
@@ -156,20 +162,18 @@ fun ModelLibraryScreen(
 }
 
 @Composable
-private fun LibraryHeader(
-    modifier: Modifier = Modifier
-) {
+private fun LibraryHeader(modifier: Modifier = Modifier) {
     Column(modifier = modifier) {
         Text(
             text = "Model Library",
             style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = "Browse and download AI models for offline use",
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
@@ -178,20 +182,21 @@ private fun LibraryHeader(
 @Composable
 private fun FilterSection(
     onFilterChanged: (InstallStateFilter) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     var selectedFilter by remember { mutableStateOf(InstallStateFilter.ALL) }
-    val filters = listOf(
-        InstallStateFilter.ALL to "All",
-        InstallStateFilter.INSTALLED to "Installed",
-        InstallStateFilter.DOWNLOADING to "Downloading",
-        InstallStateFilter.AVAILABLE to "Available"
-    )
+    val filters =
+        listOf(
+            InstallStateFilter.ALL to "All",
+            InstallStateFilter.INSTALLED to "Installed",
+            InstallStateFilter.DOWNLOADING to "Downloading",
+            InstallStateFilter.AVAILABLE to "Available",
+        )
 
     LazyRow(
         contentPadding = PaddingValues(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = modifier
+        modifier = modifier,
     ) {
         items(filters) { (filter, label) ->
             FilterChip(
@@ -201,9 +206,10 @@ private fun FilterSection(
                     onFilterChanged(filter)
                 },
                 label = { Text(label) },
-                modifier = Modifier.semantics {
-                    contentDescription = "$label filter chip"
-                }
+                modifier =
+                    Modifier.semantics {
+                        contentDescription = "$label filter chip"
+                    },
             )
         }
     }
@@ -216,23 +222,25 @@ private fun DownloadQueueSection(
     onResume: (UUID) -> Unit,
     onCancel: (UUID) -> Unit,
     onRetry: (UUID) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Card(
         modifier = modifier,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            ),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
         ) {
             Text(
                 text = "Download Queue",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -243,7 +251,7 @@ private fun DownloadQueueSection(
                     onPause = onPause,
                     onResume = onResume,
                     onCancel = onCancel,
-                    onRetry = onRetry
+                    onRetry = onRetry,
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             }
@@ -258,35 +266,36 @@ private fun DownloadTaskItem(
     onResume: (UUID) -> Unit,
     onCancel: (UUID) -> Unit,
     onRetry: (UUID) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = download.modelId,
                     style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
                 )
 
                 val progressPercent = (download.progress * 100).toInt()
-                val statusText = when (download.status) {
-                    DownloadStatus.QUEUED -> "Queued"
-                    DownloadStatus.DOWNLOADING -> "Downloading $progressPercent%"
-                    DownloadStatus.PAUSED -> "Paused at $progressPercent%"
-                    DownloadStatus.COMPLETED -> "Completed"
-                    DownloadStatus.FAILED -> "Failed: ${download.errorMessage ?: "Unknown error"}"
-                    DownloadStatus.CANCELLED -> "Cancelled"
-                }
+                val statusText =
+                    when (download.status) {
+                        DownloadStatus.QUEUED -> "Queued"
+                        DownloadStatus.DOWNLOADING -> "Downloading $progressPercent%"
+                        DownloadStatus.PAUSED -> "Paused at $progressPercent%"
+                        DownloadStatus.COMPLETED -> "Completed"
+                        DownloadStatus.FAILED -> "Failed: ${download.errorMessage ?: "Unknown error"}"
+                        DownloadStatus.CANCELLED -> "Cancelled"
+                    }
 
                 Text(
                     text = statusText,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
 
@@ -295,17 +304,19 @@ private fun DownloadTaskItem(
                     DownloadStatus.DOWNLOADING -> {
                         IconButton(
                             onClick = { onPause(download.taskId) },
-                            modifier = Modifier.semantics {
-                                contentDescription = "Pause download"
-                            }
+                            modifier =
+                                Modifier.semantics {
+                                    contentDescription = "Pause download"
+                                },
                         ) {
                             Icon(Icons.Filled.PlayArrow, "Pause")
                         }
                         IconButton(
                             onClick = { onCancel(download.taskId) },
-                            modifier = Modifier.semantics {
-                                contentDescription = "Cancel download"
-                            }
+                            modifier =
+                                Modifier.semantics {
+                                    contentDescription = "Cancel download"
+                                },
                         ) {
                             Icon(Icons.Default.Close, "Cancel")
                         }
@@ -313,17 +324,19 @@ private fun DownloadTaskItem(
                     DownloadStatus.PAUSED -> {
                         IconButton(
                             onClick = { onResume(download.taskId) },
-                            modifier = Modifier.semantics {
-                                contentDescription = "Resume download"
-                            }
+                            modifier =
+                                Modifier.semantics {
+                                    contentDescription = "Resume download"
+                                },
                         ) {
                             Icon(Icons.Default.PlayArrow, "Resume")
                         }
                         IconButton(
                             onClick = { onCancel(download.taskId) },
-                            modifier = Modifier.semantics {
-                                contentDescription = "Cancel download"
-                            }
+                            modifier =
+                                Modifier.semantics {
+                                    contentDescription = "Cancel download"
+                                },
                         ) {
                             Icon(Icons.Default.Close, "Cancel")
                         }
@@ -331,9 +344,10 @@ private fun DownloadTaskItem(
                     DownloadStatus.FAILED -> {
                         IconButton(
                             onClick = { onRetry(download.taskId) },
-                            modifier = Modifier.semantics {
-                                contentDescription = "Retry download"
-                            }
+                            modifier =
+                                Modifier.semantics {
+                                    contentDescription = "Retry download"
+                                },
                         ) {
                             Icon(Icons.Default.Refresh, "Retry")
                         }
@@ -347,11 +361,12 @@ private fun DownloadTaskItem(
             Spacer(modifier = Modifier.height(8.dp))
             LinearProgressIndicator(
                 progress = { download.progress },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .semantics {
-                        contentDescription = "Download progress ${(download.progress * 100).toInt()}%"
-                    }
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .semantics {
+                            contentDescription = "Download progress ${(download.progress * 100).toInt()}%"
+                        },
             )
         }
     }
@@ -363,26 +378,27 @@ private fun ModelsGrid(
     installedModels: List<ModelPackage>,
     onDownload: (ModelPackage) -> Unit,
     onDelete: (ModelPackage) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     LazyColumn(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = modifier.semantics {
-            contentDescription = "Models list"
-        }
+        modifier =
+            modifier.semantics {
+                contentDescription = "Models list"
+            },
     ) {
         items(
             items = models,
             key = { it.modelId },
-            contentType = { "model_card" }
+            contentType = { "model_card" },
         ) { model ->
             val isInstalled = installedModels.any { it.modelId == model.modelId }
             ModelCard(
                 model = model,
                 isInstalled = isInstalled,
                 onDownload = { onDownload(model) },
-                onDelete = { onDelete(model) }
+                onDelete = { onDelete(model) },
             )
         }
     }
@@ -394,27 +410,28 @@ private fun ModelCard(
     isInstalled: Boolean,
     onDownload: () -> Unit,
     onDelete: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
+                verticalAlignment = Alignment.Top,
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = model.displayName,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
                     )
 
                     Spacer(modifier = Modifier.height(4.dp))
@@ -422,21 +439,21 @@ private fun ModelCard(
                     Text(
                         text = "${model.providerType.name} · ${model.capabilities.joinToString(", ")}",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
                     ) {
                         Text(
                             text = "Version: ${model.version}",
-                            style = MaterialTheme.typography.bodySmall
+                            style = MaterialTheme.typography.bodySmall,
                         )
                         Text(
                             text = "Size: ${formatSize(model.sizeBytes)}",
-                            style = MaterialTheme.typography.bodySmall
+                            style = MaterialTheme.typography.bodySmall,
                         )
                     }
                 }
@@ -449,14 +466,15 @@ private fun ModelCard(
                             imageVector = Icons.Default.CheckCircle,
                             contentDescription = "Installed",
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(24.dp),
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         IconButton(
                             onClick = onDelete,
-                            modifier = Modifier.semantics {
-                                contentDescription = "Delete ${model.displayName}"
-                            }
+                            modifier =
+                                Modifier.semantics {
+                                    contentDescription = "Delete ${model.displayName}"
+                                },
                         ) {
                             Icon(Icons.Default.Delete, "Delete")
                         }
@@ -464,9 +482,10 @@ private fun ModelCard(
                 } else {
                     IconButton(
                         onClick = onDownload,
-                        modifier = Modifier.semantics {
-                            contentDescription = "Download ${model.displayName}"
-                        }
+                        modifier =
+                            Modifier.semantics {
+                                contentDescription = "Download ${model.displayName}"
+                            },
                     ) {
                         Icon(Icons.Filled.Refresh, "Download")
                     }

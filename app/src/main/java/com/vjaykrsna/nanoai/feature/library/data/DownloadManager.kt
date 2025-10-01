@@ -2,8 +2,8 @@ package com.vjaykrsna.nanoai.feature.library.data
 
 import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
-import java.util.UUID
 import kotlinx.coroutines.flow.Flow
+import java.util.UUID
 
 /**
  * Manager for model download operations.
@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.Flow
  * downloads.
  */
 interface DownloadManager {
-
     /** Start downloading a model. Queues if max concurrent downloads reached. */
     suspend fun startDownload(modelId: String): UUID
 
@@ -53,7 +52,10 @@ interface DownloadManager {
     suspend fun getMaxConcurrentDownloads(): Int
 
     /** Update the status of a download task. */
-    suspend fun updateTaskStatus(taskId: UUID, status: DownloadStatus)
+    suspend fun updateTaskStatus(
+        taskId: UUID,
+        status: DownloadStatus,
+    )
 
     /** Map task to model ID. */
     suspend fun getModelIdForTask(taskId: UUID): String?

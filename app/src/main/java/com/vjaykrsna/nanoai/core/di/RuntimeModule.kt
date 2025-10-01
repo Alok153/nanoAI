@@ -12,10 +12,7 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RuntimeModule {
-
     @Binds
     @Singleton
-    abstract fun bindLocalModelRuntime(
-        impl: MediaPipeLocalModelRuntime
-    ): LocalModelRuntime
+    abstract fun bindLocalModelRuntime(impl: MediaPipeLocalModelRuntime): LocalModelRuntime
 }

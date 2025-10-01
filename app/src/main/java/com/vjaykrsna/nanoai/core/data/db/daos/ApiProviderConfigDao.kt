@@ -13,12 +13,11 @@ import kotlinx.datetime.Instant
 
 /**
  * Data Access Object for ApiProviderConfig entities.
- * 
+ *
  * Provides methods to manage cloud API provider configurations and status.
  */
 @Dao
 interface ApiProviderConfigDao {
-
     /**
      * Insert or update an API provider configuration.
      */
@@ -89,25 +88,37 @@ interface ApiProviderConfigDao {
      * Enable or disable a provider.
      */
     @Query("UPDATE api_provider_configs SET is_enabled = :enabled WHERE provider_id = :providerId")
-    suspend fun setEnabled(providerId: String, enabled: Boolean)
+    suspend fun setEnabled(
+        providerId: String,
+        enabled: Boolean,
+    )
 
     /**
      * Update provider status.
      */
     @Query("UPDATE api_provider_configs SET last_status = :status WHERE provider_id = :providerId")
-    suspend fun updateStatus(providerId: String, status: ProviderStatus)
+    suspend fun updateStatus(
+        providerId: String,
+        status: ProviderStatus,
+    )
 
     /**
      * Update quota reset time.
      */
     @Query("UPDATE api_provider_configs SET quota_reset_at = :resetAt WHERE provider_id = :providerId")
-    suspend fun updateQuotaReset(providerId: String, resetAt: Instant?)
+    suspend fun updateQuotaReset(
+        providerId: String,
+        resetAt: Instant?,
+    )
 
     /**
      * Update API key (for key rotation).
      */
     @Query("UPDATE api_provider_configs SET api_key = :apiKey WHERE provider_id = :providerId")
-    suspend fun updateApiKey(providerId: String, apiKey: String)
+    suspend fun updateApiKey(
+        providerId: String,
+        apiKey: String,
+    )
 
     /**
      * Delete all providers (for testing/debugging).

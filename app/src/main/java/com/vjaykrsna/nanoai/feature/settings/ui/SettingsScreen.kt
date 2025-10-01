@@ -19,9 +19,9 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -45,7 +45,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.vjaykrsna.nanoai.core.data.preferences.RetentionPolicy
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
@@ -57,7 +56,7 @@ import java.util.UUID
 @Composable
 fun SettingsScreen(
     modifier: Modifier = Modifier,
-    viewModel: SettingsViewModel = hiltViewModel()
+    viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val apiProviders by viewModel.apiProviders.collectAsState()
     val privacyPreferences by viewModel.privacyPreferences.collectAsState()
@@ -70,14 +69,15 @@ fun SettingsScreen(
 
     LaunchedEffect(Unit) {
         viewModel.errorEvents.collectLatest { error ->
-            val message = when (error) {
-                is SettingsError.ProviderAddFailed -> "Failed to add provider: ${error.message}"
-                is SettingsError.ProviderUpdateFailed -> "Failed to update provider: ${error.message}"
-                is SettingsError.ProviderDeleteFailed -> "Failed to delete provider: ${error.message}"
-                is SettingsError.ExportFailed -> "Export failed: ${error.message}"
-                is SettingsError.PreferenceUpdateFailed -> "Failed to update preference: ${error.message}"
-                is SettingsError.UnexpectedError -> "Unexpected error: ${error.message}"
-            }
+            val message =
+                when (error) {
+                    is SettingsError.ProviderAddFailed -> "Failed to add provider: ${error.message}"
+                    is SettingsError.ProviderUpdateFailed -> "Failed to update provider: ${error.message}"
+                    is SettingsError.ProviderDeleteFailed -> "Failed to delete provider: ${error.message}"
+                    is SettingsError.ExportFailed -> "Export failed: ${error.message}"
+                    is SettingsError.PreferenceUpdateFailed -> "Failed to update preference: ${error.message}"
+                    is SettingsError.UnexpectedError -> "Unexpected error: ${error.message}"
+                }
             snackbarHostState.showSnackbar(message)
         }
     }
@@ -87,30 +87,33 @@ fun SettingsScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { showAddProviderDialog = true },
-                modifier = Modifier.semantics {
-                    contentDescription = "Add API provider"
-                }
+                modifier =
+                    Modifier.semantics {
+                        contentDescription = "Add API provider"
+                    },
             ) {
                 Icon(Icons.Default.Add, "Add")
             }
         },
-        modifier = modifier.semantics {
-            contentDescription = "Settings screen with API providers and privacy options"
-        }
+        modifier =
+            modifier.semantics {
+                contentDescription = "Settings screen with API providers and privacy options"
+            },
     ) { innerPadding ->
         LazyColumn(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
         ) {
             // Header
             item {
                 Text(
                     text = "Settings",
                     style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
             }
 
@@ -122,7 +125,7 @@ fun SettingsScreen(
                             text = "No API providers configured",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(vertical = 16.dp)
+                            modifier = Modifier.padding(vertical = 16.dp),
                         )
                     }
                 }
@@ -131,12 +134,12 @@ fun SettingsScreen(
             items(
                 items = apiProviders,
                 key = { it.providerId.toString() },
-                contentType = { "api_provider_card" }
+                contentType = { "api_provider_card" },
             ) { provider ->
                 ApiProviderCard(
                     provider = provider,
                     onEdit = { editingProvider = provider },
-                    onDelete = { viewModel.deleteApiProvider(provider.providerId) }
+                    onDelete = { viewModel.deleteApiProvider(provider.providerId) },
                 )
             }
 
@@ -146,28 +149,30 @@ fun SettingsScreen(
                 SettingsSection(title = "Data Management") {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
+                        colors =
+                            CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            ),
                     ) {
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { showExportDialog = true }
-                                .padding(16.dp),
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clickable { showExportDialog = true }
+                                    .padding(16.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = "Export Backup",
                                     style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Medium
+                                    fontWeight = FontWeight.Medium,
                                 )
                                 Text(
                                     text = "Export conversations, personas, and settings",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
                             Icon(Icons.Default.Edit, "Export")
@@ -183,7 +188,7 @@ fun SettingsScreen(
                     PrivacySettings(
                         preferences = privacyPreferences,
                         onTelemetryToggle = { viewModel.setTelemetryOptIn(it) },
-                        onRetentionPolicyChanged = { viewModel.setRetentionPolicy(it) }
+                        onRetentionPolicyChanged = { viewModel.setRetentionPolicy(it) },
                     )
                 }
             }
@@ -205,8 +210,8 @@ fun SettingsScreen(
                         provider.copy(
                             providerName = name,
                             baseUrl = baseUrl,
-                            apiKey = apiKey ?: ""
-                        )
+                            apiKey = apiKey ?: "",
+                        ),
                     )
                 } else {
                     viewModel.addApiProvider(
@@ -216,13 +221,13 @@ fun SettingsScreen(
                             baseUrl = baseUrl,
                             apiKey = apiKey ?: "",
                             apiType = com.vjaykrsna.nanoai.core.model.APIType.OPENAI_COMPATIBLE,
-                            isEnabled = true
-                        )
+                            isEnabled = true,
+                        ),
                     )
                 }
                 showAddProviderDialog = false
                 editingProvider = null
-            }
+            },
         )
     }
 
@@ -232,12 +237,14 @@ fun SettingsScreen(
             onDismiss = { showExportDialog = false },
             onConfirm = {
                 // Use Downloads directory
-                val downloadsPath = android.os.Environment.getExternalStoragePublicDirectory(
-                    android.os.Environment.DIRECTORY_DOWNLOADS
-                ).absolutePath + "/nanoai-backup-${System.currentTimeMillis()}.json"
+                val downloadsPath =
+                    android.os.Environment
+                        .getExternalStoragePublicDirectory(
+                            android.os.Environment.DIRECTORY_DOWNLOADS,
+                        ).absolutePath + "/nanoai-backup-${System.currentTimeMillis()}.json"
                 viewModel.exportBackup(downloadsPath, includeChatHistory = true)
                 showExportDialog = false
-            }
+            },
         )
     }
 }
@@ -246,13 +253,13 @@ fun SettingsScreen(
 private fun SettingsSection(
     title: String,
     modifier: Modifier = Modifier,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
             text = title,
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
         )
         Spacer(modifier = Modifier.height(12.dp))
         content()
@@ -264,53 +271,56 @@ private fun ApiProviderCard(
     provider: APIProviderConfig,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = provider.providerName,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = provider.baseUrl,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = "Type: ${provider.apiType.name}",
                     style = MaterialTheme.typography.labelSmall,
-                    color = if (provider.isEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                    color = if (provider.isEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
                 )
             }
 
             Row {
                 IconButton(
                     onClick = onEdit,
-                    modifier = Modifier.semantics {
-                        contentDescription = "Edit ${provider.providerName}"
-                    }
+                    modifier =
+                        Modifier.semantics {
+                            contentDescription = "Edit ${provider.providerName}"
+                        },
                 ) {
                     Icon(Icons.Default.Edit, "Edit")
                 }
                 IconButton(
                     onClick = onDelete,
-                    modifier = Modifier.semantics {
-                        contentDescription = "Delete ${provider.providerName}"
-                    }
+                    modifier =
+                        Modifier.semantics {
+                            contentDescription = "Delete ${provider.providerName}"
+                        },
                 ) {
                     Icon(Icons.Default.Delete, "Delete")
                 }
@@ -325,7 +335,7 @@ private fun ApiProviderDialog(
     provider: APIProviderConfig?,
     onDismiss: () -> Unit,
     onSave: (name: String, baseUrl: String, apiKey: String?) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     var name by remember { mutableStateOf(provider?.providerName ?: "") }
     var baseUrl by remember { mutableStateOf(provider?.baseUrl ?: "") }
@@ -341,7 +351,7 @@ private fun ApiProviderDialog(
                     onValueChange = { name = it },
                     label = { Text("Name") },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 )
 
                 OutlinedTextField(
@@ -350,7 +360,7 @@ private fun ApiProviderDialog(
                     label = { Text("Base URL") },
                     placeholder = { Text("https://api.example.com") },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 )
 
                 OutlinedTextField(
@@ -358,7 +368,7 @@ private fun ApiProviderDialog(
                     onValueChange = { apiKey = it },
                     label = { Text("API Key (Optional)") },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
         },
@@ -369,7 +379,7 @@ private fun ApiProviderDialog(
                         onSave(name, baseUrl, apiKey.ifBlank { null })
                     }
                 },
-                enabled = name.isNotBlank() && baseUrl.isNotBlank()
+                enabled = name.isNotBlank() && baseUrl.isNotBlank(),
             ) {
                 Text("Save")
             }
@@ -379,7 +389,7 @@ private fun ApiProviderDialog(
                 Text("Cancel")
             }
         },
-        modifier = modifier
+        modifier = modifier,
     )
 }
 
@@ -387,7 +397,7 @@ private fun ApiProviderDialog(
 private fun ExportDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -404,7 +414,7 @@ private fun ExportDialog(
                 Text(
                     "The backup will be saved to your Downloads folder.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         },
@@ -418,7 +428,7 @@ private fun ExportDialog(
                 Text("Cancel")
             }
         },
-        modifier = modifier
+        modifier = modifier,
     )
 }
 
@@ -427,44 +437,47 @@ private fun PrivacySettings(
     preferences: com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreference?,
     onTelemetryToggle: (Boolean) -> Unit,
     onRetentionPolicyChanged: (RetentionPolicy) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            ),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             // Telemetry toggle
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "Usage Analytics",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Medium,
                     )
                     Text(
                         text = "Help improve the app by sharing anonymous usage data",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
                 Switch(
                     checked = preferences?.telemetryOptIn ?: false,
                     onCheckedChange = onTelemetryToggle,
-                    modifier = Modifier.semantics {
-                        contentDescription = "Toggle usage analytics"
-                    }
+                    modifier =
+                        Modifier.semantics {
+                            contentDescription = "Toggle usage analytics"
+                        },
                 )
             }
 
@@ -475,13 +488,13 @@ private fun PrivacySettings(
                 Text(
                     text = "Message Retention",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "Message retention policy: ${preferences?.retentionPolicy?.name ?: RetentionPolicy.INDEFINITE.name}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
 
@@ -492,13 +505,13 @@ private fun PrivacySettings(
                 Text(
                     text = "Privacy Notice",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "All data is stored locally on your device. No cloud sync or external data sharing occurs unless you explicitly export your data.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }

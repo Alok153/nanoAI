@@ -7,7 +7,7 @@ import kotlinx.datetime.Instant
 
 /**
  * Domain model for API provider configuration.
- * 
+ *
  * Clean architecture: Separate from database entities.
  * Used by repositories, use cases, ViewModels, and UI.
  */
@@ -19,33 +19,35 @@ data class APIProviderConfig(
     val apiType: APIType,
     val isEnabled: Boolean = true,
     val quotaResetAt: Instant? = null,
-    val lastStatus: ProviderStatus = ProviderStatus.UNKNOWN
+    val lastStatus: ProviderStatus = ProviderStatus.UNKNOWN,
 )
 
 /**
  * Extension function to convert entity to domain model.
  */
-fun ApiProviderConfigEntity.toDomain(): APIProviderConfig = APIProviderConfig(
-    providerId = providerId,
-    providerName = providerName,
-    baseUrl = baseUrl,
-    apiKey = apiKey,
-    apiType = apiType,
-    isEnabled = isEnabled,
-    quotaResetAt = quotaResetAt,
-    lastStatus = lastStatus
-)
+fun ApiProviderConfigEntity.toDomain(): APIProviderConfig =
+    APIProviderConfig(
+        providerId = providerId,
+        providerName = providerName,
+        baseUrl = baseUrl,
+        apiKey = apiKey,
+        apiType = apiType,
+        isEnabled = isEnabled,
+        quotaResetAt = quotaResetAt,
+        lastStatus = lastStatus,
+    )
 
 /**
  * Extension function to convert domain model to entity.
  */
-fun APIProviderConfig.toEntity(): ApiProviderConfigEntity = ApiProviderConfigEntity(
-    providerId = providerId,
-    providerName = providerName,
-    baseUrl = baseUrl,
-    apiKey = apiKey,
-    apiType = apiType,
-    isEnabled = isEnabled,
-    quotaResetAt = quotaResetAt,
-    lastStatus = lastStatus
-)
+fun APIProviderConfig.toEntity(): ApiProviderConfigEntity =
+    ApiProviderConfigEntity(
+        providerId = providerId,
+        providerName = providerName,
+        baseUrl = baseUrl,
+        apiKey = apiKey,
+        apiType = apiType,
+        isEnabled = isEnabled,
+        quotaResetAt = quotaResetAt,
+        lastStatus = lastStatus,
+    )

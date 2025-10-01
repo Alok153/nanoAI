@@ -17,5 +17,5 @@ enum class APIType {
     /**
      * Custom API with proprietary protocol.
      */
-    CUSTOM
+    CUSTOM,
 }

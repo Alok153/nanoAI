@@ -6,18 +6,16 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
-import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryViewModel
 import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
 import com.vjaykrsna.nanoai.feature.library.model.ProviderType
+import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryViewModel
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import org.junit.Before
@@ -38,7 +36,6 @@ import java.util.UUID
  */
 @RunWith(AndroidJUnit4::class)
 class ModelLibraryFlowTest {
-
     @get:Rule
     val composeTestRule = createComposeRule()
 
@@ -68,19 +65,20 @@ class ModelLibraryFlowTest {
     @Test
     fun modelLibraryScreen_shouldDisplayAvailableModels() {
         // Arrange
-        val availableModels = listOf(
-            createModelPackage(
-                modelId = "gemini-2.0-flash-lite",
-                displayName = "Gemini 2.0 Flash Lite",
-                installState = InstallState.NOT_INSTALLED
-            ),
-            createModelPackage(
-                modelId = "phi-3-mini-4k",
-                displayName = "Phi-3 Mini 4K",
-                installState = InstallState.NOT_INSTALLED
+        val availableModels =
+            listOf(
+                createModelPackage(
+                    modelId = "gemini-2.0-flash-lite",
+                    displayName = "Gemini 2.0 Flash Lite",
+                    installState = InstallState.NOT_INSTALLED,
+                ),
+                createModelPackage(
+                    modelId = "phi-3-mini-4k",
+                    displayName = "Phi-3 Mini 4K",
+                    installState = InstallState.NOT_INSTALLED,
+                ),
             )
-        )
-        
+
         allModelsFlow.value = availableModels
         filteredModelsFlow.value = availableModels
 
@@ -97,12 +95,13 @@ class ModelLibraryFlowTest {
     @Test
     fun downloadButton_whenClicked_shouldStartDownload() {
         // Arrange
-        val model = createModelPackage(
-            modelId = "gemini-2.0-flash-lite",
-            displayName = "Gemini 2.0 Flash Lite",
-            installState = InstallState.NOT_INSTALLED
-        )
-        
+        val model =
+            createModelPackage(
+                modelId = "gemini-2.0-flash-lite",
+                displayName = "Gemini 2.0 Flash Lite",
+                installState = InstallState.NOT_INSTALLED,
+            )
+
         uiState.value = uiState.value.copy(availableModels = listOf(model))
 
         composeTestRule.setContent {
@@ -110,7 +109,8 @@ class ModelLibraryFlowTest {
         }
 
         // Act
-        composeTestRule.onNodeWithContentDescription("Download Gemini 2.0 Flash Lite")
+        composeTestRule
+            .onNodeWithContentDescription("Download Gemini 2.0 Flash Lite")
             .performClick()
 
         // Assert
@@ -120,27 +120,30 @@ class ModelLibraryFlowTest {
     @Test
     fun downloadProgress_shouldDisplayProgressBar() {
         // Arrange
-        val downloadingModel = createModelPackage(
-            modelId = "gemini-2.0-flash-lite",
-            displayName = "Gemini 2.0 Flash Lite",
-            installState = InstallState.DOWNLOADING
-        )
-        
-        val downloadTask = DownloadTask(
-            taskId = UUID.randomUUID(),
-            modelId = "gemini-2.0-flash-lite",
-            progress = 0.65f,
-            status = DownloadStatus.DOWNLOADING,
-            bytesDownloaded = 975000000L,
-            startedAt = Instant.now(),
-            finishedAt = null,
-            errorMessage = null
-        )
+        val downloadingModel =
+            createModelPackage(
+                modelId = "gemini-2.0-flash-lite",
+                displayName = "Gemini 2.0 Flash Lite",
+                installState = InstallState.DOWNLOADING,
+            )
 
-        uiState.value = uiState.value.copy(
-            availableModels = listOf(downloadingModel),
-            downloadingModels = listOf(downloadTask)
-        )
+        val downloadTask =
+            DownloadTask(
+                taskId = UUID.randomUUID(),
+                modelId = "gemini-2.0-flash-lite",
+                progress = 0.65f,
+                status = DownloadStatus.DOWNLOADING,
+                bytesDownloaded = 975000000L,
+                startedAt = Instant.now(),
+                finishedAt = null,
+                errorMessage = null,
+            )
+
+        uiState.value =
+            uiState.value.copy(
+                availableModels = listOf(downloadingModel),
+                downloadingModels = listOf(downloadTask),
+            )
 
         // Act
         composeTestRule.setContent {
@@ -149,23 +152,25 @@ class ModelLibraryFlowTest {
 
         // Assert
         composeTestRule.onNodeWithText("65%").assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription("Downloading Gemini 2.0 Flash Lite")
+        composeTestRule
+            .onNodeWithContentDescription("Downloading Gemini 2.0 Flash Lite")
             .assertIsDisplayed()
     }
 
     @Test
     fun pauseButton_whenClicked_shouldPauseDownload() {
         // Arrange
-        val downloadTask = DownloadTask(
-            taskId = UUID.randomUUID(),
-            modelId = "gemini-2.0-flash-lite",
-            progress = 0.45f,
-            status = DownloadStatus.DOWNLOADING,
-            bytesDownloaded = 675000000L,
-            startedAt = Instant.now(),
-            finishedAt = null,
-            errorMessage = null
-        )
+        val downloadTask =
+            DownloadTask(
+                taskId = UUID.randomUUID(),
+                modelId = "gemini-2.0-flash-lite",
+                progress = 0.45f,
+                status = DownloadStatus.DOWNLOADING,
+                bytesDownloaded = 675000000L,
+                startedAt = Instant.now(),
+                finishedAt = null,
+                errorMessage = null,
+            )
 
         uiState.value = uiState.value.copy(downloadingModels = listOf(downloadTask))
 
@@ -174,7 +179,8 @@ class ModelLibraryFlowTest {
         }
 
         // Act
-        composeTestRule.onNodeWithContentDescription("Pause download")
+        composeTestRule
+            .onNodeWithContentDescription("Pause download")
             .performClick()
 
         // Assert
@@ -184,16 +190,17 @@ class ModelLibraryFlowTest {
     @Test
     fun resumeButton_whenClicked_shouldResumeDownload() {
         // Arrange
-        val pausedTask = DownloadTask(
-            taskId = UUID.randomUUID(),
-            modelId = "gemini-2.0-flash-lite",
-            progress = 0.45f,
-            status = DownloadStatus.PAUSED,
-            bytesDownloaded = 675000000L,
-            startedAt = Instant.now(),
-            finishedAt = null,
-            errorMessage = null
-        )
+        val pausedTask =
+            DownloadTask(
+                taskId = UUID.randomUUID(),
+                modelId = "gemini-2.0-flash-lite",
+                progress = 0.45f,
+                status = DownloadStatus.PAUSED,
+                bytesDownloaded = 675000000L,
+                startedAt = Instant.now(),
+                finishedAt = null,
+                errorMessage = null,
+            )
 
         uiState.value = uiState.value.copy(downloadingModels = listOf(pausedTask))
 
@@ -202,7 +209,8 @@ class ModelLibraryFlowTest {
         }
 
         // Act
-        composeTestRule.onNodeWithContentDescription("Resume download")
+        composeTestRule
+            .onNodeWithContentDescription("Resume download")
             .performClick()
 
         // Assert
@@ -212,20 +220,21 @@ class ModelLibraryFlowTest {
     @Test
     fun queuedDownloads_shouldDisplayQueuePosition() {
         // Arrange
-        val queuedDownloads = listOf(
-            createDownloadTask(
-                modelId = "model-1",
-                status = DownloadStatus.QUEUED
-            ),
-            createDownloadTask(
-                modelId = "model-2",
-                status = DownloadStatus.QUEUED
-            ),
-            createDownloadTask(
-                modelId = "model-3",
-                status = DownloadStatus.QUEUED
+        val queuedDownloads =
+            listOf(
+                createDownloadTask(
+                    modelId = "model-1",
+                    status = DownloadStatus.QUEUED,
+                ),
+                createDownloadTask(
+                    modelId = "model-2",
+                    status = DownloadStatus.QUEUED,
+                ),
+                createDownloadTask(
+                    modelId = "model-3",
+                    status = DownloadStatus.QUEUED,
+                ),
             )
-        )
 
         uiState.value = uiState.value.copy(queuedDownloads = queuedDownloads)
 
@@ -243,21 +252,23 @@ class ModelLibraryFlowTest {
     @Test
     fun failedDownload_shouldDisplayRetryButton() {
         // Arrange
-        val failedTask = DownloadTask(
-            taskId = UUID.randomUUID(),
-            modelId = "gemini-2.0-flash-lite",
-            progress = 0.78f,
-            status = DownloadStatus.FAILED,
-            bytesDownloaded = 1170000000L,
-            startedAt = Instant.now(),
-            finishedAt = Instant.now(),
-            errorMessage = "Network connection lost"
-        )
+        val failedTask =
+            DownloadTask(
+                taskId = UUID.randomUUID(),
+                modelId = "gemini-2.0-flash-lite",
+                progress = 0.78f,
+                status = DownloadStatus.FAILED,
+                bytesDownloaded = 1170000000L,
+                startedAt = Instant.now(),
+                finishedAt = Instant.now(),
+                errorMessage = "Network connection lost",
+            )
 
-        uiState.value = uiState.value.copy(
-            downloadingModels = listOf(failedTask),
-            errorMessage = "Download failed: Network connection lost"
-        )
+        uiState.value =
+            uiState.value.copy(
+                downloadingModels = listOf(failedTask),
+                errorMessage = "Download failed: Network connection lost",
+            )
 
         // Act
         composeTestRule.setContent {
@@ -266,23 +277,25 @@ class ModelLibraryFlowTest {
 
         // Assert
         composeTestRule.onNodeWithText("Network connection lost").assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription("Retry download")
+        composeTestRule
+            .onNodeWithContentDescription("Retry download")
             .assertIsDisplayed()
     }
 
     @Test
     fun retryButton_whenClicked_shouldRetryFailedDownload() {
         // Arrange
-        val failedTask = DownloadTask(
-            taskId = UUID.randomUUID(),
-            modelId = "gemini-2.0-flash-lite",
-            progress = 0.60f,
-            status = DownloadStatus.FAILED,
-            bytesDownloaded = 900000000L,
-            startedAt = Instant.now(),
-            finishedAt = Instant.now(),
-            errorMessage = "Checksum mismatch"
-        )
+        val failedTask =
+            DownloadTask(
+                taskId = UUID.randomUUID(),
+                modelId = "gemini-2.0-flash-lite",
+                progress = 0.60f,
+                status = DownloadStatus.FAILED,
+                bytesDownloaded = 900000000L,
+                startedAt = Instant.now(),
+                finishedAt = Instant.now(),
+                errorMessage = "Checksum mismatch",
+            )
 
         uiState.value = uiState.value.copy(downloadingModels = listOf(failedTask))
 
@@ -291,7 +304,8 @@ class ModelLibraryFlowTest {
         }
 
         // Act
-        composeTestRule.onNodeWithContentDescription("Retry download")
+        composeTestRule
+            .onNodeWithContentDescription("Retry download")
             .performClick()
 
         // Assert
@@ -301,11 +315,12 @@ class ModelLibraryFlowTest {
     @Test
     fun installedModel_shouldDisplayDeleteButton() {
         // Arrange
-        val installedModel = createModelPackage(
-            modelId = "gemini-2.0-flash-lite",
-            displayName = "Gemini 2.0 Flash Lite",
-            installState = InstallState.INSTALLED
-        )
+        val installedModel =
+            createModelPackage(
+                modelId = "gemini-2.0-flash-lite",
+                displayName = "Gemini 2.0 Flash Lite",
+                installState = InstallState.INSTALLED,
+            )
 
         uiState.value = uiState.value.copy(installedModels = listOf(installedModel))
 
@@ -315,18 +330,20 @@ class ModelLibraryFlowTest {
         }
 
         // Assert
-        composeTestRule.onNodeWithContentDescription("Delete Gemini 2.0 Flash Lite")
+        composeTestRule
+            .onNodeWithContentDescription("Delete Gemini 2.0 Flash Lite")
             .assertIsDisplayed()
     }
 
     @Test
     fun deleteButton_whenClicked_shouldShowConfirmationDialog() {
         // Arrange
-        val installedModel = createModelPackage(
-            modelId = "gemini-2.0-flash-lite",
-            displayName = "Gemini 2.0 Flash Lite",
-            installState = InstallState.INSTALLED
-        )
+        val installedModel =
+            createModelPackage(
+                modelId = "gemini-2.0-flash-lite",
+                displayName = "Gemini 2.0 Flash Lite",
+                installState = InstallState.INSTALLED,
+            )
 
         uiState.value = uiState.value.copy(installedModels = listOf(installedModel))
 
@@ -335,23 +352,26 @@ class ModelLibraryFlowTest {
         }
 
         // Act
-        composeTestRule.onNodeWithContentDescription("Delete Gemini 2.0 Flash Lite")
+        composeTestRule
+            .onNodeWithContentDescription("Delete Gemini 2.0 Flash Lite")
             .performClick()
 
         // Assert
         composeTestRule.onNodeWithText("Delete Model?").assertIsDisplayed()
-        composeTestRule.onNodeWithText("This will remove the model from your device.")
+        composeTestRule
+            .onNodeWithText("This will remove the model from your device.")
             .assertIsDisplayed()
     }
 
     @Test
     fun modelSize_shouldDisplayInGigabytes() {
         // Arrange
-        val model = createModelPackage(
-            modelId = "gemini-2.0-flash-lite",
-            displayName = "Gemini 2.0 Flash Lite",
-            sizeBytes = 1500000000L // 1.5 GB
-        )
+        val model =
+            createModelPackage(
+                modelId = "gemini-2.0-flash-lite",
+                displayName = "Gemini 2.0 Flash Lite",
+                sizeBytes = 1500000000L, // 1.5 GB
+            )
 
         uiState.value = uiState.value.copy(availableModels = listOf(model))
 
@@ -367,11 +387,12 @@ class ModelLibraryFlowTest {
     @Test
     fun modelCapabilities_shouldDisplayChips() {
         // Arrange
-        val model = createModelPackage(
-            modelId = "gemini-2.0-flash-lite",
-            displayName = "Gemini 2.0 Flash Lite",
-            capabilities = setOf("TEXT_GEN", "CODE_GEN", "AUDIO_IN")
-        )
+        val model =
+            createModelPackage(
+                modelId = "gemini-2.0-flash-lite",
+                displayName = "Gemini 2.0 Flash Lite",
+                capabilities = setOf("TEXT_GEN", "CODE_GEN", "AUDIO_IN"),
+            )
 
         uiState.value = uiState.value.copy(availableModels = listOf(model))
 
@@ -389,11 +410,12 @@ class ModelLibraryFlowTest {
     @Test
     fun searchBar_shouldFilterModels() {
         // Arrange
-        val models = listOf(
-            createModelPackage(modelId = "gemini-2.0-flash-lite", displayName = "Gemini 2.0 Flash Lite"),
-            createModelPackage(modelId = "phi-3-mini-4k", displayName = "Phi-3 Mini 4K"),
-            createModelPackage(modelId = "llama-3-8b", displayName = "Llama 3 8B")
-        )
+        val models =
+            listOf(
+                createModelPackage(modelId = "gemini-2.0-flash-lite", displayName = "Gemini 2.0 Flash Lite"),
+                createModelPackage(modelId = "phi-3-mini-4k", displayName = "Phi-3 Mini 4K"),
+                createModelPackage(modelId = "llama-3-8b", displayName = "Llama 3 8B"),
+            )
 
         uiState.value = uiState.value.copy(availableModels = models)
 
@@ -402,7 +424,8 @@ class ModelLibraryFlowTest {
         }
 
         // Act
-        composeTestRule.onNodeWithContentDescription("Search models")
+        composeTestRule
+            .onNodeWithContentDescription("Search models")
             .performClick()
         // Type "gemini" in search field (would need text input simulation)
 
@@ -416,7 +439,7 @@ class ModelLibraryFlowTest {
         displayName: String,
         installState: InstallState = InstallState.NOT_INSTALLED,
         sizeBytes: Long = 1500000000L,
-        capabilities: Set<String> = setOf("TEXT_GEN")
+        capabilities: Set<String> = setOf("TEXT_GEN"),
     ) = ModelPackage(
         modelId = modelId,
         displayName = displayName,
@@ -427,12 +450,12 @@ class ModelLibraryFlowTest {
         installState = installState,
         downloadTaskId = null,
         checksum = "abc123def456",
-        updatedAt = Clock.System.now()
+        updatedAt = Clock.System.now(),
     )
 
     private fun createDownloadTask(
         modelId: String,
-        status: DownloadStatus
+        status: DownloadStatus,
     ) = DownloadTask(
         taskId = UUID.randomUUID(),
         modelId = modelId,
@@ -441,6 +464,6 @@ class ModelLibraryFlowTest {
         bytesDownloaded = 0L,
         startedAt = Clock.System.now(),
         finishedAt = null,
-        errorMessage = null
+        errorMessage = null,
     )
 }

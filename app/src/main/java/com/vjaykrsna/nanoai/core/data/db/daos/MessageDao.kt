@@ -5,7 +5,6 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.Transaction
 import androidx.room.Update
 import com.vjaykrsna.nanoai.core.data.db.entities.MessageEntity
 import com.vjaykrsna.nanoai.core.model.Role
@@ -13,13 +12,12 @@ import kotlinx.coroutines.flow.Flow
 
 /**
  * Data Access Object for Message entities.
- * 
+ *
  * Provides methods to query, insert, update, and delete messages.
  * Messages are automatically ordered by creation timestamp within threads.
  */
 @Dao
 interface MessageDao {
-
     /**
      * Insert a new message. Replaces if message with same ID exists.
      */
@@ -72,15 +70,21 @@ interface MessageDao {
         WHERE thread_id = :threadId 
         ORDER BY created_at DESC 
         LIMIT :limit
-        """
+        """,
     )
-    suspend fun getLatestMessages(threadId: String, limit: Int): List<MessageEntity>
+    suspend fun getLatestMessages(
+        threadId: String,
+        limit: Int,
+    ): List<MessageEntity>
 
     /**
      * Get messages by role (e.g., all USER messages).
      */
     @Query("SELECT * FROM messages WHERE thread_id = :threadId AND role = :role ORDER BY created_at ASC")
-    suspend fun getByRole(threadId: String, role: Role): List<MessageEntity>
+    suspend fun getByRole(
+        threadId: String,
+        role: Role,
+    ): List<MessageEntity>
 
     /**
      * Get the last message in a thread.
@@ -91,7 +95,7 @@ interface MessageDao {
         WHERE thread_id = :threadId 
         ORDER BY created_at DESC 
         LIMIT 1
-        """
+        """,
     )
     suspend fun getLastMessage(threadId: String): MessageEntity?
 
@@ -128,7 +132,7 @@ interface MessageDao {
         SELECT AVG(latency_ms) 
         FROM messages 
         WHERE thread_id = :threadId AND latency_ms IS NOT NULL
-        """
+        """,
     )
     suspend fun getAverageLatency(threadId: String): Double?
 }

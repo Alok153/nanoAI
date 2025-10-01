@@ -18,5 +18,5 @@ enum class Role {
     /**
      * System instruction/prompt (typically hidden from UI).
      */
-    SYSTEM
+    SYSTEM,
 }
