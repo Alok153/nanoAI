@@ -16,11 +16,10 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
-import kotlin.time.Duration.Companion.days
 import org.junit.Before
 import org.junit.Test
 import java.util.UUID
+import kotlin.time.Duration.Companion.days
 
 class SendPromptAndPersonaUseCaseTest {
     private lateinit var useCase: SendPromptAndPersonaUseCase

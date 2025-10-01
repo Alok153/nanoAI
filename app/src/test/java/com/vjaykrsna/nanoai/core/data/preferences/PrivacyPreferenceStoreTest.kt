@@ -25,44 +25,47 @@ class PrivacyPreferenceStoreTest {
     }
 
     @Test
-    fun `privacyPreference exposes defaults`() = runTest {
-        store.reset()
-        advanceUntilIdle()
+    fun `privacyPreference exposes defaults`() =
+        runTest {
+            store.reset()
+            advanceUntilIdle()
 
-        val preference = store.privacyPreference.first()
+            val preference = store.privacyPreference.first()
 
-        assertThat(preference.exportWarningsDismissed).isFalse()
-        assertThat(preference.telemetryOptIn).isFalse()
-        assertThat(preference.consentAcknowledgedAt).isNull()
-        assertThat(preference.disclaimerShownCount).isEqualTo(0)
-        assertThat(preference.retentionPolicy).isEqualTo(RetentionPolicy.INDEFINITE)
-    }
-
-    @Test
-    fun `acknowledgeConsent persists timestamp`() = runTest {
-        store.reset()
-        advanceUntilIdle()
-
-        val expectedInstant = Instant.fromEpochMilliseconds(1_696_000_000_000)
-
-        store.acknowledgeConsent(expectedInstant)
-        advanceUntilIdle()
-
-        val preference = store.privacyPreference.first()
-
-        assertThat(preference.consentAcknowledgedAt).isEqualTo(expectedInstant)
-    }
+            assertThat(preference.exportWarningsDismissed).isFalse()
+            assertThat(preference.telemetryOptIn).isFalse()
+            assertThat(preference.consentAcknowledgedAt).isNull()
+            assertThat(preference.disclaimerShownCount).isEqualTo(0)
+            assertThat(preference.retentionPolicy).isEqualTo(RetentionPolicy.INDEFINITE)
+        }
 
     @Test
-    fun `incrementDisclaimerShown increases counter`() = runTest {
-        store.reset()
-        advanceUntilIdle()
+    fun `acknowledgeConsent persists timestamp`() =
+        runTest {
+            store.reset()
+            advanceUntilIdle()
 
-        repeat(3) { store.incrementDisclaimerShown() }
-        advanceUntilIdle()
+            val expectedInstant = Instant.fromEpochMilliseconds(1_696_000_000_000)
 
-        val preference = store.privacyPreference.first()
+            store.acknowledgeConsent(expectedInstant)
+            advanceUntilIdle()
 
-        assertThat(preference.disclaimerShownCount).isEqualTo(3)
-    }
+            val preference = store.privacyPreference.first()
+
+            assertThat(preference.consentAcknowledgedAt).isEqualTo(expectedInstant)
+        }
+
+    @Test
+    fun `incrementDisclaimerShown increases counter`() =
+        runTest {
+            store.reset()
+            advanceUntilIdle()
+
+            repeat(3) { store.incrementDisclaimerShown() }
+            advanceUntilIdle()
+
+            val preference = store.privacyPreference.first()
+
+            assertThat(preference.disclaimerShownCount).isEqualTo(3)
+        }
 }

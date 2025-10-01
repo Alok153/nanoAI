@@ -1,3 +1,5 @@
+@file:Suppress("FunctionName")
+
 package com.vjaykrsna.nanoai.ui.navigation
 
 import androidx.activity.compose.BackHandler
@@ -41,7 +43,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
@@ -58,6 +59,8 @@ import androidx.navigation.compose.rememberNavController
 import com.vjaykrsna.nanoai.core.domain.model.ChatThread
 import com.vjaykrsna.nanoai.feature.chat.ui.ChatScreen
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryScreen
+import com.vjaykrsna.nanoai.feature.settings.presentation.FirstLaunchDisclaimerViewModel
+import com.vjaykrsna.nanoai.feature.settings.ui.FirstLaunchDisclaimerDialog
 import com.vjaykrsna.nanoai.feature.settings.ui.SettingsScreen
 import com.vjaykrsna.nanoai.feature.sidebar.presentation.SidebarViewModel
 import kotlinx.coroutines.launch
@@ -70,6 +73,7 @@ fun NavigationScaffold(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
     sidebarViewModel: SidebarViewModel = hiltViewModel(),
+    disclaimerViewModel: FirstLaunchDisclaimerViewModel = hiltViewModel(),
 ) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -79,6 +83,7 @@ fun NavigationScaffold(
     val threads by sidebarViewModel.threads.collectAsState()
     val searchQuery by sidebarViewModel.searchQuery.collectAsState()
     val showArchived by sidebarViewModel.showArchived.collectAsState()
+    val disclaimerUiState by disclaimerViewModel.uiState.collectAsState()
 
     // Handle back button when drawer is open
     BackHandler(enabled = drawerState.isOpen) {
@@ -119,6 +124,12 @@ fun NavigationScaffold(
         },
         modifier = modifier,
     ) {
+        FirstLaunchDisclaimerDialog(
+            isVisible = disclaimerUiState.shouldShowDialog,
+            onAcknowledge = { disclaimerViewModel.onAcknowledge() },
+            onDismiss = { disclaimerViewModel.onDismiss() },
+        )
+
         Scaffold(
             topBar = {
                 TopAppBar(

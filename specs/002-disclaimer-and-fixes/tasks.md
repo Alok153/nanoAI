@@ -58,7 +58,7 @@ T004 [X] - Data model migration: add fields to `PrivacyPreference`
 - Why: Required by FR-001 and quickstart verification.
 - Status Notes (2025-10-01): Added `disclaimerShownCount` to the preference model, persisted it via DataStore with an increment helper, and covered defaults/acknowledgement/increment flows in `PrivacyPreferenceStoreTest`.
 
-T005 - Implement first-launch disclaimer UI (non-blocking)
+T005 [X] - Implement first-launch disclaimer UI (non-blocking)
 - Description: Add Compose dialog shown on first launch per spec and wire to `PrivacyPreferenceStore`.
 - Actions:
   1. Create a composable `FirstLaunchDisclaimerDialog` under `feature/settings/ui` or `core/ui` with `Acknowledge` and `Dismiss` actions, content per spec text.
@@ -69,6 +69,7 @@ T005 - Implement first-launch disclaimer UI (non-blocking)
 - Dependencies: T004
 - Parallel: no
 - Why: Directly implements FR-001.
+- Status Notes (2025-10-01): Added `FirstLaunchDisclaimerViewModel` + dialog composable, integrated into `NavigationScaffold`, and covered with unit + Compose UI tests. New DataStore counter wiring completes consent tracking.
 
 T006 - Settings import handler and validation
 - Description: Implement import endpoint handler in app settings (local import from file) using the `BackupBundle` schema.

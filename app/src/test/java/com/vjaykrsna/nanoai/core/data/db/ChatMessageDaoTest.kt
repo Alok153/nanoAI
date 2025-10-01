@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai.core.data.db
 
+import android.os.Build
 import androidx.room.Room
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.data.db.daos.ChatThreadDao
@@ -12,16 +13,18 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
-import kotlin.time.Duration.Companion.seconds
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
+import org.robolectric.annotation.Config
 import java.util.UUID
+import kotlin.time.Duration.Companion.seconds
 
 @RunWith(RobolectricTestRunner::class)
+@Config(sdk = [Build.VERSION_CODES.TIRAMISU])
 @OptIn(ExperimentalCoroutinesApi::class)
 class ChatMessageDaoTest {
     private lateinit var database: NanoAIDatabase

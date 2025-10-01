@@ -51,6 +51,7 @@ class SettingsViewModel
                         exportWarningsDismissed = false,
                         telemetryOptIn = false,
                         consentAcknowledgedAt = null,
+                        disclaimerShownCount = 0,
                         retentionPolicy = RetentionPolicy.INDEFINITE,
                     ),
                 )
