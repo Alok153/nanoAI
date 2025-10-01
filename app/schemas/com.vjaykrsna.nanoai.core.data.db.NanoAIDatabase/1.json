@@ -1,0 +1,557 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "f2dc23d06f7e3ae241746b8a5b0fc764",
+    "entities": [
+      {
+        "tableName": "chat_threads",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`thread_id` TEXT NOT NULL, `title` TEXT, `persona_id` TEXT, `active_model_id` TEXT NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, `is_archived` INTEGER NOT NULL, PRIMARY KEY(`thread_id`))",
+        "fields": [
+          {
+            "fieldPath": "threadId",
+            "columnName": "thread_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "personaId",
+            "columnName": "persona_id",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "activeModelId",
+            "columnName": "active_model_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "created_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updated_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isArchived",
+            "columnName": "is_archived",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "thread_id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "messages",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`message_id` TEXT NOT NULL, `thread_id` TEXT NOT NULL, `role` TEXT NOT NULL, `text` TEXT, `audio_uri` TEXT, `image_uri` TEXT, `source` TEXT NOT NULL, `latency_ms` INTEGER, `created_at` INTEGER NOT NULL, `error_code` TEXT, PRIMARY KEY(`message_id`), FOREIGN KEY(`thread_id`) REFERENCES `chat_threads`(`thread_id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "messageId",
+            "columnName": "message_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "threadId",
+            "columnName": "thread_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "role",
+            "columnName": "role",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "text",
+            "columnName": "text",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "audioUri",
+            "columnName": "audio_uri",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "imageUri",
+            "columnName": "image_uri",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "source",
+            "columnName": "source",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "latencyMs",
+            "columnName": "latency_ms",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "created_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "errorCode",
+            "columnName": "error_code",
+            "affinity": "TEXT",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "message_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_messages_thread_id_created_at",
+            "unique": false,
+            "columnNames": [
+              "thread_id",
+              "created_at"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_messages_thread_id_created_at` ON `${TABLE_NAME}` (`thread_id`, `created_at`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "chat_threads",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "thread_id"
+            ],
+            "referencedColumns": [
+              "thread_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "persona_profiles",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`persona_id` TEXT NOT NULL, `name` TEXT NOT NULL, `description` TEXT NOT NULL, `system_prompt` TEXT NOT NULL, `default_model_preference` TEXT, `temperature` REAL NOT NULL, `top_p` REAL NOT NULL, `default_voice` TEXT, `default_image_style` TEXT, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`persona_id`))",
+        "fields": [
+          {
+            "fieldPath": "personaId",
+            "columnName": "persona_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "systemPrompt",
+            "columnName": "system_prompt",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "defaultModelPreference",
+            "columnName": "default_model_preference",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "temperature",
+            "columnName": "temperature",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "topP",
+            "columnName": "top_p",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "defaultVoice",
+            "columnName": "default_voice",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "defaultImageStyle",
+            "columnName": "default_image_style",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "created_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updated_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "persona_id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "persona_switch_logs",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`log_id` TEXT NOT NULL, `thread_id` TEXT NOT NULL, `previous_persona_id` TEXT, `new_persona_id` TEXT NOT NULL, `action_taken` TEXT NOT NULL, `created_at` INTEGER NOT NULL, PRIMARY KEY(`log_id`), FOREIGN KEY(`thread_id`) REFERENCES `chat_threads`(`thread_id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "logId",
+            "columnName": "log_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "threadId",
+            "columnName": "thread_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "previousPersonaId",
+            "columnName": "previous_persona_id",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "newPersonaId",
+            "columnName": "new_persona_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actionTaken",
+            "columnName": "action_taken",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "created_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "log_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_persona_switch_logs_thread_id",
+            "unique": false,
+            "columnNames": [
+              "thread_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_persona_switch_logs_thread_id` ON `${TABLE_NAME}` (`thread_id`)"
+          },
+          {
+            "name": "index_persona_switch_logs_new_persona_id",
+            "unique": false,
+            "columnNames": [
+              "new_persona_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_persona_switch_logs_new_persona_id` ON `${TABLE_NAME}` (`new_persona_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "chat_threads",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "thread_id"
+            ],
+            "referencedColumns": [
+              "thread_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "model_packages",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`model_id` TEXT NOT NULL, `display_name` TEXT NOT NULL, `version` TEXT NOT NULL, `provider_type` TEXT NOT NULL, `size_bytes` INTEGER NOT NULL, `capabilities` TEXT NOT NULL, `install_state` TEXT NOT NULL, `download_task_id` TEXT, `checksum` TEXT, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`model_id`))",
+        "fields": [
+          {
+            "fieldPath": "modelId",
+            "columnName": "model_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "displayName",
+            "columnName": "display_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "version",
+            "columnName": "version",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "providerType",
+            "columnName": "provider_type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sizeBytes",
+            "columnName": "size_bytes",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "capabilities",
+            "columnName": "capabilities",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "installState",
+            "columnName": "install_state",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "downloadTaskId",
+            "columnName": "download_task_id",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "checksum",
+            "columnName": "checksum",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updated_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "model_id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "download_tasks",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`task_id` TEXT NOT NULL, `model_id` TEXT NOT NULL, `progress` REAL NOT NULL, `status` TEXT NOT NULL, `bytes_downloaded` INTEGER NOT NULL, `started_at` INTEGER, `finished_at` INTEGER, `error_message` TEXT, PRIMARY KEY(`task_id`), FOREIGN KEY(`model_id`) REFERENCES `model_packages`(`model_id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "taskId",
+            "columnName": "task_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modelId",
+            "columnName": "model_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "progress",
+            "columnName": "progress",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bytesDownloaded",
+            "columnName": "bytes_downloaded",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "startedAt",
+            "columnName": "started_at",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "finishedAt",
+            "columnName": "finished_at",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "errorMessage",
+            "columnName": "error_message",
+            "affinity": "TEXT",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "task_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_download_tasks_model_id",
+            "unique": false,
+            "columnNames": [
+              "model_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_download_tasks_model_id` ON `${TABLE_NAME}` (`model_id`)"
+          },
+          {
+            "name": "index_download_tasks_status",
+            "unique": false,
+            "columnNames": [
+              "status"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_download_tasks_status` ON `${TABLE_NAME}` (`status`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "model_packages",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "model_id"
+            ],
+            "referencedColumns": [
+              "model_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "api_provider_configs",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`provider_id` TEXT NOT NULL, `provider_name` TEXT NOT NULL, `base_url` TEXT NOT NULL, `api_key` TEXT NOT NULL, `api_type` TEXT NOT NULL, `is_enabled` INTEGER NOT NULL, `quota_reset_at` INTEGER, `last_status` TEXT NOT NULL, PRIMARY KEY(`provider_id`))",
+        "fields": [
+          {
+            "fieldPath": "providerId",
+            "columnName": "provider_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "providerName",
+            "columnName": "provider_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "baseUrl",
+            "columnName": "base_url",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "apiKey",
+            "columnName": "api_key",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "apiType",
+            "columnName": "api_type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isEnabled",
+            "columnName": "is_enabled",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "quotaResetAt",
+            "columnName": "quota_reset_at",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "lastStatus",
+            "columnName": "last_status",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "provider_id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'f2dc23d06f7e3ae241746b8a5b0fc764')"
+    ]
+  }
+}
