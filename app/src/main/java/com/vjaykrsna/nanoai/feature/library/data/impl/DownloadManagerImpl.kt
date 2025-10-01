@@ -48,17 +48,17 @@ constructor(
     override suspend fun queueDownload(modelId: String): UUID {
         val taskId = UUID.randomUUID()
         val now = Clock.System.now()
-        val task =
-                DownloadTask(
-                        taskId = taskId.toString(),
-                        modelId = modelId,
-                        status = DownloadStatus.QUEUED,
-                        progress = 0f,
-                        bytesDownloaded = 0L,
-                        startedAt = now,
-                        finishedAt = null,
-                        errorMessage = null
-                )
+    val task =
+        DownloadTask(
+            taskId = taskId,
+            modelId = modelId,
+            status = DownloadStatus.QUEUED,
+            progress = 0f,
+            bytesDownloaded = 0L,
+            startedAt = now,
+            finishedAt = null,
+            errorMessage = null
+        )
         downloadTaskDao.insert(task.toEntity())
         return taskId
     }
