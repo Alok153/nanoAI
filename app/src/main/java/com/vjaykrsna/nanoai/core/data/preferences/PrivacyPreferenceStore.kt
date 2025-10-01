@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -36,6 +37,7 @@ class PrivacyPreferenceStore
             private val KEY_TELEMETRY_OPT_IN = booleanPreferencesKey("telemetry_opt_in")
             private val KEY_CONSENT_ACKNOWLEDGED_AT = longPreferencesKey("consent_acknowledged_at")
             private val KEY_RETENTION_POLICY = stringPreferencesKey("retention_policy")
+            private val KEY_DISCLAIMER_SHOWN_COUNT = intPreferencesKey("disclaimer_shown_count")
         }
 
         /**
@@ -51,6 +53,7 @@ class PrivacyPreferenceStore
                         preferences[KEY_CONSENT_ACKNOWLEDGED_AT]?.let {
                             Instant.fromEpochMilliseconds(it)
                         },
+                    disclaimerShownCount = preferences[KEY_DISCLAIMER_SHOWN_COUNT] ?: 0,
                     retentionPolicy =
                         preferences[KEY_RETENTION_POLICY]?.let {
                             RetentionPolicy.valueOf(it)
@@ -82,6 +85,16 @@ class PrivacyPreferenceStore
         suspend fun acknowledgeConsent(timestamp: Instant) {
             context.dataStore.edit { preferences ->
                 preferences[KEY_CONSENT_ACKNOWLEDGED_AT] = timestamp.toEpochMilliseconds()
+            }
+        }
+
+        /**
+         * Increment the disclaimer shown counter.
+         */
+        suspend fun incrementDisclaimerShown() {
+            context.dataStore.edit { preferences ->
+                val currentCount = preferences[KEY_DISCLAIMER_SHOWN_COUNT] ?: 0
+                preferences[KEY_DISCLAIMER_SHOWN_COUNT] = currentCount + 1
             }
         }
 

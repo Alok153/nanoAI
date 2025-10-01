@@ -2,27 +2,28 @@ package com.vjaykrsna.nanoai.feature.library.domain
 
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
+import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
+import com.vjaykrsna.nanoai.core.domain.model.ChatThread
+import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
+import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
+import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
+import com.vjaykrsna.nanoai.core.model.APIType
+import com.vjaykrsna.nanoai.core.model.ProviderStatus
+import com.vjaykrsna.nanoai.feature.library.data.DownloadManager
+import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
+import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
+import com.vjaykrsna.nanoai.feature.library.model.InstallState
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.Clock
 import org.junit.Before
 import org.junit.Test
-import java.time.Instant
 import java.util.UUID
 
-/**
- * Domain unit test for ModelDownloadsAndExportUseCase.
- * Tests queue limits, checksum validation, and export bundle composition.
- *
- * TDD: This test is written BEFORE the use case is implemented.
- * Expected to FAIL with compilation errors until:
- * - ModelDownloadsAndExportUseCase is created
- * - ModelCatalogRepository is defined
- * - DownloadManager is defined
- * - ExportService is defined
- */
 class ModelDownloadsAndExportUseCaseTest {
     private lateinit var useCase: ModelDownloadsAndExportUseCase
     private lateinit var modelCatalogRepository: ModelCatalogRepository
@@ -44,9 +45,8 @@ class ModelDownloadsAndExportUseCaseTest {
     }
 
     @Test
-    fun `downloadModel should enforce concurrent download limit`() =
+    fun `downloadModel enqueues when limit reached`() =
         runTest {
-            // Arrange: 2 downloads already in progress
             val activeDownloads =
                 listOf(
                     createDownloadTask(status = DownloadStatus.DOWNLOADING),
@@ -55,375 +55,280 @@ class ModelDownloadsAndExportUseCaseTest {
             coEvery { downloadManager.getActiveDownloads() } returns flowOf(activeDownloads)
             coEvery { downloadManager.getMaxConcurrentDownloads() } returns 2
 
-            val newModelId = "gemini-2.0-flash-lite"
+            val result = useCase.downloadModel("gemini-2.0-flash-lite")
 
-            // Act
-            val result = useCase.downloadModel(newModelId)
-
-            // Assert: Should queue the download instead of starting immediately
             assertThat(result.isSuccess).isTrue()
-            coVerify { downloadManager.queueDownload(newModelId) }
-            coVerify(exactly = 0) { downloadManager.startDownload(newModelId) }
+            coVerify { downloadManager.queueDownload("gemini-2.0-flash-lite") }
+            coVerify(exactly = 0) { downloadManager.startDownload("gemini-2.0-flash-lite") }
+            coVerify { modelCatalogRepository.updateInstallState("gemini-2.0-flash-lite", InstallState.DOWNLOADING) }
         }
 
     @Test
-    fun `downloadModel should start immediately when under concurrent limit`() =
+    fun `downloadModel starts immediately under limit`() =
         runTest {
-            // Arrange: Only 1 download in progress, limit is 2
-            val activeDownloads =
-                listOf(
-                    createDownloadTask(status = DownloadStatus.DOWNLOADING),
-                )
+            val activeDownloads = listOf(createDownloadTask(status = DownloadStatus.DOWNLOADING))
             coEvery { downloadManager.getActiveDownloads() } returns flowOf(activeDownloads)
-            coEvery { downloadManager.getMaxConcurrentDownloads() } returns 2
+            coEvery { downloadManager.getMaxConcurrentDownloads() } returns 3
 
-            val newModelId = "phi-3-mini-4k"
+            val result = useCase.downloadModel("phi-3-mini-4k")
 
-            // Act
-            val result = useCase.downloadModel(newModelId)
-
-            // Assert: Should start download immediately
             assertThat(result.isSuccess).isTrue()
-            coVerify { downloadManager.startDownload(newModelId) }
+            coVerify { downloadManager.startDownload("phi-3-mini-4k") }
         }
 
     @Test
-    fun `downloadModel should validate checksum after download completes`() =
+    fun `verifyDownloadChecksum succeeds when checksums match`() =
         runTest {
-            // Arrange
             val modelId = "gemini-2.0-flash-lite"
-            val expectedChecksum = "abc123def456"
+            val checksum = "abc123"
+            coEvery { modelCatalogRepository.getModelById(modelId) } returns flowOf(sampleModel(modelId, checksum))
+            coEvery { downloadManager.getDownloadedChecksum(modelId) } returns checksum
 
-            val modelPackage =
-                ModelPackage(
-                    modelId = modelId,
-                    displayName = "Gemini 2.0 Flash Lite",
-                    version = "2.0.1",
-                    providerType = ProviderType.MEDIA_PIPE,
-                    sizeBytes = 1500000000L,
-                    capabilities = setOf("TEXT_GEN"),
-                    installState = InstallState.DOWNLOADING,
-                    downloadTaskId = UUID.randomUUID(),
-                    checksum = expectedChecksum,
-                    updatedAt = Instant.now(),
-                )
-
-            coEvery { modelCatalogRepository.getModelById(modelId) } returns flowOf(modelPackage)
-            coEvery { downloadManager.getDownloadedChecksum(modelId) } returns expectedChecksum
-
-            // Act
             val result = useCase.verifyDownloadChecksum(modelId)
 
-            // Assert
             assertThat(result.isSuccess).isTrue()
             assertThat(result.getOrNull()).isTrue()
+            coVerify { modelCatalogRepository.updateInstallState(modelId, InstallState.INSTALLED) }
         }
 
     @Test
-    fun `downloadModel should fail when checksum mismatch detected`() =
+    fun `verifyDownloadChecksum marks error on mismatch`() =
         runTest {
-            // Arrange
             val modelId = "gemini-2.0-flash-lite"
-            val expectedChecksum = "abc123def456"
-            val actualChecksum = "different123"
+            coEvery { modelCatalogRepository.getModelById(modelId) } returns flowOf(sampleModel(modelId, "expected"))
+            coEvery { downloadManager.getDownloadedChecksum(modelId) } returns "different"
 
-            val modelPackage =
-                ModelPackage(
-                    modelId = modelId,
-                    displayName = "Gemini 2.0 Flash Lite",
-                    version = "2.0.1",
-                    providerType = ProviderType.MEDIA_PIPE,
-                    sizeBytes = 1500000000L,
-                    capabilities = setOf("TEXT_GEN"),
-                    installState = InstallState.DOWNLOADING,
-                    downloadTaskId = UUID.randomUUID(),
-                    checksum = expectedChecksum,
-                    updatedAt = Instant.now(),
-                )
-
-            coEvery { modelCatalogRepository.getModelById(modelId) } returns flowOf(modelPackage)
-            coEvery { downloadManager.getDownloadedChecksum(modelId) } returns actualChecksum
-
-            // Act
             val result = useCase.verifyDownloadChecksum(modelId)
 
-            // Assert
             assertThat(result.isSuccess).isTrue()
             assertThat(result.getOrNull()).isFalse()
             coVerify { modelCatalogRepository.updateInstallState(modelId, InstallState.ERROR) }
         }
 
     @Test
-    fun `pauseDownload should update task status to PAUSED`() =
+    fun `pauseDownload updates status`() =
         runTest {
-            // Arrange
             val taskId = UUID.randomUUID()
 
-            // Act
             useCase.pauseDownload(taskId)
 
-            // Assert
             coVerify { downloadManager.pauseDownload(taskId) }
             coVerify { downloadManager.updateTaskStatus(taskId, DownloadStatus.PAUSED) }
         }
 
     @Test
-    fun `resumeDownload should restart paused download`() =
+    fun `resumeDownload restarts paused task`() =
         runTest {
-            // Arrange
             val taskId = UUID.randomUUID()
-            val pausedTask =
-                createDownloadTask(
-                    taskId = taskId,
-                    status = DownloadStatus.PAUSED,
-                    progress = 0.45f,
-                )
+            coEvery { downloadManager.getTaskById(taskId) } returns
+                flowOf(createDownloadTask(taskId = taskId, status = DownloadStatus.PAUSED))
 
-            coEvery { downloadManager.getTaskById(taskId) } returns flowOf(pausedTask)
-
-            // Act
             useCase.resumeDownload(taskId)
 
-            // Assert
             coVerify { downloadManager.resumeDownload(taskId) }
             coVerify { downloadManager.updateTaskStatus(taskId, DownloadStatus.DOWNLOADING) }
         }
 
     @Test
-    fun `cancelDownload should clean up partial files and update state`() =
+    fun `cancelDownload cleans up artifacts`() =
         runTest {
-            // Arrange
             val taskId = UUID.randomUUID()
-            val modelId = "test-model"
+            coEvery { downloadManager.getModelIdForTask(taskId) } returns "test-model"
 
-            coEvery { downloadManager.getModelIdForTask(taskId) } returns modelId
-
-            // Act
             useCase.cancelDownload(taskId)
 
-            // Assert
             coVerify { downloadManager.cancelDownload(taskId) }
-            coVerify { downloadManager.deletePartialFiles(modelId) }
-            coVerify { modelCatalogRepository.updateInstallState(modelId, InstallState.NOT_INSTALLED) }
+            coVerify { downloadManager.deletePartialFiles("test-model") }
+            coVerify { modelCatalogRepository.updateInstallState("test-model", InstallState.NOT_INSTALLED) }
         }
 
     @Test
-    fun `deleteModel should fail if model is currently active in session`() =
+    fun `deleteModel rejects when active`() =
         runTest {
-            // Arrange
-            val modelId = "active-model"
+            val modelId = "active"
             coEvery { modelCatalogRepository.isModelActiveInSession(modelId) } returns true
 
-            // Act
             val result = useCase.deleteModel(modelId)
 
-            // Assert
             assertThat(result.isFailure).isTrue()
             assertThat(result.exceptionOrNull()).isInstanceOf(ModelInUseException::class.java)
             coVerify(exactly = 0) { modelCatalogRepository.deleteModelFiles(modelId) }
         }
 
     @Test
-    fun `deleteModel should remove files and update catalog when model inactive`() =
+    fun `deleteModel removes files when idle`() =
         runTest {
-            // Arrange
-            val modelId = "inactive-model"
+            val modelId = "inactive"
             coEvery { modelCatalogRepository.isModelActiveInSession(modelId) } returns false
 
-            // Act
             val result = useCase.deleteModel(modelId)
 
-            // Assert
             assertThat(result.isSuccess).isTrue()
             coVerify { modelCatalogRepository.deleteModelFiles(modelId) }
             coVerify { modelCatalogRepository.updateInstallState(modelId, InstallState.NOT_INSTALLED) }
         }
 
     @Test
-    fun `exportBackup should create bundle with personas, credentials, and config`() =
+    fun `exportBackup generates bundle`() =
         runTest {
-            // Arrange
-            val exportPath = "/storage/emulated/0/Download/nanoai-backup.zip"
-
-            val personas =
-                listOf(
-                    PersonaProfile(
-                        personaId = UUID.randomUUID(),
-                        name = "Assistant",
-                        description = "General assistant",
-                        systemPrompt = "You are helpful",
-                        defaultModelPreference = null,
-                        temperature = 0.7f,
-                        topP = 0.9f,
-                        defaultVoice = null,
-                        defaultImageStyle = null,
-                        createdAt = Instant.now(),
-                        updatedAt = Instant.now(),
-                    ),
-                )
-
-            val apiConfigs =
-                listOf(
-                    APIProviderConfig(
-                        providerId = "openai",
-                        providerName = "OpenAI",
-                        baseUrl = "https://api.openai.com/v1",
-                        apiKey = "sk-test123",
-                        apiType = APIType.OPENAI_COMPATIBLE,
-                        isEnabled = true,
-                        quotaResetAt = null,
-                        lastStatus = ProviderStatus.OK,
-                    ),
-                )
+            val exportPath = "/tmp/nanoai-backup.zip"
+            val personas = listOf(samplePersona())
+            val providers = listOf(sampleProvider())
 
             coEvery { exportService.gatherPersonas() } returns personas
-            coEvery { exportService.gatherAPIProviderConfigs() } returns apiConfigs
-            coEvery { exportService.createExportBundle(any(), any(), any()) } returns exportPath
+            coEvery { exportService.gatherAPIProviderConfigs() } returns providers
+            coEvery { exportService.createExportBundle(personas, providers, exportPath, emptyList()) } returns exportPath
 
-            // Act
             val result = useCase.exportBackup(exportPath)
 
-            // Assert
             assertThat(result.isSuccess).isTrue()
             assertThat(result.getOrNull()).isEqualTo(exportPath)
-            coVerify { exportService.createExportBundle(personas, apiConfigs, exportPath) }
+            coVerify { exportService.createExportBundle(personas, providers, exportPath, emptyList()) }
+            coVerify { exportService.notifyUnencryptedExport(exportPath) }
         }
 
     @Test
-    fun `exportBackup should exclude chat history by default`() =
+    fun `exportBackup skips chat history by default`() =
         runTest {
-            // Arrange
-            val exportPath = "/storage/emulated/0/Download/backup.zip"
+            val exportPath = "/tmp/backup.zip"
 
-            // Act
-            useCase.exportBackup(exportPath, includeChatHistory = false)
+            useCase.exportBackup(exportPath)
 
-            // Assert
             coVerify(exactly = 0) { exportService.gatherChatHistory() }
-            coVerify { exportService.createExportBundle(any(), any(), exportPath) }
         }
 
     @Test
-    fun `exportBackup should include chat history when requested`() =
+    fun `exportBackup includes chat history on request`() =
         runTest {
-            // Arrange
-            val exportPath = "/storage/emulated/0/Download/backup-with-history.zip"
-            val chatThreads =
-                listOf(
-                    ChatThread(
-                        threadId = UUID.randomUUID(),
-                        title = "Test Chat",
-                        personaId = null,
-                        activeModelId = "test-model",
-                        createdAt = Instant.now(),
-                        updatedAt = Instant.now(),
-                        isArchived = false,
-                    ),
-                )
+            val exportPath = "/tmp/backup-with-history.zip"
+            val chats = listOf(sampleThread())
 
-            coEvery { exportService.gatherChatHistory() } returns chatThreads
+            coEvery { exportService.gatherChatHistory() } returns chats
+            coEvery { exportService.gatherPersonas() } returns emptyList()
+            coEvery { exportService.gatherAPIProviderConfigs() } returns emptyList()
+            coEvery { exportService.createExportBundle(emptyList(), emptyList(), exportPath, chats) } returns exportPath
 
-            // Act
-            useCase.exportBackup(exportPath, includeChatHistory = true)
+            val result = useCase.exportBackup(exportPath, includeChatHistory = true)
 
-            // Assert
-            coVerify { exportService.gatherChatHistory() }
-        }
-
-    @Test
-    fun `exportBackup should warn user about unencrypted export`() =
-        runTest {
-            // Arrange
-            val exportPath = "/storage/emulated/0/Download/backup.zip"
-
-            // Act
-            val result = useCase.exportBackup(exportPath)
-
-            // Assert: Warning should be logged or returned
             assertThat(result.isSuccess).isTrue()
-            // Implementation should show warning dialog to user about storing securely
+            coVerify { exportService.gatherChatHistory() }
+            coVerify { exportService.createExportBundle(emptyList(), emptyList(), exportPath, chats) }
         }
 
     @Test
-    fun `getDownloadProgress should emit progress updates`() =
+    fun `getDownloadProgress proxies flow`() =
         runTest {
-            // Arrange
             val taskId = UUID.randomUUID()
-            val progressFlow = flowOf(0.0f, 0.25f, 0.50f, 0.75f, 1.0f)
+            val progressFlow = flowOf(0.0f, 0.25f, 1.0f)
+            every { downloadManager.observeProgress(taskId) } returns progressFlow
 
-            coEvery { downloadManager.observeProgress(taskId) } returns progressFlow
-
-            // Act & Assert
             useCase.getDownloadProgress(taskId).test {
                 assertThat(awaitItem()).isEqualTo(0.0f)
                 assertThat(awaitItem()).isEqualTo(0.25f)
-                assertThat(awaitItem()).isEqualTo(0.50f)
-                assertThat(awaitItem()).isEqualTo(0.75f)
                 assertThat(awaitItem()).isEqualTo(1.0f)
                 awaitComplete()
             }
         }
 
     @Test
-    fun `getQueuedDownloads should return downloads in QUEUED state`() =
+    fun `getQueuedDownloads emits current queue`() =
         runTest {
-            // Arrange
-            val queuedDownloads =
-                listOf(
-                    createDownloadTask(status = DownloadStatus.QUEUED, modelId = "model-1"),
-                    createDownloadTask(status = DownloadStatus.QUEUED, modelId = "model-2"),
-                )
+            val queue = listOf(createDownloadTask(status = DownloadStatus.QUEUED))
+            every { downloadManager.getQueuedDownloads() } returns flowOf(queue)
 
-            coEvery { downloadManager.getQueuedDownloads() } returns flowOf(queuedDownloads)
-
-            // Act & Assert
             useCase.getQueuedDownloads().test {
-                val result = awaitItem()
-                assertThat(result).hasSize(2)
-                assertThat(result.all { it.status == DownloadStatus.QUEUED }).isTrue()
+                val emission = awaitItem()
+                assertThat(emission).hasSize(1)
+                assertThat(emission.first().status).isEqualTo(DownloadStatus.QUEUED)
                 awaitComplete()
             }
         }
 
     @Test
-    fun `retryFailedDownload should reset error state and restart`() =
+    fun `retryFailedDownload resets and restarts`() =
         runTest {
-            // Arrange
             val taskId = UUID.randomUUID()
             val modelId = "failed-model"
-            val failedTask =
-                createDownloadTask(
-                    taskId = taskId,
-                    modelId = modelId,
-                    status = DownloadStatus.FAILED,
-                )
-
-            coEvery { downloadManager.getTaskById(taskId) } returns flowOf(failedTask)
+            coEvery { downloadManager.getTaskById(taskId) } returns
+                flowOf(createDownloadTask(taskId = taskId, modelId = modelId, status = DownloadStatus.FAILED))
             coEvery { downloadManager.getModelIdForTask(taskId) } returns modelId
 
-            // Act
             useCase.retryFailedDownload(taskId)
 
-            // Assert
             coVerify { downloadManager.resetTask(taskId) }
             coVerify { downloadManager.startDownload(modelId) }
             coVerify { modelCatalogRepository.updateInstallState(modelId, InstallState.DOWNLOADING) }
         }
 
-    // Helper functions
+    private fun sampleModel(
+        modelId: String,
+        checksum: String?,
+    ): ModelPackage =
+        ModelPackage(
+            modelId = modelId,
+            displayName = "Model $modelId",
+            version = "1.0.0",
+            providerType = com.vjaykrsna.nanoai.feature.library.model.ProviderType.MEDIA_PIPE,
+            sizeBytes = 1_000_000_000L,
+            capabilities = setOf("TEXT_GEN"),
+            installState = InstallState.DOWNLOADING,
+            downloadTaskId = UUID.randomUUID(),
+            checksum = checksum,
+            updatedAt = Clock.System.now(),
+        )
+
+    private fun samplePersona(): PersonaProfile =
+        PersonaProfile(
+            personaId = UUID.randomUUID(),
+            name = "Assistant",
+            description = "Helpful persona",
+            systemPrompt = "Be helpful",
+            defaultModelPreference = null,
+            temperature = 0.7f,
+            topP = 0.9f,
+            defaultVoice = null,
+            defaultImageStyle = null,
+            createdAt = Clock.System.now(),
+            updatedAt = Clock.System.now(),
+        )
+
+    private fun sampleProvider(): APIProviderConfig =
+        APIProviderConfig(
+            providerId = "openai",
+            providerName = "OpenAI",
+            baseUrl = "https://api.openai.com/v1",
+            apiKey = "sk-test",
+            apiType = APIType.OPENAI_COMPATIBLE,
+            isEnabled = true,
+            quotaResetAt = null,
+            lastStatus = ProviderStatus.OK,
+        )
+
+    private fun sampleThread(): ChatThread =
+        ChatThread(
+            threadId = UUID.randomUUID(),
+            title = "Test",
+            personaId = null,
+            activeModelId = "model",
+            createdAt = Clock.System.now(),
+            updatedAt = Clock.System.now(),
+            isArchived = false,
+        )
+
     private fun createDownloadTask(
         taskId: UUID = UUID.randomUUID(),
-        modelId: String = "test-model",
-        status: DownloadStatus = DownloadStatus.DOWNLOADING,
+        modelId: String = "model",
+        status: DownloadStatus,
         progress: Float = 0.5f,
-    ) = DownloadTask(
-        taskId = taskId,
-        modelId = modelId,
-        progress = progress,
-        status = status,
-        bytesDownloaded = 750000000L,
-        startedAt = Instant.now(),
-        finishedAt = null,
-        errorMessage = null,
-    )
+    ): DownloadTask =
+        DownloadTask(
+            taskId = taskId,
+            modelId = modelId,
+            progress = progress,
+            status = status,
+            bytesDownloaded = 750_000_000L,
+            startedAt = Clock.System.now(),
+            finishedAt = null,
+            errorMessage = null,
+        )
 }

@@ -10,12 +10,14 @@ import kotlinx.datetime.Instant
  * @property exportWarningsDismissed Whether user has dismissed export warnings
  * @property telemetryOptIn Whether user has opted into telemetry (default false)
  * @property consentAcknowledgedAt Timestamp when consent was last acknowledged
+ * @property disclaimerShownCount Number of times the disclaimer dialog has been shown
  * @property retentionPolicy Data retention policy preference
  */
 data class PrivacyPreference(
     val exportWarningsDismissed: Boolean = false,
     val telemetryOptIn: Boolean = false,
     val consentAcknowledgedAt: Instant? = null,
+    val disclaimerShownCount: Int = 0,
     val retentionPolicy: RetentionPolicy = RetentionPolicy.INDEFINITE,
 )
 

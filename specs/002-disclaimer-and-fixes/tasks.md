@@ -23,7 +23,7 @@ T001 [X] - Setup: Local verification and CI sandbox
 - Dependencies: none
 - Why: Provides baseline test/lint output to triage failures.
 
-T002 - Test harness fixes: resolve test compile issues (namespaces/imports)
+T002 [X] - Test harness fixes: resolve test compile issues (namespaces/imports)
 - Description: Fix unit test compile failures caused by missing imports, wrong test source set assumptions, or test dependencies.
 - Actions:
   1. Inspect failing tests under `app/src/test/java/` (e.g., `core/data/db/ChatMessageDaoTest.kt`, `feature/chat/domain/SendPromptAndPersonaUseCaseTest.kt`) and add required test dependencies or update imports.
@@ -33,8 +33,9 @@ T002 - Test harness fixes: resolve test compile issues (namespaces/imports)
 - Dependencies: T001
 - Parallel: no
 - Why: Compiling tests unlocks TDD flow.
+- Status Notes (2025-10-01): Swapped `ApplicationProvider` for `RuntimeEnvironment` in `ChatMessageDaoTest` to unblock Robolectric context usage, replaced MockK `any()` matchers with explicit arguments in `ModelDownloadsAndExportUseCaseTest`, and restored clean Kotlin compile for `testDebugUnitTest`.
 
-T003 - Lint cleanup: fix SuspiciousIndentation & run formatters
+T003 [X] - Lint cleanup: fix SuspiciousIndentation & run formatters
 - Description: Fix lint errors found by `./gradlew lintDebug` (suspicious indentation in `ConversationRepositoryImpl.kt`) and run formatters.
 - Actions:
   1. Edit `app/src/main/java/com/vjaykrsna/nanoai/core/data/repository/impl/ConversationRepositoryImpl.kt` to fix indentation and any lint-reported issues.
@@ -43,8 +44,9 @@ T003 - Lint cleanup: fix SuspiciousIndentation & run formatters
 - Dependencies: T001
 - Parallel: no
 - Why: Lint is a CI blocker per constitution.
+- Status Notes (2025-10-01): Normalized repository indentation, removed ktlint wildcard import warning, and configured manifest to remove default WorkManager initializer. Verified with `ktlintFormat`, `detekt`, and `lintDebug`.
 
-T004 - Data model migration: add fields to `PrivacyPreference`
+T004 [X] - Data model migration: add fields to `PrivacyPreference`
 - Description: Add `consentAcknowledgedAt: Instant?` and `disclaimerShownCount: Int` to the `PrivacyPreference` data model and persistence store.
 - Actions:
   1. Update `app/src/main/java/com/vjaykrsna/nanoai/core/data/preferences/PrivacyPreference.kt` to include the new fields with defaults.
@@ -54,6 +56,7 @@ T004 - Data model migration: add fields to `PrivacyPreference`
 - Dependencies: T003
 - Parallel: [P]
 - Why: Required by FR-001 and quickstart verification.
+- Status Notes (2025-10-01): Added `disclaimerShownCount` to the preference model, persisted it via DataStore with an increment helper, and covered defaults/acknowledgement/increment flows in `PrivacyPreferenceStoreTest`.
 
 T005 - Implement first-launch disclaimer UI (non-blocking)
 - Description: Add Compose dialog shown on first launch per spec and wire to `PrivacyPreferenceStore`.
@@ -146,7 +149,7 @@ T013 - Accessibility verification
   2. Add a short script or CI step to capture screenshots of critical screens (ChatScreen, SettingsScreen, ModelLibraryScreen) and include them as PR artifacts.
   3. Document any remaining accessibility gaps in the PR and create follow-up tasks for unresolved items.
 - Files/paths: `app/src/androidTest/.../AccessibilityChecks.kt`, `specs/002-disclaimer-and-fixes/qa/` screenshots and scripts
-- Dependencies: T005, T027
+- Dependencies: T005, T007, T008
 - Parallel: [P]
 - Why: Makes FR-005 explicit and verifiable for reviewers and agents.
 
