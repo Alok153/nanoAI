@@ -1,8 +1,8 @@
 
 # Implementation Plan: Offline Multimodal nanoAI Assistant
 
-**Branch**: `002-i-want-to` | **Date**: 2025-09-30 | **Spec**: `/specs/002-i-want-to/spec.md`
-**Input**: Feature specification from `/specs/002-i-want-to/spec.md`
+**Branch**: `001-foundation` | **Date**: 2025-09-30 | **Spec**: `/specs/001-foundation/spec.md`
+**Input**: Feature specification from `/specs/001-foundation/spec.md`
 
 ## Execution Flow (/plan command scope)
 ```

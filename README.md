@@ -154,7 +154,7 @@ nanoAI/
 │   ├── build.gradle.kts
 │   └── schemas/                       # Room database schemas
 ├── specs/                             # Design specifications
-│   └── 002-i-want-to/
+│   └── 001-foundation/
 │       ├── plan.md                    # Implementation plan
 │       ├── tasks.md                   # Task breakdown
 │       ├── data-model.md              # Data model spec

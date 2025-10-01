@@ -8,15 +8,19 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
+import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreference
+import com.vjaykrsna.nanoai.core.data.preferences.RetentionPolicy
+import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
+import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsViewModel
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.datetime.Clock
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.time.Instant
 
 /**
  * Compose UI instrumentation test for Settings features.
@@ -36,20 +40,27 @@ class CloudFallbackAndExportTest {
     val composeTestRule = createComposeRule()
 
     private lateinit var viewModel: SettingsViewModel
-    private lateinit var uiState: MutableStateFlow<SettingsUiState>
+    private lateinit var apiProvidersFlow: MutableStateFlow<List<APIProviderConfig>>
+    private lateinit var privacyPreferencesFlow: MutableStateFlow<PrivacyPreference>
+    private lateinit var isLoadingFlow: MutableStateFlow<Boolean>
 
     @Before
     fun setup() {
         viewModel = mockk(relaxed = true)
-        uiState = MutableStateFlow(
-            SettingsUiState(
-                apiProviders = emptyList(),
-                privacyPreferences = null,
-                exportInProgress = false,
-                errorMessage = null
+        apiProvidersFlow = MutableStateFlow(emptyList())
+        privacyPreferencesFlow = MutableStateFlow(
+            PrivacyPreference(
+                exportWarningsDismissed = false,
+                telemetryOptIn = false,
+                consentAcknowledgedAt = null,
+                retentionPolicy = RetentionPolicy.INDEFINITE
             )
         )
-        coEvery { viewModel.uiState } returns uiState
+        isLoadingFlow = MutableStateFlow(false)
+
+        coEvery { viewModel.apiProviders } returns apiProvidersFlow
+        coEvery { viewModel.privacyPreferences } returns privacyPreferencesFlow
+        coEvery { viewModel.isLoading } returns isLoadingFlow
     }
 
     @Test

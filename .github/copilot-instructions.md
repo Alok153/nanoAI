@@ -3,7 +3,7 @@
 Auto-generated from all feature plans. Last updated: 2025-09-30
 
 ## Active Technologies
-- Kotlin 1.9.x (JDK 11 baseline) + Jetpack Compose Material 3, Hilt, WorkManager, Room, DataStore, Retrofit + Kotlin Serialization, OkHttp, MediaPipe Generative (LiteRT), Coil, Kotlin Coroutines (002-i-want-to)
+- Kotlin 1.9.x (JDK 11 baseline) + Jetpack Compose Material 3, Hilt, WorkManager, Room, DataStore, Retrofit + Kotlin Serialization, OkHttp, MediaPipe Generative (LiteRT), Coil, Kotlin Coroutines (001-foundation)
 
 ## Project Structure
 ```
@@ -19,7 +19,7 @@ app/
 gradle/
 	libs.versions.toml
 specs/
-	002-i-want-to/
+	foundation/
 ```
 
 ## Commands
@@ -32,7 +32,7 @@ specs/
 Kotlin 1.9.x (JDK 11 baseline): Follow standard conventions
 
 ## Recent Changes
-- 002-i-want-to: Added Kotlin 1.9.x (JDK 11 baseline) + Jetpack Compose Material 3, Hilt, WorkManager, Room, DataStore, Retrofit + Kotlin Serialization, OkHttp, MediaPipe Generative (LiteRT), Coil, Kotlin Coroutines
+- foundation: Added Kotlin 1.9.x (JDK 11 baseline) + Jetpack Compose Material 3, Hilt, WorkManager, Room, DataStore, Retrofit + Kotlin Serialization, OkHttp, MediaPipe Generative (LiteRT), Coil, Kotlin Coroutines
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

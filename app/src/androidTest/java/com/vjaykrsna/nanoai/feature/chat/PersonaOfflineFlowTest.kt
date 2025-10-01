@@ -7,15 +7,24 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.vjaykrsna.nanoai.core.domain.model.ChatThread
+import com.vjaykrsna.nanoai.core.domain.model.Message
+import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
+import com.vjaykrsna.nanoai.core.model.PersonaSwitchAction
+import com.vjaykrsna.nanoai.feature.chat.presentation.ChatError
+import com.vjaykrsna.nanoai.feature.chat.presentation.ChatViewModel
+import com.vjaykrsna.nanoai.feature.chat.ui.ChatScreen
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.time.Instant
+import kotlinx.datetime.Clock
 import java.util.UUID
 
 /**
@@ -36,23 +45,23 @@ class PersonaOfflineFlowTest {
     val composeTestRule = createComposeRule()
 
     private lateinit var viewModel: ChatViewModel
-    private lateinit var uiState: MutableStateFlow<ChatUiState>
+    private lateinit var currentThreadFlow: MutableStateFlow<ChatThread?>
+    private lateinit var messagesFlow: MutableStateFlow<List<Message>>
+    private lateinit var availablePersonasFlow: MutableStateFlow<List<PersonaProfile>>
+    private lateinit var isLoadingFlow: MutableStateFlow<Boolean>
 
     @Before
     fun setup() {
         viewModel = mockk(relaxed = true)
-        uiState = MutableStateFlow(
-            ChatUiState(
-                currentThread = null,
-                messages = emptyList(),
-                currentPersona = null,
-                isOnline = true,
-                hasLocalModelAvailable = false,
-                isGenerating = false,
-                errorMessage = null
-            )
-        )
-        coEvery { viewModel.uiState } returns uiState
+        currentThreadFlow = MutableStateFlow(null)
+        messagesFlow = MutableStateFlow(emptyList())
+        availablePersonasFlow = MutableStateFlow(emptyList())
+        isLoadingFlow = MutableStateFlow(false)
+
+        coEvery { viewModel.currentThread } returns currentThreadFlow
+        coEvery { viewModel.messages } returns messagesFlow
+        coEvery { viewModel.availablePersonas } returns availablePersonasFlow
+        coEvery { viewModel.isLoading } returns isLoadingFlow
     }
 
     @Test
@@ -68,11 +77,20 @@ class PersonaOfflineFlowTest {
             topP = 0.95f,
             defaultVoice = null,
             defaultImageStyle = null,
-            createdAt = Instant.now(),
-            updatedAt = Instant.now()
+            createdAt = Clock.System.now(),
+            updatedAt = Clock.System.now()
         )
 
-        uiState.value = uiState.value.copy(currentPersona = persona)
+        availablePersonasFlow.value = listOf(persona)
+        currentThreadFlow.value = ChatThread(
+            threadId = UUID.randomUUID(),
+            title = "Test Thread",
+            personaId = persona.personaId,
+            activeModelId = "test-model",
+            createdAt = Clock.System.now(),
+            updatedAt = Clock.System.now(),
+            isArchived = false
+        )
 
         // Act
         composeTestRule.setContent {
@@ -111,21 +129,33 @@ class PersonaOfflineFlowTest {
             topP = 0.9f,
             defaultVoice = null,
             defaultImageStyle = null,
-            createdAt = Instant.now(),
-            updatedAt = Instant.now()
+            createdAt = Clock.System.now(),
+            updatedAt = Clock.System.now()
         )
 
-        uiState.value = uiState.value.copy(
-            currentPersona = currentPersona,
-            currentThread = ChatThread(
-                threadId = UUID.randomUUID(),
-                title = "Existing Chat",
-                personaId = currentPersona.personaId,
-                activeModelId = "test-model",
-                createdAt = Instant.now(),
-                updatedAt = Instant.now(),
-                isArchived = false
-            )
+        val newPersona = PersonaProfile(
+            personaId = UUID.randomUUID(),
+            name = "Creative Writer",
+            description = "Creative writing assistant",
+            systemPrompt = "You are a creative writer",
+            defaultModelPreference = null,
+            temperature = 0.9f,
+            topP = 0.95f,
+            defaultVoice = null,
+            defaultImageStyle = null,
+            createdAt = Clock.System.now(),
+            updatedAt = Clock.System.now()
+        )
+
+        availablePersonasFlow.value = listOf(currentPersona, newPersona)
+        currentThreadFlow.value = ChatThread(
+            threadId = UUID.randomUUID(),
+            title = "Existing Chat",
+            personaId = currentPersona.personaId,
+            activeModelId = "test-model",
+            createdAt = Clock.System.now(),
+            updatedAt = Clock.System.now(),
+            isArchived = false
         )
 
         composeTestRule.setContent {
@@ -151,16 +181,43 @@ class PersonaOfflineFlowTest {
         val currentPersonaId = UUID.randomUUID()
         val newPersonaId = UUID.randomUUID()
 
-        uiState.value = uiState.value.copy(
-            currentThread = ChatThread(
-                threadId = threadId,
-                title = "Test Chat",
-                personaId = currentPersonaId,
-                activeModelId = "test-model",
-                createdAt = Instant.now(),
-                updatedAt = Instant.now(),
-                isArchived = false
-            )
+        val currentPersona = PersonaProfile(
+            personaId = currentPersonaId,
+            name = "Assistant",
+            description = "General assistant",
+            systemPrompt = "You are helpful",
+            defaultModelPreference = null,
+            temperature = 0.7f,
+            topP = 0.9f,
+            defaultVoice = null,
+            defaultImageStyle = null,
+            createdAt = Clock.System.now(),
+            updatedAt = Clock.System.now()
+        )
+
+        val newPersona = PersonaProfile(
+            personaId = newPersonaId,
+            name = "Creative Writer",
+            description = "Creative writing assistant",
+            systemPrompt = "You are a creative writer",
+            defaultModelPreference = null,
+            temperature = 0.9f,
+            topP = 0.95f,
+            defaultVoice = null,
+            defaultImageStyle = null,
+            createdAt = Clock.System.now(),
+            updatedAt = Clock.System.now()
+        )
+
+        availablePersonasFlow.value = listOf(currentPersona, newPersona)
+        currentThreadFlow.value = ChatThread(
+            threadId = threadId,
+            title = "Test Chat",
+            personaId = currentPersonaId,
+            activeModelId = "test-model",
+            createdAt = Clock.System.now(),
+            updatedAt = Clock.System.now(),
+            isArchived = false
         )
 
         composeTestRule.setContent {
@@ -178,7 +235,6 @@ class PersonaOfflineFlowTest {
         // Assert
         coVerify { 
             viewModel.switchPersona(
-                threadId = threadId,
                 newPersonaId = newPersonaId,
                 action = PersonaSwitchAction.CONTINUE_THREAD
             ) 
@@ -191,16 +247,43 @@ class PersonaOfflineFlowTest {
         val oldThreadId = UUID.randomUUID()
         val newPersonaId = UUID.randomUUID()
 
-        uiState.value = uiState.value.copy(
-            currentThread = ChatThread(
-                threadId = oldThreadId,
-                title = "Old Chat",
-                personaId = UUID.randomUUID(),
-                activeModelId = "test-model",
-                createdAt = Instant.now(),
-                updatedAt = Instant.now(),
-                isArchived = false
-            )
+        val oldPersona = PersonaProfile(
+            personaId = UUID.randomUUID(),
+            name = "Assistant",
+            description = "General assistant",
+            systemPrompt = "You are helpful",
+            defaultModelPreference = null,
+            temperature = 0.7f,
+            topP = 0.9f,
+            defaultVoice = null,
+            defaultImageStyle = null,
+            createdAt = Clock.System.now(),
+            updatedAt = Clock.System.now()
+        )
+
+        val newPersona = PersonaProfile(
+            personaId = newPersonaId,
+            name = "Creative Writer",
+            description = "Creative writing assistant",
+            systemPrompt = "You are a creative writer",
+            defaultModelPreference = null,
+            temperature = 0.9f,
+            topP = 0.95f,
+            defaultVoice = null,
+            defaultImageStyle = null,
+            createdAt = Clock.System.now(),
+            updatedAt = Clock.System.now()
+        )
+
+        availablePersonasFlow.value = listOf(oldPersona, newPersona)
+        currentThreadFlow.value = ChatThread(
+            threadId = oldThreadId,
+            title = "Old Chat",
+            personaId = oldPersona.personaId,
+            activeModelId = "test-model",
+            createdAt = Clock.System.now(),
+            updatedAt = Clock.System.now(),
+            isArchived = false
         )
 
         composeTestRule.setContent {
@@ -218,7 +301,6 @@ class PersonaOfflineFlowTest {
         // Assert
         coVerify { 
             viewModel.switchPersona(
-                threadId = oldThreadId,
                 newPersonaId = newPersonaId,
                 action = PersonaSwitchAction.START_NEW_THREAD
             ) 
@@ -286,18 +368,15 @@ class PersonaOfflineFlowTest {
             Message(
                 messageId = UUID.randomUUID(),
                 threadId = UUID.randomUUID(),
-                role = MessageRole.ASSISTANT,
+                role = com.vjaykrsna.nanoai.core.model.Role.ASSISTANT,
                 text = "This is a local response",
-                audioUri = null,
-                imageUri = null,
-                source = MessageSource.LOCAL_MODEL,
+                source = com.vjaykrsna.nanoai.core.model.MessageSource.LOCAL_MODEL,
                 latencyMs = 1200,
-                createdAt = Instant.now(),
-                errorCode = null
+                createdAt = kotlinx.datetime.Clock.System.now()
             )
         )
 
-        uiState.value = uiState.value.copy(messages = messages)
+        messagesFlow.value = messages
 
         // Act
         composeTestRule.setContent {
@@ -317,18 +396,15 @@ class PersonaOfflineFlowTest {
             Message(
                 messageId = UUID.randomUUID(),
                 threadId = UUID.randomUUID(),
-                role = MessageRole.ASSISTANT,
+                role = com.vjaykrsna.nanoai.core.model.Role.ASSISTANT,
                 text = "This is a cloud API response",
-                audioUri = null,
-                imageUri = null,
-                source = MessageSource.CLOUD_API,
+                source = com.vjaykrsna.nanoai.core.model.MessageSource.CLOUD_API,
                 latencyMs = 3500,
-                createdAt = Instant.now(),
-                errorCode = null
+                createdAt = Clock.System.now()
             )
         )
 
-        uiState.value = uiState.value.copy(messages = messages)
+        messagesFlow.value = messages
 
         // Act
         composeTestRule.setContent {
@@ -366,7 +442,7 @@ class PersonaOfflineFlowTest {
                 previousPersonaId = null,
                 newPersonaId = UUID.randomUUID(),
                 actionTaken = PersonaSwitchAction.START_NEW_THREAD,
-                createdAt = Instant.now().minusSeconds(3600)
+                createdAt = Clock.System.now().minusSeconds(3600)
             ),
             PersonaSwitchLog(
                 logId = UUID.randomUUID(),
@@ -374,7 +450,7 @@ class PersonaOfflineFlowTest {
                 previousPersonaId = UUID.randomUUID(),
                 newPersonaId = UUID.randomUUID(),
                 actionTaken = PersonaSwitchAction.CONTINUE_THREAD,
-                createdAt = Instant.now().minusSeconds(1800)
+                createdAt = Clock.System.now().minusSeconds(1800)
             )
         )
 
@@ -438,7 +514,7 @@ class PersonaOfflineFlowTest {
                 imageUri = null,
                 source = MessageSource.LOCAL_MODEL,
                 latencyMs = 1200,
-                createdAt = Instant.now(),
+                createdAt = Clock.System.now(),
                 errorCode = null
             )
         )

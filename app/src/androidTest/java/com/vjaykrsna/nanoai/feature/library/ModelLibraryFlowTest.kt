@@ -7,16 +7,23 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
+import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
+import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
+import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryViewModel
+import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
+import com.vjaykrsna.nanoai.feature.library.model.InstallState
+import com.vjaykrsna.nanoai.feature.library.model.ProviderType
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.time.Instant
 import java.util.UUID
 
 /**
@@ -36,22 +43,26 @@ class ModelLibraryFlowTest {
     val composeTestRule = createComposeRule()
 
     private lateinit var viewModel: ModelLibraryViewModel
-    private lateinit var uiState: MutableStateFlow<ModelLibraryUiState>
+    private lateinit var allModelsFlow: MutableStateFlow<List<ModelPackage>>
+    private lateinit var installedModelsFlow: MutableStateFlow<List<ModelPackage>>
+    private lateinit var filteredModelsFlow: MutableStateFlow<List<ModelPackage>>
+    private lateinit var queuedDownloadsFlow: MutableStateFlow<List<DownloadTask>>
+    private lateinit var isLoadingFlow: MutableStateFlow<Boolean>
 
     @Before
     fun setup() {
         viewModel = mockk(relaxed = true)
-        uiState = MutableStateFlow(
-            ModelLibraryUiState(
-                availableModels = emptyList(),
-                downloadingModels = emptyList(),
-                queuedDownloads = emptyList(),
-                installedModels = emptyList(),
-                isLoading = false,
-                errorMessage = null
-            )
-        )
-        coEvery { viewModel.uiState } returns uiState
+        allModelsFlow = MutableStateFlow(emptyList())
+        installedModelsFlow = MutableStateFlow(emptyList())
+        filteredModelsFlow = MutableStateFlow(emptyList())
+        queuedDownloadsFlow = MutableStateFlow(emptyList())
+        isLoadingFlow = MutableStateFlow(false)
+
+        coEvery { viewModel.allModels } returns allModelsFlow
+        coEvery { viewModel.installedModels } returns installedModelsFlow
+        coEvery { viewModel.filteredModels } returns filteredModelsFlow
+        coEvery { viewModel.queuedDownloads } returns queuedDownloadsFlow
+        coEvery { viewModel.isLoading } returns isLoadingFlow
     }
 
     @Test
@@ -70,7 +81,8 @@ class ModelLibraryFlowTest {
             )
         )
         
-        uiState.value = uiState.value.copy(availableModels = availableModels)
+        allModelsFlow.value = availableModels
+        filteredModelsFlow.value = availableModels
 
         // Act
         composeTestRule.setContent {
@@ -415,7 +427,7 @@ class ModelLibraryFlowTest {
         installState = installState,
         downloadTaskId = null,
         checksum = "abc123def456",
-        updatedAt = Instant.now()
+        updatedAt = Clock.System.now()
     )
 
     private fun createDownloadTask(
@@ -427,7 +439,7 @@ class ModelLibraryFlowTest {
         progress = 0.0f,
         status = status,
         bytesDownloaded = 0L,
-        startedAt = Instant.now(),
+        startedAt = Clock.System.now(),
         finishedAt = null,
         errorMessage = null
     )

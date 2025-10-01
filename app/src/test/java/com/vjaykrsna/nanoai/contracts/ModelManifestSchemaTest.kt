@@ -21,9 +21,9 @@ class ModelManifestSchemaTest {
 
     @Before
     fun setup() {
-        // Schema is in specs/002-i-want-to/contracts/model-manifest.json
+        // Schema is in specs/001-foundation/contracts/model-manifest.json
         val projectRoot = File(System.getProperty("user.dir")).parentFile
-        schemaFile = File(projectRoot, "specs/002-i-want-to/contracts/model-manifest.json")
+        schemaFile = File(projectRoot, "specs/001-foundation/contracts/model-manifest.json")
         
         // Verify schema file exists (will fail if not found - expected in TDD)
         assertThat(schemaFile.exists()).isTrue()

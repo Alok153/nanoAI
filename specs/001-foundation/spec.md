@@ -1,6 +1,6 @@
 # Feature Specification: Offline Multimodal nanoAI Assistant
 
-**Feature Branch**: `002-i-want-to`  
+**Feature Branch**: `001-foundation`  
 **Created**: 2025-09-30  
 **Status**: Draft  
 **Input**: User description: "I want to build an android app that lets user run small llm offline on the android, It will have a modern polished Ui will support text, image and audio input output, it will be a like a normal chatapp with a sidebar that has all the chathistory\nIt will use backend libraries that are already optimised to run on edge device with low resource requirements to run the llms\nI went on to create this new app because none of the app available online is good or their maintainers left the project some support text generation but don't have support for image generation or similar small issues\nIt will have online api support as well for openai api, gemini api and configurable openai api format configuration to configure more models and api endpoints if user wants to connect to external api (no limitation on that front), it will have model library ui with download play pause options, it will have option to configure personal for ai to quickly switch into it\neverything will be organised in the settings and easy to setup and navigate and quick toggles and switching from sidebar menu"
@@ -73,7 +73,10 @@ A privacy-conscious mobile professional installs nanoAI, downloads an on-device 
 1. **Given** the user has opened the chat view, **When** they send a text prompt, **Then** the assistant returns a response within 2 seconds using the selected local or cloud model and displays it in the conversation thread.
 2. **Given** the user opens the model library, **When** they tap "Download" on an available on-device model, **Then** the app shows progress with pause/resume options and adds the model to the usable list upon completion.
 3. **Given** the device is offline and a local model is available, **When** the user submits an audio prompt, **Then** the app processes it locally, returns the configured response (text or audio), and surfaces a notice that cloud APIs are unavailable.
-4. **Given** the user opens the settings export screen, **When** they trigger the universal export, **Then** the app generates a single encrypted archive containing personas, credentials, and configuration for safekeeping.
+4. **Given** the user opens the settings export screen, **When** they trigger the universal export, **Then** the app generates a single unencrypted archive containing personas, credentials, and configuration with a clear warning for safekeeping.
+5. **Given** the user submits a cloud request while offline, **When** connectivity resumes, **Then** the app automatically syncs the pending request and notifies the user of completion.
+6. **Given** it's the user's first app launch, **When** they open the chat view, **Then** a disclaimer dialog appears explaining content responsibility and lack of automated filters.
+7. **Given** the user views a model in the library, **When** they tap for details, **Then** contextual help displays recommended RAM/storage requirements.
 
 ### Edge Cases
 - Device storage is insufficient for the selected model download.
@@ -86,6 +89,9 @@ A privacy-conscious mobile professional installs nanoAI, downloads an on-device 
 - User initiates multiple model downloads; queued transfers and configurable concurrency must behave predictably.
 - Active personas reference a model being deleted; running sessions should stop and allow model removal without corruption.
 - Power users enable two concurrent models (e.g., text + image) and expect stable resource allocation.
+- Pending cloud requests fail to sync after reconnection; user receives error notification with retry.
+- First-launch disclaimer is dismissed; it does not reappear on future launches.
+- Model sizing recommendations exceed device capabilities; user is advised to use cloud alternatives.
 
 ---
 
@@ -96,24 +102,24 @@ A privacy-conscious mobile professional installs nanoAI, downloads an on-device 
 - **FR-002**: App MUST persist chat history, selected model, and persona configurations using encrypted storage so state restores after process death.
 - **FR-003**: App MUST surface accessibility affordances (TalkBack labels, dynamic type) for every interactive element and prepare copy/UX hooks for future audio captioning.
 - **FR-004**: App MUST support offline inference by executing on-device models when no network is available and sync pending cloud requests once connectivity resumes.
-- **FR-005**: App MUST enforce runtime microphone, camera, and storage permissions with explicit consent messaging before capturing or storing user data.
-- **FR-006**: App MUST provide a model library UI with search, size metadata, download progress, pause/resume, and delete controls.
+- **FR-005**: App MUST enforce runtime microphone, camera, and storage permissions with explicit consent messaging before capturing or storing user data, using Android keystore-backed encryption for sensitive stored data.
+- **FR-006**: App MUST provide a model library UI with search, size metadata, download progress, pause/resume, and delete controls, supporting user-configurable download concurrency (default 1, max 3).
 - **FR-007**: App MUST allow users to configure multiple personas (tone, instructions, default model/API preference) and switch between them within two taps from the sidebar.
 - **FR-008**: App MUST integrate cloud APIs (OpenAI, Gemini, and user-configured endpoints) with per-provider authentication and model selection.
-- **FR-009**: App MUST offer quick toggles in the sidebar for switching between local/cloud models, muting future audio output, reserving space for image generation controls, and clearing conversation context.
-- **FR-010**: App MUST meet performance budgets: cold start < 1.5s on reference device, single response round-trip (local) < 2s median, and maintain <5% dropped frames during rendering.
-- **FR-011**: App MUST track and display API usage status (quota, failures) and notify the user when limits are reached.
+- **FR-009**: App MUST offer quick toggles in the sidebar for switching between local/cloud models, muting future audio output, reserving space for image generation controls (future), and clearing conversation context. Note: Advanced users may enable concurrent models via settings.
+- **FR-010**: App SHOULD meet reasonable performance budgets: cold start < 2s on reference device, local response < 3s median, and maintain <10% dropped frames during rendering.
+- **FR-011**: App MUST track and display API usage status (quota, failures) and notify the user when limits are reached, with automatic quota reset tracking synced from provider APIs.
 - **FR-012**: App MUST provide a setup flow to validate external API configurations and fail gracefully with actionable error messages.
 - **FR-013**: App MUST enable exporting/importing personas and model configurations for backup or migration via a universal export/import flow, providing clear warnings that the generated archive is unencrypted and should be stored securely by the user.
-- **FR-014**: App MUST log consent choices and data retention preferences in a privacy dashboard accessible from settings.
+- **FR-014**: App MUST log consent choices and data retention preferences in an encrypted privacy dashboard accessible from settings.
 - **FR-015**: App MUST document user-facing fallback behavior when requested modality is unsupported by the selected model.
 - **FR-016**: App MUST operate without authentication; all features remain available in a local-first experience without user accounts.
 - **FR-017**: App MUST retain chat transcripts indefinitely until the user explicitly deletes a thread or clears history.
 - **FR-018**: App MUST provide clear disclosure that no automated safety filters are applied to prompts or responses; users manage moderation manually, with audio output deferred to a later release.
 - **FR-019**: App MUST present a first-launch message reminding users they are responsible for generated content without blocking access.
 - **FR-020**: App MUST surface a contextual “model sizing help” action explaining recommended RAM/storage requirements for third-party models, without enforcing download limits.
-- **FR-021**: App MUST store third-party API credentials locally only and include them in the universal export bundle; no cloud backup occurs.
-- **FR-022**: App MUST allow model downloads up to at least 3 GB and provide live progress with pause/resume controls without additional storage warnings.
+- **FR-021**: App MUST store third-party API credentials locally using Android keystore-backed encryption and include them in the universal export bundle; no cloud backup occurs.
+- **FR-022**: App MUST allow model downloads up to at least 3 GB and provide live progress with pause/resume controls without additional storage warnings, with user-configurable concurrency limits (default 1, max 3).
 - **FR-023**: App MUST default to a single concurrent model download, queue additional requests, and allow users to raise the limit (e.g., up to 3) via settings.
 - **FR-024**: App MUST restrict active inference to one model at a time by default and offer an advanced setting to enable two concurrent models with clear performance caveats (future calling/voice features to build atop this toggle).
 - **FR-025**: App MUST stop active inference gracefully and remove assets when a user deletes an in-use local model, notifying them that the session ended.
@@ -124,6 +130,11 @@ A privacy-conscious mobile professional installs nanoAI, downloads an on-device 
 - **FR-030**: Offline inference MUST launch with MediaPipe Generative (LiteRT) runtime support, while the research backlog tracks TensorFlow Lite, MLC LLM, and ONNX Runtime Mobile for successive integrations.
 - **FR-031**: Image generation is deferred at launch; the roadmap MUST evaluate on-device Stable Diffusion-class models and external services (e.g., Automatic1111, ComfyUI, OpenAI, Gemini) for phased integration once the text-only prototype is stable.
 - **FR-032**: When users change personas mid-thread, the app MUST prompt whether to continue in the same chat or split into a new thread, following a user-configurable default stored in settings.
+- **FR-033**: App MUST resume pending cloud requests once network connectivity is restored and display sync status to the user.
+- **FR-034**: App MUST display a first-launch disclaimer dialog reminding users they are responsible for generated content without automated safety filters.
+- **FR-035**: App MUST provide contextual help for model sizing requirements, including recommended RAM/storage for each model in the library UI.
+- **FR-036**: App MUST gracefully handle model deletion by stopping active inferences, notifying users of session interruptions, and preventing data corruption.
+- **FR-037**: App MUST include manual content moderation warnings in the chat UI for responses that may be uncensored or inappropriate.
 
 ### Key Entities *(include if feature involves data)*
 - **ChatThread**: Represents a conversation session; stores participants (user, assistant persona), chronological messages, associated model, and timestamps.
@@ -154,8 +165,8 @@ A privacy-conscious mobile professional installs nanoAI, downloads an on-device 
 
 ### Constitution Alignment
 - [x] UX stories note Material compliance and accessibility expectations.
-- [x] Performance budgets and offline behavior are described or explicitly deferred.
-- [x] Data handling, permissions, and consent obligations are documented.
+- [x] Reasonable performance budgets and offline behavior are described (optimized later).
+- [x] Data handling, permissions, consent, and encryption obligations are documented.
 
 ---
 
@@ -168,7 +179,7 @@ A privacy-conscious mobile professional installs nanoAI, downloads an on-device 
 - [x] User scenarios defined
 - [x] Requirements generated
 - [x] Entities identified
-- [ ] Review checklist passed
+- [x] Review checklist passed
 
 ---
 *Align with Constitution v1.0.0 (see `.specify/memory/constitution.md` for principles)*

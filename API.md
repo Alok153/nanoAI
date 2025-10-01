@@ -583,4 +583,4 @@ Store in `ApiProviderConfig.quotaResetAt`.
 
 ---
 
-**For complete API contract specifications, see `/specs/002-i-want-to/contracts/`.**
+**For complete API contract specifications, see `/specs/001-foundation/contracts/`.**
