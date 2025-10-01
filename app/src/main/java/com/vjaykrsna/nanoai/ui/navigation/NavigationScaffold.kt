@@ -19,7 +19,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
@@ -340,7 +339,7 @@ private fun ThreadItem(
                         }
                     ) {
                         Icon(
-                            Icons.Default.Archive,
+                            Icons.Default.Delete,
                             "Archive",
                             modifier = Modifier.padding(4.dp)
                         )
@@ -376,7 +375,7 @@ private fun BottomNavigationBar(
     ) {
         NavigationBarItem(
             selected = currentRoute == Screen.Chat.route,
-            icon = { Icon(Icons.Default.Chat, "Chat") },
+            onClick = { onNavigate(Screen.Chat.route) },
             icon = { Icon(Icons.Default.Menu, "Chat") },
             label = { Text("Chat") },
             modifier = Modifier.semantics {
@@ -386,7 +385,7 @@ private fun BottomNavigationBar(
         NavigationBarItem(
             selected = currentRoute == Screen.ModelLibrary.route,
             onClick = { onNavigate(Screen.ModelLibrary.route) },
-            icon = { Icon(Icons.Default.Folder, "Library") },
+            icon = { Icon(Icons.Default.Menu, "Library") },
             label = { Text("Library") },
             modifier = Modifier.semantics {
                 contentDescription = "Navigate to Model Library"

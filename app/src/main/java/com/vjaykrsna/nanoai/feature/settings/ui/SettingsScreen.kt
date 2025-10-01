@@ -485,7 +485,7 @@ private fun PrivacySettings(
                 )
             }
 
-            Divider()
+            androidx.compose.material3.HorizontalDivider()
 
             // Consent info
             Column {
