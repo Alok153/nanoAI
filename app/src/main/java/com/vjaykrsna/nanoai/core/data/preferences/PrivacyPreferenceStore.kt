@@ -8,9 +8,12 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Instant
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * DataStore-based storage for privacy preferences.
@@ -18,7 +21,8 @@ import kotlinx.datetime.Instant
  * Provides reactive Flow-based access to privacy settings and consent tracking.
  * Uses Preferences DataStore for simple key-value storage.
  */
-class PrivacyPreferenceStore(private val context: Context) {
+@Singleton
+class PrivacyPreferenceStore @Inject constructor(@ApplicationContext private val context: Context) {
 
     companion object {
         private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(

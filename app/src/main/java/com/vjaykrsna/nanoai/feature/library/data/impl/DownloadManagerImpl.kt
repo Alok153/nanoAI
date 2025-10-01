@@ -111,11 +111,11 @@ constructor(
         return downloadTaskDao.observeActiveDownloads().map { tasks -> tasks.map { it.toDomain() } }
     }
 
-    override suspend fun getQueuedDownloads(): Flow<List<DownloadTask>> {
+    override fun getQueuedDownloads(): Flow<List<DownloadTask>> {
         return downloadTaskDao.observeQueuedDownloads().map { tasks -> tasks.map { it.toDomain() } }
     }
 
-    override suspend fun observeProgress(taskId: UUID): Flow<Float> {
+    override fun observeProgress(taskId: UUID): Flow<Float> {
         return downloadTaskDao.observeById(taskId.toString()).map { it?.progress ?: 0f }
     }
 

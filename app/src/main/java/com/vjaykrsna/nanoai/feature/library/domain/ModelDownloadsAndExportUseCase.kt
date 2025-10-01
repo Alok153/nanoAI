@@ -114,10 +114,10 @@ class ModelDownloadsAndExportUseCase @Inject constructor(
     }
 
     /** Observe download progress as a Flow. */
-    suspend fun getDownloadProgress(taskId: UUID): Flow<Float> = downloadManager.observeProgress(taskId)
+    fun getDownloadProgress(taskId: UUID): Flow<Float> = downloadManager.observeProgress(taskId)
 
     /** Observe queued download tasks. */
-    suspend fun getQueuedDownloads(): Flow<List<DownloadTask>> = downloadManager.getQueuedDownloads()
+    fun getQueuedDownloads(): Flow<List<DownloadTask>> = downloadManager.getQueuedDownloads()
 
     /** Retry a failed download task. */
     suspend fun retryFailedDownload(taskId: UUID) {

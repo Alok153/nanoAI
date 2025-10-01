@@ -44,10 +44,10 @@ interface DownloadManager {
     suspend fun getActiveDownloads(): Flow<List<DownloadTask>>
 
     /** Get queued downloads. */
-    suspend fun getQueuedDownloads(): Flow<List<DownloadTask>>
+    fun getQueuedDownloads(): Flow<List<DownloadTask>>
 
     /** Observe download progress for a task. */
-    suspend fun observeProgress(taskId: UUID): Flow<Float>
+    fun observeProgress(taskId: UUID): Flow<Float>
 
     /** Get max concurrent downloads configured by user. */
     suspend fun getMaxConcurrentDownloads(): Int
