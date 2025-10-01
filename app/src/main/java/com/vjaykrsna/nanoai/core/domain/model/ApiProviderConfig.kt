@@ -11,7 +11,7 @@ import kotlinx.datetime.Instant
  * Clean architecture: Separate from database entities.
  * Used by repositories, use cases, ViewModels, and UI.
  */
-data class ApiProviderConfig(
+data class APIProviderConfig(
     val providerId: String,
     val providerName: String,
     val baseUrl: String,
@@ -25,7 +25,7 @@ data class ApiProviderConfig(
 /**
  * Extension function to convert entity to domain model.
  */
-fun ApiProviderConfigEntity.toDomain(): ApiProviderConfig = ApiProviderConfig(
+fun ApiProviderConfigEntity.toDomain(): APIProviderConfig = APIProviderConfig(
     providerId = providerId,
     providerName = providerName,
     baseUrl = baseUrl,
@@ -39,7 +39,7 @@ fun ApiProviderConfigEntity.toDomain(): ApiProviderConfig = ApiProviderConfig(
 /**
  * Extension function to convert domain model to entity.
  */
-fun ApiProviderConfig.toEntity(): ApiProviderConfigEntity = ApiProviderConfigEntity(
+fun APIProviderConfig.toEntity(): ApiProviderConfigEntity = ApiProviderConfigEntity(
     providerId = providerId,
     providerName = providerName,
     baseUrl = baseUrl,

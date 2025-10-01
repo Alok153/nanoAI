@@ -1,6 +1,6 @@
 package com.vjaykrsna.nanoai.core.data.repository
 
-import com.vjaykrsna.nanoai.core.domain.model.ApiProviderConfig
+import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -11,23 +11,23 @@ import kotlinx.coroutines.flow.Flow
 interface ApiProviderConfigRepository {
 
     /** Get all API providers. */
-    suspend fun getAllProviders(): List<ApiProviderConfig>
+    suspend fun getAllProviders(): List<APIProviderConfig>
 
     /** Get a specific provider by ID. */
-    suspend fun getProvider(providerId: String): ApiProviderConfig?
+    suspend fun getProvider(providerId: String): APIProviderConfig?
 
     /** Add a new provider configuration. */
-    suspend fun addProvider(config: ApiProviderConfig)
+    suspend fun addProvider(config: APIProviderConfig)
 
     /** Update an existing provider configuration. */
-    suspend fun updateProvider(config: ApiProviderConfig)
+    suspend fun updateProvider(config: APIProviderConfig)
 
     /** Delete a provider configuration. */
     suspend fun deleteProvider(providerId: String)
 
     /** Get all enabled providers. */
-    suspend fun getEnabledProviders(): List<ApiProviderConfig>
+    suspend fun getEnabledProviders(): List<APIProviderConfig>
 
     /** Observe all providers (reactive updates). */
-    fun observeAllProviders(): Flow<List<ApiProviderConfig>>
+    fun observeAllProviders(): Flow<List<APIProviderConfig>>
 }

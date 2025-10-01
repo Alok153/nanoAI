@@ -2,6 +2,7 @@ package com.vjaykrsna.nanoai.feature.library.data
 
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
+import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -32,6 +33,12 @@ interface ModelCatalogRepository {
     /** Update model installation state (alias for updateModelState). */
     suspend fun updateInstallState(modelId: String, state: InstallState) =
         updateModelState(modelId, state)
+
+    /** Associate a download task with a model. */
+    suspend fun updateDownloadTaskId(modelId: String, taskId: UUID?)
+
+    /** Persist checksum for a model package. */
+    suspend fun updateChecksum(modelId: String, checksum: String)
 
     /** Insert or update a model in the catalog. */
     suspend fun upsertModel(model: ModelPackage)

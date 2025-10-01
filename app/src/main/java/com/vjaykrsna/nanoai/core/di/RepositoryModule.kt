@@ -10,8 +10,10 @@ import com.vjaykrsna.nanoai.core.data.repository.impl.PersonaRepositoryImpl
 import com.vjaykrsna.nanoai.core.data.repository.impl.PersonaSwitchLogRepositoryImpl
 import com.vjaykrsna.nanoai.feature.library.data.DownloadManager
 import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
+import com.vjaykrsna.nanoai.feature.library.data.export.ExportServiceImpl
 import com.vjaykrsna.nanoai.feature.library.data.impl.DownloadManagerImpl
 import com.vjaykrsna.nanoai.feature.library.data.impl.ModelCatalogRepositoryImpl
+import com.vjaykrsna.nanoai.feature.library.domain.ExportService
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -55,5 +57,11 @@ abstract class RepositoryModule {
             impl: ModelCatalogRepositoryImpl
     ): ModelCatalogRepository
 
-    @Binds @Singleton abstract fun bindDownloadManager(impl: DownloadManagerImpl): DownloadManager
+        @Binds
+        @Singleton
+        abstract fun bindDownloadManager(impl: DownloadManagerImpl): DownloadManager
+
+        @Binds
+        @Singleton
+        abstract fun bindExportService(impl: ExportServiceImpl): ExportService
 }

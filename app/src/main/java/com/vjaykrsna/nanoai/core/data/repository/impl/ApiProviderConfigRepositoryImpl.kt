@@ -2,7 +2,7 @@ package com.vjaykrsna.nanoai.core.data.repository.impl
 
 import com.vjaykrsna.nanoai.core.data.db.daos.ApiProviderConfigDao
 import com.vjaykrsna.nanoai.core.data.repository.ApiProviderConfigRepository
-import com.vjaykrsna.nanoai.core.domain.model.ApiProviderConfig
+import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
 import com.vjaykrsna.nanoai.core.domain.model.toDomain
 import com.vjaykrsna.nanoai.core.domain.model.toEntity
 import javax.inject.Inject
@@ -20,19 +20,19 @@ class ApiProviderConfigRepositoryImpl
 @Inject
 constructor(private val apiProviderConfigDao: ApiProviderConfigDao) : ApiProviderConfigRepository {
 
-    override suspend fun getAllProviders(): List<ApiProviderConfig> {
+    override suspend fun getAllProviders(): List<APIProviderConfig> {
         return apiProviderConfigDao.getAll().map { it.toDomain() }
     }
 
-    override suspend fun getProvider(providerId: String): ApiProviderConfig? {
+    override suspend fun getProvider(providerId: String): APIProviderConfig? {
         return apiProviderConfigDao.getById(providerId)?.toDomain()
     }
 
-    override suspend fun addProvider(config: ApiProviderConfig) {
+    override suspend fun addProvider(config: APIProviderConfig) {
         apiProviderConfigDao.insert(config.toEntity())
     }
 
-    override suspend fun updateProvider(config: ApiProviderConfig) {
+    override suspend fun updateProvider(config: APIProviderConfig) {
         apiProviderConfigDao.update(config.toEntity())
     }
 
@@ -43,11 +43,11 @@ constructor(private val apiProviderConfigDao: ApiProviderConfigDao) : ApiProvide
         }
     }
 
-    override suspend fun getEnabledProviders(): List<ApiProviderConfig> {
+    override suspend fun getEnabledProviders(): List<APIProviderConfig> {
         return apiProviderConfigDao.getEnabled().map { it.toDomain() }
     }
 
-    override fun observeAllProviders(): Flow<List<ApiProviderConfig>> {
+    override fun observeAllProviders(): Flow<List<APIProviderConfig>> {
         return apiProviderConfigDao.observeAll().map { providers ->
             providers.map { it.toDomain() }
         }

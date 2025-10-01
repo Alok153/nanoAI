@@ -1,6 +1,6 @@
 package com.vjaykrsna.nanoai.core.network
 
-import com.vjaykrsna.nanoai.core.domain.model.ApiProviderConfig
+import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
 import com.vjaykrsna.nanoai.core.model.APIType
 import com.vjaykrsna.nanoai.core.network.dto.CompletionRequestDto
 import com.vjaykrsna.nanoai.core.network.dto.CompletionResponseDto
@@ -33,7 +33,7 @@ class CloudGatewayClient @Inject constructor(
 
     /** Execute a text completion request against the configured provider. */
     suspend fun createCompletion(
-        provider: ApiProviderConfig,
+    provider: APIProviderConfig,
         request: CompletionRequestDto
     ): CloudGatewayResult<CompletionResponseDto> = execute(provider) { service ->
         service.createCompletion(request)
@@ -41,14 +41,14 @@ class CloudGatewayClient @Inject constructor(
 
     /** Retrieve the provider's available model list. */
     suspend fun listModels(
-        provider: ApiProviderConfig
+    provider: APIProviderConfig
     ): CloudGatewayResult<ModelListResponseDto> = execute(provider) { service ->
         service.listModels()
     }
 
     @OptIn(ExperimentalTime::class)
     private suspend fun <T : Any> execute(
-        provider: ApiProviderConfig,
+    provider: APIProviderConfig,
         block: suspend (CloudGatewayService) -> T
     ): CloudGatewayResult<T> = withContext(Dispatchers.IO) {
         val service = createService(provider)
@@ -60,7 +60,7 @@ class CloudGatewayClient @Inject constructor(
         }
     }
 
-    private fun createService(provider: ApiProviderConfig): CloudGatewayService {
+    private fun createService(provider: APIProviderConfig): CloudGatewayService {
         val retrofit = Retrofit.Builder()
             .baseUrl(normalizeBaseUrl(provider.baseUrl))
             .client(buildClient(provider))
@@ -69,7 +69,7 @@ class CloudGatewayClient @Inject constructor(
         return retrofit.create(CloudGatewayService::class.java)
     }
 
-    private fun buildClient(provider: ApiProviderConfig): OkHttpClient {
+    private fun buildClient(provider: APIProviderConfig): OkHttpClient {
         return okHttpClient.newBuilder()
             .addInterceptor { chain ->
                 val requestBuilder: Request.Builder = chain.request().newBuilder()

@@ -4,6 +4,7 @@ import com.vjaykrsna.nanoai.feature.library.data.entities.ModelPackageEntity
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
 import com.vjaykrsna.nanoai.feature.library.model.ProviderType
 import kotlinx.datetime.Instant
+import java.util.UUID
 
 /**
  * Domain model for a model package in the catalog.
@@ -19,7 +20,7 @@ data class ModelPackage(
     val sizeBytes: Long,
     val capabilities: Set<String>,
     val installState: InstallState,
-    val downloadTaskId: String? = null,
+    val downloadTaskId: UUID? = null,
     val checksum: String? = null,
     val updatedAt: Instant
 )
@@ -35,7 +36,7 @@ fun ModelPackageEntity.toDomain(): ModelPackage = ModelPackage(
     sizeBytes = sizeBytes,
     capabilities = capabilities,
     installState = installState,
-    downloadTaskId = downloadTaskId,
+    downloadTaskId = downloadTaskId?.let(UUID::fromString),
     checksum = checksum,
     updatedAt = updatedAt
 )
@@ -51,7 +52,7 @@ fun ModelPackage.toEntity(): ModelPackageEntity = ModelPackageEntity(
     sizeBytes = sizeBytes,
     capabilities = capabilities,
     installState = installState,
-    downloadTaskId = downloadTaskId,
+    downloadTaskId = downloadTaskId?.toString(),
     checksum = checksum,
     updatedAt = updatedAt
 )

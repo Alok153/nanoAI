@@ -10,6 +10,7 @@ import com.vjaykrsna.nanoai.feature.library.data.daos.ModelPackageDao
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
@@ -47,6 +48,14 @@ constructor(
     override suspend fun upsertModel(model: ModelPackage) {
         modelPackageDao.insert(model.toEntity())
     }
+
+        override suspend fun updateDownloadTaskId(modelId: String, taskId: UUID?) {
+                modelPackageDao.updateDownloadTaskId(modelId, taskId?.toString())
+        }
+
+        override suspend fun updateChecksum(modelId: String, checksum: String) {
+                modelPackageDao.updateChecksum(modelId, checksum)
+        }
 
     override fun observeAllModels(): Flow<List<ModelPackage>> =
             modelPackageDao.observeAll().map { models -> models.map { it.toDomain() } }
