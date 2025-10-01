@@ -1,0 +1,22 @@
+{
+    "personas": [
+        {
+            "personaId": "11111111-1111-1111-1111-111111111111",
+            "name": "Default",
+            "systemPrompt": "You are a helpful assistant.",
+            "defaultModelPreference": null
+        }
+    ],
+    "apiProviders": [
+        {
+            "providerId": "openai-test",
+            "name": "OpenAI Test",
+            "endpoint": "https://api.openai.com/v1",
+            "apiKey": "REDACTED"
+        }
+    ],
+    "settings": {
+        "theme": "system",
+        "telemetryOptIn": false
+    }
+}
