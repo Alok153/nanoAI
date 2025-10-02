@@ -1,5 +1,7 @@
 package com.vjaykrsna.nanoai.feature.settings.ui
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -19,6 +22,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
@@ -67,6 +71,13 @@ fun SettingsScreen(
     var showExportDialog by remember { mutableStateOf(false) }
     var editingProvider by remember { mutableStateOf<APIProviderConfig?>(null) }
 
+    val importBackupLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            if (uri != null) {
+                viewModel.importBackup(uri)
+            }
+        }
+
     LaunchedEffect(Unit) {
         viewModel.errorEvents.collectLatest { error ->
             val message =
@@ -75,11 +86,42 @@ fun SettingsScreen(
                     is SettingsError.ProviderUpdateFailed -> "Failed to update provider: ${error.message}"
                     is SettingsError.ProviderDeleteFailed -> "Failed to delete provider: ${error.message}"
                     is SettingsError.ExportFailed -> "Export failed: ${error.message}"
+                    is SettingsError.ImportFailed -> "Import failed: ${error.message}"
                     is SettingsError.PreferenceUpdateFailed -> "Failed to update preference: ${error.message}"
                     is SettingsError.UnexpectedError -> "Unexpected error: ${error.message}"
                 }
             snackbarHostState.showSnackbar(message)
         }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.exportSuccess.collectLatest { path ->
+            snackbarHostState.showSnackbar("Backup exported to ${path.substringAfterLast('/')}…")
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.importSuccess.collectLatest { summary ->
+            val personasTotal = summary.personasImported + summary.personasUpdated
+            val providersTotal = summary.providersImported + summary.providersUpdated
+            val message =
+                buildString {
+                    append("Imported backup: ")
+                    append("$personasTotal persona${if (personasTotal == 1) "" else "s"}")
+                    append(", ")
+                    append("$providersTotal provider${if (providersTotal == 1) "" else "s"}")
+                }
+            snackbarHostState.showSnackbar(message)
+        }
+    }
+
+    fun triggerExport(includeChatHistory: Boolean = true) {
+        val downloadsPath =
+            android.os.Environment
+                .getExternalStoragePublicDirectory(
+                    android.os.Environment.DIRECTORY_DOWNLOADS,
+                ).absolutePath + "/nanoai-backup-${System.currentTimeMillis()}.json"
+        viewModel.exportBackup(downloadsPath, includeChatHistory)
     }
 
     Scaffold(
@@ -147,35 +189,78 @@ fun SettingsScreen(
             item {
                 Spacer(modifier = Modifier.height(8.dp))
                 SettingsSection(title = "Data Management") {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors =
-                            CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            ),
-                    ) {
-                        Row(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .clickable { showExportDialog = true }
-                                    .padding(16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors =
+                                CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                ),
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "Export Backup",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Medium,
-                                )
-                                Text(
-                                    text = "Export conversations, personas, and settings",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
+                            Row(
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            importBackupLauncher.launch(
+                                                arrayOf("application/json", "application/zip", "application/octet-stream"),
+                                            )
+                                        }.padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "Import Backup",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Medium,
+                                    )
+                                    Text(
+                                        text = "Restore personas, providers, and settings from a backup file",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                                Icon(Icons.Default.Add, "Import")
                             }
-                            Icon(Icons.Default.Edit, "Export")
+                        }
+
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors =
+                                CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                ),
+                        ) {
+                            Row(
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            if (privacyPreferences.exportWarningsDismissed) {
+                                                triggerExport()
+                                            } else {
+                                                showExportDialog = true
+                                            }
+                                        }
+                                        .padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "Export Backup",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Medium,
+                                    )
+                                    Text(
+                                        text = "Export conversations, personas, and settings",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                                Icon(Icons.Default.Edit, "Export")
+                            }
                         }
                     }
                 }
@@ -235,14 +320,11 @@ fun SettingsScreen(
     if (showExportDialog) {
         ExportDialog(
             onDismiss = { showExportDialog = false },
-            onConfirm = {
-                // Use Downloads directory
-                val downloadsPath =
-                    android.os.Environment
-                        .getExternalStoragePublicDirectory(
-                            android.os.Environment.DIRECTORY_DOWNLOADS,
-                        ).absolutePath + "/nanoai-backup-${System.currentTimeMillis()}.json"
-                viewModel.exportBackup(downloadsPath, includeChatHistory = true)
+            onConfirm = { dontShowAgain ->
+                if (dontShowAgain) {
+                    viewModel.dismissExportWarnings()
+                }
+                triggerExport()
                 showExportDialog = false
             },
         )
@@ -396,9 +478,11 @@ private fun ApiProviderDialog(
 @Composable
 private fun ExportDialog(
     onDismiss: () -> Unit,
-    onConfirm: () -> Unit,
+    onConfirm: (dontShowAgain: Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var dontShowAgain by remember { mutableStateOf(false) }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Export Backup") },
@@ -416,10 +500,31 @@ private fun ExportDialog(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    "Backups are not encrypted. Store the exported JSON securely and delete it when finished.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Checkbox(
+                        checked = dontShowAgain,
+                        onCheckedChange = { dontShowAgain = it },
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Don't warn me again",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
             }
         },
         confirmButton = {
-            TextButton(onClick = onConfirm) {
+            TextButton(onClick = { onConfirm(dontShowAgain) }) {
                 Text("Export")
             }
         },

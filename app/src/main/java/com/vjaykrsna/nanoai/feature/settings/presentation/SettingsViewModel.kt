@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai.feature.settings.presentation
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreference
@@ -8,6 +9,8 @@ import com.vjaykrsna.nanoai.core.data.preferences.RetentionPolicy
 import com.vjaykrsna.nanoai.core.data.repository.ApiProviderConfigRepository
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
 import com.vjaykrsna.nanoai.feature.library.domain.ModelDownloadsAndExportUseCase
+import com.vjaykrsna.nanoai.feature.settings.domain.ImportService
+import com.vjaykrsna.nanoai.feature.settings.domain.ImportSummary
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,6 +30,7 @@ class SettingsViewModel
         private val apiProviderConfigRepository: ApiProviderConfigRepository,
         private val modelDownloadsAndExportUseCase: ModelDownloadsAndExportUseCase,
         private val privacyPreferenceStore: PrivacyPreferenceStore,
+        private val importService: ImportService,
     ) : ViewModel() {
         private val _isLoading = MutableStateFlow(false)
         val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -36,6 +40,9 @@ class SettingsViewModel
 
         private val _exportSuccess = MutableSharedFlow<String>()
         val exportSuccess = _exportSuccess.asSharedFlow()
+
+        private val _importSuccess = MutableSharedFlow<ImportSummary>()
+        val importSuccess = _importSuccess.asSharedFlow()
 
         val apiProviders: StateFlow<List<APIProviderConfig>> =
             apiProviderConfigRepository
@@ -117,6 +124,27 @@ class SettingsViewModel
             }
         }
 
+        fun importBackup(uri: Uri) {
+            viewModelScope.launch {
+                _isLoading.value = true
+                try {
+                    val result = importService.importBackup(uri)
+                    result
+                        .onSuccess { summary ->
+                            _importSuccess.emit(summary)
+                        }.onFailure { error ->
+                            _errorEvents.emit(
+                                SettingsError.ImportFailed(error.message ?: "Import failed"),
+                            )
+                        }
+                } catch (e: Exception) {
+                    _errorEvents.emit(SettingsError.UnexpectedError(e.message ?: "Unexpected error"))
+                } finally {
+                    _isLoading.value = false
+                }
+            }
+        }
+
         fun setTelemetryOptIn(optIn: Boolean) {
             viewModelScope.launch {
                 try {
@@ -172,6 +200,10 @@ sealed class SettingsError {
     ) : SettingsError()
 
     data class ExportFailed(
+        val message: String,
+    ) : SettingsError()
+
+    data class ImportFailed(
         val message: String,
     ) : SettingsError()
 

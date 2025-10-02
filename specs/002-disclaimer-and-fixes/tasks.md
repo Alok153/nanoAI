@@ -71,7 +71,7 @@ T005 [X] - Implement first-launch disclaimer UI (non-blocking)
 - Why: Directly implements FR-001.
 - Status Notes (2025-10-01): Added `FirstLaunchDisclaimerViewModel` + dialog composable, integrated into `NavigationScaffold`, and covered with unit + Compose UI tests. New DataStore counter wiring completes consent tracking.
 
-T006 - Settings import handler and validation
+T006 [X] - Settings import handler and validation
 - Description: Implement import endpoint handler in app settings (local import from file) using the `BackupBundle` schema.
 - Actions:
   1. Add `ImportService` in `feature/settings/data/impl` that reads a JSON file, validates schema, and applies personas and API providers via corresponding repositories.
@@ -81,8 +81,9 @@ T006 - Settings import handler and validation
 - Dependencies: T003, T004
 - Parallel: no
 - Why: Implements FR-002 import path from spec.
+ - Status Notes (2025-10-02): Introduced `ImportServiceImpl` with JSON/Base64/ZIP decoding, wired document picker in `SettingsScreen` and success/error snackbars via `SettingsViewModel`, and emitted detailed `ImportSummary` counts for UI messaging.
 
-T007 - Export: use existing export flow and show warnings
+T007 [X] - Export: use existing export flow and show warnings
 - Description: Ensure `ExportDialog` warns about unencrypted backup and uses JSON format; connect to existing export use case in `ModelDownloadsAndExportUseCase` or similar.
 - Actions:
   1. Verify `SettingsScreen` ExportDialog uses Downloads directory safely and shows warning; add `exportWarningsDismissed` toggle to not show again.
@@ -91,6 +92,7 @@ T007 - Export: use existing export flow and show warnings
 - Dependencies: T006
 - Parallel: [P]
 - Why: Completes FR-002 export side.
+ - Status Notes (2025-10-02): Added unencrypted-backup warning with "Don't warn me again" toggle in `SettingsScreen`, persisted preference via `PrivacyPreferenceStore`, ensured exports default to JSON payloads in `ExportServiceImpl`, and covered bundle contents with `ExportServiceImplTest`.
 
 T008 - Sidebar local/cloud toggle wiring
 - Description: Add the Local/Cloud toggle to the sidebar and wire it to `InferenceOrchestrator` so user choice affects inference preference.

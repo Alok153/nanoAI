@@ -50,10 +50,16 @@ class ExportServiceImpl
             outputFile.parentFile?.mkdirs()
 
             val payload = buildExportPayload(personas, apiProviders, chatHistory)
-            ZipOutputStream(outputFile.outputStream().buffered()).use { zip ->
-                zip.putNextEntry(ZipEntry("metadata.json"))
-                zip.write(json.encodeToString(JsonObject.serializer(), payload).encodeToByteArray())
-                zip.closeEntry()
+            val payloadJson = json.encodeToString(JsonObject.serializer(), payload)
+
+            if (outputFile.extension.equals("zip", ignoreCase = true)) {
+                ZipOutputStream(outputFile.outputStream().buffered()).use { zip ->
+                    zip.putNextEntry(ZipEntry("metadata.json"))
+                    zip.write(payloadJson.encodeToByteArray())
+                    zip.closeEntry()
+                }
+            } else {
+                outputFile.writeText(payloadJson)
             }
             return outputFile.absolutePath
         }

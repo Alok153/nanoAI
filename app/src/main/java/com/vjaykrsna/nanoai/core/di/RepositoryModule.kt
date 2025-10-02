@@ -14,6 +14,8 @@ import com.vjaykrsna.nanoai.feature.library.data.export.ExportServiceImpl
 import com.vjaykrsna.nanoai.feature.library.data.impl.DownloadManagerImpl
 import com.vjaykrsna.nanoai.feature.library.data.impl.ModelCatalogRepositoryImpl
 import com.vjaykrsna.nanoai.feature.library.domain.ExportService
+import com.vjaykrsna.nanoai.feature.settings.data.backup.ImportServiceImpl
+import com.vjaykrsna.nanoai.feature.settings.domain.ImportService
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -55,4 +57,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindExportService(impl: ExportServiceImpl): ExportService
+
+    @Binds
+    @Singleton
+    abstract fun bindImportService(impl: ImportServiceImpl): ImportService
 }
