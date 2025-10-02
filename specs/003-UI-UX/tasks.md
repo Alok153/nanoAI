@@ -57,12 +57,12 @@
 - [X] T029 [P] Add macrobenchmark `macrobenchmark/src/main/java/com/vjaykrsna/nanoai/uiux/UiUxStartupBenchmark.kt` asserting cold start <1.5 s, FMP ≤300 ms, interaction latency ≤100 ms.
 
 ## Phase 3.3 Core Implementation (only after tests fail)
-- [ ] T030 [P] Implement `core/domain/model/uiux/UserProfile.kt` with validation, conversion helpers, and Flow mappers to Room/DataStore.
-- [ ] T031 [P] Implement `core/domain/model/uiux/LayoutSnapshot.kt` encapsulating saved layout metadata and mapping helpers.
-- [ ] T032 [P] Implement `core/domain/model/uiux/UIStateSnapshot.kt` modeling expanded panels, recent actions rotation, and mapping helpers.
-- [ ] T033 Create `core/data/db/entities/UserProfileEntity.kt` plus `toDomain`/`fromDomain` conversions with type converters for enums and maps.
-- [ ] T034 Create `core/data/db/entities/LayoutSnapshotEntity.kt` modeling saved layouts with indices for quick lookup.
-- [ ] T035 Create `core/data/db/entities/UIStateSnapshotEntity.kt` persisting session state with foreign keys to `UserProfileEntity`.
+- [X] T030 [P] Implement `core/domain/model/uiux/UserProfile.kt` with validation, conversion helpers, and Flow mappers to Room/DataStore.
+- [X] T031 [P] Implement `core/domain/model/uiux/LayoutSnapshot.kt` encapsulating saved layout metadata and mapping helpers.
+- [X] T032 [P] Implement `core/domain/model/uiux/UIStateSnapshot.kt` modeling expanded panels, recent actions rotation, and mapping helpers.
+- [X] T033 Create `core/data/db/entities/UserProfileEntity.kt` plus `toDomain`/`fromDomain` conversions with type converters for enums and maps.
+- [X] T034 Create `core/data/db/entities/LayoutSnapshotEntity.kt` modeling saved layouts with indices for quick lookup.
+- [X] T035 Create `core/data/db/entities/UIStateSnapshotEntity.kt` persisting session state with foreign keys to `UserProfileEntity`.
 - [ ] T036 Create `core/data/db/daos/UserProfileDao.kt` exposing Flow CRUD, pinned tools updates, and compact mode toggles.
 - [ ] T037 Create `core/data/db/daos/LayoutSnapshotDao.kt` for CRUD, ordering, and pinned tool synchronization.
 - [ ] T038 Create `core/data/db/daos/UIStateSnapshotDao.kt` for session restoration and sidebar collapse persistence.
