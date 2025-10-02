@@ -11,6 +11,7 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.LayoutSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ScreenType
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UIStateSnapshot
+import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferencesSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UserProfile
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
 import kotlinx.coroutines.flow.Flow
@@ -180,6 +181,17 @@ class UserProfileLocalDataSource
         }
 
         /**
+         * Replace dismissed tips with provided snapshot across DataStore and Room.
+         */
+        suspend fun setDismissedTips(
+            userId: String,
+            dismissedTips: Map<String, Boolean>,
+        ) {
+            uiPreferencesStore.setDismissedTips(dismissedTips)
+            userProfileDao.updateDismissedTips(userId, dismissedTips)
+        }
+
+        /**
          * Update compact mode in database.
          *
          * @param userId The unique user identifier
@@ -291,4 +303,9 @@ class UserProfileLocalDataSource
          * @return Current UI preferences from DataStore
          */
         suspend fun getCachedPreferences() = uiPreferencesStore.uiPreferences.first()
+
+        /**
+         * Observe UiPreferences as domain snapshots for repository consumers.
+         */
+        fun observePreferences(): Flow<UiPreferencesSnapshot> = uiPreferencesStore.uiPreferences.map { it.toDomainSnapshot() }
     }

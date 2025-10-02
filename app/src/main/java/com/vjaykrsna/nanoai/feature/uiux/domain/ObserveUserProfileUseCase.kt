@@ -1,0 +1,72 @@
+package com.vjaykrsna.nanoai.feature.uiux.domain
+
+import com.vjaykrsna.nanoai.core.data.repository.UserProfileRepository
+import com.vjaykrsna.nanoai.core.domain.model.uiux.LayoutSnapshot
+import com.vjaykrsna.nanoai.core.domain.model.uiux.UIStateSnapshot
+import com.vjaykrsna.nanoai.core.domain.model.uiux.UserProfile
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+/**
+ * Observes the composed user interface profile merging Room, DataStore, and UI state flows.
+ */
+class ObserveUserProfileUseCase
+    @Inject
+    constructor(
+        private val repository: UserProfileRepository,
+        private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
+    ) {
+        private val scope = CoroutineScope(SupervisorJob() + dispatcher)
+
+        data class Result(
+            val userProfile: UserProfile?,
+            val layoutSnapshots: List<LayoutSnapshot>,
+            val uiState: UIStateSnapshot?,
+            val offline: Boolean,
+            val hydratedFromCache: Boolean,
+        )
+
+        /**
+         * Zero-argument Flow accessor used by contract tests. Defaults to the primary user profile.
+         */
+        val flow: Flow<Result> = invoke()
+
+        operator fun invoke(userId: String = UIUX_DEFAULT_USER_ID): Flow<Result> =
+            callbackFlow {
+                var firstEmission = true
+                val job =
+                    combine(
+                        repository.observeUserProfile(userId),
+                        repository.observeUIStateSnapshot(userId),
+                        repository.observeOfflineStatus(),
+                    ) { profile, uiState, offline ->
+                        Result(
+                            userProfile = profile,
+                            layoutSnapshots = profile?.savedLayouts ?: emptyList(),
+                            uiState = uiState,
+                            offline = offline,
+                            hydratedFromCache = firstEmission,
+                        )
+                    }.onEach { result ->
+                        trySend(result.copy(hydratedFromCache = firstEmission))
+                        if (firstEmission) {
+                            firstEmission = false
+                        }
+                    }.launchIn(this)
+
+                launch { repository.refreshUserProfile(userId) }
+
+                awaitClose { job.cancel() }
+            }.flowOn(dispatcher)
+    }

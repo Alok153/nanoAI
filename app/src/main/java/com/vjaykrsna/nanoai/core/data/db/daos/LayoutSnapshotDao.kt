@@ -200,8 +200,7 @@ interface LayoutSnapshotDao {
         ORDER BY position ASC
         """,
     )
-    suspend fun findLayoutsWithTool(
+    suspend fun findAllLayouts(
         userId: String,
-        toolId: String,
     ): List<LayoutSnapshotEntity>
 }

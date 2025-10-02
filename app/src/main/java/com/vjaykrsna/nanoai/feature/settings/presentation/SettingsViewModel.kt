@@ -8,9 +8,13 @@ import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreferenceStore
 import com.vjaykrsna.nanoai.core.data.preferences.RetentionPolicy
 import com.vjaykrsna.nanoai.core.data.repository.ApiProviderConfigRepository
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.feature.library.domain.ModelDownloadsAndExportUseCase
 import com.vjaykrsna.nanoai.feature.settings.domain.ImportService
 import com.vjaykrsna.nanoai.feature.settings.domain.ImportSummary
+import com.vjaykrsna.nanoai.feature.uiux.domain.ObserveUserProfileUseCase
+import com.vjaykrsna.nanoai.feature.uiux.domain.ToggleCompactModeUseCase
+import com.vjaykrsna.nanoai.feature.uiux.domain.UpdateThemePreferenceUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,7 +22,10 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import javax.inject.Inject
@@ -31,6 +38,9 @@ class SettingsViewModel
         private val modelDownloadsAndExportUseCase: ModelDownloadsAndExportUseCase,
         private val privacyPreferenceStore: PrivacyPreferenceStore,
         private val importService: ImportService,
+        private val observeUserProfileUseCase: ObserveUserProfileUseCase,
+        private val updateThemePreferenceUseCase: UpdateThemePreferenceUseCase,
+        private val toggleCompactModeUseCase: ToggleCompactModeUseCase,
     ) : ViewModel() {
         private val _isLoading = MutableStateFlow(false)
         val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -43,6 +53,10 @@ class SettingsViewModel
 
         private val _importSuccess = MutableSharedFlow<ImportSummary>()
         val importSuccess = _importSuccess.asSharedFlow()
+
+        private val _uiUxState = MutableStateFlow(SettingsUiUxState())
+        val uiUxState: StateFlow<SettingsUiUxState> = _uiUxState.asStateFlow()
+        private var previousUiUxState: SettingsUiUxState? = null
 
         val apiProviders: StateFlow<List<APIProviderConfig>> =
             apiProviderConfigRepository
@@ -62,6 +76,20 @@ class SettingsViewModel
                         retentionPolicy = RetentionPolicy.INDEFINITE,
                     ),
                 )
+
+        init {
+            observeUserProfileUseCase.flow
+                .onEach { result ->
+                    val profile = result.userProfile
+                    _uiUxState.update { current ->
+                        current.copy(
+                            themePreference = profile?.themePreference ?: ThemePreference.SYSTEM,
+                            compactModeEnabled = profile?.compactMode ?: false,
+                            undoAvailable = previousUiUxState != null,
+                        )
+                    }
+                }.launchIn(viewModelScope)
+        }
 
         fun addApiProvider(config: APIProviderConfig) {
             viewModelScope.launch {
@@ -184,6 +212,44 @@ class SettingsViewModel
                 }
             }
         }
+
+        fun setThemePreference(themePreference: ThemePreference) {
+            previousUiUxState = _uiUxState.value
+            _uiUxState.update {
+                it.copy(
+                    themePreference = themePreference,
+                    undoAvailable = true,
+                    statusMessage = "Theme updated",
+                )
+            }
+            viewModelScope.launch {
+                updateThemePreferenceUseCase.updateTheme(themePreference)
+            }
+        }
+
+        fun setCompactMode(enabled: Boolean) {
+            previousUiUxState = _uiUxState.value
+            _uiUxState.update {
+                it.copy(
+                    compactModeEnabled = enabled,
+                    undoAvailable = true,
+                    statusMessage = if (enabled) "Compact mode enabled" else "Compact mode disabled",
+                )
+            }
+            viewModelScope.launch {
+                toggleCompactModeUseCase.toggle(enabled)
+            }
+        }
+
+        fun undoUiPreferenceChange() {
+            val previous = previousUiUxState ?: return
+            _uiUxState.value = previous.copy(undoAvailable = false, statusMessage = "Preferences restored")
+            previousUiUxState = null
+            viewModelScope.launch {
+                updateThemePreferenceUseCase.updateTheme(previous.themePreference)
+                toggleCompactModeUseCase.toggle(previous.compactModeEnabled)
+            }
+        }
     }
 
 sealed class SettingsError {
@@ -215,3 +281,10 @@ sealed class SettingsError {
         val message: String,
     ) : SettingsError()
 }
+
+data class SettingsUiUxState(
+    val themePreference: ThemePreference = ThemePreference.SYSTEM,
+    val compactModeEnabled: Boolean = false,
+    val undoAvailable: Boolean = false,
+    val statusMessage: String? = null,
+)

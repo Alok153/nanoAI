@@ -7,6 +7,7 @@ import com.vjaykrsna.nanoai.core.data.repository.InferencePreferenceRepository
 import com.vjaykrsna.nanoai.core.domain.model.ChatThread
 import com.vjaykrsna.nanoai.core.domain.model.InferencePreference
 import com.vjaykrsna.nanoai.core.model.InferenceMode
+import com.vjaykrsna.nanoai.feature.uiux.domain.ObserveUserProfileUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,6 +16,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -26,6 +29,7 @@ class SidebarViewModel
     constructor(
         private val conversationRepository: ConversationRepository,
         private val inferencePreferenceRepository: InferencePreferenceRepository,
+        private val observeUserProfileUseCase: ObserveUserProfileUseCase,
     ) : ViewModel() {
         private val _searchQuery = MutableStateFlow("")
         val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
@@ -38,6 +42,15 @@ class SidebarViewModel
 
         private val _errorEvents = MutableSharedFlow<SidebarError>()
         val errorEvents = _errorEvents.asSharedFlow()
+
+        private val _drawerOpen = MutableStateFlow(false)
+        val drawerOpen: StateFlow<Boolean> = _drawerOpen.asStateFlow()
+
+        private val _pinnedTools = MutableStateFlow<List<String>>(emptyList())
+        val pinnedTools: StateFlow<List<String>> = _pinnedTools.asStateFlow()
+
+        private val _navigationEvents = MutableSharedFlow<String>(extraBufferCapacity = 1)
+        val navigationEvents = _navigationEvents.asSharedFlow()
 
         private val allThreadsFlow = conversationRepository.getAllThreadsFlow()
 
@@ -83,6 +96,14 @@ class SidebarViewModel
                             }
                         }.sortedByDescending { it.updatedAt }
                 }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+        init {
+            observeUserProfileUseCase.flow
+                .onEach { result ->
+                    val pinned = result.userProfile?.pinnedTools ?: emptyList()
+                    _pinnedTools.value = pinned
+                }.launchIn(viewModelScope)
+        }
 
         fun setSearchQuery(query: String) {
             _searchQuery.value = query
@@ -139,6 +160,22 @@ class SidebarViewModel
                     _errorEvents.emit(SidebarError.PreferenceUpdateFailed(e.message ?: "Failed to update inference preference"))
                 }
             }
+        }
+
+        fun openDrawer() {
+            _drawerOpen.value = true
+        }
+
+        fun closeDrawer() {
+            _drawerOpen.value = false
+        }
+
+        fun emitNavigation(route: String) {
+            _navigationEvents.tryEmit(route)
+        }
+
+        fun reorderPinnedTools(order: List<String>) {
+            _pinnedTools.value = order
         }
     }
 

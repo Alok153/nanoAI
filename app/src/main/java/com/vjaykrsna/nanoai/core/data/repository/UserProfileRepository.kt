@@ -21,6 +21,12 @@ interface UserProfileRepository {
     fun observeUserProfile(userId: String): Flow<UserProfile?>
 
     /**
+     * Observe current offline status for the active user session.
+     * True indicates the app should present offline affordances.
+     */
+    fun observeOfflineStatus(): Flow<Boolean>
+
+    /**
      * Get the current user profile in a one-shot call. Returns null if not found.
      */
     suspend fun getUserProfile(userId: String): UserProfile?
@@ -56,6 +62,14 @@ interface UserProfileRepository {
     )
 
     /**
+     * Update compact mode preference (and persisted visual density) for the user.
+     */
+    suspend fun updateCompactMode(
+        userId: String,
+        enabled: Boolean,
+    )
+
+    /**
      * Update pinned tools list (ordering enforced by repository).
      */
     suspend fun updatePinnedTools(
@@ -86,4 +100,18 @@ interface UserProfileRepository {
      * Sync local profile to remote (best-effort). Returns true if sync succeeded.
      */
     suspend fun syncToRemote(userId: String): Boolean
+
+    /**
+     * Explicitly refresh the user profile from remote and persist results.
+     * Returns true when fresh data was saved successfully.
+     */
+    suspend fun refreshUserProfile(
+        userId: String,
+        force: Boolean = false,
+    ): Boolean
+
+    /**
+     * Debug/override hook for instrumentation tests to emulate offline mode.
+     */
+    suspend fun setOfflineOverride(isOffline: Boolean)
 }

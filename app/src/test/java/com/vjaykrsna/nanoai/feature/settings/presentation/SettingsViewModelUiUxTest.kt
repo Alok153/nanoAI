@@ -1,7 +1,9 @@
 package com.vjaykrsna.nanoai.feature.settings.presentation
 
+import com.google.common.truth.Truth.assertThat
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import kotlin.test.Test
-import kotlin.test.fail
+import kotlin.test.assertNotNull
 
 /**
  * UI/UX-focused contract test for SettingsViewModel additions introduced in the
@@ -14,20 +16,13 @@ import kotlin.test.fail
 class SettingsViewModelUiUxTest {
     @Test
     fun settingsViewModel_providesThemeTogglePersistenceHook() {
-        val toggleMethod =
+        val themeMethod =
             SettingsViewModel::class.java.methods.firstOrNull { method ->
                 method.name.contains("Theme", ignoreCase = true) &&
-                    method.parameterTypes.any { it == Boolean::class.java || it == java.lang.Boolean::class.java }
+                    method.parameterTypes.firstOrNull() == ThemePreference::class.java
             }
-                ?: fail(
-                    "T022: Extend SettingsViewModel with a theme toggle API that persists the user's selection.",
-                )
-
-        if (!toggleMethod.returnType.name.contains("Unit")) {
-            fail("T022: Theme toggle handler should return Unit and drive asynchronous persistence work.")
-        }
-
-        fail("T022: Persist theme toggles and notify UI observers before removing this sentinel failure.")
+        assertNotNull(themeMethod)
+        assertThat(themeMethod!!.returnType).isEqualTo(Void.TYPE)
     }
 
     @Test
@@ -37,22 +32,15 @@ class SettingsViewModelUiUxTest {
                 method.name.contains("Density", ignoreCase = true) ||
                     method.name.contains("Compact", ignoreCase = true)
             }
-                ?: fail("T022: Add a visual density toggle (default/compact) API to SettingsViewModel.")
+        assertNotNull(densityMethod)
 
         val undoMethod =
             SettingsViewModel::class.java.methods.firstOrNull { method ->
                 method.name.contains("Undo", ignoreCase = true)
             }
-                ?: fail("T022: Provide an undo affordance API on SettingsViewModel for reversible UI changes.")
+        assertNotNull(undoMethod)
 
-        if (!densityMethod.returnType.name.contains("Unit")) {
-            fail("T022: Density toggle handler should return Unit and emit state changes asynchronously.")
-        }
-
-        if (!undoMethod.returnType.name.contains("Unit")) {
-            fail("T022: Undo handler should return Unit and trigger state rollback events.")
-        }
-
-        fail("T022: Wire density toggles, undo interactions, and related state flows before removing this sentinel failure.")
+        assertThat(densityMethod!!.returnType).isEqualTo(Void.TYPE)
+        assertThat(undoMethod!!.returnType).isEqualTo(Void.TYPE)
     }
 }

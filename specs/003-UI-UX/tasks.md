@@ -75,24 +75,24 @@
 - [X] T045 Implement `.../feature/uiux/data/UserProfileLocalDataSource.kt` coordinating DAO + DataStore updates and cache hydration.
 - [X] T046 Define `core/data/repository/UserProfileRepository.kt` interface covering observe/update theme, onboarding, pinned tools, and layout snapshots.
 - [X] T047 Implement `core/data/repository/impl/UserProfileRepositoryImpl.kt` merging remote/local sources, ensuring offline-first behavior, and exposing Flow APIs.
-- [ ] T048 [P] Implement `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/domain/ObserveUserProfileUseCase.kt` wiring repository Flow into UI state mediator with error handling.
-- [ ] T049 [P] Implement `.../UpdateThemePreferenceUseCase.kt` orchestrating DataStore writes and repository refresh triggers.
-- [ ] T050 [P] Implement `.../RecordOnboardingProgressUseCase.kt` persisting dismissed tooltips and onboarding completion flag.
-- [ ] T051 [P] Implement `.../ToggleCompactModeUseCase.kt` flipping density preference and syncing with layout snapshots.
-- [ ] T052 [P] Implement `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/presentation/WelcomeViewModel.kt` coordinating onboarding, CTA navigation events, and analytics hooks.
-- [ ] T053 [P] Implement `.../presentation/HomeViewModel.kt` combining recommended actions, offline banner state, and tooltip surfacing from repository + connectivity provider.
-- [ ] T054 Extend `app/src/main/java/com/vjaykrsna/nanoai/feature/settings/presentation/SettingsViewModel.kt` to use UI preference use cases, expose theme/density toggles, and provide undo operations.
-- [ ] T055 Extend `app/src/main/java/com/vjaykrsna/nanoai/feature/sidebar/presentation/SidebarViewModel.kt` with DrawerState, pinned tool ordering, and navigation intents for new sidebar contracts.
-- [ ] T056 [P] Build `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/WelcomeScreen.kt` Compose screen implementing hero layout, CTA buttons, skip inline link, and tooltip entry points.
-- [ ] T057 [P] Build `.../feature/uiux/ui/HomeScreen.kt` Compose screen with single-column feed, recommended action cards, skeleton loaders, and collapsible tools rail.
-- [ ] T058 [P] Build `app/src/main/java/com/vjaykrsna/nanoai/feature/sidebar/ui/SidebarDrawer.kt` Compose drawer handling breakpoint-specific behavior and accessibility semantics.
-- [ ] T059 Update `app/src/main/java/com/vjaykrsna/nanoai/ui/navigation/Screen.kt` and `NavigationScaffold.kt` to register welcome/home routes, manage DrawerState, and inject ViewModels via Hilt.
-- [ ] T060 [P] Create `app/src/main/java/com/vjaykrsna/nanoai/ui/components/ThemeToggle.kt` implementing manual/system toggle, animations, and semantics per contract.
-- [ ] T061 [P] Create `.../ui/components/OfflineBanner.kt` exposing status messaging, retry callback, and queue indicator.
-- [ ] T062 [P] Create `.../ui/components/OnboardingTooltip.kt` providing dismiss + "don't show again" behavior with Compose semantics.
-- [ ] T063 [P] Create `.../ui/components/PrimaryActionCard.kt` for recommended actions with iconography, semantics, and haptic feedback hooks.
-- [ ] T064 Update `app/src/main/java/com/vjaykrsna/nanoai/ui/theme/Color.kt`, `Theme.kt`, and `Type.kt` to define Material 3 tokens, spacing, elevation, and dynamic color fallbacks aligned with research.md budgets.
-- [ ] T065 Update `app/src/main/java/com/vjaykrsna/nanoai/MainActivity.kt` to observe theme preference flows, gate welcome vs home navigation, and surface skeleton state while caches hydrate.
+- [X] T048 [P] Implement `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/domain/ObserveUserProfileUseCase.kt` wiring repository Flow into UI state mediator with error handling.
+- [X] T049 [P] Implement `.../UpdateThemePreferenceUseCase.kt` orchestrating DataStore writes and repository refresh triggers.
+- [X] T050 [P] Implement `.../RecordOnboardingProgressUseCase.kt` persisting dismissed tooltips and onboarding completion flag.
+- [X] T051 [P] Implement `.../ToggleCompactModeUseCase.kt` flipping density preference and syncing with layout snapshots.
+- [X] T052 [P] Implement `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/presentation/WelcomeViewModel.kt` coordinating onboarding, CTA navigation events, and analytics hooks.
+- [X] T053 [P] Implement `.../presentation/HomeViewModel.kt` combining recommended actions, offline banner state, and tooltip surfacing from repository + connectivity provider.
+- [X] T054 Extend `app/src/main/java/com/vjaykrsna/nanoai/feature/settings/presentation/SettingsViewModel.kt` to use UI preference use cases, expose theme/density toggles, and provide undo operations.
+- [X] T055 Extend `app/src/main/java/com/vjaykrsna/nanoai/feature/sidebar/presentation/SidebarViewModel.kt` with DrawerState, pinned tool ordering, and navigation intents for new sidebar contracts.
+- [X] T056 [P] Build `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/WelcomeScreen.kt` Compose screen implementing hero layout, CTA buttons, skip inline link, and tooltip entry points.
+- [X] T057 [P] Build `.../feature/uiux/ui/HomeScreen.kt` Compose screen with single-column feed, recommended action cards, skeleton loaders, and collapsible tools rail.
+- [X] T058 [P] Build `app/src/main/java/com/vjaykrsna/nanoai/feature/sidebar/ui/SidebarDrawer.kt` Compose drawer handling breakpoint-specific behavior and accessibility semantics.
+- [X] T059 Update `app/src/main/java/com/vjaykrsna/nanoai/ui/navigation/Screen.kt` and `NavigationScaffold.kt` to register welcome/home routes, manage DrawerState, and inject ViewModels via Hilt.
+- [X] T060 [P] Create `app/src/main/java/com/vjaykrsna/nanoai/ui/components/ThemeToggle.kt` implementing manual/system toggle, animations, and semantics per contract.
+- [X] T061 [P] Create `.../ui/components/OfflineBanner.kt` exposing status messaging, retry callback, and queue indicator.
+- [X] T062 [P] Create `.../ui/components/OnboardingTooltip.kt` providing dismiss + "don't show again" behavior with Compose semantics.
+- [X] T063 [P] Create `.../ui/components/PrimaryActionCard.kt` for recommended actions with iconography, semantics, and haptic feedback hooks.
+- [X] T064 Update `app/src/main/java/com/vjaykrsna/nanoai/ui/theme/Color.kt`, `Theme.kt`, and `Type.kt` to define Material 3 tokens, spacing, elevation, and dynamic color fallbacks aligned with research.md budgets.
+- [X] T065 Update `app/src/main/java/com/vjaykrsna/nanoai/MainActivity.kt` to observe theme preference flows, gate welcome vs home navigation, and surface skeleton state while caches hydrate.
 
 ## Phase 3.4 Integration
 - [ ] T066 Update `app/src/main/java/com/vjaykrsna/nanoai/core/di/DatabaseModule.kt` to provide new DAOs and migrate schema version for UserProfile/UI state tables.

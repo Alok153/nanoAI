@@ -42,17 +42,20 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -66,6 +69,12 @@ import com.vjaykrsna.nanoai.feature.settings.presentation.FirstLaunchDisclaimerV
 import com.vjaykrsna.nanoai.feature.settings.ui.FirstLaunchDisclaimerDialog
 import com.vjaykrsna.nanoai.feature.settings.ui.SettingsScreen
 import com.vjaykrsna.nanoai.feature.sidebar.presentation.SidebarViewModel
+import com.vjaykrsna.nanoai.feature.uiux.presentation.AppUiState
+import com.vjaykrsna.nanoai.feature.uiux.presentation.HomeViewModel
+import com.vjaykrsna.nanoai.feature.uiux.presentation.WelcomeViewModel
+import com.vjaykrsna.nanoai.feature.uiux.ui.HomeScreen
+import com.vjaykrsna.nanoai.feature.uiux.ui.SidebarDrawer
+import com.vjaykrsna.nanoai.feature.uiux.ui.WelcomeScreen
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -73,6 +82,7 @@ import kotlinx.datetime.toLocalDateTime
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NavigationScaffold(
+    appState: AppUiState = AppUiState(),
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
     sidebarViewModel: SidebarViewModel = hiltViewModel(),
@@ -82,12 +92,42 @@ fun NavigationScaffold(
     val scope = rememberCoroutineScope()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+    val isWelcomeRoute = currentRoute == Screen.Welcome.route
 
     val threads by sidebarViewModel.threads.collectAsState()
     val searchQuery by sidebarViewModel.searchQuery.collectAsState()
     val showArchived by sidebarViewModel.showArchived.collectAsState()
     val inferencePreference by sidebarViewModel.inferencePreference.collectAsState()
+    val pinnedTools by sidebarViewModel.pinnedTools.collectAsState()
     val disclaimerUiState by disclaimerViewModel.uiState.collectAsState()
+
+    LaunchedEffect(appState.shouldShowWelcome, currentRoute) {
+        if (navBackStackEntry == null) return@LaunchedEffect
+        when {
+            appState.shouldShowWelcome && currentRoute != Screen.Welcome.route -> {
+                navController.navigate(Screen.Welcome.route) {
+                    popUpTo(Screen.Home.route)
+                    launchSingleTop = true
+                }
+                sidebarViewModel.emitNavigation(Screen.Welcome.route)
+            }
+            !appState.shouldShowWelcome && currentRoute == Screen.Welcome.route -> {
+                navController.navigate(Screen.Home.route) {
+                    popUpTo(Screen.Welcome.route) {
+                        inclusive = true
+                    }
+                    launchSingleTop = true
+                }
+                sidebarViewModel.emitNavigation(Screen.Home.route)
+            }
+        }
+    }
+
+    LaunchedEffect(isWelcomeRoute) {
+        if (isWelcomeRoute && drawerState.isOpen) {
+            drawerState.close()
+        }
+    }
 
     // Handle back button when drawer is open
     BackHandler(enabled = drawerState.isOpen) {
@@ -96,6 +136,7 @@ fun NavigationScaffold(
 
     ModalNavigationDrawer(
         drawerState = drawerState,
+        gesturesEnabled = !isWelcomeRoute,
         drawerContent = {
             ModalDrawerSheet(
                 modifier =
@@ -124,6 +165,23 @@ fun NavigationScaffold(
                         navController.navigate(Screen.Chat.route)
                         scope.launch { drawerState.close() }
                     },
+                    pinnedTools = pinnedTools,
+                    onNavigateHome = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Home.route) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                        sidebarViewModel.emitNavigation(Screen.Home.route)
+                        scope.launch { drawerState.close() }
+                    },
+                    onNavigateSettings = {
+                        navController.navigate(Screen.Settings.route)
+                        sidebarViewModel.emitNavigation(Screen.Settings.route)
+                        scope.launch { drawerState.close() }
+                    },
                     modifier = Modifier.fillMaxHeight(),
                 )
             }
@@ -138,59 +196,123 @@ fun NavigationScaffold(
 
         Scaffold(
             topBar = {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text =
-                                when (currentRoute) {
-                                    Screen.Chat.route -> "Chat"
-                                    Screen.ModelLibrary.route -> "Model Library"
-                                    Screen.Settings.route -> "Settings"
-                                    else -> "nanoAI"
+                if (!isWelcomeRoute) {
+                    TopAppBar(
+                        title = {
+                            Text(
+                                text =
+                                    when (currentRoute) {
+                                        Screen.Home.route -> "Home"
+                                        Screen.Chat.route -> "Chat"
+                                        Screen.ModelLibrary.route -> "Model Library"
+                                        Screen.Settings.route -> "Settings"
+                                        else -> "nanoAI"
+                                    },
+                            )
+                        },
+                        navigationIcon = {
+                            IconButton(
+                                onClick = {
+                                    scope.launch {
+                                        if (drawerState.isClosed) drawerState.open() else drawerState.close()
+                                    }
                                 },
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(
-                            onClick = {
-                                scope.launch {
-                                    if (drawerState.isClosed) drawerState.open() else drawerState.close()
-                                }
-                            },
-                            modifier =
-                                Modifier.semantics {
-                                    contentDescription = "Toggle navigation drawer"
-                                },
-                        ) {
-                            Icon(Icons.Default.Menu, "Menu")
-                        }
-                    },
-                    colors =
-                        TopAppBarDefaults.topAppBarColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        ),
-                )
+                                modifier =
+                                    Modifier.semantics {
+                                        contentDescription = "Open navigation drawer"
+                                    },
+                            ) {
+                                Icon(Icons.Default.Menu, "Menu")
+                            }
+                        },
+                        colors =
+                            TopAppBarDefaults.topAppBarColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            ),
+                    )
+                }
             },
             bottomBar = {
-                BottomNavigationBar(
-                    currentRoute = currentRoute,
-                    onNavigate = { route ->
-                        navController.navigate(route) {
-                            popUpTo(navController.graph.startDestinationId) {
-                                saveState = true
+                if (!isWelcomeRoute) {
+                    BottomNavigationBar(
+                        currentRoute = currentRoute,
+                        onNavigate = { route ->
+                            navController.navigate(route) {
+                                popUpTo(Screen.Home.route) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
                             }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    },
-                )
+                        },
+                    )
+                }
             },
         ) { innerPadding ->
             NavHost(
                 navController = navController,
-                startDestination = Screen.Chat.route,
+                startDestination = Screen.Home.route,
                 modifier = Modifier.padding(innerPadding),
             ) {
+                composable(Screen.Welcome.route) { entry ->
+                    val welcomeViewModel: WelcomeViewModel = hiltViewModel(entry)
+                    val state by welcomeViewModel.uiState.collectAsStateWithLifecycle()
+
+                    WelcomeScreen(
+                        state = state,
+                        onGetStarted = {
+                            welcomeViewModel.onGetStarted()
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(Screen.Welcome.route) {
+                                    inclusive = true
+                                }
+                                launchSingleTop = true
+                            }
+                            sidebarViewModel.emitNavigation(Screen.Home.route)
+                        },
+                        onExplore = {
+                            welcomeViewModel.onExploreFeatures()
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(Screen.Welcome.route) {
+                                    inclusive = true
+                                }
+                                launchSingleTop = true
+                            }
+                            sidebarViewModel.emitNavigation(Screen.Home.route)
+                        },
+                        onSkip = {
+                            welcomeViewModel.onSkip()
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(Screen.Welcome.route) {
+                                    inclusive = true
+                                }
+                                launchSingleTop = true
+                            }
+                            sidebarViewModel.emitNavigation(Screen.Home.route)
+                        },
+                        onTooltipHelp = welcomeViewModel::onTooltipHelp,
+                        onTooltipDismiss = welcomeViewModel::onTooltipDismiss,
+                        onTooltipDontShow = welcomeViewModel::onTooltipDontShowAgain,
+                    )
+                }
+                composable(Screen.Home.route) { entry ->
+                    val homeViewModel: HomeViewModel = hiltViewModel(entry)
+                    val state by homeViewModel.uiState.collectAsStateWithLifecycle()
+
+                    LaunchedEffect(Unit) {
+                        sidebarViewModel.emitNavigation(Screen.Home.route)
+                    }
+
+                    HomeScreen(
+                        state = state,
+                        onToggleTools = homeViewModel::toggleToolsExpanded,
+                        onActionClick = homeViewModel::onRecentAction,
+                        onTooltipDismiss = homeViewModel::dismissTooltip,
+                        onTooltipHelp = homeViewModel::onTooltipHelp,
+                        onTooltipDontShow = homeViewModel::dontShowTooltipAgain,
+                        onRetryOffline = homeViewModel::retryPendingActions,
+                    )
+                }
                 composable(Screen.Chat.route) {
                     ChatScreen()
                 }
@@ -218,82 +340,95 @@ private fun SidebarContent(
     onArchiveThread: (java.util.UUID) -> Unit,
     onDeleteThread: (java.util.UUID) -> Unit,
     onNewThread: () -> Unit,
+    pinnedTools: List<String>,
+    onNavigateHome: () -> Unit,
+    onNavigateSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier.padding(16.dp)) {
-        // Header
-        Row(
+    Column(modifier = modifier.fillMaxHeight().testTag("sidebar_drawer_container")) {
+        SidebarDrawer(
+            pinnedTools = pinnedTools,
+            onNavigateSettings = onNavigateSettings,
+            onNavigateHome = onNavigateHome,
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = "Conversations",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-            )
-            IconButton(
-                onClick = onNewThread,
-                modifier =
-                    Modifier.semantics {
-                        contentDescription = "Create new conversation"
-                    },
-            ) {
-                Icon(Icons.Default.Add, "New")
-            }
-        }
+        )
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Search field
-        androidx.compose.material3.TextField(
-            value = searchQuery,
-            onValueChange = onSearchQueryChanged,
-            placeholder = { Text("Search conversations...") },
-            leadingIcon = { Icon(Icons.Default.Search, "Search") },
+        Column(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .semantics { contentDescription = "Search conversations" },
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Archive toggle
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
+                    .padding(horizontal = 16.dp),
         ) {
-            Text(
-                text = if (showArchived) "Archived" else "Active",
-                style = MaterialTheme.typography.titleMedium,
-            )
-            AssistChip(
-                onClick = onToggleArchived,
-                label = { Text(if (showArchived) "Show Active" else "Show Archived") },
-                leadingIcon = { Icon(Icons.Default.Delete, null) },
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = "Conversations",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                )
+                IconButton(
+                    onClick = onNewThread,
+                    modifier =
+                        Modifier.semantics {
+                            contentDescription = "Create new conversation"
+                        },
+                ) {
+                    Icon(Icons.Default.Add, "New")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            androidx.compose.material3.TextField(
+                value = searchQuery,
+                onValueChange = onSearchQueryChanged,
+                placeholder = { Text("Search conversations...") },
+                leadingIcon = { Icon(Icons.Default.Search, "Search") },
                 modifier =
-                    Modifier.semantics {
-                        contentDescription = "Toggle archived conversations"
-                    },
+                    Modifier
+                        .fillMaxWidth()
+                        .semantics { contentDescription = "Search conversations" },
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = if (showArchived) "Archived" else "Active",
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                AssistChip(
+                    onClick = onToggleArchived,
+                    label = { Text(if (showArchived) "Show Active" else "Show Archived") },
+                    leadingIcon = { Icon(Icons.Default.Delete, null) },
+                    modifier =
+                        Modifier.semantics {
+                            contentDescription = "Toggle archived conversations"
+                        },
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            InferencePreferenceToggleRow(
+                inferenceMode = inferenceMode,
+                onInferenceModeChanged = onInferenceModeChanged,
+                modifier = Modifier.fillMaxWidth(),
             )
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
-
-        InferencePreferenceToggleRow(
-            inferenceMode = inferenceMode,
-            onInferenceModeChanged = onInferenceModeChanged,
-            modifier = Modifier.fillMaxWidth(),
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Thread list
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(bottom = 8.dp),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 8.dp),
             modifier =
                 Modifier
                     .weight(1f)
