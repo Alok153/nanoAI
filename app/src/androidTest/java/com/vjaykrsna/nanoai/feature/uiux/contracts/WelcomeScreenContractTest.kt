@@ -22,27 +22,30 @@ import org.junit.runner.RunWith
 @LargeTest
 @RunWith(AndroidJUnit4::class)
 class WelcomeScreenContractTest {
-
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     @Test
     fun welcomeScreen_displaysHeroMessage_andPrimaryCtas() {
-        composeRule.onNodeWithTag("welcome_hero_title")
+        composeRule
+            .onNodeWithTag("welcome_hero_title")
             .assertIsDisplayed()
 
-        composeRule.onNodeWithTag("welcome_cta_get_started")
+        composeRule
+            .onNodeWithTag("welcome_cta_get_started")
             .assertIsDisplayed()
             .assertHasClickAction()
 
-        composeRule.onNodeWithTag("welcome_cta_explore")
+        composeRule
+            .onNodeWithTag("welcome_cta_explore")
             .assertIsDisplayed()
             .assertHasClickAction()
     }
 
     @Test
     fun welcomeScreen_offersSkipControlWithinSemantics() {
-        composeRule.onNodeWithTag("welcome_skip")
+        composeRule
+            .onNodeWithTag("welcome_skip")
             .assertIsDisplayed()
             .assertHasClickAction()
     }

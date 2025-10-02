@@ -18,26 +18,29 @@ import org.junit.runner.RunWith
 @LargeTest
 @RunWith(AndroidJUnit4::class)
 class SettingsScreenContractTest {
-
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     @Test
     fun settingsScreen_displaysGroupedCards_withInlineHelp() {
-        composeRule.onNodeWithTag("settings_group_theme")
+        composeRule
+            .onNodeWithTag("settings_group_theme")
             .assertIsDisplayed()
 
-        composeRule.onNodeWithTag("settings_group_preferences")
+        composeRule
+            .onNodeWithTag("settings_group_preferences")
             .assertIsDisplayed()
 
-        composeRule.onNodeWithTag("settings_inline_help_button")
+        composeRule
+            .onNodeWithTag("settings_inline_help_button")
             .assertIsDisplayed()
             .assertHasClickAction()
     }
 
     @Test
     fun settingsScreen_offersUndoAffordance_forChanges() {
-        composeRule.onNodeWithTag("settings_undo_button")
+        composeRule
+            .onNodeWithTag("settings_undo_button")
             .assertIsDisplayed()
             .assertHasClickAction()
     }

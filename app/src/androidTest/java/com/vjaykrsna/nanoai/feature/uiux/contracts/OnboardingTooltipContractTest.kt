@@ -12,40 +12,39 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Contract test for the Home screen. Captures FR-002 requirements around layout, ordering,
- * and collapsible tools rail behavior. Assertions currently fail until the new UI exists.
+ * Contract test for the contextual onboarding tooltip (FR-013).
+ * Validates dismiss, "Don't show again", and Help re-entry semantics.
+ *
+ * The assertions fail until the tooltip component wires the required semantics.
  */
 @LargeTest
 @RunWith(AndroidJUnit4::class)
-class HomeScreenContractTest {
+class OnboardingTooltipContractTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     @Test
-    fun homeScreen_rendersSingleColumnFeed_withRecentActions() {
+    fun onboardingTooltip_exposesDismissAndDontShowAgain() {
         composeRule
-            .onNodeWithTag("home_single_column_feed")
+            .onNodeWithTag("onboarding_tooltip_container")
             .assertIsDisplayed()
 
         composeRule
-            .onNodeWithTag("home_recent_actions_header")
+            .onNodeWithTag("onboarding_tooltip_dismiss")
             .assertIsDisplayed()
+            .assertHasClickAction()
 
         composeRule
-            .onNodeWithTag("home_recent_action_0")
+            .onNodeWithTag("onboarding_tooltip_dont_show_again")
             .assertIsDisplayed()
             .assertHasClickAction()
     }
 
     @Test
-    fun homeScreen_collapsibleToolsPanel_startsCollapsed() {
+    fun onboardingTooltip_helpEntry_isReachable() {
         composeRule
-            .onNodeWithTag("home_tools_toggle")
+            .onNodeWithTag("onboarding_tooltip_help_entry")
             .assertIsDisplayed()
             .assertHasClickAction()
-
-        composeRule
-            .onNodeWithTag("home_tools_panel_collapsed")
-            .assertIsDisplayed()
     }
 }

@@ -157,8 +157,7 @@ class ExportServiceImplTest {
 
     @Suppress("ktlint:standard:function-expression-body")
     private class FakeConversationRepository : ConversationRepository {
-        override suspend fun getThread(threadId: UUID): ChatThread? =
-            throw UnsupportedOperationException("Not required for test")
+        override suspend fun getThread(threadId: UUID): ChatThread? = throw UnsupportedOperationException("Not required for test")
 
         override suspend fun getAllThreads(): List<ChatThread> = emptyList()
 

@@ -30,31 +30,31 @@
 - [X] T004 Extend `config/detekt/detekt.yml` to enable Compose-specific rules, accessibility checks, and include `feature/uiux`, `ui/components`, and new DAO packages in analysis.
 
 ## Phase 3.2 Tests First (TDD) ⚠️ Complete before any implementation
-- [ ] T005 [P] Author failing `/user/profile` contract test at `app/src/test/java/com/vjaykrsna/nanoai/feature/uiux/contracts/UserProfileContractTest.kt` validating `contracts/openapi.yaml` schema with MockWebServer + Kotlin Serialization.
-- [ ] T006 [P] Add Compose contract test `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/contracts/WelcomeScreenContractTest.kt` covering hero copy, CTA semantics, and skip control per `ui_contracts.md`.
-- [ ] T007 [P] Add Compose contract test `.../feature/uiux/contracts/HomeScreenContractTest.kt` asserting single-column layout, recent-actions ordering, and collapsed tools behavior.
-- [ ] T008 [P] Add Compose contract test `.../feature/uiux/contracts/SidebarContractTest.kt` verifying DrawerState accessibility, keyboard navigation, and deep-link slotting.
-- [ ] T009 [P] Add Compose contract test `.../feature/uiux/contracts/SettingsScreenContractTest.kt` validating grouped settings cards, inline help, and undo affordances.
-- [ ] T010 [P] Add Compose contract test `.../feature/uiux/contracts/ThemeToggleContractTest.kt` ensuring instant theme switch, semantics, and persistence intents.
-- [ ] T011 [P] Add Compose contract test `.../feature/uiux/contracts/OfflineBannerContractTest.kt` covering offline messaging, disabled actions, and retry hook.
-- [ ] T012 [P] Add Compose contract test `.../feature/uiux/contracts/OnboardingTooltipContractTest.kt` verifying dismiss + "Don't show again" semantics and HELP re-entry.
-- [ ] T013 [P] Create unit test `app/src/test/java/com/vjaykrsna/nanoai/feature/uiux/domain/UserProfileModelTest.kt` enforcing validation rules (displayName length, pinnedTools ≤10, savedLayouts ≤5, dismissed tips map).
-- [ ] T014 [P] Create unit test `.../LayoutSnapshotModelTest.kt` checking layout name length, pinned tools cap, and compact flag consistency.
-- [ ] T015 [P] Create unit test `.../UIStateSnapshotModelTest.kt` verifying sidebar toggle persistence, recentActions rotation (max 5), and expanded panel dedupe.
-- [ ] T016 [P] Create unit test `app/src/test/java/com/vjaykrsna/nanoai/feature/uiux/domain/ObserveUserProfileUseCaseTest.kt` faking DAO + DataStore flows to assert merged state fidelity and offline cache hydration.
-- [ ] T017 [P] Create unit test `.../UpdateThemePreferenceUseCaseTest.kt` ensuring DataStore writes, repository sync, and notification to observers.
-- [ ] T018 [P] Create unit test `.../RecordOnboardingProgressUseCaseTest.kt` validating dismissed tip storage and onboarding completion flag.
-- [ ] T019 [P] Create unit test `.../ToggleCompactModeUseCaseTest.kt` verifying compact mode persistence and layout snapshot updates.
-- [ ] T020 [P] Create unit test `app/src/test/java/com/vjaykrsna/nanoai/feature/uiux/presentation/WelcomeViewModelTest.kt` asserting onboarding branching, CTA analytics events, and skip gating.
-- [ ] T021 [P] Create unit test `.../HomeViewModelTest.kt` covering recommended action ranking, offline banner state, and tooltip surfacing.
-- [ ] T022 [P] Extend `app/src/test/java/com/vjaykrsna/nanoai/feature/settings/presentation/SettingsViewModelUiUxTest.kt` to fail on missing theme toggle persistence, density toggles, and undo interactions.
-- [ ] T023 [P] Instrument Quickstart Scenario 1 in `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/scenario/FirstTimeWelcomeScenarioTest.kt` following welcome journey expectations.
-- [ ] T024 [P] Instrument Scenario 2 in `.../HomeNavigationScenarioTest.kt` validating expand-tools flow, latency <100 ms, and action execution.
-- [ ] T025 [P] Instrument Scenario 3 in `.../SidebarSettingsScenarioTest.kt` verifying sidebar navigation, grouped settings, and inline help copy.
-- [ ] T026 [P] Instrument Scenario 4 in `.../ThemeToggleScenarioTest.kt` ensuring theme persistence across process death and no layout jump.
-- [ ] T027 [P] Instrument Scenario 5 in `.../OfflineModeScenarioTest.kt` enforcing offline banner display, disabled CTAs, and queued retries.
-- [ ] T028 [P] Instrument Scenario 6 in `.../AccessibilityScenarioTest.kt` validating TalkBack ordering, dynamic type support, and focus traps.
-- [ ] T029 [P] Add macrobenchmark `macrobenchmark/src/main/java/com/vjaykrsna/nanoai/uiux/UiUxStartupBenchmark.kt` asserting cold start <1.5 s, FMP ≤300 ms, interaction latency ≤100 ms.
+- [X] T005 [P] Author failing `/user/profile` contract test at `app/src/test/java/com/vjaykrsna/nanoai/feature/uiux/contracts/UserProfileContractTest.kt` validating `contracts/openapi.yaml` schema with MockWebServer + Kotlin Serialization.
+- [X] T006 [P] Add Compose contract test `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/contracts/WelcomeScreenContractTest.kt` covering hero copy, CTA semantics, and skip control per `ui_contracts.md`.
+- [X] T007 [P] Add Compose contract test `.../feature/uiux/contracts/HomeScreenContractTest.kt` asserting single-column layout, recent-actions ordering, and collapsed tools behavior.
+- [X] T008 [P] Add Compose contract test `.../feature/uiux/contracts/SidebarContractTest.kt` verifying DrawerState accessibility, keyboard navigation, and deep-link slotting.
+- [X] T009 [P] Add Compose contract test `.../feature/uiux/contracts/SettingsScreenContractTest.kt` validating grouped settings cards, inline help, and undo affordances.
+- [X] T010 [P] Add Compose contract test `.../feature/uiux/contracts/ThemeToggleContractTest.kt` ensuring instant theme switch, semantics, and persistence intents.
+- [X] T011 [P] Add Compose contract test `.../feature/uiux/contracts/OfflineBannerContractTest.kt` covering offline messaging, disabled actions, and retry hook.
+- [X] T012 [P] Add Compose contract test `.../feature/uiux/contracts/OnboardingTooltipContractTest.kt` verifying dismiss + "Don't show again" semantics and HELP re-entry.
+- [X] T013 [P] Create unit test `app/src/test/java/com/vjaykrsna/nanoai/feature/uiux/domain/UserProfileModelTest.kt` enforcing validation rules (displayName length, pinnedTools ≤10, savedLayouts ≤5, dismissed tips map).
+- [X] T014 [P] Create unit test `.../LayoutSnapshotModelTest.kt` checking layout name length, pinned tools cap, and compact flag consistency.
+- [X] T015 [P] Create unit test `.../UIStateSnapshotModelTest.kt` verifying sidebar toggle persistence, recentActions rotation (max 5), and expanded panel dedupe.
+- [X] T016 [P] Create unit test `app/src/test/java/com/vjaykrsna/nanoai/feature/uiux/domain/ObserveUserProfileUseCaseTest.kt` faking DAO + DataStore flows to assert merged state fidelity and offline cache hydration.
+- [X] T017 [P] Create unit test `.../UpdateThemePreferenceUseCaseTest.kt` ensuring DataStore writes, repository sync, and notification to observers.
+- [X] T018 [P] Create unit test `.../RecordOnboardingProgressUseCaseTest.kt` validating dismissed tip storage and onboarding completion flag.
+- [X] T019 [P] Create unit test `.../ToggleCompactModeUseCaseTest.kt` verifying compact mode persistence and layout snapshot updates.
+- [X] T020 [P] Create unit test `app/src/test/java/com/vjaykrsna/nanoai/feature/uiux/presentation/WelcomeViewModelTest.kt` asserting onboarding branching, CTA analytics events, and skip gating.
+- [X] T021 [P] Create unit test `.../HomeViewModelTest.kt` covering recommended action ranking, offline banner state, and tooltip surfacing.
+- [X] T022 [P] Extend `app/src/test/java/com/vjaykrsna/nanoai/feature/settings/presentation/SettingsViewModelUiUxTest.kt` to fail on missing theme toggle persistence, density toggles, and undo interactions.
+- [X] T023 [P] Instrument Quickstart Scenario 1 in `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/scenario/FirstTimeWelcomeScenarioTest.kt` following welcome journey expectations.
+- [X] T024 [P] Instrument Scenario 2 in `.../HomeNavigationScenarioTest.kt` validating expand-tools flow, latency <100 ms, and action execution.
+- [X] T025 [P] Instrument Scenario 3 in `.../SidebarSettingsScenarioTest.kt` verifying sidebar navigation, grouped settings, and inline help copy.
+- [X] T026 [P] Instrument Scenario 4 in `.../ThemeToggleScenarioTest.kt` ensuring theme persistence across process death and no layout jump.
+- [X] T027 [P] Instrument Scenario 5 in `.../OfflineModeScenarioTest.kt` enforcing offline banner display, disabled CTAs, and queued retries.
+- [X] T028 [P] Instrument Scenario 6 in `.../AccessibilityScenarioTest.kt` validating TalkBack ordering, dynamic type support, and focus traps.
+- [X] T029 [P] Add macrobenchmark `macrobenchmark/src/main/java/com/vjaykrsna/nanoai/uiux/UiUxStartupBenchmark.kt` asserting cold start <1.5 s, FMP ≤300 ms, interaction latency ≤100 ms.
 
 ## Phase 3.3 Core Implementation (only after tests fail)
 - [ ] T030 [P] Implement `core/domain/model/uiux/UserProfile.kt` with validation, conversion helpers, and Flow mappers to Room/DataStore.

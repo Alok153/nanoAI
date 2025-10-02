@@ -12,40 +12,41 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Contract test for the Home screen. Captures FR-002 requirements around layout, ordering,
- * and collapsible tools rail behavior. Assertions currently fail until the new UI exists.
+ * Contract test for the Offline banner (FR-006).
+ * Ensures offline messaging, disabled-action affordance, and retry semantics are exposed.
+ *
+ * This test intentionally fails until the UI layer adds the required semantics.
  */
 @LargeTest
 @RunWith(AndroidJUnit4::class)
-class HomeScreenContractTest {
+class OfflineBannerContractTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     @Test
-    fun homeScreen_rendersSingleColumnFeed_withRecentActions() {
+    fun offlineBanner_displaysMessaging_andDisabledAffordance() {
         composeRule
-            .onNodeWithTag("home_single_column_feed")
+            .onNodeWithTag("offline_banner_container")
             .assertIsDisplayed()
 
         composeRule
-            .onNodeWithTag("home_recent_actions_header")
+            .onNodeWithTag("offline_banner_message")
             .assertIsDisplayed()
 
         composeRule
-            .onNodeWithTag("home_recent_action_0")
+            .onNodeWithTag("offline_banner_disabled_actions")
             .assertIsDisplayed()
-            .assertHasClickAction()
     }
 
     @Test
-    fun homeScreen_collapsibleToolsPanel_startsCollapsed() {
+    fun offlineBanner_retryAction_isAccessible() {
         composeRule
-            .onNodeWithTag("home_tools_toggle")
+            .onNodeWithTag("offline_banner_retry")
             .assertIsDisplayed()
             .assertHasClickAction()
 
         composeRule
-            .onNodeWithTag("home_tools_panel_collapsed")
+            .onNodeWithTag("offline_banner_queue_status")
             .assertIsDisplayed()
     }
 }

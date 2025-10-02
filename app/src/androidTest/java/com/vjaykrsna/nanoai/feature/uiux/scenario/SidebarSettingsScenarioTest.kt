@@ -1,10 +1,11 @@
-package com.vjaykrsna.nanoai.feature.uiux.contracts
+package com.vjaykrsna.nanoai.feature.uiux.scenario
 
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import com.vjaykrsna.nanoai.MainActivity
@@ -13,36 +14,44 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Contract test for Sidebar navigation per FR-012.
- * Expects keyboard accessibility, navigation targets, and deep-link slot.
+ * Instrumentation scenario covering Quickstart Scenario 3 (Sidebar and Settings).
+ * Assertions fail until the sidebar + settings flows provide the required semantics.
  */
 @LargeTest
 @RunWith(AndroidJUnit4::class)
-class SidebarContractTest {
+class SidebarSettingsScenarioTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     @Test
-    fun sidebar_drawerAccessibleViaToggle_andContainsNavigationTargets() {
+    fun sidebarNavigation_reachesSettings_withUndoAffordance() {
         composeRule
-            .onNodeWithContentDescription("Open navigation drawer")
+            .onNodeWithTag("sidebar_toggle")
             .assertIsDisplayed()
             .assertHasClickAction()
+            .performClick()
 
         composeRule
             .onNodeWithTag("sidebar_drawer")
             .assertIsDisplayed()
 
         composeRule
-            .onNodeWithTag("sidebar_nav_settings")
+            .onNodeWithTag("sidebar_item_settings")
             .assertIsDisplayed()
             .assertHasClickAction()
-    }
+            .performClick()
 
-    @Test
-    fun sidebar_exposesDeepLinkSlot_forScreenDestinations() {
         composeRule
-            .onNodeWithTag("sidebar_deeplink_slot")
+            .onNodeWithTag("settings_grouped_options")
             .assertIsDisplayed()
+
+        composeRule
+            .onNodeWithTag("settings_inline_help")
+            .assertIsDisplayed()
+
+        composeRule
+            .onNodeWithTag("settings_undo_action")
+            .assertIsDisplayed()
+            .assertIsEnabled()
     }
 }

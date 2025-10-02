@@ -631,7 +631,7 @@ private fun PrivacySettings(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "All data is stored locally on your device. No cloud sync or external data sharing occurs unless you explicitly export your data.",
+                    text = "All data is stored locally on your device.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

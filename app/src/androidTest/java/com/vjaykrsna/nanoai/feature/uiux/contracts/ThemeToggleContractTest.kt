@@ -19,13 +19,13 @@ import org.junit.runner.RunWith
 @LargeTest
 @RunWith(AndroidJUnit4::class)
 class ThemeToggleContractTest {
-
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     @Test
     fun themeToggle_switchPresent_andInteractive() {
-        composeRule.onNodeWithTag("theme_toggle_switch")
+        composeRule
+            .onNodeWithTag("theme_toggle_switch")
             .assertIsDisplayed()
             .assertHasClickAction()
             .performClick()
@@ -33,7 +33,8 @@ class ThemeToggleContractTest {
 
     @Test
     fun themeToggle_persistsSelection_acrossRecomposition() {
-        composeRule.onNodeWithTag("theme_toggle_persistence_status")
+        composeRule
+            .onNodeWithTag("theme_toggle_persistence_status")
             .assertIsDisplayed()
     }
 }

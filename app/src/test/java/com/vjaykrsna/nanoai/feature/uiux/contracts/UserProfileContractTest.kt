@@ -26,7 +26,6 @@ import retrofit2.http.GET
  */
 @OptIn(ExperimentalSerializationApi::class)
 class UserProfileContractTest {
-
     private lateinit var server: MockWebServer
     private lateinit var service: UserProfileService
 
@@ -35,12 +34,14 @@ class UserProfileContractTest {
     @Before
     fun setUp() {
         server = MockWebServer().apply { start() }
-        service = Retrofit.Builder()
-            .baseUrl(server.url("/"))
-            .client(OkHttpClient.Builder().build())
-            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
-            .build()
-            .create(UserProfileService::class.java)
+        service =
+            Retrofit
+                .Builder()
+                .baseUrl(server.url("/"))
+                .client(OkHttpClient.Builder().build())
+                .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+                .build()
+                .create(UserProfileService::class.java)
     }
 
     @After
@@ -49,32 +50,33 @@ class UserProfileContractTest {
     }
 
     @Test
-    fun `get user profile matches OpenAPI schema`() = runBlocking {
-        server.enqueue(
-            MockResponse()
-                .setResponseCode(200)
-                .setBody(
-                    """
-                    {
-                      "id": "user-123",
-                      "displayName": "Taylor",
-                      "themePreference": "LIGHT"
-                    }
-                                        """.trimIndent()
-                )
-        )
+    fun `get user profile matches OpenAPI schema`() =
+        runBlocking {
+            server.enqueue(
+                MockResponse()
+                    .setResponseCode(200)
+                    .setBody(
+                        """
+                        {
+                          "id": "user-123",
+                          "displayName": "Taylor",
+                          "themePreference": "LIGHT"
+                        }
+                        """.trimIndent(),
+                    ),
+            )
 
-    val response = service.getUserProfile()
-    val body = requireNotNull(response.body()) { "Expected response body to be non-null" }
+            val response = service.getUserProfile()
+            val body = requireNotNull(response.body()) { "Expected response body to be non-null" }
 
-        assertThat(body.id).isEqualTo("user-123")
-        assertThat(body.displayName).isEqualTo("Taylor")
-        assertThat(body.themePreference).isEqualTo("LIGHT")
+            assertThat(body.id).isEqualTo("user-123")
+            assertThat(body.displayName).isEqualTo("Taylor")
+            assertThat(body.themePreference).isEqualTo("LIGHT")
 
-        assertRequestMatchesOpenApi(server.takeRequest())
+            assertRequestMatchesOpenApi(server.takeRequest())
 
-        fail("T005: Implement real client wiring for /user/profile before marking task complete")
-    }
+            fail("T005: Implement real client wiring for /user/profile before marking task complete")
+        }
 
     private fun assertRequestMatchesOpenApi(request: RecordedRequest) {
         assertThat(request.method).isEqualTo("GET")
