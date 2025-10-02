@@ -176,6 +176,7 @@ dependencies {
     implementation(libs.androidx.profileinstaller)
 
     // Unit Testing
+    testImplementation(kotlin("test"))
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
     testImplementation(libs.turbine)
@@ -184,6 +185,7 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.androidx.room.testing)
     testImplementation(libs.networknt.json.schema.validator)
+    testImplementation(libs.mockwebserver)
 
     // Instrumentation Testing
     androidTestImplementation(libs.androidx.junit)
