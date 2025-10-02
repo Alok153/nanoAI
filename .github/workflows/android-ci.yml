@@ -2,9 +2,9 @@ name: Android CI
 
 on:
   push:
-    branches: [ main, develop, '001-foundation' ]
+    branches: [ main, develop, '001-foundation', '002-disclaimer-and-fixes' ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, develop, '002-disclaimer-and-fixes' ]
 
 jobs:
   lint:

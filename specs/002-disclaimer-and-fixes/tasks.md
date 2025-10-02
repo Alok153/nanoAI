@@ -94,7 +94,7 @@ T007 [X] - Export: use existing export flow and show warnings
 - Why: Completes FR-002 export side.
  - Status Notes (2025-10-02): Added unencrypted-backup warning with "Don't warn me again" toggle in `SettingsScreen`, persisted preference via `PrivacyPreferenceStore`, ensured exports default to JSON payloads in `ExportServiceImpl`, and covered bundle contents with `ExportServiceImplTest`.
 
-T008 - Sidebar local/cloud toggle wiring
+T008 [X] - Sidebar local/cloud toggle wiring
 - Description: Add the Local/Cloud toggle to the sidebar and wire it to `InferenceOrchestrator` so user choice affects inference preference.
 - Actions:
   1. Add toggle UI to `ui/navigation/NavigationScaffold.kt` or `feature/sidebar/presentation/SidebarViewModel.kt` and persist choice in DataStore.
@@ -104,8 +104,9 @@ T008 - Sidebar local/cloud toggle wiring
 - Dependencies: T004, T003
 - Parallel: no
 - Why: Implements FR-003.
+ - Status Notes (2025-10-02): Added `InferencePreferenceRepository` backed by DataStore, exposed toggle state via `SidebarViewModel`, surfaced a switch in `NavigationScaffold`, and taught `InferenceOrchestrator`/`SendPromptAndPersonaUseCase` to respect the persisted mode with updated unit coverage.
 
-T009 - Contract tests for import/export/disclaimer
+T009 [X] - Contract tests for import/export/disclaimer
 - Description: Create failing contract tests based on `contracts/import-export-openapi.yaml` to codify expected behavior.
 - Actions:
   1. Add tests under `app/src/test/contract/` that assert schema and basic field presence for import/export endpoints.
@@ -114,18 +115,10 @@ T009 - Contract tests for import/export/disclaimer
 - Dependencies: T002
 - Parallel: [P]
 - Why: Capture expected API behavior and drive implementation.
+ - Status Notes (2025-10-02): Added new contract test source set validating backup metadata and provider shape against `import-export-openapi.yaml`; tests currently fail as expected until export payload/schema alignment is complete.
 
-T010 - Add sample backup and QA scripts
-- Description: Add sample backup JSON and a QA script to run quickstart checks automatically.
-- Actions:
-  1. Ensure `specs/002-disclaimer-and-fixes/contracts/sample-backup.json` is present (already added).
-  2. Add a small shell script `specs/002-disclaimer-and-fixes/qa/run-quickstart.sh` that automates steps 2-4 from `quickstart.md` using adb commands where possible and prints results.
-- Files/paths: `specs/002-disclaimer-and-fixes/qa/run-quickstart.sh`
-- Dependencies: T005, T006
-- Parallel: [P]
-- Why: Speeds QA validation.
 
-T011 - CI integration: ensure tasks run in pipeline
+T010 [X] - CI integration: ensure tasks run in pipeline
 - Description: Add or update CI workflow to include `ktlint`, `detekt`, `lintDebug`, and `testDebugUnitTest` for this branch.
 - Actions:
   1. Add a GitHub Actions job or update existing one to run before merge for branch `002-disclaimer-and-fixes`.
@@ -134,8 +127,9 @@ T011 - CI integration: ensure tasks run in pipeline
 - Dependencies: T001, T003, T009
 - Parallel: no
 - Why: Enforces constitution automated quality gates.
+- Status Notes (2025-10-02): Expanded `android-ci.yml` triggers to include `002-disclaimer-and-fixes` on push/PR, verified local run of `ktlintCheck detekt lintDebug testDebugUnitTest` (fails only on intentional contract tests).
 
-T012 - Polish & docs
+T011 - Polish & docs
 - Description: Write docs, update spec to reference implemented files, and ensure quickstart is accurate.
 - Actions:
   1. Update `specs/002-disclaimer-and-fixes/spec.md` with implemented changes and link to new files.
@@ -145,7 +139,7 @@ T012 - Polish & docs
 - Parallel: [P]
 - Why: Completes feature delivery.
 
-T013 - Accessibility verification
+T012 - Accessibility verification
 - Description: Validate accessibility semantics and ensure UI elements expose necessary content descriptions and roles. Require evidence for PR review.
 - Actions:
   1. Add Compose semantics tests that assert contentDescription/semantics presence for key UI controls (dialog buttons, sidebar toggles, model download controls, export dialog).
@@ -159,8 +153,8 @@ T013 - Accessibility verification
 ---
 
 Parallel execution examples (run these concurrently):
-- Group A [P]: T004 (data model migration), T009 (contract tests), T010 (QA scripts)
-- Group B [P]: T007 (export polish), T012 (docs)
+- Group A [P]: T004 (data model migration), T009 (contract tests)
+- Group B [P]: T007 (export polish), T011 (docs)
 
 Try it (local):
 - Run the setup task first to capture failures:

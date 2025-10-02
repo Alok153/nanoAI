@@ -35,6 +35,7 @@ import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -57,6 +58,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.vjaykrsna.nanoai.core.domain.model.ChatThread
+import com.vjaykrsna.nanoai.core.model.InferenceMode
 import com.vjaykrsna.nanoai.feature.chat.ui.ChatScreen
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryScreen
 import com.vjaykrsna.nanoai.feature.settings.presentation.FirstLaunchDisclaimerViewModel
@@ -83,6 +85,7 @@ fun NavigationScaffold(
     val threads by sidebarViewModel.threads.collectAsState()
     val searchQuery by sidebarViewModel.searchQuery.collectAsState()
     val showArchived by sidebarViewModel.showArchived.collectAsState()
+    val inferencePreference by sidebarViewModel.inferencePreference.collectAsState()
     val disclaimerUiState by disclaimerViewModel.uiState.collectAsState()
 
     // Handle back button when drawer is open
@@ -106,6 +109,8 @@ fun NavigationScaffold(
                     showArchived = showArchived,
                     onSearchQueryChanged = { sidebarViewModel.setSearchQuery(it) },
                     onToggleArchived = { sidebarViewModel.toggleShowArchived() },
+                    inferenceMode = inferencePreference.mode,
+                    onInferenceModeChanged = { mode -> sidebarViewModel.setInferenceMode(mode) },
                     onThreadClick = { thread ->
                         // Navigate to chat with thread
                         navController.navigate(Screen.Chat.route)
@@ -206,6 +211,8 @@ private fun SidebarContent(
     showArchived: Boolean,
     onSearchQueryChanged: (String) -> Unit,
     onToggleArchived: () -> Unit,
+    inferenceMode: InferenceMode,
+    onInferenceModeChanged: (InferenceMode) -> Unit,
     onThreadClick: (ChatThread) -> Unit,
     onArchiveThread: (java.util.UUID) -> Unit,
     onDeleteThread: (java.util.UUID) -> Unit,
@@ -268,6 +275,39 @@ private fun SidebarContent(
                 modifier =
                     Modifier.semantics {
                         contentDescription = "Toggle archived conversations"
+                    },
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Inference preference toggle
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Inference Preference",
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Text(
+                    text =
+                        if (inferenceMode == InferenceMode.LOCAL_FIRST) "Prefer on-device models when available" else "Prefer cloud inference when online",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Switch(
+                checked = inferenceMode == InferenceMode.LOCAL_FIRST,
+                onCheckedChange = { checked ->
+                    val mode = if (checked) InferenceMode.LOCAL_FIRST else InferenceMode.CLOUD_FIRST
+                    onInferenceModeChanged(mode)
+                },
+                modifier =
+                    Modifier.semantics {
+                        contentDescription = "Toggle inference preference"
                     },
             )
         }

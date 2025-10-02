@@ -1,11 +1,13 @@
 package com.vjaykrsna.nanoai.feature.chat.domain
 
 import com.vjaykrsna.nanoai.core.data.repository.ConversationRepository
+import com.vjaykrsna.nanoai.core.data.repository.InferencePreferenceRepository
 import com.vjaykrsna.nanoai.core.data.repository.PersonaRepository
 import com.vjaykrsna.nanoai.core.data.repository.PersonaSwitchLogRepository
 import com.vjaykrsna.nanoai.core.domain.model.Message
 import com.vjaykrsna.nanoai.core.domain.model.PersonaSwitchLog
 import com.vjaykrsna.nanoai.core.model.MessageSource
+import com.vjaykrsna.nanoai.core.model.InferenceMode
 import com.vjaykrsna.nanoai.core.model.PersonaSwitchAction
 import com.vjaykrsna.nanoai.core.model.Role
 import kotlinx.coroutines.flow.Flow
@@ -23,6 +25,7 @@ class SendPromptAndPersonaUseCase
         private val personaRepository: PersonaRepository,
         private val inferenceOrchestrator: InferenceOrchestrator,
         private val personaSwitchLogRepository: PersonaSwitchLogRepository,
+        private val inferencePreferenceRepository: InferencePreferenceRepository,
     ) {
         suspend fun sendPrompt(
             threadId: UUID,
@@ -47,18 +50,13 @@ class SendPromptAndPersonaUseCase
                     )
                 } ?: GenerationOptions()
 
-            val preferLocal =
-                when {
-                    hasLocalModel && !isOnline -> true
-                    hasLocalModel -> true
-                    else -> false
-                }
+            val userPreference = inferencePreferenceRepository.observeInferencePreference().first()
+            val preferLocal = shouldPreferLocal(hasLocalModel, isOnline, userPreference.mode == InferenceMode.LOCAL_FIRST)
 
             val inferenceResult =
                 inferenceOrchestrator.generateResponse(
                     prompt = prompt,
                     personaId = personaId,
-                    preferLocal = preferLocal,
                     options = generationOptions,
                 )
 
@@ -127,6 +125,16 @@ class SendPromptAndPersonaUseCase
 
         suspend fun getPersonaSwitchHistory(threadId: UUID): Flow<List<PersonaSwitchLog>> =
             personaSwitchLogRepository.getLogsByThreadId(threadId)
+    }
+
+    private fun shouldPreferLocal(
+        hasLocalModel: Boolean,
+        isOnline: Boolean,
+        userPrefersLocal: Boolean,
+    ): Boolean {
+        if (!hasLocalModel) return false
+        if (!isOnline) return true
+        return userPrefersLocal
     }
 
 class OfflineNoModelException : IllegalStateException("Device offline with no local model available")

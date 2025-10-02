@@ -77,6 +77,12 @@ android {
             isReturnDefaultValues = true
         }
     }
+
+    sourceSets {
+        getByName("test") {
+            java.srcDir("src/test/contract")
+        }
+    }
 }
 
 room {

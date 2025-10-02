@@ -193,16 +193,35 @@ The project follows Test-Driven Development (TDD) principles with comprehensive 
 
 # Benchmarks (requires release build)
 ./gradlew :macrobenchmark:connectedBenchmarkReleaseAndroidTest
+
+# CI parity checks
+./gradlew ktlintCheck detekt lintDebug testDebugUnitTest
 ```
+
+> **Note:** The `ImportExportContractTest` assertions intentionally fail until the export payload fully matches the published OpenAPI contract. Use the reports emitted under `app/build/reports/tests/testDebugUnitTest` to track progress while implementing the remaining export changes.
 
 ## Usage
 
 ### First Launch
 
 1. **Grant Permissions**: Allow storage access for model downloads
-2. **Configure API (Optional)**: Add cloud API providers in Settings if desired
-3. **Download Models**: Visit Model Library to download AI models for offline use
-4. **Start Chatting**: Create a new conversation and select a persona
+2. **Review Disclaimer**: On the first run, acknowledge the safety disclaimer to record consent (dismiss to review the copy again later)
+3. **Configure API (Optional)**: Add cloud API providers in Settings if desired
+4. **Download Models**: Visit Model Library to download AI models for offline use
+5. **Start Chatting**: Create a new conversation and select a persona
+
+### Validating the First-launch Disclaimer
+
+1. Clear prior state to simulate a new install: `adb shell pm clear com.vjaykrsna.nanoai`
+2. Launch the app and confirm the disclaimer dialog appears with **Acknowledge** and **Remind Me Later** actions.
+3. Tap **Acknowledge** to persist consent; relaunching the app should no longer show the dialog.
+4. Repeat the clear-data command and tap **Remind Me Later** to verify the dialog returns on the next launch.
+
+### Sidebar Inference Toggle
+
+1. Open the navigation sidebar and locate the **Inference Mode** toggle.
+2. Switch between **Local** and **Cloud**; the selection is saved via DataStore.
+3. Close and relaunch the app (or run `adb shell am force-stop com.vjaykrsna.nanoai`) to confirm the toggle restores your last choice.
 
 ### Managing Personas
 

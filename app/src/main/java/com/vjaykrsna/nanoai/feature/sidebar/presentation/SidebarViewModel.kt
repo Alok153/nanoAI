@@ -3,7 +3,10 @@ package com.vjaykrsna.nanoai.feature.sidebar.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.data.repository.ConversationRepository
+import com.vjaykrsna.nanoai.core.data.repository.InferencePreferenceRepository
 import com.vjaykrsna.nanoai.core.domain.model.ChatThread
+import com.vjaykrsna.nanoai.core.domain.model.InferencePreference
+import com.vjaykrsna.nanoai.core.model.InferenceMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,6 +25,7 @@ class SidebarViewModel
     @Inject
     constructor(
         private val conversationRepository: ConversationRepository,
+        private val inferencePreferenceRepository: InferencePreferenceRepository,
     ) : ViewModel() {
         private val _searchQuery = MutableStateFlow("")
         val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
@@ -36,6 +40,15 @@ class SidebarViewModel
         val errorEvents = _errorEvents.asSharedFlow()
 
         private val allThreadsFlow = conversationRepository.getAllThreadsFlow()
+
+        private val inferencePreferenceFlow = inferencePreferenceRepository.observeInferencePreference()
+
+        val inferencePreference: StateFlow<InferencePreference> =
+            inferencePreferenceFlow.stateIn(
+                viewModelScope,
+                SharingStarted.WhileSubscribed(5000),
+                InferencePreference(),
+            )
 
         val threads: StateFlow<List<ChatThread>> =
             combine(
@@ -117,6 +130,16 @@ class SidebarViewModel
                 }
             }
         }
+
+        fun setInferenceMode(mode: InferenceMode) {
+            viewModelScope.launch {
+                try {
+                    inferencePreferenceRepository.setInferenceMode(mode)
+                } catch (e: Exception) {
+                    _errorEvents.emit(SidebarError.PreferenceUpdateFailed(e.message ?: "Failed to update inference preference"))
+                }
+            }
+        }
     }
 
 sealed class SidebarError {
@@ -129,6 +152,10 @@ sealed class SidebarError {
     ) : SidebarError()
 
     data class CreateFailed(
+        val message: String,
+    ) : SidebarError()
+
+    data class PreferenceUpdateFailed(
         val message: String,
     ) : SidebarError()
 }

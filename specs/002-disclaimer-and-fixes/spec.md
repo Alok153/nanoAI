@@ -2,7 +2,7 @@
 
 **Feature Branch**: `002-disclaimer-and-fixes`  
 **Created**: 2025-10-01  
-**Status**: Draft  
+**Status**: Implemented  
 **Input**: User description: "first-launch and fixes
 lets fix those recommended things, as far as i know tests are failing because we don't have complete implementaion of the project right now we will fix most of those later"
 
@@ -88,6 +88,13 @@ A privacy-conscious user launches nanoAI for the first time, sees a clear discla
 **FR-003**: The product MUST provide UI controls for switching between local and cloud inference modes and for clearing conversation context; the controls MUST persist user preference.
 **FR-004**: The product MUST enforce automated quality gates: static analysis and test targets defined in the feature plan must run in CI and pass before merge; the plan must list the exact commands that constitute the gate.
 **FR-005**: The product MUST follow Material design accessibility expectations for any new UI elements (labels, semantics, and contrast). Performance-related guidance should be documented in the plan when measurable targets are required.
+
+## Implementation Traceability *(reference)*
+- FR-001 → `app/src/main/java/com/vjaykrsna/nanoai/ui/navigation/NavigationScaffold.kt`, `app/src/main/java/com/vjaykrsna/nanoai/feature/settings/presentation/FirstLaunchDisclaimerViewModel.kt`, `app/src/main/java/com/vjaykrsna/nanoai/core/data/preferences/PrivacyPreferenceStore.kt`
+- FR-002 → `app/src/main/java/com/vjaykrsna/nanoai/feature/settings/data/ImportServiceImpl.kt`, `app/src/main/java/com/vjaykrsna/nanoai/feature/settings/data/ExportServiceImpl.kt`, `app/src/test/contract/ImportExportContractTest.kt`
+- FR-003 → `app/src/main/java/com/vjaykrsna/nanoai/ui/navigation/NavigationScaffold.kt`, `app/src/main/java/com/vjaykrsna/nanoai/feature/sidebar/presentation/SidebarViewModel.kt`, `app/src/main/java/com/vjaykrsna/nanoai/core/data/preferences/InferencePreferenceRepository.kt`, `app/src/main/java/com/vjaykrsna/nanoai/core/domain/InferenceOrchestrator.kt`
+- FR-004 → `.github/workflows/android-ci.yml`, `specs/002-disclaimer-and-fixes/tasks.md`
+- FR-005 → `app/src/main/java/com/vjaykrsna/nanoai/feature/settings/ui/FirstLaunchDisclaimer.kt`, UI tests under `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/settings/ui/FirstLaunchDisclaimerDialogTest.kt`
 
 ### Key Entities *(include if feature involves data)*
 - **PrivacyPreference**: Tracks disclaimer acknowledgment and consent timestamps (extends existing entity).

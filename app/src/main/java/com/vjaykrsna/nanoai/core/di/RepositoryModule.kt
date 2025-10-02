@@ -2,10 +2,12 @@ package com.vjaykrsna.nanoai.core.di
 
 import com.vjaykrsna.nanoai.core.data.repository.ApiProviderConfigRepository
 import com.vjaykrsna.nanoai.core.data.repository.ConversationRepository
+import com.vjaykrsna.nanoai.core.data.repository.InferencePreferenceRepository
 import com.vjaykrsna.nanoai.core.data.repository.PersonaRepository
 import com.vjaykrsna.nanoai.core.data.repository.PersonaSwitchLogRepository
 import com.vjaykrsna.nanoai.core.data.repository.impl.ApiProviderConfigRepositoryImpl
 import com.vjaykrsna.nanoai.core.data.repository.impl.ConversationRepositoryImpl
+import com.vjaykrsna.nanoai.core.data.repository.impl.InferencePreferenceRepositoryImpl
 import com.vjaykrsna.nanoai.core.data.repository.impl.PersonaRepositoryImpl
 import com.vjaykrsna.nanoai.core.data.repository.impl.PersonaSwitchLogRepositoryImpl
 import com.vjaykrsna.nanoai.feature.library.data.DownloadManager
@@ -41,6 +43,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindPersonaSwitchLogRepository(impl: PersonaSwitchLogRepositoryImpl): PersonaSwitchLogRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindInferencePreferenceRepository(impl: InferencePreferenceRepositoryImpl): InferencePreferenceRepository
 
     @Binds
     @Singleton

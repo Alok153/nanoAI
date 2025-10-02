@@ -1,7 +1,9 @@
 package com.vjaykrsna.nanoai.feature.chat.domain
 
 import com.vjaykrsna.nanoai.core.data.repository.ApiProviderConfigRepository
+import com.vjaykrsna.nanoai.core.data.repository.InferencePreferenceRepository
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
+import com.vjaykrsna.nanoai.core.model.InferenceMode
 import com.vjaykrsna.nanoai.core.model.MessageSource
 import com.vjaykrsna.nanoai.core.network.CloudGatewayClient
 import com.vjaykrsna.nanoai.core.network.CloudGatewayResult
@@ -16,6 +18,7 @@ import com.vjaykrsna.nanoai.feature.library.model.ProviderType
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.flow.first
 
 /**
  * Coordinates local MediaPipe inference with cloud fallback via the gateway client.
@@ -26,6 +29,7 @@ class InferenceOrchestrator
     constructor(
         private val modelCatalogRepository: ModelCatalogRepository,
         private val apiProviderConfigRepository: ApiProviderConfigRepository,
+        private val inferencePreferenceRepository: InferencePreferenceRepository,
         private val localModelRuntime: LocalModelRuntime,
         private val cloudGatewayClient: CloudGatewayClient,
         private val connectivityStatusProvider: ConnectivityStatusProvider,
@@ -49,11 +53,14 @@ class InferenceOrchestrator
         suspend fun generateResponse(
             prompt: String,
             personaId: UUID?,
-            preferLocal: Boolean,
             options: GenerationOptions = GenerationOptions(),
         ): InferenceResult {
             val installedModels = modelCatalogRepository.getInstalledModels()
             val localCandidates = installedModels.filterNot { it.providerType == ProviderType.CLOUD_API }
+            val inferencePreference = inferencePreferenceRepository.observeInferencePreference().first()
+            val userPrefersLocal = inferencePreference.mode == InferenceMode.LOCAL_FIRST
+            val isOnline = isOnline()
+            val preferLocal = resolvePreference(localCandidates.isNotEmpty(), isOnline, userPrefersLocal)
 
             val preferredLocalModel = selectLocalModel(localCandidates, options.localModelPreference)
 
@@ -63,12 +70,12 @@ class InferenceOrchestrator
                     return localResult
                 }
                 // Fallback to cloud when local failed but network is available.
-                if (localResult is InferenceResult.Error && !isOnline()) {
+                if (localResult is InferenceResult.Error && !isOnline) {
                     return localResult
                 }
             }
 
-            if (!isOnline()) {
+            if (!isOnline) {
                 return InferenceResult.Error(
                     errorCode = "OFFLINE",
                     message = "Device is offline and cloud inference is unavailable",
@@ -89,6 +96,16 @@ class InferenceOrchestrator
             }
 
             return cloudResult
+        }
+
+        private fun resolvePreference(
+            hasLocalCandidate: Boolean,
+            isOnline: Boolean,
+            userPrefersLocal: Boolean,
+        ): Boolean {
+            if (!hasLocalCandidate) return false
+            if (!isOnline) return true
+            return userPrefersLocal
         }
 
         private suspend fun runLocalInference(

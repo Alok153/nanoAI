@@ -2,16 +2,21 @@ package com.vjaykrsna.nanoai.feature.chat.domain
 
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.data.repository.ConversationRepository
+import com.vjaykrsna.nanoai.core.data.repository.InferencePreferenceRepository
 import com.vjaykrsna.nanoai.core.data.repository.PersonaRepository
 import com.vjaykrsna.nanoai.core.data.repository.PersonaSwitchLogRepository
 import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
 import com.vjaykrsna.nanoai.core.domain.model.PersonaSwitchLog
+import com.vjaykrsna.nanoai.core.domain.model.InferencePreference
 import com.vjaykrsna.nanoai.core.model.MessageSource
+import com.vjaykrsna.nanoai.core.model.InferenceMode
 import com.vjaykrsna.nanoai.core.model.PersonaSwitchAction
 import com.vjaykrsna.nanoai.core.model.Role
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -27,6 +32,7 @@ class SendPromptAndPersonaUseCaseTest {
     private lateinit var personaRepository: PersonaRepository
     private lateinit var inferenceOrchestrator: InferenceOrchestrator
     private lateinit var personaSwitchLogRepository: PersonaSwitchLogRepository
+    private lateinit var inferencePreferenceRepository: InferencePreferenceRepository
 
     @Before
     fun setUp() {
@@ -34,6 +40,9 @@ class SendPromptAndPersonaUseCaseTest {
         personaRepository = mockk(relaxed = true)
         inferenceOrchestrator = mockk(relaxed = true)
         personaSwitchLogRepository = mockk(relaxed = true)
+        inferencePreferenceRepository = mockk(relaxed = true)
+
+        every { inferencePreferenceRepository.observeInferencePreference() } returns flowOf(InferencePreference(InferenceMode.LOCAL_FIRST))
 
         useCase =
             SendPromptAndPersonaUseCase(
@@ -41,6 +50,7 @@ class SendPromptAndPersonaUseCaseTest {
                 personaRepository = personaRepository,
                 inferenceOrchestrator = inferenceOrchestrator,
                 personaSwitchLogRepository = personaSwitchLogRepository,
+                inferencePreferenceRepository = inferencePreferenceRepository,
             )
     }
 
@@ -61,7 +71,6 @@ class SendPromptAndPersonaUseCaseTest {
                 inferenceOrchestrator.generateResponse(
                     prompt = "hi",
                     personaId = personaId,
-                    preferLocal = false,
                     options = match { true },
                 )
             }
@@ -76,7 +85,7 @@ class SendPromptAndPersonaUseCaseTest {
 
             coEvery { inferenceOrchestrator.isOnline() } returns true
             coEvery { inferenceOrchestrator.hasLocalModelAvailable() } returns true
-            coEvery { inferenceOrchestrator.generateResponse(any(), any(), any(), any()) } returns
+            coEvery { inferenceOrchestrator.generateResponse(any(), any(), any()) } returns
                 InferenceResult.Success(
                     text = "response",
                     source = MessageSource.LOCAL_MODEL,
@@ -86,14 +95,7 @@ class SendPromptAndPersonaUseCaseTest {
             val result = useCase.sendPrompt(threadId, "hello", personaId)
 
             assertThat(result.isSuccess).isTrue()
-            coVerify {
-                inferenceOrchestrator.generateResponse(
-                    prompt = "hello",
-                    personaId = personaId,
-                    preferLocal = true,
-                    options = any(),
-                )
-            }
+            coVerify { inferenceOrchestrator.generateResponse(prompt = "hello", personaId = personaId, options = any()) }
             coVerify {
                 conversationRepository.saveMessage(
                     match { message ->
@@ -105,6 +107,7 @@ class SendPromptAndPersonaUseCaseTest {
                 )
             }
             assertThat(result.isFailure).isFalse()
+            verify { inferencePreferenceRepository.observeInferencePreference() }
         }
 
     @Test
@@ -115,7 +118,7 @@ class SendPromptAndPersonaUseCaseTest {
 
             coEvery { inferenceOrchestrator.isOnline() } returns true
             coEvery { inferenceOrchestrator.hasLocalModelAvailable() } returns false
-            coEvery { inferenceOrchestrator.generateResponse(any(), any(), any(), any()) } returns
+            coEvery { inferenceOrchestrator.generateResponse(any(), any(), any()) } returns
                 InferenceResult.Error(
                     errorCode = "RATE_LIMIT",
                     message = "Too many requests",
@@ -130,6 +133,35 @@ class SendPromptAndPersonaUseCaseTest {
                         message.threadId == threadId &&
                             message.errorCode == "RATE_LIMIT" &&
                             message.text == null
+                    },
+                )
+            }
+        }
+
+    @Test
+    fun sendPrompt_prefersCloudWhenUserRequests() =
+        runTest {
+            val threadId = UUID.randomUUID()
+            val personaId = UUID.randomUUID()
+
+            every { inferencePreferenceRepository.observeInferencePreference() } returns flowOf(InferencePreference(InferenceMode.CLOUD_FIRST))
+            coEvery { inferenceOrchestrator.isOnline() } returns true
+            coEvery { inferenceOrchestrator.hasLocalModelAvailable() } returns true
+            coEvery { inferenceOrchestrator.generateResponse(any(), any(), any()) } returns
+                InferenceResult.Error(
+                    errorCode = "CLOUD_FAIL",
+                    message = "Cloud unavailable",
+                )
+
+            val result = useCase.sendPrompt(threadId, "prompt", personaId)
+
+            assertThat(result.isFailure).isTrue()
+            coVerify {
+                conversationRepository.saveMessage(
+                    match { message ->
+                        message.threadId == threadId &&
+                            message.source == MessageSource.CLOUD_API &&
+                            message.errorCode == "CLOUD_FAIL"
                     },
                 )
             }
@@ -159,7 +191,7 @@ class SendPromptAndPersonaUseCaseTest {
             coEvery { inferenceOrchestrator.isOnline() } returns true
             coEvery { inferenceOrchestrator.hasLocalModelAvailable() } returns true
             coEvery { personaRepository.getPersonaById(personaId) } returns flowOf(persona)
-            coEvery { inferenceOrchestrator.generateResponse(any(), any(), any(), any()) } returns
+            coEvery { inferenceOrchestrator.generateResponse(any(), any(), any()) } returns
                 InferenceResult.Success(
                     text = "ok",
                     source = MessageSource.LOCAL_MODEL,
@@ -172,7 +204,6 @@ class SendPromptAndPersonaUseCaseTest {
                 inferenceOrchestrator.generateResponse(
                     prompt = "prompt",
                     personaId = personaId,
-                    preferLocal = true,
                     options =
                         match { options ->
                             options.temperature == persona.temperature &&
