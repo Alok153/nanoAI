@@ -33,6 +33,12 @@ android {
                 "proguard-rules.pro",
             )
         }
+        create("baselineProfile") {
+            initWith(buildTypes.getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+            isDebuggable = false
+        }
         create("benchmark") {
             initWith(buildTypes.getByName("release"))
             signingConfig = signingConfigs.getByName("debug")
@@ -61,7 +67,7 @@ android {
         buildConfig = true
     }
 
-    composeOptions { kotlinCompilerExtensionVersion = "1.5.15" }
+    composeOptions { kotlinCompilerExtensionVersion = libs.versions.composeCompiler.get() }
 
     packaging {
         resources {
@@ -89,6 +95,19 @@ room {
     schemaDirectory("$projectDir/schemas")
 }
 
+composeCompiler {
+    reportsDestination.set(layout.buildDirectory.dir("compose/reports"))
+    metricsDestination.set(layout.buildDirectory.dir("compose/metrics"))
+}
+
+androidComponents {
+    beforeVariants(selector().all()) { variant ->
+        if (variant.buildType in listOf("benchmark", "baselineProfile")) {
+            variant.enable = true
+        }
+    }
+}
+
 dependencies {
     // Core Android
     implementation(libs.androidx.core.ktx)
@@ -101,10 +120,13 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.material3.windowSizeClass)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.window)
+    debugImplementation(libs.androidx.compose.ui.test)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
@@ -114,6 +136,7 @@ dependencies {
     // Networking
     implementation(libs.retrofit)
     implementation(libs.retrofit.kotlin.serialization)
+    implementation(libs.kotlinx.serialization.core)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging.interceptor)
@@ -136,6 +159,8 @@ dependencies {
     // DataStore
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.datastore)
+    implementation(libs.androidx.datastore.core)
+    implementation(libs.androidx.datastore.preferences.core)
 
     // Hilt
     implementation(libs.hilt.android)
@@ -166,6 +191,7 @@ dependencies {
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.compose.ui.test)
     androidTestImplementation(libs.mockk)
     androidTestImplementation(libs.truth)
     androidTestImplementation(libs.kotlinx.coroutines.test)

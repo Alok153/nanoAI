@@ -23,11 +23,11 @@
 - Instrumentation: `app/src/androidTest/java/com/vjaykrsna/nanoai/`
 - Macrobenchmark: `macrobenchmark/src/main/java/com/vjaykrsna/nanoai/`
 
-## Phase 3.1 Setup
-- [ ] T001 Align `gradle/libs.versions.toml` with Material3 dynamic color, navigation-compose, lifecycle-runtime-compose, DataStore, Room (runtime + ksp), Coil, WindowSizeClass, Compose testing, macrobenchmark, and serialization versions required by the UI/UX plan.
-- [ ] T002 Update `app/build.gradle.kts` to apply Compose compiler metrics, register BaselineProfile variants, enable Room schema export, wire DataStore/Room/Coil dependencies, and expose macrobenchmark instrumentation targets.
-- [ ] T003 Harden `.github/workflows/android-ci.yml` so CI runs ktlint, Detekt, unit tests, Compose instrumentation (contracts + quickstart scenarios), and the UI/UX macrobenchmark smoke job.
-- [ ] T004 Extend `config/detekt/detekt.yml` to enable Compose-specific rules, accessibility checks, and include `feature/uiux`, `ui/components`, and new DAO packages in analysis.
+# Phase 3.1 Setup
+- [X] T001 Align `gradle/libs.versions.toml` with Material3 dynamic color, navigation-compose, lifecycle-runtime-compose, DataStore, Room (runtime + ksp), Coil, WindowSizeClass, Compose testing, macrobenchmark, and serialization versions required by the UI/UX plan.
+- [X] T002 Update `app/build.gradle.kts` to apply Compose compiler metrics, register BaselineProfile variants, enable Room schema export, wire DataStore/Room/Coil dependencies, and expose macrobenchmark instrumentation targets.
+- [X] T003 Harden `.github/workflows/android-ci.yml` so CI runs ktlint, Detekt, unit tests, Compose instrumentation (contracts + quickstart scenarios), and the UI/UX macrobenchmark smoke job.
+- [X] T004 Extend `config/detekt/detekt.yml` to enable Compose-specific rules, accessibility checks, and include `feature/uiux`, `ui/components`, and new DAO packages in analysis.
 
 ## Phase 3.2 Tests First (TDD) ⚠️ Complete before any implementation
 - [ ] T005 [P] Author failing `/user/profile` contract test at `app/src/test/java/com/vjaykrsna/nanoai/feature/uiux/contracts/UserProfileContractTest.kt` validating `contracts/openapi.yaml` schema with MockWebServer + Kotlin Serialization.

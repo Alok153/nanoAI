@@ -2,9 +2,9 @@ name: Android CI
 
 on:
   push:
-    branches: [ main, develop, '001-foundation', '002-disclaimer-and-fixes' ]
+    branches: [ main, develop, '001-foundation', '002-disclaimer-and-fixes', '003-UI-UX' ]
   pull_request:
-    branches: [ main, develop, '002-disclaimer-and-fixes' ]
+    branches: [ main, develop, '002-disclaimer-and-fixes', '003-UI-UX' ]
 
 jobs:
   lint:
@@ -104,7 +104,7 @@ jobs:
           path: '**/build/reports/tests/testDebugUnitTest/'
 
   instrumented-tests:
-    name: Instrumented Tests
+    name: Compose Contract & Quickstart Tests
     runs-on: ubuntu-latest
     timeout-minutes: 60
     
@@ -154,7 +154,7 @@ jobs:
           disable-animations: true
           script: echo "Generated AVD snapshot for caching."
           
-      - name: Run instrumented tests
+      - name: Run Compose instrumentation suite
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
@@ -183,7 +183,10 @@ jobs:
     name: Macrobenchmark Smoke Test
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'benchmark')
+    if: |
+      github.ref == 'refs/heads/003-UI-UX' ||
+      github.base_ref == '003-UI-UX' ||
+      (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'benchmark'))
     
     steps:
       - name: Checkout code

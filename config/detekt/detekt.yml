@@ -23,6 +23,19 @@ output-reports:
   exclude:
     - 'TxtOutputReport'
 
+Compose:
+  active: true
+  ComposableNaming:
+    active: true
+  CompositionLocalNaming:
+    active: true
+  ModifierMissing:
+    active: true
+  ModifierClickableOrder:
+    active: true
+  ContentEmitterReturningValues:
+    active: true
+
 comments:
   active: true
   AbsentOrWrongFileLicense:
@@ -47,7 +60,7 @@ complexity:
     threshold: 4
   ComplexInterface:
     active: false
-  ComplexMethod:
+  CyclomaticComplexMethod:
     active: true
     threshold: 15
   LabeledExpression:
@@ -190,8 +203,6 @@ potential-bugs:
     active: false
   DoubleMutabilityForCollection:
     active: true
-  DuplicateCaseInWhenExpression:
-    active: true
   EqualsAlwaysReturnsTrueOrFalse:
     active: true
   EqualsWithHashCodeExist:
@@ -265,16 +276,12 @@ style:
     active: false
   ForbiddenMethodCall:
     active: false
-  ForbiddenPublicDataClass:
-    active: false
   FunctionOnlyReturningConstant:
     active: false
   LoopWithTooManyJumpStatements:
     active: true
     maxJumpCount: 1
   MagicNumber:
-    active: false
-  MandatoryBracesIfStatements:
     active: false
   MandatoryBracesLoops:
     active: false

@@ -25,6 +25,17 @@ detekt {
     allRules = false
     config.setFrom("${rootProject.projectDir}/config/detekt/detekt.yml")
     baseline = file("${rootProject.projectDir}/config/detekt/baseline.xml")
+    source.setFrom(
+        "app/src/main/java",
+        "app/src/test/java",
+        "app/src/androidTest/java",
+        "macrobenchmark/src/main/java",
+    )
+}
+
+dependencies {
+    detektPlugins("io.nlopez.compose.rules:detekt:0.4.9")
+    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.23.7")
 }
 
 tasks.register("clean", Delete::class) {
