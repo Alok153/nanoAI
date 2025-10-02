@@ -2,18 +2,8 @@
 
 Auto-generated from all feature plans. Last updated: 2025-10-02
 
-## Active Technologies
-- **Kotlin 1.9.x (JDK 11 baseline)**: Primary language for Android development.
-- **Jetpack Compose Material 3**: UI toolkit for modern Android interfaces.
-- **Hilt**: Dependency injection framework.
-- **WorkManager**: For scheduling background tasks.
-- **Room**: SQLite database abstraction.
-- **DataStore**: Preferences storage solution.
-- **Retrofit + Kotlin Serialization**: For REST API calls with JSON handling.
-- **OkHttp**: HTTP client.
-- **MediaPipe Generative (LiteRT)**: AI/ML inference on-device.
-- **Coil**: Image loading library.
-- **Kotlin Coroutines**: Asynchronous programming (foundation spec: 001-foundation).
+## Active Technologies (001-foundation, 003-UI-UX)
+- Kotlin 1.9.x (JDK 11 baseline), Jetpack Compose Material 3, Hilt, WorkManager, Room (SQLite database), DataStore (preferences), Retrofit + Kotlin Serialization, OkHttp, MediaPipe Generative (LiteRT), Coil, Kotlin Coroutines
 
 See `gradle/libs.versions.toml` for version details and updates.
 
