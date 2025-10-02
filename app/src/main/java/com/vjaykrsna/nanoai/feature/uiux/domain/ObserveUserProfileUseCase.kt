@@ -1,8 +1,12 @@
 package com.vjaykrsna.nanoai.feature.uiux.domain
 
+import com.vjaykrsna.nanoai.core.common.IoDispatcher
+import com.vjaykrsna.nanoai.core.data.preferences.UiPreferences
+import com.vjaykrsna.nanoai.core.data.preferences.toDomainSnapshot
 import com.vjaykrsna.nanoai.core.data.repository.UserProfileRepository
 import com.vjaykrsna.nanoai.core.domain.model.uiux.LayoutSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UIStateSnapshot
+import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferencesSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UserProfile
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -25,7 +29,7 @@ class ObserveUserProfileUseCase
     @Inject
     constructor(
         private val repository: UserProfileRepository,
-        private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
+        @IoDispatcher private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
     ) {
         private val scope = CoroutineScope(SupervisorJob() + dispatcher)
 
@@ -48,12 +52,15 @@ class ObserveUserProfileUseCase
                 val job =
                     combine(
                         repository.observeUserProfile(userId),
+                        repository.observePreferences(),
                         repository.observeUIStateSnapshot(userId),
                         repository.observeOfflineStatus(),
-                    ) { profile, uiState, offline ->
+                    ) { profile, preferences, uiState, offline ->
+                        val preferencesSnapshot = preferences.toSnapshot()
+                        val mergedProfile = profile?.let { it.withPreferences(preferencesSnapshot) }
                         Result(
-                            userProfile = profile,
-                            layoutSnapshots = profile?.savedLayouts ?: emptyList(),
+                            userProfile = mergedProfile,
+                            layoutSnapshots = mergedProfile?.savedLayouts ?: profile?.savedLayouts ?: emptyList(),
                             uiState = uiState,
                             offline = offline,
                             hydratedFromCache = firstEmission,
@@ -69,4 +76,19 @@ class ObserveUserProfileUseCase
 
                 awaitClose { job.cancel() }
             }.flowOn(dispatcher)
+
+        fun refresh(
+            userId: String = UIUX_DEFAULT_USER_ID,
+            force: Boolean = true,
+        ) {
+            scope.launch { repository.refreshUserProfile(userId, force) }
+        }
+
+        private fun Any?.toSnapshot(): UiPreferencesSnapshot =
+            when (this) {
+                null -> UiPreferencesSnapshot()
+                is UiPreferencesSnapshot -> this
+                is UiPreferences -> this.toDomainSnapshot()
+                else -> UiPreferencesSnapshot()
+            }
     }

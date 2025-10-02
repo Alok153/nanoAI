@@ -95,12 +95,12 @@
 - [X] T065 Update `app/src/main/java/com/vjaykrsna/nanoai/MainActivity.kt` to observe theme preference flows, gate welcome vs home navigation, and surface skeleton state while caches hydrate.
 
 ## Phase 3.4 Integration
-- [ ] T066 Update `app/src/main/java/com/vjaykrsna/nanoai/core/di/DatabaseModule.kt` to provide new DAOs and migrate schema version for UserProfile/UI state tables.
-- [ ] T067 Update `app/src/main/java/com/vjaykrsna/nanoai/core/di/RepositoryModule.kt` binding `UserProfileRepositoryImpl`, local, and remote data sources.
-- [ ] T068 Update `app/src/main/java/com/vjaykrsna/nanoai/core/di/NetworkModule.kt` to supply `UserProfileService` Retrofit client with JSON serialization config.
-- [ ] T069 Add or extend `app/src/main/java/com/vjaykrsna/nanoai/core/di/PreferencesModule.kt` providing singleton `UiPreferencesStore` and converters.
-- [ ] T070 Implement `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/data/SyncUiStateWorker.kt` to queue layout snapshot sync and tooltip dismissal uploads via WorkManager.
-- [ ] T071 Update `app/src/main/java/com/vjaykrsna/nanoai/core/di/WorkerModule.kt` to bind `SyncUiStateWorker` with Hilt and schedule periodic sync respecting offline constraints.
+- [X] T066 Update `app/src/main/java/com/vjaykrsna/nanoai/core/di/DatabaseModule.kt` to provide new DAOs and migrate schema version for UserProfile/UI state tables.
+- [X] T067 Update `app/src/main/java/com/vjaykrsna/nanoai/core/di/RepositoryModule.kt` binding `UserProfileRepositoryImpl`, local, and remote data sources.
+- [X] T068 Update `app/src/main/java/com/vjaykrsna/nanoai/core/di/NetworkModule.kt` to supply `UserProfileService` Retrofit client with JSON serialization config.
+- [X] T069 Add or extend `app/src/main/java/com/vjaykrsna/nanoai/core/di/PreferencesModule.kt` providing singleton `UiPreferencesStore` and converters.
+- [X] T070 Implement `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/data/SyncUiStateWorker.kt` to queue layout snapshot sync and tooltip dismissal uploads via WorkManager.
+- [X] T071 Update `app/src/main/java/com/vjaykrsna/nanoai/core/di/WorkerModule.kt` to bind `SyncUiStateWorker` with Hilt and schedule periodic sync respecting offline constraints.
 
 ## Phase 3.5 Polish
 - [ ] T072 [P] Add Compose visual regression `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/visual/ThemeToggleVisualTest.kt` capturing light/dark snapshots for accessibility review.

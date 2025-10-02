@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai.feature.uiux.domain
 
+import com.vjaykrsna.nanoai.core.common.IoDispatcher
 import com.vjaykrsna.nanoai.core.data.repository.UserProfileRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -15,7 +16,7 @@ class ToggleCompactModeUseCase
     @Inject
     constructor(
         private val repository: UserProfileRepository,
-        private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
+        @IoDispatcher private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
     ) {
         private val scope = CoroutineScope(SupervisorJob() + dispatcher)
 
@@ -27,5 +28,9 @@ class ToggleCompactModeUseCase
                 repository.updateCompactMode(userId, enabled)
                 repository.refreshUserProfile(userId, force = true)
             }
+        }
+
+        fun toggle(enabled: Boolean) {
+            toggle(enabled, UIUX_DEFAULT_USER_ID)
         }
     }

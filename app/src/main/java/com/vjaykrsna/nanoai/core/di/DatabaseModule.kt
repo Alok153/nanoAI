@@ -2,7 +2,9 @@ package com.vjaykrsna.nanoai.core.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.RoomDatabase
 import com.vjaykrsna.nanoai.core.data.db.NanoAIDatabase
+import com.vjaykrsna.nanoai.core.data.db.NanoAIDatabaseMigrations
 import com.vjaykrsna.nanoai.core.data.db.daos.ApiProviderConfigDao
 import com.vjaykrsna.nanoai.core.data.db.daos.ChatThreadDao
 import com.vjaykrsna.nanoai.core.data.db.daos.LayoutSnapshotDao
@@ -30,8 +32,9 @@ object DatabaseModule {
         @ApplicationContext context: Context,
     ): NanoAIDatabase =
         Room
-            .databaseBuilder(context, NanoAIDatabase::class.java, "nanoai_database")
-            .fallbackToDestructiveMigration() // TODO: Add proper migrations for production
+            .databaseBuilder(context, NanoAIDatabase::class.java, NanoAIDatabase.DATABASE_NAME)
+            .addMigrations(NanoAIDatabaseMigrations.MIGRATION_1_2)
+            .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
             .build()
 
     @Provides

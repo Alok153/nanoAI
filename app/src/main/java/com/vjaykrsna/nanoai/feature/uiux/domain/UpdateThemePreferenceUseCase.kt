@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai.feature.uiux.domain
 
+import com.vjaykrsna.nanoai.core.common.IoDispatcher
 import com.vjaykrsna.nanoai.core.data.repository.UserProfileRepository
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import kotlinx.coroutines.CoroutineDispatcher
@@ -16,17 +17,22 @@ class UpdateThemePreferenceUseCase
     @Inject
     constructor(
         private val repository: UserProfileRepository,
-        private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
+        @IoDispatcher private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
     ) {
         private val scope = CoroutineScope(SupervisorJob() + dispatcher)
 
-        fun updateTheme(
+        fun updateTheme(themePreference: ThemePreference) {
+            updateThemeForUser(UIUX_DEFAULT_USER_ID, themePreference)
+        }
+
+        fun updateThemeForUser(
+            userId: String,
             themePreference: ThemePreference,
-            userId: String = UIUX_DEFAULT_USER_ID,
+            forceRefresh: Boolean = true,
         ) {
             scope.launch {
                 repository.updateThemePreference(userId, themePreference.name)
-                repository.refreshUserProfile(userId, force = true)
+                repository.refreshUserProfile(userId, force = forceRefresh)
             }
         }
     }

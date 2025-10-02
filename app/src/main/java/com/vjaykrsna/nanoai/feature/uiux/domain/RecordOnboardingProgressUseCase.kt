@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai.feature.uiux.domain
 
+import com.vjaykrsna.nanoai.core.common.IoDispatcher
 import com.vjaykrsna.nanoai.core.data.repository.UserProfileRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -15,7 +16,7 @@ class RecordOnboardingProgressUseCase
     @Inject
     constructor(
         private val repository: UserProfileRepository,
-        private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
+        @IoDispatcher private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
     ) {
         private val scope = CoroutineScope(SupervisorJob() + dispatcher)
         private val dismissedTips = mutableMapOf<String, Boolean>()
@@ -42,5 +43,13 @@ class RecordOnboardingProgressUseCase
                     repository.refreshUserProfile(userId, force = true)
                 }
             }
+        }
+
+        fun recordDismissal(
+            tipId: String?,
+            dismissed: Boolean,
+            completed: Boolean,
+        ) {
+            recordDismissal(tipId, dismissed, completed, UIUX_DEFAULT_USER_ID)
         }
     }

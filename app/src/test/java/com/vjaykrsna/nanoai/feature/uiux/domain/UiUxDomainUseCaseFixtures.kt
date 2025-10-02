@@ -8,18 +8,21 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.TestScope
 import java.lang.IllegalStateException
+import java.lang.reflect.Constructor
 import java.lang.reflect.Proxy
 import java.util.Locale
 import java.util.concurrent.CopyOnWriteArrayList
+import kotlin.runCatching
 
 internal object UiUxDomainReflection {
     private const val USER_PROFILE = "com.vjaykrsna.nanoai.core.domain.model.uiux.UserProfile"
     private const val LAYOUT_SNAPSHOT = "com.vjaykrsna.nanoai.core.domain.model.uiux.LayoutSnapshot"
     private const val UI_STATE_SNAPSHOT = "com.vjaykrsna.nanoai.core.domain.model.uiux.UIStateSnapshot"
-    private const val UI_PREFERENCES = "com.vjaykrsna.nanoai.core.data.preferences.UiPreferences"
+    private const val UI_PREFERENCES = "com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferencesSnapshot"
     private const val THEME_ENUM = "com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference"
     private const val VISUAL_DENSITY_ENUM = "com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity"
     private const val SCREEN_TYPE_ENUM = "com.vjaykrsna.nanoai.core.domain.model.uiux.ScreenType"
+    private const val DEFAULT_CONSTRUCTOR_MARKER = "kotlin.jvm.internal.DefaultConstructorMarker"
 
     fun themePreference(name: String): Any = loadEnumConstant(THEME_ENUM, name)
 
@@ -55,14 +58,27 @@ internal object UiUxDomainReflection {
         dismissedTips: Map<String, Boolean> = emptyMap(),
         pinnedTools: List<String> = emptyList(),
     ): Any {
-        val ctor = primaryConstructor(loadClass(UI_PREFERENCES))
-        return ctor.newInstance(
-            themePreference,
-            visualDensity,
-            onboardingCompleted,
-            dismissedTips,
-            pinnedTools,
-        )
+        val clazz = loadClass(UI_PREFERENCES)
+        val ctor = preferredConstructor(clazz)
+        return if (ctor.parameterCount == 0) {
+            val instance = ctor.newInstance()
+            invokeCopy(
+                instance,
+                themePreference,
+                visualDensity,
+                onboardingCompleted,
+                dismissedTips,
+                pinnedTools,
+            )
+        } else {
+            ctor.newInstance(
+                themePreference,
+                visualDensity,
+                onboardingCompleted,
+                dismissedTips,
+                pinnedTools,
+            )
+        }
     }
 
     fun newUserProfile(
@@ -102,10 +118,15 @@ internal object UiUxDomainReflection {
     ): Any {
         val baseline = original ?: newUiPreferences()
         val clazz = baseline.javaClass
-        val ctor = primaryConstructor(clazz)
+        val ctor = preferredConstructor(clazz)
 
-        val resolvedTheme = themePreference ?: getProperty(baseline, "themePreference")
-        val resolvedDensity = visualDensity ?: getProperty(baseline, "visualDensity")
+        val resolvedTheme =
+            coerceThemePreference(themePreference)
+                ?: coerceThemePreference(getProperty(baseline, "themePreference"))
+                ?: throw IllegalStateException("themePreference must not be null")
+        val resolvedDensity =
+            (visualDensity ?: getProperty(baseline, "visualDensity"))
+                ?: throw IllegalStateException("visualDensity must not be null")
         val resolvedOnboarding = onboardingCompleted ?: (getProperty(baseline, "onboardingCompleted") as Boolean)
 
         @Suppress("UNCHECKED_CAST")
@@ -114,13 +135,24 @@ internal object UiUxDomainReflection {
         @Suppress("UNCHECKED_CAST")
         val resolvedPinned = pinnedTools ?: (getProperty(baseline, "pinnedTools") as List<String>)
 
-        return ctor.newInstance(
-            resolvedTheme,
-            resolvedDensity,
-            resolvedOnboarding,
-            resolvedDismissed,
-            resolvedPinned,
-        )
+        return if (ctor.parameterCount == 0) {
+            invokeCopy(
+                baseline,
+                resolvedTheme,
+                resolvedDensity,
+                resolvedOnboarding,
+                resolvedDismissed,
+                resolvedPinned,
+            )
+        } else {
+            ctor.newInstance(
+                resolvedTheme,
+                resolvedDensity,
+                resolvedOnboarding,
+                resolvedDismissed,
+                resolvedPinned,
+            )
+        }
     }
 
     fun updateLayoutCompact(
@@ -155,6 +187,46 @@ internal object UiUxDomainReflection {
                 ?: throw IllegalStateException("Property $property not found on ${instance.javaClass.name}")
         return method.invoke(instance)
     }
+
+    private fun preferredConstructor(clazz: Class<*>): Constructor<*> {
+        val constructors =
+            clazz.declaredConstructors
+                .filterNot { constructor ->
+                    constructor.parameterTypes.any { type -> type.name == DEFAULT_CONSTRUCTOR_MARKER }
+                }.sortedByDescending { it.parameterCount }
+        val resolved = constructors.firstOrNull()?.apply { isAccessible = true }
+        return resolved ?: clazz.declaredConstructors.firstOrNull()?.apply { isAccessible = true }
+            ?: throw IllegalStateException("No accessible constructor found for ${clazz.name}")
+    }
+
+    private fun coerceThemePreference(candidate: Any?): Any? =
+        when (candidate) {
+            null -> null
+            is String -> themePreference(candidate)
+            else -> candidate
+        }
+
+    private fun invokeCopy(
+        baseline: Any,
+        themePreference: Any,
+        visualDensity: Any,
+        onboardingCompleted: Boolean,
+        dismissedTips: Map<String, Boolean>,
+        pinnedTools: List<String>,
+    ): Any {
+        val method =
+            baseline.javaClass.methods.firstOrNull { method ->
+                method.name == "copy" && method.parameterCount >= 5
+            } ?: throw IllegalStateException("UiPreferencesSnapshot copy method not found")
+        return method.invoke(
+            baseline,
+            themePreference,
+            visualDensity,
+            onboardingCompleted,
+            dismissedTips,
+            pinnedTools,
+        )
+    }
 }
 
 internal class UserProfileRepositorySpy {
@@ -163,7 +235,7 @@ internal class UserProfileRepositorySpy {
     val layoutSnapshotsFlow = MutableStateFlow<List<Any>>(emptyList())
     val uiStateFlow = MutableStateFlow<Any?>(null)
     val offlineStatusFlow = MutableStateFlow(false)
-    val themeEvents = MutableSharedFlow<Any>(replay = 0)
+    val themeEvents = MutableSharedFlow<Any>(replay = 1)
     val invocations = CopyOnWriteArrayList<String>()
     var lastOnboardingRecord: Pair<Map<String, Boolean>, Boolean>? = null
     var lastCompactToggle: Boolean? = null
@@ -183,13 +255,23 @@ internal class UserProfileRepositorySpy {
                 }
                 name.contains("theme", ignoreCase = true) -> {
                     invocations += name
-                    val theme = args?.firstOrNull()
+                    val themeArg =
+                        when {
+                            args == null || args.isEmpty() -> null
+                            args.size >= 2 -> args[1]
+                            else -> args.firstOrNull()
+                        }
+                    val resolvedTheme =
+                        when (themeArg) {
+                            is String -> runCatching { UiUxDomainReflection.themePreference(themeArg) }.getOrDefault(themeArg)
+                            else -> themeArg
+                        }
                     preferencesFlow.value =
                         UiUxDomainReflection.copyUiPreferences(
                             preferencesFlow.value,
-                            themePreference = theme,
+                            themePreference = resolvedTheme,
                         )
-                    theme?.let { themeEvents.tryEmit(it) }
+                    resolvedTheme?.let { themeEvents.tryEmit(it) }
                     Unit
                 }
                 name.contains("notify", ignoreCase = true) -> {

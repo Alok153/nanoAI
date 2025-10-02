@@ -17,12 +17,20 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
  * @property pinnedToolIds Ordered list of pinned tool IDs (max 10)
  */
 data class UiPreferences(
-    val themePreference: ThemePreference = ThemePreference.SYSTEM,
-    val visualDensity: VisualDensity = VisualDensity.DEFAULT,
-    val onboardingCompleted: Boolean = false,
-    val dismissedTips: Map<String, Boolean> = emptyMap(),
-    val pinnedToolIds: List<String> = emptyList(),
-)
+    val themePreference: ThemePreference,
+    val visualDensity: VisualDensity,
+    val onboardingCompleted: Boolean,
+    val dismissedTips: Map<String, Boolean>,
+    val pinnedToolIds: List<String>,
+) {
+    constructor() : this(
+        themePreference = ThemePreference.SYSTEM,
+        visualDensity = VisualDensity.DEFAULT,
+        onboardingCompleted = false,
+        dismissedTips = emptyMap(),
+        pinnedToolIds = emptyList(),
+    )
+}
 
 /**
  * Convert DataStore UiPreferences to domain UiPreferencesSnapshot.

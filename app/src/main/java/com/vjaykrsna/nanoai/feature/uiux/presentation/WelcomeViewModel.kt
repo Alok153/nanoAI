@@ -3,14 +3,17 @@ package com.vjaykrsna.nanoai.feature.uiux.presentation
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
 import com.vjaykrsna.nanoai.feature.uiux.domain.ObserveUserProfileUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.RecordOnboardingProgressUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.ToggleCompactModeUseCase
-import com.vjaykrsna.nanoai.feature.uiux.domain.UIUX_DEFAULT_USER_ID
 import com.vjaykrsna.nanoai.feature.uiux.domain.UpdateThemePreferenceUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -32,10 +35,11 @@ class WelcomeViewModel
         private val toggleCompactMode: ToggleCompactModeUseCase,
         private val savedStateHandle: SavedStateHandle,
         private val analytics: WelcomeAnalytics = WelcomeAnalytics.NoOp,
-        private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
+        @MainImmediateDispatcher private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(WelcomeUiState())
         val uiState: StateFlow<WelcomeUiState> = _uiState.asStateFlow()
+        private val presenterScope = CoroutineScope(SupervisorJob() + dispatcher)
 
         init {
             observeUserProfile.flow
@@ -47,7 +51,7 @@ class WelcomeViewModel
                             offline = result.offline,
                         )
                     }
-                }.launchIn(viewModelScope)
+                }.launchIn(presenterScope)
         }
 
         fun onGetStarted() {
@@ -98,7 +102,12 @@ class WelcomeViewModel
 
         private fun markOnboardingCompleted() {
             _uiState.update { it.copy(skipEnabled = false, showOnboarding = false) }
-            recordOnboardingProgress.recordDismissal(tipId = null, dismissed = false, completed = true, userId = UIUX_DEFAULT_USER_ID)
+            recordOnboardingProgress.recordDismissal(tipId = null, dismissed = false, completed = true)
+        }
+
+        override fun onCleared() {
+            super.onCleared()
+            presenterScope.cancel()
         }
     }
 

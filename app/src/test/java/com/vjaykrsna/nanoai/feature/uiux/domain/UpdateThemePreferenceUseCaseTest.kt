@@ -85,10 +85,16 @@ class UpdateThemePreferenceUseCaseTest {
     ) {
         val method =
             instance.javaClass.methods.firstOrNull { method ->
-                method.parameterCount >= 1 &&
-                    method.parameterTypes[0].name.contains("ThemePreference") &&
-                    method.parameterTypes.none { it.name.contains("Continuation") }
-            } ?: fail("Expected non-suspend theme update method on ${instance.javaClass.name}")
+                method.name == "updateTheme" &&
+                    method.parameterCount == 1 &&
+                    method.parameterTypes[0].name.contains("ThemePreference")
+            }
+                ?: instance.javaClass.methods.firstOrNull { method ->
+                    method.parameterCount >= 1 &&
+                        method.parameterTypes[0].name.contains("ThemePreference") &&
+                        method.parameterTypes.none { it.name.contains("Continuation") }
+                }
+                ?: fail("Expected non-suspend theme update method on ${instance.javaClass.name}")
         method.invoke(instance, theme)
     }
 }

@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai.core.data.repository.impl
 
+import com.vjaykrsna.nanoai.core.common.IoDispatcher
 import com.vjaykrsna.nanoai.core.data.repository.UserProfileRepository
 import com.vjaykrsna.nanoai.core.domain.model.uiux.LayoutSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
@@ -28,7 +29,7 @@ class UserProfileRepositoryImpl
     constructor(
         private val local: UserProfileLocalDataSource,
         private val remote: UserProfileRemoteDataSource,
-        private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+        @IoDispatcher private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     ) : UserProfileRepository {
         private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
         private val offlineState = MutableStateFlow(false)

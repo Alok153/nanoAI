@@ -3,7 +3,7 @@ package com.vjaykrsna.nanoai.feature.uiux.ui
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -42,7 +42,7 @@ fun SidebarDrawer(
         ) {
             Text("Settings")
         }
-        Divider(modifier = Modifier.padding(vertical = 8.dp))
+    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
         Text(text = "Pinned tools", style = MaterialTheme.typography.titleSmall)
         pinnedTools.forEach { tool ->
             Text(
@@ -55,7 +55,7 @@ fun SidebarDrawer(
                         .testTag("sidebar_pinned_$tool"),
             )
         }
-        Divider(modifier = Modifier.padding(vertical = 8.dp))
+    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
         Text(
             text = "Deep links",
             style = MaterialTheme.typography.titleSmall,

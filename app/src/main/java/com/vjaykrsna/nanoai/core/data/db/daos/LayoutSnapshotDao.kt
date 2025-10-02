@@ -200,7 +200,5 @@ interface LayoutSnapshotDao {
         ORDER BY position ASC
         """,
     )
-    suspend fun findAllLayouts(
-        userId: String,
-    ): List<LayoutSnapshotEntity>
+    suspend fun findAllLayouts(userId: String): List<LayoutSnapshotEntity>
 }

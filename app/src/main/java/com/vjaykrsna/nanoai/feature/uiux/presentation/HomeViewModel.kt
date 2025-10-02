@@ -2,13 +2,16 @@ package com.vjaykrsna.nanoai.feature.uiux.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.vjaykrsna.nanoai.core.data.repository.UserProfileRepository
+import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
 import com.vjaykrsna.nanoai.feature.uiux.domain.ObserveUserProfileUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.RecordOnboardingProgressUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.UIUX_DEFAULT_USER_ID
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,11 +29,11 @@ class HomeViewModel
     constructor(
         private val observeUserProfile: ObserveUserProfileUseCase,
         private val recordOnboardingProgress: RecordOnboardingProgressUseCase,
-        private val userProfileRepository: UserProfileRepository,
-        private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
+        @MainImmediateDispatcher private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(HomeUiState())
         val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+        private val presenterScope = CoroutineScope(SupervisorJob() + dispatcher)
 
         init {
             observeUserProfile.flow
@@ -47,7 +50,7 @@ class HomeViewModel
                             isHydrating = result.userProfile == null,
                         )
                     }
-                }.launchIn(viewModelScope)
+                }.launchIn(presenterScope)
         }
 
         fun toggleToolsExpanded() {
@@ -63,9 +66,8 @@ class HomeViewModel
             viewModelScope.launch(dispatcher) {
                 recordOnboardingProgress.recordDismissal(
                     tipId = HOME_TOOLTIP_ID,
-                    dismissed = false,
+                    dismissed = true,
                     completed = false,
-                    userId = UIUX_DEFAULT_USER_ID,
                 )
             }
         }
@@ -77,7 +79,6 @@ class HomeViewModel
                     tipId = HOME_TOOLTIP_ID,
                     dismissed = true,
                     completed = false,
-                    userId = UIUX_DEFAULT_USER_ID,
                 )
             }
         }
@@ -87,9 +88,12 @@ class HomeViewModel
         }
 
         fun retryPendingActions() {
-            viewModelScope.launch(dispatcher) {
-                userProfileRepository.refreshUserProfile(UIUX_DEFAULT_USER_ID, force = true)
-            }
+            observeUserProfile.refresh(UIUX_DEFAULT_USER_ID, force = true)
+        }
+
+        override fun onCleared() {
+            super.onCleared()
+            presenterScope.cancel()
         }
     }
 
