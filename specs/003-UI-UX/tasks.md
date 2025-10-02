@@ -63,18 +63,18 @@
 - [X] T033 Create `core/data/db/entities/UserProfileEntity.kt` plus `toDomain`/`fromDomain` conversions with type converters for enums and maps.
 - [X] T034 Create `core/data/db/entities/LayoutSnapshotEntity.kt` modeling saved layouts with indices for quick lookup.
 - [X] T035 Create `core/data/db/entities/UIStateSnapshotEntity.kt` persisting session state with foreign keys to `UserProfileEntity`.
-- [ ] T036 Create `core/data/db/daos/UserProfileDao.kt` exposing Flow CRUD, pinned tools updates, and compact mode toggles.
-- [ ] T037 Create `core/data/db/daos/LayoutSnapshotDao.kt` for CRUD, ordering, and pinned tool synchronization.
-- [ ] T038 Create `core/data/db/daos/UIStateSnapshotDao.kt` for session restoration and sidebar collapse persistence.
-- [ ] T039 Update `core/data/db/NanoAIDatabase.kt` to register new entities/DAOs, add migrations, and export updated schema JSON.
-- [ ] T040 Implement `core/data/preferences/UiPreferencesStore.kt` storing theme preference, visual density, onboarding completion, dismissed tips, and pinned tool ordering via Preferences DataStore.
-- [ ] T041 Add `core/data/preferences/UiPreferences.kt` data class + mapper bridging DataStore snapshots to domain `UserProfile` overlays.
-- [ ] T042 Create `core/network/dto/UserProfileDto.kt` with serialization annotations and mapping to domain models.
-- [ ] T043 Define Retrofit `core/network/UserProfileService.kt` exposing `GET /user/profile` with suspend function.
-- [ ] T044 Implement `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/data/UserProfileRemoteDataSource.kt` handling API fetch, error wrapping, and DTO conversion.
-- [ ] T045 Implement `.../feature/uiux/data/UserProfileLocalDataSource.kt` coordinating DAO + DataStore updates and cache hydration.
-- [ ] T046 Define `core/data/repository/UserProfileRepository.kt` interface covering observe/update theme, onboarding, pinned tools, and layout snapshots.
-- [ ] T047 Implement `core/data/repository/impl/UserProfileRepositoryImpl.kt` merging remote/local sources, ensuring offline-first behavior, and exposing Flow APIs.
+- [X] T036 Create `core/data/db/daos/UserProfileDao.kt` exposing Flow CRUD, pinned tools updates, and compact mode toggles.
+- [X] T037 Create `core/data/db/daos/LayoutSnapshotDao.kt` for CRUD, ordering, and pinned tool synchronization.
+- [X] T038 Create `core/data/db/daos/UIStateSnapshotDao.kt` for session restoration and sidebar collapse persistence.
+- [X] T039 Update `core/data/db/NanoAIDatabase.kt` to register new entities/DAOs, add migrations, and export updated schema JSON.
+- [X] T040 Implement `core/data/preferences/UiPreferencesStore.kt` storing theme preference, visual density, onboarding completion, dismissed tips, and pinned tool ordering via Preferences DataStore.
+- [X] T041 Add `core/data/preferences/UiPreferences.kt` data class + mapper bridging DataStore snapshots to domain `UserProfile` overlays.
+- [X] T042 Create `core/network/dto/UserProfileDto.kt` with serialization annotations and mapping to domain models.
+- [X] T043 Define Retrofit `core/network/UserProfileService.kt` exposing `GET /user/profile` with suspend function.
+- [X] T044 Implement `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/data/UserProfileRemoteDataSource.kt` handling API fetch, error wrapping, and DTO conversion.
+- [X] T045 Implement `.../feature/uiux/data/UserProfileLocalDataSource.kt` coordinating DAO + DataStore updates and cache hydration.
+- [X] T046 Define `core/data/repository/UserProfileRepository.kt` interface covering observe/update theme, onboarding, pinned tools, and layout snapshots.
+- [X] T047 Implement `core/data/repository/impl/UserProfileRepositoryImpl.kt` merging remote/local sources, ensuring offline-first behavior, and exposing Flow APIs.
 - [ ] T048 [P] Implement `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/domain/ObserveUserProfileUseCase.kt` wiring repository Flow into UI state mediator with error handling.
 - [ ] T049 [P] Implement `.../UpdateThemePreferenceUseCase.kt` orchestrating DataStore writes and repository refresh triggers.
 - [ ] T050 [P] Implement `.../RecordOnboardingProgressUseCase.kt` persisting dismissed tooltips and onboarding completion flag.

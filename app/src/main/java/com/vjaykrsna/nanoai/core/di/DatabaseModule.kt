@@ -5,9 +5,12 @@ import androidx.room.Room
 import com.vjaykrsna.nanoai.core.data.db.NanoAIDatabase
 import com.vjaykrsna.nanoai.core.data.db.daos.ApiProviderConfigDao
 import com.vjaykrsna.nanoai.core.data.db.daos.ChatThreadDao
+import com.vjaykrsna.nanoai.core.data.db.daos.LayoutSnapshotDao
 import com.vjaykrsna.nanoai.core.data.db.daos.MessageDao
 import com.vjaykrsna.nanoai.core.data.db.daos.PersonaProfileDao
 import com.vjaykrsna.nanoai.core.data.db.daos.PersonaSwitchLogDao
+import com.vjaykrsna.nanoai.core.data.db.daos.UIStateSnapshotDao
+import com.vjaykrsna.nanoai.core.data.db.daos.UserProfileDao
 import com.vjaykrsna.nanoai.feature.library.data.daos.DownloadTaskDao
 import com.vjaykrsna.nanoai.feature.library.data.daos.ModelPackageDao
 import dagger.Module
@@ -58,4 +61,16 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideDownloadTaskDao(database: NanoAIDatabase): DownloadTaskDao = database.downloadTaskDao()
+
+    @Provides
+    @Singleton
+    fun provideUserProfileDao(database: NanoAIDatabase): UserProfileDao = database.userProfileDao()
+
+    @Provides
+    @Singleton
+    fun provideLayoutSnapshotDao(database: NanoAIDatabase): LayoutSnapshotDao = database.layoutSnapshotDao()
+
+    @Provides
+    @Singleton
+    fun provideUIStateSnapshotDao(database: NanoAIDatabase): UIStateSnapshotDao = database.uiStateSnapshotDao()
 }

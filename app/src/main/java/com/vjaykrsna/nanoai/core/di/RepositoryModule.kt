@@ -5,11 +5,13 @@ import com.vjaykrsna.nanoai.core.data.repository.ConversationRepository
 import com.vjaykrsna.nanoai.core.data.repository.InferencePreferenceRepository
 import com.vjaykrsna.nanoai.core.data.repository.PersonaRepository
 import com.vjaykrsna.nanoai.core.data.repository.PersonaSwitchLogRepository
+import com.vjaykrsna.nanoai.core.data.repository.UserProfileRepository
 import com.vjaykrsna.nanoai.core.data.repository.impl.ApiProviderConfigRepositoryImpl
 import com.vjaykrsna.nanoai.core.data.repository.impl.ConversationRepositoryImpl
 import com.vjaykrsna.nanoai.core.data.repository.impl.InferencePreferenceRepositoryImpl
 import com.vjaykrsna.nanoai.core.data.repository.impl.PersonaRepositoryImpl
 import com.vjaykrsna.nanoai.core.data.repository.impl.PersonaSwitchLogRepositoryImpl
+import com.vjaykrsna.nanoai.core.data.repository.impl.UserProfileRepositoryImpl
 import com.vjaykrsna.nanoai.feature.library.data.DownloadManager
 import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
 import com.vjaykrsna.nanoai.feature.library.data.export.ExportServiceImpl
@@ -67,4 +69,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindImportService(impl: ImportServiceImpl): ImportService
+
+    @Binds
+    @Singleton
+    abstract fun bindUserProfileRepository(impl: UserProfileRepositoryImpl): UserProfileRepository
 }

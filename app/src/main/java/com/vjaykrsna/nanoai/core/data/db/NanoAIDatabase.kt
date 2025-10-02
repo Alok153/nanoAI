@@ -5,14 +5,20 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.vjaykrsna.nanoai.core.data.db.daos.ApiProviderConfigDao
 import com.vjaykrsna.nanoai.core.data.db.daos.ChatThreadDao
+import com.vjaykrsna.nanoai.core.data.db.daos.LayoutSnapshotDao
 import com.vjaykrsna.nanoai.core.data.db.daos.MessageDao
 import com.vjaykrsna.nanoai.core.data.db.daos.PersonaProfileDao
 import com.vjaykrsna.nanoai.core.data.db.daos.PersonaSwitchLogDao
+import com.vjaykrsna.nanoai.core.data.db.daos.UIStateSnapshotDao
+import com.vjaykrsna.nanoai.core.data.db.daos.UserProfileDao
 import com.vjaykrsna.nanoai.core.data.db.entities.ApiProviderConfigEntity
 import com.vjaykrsna.nanoai.core.data.db.entities.ChatThreadEntity
+import com.vjaykrsna.nanoai.core.data.db.entities.LayoutSnapshotEntity
 import com.vjaykrsna.nanoai.core.data.db.entities.MessageEntity
 import com.vjaykrsna.nanoai.core.data.db.entities.PersonaProfileEntity
 import com.vjaykrsna.nanoai.core.data.db.entities.PersonaSwitchLogEntity
+import com.vjaykrsna.nanoai.core.data.db.entities.UIStateSnapshotEntity
+import com.vjaykrsna.nanoai.core.data.db.entities.UserProfileEntity
 import com.vjaykrsna.nanoai.feature.library.data.daos.DownloadTaskDao
 import com.vjaykrsna.nanoai.feature.library.data.daos.ModelPackageDao
 import com.vjaykrsna.nanoai.feature.library.data.entities.DownloadTaskEntity
@@ -22,12 +28,13 @@ import com.vjaykrsna.nanoai.feature.library.data.entities.ModelPackageEntity
  * Room database for nanoAI application.
  *
  * Contains all entities for chat threads, messages, personas, models, downloads,
- * API configurations, and persona switch logging.
+ * API configurations, persona switch logging, and UI/UX state.
  *
- * Version 1: Initial schema with all core entities.
+ * Version 1: Initial schema with core entities.
+ * Version 2: Added UserProfile, LayoutSnapshot, and UIStateSnapshot entities for UI/UX feature.
  *
  * Foreign keys are enabled to ensure referential integrity and cascade deletes.
- * TypeConverters handle UUID, Instant, Set<String>, and enum conversions.
+ * TypeConverters handle UUID, Instant, Set<String>, List<String>, Map<String, Boolean>, and enum conversions.
  */
 @Database(
     entities = [
@@ -38,8 +45,11 @@ import com.vjaykrsna.nanoai.feature.library.data.entities.ModelPackageEntity
         ModelPackageEntity::class,
         DownloadTaskEntity::class,
         ApiProviderConfigEntity::class,
+        UserProfileEntity::class,
+        LayoutSnapshotEntity::class,
+        UIStateSnapshotEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 @TypeConverters(com.vjaykrsna.nanoai.core.data.db.TypeConverters::class)
@@ -59,6 +69,13 @@ abstract class NanoAIDatabase : RoomDatabase() {
     abstract fun modelPackageDao(): ModelPackageDao
 
     abstract fun downloadTaskDao(): DownloadTaskDao
+
+    // UI/UX feature DAOs
+    abstract fun userProfileDao(): UserProfileDao
+
+    abstract fun layoutSnapshotDao(): LayoutSnapshotDao
+
+    abstract fun uiStateSnapshotDao(): UIStateSnapshotDao
 
     companion object {
         const val DATABASE_NAME = "nanoai_database"
