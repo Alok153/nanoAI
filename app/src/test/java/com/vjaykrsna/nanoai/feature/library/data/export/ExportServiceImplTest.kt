@@ -80,7 +80,10 @@ class ExportServiceImplTest {
             personaRepository.personas = listOf(persona)
             apiProviderRepository.providers = listOf(provider)
 
-            val tempFile = createTempFile(prefix = "nanoai-export", suffix = ".json").toFile().apply { deleteOnExit() }
+            val tempFile =
+                createTempFile(prefix = "nanoai-export", suffix = ".json")
+                    .toFile()
+                    .apply { deleteOnExit() }
 
             val exportedPath =
                 exportService.createExportBundle(
@@ -99,6 +102,7 @@ class ExportServiceImplTest {
             assertThat(payload["apiProviders"]!!.jsonArray).isNotEmpty()
         }
 
+    @Suppress("ktlint:standard:function-expression-body")
     private class FakePersonaRepository : PersonaRepository {
         var personas: List<PersonaProfile> = emptyList()
 
@@ -106,7 +110,8 @@ class ExportServiceImplTest {
 
         override suspend fun getPersona(personaId: UUID): PersonaProfile? = personas.firstOrNull { it.personaId == personaId }
 
-        override suspend fun getPersonaById(personaId: UUID): Flow<PersonaProfile?> = flowOf(personas.firstOrNull { it.personaId == personaId })
+        override suspend fun getPersonaById(personaId: UUID): Flow<PersonaProfile?> =
+            flowOf(personas.firstOrNull { it.personaId == personaId })
 
         override suspend fun createPersona(persona: PersonaProfile) {
             throw UnsupportedOperationException("Not required for test")
@@ -125,6 +130,7 @@ class ExportServiceImplTest {
         override fun observeAllPersonas(): Flow<List<PersonaProfile>> = flowOf(personas)
     }
 
+    @Suppress("ktlint:standard:function-expression-body")
     private class FakeApiProviderConfigRepository : ApiProviderConfigRepository {
         var providers: List<APIProviderConfig> = emptyList()
 
@@ -149,10 +155,10 @@ class ExportServiceImplTest {
         override fun observeAllProviders(): Flow<List<APIProviderConfig>> = flowOf(providers)
     }
 
+    @Suppress("ktlint:standard:function-expression-body")
     private class FakeConversationRepository : ConversationRepository {
-        override suspend fun getThread(threadId: UUID): ChatThread? {
+        override suspend fun getThread(threadId: UUID): ChatThread? =
             throw UnsupportedOperationException("Not required for test")
-        }
 
         override suspend fun getAllThreads(): List<ChatThread> = emptyList()
 
@@ -186,11 +192,15 @@ class ExportServiceImplTest {
 
         override suspend fun getCurrentPersonaForThread(threadId: UUID): UUID? = null
 
-        override suspend fun createNewThread(personaId: UUID, title: String?): UUID {
-            throw UnsupportedOperationException("Not required for test")
-        }
+        override suspend fun createNewThread(
+            personaId: UUID,
+            title: String?,
+        ): UUID = throw UnsupportedOperationException("Not required for test")
 
-        override suspend fun updateThreadPersona(threadId: UUID, personaId: UUID?) {
+        override suspend fun updateThreadPersona(
+            threadId: UUID,
+            personaId: UUID?,
+        ) {
             throw UnsupportedOperationException("Not required for test")
         }
     }

@@ -5,11 +5,11 @@ import com.vjaykrsna.nanoai.core.data.repository.ConversationRepository
 import com.vjaykrsna.nanoai.core.data.repository.InferencePreferenceRepository
 import com.vjaykrsna.nanoai.core.data.repository.PersonaRepository
 import com.vjaykrsna.nanoai.core.data.repository.PersonaSwitchLogRepository
+import com.vjaykrsna.nanoai.core.domain.model.InferencePreference
 import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
 import com.vjaykrsna.nanoai.core.domain.model.PersonaSwitchLog
-import com.vjaykrsna.nanoai.core.domain.model.InferencePreference
-import com.vjaykrsna.nanoai.core.model.MessageSource
 import com.vjaykrsna.nanoai.core.model.InferenceMode
+import com.vjaykrsna.nanoai.core.model.MessageSource
 import com.vjaykrsna.nanoai.core.model.PersonaSwitchAction
 import com.vjaykrsna.nanoai.core.model.Role
 import io.mockk.coEvery
@@ -42,7 +42,12 @@ class SendPromptAndPersonaUseCaseTest {
         personaSwitchLogRepository = mockk(relaxed = true)
         inferencePreferenceRepository = mockk(relaxed = true)
 
-        every { inferencePreferenceRepository.observeInferencePreference() } returns flowOf(InferencePreference(InferenceMode.LOCAL_FIRST))
+        every {
+            inferencePreferenceRepository.observeInferencePreference()
+        } returns
+            flowOf(
+                InferencePreference(InferenceMode.LOCAL_FIRST),
+            )
 
         useCase =
             SendPromptAndPersonaUseCase(
@@ -144,7 +149,12 @@ class SendPromptAndPersonaUseCaseTest {
             val threadId = UUID.randomUUID()
             val personaId = UUID.randomUUID()
 
-            every { inferencePreferenceRepository.observeInferencePreference() } returns flowOf(InferencePreference(InferenceMode.CLOUD_FIRST))
+            every {
+                inferencePreferenceRepository.observeInferencePreference()
+            } returns
+                flowOf(
+                    InferencePreference(InferenceMode.CLOUD_FIRST),
+                )
             coEvery { inferenceOrchestrator.isOnline() } returns true
             coEvery { inferenceOrchestrator.hasLocalModelAvailable() } returns true
             coEvery { inferenceOrchestrator.generateResponse(any(), any(), any()) } returns

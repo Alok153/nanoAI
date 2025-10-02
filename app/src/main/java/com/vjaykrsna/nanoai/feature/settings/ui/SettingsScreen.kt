@@ -2,6 +2,7 @@ package com.vjaykrsna.nanoai.feature.settings.ui
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -242,8 +243,7 @@ fun SettingsScreen(
                                             } else {
                                                 showExportDialog = true
                                             }
-                                        }
-                                        .padding(16.dp),
+                                        }.padding(16.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
@@ -476,7 +476,8 @@ private fun ApiProviderDialog(
 }
 
 @Composable
-private fun ExportDialog(
+@VisibleForTesting
+internal fun ExportDialog(
     onDismiss: () -> Unit,
     onConfirm: (dontShowAgain: Boolean) -> Unit,
     modifier: Modifier = Modifier,
@@ -514,6 +515,10 @@ private fun ExportDialog(
                     Checkbox(
                         checked = dontShowAgain,
                         onCheckedChange = { dontShowAgain = it },
+                        modifier =
+                            Modifier.semantics {
+                                contentDescription = "Don't warn me again checkbox"
+                            },
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
@@ -524,12 +529,24 @@ private fun ExportDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(dontShowAgain) }) {
+            TextButton(
+                onClick = { onConfirm(dontShowAgain) },
+                modifier =
+                    Modifier.semantics {
+                        contentDescription = "Confirm export backup"
+                    },
+            ) {
                 Text("Export")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(
+                onClick = onDismiss,
+                modifier =
+                    Modifier.semantics {
+                        contentDescription = "Cancel export backup"
+                    },
+            ) {
                 Text("Cancel")
             }
         },

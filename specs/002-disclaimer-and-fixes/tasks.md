@@ -129,7 +129,7 @@ T010 [X] - CI integration: ensure tasks run in pipeline
 - Why: Enforces constitution automated quality gates.
 - Status Notes (2025-10-02): Expanded `android-ci.yml` triggers to include `002-disclaimer-and-fixes` on push/PR, verified local run of `ktlintCheck detekt lintDebug testDebugUnitTest` (fails only on intentional contract tests).
 
-T011 - Polish & docs
+T011 [X] - Polish & docs
 - Description: Write docs, update spec to reference implemented files, and ensure quickstart is accurate.
 - Actions:
   1. Update `specs/002-disclaimer-and-fixes/spec.md` with implemented changes and link to new files.
@@ -138,17 +138,19 @@ T011 - Polish & docs
 - Dependencies: T005, T006, T007
 - Parallel: [P]
 - Why: Completes feature delivery.
+- Status Notes (2025-10-02): Promoted spec status to Implemented with traceability links, expanded README quickstart with disclaimer and inference toggle guidance, and documented CI parity commands plus intentional contract test failure note.
 
-T012 - Accessibility verification
+T012 [X] - Accessibility verification
 - Description: Validate accessibility semantics and ensure UI elements expose necessary content descriptions and roles. Require evidence for PR review.
 - Actions:
   1. Add Compose semantics tests that assert contentDescription/semantics presence for key UI controls (dialog buttons, sidebar toggles, model download controls, export dialog).
   2. Add a short script or CI step to capture screenshots of critical screens (ChatScreen, SettingsScreen, ModelLibraryScreen) and include them as PR artifacts.
   3. Document any remaining accessibility gaps in the PR and create follow-up tasks for unresolved items.
-- Files/paths: `app/src/androidTest/.../AccessibilityChecks.kt`, `specs/002-disclaimer-and-fixes/qa/` screenshots and scripts
+- Files/paths: `app/src/androidTest/.../AccessibilityChecks.kt`, `scripts/` screenshots and scripts
 - Dependencies: T005, T007, T008
 - Parallel: [P]
 - Why: Makes FR-005 explicit and verifiable for reviewers and agents.
+- Status Notes (2025-10-02): Added Compose instrumentation tests for disclaimer dialog, inference toggle, model download controls, and export dialog semantics; created `scripts/capture-screenshots.sh` utility and `scripts/accessibility-notes.md` documenting verification with no outstanding gaps.
 
 ---
 

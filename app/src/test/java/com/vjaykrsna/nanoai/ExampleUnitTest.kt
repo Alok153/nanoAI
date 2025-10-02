@@ -1,6 +1,6 @@
 package com.vjaykrsna.nanoai
 
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**

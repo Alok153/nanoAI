@@ -3,6 +3,7 @@ package com.vjaykrsna.nanoai.feature.settings.ui
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.ui.theme.NanoAITheme
@@ -33,5 +34,21 @@ class FirstLaunchDisclaimerDialogTest {
         composeRule.runOnIdle {
             assertThat(acknowledged).isTrue()
         }
+    }
+
+    @Test
+    fun disclaimerDialog_buttonsExposeContentDescriptions() {
+        composeRule.setContent {
+            NanoAITheme {
+                FirstLaunchDisclaimerDialog(
+                    isVisible = true,
+                    onAcknowledge = {},
+                    onDismiss = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("Acknowledge disclaimer and continue").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Dismiss disclaimer").assertIsDisplayed()
     }
 }

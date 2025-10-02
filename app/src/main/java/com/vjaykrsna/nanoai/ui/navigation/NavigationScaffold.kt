@@ -3,6 +3,7 @@
 package com.vjaykrsna.nanoai.ui.navigation
 
 import androidx.activity.compose.BackHandler
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -281,36 +282,11 @@ private fun SidebarContent(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Inference preference toggle
-        Row(
+        InferencePreferenceToggleRow(
+            inferenceMode = inferenceMode,
+            onInferenceModeChanged = onInferenceModeChanged,
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "Inference Preference",
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                Text(
-                    text =
-                        if (inferenceMode == InferenceMode.LOCAL_FIRST) "Prefer on-device models when available" else "Prefer cloud inference when online",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Switch(
-                checked = inferenceMode == InferenceMode.LOCAL_FIRST,
-                onCheckedChange = { checked ->
-                    val mode = if (checked) InferenceMode.LOCAL_FIRST else InferenceMode.CLOUD_FIRST
-                    onInferenceModeChanged(mode)
-                },
-                modifier =
-                    Modifier.semantics {
-                        contentDescription = "Toggle inference preference"
-                    },
-            )
-        }
+        )
 
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -336,6 +312,50 @@ private fun SidebarContent(
                 )
             }
         }
+    }
+}
+
+@VisibleForTesting
+@Composable
+internal fun InferencePreferenceToggleRow(
+    inferenceMode: InferenceMode,
+    onInferenceModeChanged: (InferenceMode) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = "Inference Preference",
+                style = MaterialTheme.typography.titleMedium,
+            )
+            Text(
+                text =
+                    if (inferenceMode ==
+                        InferenceMode.LOCAL_FIRST
+                    ) {
+                        "Prefer on-device models when available"
+                    } else {
+                        "Prefer cloud inference when online"
+                    },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Switch(
+            checked = inferenceMode == InferenceMode.LOCAL_FIRST,
+            onCheckedChange = { checked ->
+                val mode = if (checked) InferenceMode.LOCAL_FIRST else InferenceMode.CLOUD_FIRST
+                onInferenceModeChanged(mode)
+            },
+            modifier =
+                Modifier.semantics {
+                    contentDescription = "Toggle inference preference"
+                },
+        )
     }
 }
 

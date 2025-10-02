@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai.feature.library.ui
 
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -259,8 +260,9 @@ private fun DownloadQueueSection(
     }
 }
 
+@VisibleForTesting
 @Composable
-private fun DownloadTaskItem(
+internal fun DownloadTaskItem(
     download: DownloadTask,
     onPause: (UUID) -> Unit,
     onResume: (UUID) -> Unit,
@@ -404,8 +406,9 @@ private fun ModelsGrid(
     }
 }
 
+@VisibleForTesting
 @Composable
-private fun ModelCard(
+internal fun ModelCard(
     model: ModelPackage,
     isInstalled: Boolean,
     onDownload: () -> Unit,

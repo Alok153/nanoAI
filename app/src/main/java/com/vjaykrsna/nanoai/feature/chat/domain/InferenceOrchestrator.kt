@@ -15,10 +15,10 @@ import com.vjaykrsna.nanoai.core.runtime.LocalGenerationRequest
 import com.vjaykrsna.nanoai.core.runtime.LocalModelRuntime
 import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
 import com.vjaykrsna.nanoai.feature.library.model.ProviderType
+import kotlinx.coroutines.flow.first
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.flow.first
 
 /**
  * Coordinates local MediaPipe inference with cloud fallback via the gateway client.

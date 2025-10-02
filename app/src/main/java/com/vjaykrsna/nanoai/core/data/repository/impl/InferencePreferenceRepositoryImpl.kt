@@ -10,10 +10,10 @@ import com.vjaykrsna.nanoai.core.data.repository.InferencePreferenceRepository
 import com.vjaykrsna.nanoai.core.domain.model.InferencePreference
 import com.vjaykrsna.nanoai.core.model.InferenceMode
 import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import javax.inject.Inject
+import javax.inject.Singleton
 
 @Singleton
 class InferencePreferenceRepositoryImpl

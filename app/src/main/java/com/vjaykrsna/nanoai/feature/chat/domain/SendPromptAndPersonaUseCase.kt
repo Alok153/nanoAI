@@ -6,8 +6,8 @@ import com.vjaykrsna.nanoai.core.data.repository.PersonaRepository
 import com.vjaykrsna.nanoai.core.data.repository.PersonaSwitchLogRepository
 import com.vjaykrsna.nanoai.core.domain.model.Message
 import com.vjaykrsna.nanoai.core.domain.model.PersonaSwitchLog
-import com.vjaykrsna.nanoai.core.model.MessageSource
 import com.vjaykrsna.nanoai.core.model.InferenceMode
+import com.vjaykrsna.nanoai.core.model.MessageSource
 import com.vjaykrsna.nanoai.core.model.PersonaSwitchAction
 import com.vjaykrsna.nanoai.core.model.Role
 import kotlinx.coroutines.flow.Flow
@@ -127,15 +127,15 @@ class SendPromptAndPersonaUseCase
             personaSwitchLogRepository.getLogsByThreadId(threadId)
     }
 
-    private fun shouldPreferLocal(
-        hasLocalModel: Boolean,
-        isOnline: Boolean,
-        userPrefersLocal: Boolean,
-    ): Boolean {
-        if (!hasLocalModel) return false
-        if (!isOnline) return true
-        return userPrefersLocal
-    }
+private fun shouldPreferLocal(
+    hasLocalModel: Boolean,
+    isOnline: Boolean,
+    userPrefersLocal: Boolean,
+): Boolean {
+    if (!hasLocalModel) return false
+    if (!isOnline) return true
+    return userPrefersLocal
+}
 
 class OfflineNoModelException : IllegalStateException("Device offline with no local model available")
 
