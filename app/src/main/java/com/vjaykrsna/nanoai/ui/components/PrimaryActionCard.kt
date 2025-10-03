@@ -22,6 +22,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -45,6 +46,7 @@ fun PrimaryActionCard(
                 .testTag(tag)
                 .semantics {
                     contentDescription = "$title action"
+                    stateDescription = "$description"
                     role = Role.Button
                 },
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),

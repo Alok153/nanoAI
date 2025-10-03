@@ -15,7 +15,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 
@@ -41,7 +43,10 @@ fun OfflineBanner(
             modifier =
                 Modifier
                     .padding(16.dp)
-                    .semantics { contentDescription = "Offline status banner" },
+                    .semantics {
+                        contentDescription = "Offline status banner"
+                        liveRegion = LiveRegionMode.Polite
+                    },
         ) {
             Text(
                 text = "You're offline. Some features are temporarily unavailable.",

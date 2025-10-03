@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai
 
+import androidx.benchmark.macro.MacrobenchmarkScope
 import androidx.benchmark.macro.junit4.BaselineProfileRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.uiautomator.By
@@ -50,7 +51,7 @@ class BaselineProfileGenerator {
             settingsJourney()
         }
 
-    private fun chatInteractionJourney() {
+    private fun MacrobenchmarkScope.chatInteractionJourney() {
         // Navigate to chat (should be default screen)
         device.waitForIdle()
 
@@ -83,7 +84,7 @@ class BaselineProfileGenerator {
         device.waitForIdle()
     }
 
-    private fun modelLibraryJourney() {
+    private fun MacrobenchmarkScope.modelLibraryJourney() {
         // Navigate to model library
         val libraryTab = device.findObject(By.desc("Model Library"))
         libraryTab?.click()
@@ -113,7 +114,7 @@ class BaselineProfileGenerator {
         device.waitForIdle()
     }
 
-    private fun personaSwitchJourney() {
+    private fun MacrobenchmarkScope.personaSwitchJourney() {
         // Navigate back to chat
         val chatTab = device.findObject(By.desc("Chat"))
         chatTab?.click()
@@ -150,7 +151,7 @@ class BaselineProfileGenerator {
         device.waitForIdle()
     }
 
-    private fun settingsJourney() {
+    private fun MacrobenchmarkScope.settingsJourney() {
         // Navigate to settings
         val settingsTab = device.findObject(By.desc("Settings"))
         settingsTab?.click()

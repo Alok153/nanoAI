@@ -160,6 +160,47 @@
                        └─► Room Database
 ```
 
+## Data Flow: UI/UX Profile Hydration
+
+```
+1. App launch
+   └─► `NavigationScaffold`
+       └─► `WelcomeViewModel` & `HomeViewModel`
+           └─► `ObserveUserProfileUseCase`
+               ├─► `UserProfileRepository.observe()`
+               │   ├─► `UserProfileLocalDataSource`
+               │   │   ├─► `UserProfileDao.observe()` *(Room cached snapshot)*
+               │   │   └─► `UiPreferencesStore.read()` *(DataStore theme + density prefs)*
+               │   └─► `UserProfileRemoteDataSource.fetch()` *(Retrofit GET /user/profile)*
+               └─► Merge flows → `UserProfile` domain model
+                   └─► Emit `HomeUiState` / `WelcomeUiState`
+```
+
+```
+2. User toggles theme or compact mode
+   └─► UI events (ThemeToggle, Settings)
+       └─► `UpdateThemePreferenceUseCase` / `ToggleCompactModeUseCase`
+           ├─► `UiPreferencesStore.update()` *(writes to encrypted DataStore)*
+           ├─► `UserProfileRepository.syncLocal()` *(Room transaction for Layout/UI state)*
+           └─► `SyncUiStateWorker.enqueue()` *(WorkManager for remote reconciliation when online)*
+```
+
+```
+3. Offline session recovery
+   └─► `SyncUiStateWorker` detects connectivity restored
+       ├─► Flush queued actions from Room (UIStateSnapshot + LayoutSnapshot)
+       └─► Retry `/user/profile` via `UserProfileRemoteDataSource`
+           └─► Merge remote changes → `UserProfileRepository`
+               └─► Emits refreshed Flow → ViewModels update Compose UI
+```
+
+### UI/UX Caching & Privacy Guardrails
+
+- **Room** stores `UserProfileEntity`, `LayoutSnapshotEntity`, and `UIStateSnapshotEntity` with encrypted pinned tools and tooltip dismissals.
+- **DataStore** keeps lightweight preferences: theme, density, onboarding completion, dismissed tips. Writes occur on background dispatcher.
+- **WorkManager** batches sync to avoid exposing UI metadata when the user has opted out of telemetry.
+- **Privacy Hooks**: `UserProfileRepository` redacts display names and pinned tool identifiers before telemetry, and `UiPreferencesStore` enforces consent gates prior to sharing personalization metadata.
+
 ## Dependency Injection (Hilt)
 
 ```

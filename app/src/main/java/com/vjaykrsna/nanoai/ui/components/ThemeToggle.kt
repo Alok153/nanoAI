@@ -25,6 +25,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
@@ -51,16 +52,23 @@ fun ThemeToggle(
         Text(
             text = "Appearance",
             style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.testTag("theme_toggle_title"),
+            modifier =
+                Modifier
+                    .testTag("theme_toggle_title")
+                    .semantics { heading() },
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = "Choose Light, Dark, or System default",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.fillMaxWidth(),
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
             FilterChip(
                 selected = usingSystem,
                 onClick = {
@@ -74,7 +82,13 @@ fun ThemeToggle(
                         contentDescription = null,
                     )
                 },
-                modifier = Modifier.testTag("theme_toggle_option_system"),
+                modifier =
+                    Modifier
+                        .testTag("theme_toggle_option_system")
+                        .semantics {
+                            contentDescription = "System theme"
+                            stateDescription = if (usingSystem) "Selected" else "Not selected"
+                        },
                 colors = FilterChipDefaults.filterChipColors(),
             )
             FilterChip(
@@ -87,7 +101,14 @@ fun ThemeToggle(
                 leadingIcon = {
                     Icon(imageVector = Icons.Filled.LightMode, contentDescription = null)
                 },
-                modifier = Modifier.testTag("theme_toggle_option_light"),
+                modifier =
+                    Modifier
+                        .testTag("theme_toggle_option_light")
+                        .semantics {
+                            contentDescription = "Light theme"
+                            stateDescription =
+                                if (!usingSystem && currentTheme == ThemePreference.LIGHT) "Selected" else "Not selected"
+                        },
             )
             FilterChip(
                 selected = !usingSystem && currentTheme == ThemePreference.DARK,
@@ -99,7 +120,14 @@ fun ThemeToggle(
                 leadingIcon = {
                     Icon(imageVector = Icons.Filled.DarkMode, contentDescription = null)
                 },
-                modifier = Modifier.testTag("theme_toggle_option_dark"),
+                modifier =
+                    Modifier
+                        .testTag("theme_toggle_option_dark")
+                        .semantics {
+                            contentDescription = "Dark theme"
+                            stateDescription =
+                                if (!usingSystem && currentTheme == ThemePreference.DARK) "Selected" else "Not selected"
+                        },
             )
         }
 

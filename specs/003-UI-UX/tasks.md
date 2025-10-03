@@ -103,13 +103,13 @@
 - [X] T071 Update `app/src/main/java/com/vjaykrsna/nanoai/core/di/WorkerModule.kt` to bind `SyncUiStateWorker` with Hilt and schedule periodic sync respecting offline constraints.
 
 ## Phase 3.5 Polish
-- [ ] T072 [P] Add Compose visual regression `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/visual/ThemeToggleVisualTest.kt` capturing light/dark snapshots for accessibility review.
-- [ ] T073 Address accessibility findings: update `feature/uiux/ui/*` and `ui/components/*` with TalkBack labels, contentDescription, focus order, and large-text support per WCAG AA.
-- [ ] T074 Tune performance budgets by updating `macrobenchmark/src/main/java/com/vjaykrsna/nanoai/uiux/UiUxStartupBenchmark.kt` thresholds and generating Baseline Profiles for welcome/home flows.
-- [ ] T075 Refresh `specs/003-UI-UX/quickstart.md` with new instrumentation commands, offline validation notes, and expected screenshots.
-- [ ] T076 Document UI/UX data flow and `/user/profile` endpoint in `docs/ARCHITECTURE.md` and `docs/API.md`, including caching and privacy notes.
-- [ ] T077 Record validation outcomes in `specs/003-UI-UX/validation/uiux-validation.md`, referencing quickstart scenarios and benchmark results.
-- [ ] T078 [P] Log manual QA results (accessibility, performance, theme checks) in `specs/003-UI-UX/logs/uiux-qa.md` with timestamps and device details.
+- [X] T072 [P] Add Compose visual regression `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/visual/ThemeToggleVisualTest.kt` capturing light/dark snapshots for accessibility review.
+- [X] T073 Address accessibility findings: update `feature/uiux/ui/*` and `ui/components/*` with TalkBack labels, contentDescription, focus order, and large-text support per WCAG AA.
+- [X] T074 Tune performance budgets by updating `macrobenchmark/src/main/java/com/vjaykrsna/nanoai/uiux/UiUxStartupBenchmark.kt` thresholds and generating Baseline Profiles for welcome/home flows.
+- [X] T075 Refresh `specs/003-UI-UX/quickstart.md` with new instrumentation commands, offline validation notes, and expected screenshots.
+- [X] T076 Document UI/UX data flow and `/user/profile` endpoint in `docs/ARCHITECTURE.md` and `docs/API.md`, including caching and privacy notes.
+- [X] T077 Record validation outcomes in `specs/003-UI-UX/validation/uiux-validation.md`, referencing quickstart scenarios and benchmark results.
+- [X] T078 [P] Log manual QA results (accessibility, performance, theme checks) in `specs/003-UI-UX/logs/uiux-qa.md` with timestamps and device details.
 
 ## Dependencies
 - T001–T004 must complete before any test task (T005–T029).

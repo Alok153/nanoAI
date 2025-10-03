@@ -56,10 +56,34 @@ Quickstart guide to validate the UI/UX implementation. Follow these steps to tes
 
 **Expected**: WCAG 2.1 AA compliance.
 
+## Automation
+
+Run the focused instrumentation suites to validate UI contracts, scenarios, and visual snapshots:
+
+```bash
+./gradlew app:connectedAndroidTest \
+  -Pandroid.testInstrumentationRunnerArguments.class=com.vjaykrsna.nanoai.feature.uiux.scenario.FirstTimeWelcomeScenarioTest
+./gradlew app:connectedAndroidTest \
+  -Pandroid.testInstrumentationRunnerArguments.class=com.vjaykrsna.nanoai.feature.uiux.scenario.ThemeToggleScenarioTest
+./gradlew app:connectedAndroidTest \
+  -Pandroid.testInstrumentationRunnerArguments.class=com.vjaykrsna.nanoai.feature.uiux.visual.ThemeToggleVisualTest
+```
+
+Visual regression snapshots are written to `files/visual/uiux/` inside the app sandbox. Pull them for review with:
+
+```bash
+adb pull /data/data/com.vjaykrsna.nanoai/files/visual/uiux ./artifacts/theme-toggle
+```
+
 ## Performance Validation
 - Measure FMP: Should be <= 300ms.
 - Interaction latency: <= 100ms.
 - Use Android Profiler to verify.
+
+**Offline Validation Notes**:
+- Toggle airplane mode before launching Scenario 5 to confirm the offline banner announces status changes (TalkBack should read "Offline status banner").
+- Queue one or two actions while offline, then reconnect and verify the banner dismisses automatically after retry.
+- Confirm the queued count increments and decrements correctly.
 
 ## Automated Smoke Test (Recommended)
 - Add an instrumentation test that:
@@ -71,3 +95,9 @@ Quickstart guide to validate the UI/UX implementation. Follow these steps to tes
 - All scenarios pass without errors.
 - UI feels polished and trustworthy.
 - No accessibility issues.
+
+## Expected Screenshots
+- Welcome screen (hero + CTAs) — annotate with light and dark themes.
+- Theme toggle component (light/dark snapshots from `ThemeToggleVisualTest`).
+- Offline banner state (with queued count).
+- Sidebar navigation with TalkBack focus order overlay.

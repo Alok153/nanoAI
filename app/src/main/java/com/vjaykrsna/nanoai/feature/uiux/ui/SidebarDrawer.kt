@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 
@@ -29,21 +30,35 @@ fun SidebarDrawer(
                 .semantics { contentDescription = "Sidebar navigation" }
                 .testTag("sidebar_drawer"),
     ) {
-        Text(text = "Navigation", style = MaterialTheme.typography.titleMedium)
+        Text(
+            text = "Navigation",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.semantics { heading() },
+        )
         TextButton(
             onClick = onNavigateHome,
-            modifier = Modifier.testTag("sidebar_nav_home"),
+            modifier =
+                Modifier
+                    .testTag("sidebar_nav_home")
+                    .semantics { contentDescription = "Navigate to Home" },
         ) {
             Text("Home")
         }
         TextButton(
             onClick = onNavigateSettings,
-            modifier = Modifier.testTag("sidebar_nav_settings"),
+            modifier =
+                Modifier
+                    .testTag("sidebar_item_settings")
+                    .semantics { contentDescription = "Navigate to Settings" },
         ) {
             Text("Settings")
         }
-    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-        Text(text = "Pinned tools", style = MaterialTheme.typography.titleSmall)
+        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+        Text(
+            text = "Pinned tools",
+            style = MaterialTheme.typography.titleSmall,
+            modifier = Modifier.semantics { heading() },
+        )
         pinnedTools.forEach { tool ->
             Text(
                 text = tool,
@@ -52,14 +67,18 @@ fun SidebarDrawer(
                     Modifier
                         .fillMaxWidth()
                         .padding(vertical = 4.dp)
-                        .testTag("sidebar_pinned_$tool"),
+                        .testTag("sidebar_pinned_$tool")
+                        .semantics { contentDescription = "$tool pinned tool" },
             )
         }
-    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
         Text(
             text = "Deep links",
             style = MaterialTheme.typography.titleSmall,
-            modifier = Modifier.testTag("sidebar_deeplink_slot"),
+            modifier =
+                Modifier
+                    .testTag("sidebar_deeplink_slot")
+                    .semantics { heading() },
         )
     }
 }
