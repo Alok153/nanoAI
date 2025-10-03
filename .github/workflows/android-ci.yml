@@ -2,9 +2,9 @@ name: Android CI
 
 on:
   push:
-    branches: [ main, develop, '001-foundation', '002-disclaimer-and-fixes', '003-UI-UX' ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, develop, '002-disclaimer-and-fixes', '003-UI-UX' ]
+    branches: [ main ]
 
 jobs:
   lint:
@@ -25,11 +25,31 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
         
-      - name: Run ktlint
-        run: ./gradlew ktlintCheck --continue
-        
-      - name: Run Detekt
-        run: ./gradlew detekt --continue
+      - name: Run Detekt & ktlint
+        run: ./gradlew detekt ktlintCheck
+
+      - name: Enforce blocking Detekt rules
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -d '' reports < <(find . -path "*build/reports/detekt/*.xml" -print0)
+          if [[ ${#reports[@]} -eq 0 ]]; then
+            echo "::warning::No Detekt XML reports found to inspect."
+            exit 0
+          fi
+
+          violations=0
+          for report in "${reports[@]}"; do
+            if grep -Eq 'TooManyFunctions|LongMethod|CyclomaticComplexMethod|LongParameterList' "$report"; then
+              echo "::error file=$report::Blocking Detekt rule violation detected (TooManyFunctions/LongMethod/CyclomaticComplexMethod/LongParameterList)."
+              violations=1
+            fi
+          done
+
+          if [[ $violations -eq 1 ]]; then
+            echo "Blocking Detekt rule violations found. Failing job."
+            exit 1
+          fi
         
       - name: Upload lint reports
         if: always()

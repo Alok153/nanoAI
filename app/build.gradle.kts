@@ -156,6 +156,9 @@ dependencies {
 
     // WorkManager
     implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.security.crypto)
+    // Security
+    implementation(libs.androidx.security.crypto)
 
     // DataStore
     implementation(libs.androidx.datastore.preferences)
@@ -187,6 +190,7 @@ dependencies {
     testImplementation(libs.androidx.room.testing)
     testImplementation(libs.networknt.json.schema.validator)
     testImplementation(libs.mockwebserver)
+    testImplementation(libs.androidx.work.testing)
 
     // Instrumentation Testing
     androidTestImplementation(libs.androidx.junit)
@@ -199,4 +203,6 @@ dependencies {
     androidTestImplementation(libs.truth)
     androidTestImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.room.testing)
+    androidTestImplementation(libs.androidx.work.testing)
+    androidTestImplementation(libs.mockwebserver)
 }
