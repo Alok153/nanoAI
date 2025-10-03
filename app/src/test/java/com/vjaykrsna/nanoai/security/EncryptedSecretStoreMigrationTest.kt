@@ -1,8 +1,8 @@
 package com.vjaykrsna.nanoai.security
 
 import com.google.common.truth.Truth.assertThat
-import kotlin.io.path.createTempFile
 import org.junit.Test
+import kotlin.io.path.createTempFile
 
 /**
  * Migration contract test for EncryptedSecretStore.

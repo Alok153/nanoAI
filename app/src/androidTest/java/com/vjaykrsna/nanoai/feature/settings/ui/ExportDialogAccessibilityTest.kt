@@ -7,7 +7,6 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class ExportDialogAccessibilityTest {
-
     @Ignore("Pending export dialog instrumentation refresh once backend wiring is complete.")
     @Test
     fun exportDialogPending() {

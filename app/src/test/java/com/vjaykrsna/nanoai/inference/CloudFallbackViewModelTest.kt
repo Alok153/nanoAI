@@ -17,7 +17,7 @@ class CloudFallbackViewModelTest {
         val viewModelClass = runCatching { Class.forName("com.vjaykrsna.nanoai.inference.CloudFallbackViewModel") }
         assertThat(viewModelClass.isSuccess).isTrue()
 
-    val stateClass = runCatching { Class.forName("com.vjaykrsna.nanoai.inference.CloudFallbackViewModel\$State") }
+        val stateClass = runCatching { Class.forName("com.vjaykrsna.nanoai.inference.CloudFallbackViewModel\$State") }
         assertThat(stateClass.isSuccess).isTrue()
 
         val state = stateClass.getOrNull()?.declaredFields?.associateBy { it.name }
@@ -27,7 +27,7 @@ class CloudFallbackViewModelTest {
 
     @Test
     fun `fatal error surfaces support escalation metadata`() {
-    val resultClass = runCatching { Class.forName("com.vjaykrsna.nanoai.core.common.NanoAIResult\$FatalError") }
+        val resultClass = runCatching { Class.forName("com.vjaykrsna.nanoai.core.common.NanoAIResult\$FatalError") }
         assertThat(resultClass.isSuccess).isTrue()
 
         val fields = resultClass.getOrNull()?.declaredFields?.map { it.name }

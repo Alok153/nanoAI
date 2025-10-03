@@ -7,7 +7,6 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class FirstLaunchDisclaimerDialogTest {
-
     @Ignore("Pending first-launch disclaimer coverage in backend phase.")
     @Test
     fun firstLaunchDisclaimerPending() {

@@ -7,7 +7,6 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class PersonaOfflineFlowTest {
-
     @Ignore("Pending persona instrumentation once backend integrations land.")
     @Test
     fun personaFlowsPending() {

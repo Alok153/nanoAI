@@ -7,7 +7,7 @@
 
 - [X] **T001** Configure Jetpack Security and integrity dependencies in `app/build.gradle.kts` (add `androidx.security:security-crypto`, ensure WorkManager/MockWebServer test deps) so encryption and manifest tests can compile.
 - [X] **T002** Update `.github/workflows/ci.yml` to run `./gradlew detekt ktlintCheck` on PRs with failure gates for `TooManyFunctions`, `LongMethod`, `CyclomaticComplexMethod`, `LongParameterList` (blocks merges when counts > 0).
-- [ ] **T003** Tighten `config/detekt/detekt.yml` thresholds to zero for blocking rules and drop matching entries from `config/detekt/baseline.xml`.
+- [X] **T003** Tighten `config/detekt/detekt.yml` thresholds to zero for blocking rules and drop matching entries from `config/detekt/baseline.xml`.
 - [X] **T004 [P]** Promote placeholder `ModelManifestContractTest` into a failing contract test at `app/src/test/contract/com/vjaykrsna/nanoai/contracts/ModelManifestContractTest.kt` asserting manifest signature, SHA-256 length, and HTTPS URL.
 - [X] **T005 [P]** Author failing contract test `ModelVerificationContractTest` in `app/src/test/contract/com/vjaykrsna/nanoai/contracts/ModelVerificationContractTest.kt` validating RETRY responses include `nextRetryAfterSeconds` and `ErrorEnvelope` mapping.
 - [X] **T006 [P]** Author failing contract test `CredentialRotationContractTest` in `app/src/test/contract/com/vjaykrsna/nanoai/contracts/CredentialRotationContractTest.kt` covering unsupported provider/environment handling and returned `keyAlias`/`migrationRequired` fields.

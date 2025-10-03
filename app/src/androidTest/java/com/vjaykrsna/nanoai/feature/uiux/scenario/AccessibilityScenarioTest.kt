@@ -7,7 +7,6 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class AccessibilityScenarioTest {
-
     @Ignore("Pending end-to-end accessibility scenario once dynamic data flows are wired.")
     @Test
     fun accessibilityScenarioPending() {
