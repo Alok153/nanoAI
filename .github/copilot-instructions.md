@@ -2,7 +2,7 @@
 
 Auto-generated from all feature plans. Last updated: 2025-10-02
 
-## Active Technologies (001-foundation, 003-UI-UX)
+## Active Technologies (main, 004-fixes-and-inconsistencies)
 - Kotlin 1.9.x (JDK 11 baseline), Jetpack Compose Material 3, Hilt, WorkManager, Room (SQLite database), DataStore (preferences), Retrofit + Kotlin Serialization, OkHttp, MediaPipe Generative (LiteRT), Coil, Kotlin Coroutines
 
 See `gradle/libs.versions.toml` for version details and updates.
@@ -56,21 +56,6 @@ nanoAI/
 - Unit tests: Located in `app/src/test/`, run with `./gradlew test`.
 - Instrumented tests: Located in `app/src/androidTest/`, run with `./gradlew connectedAndroidTest`.
 - Macrobenchmarks: Located in `macrobenchmark/`, for performance testing.
-
-## Code Style
-- Kotlin 1.9.x (JDK 11 baseline): Follow the [official Kotlin coding conventions](https://kotlinlang.org/docs/coding-conventions.html).
-- Use ktlint for code formatting and linting.
-- Use Detekt for static code analysis; see `config/detekt/detekt.yml` for rules.
-
-## Contributing
-- Branching: Use feature branches (e.g., `003-UI-UX` for UI/UX work). Reference specs in `specs/` for new features.
-- Pull Requests: Ensure tests pass and code style checks before submitting.
-- Workflow: Follow the foundation spec in `specs/001-foundation/` for core guidelines.
-
-## Build and Deployment
-- Build files: `build.gradle.kts` (root and app module).
-- ProGuard rules: `app/proguard-rules.pro` for obfuscation.
-- Deployment: Use `./gradlew assembleRelease` for production APKs.
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->
