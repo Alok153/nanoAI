@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -122,7 +123,7 @@ class UserProfileRepositoryImpl
         ): Boolean =
             withContext(ioDispatcher) {
                 runCatching {
-                    val result = remote.fetchUserProfile()
+                    val result = withTimeout(5000) { remote.fetchUserProfile() }
                     val profile = result.getOrNull()
                     if (profile != null) {
                         local.saveUserProfile(profile)
