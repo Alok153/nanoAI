@@ -2,6 +2,7 @@ package com.vjaykrsna.nanoai.feature.chat.domain
 
 import com.vjaykrsna.nanoai.core.data.repository.ApiProviderConfigRepository
 import com.vjaykrsna.nanoai.core.data.repository.InferencePreferenceRepository
+import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.core.model.InferenceMode
 import com.vjaykrsna.nanoai.core.model.MessageSource
@@ -10,6 +11,7 @@ import com.vjaykrsna.nanoai.core.network.CloudGatewayResult
 import com.vjaykrsna.nanoai.core.network.ConnectivityStatusProvider
 import com.vjaykrsna.nanoai.core.network.dto.CompletionMessageDto
 import com.vjaykrsna.nanoai.core.network.dto.CompletionRequestDto
+import com.vjaykrsna.nanoai.core.network.dto.CompletionResponseDto
 import com.vjaykrsna.nanoai.core.network.dto.CompletionRole
 import com.vjaykrsna.nanoai.core.runtime.LocalGenerationRequest
 import com.vjaykrsna.nanoai.core.runtime.LocalModelRuntime
@@ -61,50 +63,42 @@ constructor(
     val preferLocal = resolvePreference(localCandidates.isNotEmpty(), isOnline, userPrefersLocal)
 
     val preferredLocalModel = selectLocalModel(localCandidates, options.localModelPreference)
+    var lastLocalError: InferenceResult.Error? = null
 
     if (preferLocal && preferredLocalModel != null) {
       val localResult = runLocalInference(preferredLocalModel, prompt, options)
       if (localResult is InferenceResult.Success) {
-        return localResult
+        return localResult.withPersona(personaId)
       }
       // Fallback to cloud when local failed but network is available.
-      if (localResult is InferenceResult.Error && !isOnline) {
-        return localResult
+      lastLocalError = localResult as? InferenceResult.Error
+    }
+
+    val finalResult =
+      if (!isOnline) {
+        lastLocalError ?: offlineError()
+      } else {
+        val cloudResult = runCloudInference(prompt, options)
+        when (cloudResult) {
+          is InferenceResult.Success -> cloudResult
+          is InferenceResult.Error ->
+            fallbackToLocal(preferLocal, preferredLocalModel, prompt, options) ?: cloudResult
+        }
       }
-    }
 
-    if (!isOnline) {
-      return InferenceResult.Error(
-        errorCode = "OFFLINE",
-        message = "Device is offline and cloud inference is unavailable",
-      )
-    }
-
-    val cloudResult = runCloudInference(prompt, options)
-    if (cloudResult is InferenceResult.Success) {
-      return cloudResult
-    }
-
-    // As a resilience measure, attempt local inference even when not preferred if cloud fails.
-    if (!preferLocal && preferredLocalModel != null) {
-      val localResult = runLocalInference(preferredLocalModel, prompt, options)
-      if (localResult is InferenceResult.Success) {
-        return localResult
-      }
-    }
-
-    return cloudResult
+    return finalResult.withPersona(personaId)
   }
 
   private fun resolvePreference(
     hasLocalCandidate: Boolean,
     isOnline: Boolean,
     userPrefersLocal: Boolean
-  ): Boolean {
-    if (!hasLocalCandidate) return false
-    if (!isOnline) return true
-    return userPrefersLocal
-  }
+  ): Boolean =
+    when {
+      !hasLocalCandidate -> false
+      !isOnline -> true
+      else -> userPrefersLocal
+    }
 
   private suspend fun runLocalInference(
     model: ModelPackage,
@@ -159,100 +153,172 @@ constructor(
     prompt: String,
     options: GenerationOptions
   ): InferenceResult {
+    val provider = selectCloudProvider() ?: return noProviderError()
+    val cloudModelId = resolveCloudModel(options.cloudModel) ?: return missingModelError()
+    val messages = buildCloudMessages(prompt, options)
+    val request = buildCompletionRequest(cloudModelId, messages, options)
+    return executeCloudRequest(provider, cloudModelId, request)
+  }
+
+  private suspend fun fallbackToLocal(
+    preferLocal: Boolean,
+    preferredLocalModel: ModelPackage?,
+    prompt: String,
+    options: GenerationOptions
+  ): InferenceResult? {
+    if (preferLocal) return null
+    val model = preferredLocalModel ?: return null
+    return runLocalInference(model, prompt, options)
+  }
+
+  private suspend fun selectCloudProvider(): APIProviderConfig? {
     val providers = apiProviderConfigRepository.getEnabledProviders()
-    val provider =
-      providers.firstOrNull()
-        ?: return InferenceResult.Error(
-          errorCode = "NO_CLOUD_PROVIDER",
-          message = "No enabled cloud provider configured",
-        )
+    return providers.firstOrNull()
+  }
 
-    val cloudModelId =
-      options.cloudModel
-        ?: modelCatalogRepository
-          .getAllModels()
-          .firstOrNull { it.providerType == ProviderType.CLOUD_API }
-          ?.modelId
-        ?: return InferenceResult.Error(
-          errorCode = "NO_CLOUD_MODEL",
-          message = "No cloud model configured for provider",
-        )
-
-    val messages = buildList {
-      options.systemPrompt
-        ?.takeIf { it.isNotBlank() }
-        ?.let { promptText ->
-          add(CompletionMessageDto(role = CompletionRole.SYSTEM, content = promptText))
-        }
-      add(CompletionMessageDto(role = CompletionRole.USER, content = prompt))
-    }
-
-    val request =
-      CompletionRequestDto(
-        model = cloudModelId,
-        messages = messages,
-        temperature = options.temperature?.toDouble(),
-        topP = options.topP?.toDouble(),
-        maxTokens = options.maxOutputTokens,
-        stream = false,
-        metadata = options.metadata,
-      )
-
-    return when (val result = cloudGatewayClient.createCompletion(provider, request)) {
-      is CloudGatewayResult.Success -> {
-        val choice =
-          result.data.choices.firstOrNull()
-            ?: return InferenceResult.Error(
-              errorCode = "EMPTY_RESPONSE",
-              message = "Cloud provider returned no choices",
-              metadata = mapOf("providerId" to provider.providerId),
-            )
-        InferenceResult.Success(
-          text = choice.message.content,
-          source = MessageSource.CLOUD_API,
-          latencyMs = result.latencyMs,
-          metadata =
-            mapOf(
-              "providerId" to provider.providerId,
-              "modelId" to cloudModelId,
-              "finishReason" to choice.finishReason,
-            ),
-        )
+  private suspend fun resolveCloudModel(localPreference: String?): String? {
+    localPreference
+      ?.takeIf { it.isNotBlank() }
+      ?.let {
+        return it
       }
-      CloudGatewayResult.Unauthorized ->
-        InferenceResult.Error(
-          errorCode = "UNAUTHORIZED",
-          message = "Cloud credentials rejected",
-          metadata = mapOf("providerId" to provider.providerId),
-        )
-      CloudGatewayResult.RateLimited ->
-        InferenceResult.Error(
-          errorCode = "RATE_LIMIT",
-          message = "Cloud provider rate limit exceeded",
-          metadata = mapOf("providerId" to provider.providerId),
-        )
-      is CloudGatewayResult.HttpError ->
-        InferenceResult.Error(
-          errorCode = "HTTP_${result.statusCode}",
-          message = result.message,
-          metadata = mapOf("providerId" to provider.providerId),
-        )
-      is CloudGatewayResult.NetworkError ->
-        InferenceResult.Error(
-          errorCode = "NETWORK_ERROR",
-          message = result.throwable.message,
-          cause = result.throwable,
-          metadata = mapOf("providerId" to provider.providerId),
-        )
-      is CloudGatewayResult.UnknownError ->
-        InferenceResult.Error(
-          errorCode = "UNKNOWN_ERROR",
-          message = result.throwable.message,
-          cause = result.throwable,
-          metadata = mapOf("providerId" to provider.providerId),
-        )
+    return modelCatalogRepository
+      .getAllModels()
+      .firstOrNull { it.providerType == ProviderType.CLOUD_API }
+      ?.modelId
+  }
+
+  private fun buildCloudMessages(
+    prompt: String,
+    options: GenerationOptions
+  ): List<CompletionMessageDto> {
+    val messages = mutableListOf<CompletionMessageDto>()
+    options.systemPrompt
+      ?.takeIf { it.isNotBlank() }
+      ?.let { promptText ->
+        messages += CompletionMessageDto(role = CompletionRole.SYSTEM, content = promptText)
+      }
+    messages += CompletionMessageDto(role = CompletionRole.USER, content = prompt)
+    return messages
+  }
+
+  private fun buildCompletionRequest(
+    cloudModelId: String,
+    messages: List<CompletionMessageDto>,
+    options: GenerationOptions
+  ): CompletionRequestDto =
+    CompletionRequestDto(
+      model = cloudModelId,
+      messages = messages,
+      temperature = options.temperature?.toDouble(),
+      topP = options.topP?.toDouble(),
+      maxTokens = options.maxOutputTokens,
+      stream = false,
+      metadata = options.metadata,
+    )
+
+  private suspend fun executeCloudRequest(
+    provider: APIProviderConfig,
+    cloudModelId: String,
+    request: CompletionRequestDto
+  ): InferenceResult {
+    val result = cloudGatewayClient.createCompletion(provider, request)
+    return when (result) {
+      is CloudGatewayResult.Success ->
+        mapCompletionSuccess(result, provider.providerId, cloudModelId)
+      CloudGatewayResult.Unauthorized -> unauthorizedError(provider.providerId)
+      CloudGatewayResult.RateLimited -> rateLimitError(provider.providerId)
+      is CloudGatewayResult.HttpError -> httpError(result, provider.providerId)
+      is CloudGatewayResult.NetworkError -> networkError(result, provider.providerId)
+      is CloudGatewayResult.UnknownError -> unknownError(result, provider.providerId)
     }
   }
+
+  private fun mapCompletionSuccess(
+    result: CloudGatewayResult.Success<CompletionResponseDto>,
+    providerId: String,
+    modelId: String
+  ): InferenceResult {
+    val choice =
+      result.data.choices.firstOrNull()
+        ?: return InferenceResult.Error(
+          errorCode = "EMPTY_RESPONSE",
+          message = "Cloud provider returned no choices",
+          metadata = mapOf("providerId" to providerId),
+        )
+    return InferenceResult.Success(
+      text = choice.message.content,
+      source = MessageSource.CLOUD_API,
+      latencyMs = result.latencyMs,
+      metadata =
+        mapOf(
+          "providerId" to providerId,
+          "modelId" to modelId,
+          "finishReason" to choice.finishReason,
+        ),
+    )
+  }
+
+  private fun unauthorizedError(providerId: String): InferenceResult =
+    InferenceResult.Error(
+      errorCode = "UNAUTHORIZED",
+      message = "Cloud credentials rejected",
+      metadata = mapOf("providerId" to providerId),
+    )
+
+  private fun rateLimitError(providerId: String): InferenceResult =
+    InferenceResult.Error(
+      errorCode = "RATE_LIMIT",
+      message = "Cloud provider rate limit exceeded",
+      metadata = mapOf("providerId" to providerId),
+    )
+
+  private fun httpError(result: CloudGatewayResult.HttpError, providerId: String): InferenceResult =
+    InferenceResult.Error(
+      errorCode = "HTTP_${result.statusCode}",
+      message = result.message,
+      metadata = mapOf("providerId" to providerId),
+    )
+
+  private fun networkError(
+    result: CloudGatewayResult.NetworkError,
+    providerId: String
+  ): InferenceResult =
+    InferenceResult.Error(
+      errorCode = "NETWORK_ERROR",
+      message = result.throwable.message,
+      cause = result.throwable,
+      metadata = mapOf("providerId" to providerId),
+    )
+
+  private fun unknownError(
+    result: CloudGatewayResult.UnknownError,
+    providerId: String
+  ): InferenceResult =
+    InferenceResult.Error(
+      errorCode = "UNKNOWN_ERROR",
+      message = result.throwable.message,
+      cause = result.throwable,
+      metadata = mapOf("providerId" to providerId),
+    )
+
+  private fun noProviderError(): InferenceResult =
+    InferenceResult.Error(
+      errorCode = "NO_CLOUD_PROVIDER",
+      message = "No enabled cloud provider configured",
+    )
+
+  private fun missingModelError(): InferenceResult =
+    InferenceResult.Error(
+      errorCode = "NO_CLOUD_MODEL",
+      message = "No cloud model configured for provider",
+    )
+
+  private fun offlineError(): InferenceResult.Error =
+    InferenceResult.Error(
+      errorCode = "OFFLINE",
+      message = "Device is offline and cloud inference is unavailable",
+    )
 
   private fun selectLocalModel(
     localModels: List<ModelPackage>,
@@ -266,5 +332,14 @@ constructor(
         }
     }
     return localModels.firstOrNull()
+  }
+
+  private fun InferenceResult.withPersona(personaId: UUID?): InferenceResult {
+    if (personaId == null) return this
+    val extra = mapOf("personaId" to personaId)
+    return when (this) {
+      is InferenceResult.Success -> copy(metadata = metadata + extra)
+      is InferenceResult.Error -> copy(metadata = metadata + extra)
+    }
   }
 }

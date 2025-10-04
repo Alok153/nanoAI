@@ -101,6 +101,13 @@ object NanoAIDatabaseMigrations {
       }
 
       private fun upgradeModelPackagesTable(database: SupportSQLiteDatabase) {
+        createTemporaryModelPackagesTable(database)
+        populateTemporaryModelPackagesTable(database)
+        replaceLegacyModelPackagesTable(database)
+        createModelPackagesIndexes(database)
+      }
+
+      private fun createTemporaryModelPackagesTable(database: SupportSQLiteDatabase) {
         database.execSQL(
           """
                     CREATE TABLE IF NOT EXISTS model_packages_new (
@@ -123,6 +130,9 @@ object NanoAIDatabaseMigrations {
                     """
             .trimIndent(),
         )
+      }
+
+      private fun populateTemporaryModelPackagesTable(database: SupportSQLiteDatabase) {
         database.execSQL(
           """
                     INSERT INTO model_packages_new (
@@ -162,8 +172,14 @@ object NanoAIDatabaseMigrations {
                     """
             .trimIndent(),
         )
+      }
+
+      private fun replaceLegacyModelPackagesTable(database: SupportSQLiteDatabase) {
         database.execSQL("DROP TABLE IF EXISTS model_packages")
         database.execSQL("ALTER TABLE model_packages_new RENAME TO model_packages")
+      }
+
+      private fun createModelPackagesIndexes(database: SupportSQLiteDatabase) {
         database.execSQL(
           """
                     CREATE INDEX IF NOT EXISTS index_model_packages_provider_type

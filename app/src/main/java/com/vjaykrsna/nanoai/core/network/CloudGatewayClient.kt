@@ -51,12 +51,12 @@ constructor(
   ): CloudGatewayResult<T> =
     withContext(Dispatchers.IO) {
       val service = createService(provider)
-      return@withContext try {
-        val timedResult = measureTimedValue { block(service) }
-        CloudGatewayResult.Success(timedResult.value, timedResult.duration.inWholeMilliseconds)
-      } catch (throwable: Throwable) {
-        mapError(throwable)
-      }
+      val timedResult = runCatching { measureTimedValue { block(service) } }
+      return@withContext
+      timedResult.fold(
+        onSuccess = { CloudGatewayResult.Success(it.value, it.duration.inWholeMilliseconds) },
+        onFailure = { mapError(it) },
+      )
     }
 
   private fun createService(provider: APIProviderConfig): CloudGatewayService {
@@ -96,22 +96,27 @@ constructor(
 
   private fun mapError(throwable: Throwable): CloudGatewayResult<Nothing> =
     when (throwable) {
-      is HttpException -> {
-        when (throwable.code()) {
-          HttpURLConnection.HTTP_UNAUTHORIZED -> CloudGatewayResult.Unauthorized
-          429 -> CloudGatewayResult.RateLimited
-          else -> {
-            val message = throwable.response()?.errorBody()?.use { body -> body.string() }
-            val parsedMessage =
-              message?.let {
-                runCatching { json.decodeFromString(GatewayErrorDto.serializer(), it).message }
-                  .getOrNull() ?: it
-              }
-            CloudGatewayResult.HttpError(throwable.code(), parsedMessage)
-          }
-        }
-      }
+      is HttpException -> mapHttpException(throwable)
       is java.io.IOException -> CloudGatewayResult.NetworkError(throwable)
       else -> CloudGatewayResult.UnknownError(throwable)
     }
+
+  private fun mapHttpException(exception: HttpException): CloudGatewayResult<Nothing> =
+    when (exception.code()) {
+      HttpURLConnection.HTTP_UNAUTHORIZED -> CloudGatewayResult.Unauthorized
+      HTTP_TOO_MANY_REQUESTS -> CloudGatewayResult.RateLimited
+      else -> CloudGatewayResult.HttpError(exception.code(), extractGatewayMessage(exception))
+    }
+
+  private fun extractGatewayMessage(exception: HttpException): String? {
+    val message = exception.response()?.errorBody()?.use { body -> body.string() }
+    return message?.let { raw -> parseGatewayMessage(raw) ?: raw }
+  }
+
+  private fun parseGatewayMessage(payload: String): String? =
+    runCatching { json.decodeFromString(GatewayErrorDto.serializer(), payload).message }.getOrNull()
+
+  companion object {
+    private const val HTTP_TOO_MANY_REQUESTS = 429
+  }
 }

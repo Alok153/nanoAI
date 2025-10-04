@@ -79,34 +79,61 @@ constructor(
     var updated = 0
     val now = Clock.System.now()
     for (dto in personas) {
-      val personaId =
-        dto.id?.let { runCatching { UUID.fromString(it) }.getOrNull() } ?: UUID.randomUUID()
-      val existing = personaRepository.getPersona(personaId)
-      val createdAt = existing?.createdAt ?: dto.createdAt?.let(::parseInstant) ?: now
-      val updatedAt = dto.updatedAt?.let(::parseInstant) ?: now
-      val persona =
-        PersonaProfile(
-          personaId = personaId,
-          name = dto.name,
-          description = dto.description.orEmpty(),
-          systemPrompt = dto.systemPrompt,
-          defaultModelPreference = dto.defaultModelPreference ?: existing?.defaultModelPreference,
-          temperature = dto.temperature ?: existing?.temperature ?: DEFAULT_TEMPERATURE,
-          topP = dto.topP ?: existing?.topP ?: DEFAULT_TOP_P,
-          defaultVoice = dto.defaultVoice ?: existing?.defaultVoice,
-          defaultImageStyle = dto.defaultImageStyle ?: existing?.defaultImageStyle,
-          createdAt = createdAt,
-          updatedAt = updatedAt,
-        )
-      if (existing == null) {
-        personaRepository.createPersona(persona)
-        imported += 1
-      } else {
-        personaRepository.updatePersona(persona)
-        updated += 1
+      when (processPersona(dto, now)) {
+        PersonaImportAction.IMPORTED -> imported += 1
+        PersonaImportAction.UPDATED -> updated += 1
       }
     }
     return imported to updated
+  }
+
+  private suspend fun processPersona(
+    dto: BackupPersonaDto,
+    defaultTimestamp: Instant
+  ): PersonaImportAction {
+    val personaId = dto.resolvePersonaId()
+    val existing = personaRepository.getPersona(personaId)
+    val persona = dto.toPersonaProfile(personaId, existing, defaultTimestamp)
+    return if (existing == null) {
+      personaRepository.createPersona(persona)
+      PersonaImportAction.IMPORTED
+    } else {
+      personaRepository.updatePersona(persona)
+      PersonaImportAction.UPDATED
+    }
+  }
+
+  private fun BackupPersonaDto.toPersonaProfile(
+    personaId: UUID,
+    existing: PersonaProfile?,
+    defaultTimestamp: Instant
+  ): PersonaProfile {
+    val persistedCreatedAt =
+      existing?.createdAt ?: this.createdAt?.let(::parseInstant) ?: defaultTimestamp
+    val persistedUpdatedAt = this.updatedAt?.let(::parseInstant) ?: defaultTimestamp
+    return PersonaProfile(
+      personaId = personaId,
+      name = name,
+      description = description.orEmpty(),
+      systemPrompt = systemPrompt,
+      defaultModelPreference = defaultModelPreference ?: existing?.defaultModelPreference,
+      temperature = temperature ?: existing?.temperature ?: DEFAULT_TEMPERATURE,
+      topP = topP ?: existing?.topP ?: DEFAULT_TOP_P,
+      defaultVoice = defaultVoice ?: existing?.defaultVoice,
+      defaultImageStyle = defaultImageStyle ?: existing?.defaultImageStyle,
+      createdAt = persistedCreatedAt,
+      updatedAt = persistedUpdatedAt,
+    )
+  }
+
+  private fun BackupPersonaDto.resolvePersonaId(): UUID {
+    val parsed = id?.let { runCatching { UUID.fromString(it) }.getOrNull() }
+    return parsed ?: UUID.randomUUID()
+  }
+
+  private enum class PersonaImportAction {
+    IMPORTED,
+    UPDATED,
   }
 
   private suspend fun importProviders(providers: List<BackupApiProviderDto>): Pair<Int, Int> {

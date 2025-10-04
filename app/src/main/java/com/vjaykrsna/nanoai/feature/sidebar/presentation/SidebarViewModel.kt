@@ -124,48 +124,50 @@ constructor(
   fun archiveThread(threadId: UUID) {
     viewModelScope.launch {
       _isLoading.value = true
-      try {
-        conversationRepository.archiveThread(threadId)
-      } catch (e: Exception) {
-        _errorEvents.emit(SidebarError.ArchiveFailed(e.message ?: "Failed to archive thread"))
-      } finally {
-        _isLoading.value = false
-      }
+      runCatching { conversationRepository.archiveThread(threadId) }
+        .onFailure { error ->
+          _errorEvents.emit(
+            SidebarError.ArchiveFailed(error.message ?: "Failed to archive thread"),
+          )
+        }
+      _isLoading.value = false
     }
   }
 
   fun deleteThread(threadId: UUID) {
     viewModelScope.launch {
       _isLoading.value = true
-      try {
-        conversationRepository.deleteThread(threadId)
-      } catch (e: Exception) {
-        _errorEvents.emit(SidebarError.DeleteFailed(e.message ?: "Failed to delete thread"))
-      } finally {
-        _isLoading.value = false
-      }
+      runCatching { conversationRepository.deleteThread(threadId) }
+        .onFailure { error ->
+          _errorEvents.emit(
+            SidebarError.DeleteFailed(error.message ?: "Failed to delete thread"),
+          )
+        }
+      _isLoading.value = false
     }
   }
 
   fun createNewThread(personaId: UUID?, title: String? = null) {
     viewModelScope.launch {
-      try {
-        conversationRepository.createNewThread(personaId ?: UUID.randomUUID(), title)
-      } catch (e: Exception) {
-        _errorEvents.emit(SidebarError.CreateFailed(e.message ?: "Failed to create thread"))
-      }
+      runCatching { conversationRepository.createNewThread(personaId ?: UUID.randomUUID(), title) }
+        .onFailure { error ->
+          _errorEvents.emit(
+            SidebarError.CreateFailed(error.message ?: "Failed to create thread"),
+          )
+        }
     }
   }
 
   fun setInferenceMode(mode: InferenceMode) {
     viewModelScope.launch {
-      try {
-        inferencePreferenceRepository.setInferenceMode(mode)
-      } catch (e: Exception) {
-        _errorEvents.emit(
-          SidebarError.PreferenceUpdateFailed(e.message ?: "Failed to update inference preference")
-        )
-      }
+      runCatching { inferencePreferenceRepository.setInferenceMode(mode) }
+        .onFailure { error ->
+          _errorEvents.emit(
+            SidebarError.PreferenceUpdateFailed(
+              error.message ?: "Failed to update inference preference",
+            ),
+          )
+        }
     }
   }
 

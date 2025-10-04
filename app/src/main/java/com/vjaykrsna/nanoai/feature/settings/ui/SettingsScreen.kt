@@ -1,5 +1,7 @@
 package com.vjaykrsna.nanoai.feature.settings.ui
 
+import android.net.Uri
+import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.VisibleForTesting
@@ -54,81 +56,273 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreference
 import com.vjaykrsna.nanoai.core.data.preferences.RetentionPolicy
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
+import com.vjaykrsna.nanoai.feature.settings.domain.ImportSummary
 import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsError
 import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsViewModel
 import java.util.UUID
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun SettingsScreen(modifier: Modifier = Modifier, viewModel: SettingsViewModel = hiltViewModel()) {
   val apiProviders by viewModel.apiProviders.collectAsState()
   val privacyPreferences by viewModel.privacyPreferences.collectAsState()
-  val isLoading by viewModel.isLoading.collectAsState()
 
   val snackbarHostState = remember { SnackbarHostState() }
   var showAddProviderDialog by remember { mutableStateOf(false) }
   var showExportDialog by remember { mutableStateOf(false) }
   var editingProvider by remember { mutableStateOf<APIProviderConfig?>(null) }
 
-  val importBackupLauncher =
-    rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-      if (uri != null) {
-        viewModel.importBackup(uri)
-      }
-    }
+  val importBackupLauncher = rememberImportBackupLauncher(viewModel::importBackup)
 
+  CollectSettingsErrorEvents(viewModel.errorEvents, snackbarHostState)
+  CollectExportSuccessEvents(viewModel.exportSuccess, snackbarHostState)
+  CollectImportSuccessEvents(viewModel.importSuccess, snackbarHostState)
+
+  fun hideProviderDialog() {
+    showAddProviderDialog = false
+    editingProvider = null
+  }
+
+  val actions =
+    createSettingsActions(
+      viewModel = viewModel,
+      privacyPreferences = privacyPreferences,
+      importBackupLauncher = importBackupLauncher,
+      onAddProviderClick = { showAddProviderDialog = true },
+      onEditProvider = { editingProvider = it },
+      onDeleteProvider = { provider -> viewModel.deleteApiProvider(provider.providerId) },
+      onShowExportDialog = { showExportDialog = true },
+    )
+
+  SettingsScreenContent(
+    state =
+      SettingsContentState(
+        apiProviders = apiProviders,
+        privacyPreferences = privacyPreferences,
+      ),
+    snackbarHostState = snackbarHostState,
+    actions = actions,
+    modifier = modifier,
+  )
+
+  SettingsDialogs(
+    showAddProviderDialog = showAddProviderDialog,
+    editingProvider = editingProvider,
+    showExportDialog = showExportDialog,
+    onProviderDismiss = { hideProviderDialog() },
+    onProviderSave = { name, baseUrl, apiKey ->
+      saveProvider(
+        editingProvider = editingProvider,
+        name = name,
+        baseUrl = baseUrl,
+        apiKey = apiKey,
+        onAdd = viewModel::addApiProvider,
+        onUpdate = viewModel::updateApiProvider,
+      )
+      hideProviderDialog()
+    },
+    onExportDismiss = { showExportDialog = false },
+    onExportConfirm = { dontShowAgain ->
+      confirmExport(
+        dontShowAgain = dontShowAgain,
+        dismissWarnings = viewModel::dismissExportWarnings,
+        export = { viewModel.exportBackupToDownloads() },
+      )
+      showExportDialog = false
+    },
+  )
+}
+
+@Composable
+private fun CollectSettingsErrorEvents(
+  errorEvents: Flow<SettingsError>,
+  snackbarHostState: SnackbarHostState,
+) {
   LaunchedEffect(Unit) {
-    viewModel.errorEvents.collectLatest { error ->
-      val message =
-        when (error) {
-          is SettingsError.ProviderAddFailed -> "Failed to add provider: ${error.message}"
-          is SettingsError.ProviderUpdateFailed -> "Failed to update provider: ${error.message}"
-          is SettingsError.ProviderDeleteFailed -> "Failed to delete provider: ${error.message}"
-          is SettingsError.ExportFailed -> "Export failed: ${error.message}"
-          is SettingsError.ImportFailed -> "Import failed: ${error.message}"
-          is SettingsError.PreferenceUpdateFailed -> "Failed to update preference: ${error.message}"
-          is SettingsError.UnexpectedError -> "Unexpected error: ${error.message}"
-        }
-      snackbarHostState.showSnackbar(message)
-    }
+    errorEvents.collectLatest { error -> snackbarHostState.showSnackbar(error.toUserMessage()) }
   }
+}
 
+@Composable
+private fun CollectExportSuccessEvents(
+  exportSuccess: Flow<String>,
+  snackbarHostState: SnackbarHostState,
+) {
   LaunchedEffect(Unit) {
-    viewModel.exportSuccess.collectLatest { path ->
-      snackbarHostState.showSnackbar("Backup exported to ${path.substringAfterLast('/')}…")
+    exportSuccess.collectLatest { path ->
+      snackbarHostState.showSnackbar(exportSuccessMessage(path))
     }
   }
+}
 
+@Composable
+private fun CollectImportSuccessEvents(
+  importSuccess: Flow<ImportSummary>,
+  snackbarHostState: SnackbarHostState,
+) {
   LaunchedEffect(Unit) {
-    viewModel.importSuccess.collectLatest { summary ->
-      val personasTotal = summary.personasImported + summary.personasUpdated
-      val providersTotal = summary.providersImported + summary.providersUpdated
-      val message = buildString {
-        append("Imported backup: ")
-        append("$personasTotal persona${if (personasTotal == 1) "" else "s"}")
-        append(", ")
-        append("$providersTotal provider${if (providersTotal == 1) "" else "s"}")
-      }
-      snackbarHostState.showSnackbar(message)
+    importSuccess.collectLatest { summary ->
+      snackbarHostState.showSnackbar(buildImportSuccessMessage(summary))
     }
   }
+}
 
-  fun triggerExport(includeChatHistory: Boolean = true) {
-    val downloadsPath =
-      android.os.Environment.getExternalStoragePublicDirectory(
-          android.os.Environment.DIRECTORY_DOWNLOADS,
-        )
-        .absolutePath + "/nanoai-backup-${System.currentTimeMillis()}.json"
-    viewModel.exportBackup(downloadsPath, includeChatHistory)
+@Composable
+private fun rememberImportBackupLauncher(
+  onImport: (Uri) -> Unit,
+): ManagedActivityResultLauncher<Array<String>, Uri?> {
+  return rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+    uri?.let(onImport)
+  }
+}
+
+private fun SettingsError.toUserMessage(): String =
+  when (this) {
+    is SettingsError.ProviderAddFailed -> "Failed to add provider: ${message}"
+    is SettingsError.ProviderUpdateFailed -> "Failed to update provider: ${message}"
+    is SettingsError.ProviderDeleteFailed -> "Failed to delete provider: ${message}"
+    is SettingsError.ExportFailed -> "Export failed: ${message}"
+    is SettingsError.ImportFailed -> "Import failed: ${message}"
+    is SettingsError.PreferenceUpdateFailed -> "Failed to update preference: ${message}"
+    is SettingsError.UnexpectedError -> "Unexpected error: ${message}"
   }
 
+private fun exportSuccessMessage(path: String): String =
+  "Backup exported to ${path.substringAfterLast('/')}…"
+
+private fun buildImportSuccessMessage(summary: ImportSummary): String {
+  val personasTotal = summary.personasImported + summary.personasUpdated
+  val providersTotal = summary.providersImported + summary.providersUpdated
+  return buildString {
+    append("Imported backup: ")
+    append("$personasTotal persona${if (personasTotal == 1) "" else "s"}")
+    append(", ")
+    append("$providersTotal provider${if (providersTotal == 1) "" else "s"}")
+  }
+}
+
+private fun SettingsViewModel.exportBackupToDownloads(includeChatHistory: Boolean = true) {
+  val downloadsPath =
+    android.os.Environment.getExternalStoragePublicDirectory(
+        android.os.Environment.DIRECTORY_DOWNLOADS,
+      )
+      .absolutePath + "/nanoai-backup-${System.currentTimeMillis()}.json"
+  exportBackup(downloadsPath, includeChatHistory)
+}
+
+private fun handleExportRequest(
+  warningsDismissed: Boolean,
+  onExport: () -> Unit,
+  onShowDialog: () -> Unit,
+) {
+  if (warningsDismissed) {
+    onExport()
+  } else {
+    onShowDialog()
+  }
+}
+
+private fun confirmExport(
+  dontShowAgain: Boolean,
+  dismissWarnings: () -> Unit,
+  export: () -> Unit,
+) {
+  if (dontShowAgain) {
+    dismissWarnings()
+  }
+  export()
+}
+
+private fun saveProvider(
+  editingProvider: APIProviderConfig?,
+  name: String,
+  baseUrl: String,
+  apiKey: String?,
+  onAdd: (APIProviderConfig) -> Unit,
+  onUpdate: (APIProviderConfig) -> Unit,
+) {
+  editingProvider?.let { provider ->
+    onUpdate(
+      provider.copy(
+        providerName = name,
+        baseUrl = baseUrl,
+        apiKey = apiKey ?: "",
+      ),
+    )
+  }
+    ?: onAdd(
+      APIProviderConfig(
+        providerId = UUID.randomUUID().toString(),
+        providerName = name,
+        baseUrl = baseUrl,
+        apiKey = apiKey ?: "",
+        apiType = com.vjaykrsna.nanoai.core.model.APIType.OPENAI_COMPATIBLE,
+        isEnabled = true,
+      ),
+    )
+}
+
+private fun createSettingsActions(
+  viewModel: SettingsViewModel,
+  privacyPreferences: PrivacyPreference,
+  importBackupLauncher: ManagedActivityResultLauncher<Array<String>, Uri?>,
+  onAddProviderClick: () -> Unit,
+  onEditProvider: (APIProviderConfig) -> Unit,
+  onDeleteProvider: (APIProviderConfig) -> Unit,
+  onShowExportDialog: () -> Unit,
+): SettingsScreenActions {
+  return SettingsScreenActions(
+    onAddProviderClick = onAddProviderClick,
+    onProviderEdit = onEditProvider,
+    onProviderDelete = onDeleteProvider,
+    onImportBackupClick = {
+      importBackupLauncher.launch(
+        arrayOf("application/json", "application/zip", "application/octet-stream"),
+      )
+    },
+    onExportBackupClick = {
+      handleExportRequest(
+        warningsDismissed = privacyPreferences.exportWarningsDismissed,
+        onExport = { viewModel.exportBackupToDownloads() },
+        onShowDialog = onShowExportDialog,
+      )
+    },
+    onTelemetryToggle = viewModel::setTelemetryOptIn,
+    onRetentionPolicyChange = viewModel::setRetentionPolicy,
+  )
+}
+
+private data class SettingsContentState(
+  val apiProviders: List<APIProviderConfig>,
+  val privacyPreferences: PrivacyPreference,
+)
+
+private data class SettingsScreenActions(
+  val onAddProviderClick: () -> Unit,
+  val onProviderEdit: (APIProviderConfig) -> Unit,
+  val onProviderDelete: (APIProviderConfig) -> Unit,
+  val onImportBackupClick: () -> Unit,
+  val onExportBackupClick: () -> Unit,
+  val onTelemetryToggle: (Boolean) -> Unit,
+  val onRetentionPolicyChange: (RetentionPolicy) -> Unit,
+)
+
+@Composable
+private fun SettingsScreenContent(
+  state: SettingsContentState,
+  snackbarHostState: SnackbarHostState,
+  actions: SettingsScreenActions,
+  modifier: Modifier = Modifier,
+) {
   Scaffold(
     snackbarHost = { SnackbarHost(snackbarHostState) },
     floatingActionButton = {
       FloatingActionButton(
-        onClick = { showAddProviderDialog = true },
+        onClick = actions.onAddProviderClick,
         modifier = Modifier.semantics { contentDescription = "Add API provider" },
       ) {
         Icon(Icons.Default.Add, "Add")
@@ -144,182 +338,199 @@ fun SettingsScreen(modifier: Modifier = Modifier, viewModel: SettingsViewModel =
       verticalArrangement = Arrangement.spacedBy(16.dp),
       modifier = Modifier.fillMaxSize().padding(innerPadding),
     ) {
-      // Header
-      item {
-        Text(
-          text = "Settings",
-          style = MaterialTheme.typography.headlineMedium,
-          fontWeight = FontWeight.Bold,
-        )
-      }
-
-      // API Providers Section
-      item {
-        SettingsSection(title = "API Providers") {
-          if (apiProviders.isEmpty()) {
-            Text(
-              text = "No API providers configured",
-              style = MaterialTheme.typography.bodyMedium,
-              color = MaterialTheme.colorScheme.onSurfaceVariant,
-              modifier = Modifier.padding(vertical = 16.dp),
-            )
-          }
-        }
-      }
+      item { SettingsHeader() }
+      item { ApiProvidersSectionHeader(hasProviders = state.apiProviders.isNotEmpty()) }
 
       items(
-        items = apiProviders,
-        key = { it.providerId.toString() },
+        items = state.apiProviders,
+        key = { it.providerId },
         contentType = { "api_provider_card" },
       ) { provider ->
         ApiProviderCard(
           provider = provider,
-          onEdit = { editingProvider = provider },
-          onDelete = { viewModel.deleteApiProvider(provider.providerId) },
+          onEdit = { actions.onProviderEdit(provider) },
+          onDelete = { actions.onProviderDelete(provider) },
         )
       }
 
-      // Export Section
       item {
-        Spacer(modifier = Modifier.height(8.dp))
-        SettingsSection(title = "Data Management") {
-          Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Card(
-              modifier = Modifier.fillMaxWidth(),
-              colors =
-                CardDefaults.cardColors(
-                  containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                ),
-            ) {
-              Row(
-                modifier =
-                  Modifier.fillMaxWidth()
-                    .clickable {
-                      importBackupLauncher.launch(
-                        arrayOf("application/json", "application/zip", "application/octet-stream"),
-                      )
-                    }
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-              ) {
-                Column(modifier = Modifier.weight(1f)) {
-                  Text(
-                    text = "Import Backup",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium,
-                  )
-                  Text(
-                    text = "Restore personas, providers, and settings from a backup file",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                  )
-                }
-                Icon(Icons.Default.Add, "Import")
-              }
-            }
-
-            Card(
-              modifier = Modifier.fillMaxWidth(),
-              colors =
-                CardDefaults.cardColors(
-                  containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                ),
-            ) {
-              Row(
-                modifier =
-                  Modifier.fillMaxWidth()
-                    .clickable {
-                      if (privacyPreferences.exportWarningsDismissed) {
-                        triggerExport()
-                      } else {
-                        showExportDialog = true
-                      }
-                    }
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-              ) {
-                Column(modifier = Modifier.weight(1f)) {
-                  Text(
-                    text = "Export Backup",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium,
-                  )
-                  Text(
-                    text = "Export conversations, personas, and settings",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                  )
-                }
-                Icon(Icons.Default.Edit, "Export")
-              }
-            }
-          }
-        }
+        DataManagementSection(
+          onImportBackupClick = actions.onImportBackupClick,
+          onExportBackupClick = actions.onExportBackupClick,
+        )
       }
 
-      // Privacy Section
       item {
-        Spacer(modifier = Modifier.height(8.dp))
-        SettingsSection(title = "Privacy & Telemetry") {
-          PrivacySettings(
-            preferences = privacyPreferences,
-            onTelemetryToggle = { viewModel.setTelemetryOptIn(it) },
-            onRetentionPolicyChange = { viewModel.setRetentionPolicy(it) },
-          )
-        }
+        PrivacySection(
+          privacyPreferences = state.privacyPreferences,
+          onTelemetryToggle = actions.onTelemetryToggle,
+          onRetentionPolicyChange = actions.onRetentionPolicyChange,
+        )
       }
     }
   }
+}
 
-  // Add/Edit Provider Dialog
-  if (showAddProviderDialog || editingProvider != null) {
-    ApiProviderDialog(
-      provider = editingProvider,
-      onDismiss = {
-        showAddProviderDialog = false
-        editingProvider = null
-      },
-      onSave = { name, baseUrl, apiKey ->
-        val provider = editingProvider
-        if (provider != null) {
-          viewModel.updateApiProvider(
-            provider.copy(
-              providerName = name,
-              baseUrl = baseUrl,
-              apiKey = apiKey ?: "",
-            ),
-          )
-        } else {
-          viewModel.addApiProvider(
-            APIProviderConfig(
-              providerId = UUID.randomUUID().toString(),
-              providerName = name,
-              baseUrl = baseUrl,
-              apiKey = apiKey ?: "",
-              apiType = com.vjaykrsna.nanoai.core.model.APIType.OPENAI_COMPATIBLE,
-              isEnabled = true,
-            ),
-          )
-        }
-        showAddProviderDialog = false
-        editingProvider = null
-      },
+@Composable
+private fun SettingsHeader(modifier: Modifier = Modifier) {
+  Text(
+    text = "Settings",
+    style = MaterialTheme.typography.headlineMedium,
+    fontWeight = FontWeight.Bold,
+    modifier = modifier,
+  )
+}
+
+@Composable
+private fun ApiProvidersSectionHeader(
+  hasProviders: Boolean,
+  modifier: Modifier = Modifier,
+) {
+  SettingsSection(title = "API Providers", modifier = modifier) {
+    if (!hasProviders) {
+      Text(
+        text = "No API providers configured",
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(vertical = 16.dp),
+      )
+    }
+  }
+}
+
+@Composable
+private fun DataManagementSection(
+  onImportBackupClick: () -> Unit,
+  onExportBackupClick: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  SettingsSection(title = "Data Management", modifier = modifier) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+      DataManagementCard(
+        title = "Import Backup",
+        description = "Restore personas, providers, and settings from a backup file",
+        icon = Icons.Default.Add,
+        contentDescription = "Import",
+        onClick = onImportBackupClick,
+      )
+
+      DataManagementCard(
+        title = "Export Backup",
+        description = "Export conversations, personas, and settings",
+        icon = Icons.Default.Edit,
+        contentDescription = "Export",
+        onClick = onExportBackupClick,
+      )
+    }
+  }
+}
+
+@Composable
+private fun DataManagementCard(
+  title: String,
+  description: String,
+  icon: ImageVector,
+  contentDescription: String,
+  onClick: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  Card(
+    modifier = modifier.fillMaxWidth(),
+    colors =
+      CardDefaults.cardColors(
+        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+      ),
+  ) {
+    Row(
+      modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(16.dp),
+      horizontalArrangement = Arrangement.SpaceBetween,
+      verticalAlignment = Alignment.CenterVertically,
+    ) {
+      Column(modifier = Modifier.weight(1f)) {
+        Text(
+          text = title,
+          style = MaterialTheme.typography.titleMedium,
+          fontWeight = FontWeight.Medium,
+        )
+        Text(
+          text = description,
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
+      Icon(icon, contentDescription)
+    }
+  }
+}
+
+@Composable
+private fun PrivacySection(
+  privacyPreferences: PrivacyPreference,
+  onTelemetryToggle: (Boolean) -> Unit,
+  onRetentionPolicyChange: (RetentionPolicy) -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  SettingsSection(title = "Privacy & Telemetry", modifier = modifier) {
+    PrivacySettings(
+      preferences = privacyPreferences,
+      onTelemetryToggle = onTelemetryToggle,
+      onRetentionPolicyChange = onRetentionPolicyChange,
     )
   }
+}
 
-  // Export Dialog
-  if (showExportDialog) {
+@Composable
+private fun SettingsDialogs(
+  showAddProviderDialog: Boolean,
+  editingProvider: APIProviderConfig?,
+  showExportDialog: Boolean,
+  onProviderDismiss: () -> Unit,
+  onProviderSave: (name: String, baseUrl: String, apiKey: String?) -> Unit,
+  onExportDismiss: () -> Unit,
+  onExportConfirm: (dontShowAgain: Boolean) -> Unit,
+) {
+  val isProviderDialogVisible = showAddProviderDialog || editingProvider != null
+
+  ProviderDialogHost(
+    isVisible = isProviderDialogVisible,
+    provider = editingProvider,
+    onDismiss = onProviderDismiss,
+    onSave = onProviderSave,
+  )
+
+  ExportDialogHost(
+    isVisible = showExportDialog,
+    onDismiss = onExportDismiss,
+    onConfirm = onExportConfirm,
+  )
+}
+
+@Composable
+private fun ProviderDialogHost(
+  isVisible: Boolean,
+  provider: APIProviderConfig?,
+  onDismiss: () -> Unit,
+  onSave: (name: String, baseUrl: String, apiKey: String?) -> Unit,
+) {
+  if (isVisible) {
+    ApiProviderDialog(
+      provider = provider,
+      onDismiss = onDismiss,
+      onSave = onSave,
+    )
+  }
+}
+
+@Composable
+private fun ExportDialogHost(
+  isVisible: Boolean,
+  onDismiss: () -> Unit,
+  onConfirm: (dontShowAgain: Boolean) -> Unit,
+) {
+  if (isVisible) {
     ExportDialog(
-      onDismiss = { showExportDialog = false },
-      onConfirm = { dontShowAgain ->
-        if (dontShowAgain) {
-          viewModel.dismissExportWarnings()
-        }
-        triggerExport()
-        showExportDialog = false
-      },
+      onDismiss = onDismiss,
+      onConfirm = onConfirm,
     )
   }
 }
@@ -476,42 +687,10 @@ internal fun ExportDialog(
     onDismissRequest = onDismiss,
     title = { Text("Export Backup") },
     text = {
-      Column {
-        Text("This will export all your data including:")
-        Spacer(modifier = Modifier.height(8.dp))
-        Text("• Conversations and messages")
-        Text("• Persona profiles")
-        Text("• API provider configurations")
-        Text("• Settings and preferences")
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(
-          "The backup will be saved to your Downloads folder.",
-          style = MaterialTheme.typography.bodySmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(
-          "Backups are not encrypted. Store the exported JSON securely and delete it when finished.",
-          style = MaterialTheme.typography.bodySmall,
-          color = MaterialTheme.colorScheme.error,
-          fontWeight = FontWeight.SemiBold,
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        Row(
-          verticalAlignment = Alignment.CenterVertically,
-        ) {
-          Checkbox(
-            checked = dontShowAgain,
-            onCheckedChange = { dontShowAgain = it },
-            modifier = Modifier.semantics { contentDescription = "Don't warn me again checkbox" },
-          )
-          Spacer(modifier = Modifier.width(8.dp))
-          Text(
-            text = "Don't warn me again",
-            style = MaterialTheme.typography.bodyMedium,
-          )
-        }
-      }
+      ExportDialogBody(
+        dontShowAgain = dontShowAgain,
+        onDontShowAgainChange = { dontShowAgain = it },
+      )
     },
     confirmButton = {
       TextButton(
@@ -534,8 +713,60 @@ internal fun ExportDialog(
 }
 
 @Composable
+private fun ExportDialogBody(
+  dontShowAgain: Boolean,
+  onDontShowAgainChange: (Boolean) -> Unit,
+) {
+  Column {
+    Text("This will export all your data including:")
+    Spacer(modifier = Modifier.height(8.dp))
+    Text("• Conversations and messages")
+    Text("• Persona profiles")
+    Text("• API provider configurations")
+    Text("• Settings and preferences")
+    Spacer(modifier = Modifier.height(12.dp))
+    Text(
+      "The backup will be saved to your Downloads folder.",
+      style = MaterialTheme.typography.bodySmall,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Spacer(modifier = Modifier.height(12.dp))
+    Text(
+      "Backups are not encrypted. Store the exported JSON securely and delete it when finished.",
+      style = MaterialTheme.typography.bodySmall,
+      color = MaterialTheme.colorScheme.error,
+      fontWeight = FontWeight.SemiBold,
+    )
+    Spacer(modifier = Modifier.height(12.dp))
+    ExportDialogCheckbox(
+      checked = dontShowAgain,
+      onCheckedChange = onDontShowAgainChange,
+    )
+  }
+}
+
+@Composable
+private fun ExportDialogCheckbox(
+  checked: Boolean,
+  onCheckedChange: (Boolean) -> Unit,
+) {
+  Row(verticalAlignment = Alignment.CenterVertically) {
+    Checkbox(
+      checked = checked,
+      onCheckedChange = onCheckedChange,
+      modifier = Modifier.semantics { contentDescription = "Don't warn me again checkbox" },
+    )
+    Spacer(modifier = Modifier.width(8.dp))
+    Text(
+      text = "Don't warn me again",
+      style = MaterialTheme.typography.bodyMedium,
+    )
+  }
+}
+
+@Composable
 private fun PrivacySettings(
-  preferences: com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreference?,
+  preferences: PrivacyPreference?,
   onTelemetryToggle: (Boolean) -> Unit,
   onRetentionPolicyChange: (RetentionPolicy) -> Unit,
   modifier: Modifier = Modifier
@@ -547,83 +778,107 @@ private fun PrivacySettings(
         containerColor = MaterialTheme.colorScheme.surfaceVariant,
       ),
   ) {
+    val telemetryOptIn = preferences?.telemetryOptIn ?: false
+    val selectedPolicy = preferences?.retentionPolicy ?: RetentionPolicy.INDEFINITE
     Column(
       modifier = Modifier.fillMaxWidth().padding(16.dp),
       verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-      // Telemetry toggle
-      Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-      ) {
-        Column(modifier = Modifier.weight(1f)) {
-          Text(
-            text = "Usage Analytics",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Medium,
-          )
-          Text(
-            text = "Help improve the app by sharing anonymous usage data",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-          )
-        }
-        Switch(
-          checked = preferences?.telemetryOptIn ?: false,
-          onCheckedChange = onTelemetryToggle,
-          modifier = Modifier.semantics { contentDescription = "Toggle usage analytics" },
-        )
-      }
+      TelemetryPreferenceRow(
+        telemetryOptIn = telemetryOptIn,
+        onTelemetryToggle = onTelemetryToggle,
+      )
 
       HorizontalDivider()
 
-      // Retention policy
-      Column {
-        Text(
-          text = "Message Retention",
-          style = MaterialTheme.typography.titleMedium,
-          fontWeight = FontWeight.Medium,
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-          text =
-            "Message retention policy: ${preferences?.retentionPolicy?.name ?: RetentionPolicy.INDEFINITE.name}",
-          style = MaterialTheme.typography.bodySmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        val selectedPolicy = preferences?.retentionPolicy ?: RetentionPolicy.INDEFINITE
-        Row(
-          modifier = Modifier.horizontalScroll(rememberScrollState()),
-          horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-          RetentionPolicy.values().forEach { policy ->
-            FilterChip(
-              selected = selectedPolicy == policy,
-              onClick = { onRetentionPolicyChange(policy) },
-              label = { Text(policy.displayLabel()) },
-            )
-          }
-        }
-      }
+      RetentionPolicySection(
+        selectedPolicy = selectedPolicy,
+        onRetentionPolicyChange = onRetentionPolicyChange,
+      )
 
-      androidx.compose.material3.HorizontalDivider()
+      HorizontalDivider()
 
-      // Consent info
-      Column {
-        Text(
-          text = "Privacy Notice",
-          style = MaterialTheme.typography.titleMedium,
-          fontWeight = FontWeight.Medium,
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-          text = "All data is stored locally on your device.",
-          style = MaterialTheme.typography.bodySmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
+      PrivacyNoticeSection()
+    }
+  }
+}
+
+@Composable
+private fun TelemetryPreferenceRow(
+  telemetryOptIn: Boolean,
+  onTelemetryToggle: (Boolean) -> Unit,
+) {
+  Row(
+    modifier = Modifier.fillMaxWidth(),
+    horizontalArrangement = Arrangement.SpaceBetween,
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    Column(modifier = Modifier.weight(1f)) {
+      Text(
+        text = "Usage Analytics",
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Medium,
+      )
+      Text(
+        text = "Help improve the app by sharing anonymous usage data",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+    }
+    Switch(
+      checked = telemetryOptIn,
+      onCheckedChange = onTelemetryToggle,
+      modifier = Modifier.semantics { contentDescription = "Toggle usage analytics" },
+    )
+  }
+}
+
+@Composable
+private fun RetentionPolicySection(
+  selectedPolicy: RetentionPolicy,
+  onRetentionPolicyChange: (RetentionPolicy) -> Unit,
+) {
+  Column {
+    Text(
+      text = "Message Retention",
+      style = MaterialTheme.typography.titleMedium,
+      fontWeight = FontWeight.Medium,
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+    Text(
+      text = "Message retention policy: ${selectedPolicy.name}",
+      style = MaterialTheme.typography.bodySmall,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+    Row(
+      modifier = Modifier.horizontalScroll(rememberScrollState()),
+      horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+      RetentionPolicy.values().forEach { policy ->
+        FilterChip(
+          selected = selectedPolicy == policy,
+          onClick = { onRetentionPolicyChange(policy) },
+          label = { Text(policy.displayLabel()) },
         )
       }
     }
+  }
+}
+
+@Composable
+private fun PrivacyNoticeSection() {
+  Column {
+    Text(
+      text = "Privacy Notice",
+      style = MaterialTheme.typography.titleMedium,
+      fontWeight = FontWeight.Medium,
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+    Text(
+      text = "All data is stored locally on your device.",
+      style = MaterialTheme.typography.bodySmall,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
   }
 }

@@ -68,84 +68,95 @@ constructor(
     val threadId = _currentThreadId.value ?: return
     viewModelScope.launch {
       _isLoading.value = true
-      try {
-        // Save user message
-        val userMessage =
-          Message(
-            messageId = UUID.randomUUID(),
-            threadId = threadId,
-            role = com.vjaykrsna.nanoai.core.model.Role.USER,
-            text = text,
-            source = com.vjaykrsna.nanoai.core.model.MessageSource.LOCAL_MODEL,
-            latencyMs = null,
-            createdAt = kotlinx.datetime.Clock.System.now(),
-          )
-        conversationRepository.saveMessage(userMessage)
-
-        // Send to inference
-        sendPromptAndPersonaUseCase.sendPrompt(threadId, text, personaId).onFailure { error ->
-          _errorEvents.emit(ChatError.InferenceFailed(error.message ?: "Unknown error"))
+      runCatching {
+          val userMessage =
+            Message(
+              messageId = UUID.randomUUID(),
+              threadId = threadId,
+              role = com.vjaykrsna.nanoai.core.model.Role.USER,
+              text = text,
+              source = com.vjaykrsna.nanoai.core.model.MessageSource.LOCAL_MODEL,
+              latencyMs = null,
+              createdAt = kotlinx.datetime.Clock.System.now(),
+            )
+          conversationRepository.saveMessage(userMessage)
+          sendPromptAndPersonaUseCase.sendPrompt(threadId, text, personaId)
         }
-      } catch (e: Exception) {
-        _errorEvents.emit(ChatError.UnexpectedError(e.message ?: "Unexpected error"))
-      } finally {
-        _isLoading.value = false
-      }
+        .onSuccess { result ->
+          result.onFailure { error ->
+            _errorEvents.emit(ChatError.InferenceFailed(error.message ?: "Unknown error"))
+          }
+        }
+        .onFailure { error ->
+          _errorEvents.emit(ChatError.UnexpectedError(error.message ?: "Unexpected error"))
+        }
+      _isLoading.value = false
     }
   }
 
   fun switchPersona(newPersonaId: UUID, action: PersonaSwitchAction) {
     val threadId = _currentThreadId.value ?: return
     viewModelScope.launch {
-      try {
-        val newThreadId = sendPromptAndPersonaUseCase.switchPersona(threadId, newPersonaId, action)
-        if (action == PersonaSwitchAction.START_NEW_THREAD) {
-          _currentThreadId.value = newThreadId
+      runCatching { sendPromptAndPersonaUseCase.switchPersona(threadId, newPersonaId, action) }
+        .onSuccess { newThreadId ->
+          if (action == PersonaSwitchAction.START_NEW_THREAD) {
+            _currentThreadId.value = newThreadId
+          }
         }
-      } catch (e: Exception) {
-        _errorEvents.emit(ChatError.PersonaSwitchFailed(e.message ?: "Failed to switch persona"))
-      }
+        .onFailure { error ->
+          _errorEvents.emit(
+            ChatError.PersonaSwitchFailed(error.message ?: "Failed to switch persona"),
+          )
+        }
     }
   }
 
   fun createNewThread(personaId: UUID?, title: String? = null) {
     viewModelScope.launch {
-      try {
-        val threadId =
+      runCatching {
           conversationRepository.createNewThread(
             personaId ?: personaRepository.getDefaultPersona()?.personaId ?: UUID.randomUUID(),
             title,
           )
-        _currentThreadId.value = threadId
-      } catch (e: Exception) {
-        _errorEvents.emit(ChatError.ThreadCreationFailed(e.message ?: "Failed to create thread"))
-      }
+        }
+        .onSuccess { threadId -> _currentThreadId.value = threadId }
+        .onFailure { error ->
+          _errorEvents.emit(
+            ChatError.ThreadCreationFailed(error.message ?: "Failed to create thread"),
+          )
+        }
     }
   }
 
   fun archiveThread(threadId: UUID) {
     viewModelScope.launch {
-      try {
-        conversationRepository.archiveThread(threadId)
-        if (_currentThreadId.value == threadId) {
-          _currentThreadId.value = null
+      runCatching { conversationRepository.archiveThread(threadId) }
+        .onSuccess {
+          if (_currentThreadId.value == threadId) {
+            _currentThreadId.value = null
+          }
         }
-      } catch (e: Exception) {
-        _errorEvents.emit(ChatError.ThreadArchiveFailed(e.message ?: "Failed to archive thread"))
-      }
+        .onFailure { error ->
+          _errorEvents.emit(
+            ChatError.ThreadArchiveFailed(error.message ?: "Failed to archive thread"),
+          )
+        }
     }
   }
 
   fun deleteThread(threadId: UUID) {
     viewModelScope.launch {
-      try {
-        conversationRepository.deleteThread(threadId)
-        if (_currentThreadId.value == threadId) {
-          _currentThreadId.value = null
+      runCatching { conversationRepository.deleteThread(threadId) }
+        .onSuccess {
+          if (_currentThreadId.value == threadId) {
+            _currentThreadId.value = null
+          }
         }
-      } catch (e: Exception) {
-        _errorEvents.emit(ChatError.ThreadDeletionFailed(e.message ?: "Failed to delete thread"))
-      }
+        .onFailure { error ->
+          _errorEvents.emit(
+            ChatError.ThreadDeletionFailed(error.message ?: "Failed to delete thread"),
+          )
+        }
     }
   }
 }

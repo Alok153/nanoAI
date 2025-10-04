@@ -42,18 +42,11 @@ fun UserProfileDto.toDomain(): UserProfile =
   UserProfile(
     id = id,
     displayName = displayName,
-    themePreference =
-      themePreference?.let { name -> ThemePreference.fromName(name) } ?: ThemePreference.SYSTEM,
-    visualDensity =
-      visualDensity?.let { name ->
-        VisualDensity.values().firstOrNull { it.name.equals(name, ignoreCase = true) }
-      } ?: VisualDensity.DEFAULT,
+    themePreference = themePreference.toThemePreference(),
+    visualDensity = visualDensity.toVisualDensity(),
     onboardingCompleted = onboardingCompleted ?: false,
     dismissedTips = dismissedTips ?: emptyMap(),
-    lastOpenedScreen =
-      lastOpenedScreen?.let { name ->
-        ScreenType.values().firstOrNull { it.name.equals(name, ignoreCase = true) }
-      } ?: ScreenType.HOME,
+    lastOpenedScreen = lastOpenedScreen.toScreenType(),
     compactMode = compactMode ?: false,
     pinnedTools = pinnedTools ?: emptyList(),
     savedLayouts = savedLayouts?.map { it.toDomain() } ?: emptyList(),
@@ -93,3 +86,18 @@ fun LayoutSnapshot.toDto(): LayoutSnapshotDto =
     pinnedTools = pinnedTools,
     isCompact = isCompact,
   )
+
+private fun String?.toThemePreference(): ThemePreference =
+  this?.let { ThemePreference.fromName(it) } ?: ThemePreference.SYSTEM
+
+private fun String?.toVisualDensity(): VisualDensity {
+  if (this == null) return VisualDensity.DEFAULT
+  return VisualDensity.values().firstOrNull { it.name.equals(this, ignoreCase = true) }
+    ?: VisualDensity.DEFAULT
+}
+
+private fun String?.toScreenType(): ScreenType {
+  if (this == null) return ScreenType.HOME
+  return ScreenType.values().firstOrNull { it.name.equals(this, ignoreCase = true) }
+    ?: ScreenType.HOME
+}

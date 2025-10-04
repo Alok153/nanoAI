@@ -72,78 +72,80 @@ constructor(
   fun downloadModel(modelId: String) {
     viewModelScope.launch {
       _isLoading.value = true
-      try {
-        modelDownloadsAndExportUseCase.downloadModel(modelId).onFailure { error ->
-          _errorEvents.emit(LibraryError.DownloadFailed(modelId, error.message ?: "Unknown error"))
+      runCatching { modelDownloadsAndExportUseCase.downloadModel(modelId) }
+        .onSuccess { result ->
+          result.onFailure { error ->
+            _errorEvents.emit(
+              LibraryError.DownloadFailed(modelId, error.message ?: "Unknown error"),
+            )
+          }
         }
-      } catch (e: Exception) {
-        _errorEvents.emit(LibraryError.UnexpectedError(e.message ?: "Unexpected error"))
-      } finally {
-        _isLoading.value = false
-      }
+        .onFailure { error ->
+          _errorEvents.emit(LibraryError.UnexpectedError(error.message ?: "Unexpected error"))
+        }
+      _isLoading.value = false
     }
   }
 
   fun pauseDownload(taskId: UUID) {
     viewModelScope.launch {
-      try {
-        modelDownloadsAndExportUseCase.pauseDownload(taskId)
-      } catch (e: Exception) {
-        _errorEvents.emit(
-          LibraryError.PauseFailed(taskId.toString(), e.message ?: "Failed to pause")
-        )
-      }
+      runCatching { modelDownloadsAndExportUseCase.pauseDownload(taskId) }
+        .onFailure { error ->
+          _errorEvents.emit(
+            LibraryError.PauseFailed(taskId.toString(), error.message ?: "Failed to pause"),
+          )
+        }
     }
   }
 
   fun resumeDownload(taskId: UUID) {
     viewModelScope.launch {
-      try {
-        modelDownloadsAndExportUseCase.resumeDownload(taskId)
-      } catch (e: Exception) {
-        _errorEvents.emit(
-          LibraryError.ResumeFailed(taskId.toString(), e.message ?: "Failed to resume")
-        )
-      }
+      runCatching { modelDownloadsAndExportUseCase.resumeDownload(taskId) }
+        .onFailure { error ->
+          _errorEvents.emit(
+            LibraryError.ResumeFailed(taskId.toString(), error.message ?: "Failed to resume"),
+          )
+        }
     }
   }
 
   fun cancelDownload(taskId: UUID) {
     viewModelScope.launch {
-      try {
-        modelDownloadsAndExportUseCase.cancelDownload(taskId)
-      } catch (e: Exception) {
-        _errorEvents.emit(
-          LibraryError.CancelFailed(taskId.toString(), e.message ?: "Failed to cancel")
-        )
-      }
+      runCatching { modelDownloadsAndExportUseCase.cancelDownload(taskId) }
+        .onFailure { error ->
+          _errorEvents.emit(
+            LibraryError.CancelFailed(taskId.toString(), error.message ?: "Failed to cancel"),
+          )
+        }
     }
   }
 
   fun retryDownload(taskId: UUID) {
     viewModelScope.launch {
-      try {
-        modelDownloadsAndExportUseCase.retryFailedDownload(taskId)
-      } catch (e: Exception) {
-        _errorEvents.emit(
-          LibraryError.RetryFailed(taskId.toString(), e.message ?: "Failed to retry")
-        )
-      }
+      runCatching { modelDownloadsAndExportUseCase.retryFailedDownload(taskId) }
+        .onFailure { error ->
+          _errorEvents.emit(
+            LibraryError.RetryFailed(taskId.toString(), error.message ?: "Failed to retry"),
+          )
+        }
     }
   }
 
   fun deleteModel(modelId: String) {
     viewModelScope.launch {
       _isLoading.value = true
-      try {
-        modelDownloadsAndExportUseCase.deleteModel(modelId).onFailure { error ->
-          _errorEvents.emit(LibraryError.DeleteFailed(modelId, error.message ?: "Unknown error"))
+      runCatching { modelDownloadsAndExportUseCase.deleteModel(modelId) }
+        .onSuccess { result ->
+          result.onFailure { error ->
+            _errorEvents.emit(
+              LibraryError.DeleteFailed(modelId, error.message ?: "Unknown error"),
+            )
+          }
         }
-      } catch (e: Exception) {
-        _errorEvents.emit(LibraryError.UnexpectedError(e.message ?: "Unexpected error"))
-      } finally {
-        _isLoading.value = false
-      }
+        .onFailure { error ->
+          _errorEvents.emit(LibraryError.UnexpectedError(error.message ?: "Unexpected error"))
+        }
+      _isLoading.value = false
     }
   }
 

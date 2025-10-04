@@ -4,8 +4,11 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.UserProfile
 import com.vjaykrsna.nanoai.core.network.UserProfileService
 import com.vjaykrsna.nanoai.core.network.dto.toDomain
 import com.vjaykrsna.nanoai.core.network.dto.toDto
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.serialization.SerializationException
+import retrofit2.HttpException
 
 /**
  * Remote data source for user profile operations via REST API.
@@ -26,12 +29,16 @@ constructor(
    * @throws Exception if network request fails or response is invalid
    */
   suspend fun fetchUserProfile(): Result<UserProfile> =
-    try {
-      val dto = userProfileService.getUserProfile()
-      Result.success(dto.toDomain())
-    } catch (e: Exception) {
-      Result.failure(RemoteDataSourceException("Failed to fetch user profile", e))
-    }
+    runCatching { userProfileService.getUserProfile() }
+      .map { it.toDomain() }
+      .fold(
+        onSuccess = { Result.success(it) },
+        onFailure = {
+          Result.failure(
+            mapRemoteFailure(message = "Failed to fetch user profile", cause = it),
+          )
+        },
+      )
 
   /**
    * Update user profile on remote server.
@@ -41,13 +48,30 @@ constructor(
    * @throws Exception if network request fails or response is invalid
    */
   suspend fun updateUserProfile(profile: UserProfile): Result<UserProfile> =
-    try {
-      val dto = profile.toDto()
-      val responseDto = userProfileService.updateUserProfile(dto)
-      Result.success(responseDto.toDomain())
-    } catch (e: Exception) {
-      Result.failure(RemoteDataSourceException("Failed to update user profile", e))
-    }
+    runCatching {
+        val dto = profile.toDto()
+        userProfileService.updateUserProfile(dto)
+      }
+      .map { it.toDomain() }
+      .fold(
+        onSuccess = { Result.success(it) },
+        onFailure = {
+          Result.failure(
+            mapRemoteFailure(message = "Failed to update user profile", cause = it),
+          )
+        },
+      )
+
+  private fun mapRemoteFailure(message: String, cause: Throwable): RemoteDataSourceException {
+    val detailedMessage =
+      when (cause) {
+        is HttpException -> "$message (HTTP ${cause.code()})"
+        is IOException -> "$message (network error)"
+        is SerializationException -> "$message (invalid response)"
+        else -> message
+      }
+    return RemoteDataSourceException(detailedMessage, cause)
+  }
 }
 
 /**

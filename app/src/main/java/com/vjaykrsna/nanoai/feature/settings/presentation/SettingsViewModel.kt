@@ -97,129 +97,141 @@ constructor(
   fun addApiProvider(config: APIProviderConfig) {
     viewModelScope.launch {
       _isLoading.value = true
-      try {
-        apiProviderConfigRepository.addProvider(config)
-      } catch (e: Exception) {
-        _errorEvents.emit(SettingsError.ProviderAddFailed(e.message ?: "Failed to add provider"))
-      } finally {
-        _isLoading.value = false
-      }
+      runCatching { apiProviderConfigRepository.addProvider(config) }
+        .onFailure { error ->
+          _errorEvents.emit(
+            SettingsError.ProviderAddFailed(error.message ?: "Failed to add provider"),
+          )
+        }
+      _isLoading.value = false
     }
   }
 
   fun updateApiProvider(config: APIProviderConfig) {
     viewModelScope.launch {
       _isLoading.value = true
-      try {
-        apiProviderConfigRepository.updateProvider(config)
-      } catch (e: Exception) {
-        _errorEvents.emit(
-          SettingsError.ProviderUpdateFailed(e.message ?: "Failed to update provider")
-        )
-      } finally {
-        _isLoading.value = false
-      }
+      runCatching { apiProviderConfigRepository.updateProvider(config) }
+        .onFailure { error ->
+          _errorEvents.emit(
+            SettingsError.ProviderUpdateFailed(error.message ?: "Failed to update provider"),
+          )
+        }
+      _isLoading.value = false
     }
   }
 
   fun deleteApiProvider(providerId: String) {
     viewModelScope.launch {
       _isLoading.value = true
-      try {
-        apiProviderConfigRepository.deleteProvider(providerId)
-      } catch (e: Exception) {
-        _errorEvents.emit(
-          SettingsError.ProviderDeleteFailed(e.message ?: "Failed to delete provider")
-        )
-      } finally {
-        _isLoading.value = false
-      }
+      runCatching { apiProviderConfigRepository.deleteProvider(providerId) }
+        .onFailure { error ->
+          _errorEvents.emit(
+            SettingsError.ProviderDeleteFailed(error.message ?: "Failed to delete provider"),
+          )
+        }
+      _isLoading.value = false
     }
   }
 
   fun exportBackup(destinationPath: String, includeChatHistory: Boolean = false) {
     viewModelScope.launch {
       _isLoading.value = true
-      try {
-        modelDownloadsAndExportUseCase
-          .exportBackup(destinationPath, includeChatHistory)
-          .onSuccess { path -> _exportSuccess.emit(path) }
-          .onFailure { error ->
-            _errorEvents.emit(SettingsError.ExportFailed(error.message ?: "Export failed"))
-          }
-      } catch (e: Exception) {
-        _errorEvents.emit(SettingsError.UnexpectedError(e.message ?: "Unexpected error"))
-      } finally {
-        _isLoading.value = false
-      }
+      runCatching {
+          modelDownloadsAndExportUseCase.exportBackup(destinationPath, includeChatHistory)
+        }
+        .fold(
+          onSuccess = { result ->
+            result
+              .onSuccess { path -> _exportSuccess.emit(path) }
+              .onFailure { error ->
+                _errorEvents.emit(
+                  SettingsError.ExportFailed(error.message ?: "Export failed"),
+                )
+              }
+          },
+          onFailure = { error ->
+            _errorEvents.emit(
+              SettingsError.UnexpectedError(error.message ?: "Unexpected error"),
+            )
+          },
+        )
+      _isLoading.value = false
     }
   }
 
   fun importBackup(uri: Uri) {
     viewModelScope.launch {
       _isLoading.value = true
-      try {
-        val result = importService.importBackup(uri)
-        result
-          .onSuccess { summary -> _importSuccess.emit(summary) }
-          .onFailure { error ->
+      runCatching { importService.importBackup(uri) }
+        .fold(
+          onSuccess = { result ->
+            result
+              .onSuccess { summary -> _importSuccess.emit(summary) }
+              .onFailure { error ->
+                _errorEvents.emit(
+                  SettingsError.ImportFailed(error.message ?: "Import failed"),
+                )
+              }
+          },
+          onFailure = { error ->
             _errorEvents.emit(
-              SettingsError.ImportFailed(error.message ?: "Import failed"),
+              SettingsError.UnexpectedError(error.message ?: "Unexpected error"),
             )
-          }
-      } catch (e: Exception) {
-        _errorEvents.emit(SettingsError.UnexpectedError(e.message ?: "Unexpected error"))
-      } finally {
-        _isLoading.value = false
-      }
+          },
+        )
+      _isLoading.value = false
     }
   }
 
   fun setTelemetryOptIn(optIn: Boolean) {
     viewModelScope.launch {
-      try {
-        privacyPreferenceStore.setTelemetryOptIn(optIn)
-      } catch (e: Exception) {
-        _errorEvents.emit(
-          SettingsError.PreferenceUpdateFailed(e.message ?: "Failed to update preference")
-        )
-      }
+      runCatching { privacyPreferenceStore.setTelemetryOptIn(optIn) }
+        .onFailure { error ->
+          _errorEvents.emit(
+            SettingsError.PreferenceUpdateFailed(
+              error.message ?: "Failed to update preference",
+            ),
+          )
+        }
     }
   }
 
   fun acknowledgeConsent() {
     viewModelScope.launch {
-      try {
-        privacyPreferenceStore.acknowledgeConsent(Clock.System.now())
-      } catch (e: Exception) {
-        _errorEvents.emit(
-          SettingsError.PreferenceUpdateFailed(e.message ?: "Failed to acknowledge consent")
-        )
-      }
+      runCatching { privacyPreferenceStore.acknowledgeConsent(Clock.System.now()) }
+        .onFailure { error ->
+          _errorEvents.emit(
+            SettingsError.PreferenceUpdateFailed(
+              error.message ?: "Failed to acknowledge consent",
+            ),
+          )
+        }
     }
   }
 
   fun setRetentionPolicy(policy: RetentionPolicy) {
     viewModelScope.launch {
-      try {
-        privacyPreferenceStore.setRetentionPolicy(policy)
-      } catch (e: Exception) {
-        _errorEvents.emit(
-          SettingsError.PreferenceUpdateFailed(e.message ?: "Failed to set retention policy")
-        )
-      }
+      runCatching { privacyPreferenceStore.setRetentionPolicy(policy) }
+        .onFailure { error ->
+          _errorEvents.emit(
+            SettingsError.PreferenceUpdateFailed(
+              error.message ?: "Failed to set retention policy",
+            ),
+          )
+        }
     }
   }
 
   fun dismissExportWarnings() {
     viewModelScope.launch {
-      try {
-        privacyPreferenceStore.setExportWarningsDismissed(true)
-      } catch (e: Exception) {
-        _errorEvents.emit(
-          SettingsError.PreferenceUpdateFailed(e.message ?: "Failed to dismiss warnings")
-        )
-      }
+      runCatching { privacyPreferenceStore.setExportWarningsDismissed(true) }
+        .onFailure { error ->
+          _errorEvents.emit(
+            SettingsError.PreferenceUpdateFailed(
+              error.message ?: "Failed to dismiss warnings",
+            ),
+          )
+        }
     }
   }
 

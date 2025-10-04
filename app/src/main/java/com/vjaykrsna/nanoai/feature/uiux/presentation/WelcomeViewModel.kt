@@ -1,6 +1,5 @@
 package com.vjaykrsna.nanoai.feature.uiux.presentation
 
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
@@ -33,7 +32,6 @@ constructor(
   private val recordOnboardingProgress: RecordOnboardingProgressUseCase,
   private val updateThemePreference: UpdateThemePreferenceUseCase,
   private val toggleCompactMode: ToggleCompactModeUseCase,
-  private val savedStateHandle: SavedStateHandle,
   private val analytics: WelcomeAnalytics = WelcomeAnalytics.NoOp,
   @MainImmediateDispatcher private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
 ) : ViewModel() {

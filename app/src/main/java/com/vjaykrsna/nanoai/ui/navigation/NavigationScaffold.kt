@@ -37,6 +37,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -126,17 +127,61 @@ private fun rememberNavigationResources(
   disclaimerViewModel: FirstLaunchDisclaimerViewModel,
 ): Pair<NavigationLayoutState, NavigationHandlers> {
   val drawerState = rememberDrawerState(DrawerValue.Closed)
-  val scope = rememberCoroutineScope()
   val navBackStackEntry by navController.currentBackStackEntryAsState()
+
+  val state =
+    rememberNavigationLayoutState(
+      navBackStackEntry = navBackStackEntry,
+      sidebarViewModel = sidebarViewModel,
+      disclaimerViewModel = disclaimerViewModel,
+      drawerState = drawerState,
+    )
+
+  val handlers =
+    rememberNavigationHandlers(
+      navController = navController,
+      drawerState = drawerState,
+      sidebarViewModel = sidebarViewModel,
+      disclaimerViewModel = disclaimerViewModel,
+    )
+
+  return state to handlers
+}
+
+@Composable
+private fun rememberNavigationLayoutState(
+  navBackStackEntry: NavBackStackEntry?,
+  sidebarViewModel: SidebarViewModel,
+  disclaimerViewModel: FirstLaunchDisclaimerViewModel,
+  drawerState: DrawerState,
+): NavigationLayoutState {
   val currentRoute = navBackStackEntry?.destination?.route
   val navigationUiState =
     NavigationUiState(
       currentRoute = currentRoute,
-      isWelcomeRoute = currentRoute == Screen.Welcome.route
+      isWelcomeRoute = currentRoute == Screen.Welcome.route,
     )
 
   val sidebarUiState = rememberSidebarUiState(sidebarViewModel)
   val disclaimerUiState by disclaimerViewModel.uiState.collectAsState()
+
+  return NavigationLayoutState(
+    navigation = navigationUiState,
+    sidebar = sidebarUiState,
+    disclaimer = disclaimerUiState,
+    drawerState = drawerState,
+    hasBackStackEntry = navBackStackEntry != null,
+  )
+}
+
+@Composable
+private fun rememberNavigationHandlers(
+  navController: NavHostController,
+  drawerState: DrawerState,
+  sidebarViewModel: SidebarViewModel,
+  disclaimerViewModel: FirstLaunchDisclaimerViewModel,
+): NavigationHandlers {
+  val scope = rememberCoroutineScope()
 
   val onRouteVisit: (String) -> Unit =
     remember(sidebarViewModel) { { route -> sidebarViewModel.emitNavigation(route) } }
@@ -175,27 +220,15 @@ private fun rememberNavigationResources(
       onCloseDrawer = onCloseDrawer,
     )
 
-  val state =
-    NavigationLayoutState(
-      navigation = navigationUiState,
-      sidebar = sidebarUiState,
-      disclaimer = disclaimerUiState,
-      drawerState = drawerState,
-      hasBackStackEntry = navBackStackEntry != null,
-    )
-
-  val handlers =
-    NavigationHandlers(
-      sidebarInteractions = sidebarInteractions,
-      onNavigate = onNavigate,
-      onDrawerToggle = onDrawerToggle,
-      onCloseDrawer = onCloseDrawer,
-      onDisclaimerAcknowledge = disclaimerViewModel::onAcknowledge,
-      onDisclaimerDismiss = disclaimerViewModel::onDismiss,
-      onRouteVisit = onRouteVisit,
-    )
-
-  return state to handlers
+  return NavigationHandlers(
+    sidebarInteractions = sidebarInteractions,
+    onNavigate = onNavigate,
+    onDrawerToggle = onDrawerToggle,
+    onCloseDrawer = onCloseDrawer,
+    onDisclaimerAcknowledge = disclaimerViewModel::onAcknowledge,
+    onDisclaimerDismiss = disclaimerViewModel::onDismiss,
+    onRouteVisit = onRouteVisit,
+  )
 }
 
 @Composable

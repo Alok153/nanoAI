@@ -88,53 +88,62 @@ class TelemetryReporter @Inject constructor() {
 
   private fun TelemetryEvent.toLogMessage(): String =
     when (this) {
-      is TelemetryEvent.Success ->
-        buildString {
-          append(source)
-          append(" success")
-          if (metadata.isNotEmpty()) {
-            append(" metadata=")
-            append(metadata)
-          }
-        }
-      is TelemetryEvent.Recoverable ->
-        buildString {
-          append(source)
-          append(" recoverable error: ")
-          append(message)
-          retryAfterSeconds?.let {
-            append(" retryAfter=")
-            append(it)
-            append("s")
-          }
-          telemetryId?.let {
-            append(" telemetryId=")
-            append(it)
-          }
-          if (context.isNotEmpty()) {
-            append(" context=")
-            append(context)
-          }
-        }
-      is TelemetryEvent.Fatal ->
-        buildString {
-          append(source)
-          append(" fatal error: ")
-          append(message)
-          telemetryId?.let {
-            append(" telemetryId=")
-            append(it)
-          }
-          supportContact?.let {
-            append(" supportContact=")
-            append(it)
-          }
-          if (context.isNotEmpty()) {
-            append(" context=")
-            append(context)
-          }
-        }
+      is TelemetryEvent.Success -> buildSuccessMessage()
+      is TelemetryEvent.Recoverable -> buildRecoverableMessage()
+      is TelemetryEvent.Fatal -> buildFatalMessage()
     }
+
+  private fun TelemetryEvent.Success.buildSuccessMessage(): String = buildString {
+    append(source)
+    append(" success")
+    if (metadata.isNotEmpty()) {
+      append(" metadata=")
+      append(metadata)
+    }
+  }
+
+  private fun TelemetryEvent.Recoverable.buildRecoverableMessage(): String = buildString {
+    append(source)
+    append(" recoverable error: ")
+    append(message)
+    appendRetryAfter(retryAfterSeconds)
+    appendTelemetryId(telemetryId)
+    appendContext(context)
+  }
+
+  private fun TelemetryEvent.Fatal.buildFatalMessage(): String = buildString {
+    append(source)
+    append(" fatal error: ")
+    append(message)
+    appendTelemetryId(telemetryId)
+    supportContact?.let {
+      append(" supportContact=")
+      append(it)
+    }
+    appendContext(context)
+  }
+
+  private fun StringBuilder.appendRetryAfter(retryAfterSeconds: Long?) {
+    retryAfterSeconds?.let {
+      append(" retryAfter=")
+      append(it)
+      append("s")
+    }
+  }
+
+  private fun StringBuilder.appendTelemetryId(telemetryId: String?) {
+    telemetryId?.let {
+      append(" telemetryId=")
+      append(it)
+    }
+  }
+
+  private fun StringBuilder.appendContext(context: Map<String, String>) {
+    if (context.isNotEmpty()) {
+      append(" context=")
+      append(context)
+    }
+  }
 
   companion object {
     private const val TAG = "TelemetryReporter"

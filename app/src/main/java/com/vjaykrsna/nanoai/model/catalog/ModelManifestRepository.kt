@@ -9,6 +9,7 @@ import com.vjaykrsna.nanoai.model.catalog.network.dto.ManifestVerificationRespon
 import com.vjaykrsna.nanoai.model.catalog.network.dto.ManifestVerificationStatusDto
 import com.vjaykrsna.nanoai.model.catalog.network.dto.ModelManifestDto
 import com.vjaykrsna.nanoai.telemetry.TelemetryReporter
+import java.net.HttpURLConnection
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -185,7 +186,7 @@ constructor(
   ): NanoAIResult<T> {
     val errorEnvelope = decodeErrorEnvelope(exception)
     val result: NanoAIResult<T> =
-      if (exception.code() in 400..499) {
+      if (exception.code() in CLIENT_ERROR_STATUS_RANGE) {
         NanoAIResult.fatal(
           message = errorEnvelope?.message ?: message,
           supportContact = SUPPORT_CONTACT,
@@ -222,7 +223,10 @@ constructor(
   }
 
   companion object {
+    private val CLIENT_ERROR_STATUS_RANGE =
+      HttpURLConnection.HTTP_BAD_REQUEST..MAX_CLIENT_ERROR_STATUS
     private const val SUPPORT_CONTACT = "support@nanoai.app"
     private const val DEFAULT_RETRY_AFTER_SECONDS = 60L
+    private const val MAX_CLIENT_ERROR_STATUS = 499
   }
 }
