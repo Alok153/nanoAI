@@ -13,11 +13,12 @@ class ModelVerificationContractTest {
   private val retryResponse =
     mapOf(
       "status" to "RETRY",
+      "nextRetryAfterSeconds" to 120,
     )
 
   private val integrityFailureEnvelope =
     mapOf(
-      "code" to "UNKNOWN",
+      "code" to "INTEGRITY_FAILURE",
       "message" to "Checksum mismatch detected",
     )
 

@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
+import kotlin.jvm.JvmName
 
 private const val FLOW_STOP_TIMEOUT_MS = 5_000L
 
@@ -234,6 +235,11 @@ constructor(
     viewModelScope.launch { updateThemePreferenceUseCase.updateTheme(themePreference) }
   }
 
+  fun applyDensityPreference(compactModeEnabled: Boolean) {
+    setCompactMode(compactModeEnabled)
+  }
+
+  @JvmName("internalSetLayoutMode")
   fun setCompactMode(enabled: Boolean) {
     previousUiUxState = _uiUxState.value
     _uiUxState.update {

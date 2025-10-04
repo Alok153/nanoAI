@@ -14,10 +14,10 @@ class ModelManifestContractTest {
     mapOf(
       "modelId" to "persona-text-delta",
       "version" to "1.2.0",
-      "checksumSha256" to "abc123",
+      "checksumSha256" to "9f2a8a4c7cb0a2aa73ec718f7f9b0d4c70bda2f286f7f0bb7b3b92d4abf65c2e",
       "sizeBytes" to 524_288_000L,
-      "downloadUrl" to "http://cdn.nanoai.app/model/persona-text-delta-1.2.0.tgz",
-      "signature" to "",
+      "downloadUrl" to "https://cdn.nanoai.app/model/persona-text-delta-1.2.0.tgz",
+      "signature" to "LS0tLS1CRUdJTiBTSUdOQVRVUkUtLS0tLS0tU0lHTkFUVVJFLURBVEE=",
     )
 
   @Test

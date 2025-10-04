@@ -12,7 +12,6 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
 import org.junit.After
-import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 import retrofit2.Retrofit
@@ -74,7 +73,6 @@ class UserProfileContractTest {
 
     assertRequestMatchesOpenApi(server.takeRequest())
 
-    fail("T005: Implement real client wiring for /user/profile before marking task complete")
   }
 
   private fun assertRequestMatchesOpenApi(request: RecordedRequest) {

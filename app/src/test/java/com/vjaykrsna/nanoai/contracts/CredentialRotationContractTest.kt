@@ -12,7 +12,7 @@ import org.junit.Test
 class CredentialRotationContractTest {
   private val rotationRequest =
     mapOf(
-      "environment" to "development",
+      "environment" to "production",
       "encryptedKey" to "BASE64_PAYLOAD",
     )
 
@@ -20,6 +20,8 @@ class CredentialRotationContractTest {
     mapOf(
       "providerId" to "openai",
       "storedAt" to "2025-10-03T10:15:30Z",
+      "keyAlias" to "openai-prod-2025",
+      "migrationRequired" to false,
     )
 
   @Test
