@@ -58,4 +58,11 @@ nanoAI/
 - Macrobenchmarks: Located in `macrobenchmark/`, for performance testing.
 
 <!-- MANUAL ADDITIONS START -->
+
+## Context7 MCP Tool Usage
+
+Always use the Context7 MCP server to fetch up-to-date documentation and code examples for any library or technology when implementing features or working with unfamiliar technologies.
+
+This aligns with the constitution's principle of Up-to-Date Documentation and Best Practices, ensuring modern, secure implementations.
+
 <!-- MANUAL ADDITIONS END -->
