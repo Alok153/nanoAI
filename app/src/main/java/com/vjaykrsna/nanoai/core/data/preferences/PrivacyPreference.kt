@@ -14,24 +14,18 @@ import kotlinx.datetime.Instant
  * @property retentionPolicy Data retention policy preference
  */
 data class PrivacyPreference(
-    val exportWarningsDismissed: Boolean = false,
-    val telemetryOptIn: Boolean = false,
-    val consentAcknowledgedAt: Instant? = null,
-    val disclaimerShownCount: Int = 0,
-    val retentionPolicy: RetentionPolicy = RetentionPolicy.INDEFINITE,
+  val exportWarningsDismissed: Boolean = false,
+  val telemetryOptIn: Boolean = false,
+  val consentAcknowledgedAt: Instant? = null,
+  val disclaimerShownCount: Int = 0,
+  val retentionPolicy: RetentionPolicy = RetentionPolicy.INDEFINITE,
 )
 
-/**
- * Data retention policy options.
- */
+/** Data retention policy options. */
 enum class RetentionPolicy {
-    /**
-     * Keep data indefinitely until manually deleted.
-     */
-    INDEFINITE,
+  /** Keep data indefinitely until manually deleted. */
+  INDEFINITE,
 
-    /**
-     * Only purge data when user explicitly requests it.
-     */
-    MANUAL_PURGE_ONLY,
+  /** Only purge data when user explicitly requests it. */
+  MANUAL_PURGE_ONLY,
 }

@@ -37,149 +37,140 @@ import kotlin.text.titlecase
 
 @Composable
 fun HomeScreen(
-    state: HomeUiState,
-    onToggleTools: () -> Unit,
-    onActionClick: (String) -> Unit,
-    onTooltipDismiss: () -> Unit,
-    onTooltipHelp: () -> Unit,
-    onTooltipDontShow: () -> Unit,
-    onRetryOffline: () -> Unit,
-    modifier: Modifier = Modifier,
+  state: HomeUiState,
+  onToggleTools: () -> Unit,
+  onActionClick: (String) -> Unit,
+  onTooltipDismiss: () -> Unit,
+  onTooltipHelp: () -> Unit,
+  onTooltipDontShow: () -> Unit,
+  onRetryOffline: () -> Unit,
+  modifier: Modifier = Modifier,
 ) {
-    Surface(modifier = modifier.fillMaxSize()) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().testTag("home_single_column_feed"),
-            contentPadding =
-                androidx.compose.foundation.layout
-                    .PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            if (state.offlineBannerVisible) {
-                item("offline_banner") {
-                    OfflineBanner(
-                        isOffline = state.offlineBannerVisible,
-                        queuedActions = state.queuedActions,
-                        onRetry = onRetryOffline,
-                        modifier = Modifier.fillMaxWidth().testTag("offline_banner_container_wrapper"),
-                    )
-                }
-            }
-
-            item("recent_actions_header") {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = "Recent actions",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        modifier =
-                            Modifier
-                                .testTag("home_recent_actions_header")
-                                .semantics { heading() },
-                    )
-                    IconButton(
-                        onClick = onToggleTools,
-                        modifier =
-                            Modifier
-                                .testTag("home_tools_toggle")
-                                .semantics {
-                                    contentDescription =
-                                        if (state.toolsExpanded) "Collapse tools panel" else "Expand tools panel"
-                                },
-                    ) {
-                        Icon(
-                            imageVector = if (state.toolsExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                            contentDescription = null,
-                        )
-                    }
-                }
-            }
-
-            item("tools_panel_state") {
-                if (state.toolsExpanded) {
-                    Text(
-                        text = "Tools",
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.testTag("home_tools_panel_expanded").semantics { heading() },
-                    )
-                } else {
-                    Text(
-                        text = "Advanced tools hidden",
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier =
-                            Modifier
-                                .testTag("home_tools_panel_collapsed")
-                                .semantics {
-                                    contentDescription =
-                                        "Advanced tools are currently hidden. Activate the toggle to reveal tools."
-                                },
-                    )
-                }
-            }
-
-            if (state.isHydrating) {
-                item("home_skeleton") {
-                    HomeSkeleton(modifier = Modifier.testTag("home_skeleton_loader"))
-                }
-            } else {
-                itemsIndexed(state.recentActions) { index, action ->
-                    PrimaryActionCard(
-                        title = action.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() },
-                        description = "Quick action",
-                        tag = "home_recent_action_$index",
-                        onClick = { onActionClick(action) },
-                    )
-                }
-            }
-
-            if (state.latencyIndicatorVisible) {
-                item("latency_indicator") {
-                    Text(
-                        text = "Response in under 100ms",
-                        style = MaterialTheme.typography.labelMedium,
-                        modifier = Modifier.testTag("home_latency_meter"),
-                    )
-                }
-            }
-
-            if (state.tooltipEntryVisible) {
-                item("tooltip_entry") {
-                    Column(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .testTag("onboarding_tooltip_entry")
-                                .semantics { contentDescription = "Onboarding tips" },
-                    ) {
-                        OnboardingTooltip(
-                            message = "Tip: Pin your favorite tools for quick access.",
-                            onDismiss = onTooltipDismiss,
-                            onDontShowAgain = onTooltipDontShow,
-                            onHelp = onTooltipHelp,
-                        )
-                    }
-                }
-            }
+  Surface(modifier = modifier.fillMaxSize()) {
+    LazyColumn(
+      modifier = Modifier.fillMaxSize().testTag("home_single_column_feed"),
+      contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
+      verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+      if (state.offlineBannerVisible) {
+        item("offline_banner") {
+          OfflineBanner(
+            isOffline = state.offlineBannerVisible,
+            queuedActions = state.queuedActions,
+            onRetry = onRetryOffline,
+            modifier = Modifier.fillMaxWidth().testTag("offline_banner_container_wrapper"),
+          )
         }
+      }
+
+      item("recent_actions_header") {
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.SpaceBetween,
+          verticalAlignment = Alignment.CenterVertically,
+        ) {
+          Text(
+            text = "Recent actions",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.testTag("home_recent_actions_header").semantics { heading() },
+          )
+          IconButton(
+            onClick = onToggleTools,
+            modifier =
+              Modifier.testTag("home_tools_toggle").semantics {
+                contentDescription =
+                  if (state.toolsExpanded) "Collapse tools panel" else "Expand tools panel"
+              },
+          ) {
+            Icon(
+              imageVector =
+                if (state.toolsExpanded) Icons.Default.KeyboardArrowUp
+                else Icons.Default.KeyboardArrowDown,
+              contentDescription = null,
+            )
+          }
+        }
+      }
+
+      item("tools_panel_state") {
+        if (state.toolsExpanded) {
+          Text(
+            text = "Tools",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.testTag("home_tools_panel_expanded").semantics { heading() },
+          )
+        } else {
+          Text(
+            text = "Advanced tools hidden",
+            style = MaterialTheme.typography.bodySmall,
+            modifier =
+              Modifier.testTag("home_tools_panel_collapsed").semantics {
+                contentDescription =
+                  "Advanced tools are currently hidden. Activate the toggle to reveal tools."
+              },
+          )
+        }
+      }
+
+      if (state.isHydrating) {
+        item("home_skeleton") { HomeSkeleton(modifier = Modifier.testTag("home_skeleton_loader")) }
+      } else {
+        itemsIndexed(state.recentActions) { index, action ->
+          PrimaryActionCard(
+            title =
+              action.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() },
+            description = "Quick action",
+            tag = "home_recent_action_$index",
+            onClick = { onActionClick(action) },
+          )
+        }
+      }
+
+      if (state.latencyIndicatorVisible) {
+        item("latency_indicator") {
+          Text(
+            text = "Response in under 100ms",
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier.testTag("home_latency_meter"),
+          )
+        }
+      }
+
+      if (state.tooltipEntryVisible) {
+        item("tooltip_entry") {
+          Column(
+            modifier =
+              Modifier.fillMaxWidth().testTag("onboarding_tooltip_entry").semantics {
+                contentDescription = "Onboarding tips"
+              },
+          ) {
+            OnboardingTooltip(
+              message = "Tip: Pin your favorite tools for quick access.",
+              onDismiss = onTooltipDismiss,
+              onDontShowAgain = onTooltipDontShow,
+              onHelp = onTooltipHelp,
+            )
+          }
+        }
+      }
     }
+  }
 }
 
 @Composable
 private fun HomeSkeleton(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        repeat(3) {
-            Card(
-                modifier = Modifier.fillMaxWidth().alpha(0.5f),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-            ) {
-                Spacer(modifier = Modifier.height(56.dp))
-            }
-        }
+  Column(
+    modifier = modifier.fillMaxWidth(),
+    verticalArrangement = Arrangement.spacedBy(12.dp),
+  ) {
+    repeat(3) {
+      Card(
+        modifier = Modifier.fillMaxWidth().alpha(0.5f),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+      ) {
+        Spacer(modifier = Modifier.height(56.dp))
+      }
     }
+  }
 }

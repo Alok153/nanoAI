@@ -13,39 +13,32 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Instrumentation scenario covering Quickstart Scenario 2 (Home Screen Navigation).
- * The checks intentionally fail until the Home screen exposes the expected test tags and behaviors.
+ * Instrumentation scenario covering Quickstart Scenario 2 (Home Screen Navigation). The checks
+ * intentionally fail until the Home screen exposes the expected test tags and behaviors.
  */
 @LargeTest
 @RunWith(AndroidJUnit4::class)
 class HomeNavigationScenarioTest {
-    @get:Rule
-    val composeRule = createAndroidComposeRule<MainActivity>()
+  @get:Rule val composeRule = createAndroidComposeRule<MainActivity>()
 
-    @Test
-    fun homeScreen_expandTools_and_triggerRecentAction() {
-        composeRule
-            .onNodeWithTag("home_single_column_feed")
-            .assertIsDisplayed()
+  @Test
+  fun homeScreen_expandTools_and_triggerRecentAction() {
+    composeRule.onNodeWithTag("home_single_column_feed").assertIsDisplayed()
 
-        composeRule
-            .onNodeWithTag("home_tools_toggle")
-            .assertIsDisplayed()
-            .assertHasClickAction()
-            .performClick()
+    composeRule
+      .onNodeWithTag("home_tools_toggle")
+      .assertIsDisplayed()
+      .assertHasClickAction()
+      .performClick()
 
-        composeRule
-            .onNodeWithTag("home_tools_panel_expanded")
-            .assertIsDisplayed()
+    composeRule.onNodeWithTag("home_tools_panel_expanded").assertIsDisplayed()
 
-        composeRule
-            .onNodeWithTag("home_recent_action_0")
-            .assertIsDisplayed()
-            .assertHasClickAction()
-            .performClick()
+    composeRule
+      .onNodeWithTag("home_recent_action_0")
+      .assertIsDisplayed()
+      .assertHasClickAction()
+      .performClick()
 
-        composeRule
-            .onNodeWithTag("home_latency_meter")
-            .assertIsDisplayed()
-    }
+    composeRule.onNodeWithTag("home_latency_meter").assertIsDisplayed()
+  }
 }

@@ -13,11 +13,9 @@ import javax.inject.Inject
  * WorkManager workers.
  */
 @HiltAndroidApp
-class NanoAIApplication :
-    Application(),
-    Configuration.Provider {
-    @Inject lateinit var workerFactory: HiltWorkerFactory
+class NanoAIApplication : Application(), Configuration.Provider {
+  @Inject lateinit var workerFactory: HiltWorkerFactory
 
-    override val workManagerConfiguration: Configuration
-        get() = Configuration.Builder().setWorkerFactory(workerFactory).build()
+  override val workManagerConfiguration: Configuration
+    get() = Configuration.Builder().setWorkerFactory(workerFactory).build()
 }

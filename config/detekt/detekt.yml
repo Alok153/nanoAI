@@ -20,9 +20,16 @@ style:
   active: true
   MaxLineLength:
     active: true
-    maxLineLength: 240
+    maxLineLength: 100   # aligned with ktfmt
     excludePackageStatements: true
     excludeImportStatements: true
+  ForbiddenComment:
+    active: true
+    comments:
+      - 'TODO:'
+      - 'FIXME:'
+      - 'STOPSHIP:'
+    allowedPatterns: 'TODO\([A-Z]+-[0-9]+\):'
 formatting:
   # Disabled because Spotless/ktfmt is the canonical project formatter.
   # Prevents multiple formatters from conflicting.
@@ -55,6 +62,10 @@ performance:
 
 naming:
   active: true
+  FunctionNaming:
+    active: true
+    functionPattern: '([a-z][a-zA-Z0-9]*)|([A-Z][a-zA-Z0-9]*)'
+    excludeClassPattern: ''
 
 Compose:
   active: true

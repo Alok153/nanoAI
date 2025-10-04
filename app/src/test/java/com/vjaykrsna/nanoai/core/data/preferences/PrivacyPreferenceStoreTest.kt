@@ -16,56 +16,53 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
 class PrivacyPreferenceStoreTest {
-    private lateinit var store: PrivacyPreferenceStore
+  private lateinit var store: PrivacyPreferenceStore
 
-    @Before
-    fun setUp() {
-        val context = RuntimeEnvironment.getApplication()
-        store = PrivacyPreferenceStore(context)
-    }
+  @Before
+  fun setUp() {
+    val context = RuntimeEnvironment.getApplication()
+    store = PrivacyPreferenceStore(context)
+  }
 
-    @Test
-    fun `privacyPreference exposes defaults`() =
-        runTest {
-            store.reset()
-            advanceUntilIdle()
+  @Test
+  fun `privacyPreference exposes defaults`() = runTest {
+    store.reset()
+    advanceUntilIdle()
 
-            val preference = store.privacyPreference.first()
+    val preference = store.privacyPreference.first()
 
-            assertThat(preference.exportWarningsDismissed).isFalse()
-            assertThat(preference.telemetryOptIn).isFalse()
-            assertThat(preference.consentAcknowledgedAt).isNull()
-            assertThat(preference.disclaimerShownCount).isEqualTo(0)
-            assertThat(preference.retentionPolicy).isEqualTo(RetentionPolicy.INDEFINITE)
-        }
+    assertThat(preference.exportWarningsDismissed).isFalse()
+    assertThat(preference.telemetryOptIn).isFalse()
+    assertThat(preference.consentAcknowledgedAt).isNull()
+    assertThat(preference.disclaimerShownCount).isEqualTo(0)
+    assertThat(preference.retentionPolicy).isEqualTo(RetentionPolicy.INDEFINITE)
+  }
 
-    @Test
-    fun `acknowledgeConsent persists timestamp`() =
-        runTest {
-            store.reset()
-            advanceUntilIdle()
+  @Test
+  fun `acknowledgeConsent persists timestamp`() = runTest {
+    store.reset()
+    advanceUntilIdle()
 
-            val expectedInstant = Instant.fromEpochMilliseconds(1_696_000_000_000)
+    val expectedInstant = Instant.fromEpochMilliseconds(1_696_000_000_000)
 
-            store.acknowledgeConsent(expectedInstant)
-            advanceUntilIdle()
+    store.acknowledgeConsent(expectedInstant)
+    advanceUntilIdle()
 
-            val preference = store.privacyPreference.first()
+    val preference = store.privacyPreference.first()
 
-            assertThat(preference.consentAcknowledgedAt).isEqualTo(expectedInstant)
-        }
+    assertThat(preference.consentAcknowledgedAt).isEqualTo(expectedInstant)
+  }
 
-    @Test
-    fun `incrementDisclaimerShown increases counter`() =
-        runTest {
-            store.reset()
-            advanceUntilIdle()
+  @Test
+  fun `incrementDisclaimerShown increases counter`() = runTest {
+    store.reset()
+    advanceUntilIdle()
 
-            repeat(3) { store.incrementDisclaimerShown() }
-            advanceUntilIdle()
+    repeat(3) { store.incrementDisclaimerShown() }
+    advanceUntilIdle()
 
-            val preference = store.privacyPreference.first()
+    val preference = store.privacyPreference.first()
 
-            assertThat(preference.disclaimerShownCount).isEqualTo(3)
-        }
+    assertThat(preference.disclaimerShownCount).isEqualTo(3)
+  }
 }

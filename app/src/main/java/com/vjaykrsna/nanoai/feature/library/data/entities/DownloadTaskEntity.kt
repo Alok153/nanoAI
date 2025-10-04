@@ -11,8 +11,8 @@ import kotlinx.datetime.Instant
 /**
  * Room entity representing a model download task.
  *
- * Tracks download progress, status, and integrates with WorkManager for
- * background download orchestration.
+ * Tracks download progress, status, and integrates with WorkManager for background download
+ * orchestration.
  *
  * @property taskId Unique identifier (UUID string)
  * @property modelId Associated model being downloaded
@@ -24,36 +24,29 @@ import kotlinx.datetime.Instant
  * @property errorMessage Error message if status is FAILED
  */
 @Entity(
-    tableName = "download_tasks",
-    foreignKeys = [
-        ForeignKey(
-            entity = ModelPackageEntity::class,
-            parentColumns = ["model_id"],
-            childColumns = ["model_id"],
-            onDelete = ForeignKey.CASCADE,
-        ),
+  tableName = "download_tasks",
+  foreignKeys =
+    [
+      ForeignKey(
+        entity = ModelPackageEntity::class,
+        parentColumns = ["model_id"],
+        childColumns = ["model_id"],
+        onDelete = ForeignKey.CASCADE,
+      ),
     ],
-    indices = [
-        Index(value = ["model_id"]),
-        Index(value = ["status"]),
+  indices =
+    [
+      Index(value = ["model_id"]),
+      Index(value = ["status"]),
     ],
 )
 data class DownloadTaskEntity(
-    @PrimaryKey
-    @ColumnInfo(name = "task_id")
-    val taskId: String,
-    @ColumnInfo(name = "model_id")
-    val modelId: String,
-    @ColumnInfo(name = "progress")
-    val progress: Float = 0f,
-    @ColumnInfo(name = "status")
-    val status: DownloadStatus,
-    @ColumnInfo(name = "bytes_downloaded")
-    val bytesDownloaded: Long = 0L,
-    @ColumnInfo(name = "started_at")
-    val startedAt: Instant? = null,
-    @ColumnInfo(name = "finished_at")
-    val finishedAt: Instant? = null,
-    @ColumnInfo(name = "error_message")
-    val errorMessage: String? = null,
+  @PrimaryKey @ColumnInfo(name = "task_id") val taskId: String,
+  @ColumnInfo(name = "model_id") val modelId: String,
+  @ColumnInfo(name = "progress") val progress: Float = 0f,
+  @ColumnInfo(name = "status") val status: DownloadStatus,
+  @ColumnInfo(name = "bytes_downloaded") val bytesDownloaded: Long = 0L,
+  @ColumnInfo(name = "started_at") val startedAt: Instant? = null,
+  @ColumnInfo(name = "finished_at") val finishedAt: Instant? = null,
+  @ColumnInfo(name = "error_message") val errorMessage: String? = null,
 )

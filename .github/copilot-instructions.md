@@ -48,7 +48,7 @@ nanoAI/
 ./gradlew connectedAndroidTest   # Run instrumented tests on connected device
 ./gradlew test                   # Run unit tests
 ./gradlew clean                  # Clean build outputs
-./gradlew ktlintCheck            # Check code formatting with ktlint
+./gradlew spotlessApply          # Check code formatting with ktlint
 ./gradlew detekt                 # Run static analysis with Detekt
 ```
 

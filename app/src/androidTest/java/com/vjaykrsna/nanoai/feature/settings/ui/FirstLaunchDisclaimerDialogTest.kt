@@ -7,9 +7,10 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class FirstLaunchDisclaimerDialogTest {
-    @Ignore("Pending first-launch disclaimer coverage in backend phase.")
-    @Test
-    fun firstLaunchDisclaimerPending() {
-        // TODO(003-UI-UX#T079): Add UI instrumentation once dialog is backed by persisted onboarding state.
-    }
+  @Ignore("Pending first-launch disclaimer coverage in backend phase.")
+  @Test
+  fun firstLaunchDisclaimerPending() {
+    // TODO(003-UI-UX#T079): Add UI instrumentation once dialog is backed by persisted onboarding
+    // state.
+  }
 }

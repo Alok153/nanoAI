@@ -30,26 +30,13 @@ subprojects {
             configure<com.diffplug.gradle.spotless.SpotlessExtension> {
                 kotlin {
                     target("**/*.kt")
-                    ktlint().editorConfigOverride(
-                        mapOf(
-                            "indent_size" to "4",
-                            "continuation_indent_size" to "4",
-                            "ktlint_code_style" to "intellij_idea",
-                            "max_line_length" to "240"
-                        )
-                    )
+                    // ktfmt auto-wraps at 100 chars, cannot be configured
+                    ktfmt().googleStyle()
                 }
 
                 kotlinGradle {
                     target("**/*.gradle.kts")
-                    ktlint().editorConfigOverride(
-                        mapOf(
-                            "indent_size" to "4",
-                            "continuation_indent_size" to "4",
-                            "ktlint_code_style" to "intellij_idea",
-                            "max_line_length" to "240"
-                        )
-                    )
+                    ktfmt().googleStyle()
                 }
             }
         }
@@ -59,10 +46,4 @@ subprojects {
 dependencies {
     detektPlugins("io.nlopez.compose.rules:detekt:0.4.9")
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.23.7")
-}
-
-if (tasks.findByName("clean") == null) {
-    tasks.register("clean", Delete::class) {
-        delete(rootProject.layout.buildDirectory)
-    }
 }

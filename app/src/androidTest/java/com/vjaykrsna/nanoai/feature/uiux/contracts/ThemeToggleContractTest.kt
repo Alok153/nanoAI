@@ -13,28 +13,25 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Contract test for Theme toggle (FR-011).
- * Checks instant theme switch semantics and persistence signal.
+ * Contract test for Theme toggle (FR-011). Checks instant theme switch semantics and persistence
+ * signal.
  */
 @LargeTest
 @RunWith(AndroidJUnit4::class)
 class ThemeToggleContractTest {
-    @get:Rule
-    val composeRule = createAndroidComposeRule<MainActivity>()
+  @get:Rule val composeRule = createAndroidComposeRule<MainActivity>()
 
-    @Test
-    fun themeToggle_switchPresent_andInteractive() {
-        composeRule
-            .onNodeWithTag("theme_toggle_switch")
-            .assertIsDisplayed()
-            .assertHasClickAction()
-            .performClick()
-    }
+  @Test
+  fun themeToggle_switchPresent_andInteractive() {
+    composeRule
+      .onNodeWithTag("theme_toggle_switch")
+      .assertIsDisplayed()
+      .assertHasClickAction()
+      .performClick()
+  }
 
-    @Test
-    fun themeToggle_persistsSelection_acrossRecomposition() {
-        composeRule
-            .onNodeWithTag("theme_toggle_persistence_status")
-            .assertIsDisplayed()
-    }
+  @Test
+  fun themeToggle_persistsSelection_acrossRecomposition() {
+    composeRule.onNodeWithTag("theme_toggle_persistence_status").assertIsDisplayed()
+  }
 }

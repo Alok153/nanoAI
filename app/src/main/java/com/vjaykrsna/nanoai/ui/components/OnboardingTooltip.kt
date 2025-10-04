@@ -23,49 +23,46 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun OnboardingTooltip(
-    message: String,
-    onDismiss: () -> Unit,
-    onDontShowAgain: () -> Unit,
-    onHelp: () -> Unit,
-    modifier: Modifier = Modifier,
+  message: String,
+  onDismiss: () -> Unit,
+  onDontShowAgain: () -> Unit,
+  onHelp: () -> Unit,
+  modifier: Modifier = Modifier,
 ) {
-    Card(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .testTag("onboarding_tooltip_container")
-                .semantics {
-                    contentDescription = "Contextual help"
-                    liveRegion = LiveRegionMode.Polite
-                },
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.semantics { heading() },
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(
-                    onClick = onDismiss,
-                    modifier = Modifier.testTag("onboarding_tooltip_dismiss"),
-                ) {
-                    Text("Dismiss")
-                }
-                TextButton(
-                    onClick = onDontShowAgain,
-                    modifier = Modifier.testTag("onboarding_tooltip_dont_show_again"),
-                ) {
-                    Text("Don't show again")
-                }
-                TextButton(
-                    onClick = onHelp,
-                    modifier = Modifier.testTag("onboarding_tooltip_help_entry"),
-                ) {
-                    Text("Help")
-                }
-            }
+  Card(
+    modifier =
+      modifier.fillMaxWidth().testTag("onboarding_tooltip_container").semantics {
+        contentDescription = "Contextual help"
+        liveRegion = LiveRegionMode.Polite
+      },
+  ) {
+    Column(modifier = Modifier.padding(16.dp)) {
+      Text(
+        text = message,
+        style = MaterialTheme.typography.bodyMedium,
+        modifier = Modifier.semantics { heading() },
+      )
+      Spacer(modifier = Modifier.height(12.dp))
+      Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        TextButton(
+          onClick = onDismiss,
+          modifier = Modifier.testTag("onboarding_tooltip_dismiss"),
+        ) {
+          Text("Dismiss")
         }
+        TextButton(
+          onClick = onDontShowAgain,
+          modifier = Modifier.testTag("onboarding_tooltip_dont_show_again"),
+        ) {
+          Text("Don't show again")
+        }
+        TextButton(
+          onClick = onHelp,
+          modifier = Modifier.testTag("onboarding_tooltip_help_entry"),
+        ) {
+          Text("Help")
+        }
+      }
     }
+  }
 }

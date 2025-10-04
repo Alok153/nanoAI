@@ -7,6 +7,7 @@ import com.vjaykrsna.nanoai.feature.uiux.domain.ObserveUserProfileUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.RecordOnboardingProgressUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.UIUX_DEFAULT_USER_ID
 import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -19,91 +20,91 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 private const val HOME_TOOLTIP_ID = "home_tools_tip"
 
 @HiltViewModel
 class HomeViewModel
-    @Inject
-    constructor(
-        private val observeUserProfile: ObserveUserProfileUseCase,
-        private val recordOnboardingProgress: RecordOnboardingProgressUseCase,
-        @MainImmediateDispatcher private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
-    ) : ViewModel() {
-        private val _uiState = MutableStateFlow(HomeUiState())
-        val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
-        private val presenterScope = CoroutineScope(SupervisorJob() + dispatcher)
+@Inject
+constructor(
+  private val observeUserProfile: ObserveUserProfileUseCase,
+  private val recordOnboardingProgress: RecordOnboardingProgressUseCase,
+  @MainImmediateDispatcher private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
+) : ViewModel() {
+  private val _uiState = MutableStateFlow(HomeUiState())
+  val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+  private val presenterScope = CoroutineScope(SupervisorJob() + dispatcher)
 
-        init {
-            observeUserProfile.flow
-                .onEach { result ->
-                    val recent = result.uiState?.recentActions ?: emptyList()
-                    val tooltipVisible = !(result.userProfile?.dismissedTips?.get(HOME_TOOLTIP_ID) ?: false)
-                    val queued = recent.size
-                    _uiState.update { current ->
-                        current.copy(
-                            recentActions = recent,
-                            offlineBannerVisible = result.offline,
-                            tooltipEntryVisible = tooltipVisible,
-                            queuedActions = queued,
-                            isHydrating = result.userProfile == null,
-                        )
-                    }
-                }.launchIn(presenterScope)
+  init {
+    observeUserProfile.flow
+      .onEach { result ->
+        val recent = result.uiState?.recentActions ?: emptyList()
+        val tooltipVisible = !(result.userProfile?.dismissedTips?.get(HOME_TOOLTIP_ID) ?: false)
+        val queued = recent.size
+        _uiState.update { current ->
+          current.copy(
+            recentActions = recent,
+            offlineBannerVisible = result.offline,
+            tooltipEntryVisible = tooltipVisible,
+            queuedActions = queued,
+            isHydrating = result.userProfile == null,
+          )
         }
+      }
+      .launchIn(presenterScope)
+  }
 
-        fun toggleToolsExpanded() {
-            _uiState.update { it.copy(toolsExpanded = !it.toolsExpanded) }
-        }
+  fun toggleToolsExpanded() {
+    _uiState.update { it.copy(toolsExpanded = !it.toolsExpanded) }
+  }
 
-        fun onRecentAction(actionId: String) {
-            _uiState.update { it.copy(lastInteractedAction = actionId, latencyIndicatorVisible = true) }
-        }
+  fun onRecentAction(actionId: String) {
+    _uiState.update { it.copy(lastInteractedAction = actionId, latencyIndicatorVisible = true) }
+  }
 
-        fun dismissTooltip() {
-            _uiState.update { it.copy(tooltipEntryVisible = false) }
-            viewModelScope.launch(dispatcher) {
-                recordOnboardingProgress.recordDismissal(
-                    tipId = HOME_TOOLTIP_ID,
-                    dismissed = true,
-                    completed = false,
-                )
-            }
-        }
-
-        fun dontShowTooltipAgain() {
-            _uiState.update { it.copy(tooltipEntryVisible = false) }
-            viewModelScope.launch(dispatcher) {
-                recordOnboardingProgress.recordDismissal(
-                    tipId = HOME_TOOLTIP_ID,
-                    dismissed = true,
-                    completed = false,
-                )
-            }
-        }
-
-        fun onTooltipHelp() {
-            _uiState.update { it.copy(lastInteractedAction = "help_center") }
-        }
-
-        fun retryPendingActions() {
-            observeUserProfile.refresh(UIUX_DEFAULT_USER_ID, force = true)
-        }
-
-        override fun onCleared() {
-            super.onCleared()
-            presenterScope.cancel()
-        }
+  fun dismissTooltip() {
+    _uiState.update { it.copy(tooltipEntryVisible = false) }
+    viewModelScope.launch(dispatcher) {
+      recordOnboardingProgress.recordDismissal(
+        tipId = HOME_TOOLTIP_ID,
+        dismissed = true,
+        completed = false,
+      )
     }
+  }
+
+  fun dontShowTooltipAgain() {
+    _uiState.update { it.copy(tooltipEntryVisible = false) }
+    viewModelScope.launch(dispatcher) {
+      recordOnboardingProgress.recordDismissal(
+        tipId = HOME_TOOLTIP_ID,
+        dismissed = true,
+        completed = false,
+      )
+    }
+  }
+
+  fun onTooltipHelp() {
+    _uiState.update { it.copy(lastInteractedAction = "help_center") }
+  }
+
+  fun retryPendingActions() {
+    observeUserProfile.refresh(UIUX_DEFAULT_USER_ID, force = true)
+  }
+
+  override fun onCleared() {
+    super.onCleared()
+    presenterScope.cancel()
+  }
+}
 
 data class HomeUiState(
-    val recentActions: List<String> = emptyList(),
-    val offlineBannerVisible: Boolean = false,
-    val queuedActions: Int = 0,
-    val toolsExpanded: Boolean = false,
-    val tooltipEntryVisible: Boolean = false,
-    val lastInteractedAction: String? = null,
-    val latencyIndicatorVisible: Boolean = false,
-    val isHydrating: Boolean = true,
+  val recentActions: List<String> = emptyList(),
+  val offlineBannerVisible: Boolean = false,
+  val queuedActions: Int = 0,
+  val toolsExpanded: Boolean = false,
+  val tooltipEntryVisible: Boolean = false,
+  val lastInteractedAction: String? = null,
+  val latencyIndicatorVisible: Boolean = false,
+  val isHydrating: Boolean = true,
 )

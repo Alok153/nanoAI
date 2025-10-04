@@ -10,8 +10,8 @@ import kotlinx.datetime.Instant
 /**
  * Room entity representing an AI model package.
  *
- * Models can be local (downloaded) or cloud-based. Tracks installation state,
- * capabilities, and associated download tasks.
+ * Models can be local (downloaded) or cloud-based. Tracks installation state, capabilities, and
+ * associated download tasks.
  *
  * @property modelId Unique model identifier (e.g., "gemma-2b-it")
  * @property displayName Human-readable model name
@@ -26,25 +26,14 @@ import kotlinx.datetime.Instant
  */
 @Entity(tableName = "model_packages")
 data class ModelPackageEntity(
-    @PrimaryKey
-    @ColumnInfo(name = "model_id")
-    val modelId: String,
-    @ColumnInfo(name = "display_name")
-    val displayName: String,
-    @ColumnInfo(name = "version")
-    val version: String,
-    @ColumnInfo(name = "provider_type")
-    val providerType: ProviderType,
-    @ColumnInfo(name = "size_bytes")
-    val sizeBytes: Long,
-    @ColumnInfo(name = "capabilities")
-    val capabilities: Set<String>,
-    @ColumnInfo(name = "install_state")
-    val installState: InstallState,
-    @ColumnInfo(name = "download_task_id")
-    val downloadTaskId: String? = null,
-    @ColumnInfo(name = "checksum")
-    val checksum: String? = null,
-    @ColumnInfo(name = "updated_at")
-    val updatedAt: Instant,
+  @PrimaryKey @ColumnInfo(name = "model_id") val modelId: String,
+  @ColumnInfo(name = "display_name") val displayName: String,
+  @ColumnInfo(name = "version") val version: String,
+  @ColumnInfo(name = "provider_type") val providerType: ProviderType,
+  @ColumnInfo(name = "size_bytes") val sizeBytes: Long,
+  @ColumnInfo(name = "capabilities") val capabilities: Set<String>,
+  @ColumnInfo(name = "install_state") val installState: InstallState,
+  @ColumnInfo(name = "download_task_id") val downloadTaskId: String? = null,
+  @ColumnInfo(name = "checksum") val checksum: String? = null,
+  @ColumnInfo(name = "updated_at") val updatedAt: Instant,
 )

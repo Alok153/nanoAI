@@ -10,20 +10,19 @@ import org.junit.Rule
 import org.junit.Test
 
 class InferenceToggleAccessibilityTest {
-    @get:Rule
-    val composeRule = createAndroidComposeRule<ComponentActivity>()
+  @get:Rule val composeRule = createAndroidComposeRule<ComponentActivity>()
 
-    @Test
-    fun inferenceToggle_exposesContentDescription() {
-        composeRule.setContent {
-            NanoAITheme {
-                InferencePreferenceToggleRow(
-                    inferenceMode = InferenceMode.LOCAL_FIRST,
-                    onInferenceModeChanged = {},
-                )
-            }
-        }
-
-        composeRule.onNodeWithContentDescription("Toggle inference preference").assertIsDisplayed()
+  @Test
+  fun inferenceToggle_exposesContentDescription() {
+    composeRule.setContent {
+      NanoAITheme {
+        InferencePreferenceToggleRow(
+          inferenceMode = InferenceMode.LOCAL_FIRST,
+          onInferenceModeChanged = {},
+        )
+      }
     }
+
+    composeRule.onNodeWithContentDescription("Toggle inference preference").assertIsDisplayed()
+  }
 }

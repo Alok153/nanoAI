@@ -82,538 +82,469 @@ import kotlinx.datetime.toLocalDateTime
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NavigationScaffold(
-    appState: AppUiState = AppUiState(),
-    modifier: Modifier = Modifier,
-    navController: NavHostController = rememberNavController(),
-    sidebarViewModel: SidebarViewModel = hiltViewModel(),
-    disclaimerViewModel: FirstLaunchDisclaimerViewModel = hiltViewModel(),
+  appState: AppUiState = AppUiState(),
+  modifier: Modifier = Modifier,
+  navController: NavHostController = rememberNavController(),
+  sidebarViewModel: SidebarViewModel = hiltViewModel(),
+  disclaimerViewModel: FirstLaunchDisclaimerViewModel = hiltViewModel(),
 ) {
-    val drawerState = rememberDrawerState(DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
-    val isWelcomeRoute = currentRoute == Screen.Welcome.route
+  val drawerState = rememberDrawerState(DrawerValue.Closed)
+  val scope = rememberCoroutineScope()
+  val navBackStackEntry by navController.currentBackStackEntryAsState()
+  val currentRoute = navBackStackEntry?.destination?.route
+  val isWelcomeRoute = currentRoute == Screen.Welcome.route
 
-    val threads by sidebarViewModel.threads.collectAsState()
-    val searchQuery by sidebarViewModel.searchQuery.collectAsState()
-    val showArchived by sidebarViewModel.showArchived.collectAsState()
-    val inferencePreference by sidebarViewModel.inferencePreference.collectAsState()
-    val pinnedTools by sidebarViewModel.pinnedTools.collectAsState()
-    val disclaimerUiState by disclaimerViewModel.uiState.collectAsState()
+  val threads by sidebarViewModel.threads.collectAsState()
+  val searchQuery by sidebarViewModel.searchQuery.collectAsState()
+  val showArchived by sidebarViewModel.showArchived.collectAsState()
+  val inferencePreference by sidebarViewModel.inferencePreference.collectAsState()
+  val pinnedTools by sidebarViewModel.pinnedTools.collectAsState()
+  val disclaimerUiState by disclaimerViewModel.uiState.collectAsState()
 
-    LaunchedEffect(appState.shouldShowWelcome, currentRoute) {
-        if (navBackStackEntry == null) return@LaunchedEffect
-        when {
-            appState.shouldShowWelcome && currentRoute != Screen.Welcome.route -> {
-                navController.navigate(Screen.Welcome.route) {
-                    popUpTo(Screen.Home.route)
-                    launchSingleTop = true
-                }
-                sidebarViewModel.emitNavigation(Screen.Welcome.route)
-            }
-            !appState.shouldShowWelcome && currentRoute == Screen.Welcome.route -> {
-                navController.navigate(Screen.Home.route) {
-                    popUpTo(Screen.Welcome.route) {
-                        inclusive = true
-                    }
-                    launchSingleTop = true
-                }
-                sidebarViewModel.emitNavigation(Screen.Home.route)
-            }
+  LaunchedEffect(appState.shouldShowWelcome, currentRoute) {
+    if (navBackStackEntry == null) return@LaunchedEffect
+    when {
+      appState.shouldShowWelcome && currentRoute != Screen.Welcome.route -> {
+        navController.navigate(Screen.Welcome.route) {
+          popUpTo(Screen.Home.route)
+          launchSingleTop = true
         }
-    }
-
-    LaunchedEffect(isWelcomeRoute) {
-        if (isWelcomeRoute && drawerState.isOpen) {
-            drawerState.close()
+        sidebarViewModel.emitNavigation(Screen.Welcome.route)
+      }
+      !appState.shouldShowWelcome && currentRoute == Screen.Welcome.route -> {
+        navController.navigate(Screen.Home.route) {
+          popUpTo(Screen.Welcome.route) { inclusive = true }
+          launchSingleTop = true
         }
+        sidebarViewModel.emitNavigation(Screen.Home.route)
+      }
     }
+  }
 
-    // Handle back button when drawer is open
-    BackHandler(enabled = drawerState.isOpen) {
-        scope.launch { drawerState.close() }
+  LaunchedEffect(isWelcomeRoute) {
+    if (isWelcomeRoute && drawerState.isOpen) {
+      drawerState.close()
     }
+  }
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        gesturesEnabled = !isWelcomeRoute,
-        drawerContent = {
-            ModalDrawerSheet(
-                modifier =
-                    Modifier
-                        .width(300.dp)
-                        .fillMaxHeight()
-                        .semantics { contentDescription = "Navigation drawer with conversation threads" },
-            ) {
-                SidebarContent(
-                    threads = threads,
-                    searchQuery = searchQuery,
-                    showArchived = showArchived,
-                    onSearchQueryChanged = { sidebarViewModel.setSearchQuery(it) },
-                    onToggleArchived = { sidebarViewModel.toggleShowArchived() },
-                    inferenceMode = inferencePreference.mode,
-                    onInferenceModeChanged = { mode -> sidebarViewModel.setInferenceMode(mode) },
-                    onThreadClick = { thread ->
-                        // Navigate to chat with thread
-                        navController.navigate(Screen.Chat.route)
-                        scope.launch { drawerState.close() }
-                    },
-                    onArchiveThread = { sidebarViewModel.archiveThread(it) },
-                    onDeleteThread = { sidebarViewModel.deleteThread(it) },
-                    onNewThread = {
-                        sidebarViewModel.createNewThread(null)
-                        navController.navigate(Screen.Chat.route)
-                        scope.launch { drawerState.close() }
-                    },
-                    pinnedTools = pinnedTools,
-                    onNavigateHome = {
-                        navController.navigate(Screen.Home.route) {
-                            popUpTo(Screen.Home.route) {
-                                saveState = true
-                            }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                        sidebarViewModel.emitNavigation(Screen.Home.route)
-                        scope.launch { drawerState.close() }
-                    },
-                    onNavigateSettings = {
-                        navController.navigate(Screen.Settings.route)
-                        sidebarViewModel.emitNavigation(Screen.Settings.route)
-                        scope.launch { drawerState.close() }
-                    },
-                    modifier = Modifier.fillMaxHeight(),
-                )
+  // Handle back button when drawer is open
+  BackHandler(enabled = drawerState.isOpen) { scope.launch { drawerState.close() } }
+
+  ModalNavigationDrawer(
+    drawerState = drawerState,
+    gesturesEnabled = !isWelcomeRoute,
+    drawerContent = {
+      ModalDrawerSheet(
+        modifier =
+          Modifier.width(300.dp).fillMaxHeight().semantics {
+            contentDescription = "Navigation drawer with conversation threads"
+          },
+      ) {
+        SidebarContent(
+          threads = threads,
+          searchQuery = searchQuery,
+          showArchived = showArchived,
+          onSearchQueryChange = { sidebarViewModel.setSearchQuery(it) },
+          onToggleArchive = { sidebarViewModel.toggleShowArchived() },
+          inferenceMode = inferencePreference.mode,
+          onInferenceModeChange = { mode -> sidebarViewModel.setInferenceMode(mode) },
+          onThreadClick = { thread ->
+            // Navigate to chat with thread
+            navController.navigate(Screen.Chat.route)
+            scope.launch { drawerState.close() }
+          },
+          onArchiveThread = { sidebarViewModel.archiveThread(it) },
+          onDeleteThread = { sidebarViewModel.deleteThread(it) },
+          onNewThread = {
+            sidebarViewModel.createNewThread(null)
+            navController.navigate(Screen.Chat.route)
+            scope.launch { drawerState.close() }
+          },
+          pinnedTools = pinnedTools,
+          onNavigateHome = {
+            navController.navigate(Screen.Home.route) {
+              popUpTo(Screen.Home.route) { saveState = true }
+              launchSingleTop = true
+              restoreState = true
             }
-        },
-        modifier = modifier,
-    ) {
-        FirstLaunchDisclaimerDialog(
-            isVisible = disclaimerUiState.shouldShowDialog,
-            onAcknowledge = { disclaimerViewModel.onAcknowledge() },
-            onDismiss = { disclaimerViewModel.onDismiss() },
+            sidebarViewModel.emitNavigation(Screen.Home.route)
+            scope.launch { drawerState.close() }
+          },
+          onNavigateSettings = {
+            navController.navigate(Screen.Settings.route)
+            sidebarViewModel.emitNavigation(Screen.Settings.route)
+            scope.launch { drawerState.close() }
+          },
+          modifier = Modifier.fillMaxHeight(),
         )
+      }
+    },
+    modifier = modifier,
+  ) {
+    FirstLaunchDisclaimerDialog(
+      isVisible = disclaimerUiState.shouldShowDialog,
+      onAcknowledge = { disclaimerViewModel.onAcknowledge() },
+      onDismiss = { disclaimerViewModel.onDismiss() },
+    )
 
-        Scaffold(
-            topBar = {
-                if (!isWelcomeRoute) {
-                    TopAppBar(
-                        title = {
-                            Text(
-                                text =
-                                    when (currentRoute) {
-                                        Screen.Home.route -> "Home"
-                                        Screen.Chat.route -> "Chat"
-                                        Screen.ModelLibrary.route -> "Model Library"
-                                        Screen.Settings.route -> "Settings"
-                                        else -> "nanoAI"
-                                    },
-                            )
-                        },
-                        navigationIcon = {
-                            IconButton(
-                                onClick = {
-                                    scope.launch {
-                                        if (drawerState.isClosed) drawerState.open() else drawerState.close()
-                                    }
-                                },
-                                modifier =
-                                    Modifier.semantics {
-                                        contentDescription = "Open navigation drawer"
-                                    },
-                            ) {
-                                Icon(Icons.Default.Menu, "Menu")
-                            }
-                        },
-                        colors =
-                            TopAppBarDefaults.topAppBarColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            ),
-                    )
-                }
+    Scaffold(
+      topBar = {
+        if (!isWelcomeRoute) {
+          TopAppBar(
+            title = {
+              Text(
+                text =
+                  when (currentRoute) {
+                    Screen.Home.route -> "Home"
+                    Screen.Chat.route -> "Chat"
+                    Screen.ModelLibrary.route -> "Model Library"
+                    Screen.Settings.route -> "Settings"
+                    else -> "nanoAI"
+                  },
+              )
             },
-            bottomBar = {
-                if (!isWelcomeRoute) {
-                    BottomNavigationBar(
-                        currentRoute = currentRoute,
-                        onNavigate = { route ->
-                            navController.navigate(route) {
-                                popUpTo(Screen.Home.route) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                    )
-                }
+            navigationIcon = {
+              IconButton(
+                onClick = {
+                  scope.launch {
+                    if (drawerState.isClosed) drawerState.open() else drawerState.close()
+                  }
+                },
+                modifier = Modifier.semantics { contentDescription = "Open navigation drawer" },
+              ) {
+                Icon(Icons.Default.Menu, "Menu")
+              }
             },
-        ) { innerPadding ->
-            NavHost(
-                navController = navController,
-                startDestination = Screen.Home.route,
-                modifier = Modifier.padding(innerPadding),
-            ) {
-                composable(Screen.Welcome.route) { entry ->
-                    val welcomeViewModel: WelcomeViewModel = hiltViewModel(entry)
-                    val state by welcomeViewModel.uiState.collectAsStateWithLifecycle()
-
-                    WelcomeScreen(
-                        state = state,
-                        onGetStarted = {
-                            welcomeViewModel.onGetStarted()
-                            navController.navigate(Screen.Home.route) {
-                                popUpTo(Screen.Welcome.route) {
-                                    inclusive = true
-                                }
-                                launchSingleTop = true
-                            }
-                            sidebarViewModel.emitNavigation(Screen.Home.route)
-                        },
-                        onExplore = {
-                            welcomeViewModel.onExploreFeatures()
-                            navController.navigate(Screen.Home.route) {
-                                popUpTo(Screen.Welcome.route) {
-                                    inclusive = true
-                                }
-                                launchSingleTop = true
-                            }
-                            sidebarViewModel.emitNavigation(Screen.Home.route)
-                        },
-                        onSkip = {
-                            welcomeViewModel.onSkip()
-                            navController.navigate(Screen.Home.route) {
-                                popUpTo(Screen.Welcome.route) {
-                                    inclusive = true
-                                }
-                                launchSingleTop = true
-                            }
-                            sidebarViewModel.emitNavigation(Screen.Home.route)
-                        },
-                        onTooltipHelp = welcomeViewModel::onTooltipHelp,
-                        onTooltipDismiss = welcomeViewModel::onTooltipDismiss,
-                        onTooltipDontShow = welcomeViewModel::onTooltipDontShowAgain,
-                    )
-                }
-                composable(Screen.Home.route) { entry ->
-                    val homeViewModel: HomeViewModel = hiltViewModel(entry)
-                    val state by homeViewModel.uiState.collectAsStateWithLifecycle()
-
-                    LaunchedEffect(Unit) {
-                        sidebarViewModel.emitNavigation(Screen.Home.route)
-                    }
-
-                    HomeScreen(
-                        state = state,
-                        onToggleTools = homeViewModel::toggleToolsExpanded,
-                        onActionClick = homeViewModel::onRecentAction,
-                        onTooltipDismiss = homeViewModel::dismissTooltip,
-                        onTooltipHelp = homeViewModel::onTooltipHelp,
-                        onTooltipDontShow = homeViewModel::dontShowTooltipAgain,
-                        onRetryOffline = homeViewModel::retryPendingActions,
-                    )
-                }
-                composable(Screen.Chat.route) {
-                    ChatScreen()
-                }
-                composable(Screen.ModelLibrary.route) {
-                    ModelLibraryScreen()
-                }
-                composable(Screen.Settings.route) {
-                    SettingsScreen()
-                }
-            }
+            colors =
+              TopAppBarDefaults.topAppBarColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+              ),
+          )
         }
+      },
+      bottomBar = {
+        if (!isWelcomeRoute) {
+          BottomNavigationBar(
+            currentRoute = currentRoute,
+            onNavigate = { route ->
+              navController.navigate(route) {
+                popUpTo(Screen.Home.route) { saveState = true }
+                launchSingleTop = true
+                restoreState = true
+              }
+            },
+          )
+        }
+      },
+    ) { innerPadding ->
+      NavHost(
+        navController = navController,
+        startDestination = Screen.Home.route,
+        modifier = Modifier.padding(innerPadding),
+      ) {
+        composable(Screen.Welcome.route) { entry ->
+          val welcomeViewModel: WelcomeViewModel = hiltViewModel(entry)
+          val state by welcomeViewModel.uiState.collectAsStateWithLifecycle()
+
+          WelcomeScreen(
+            state = state,
+            onGetStartedClick = {
+              welcomeViewModel.onGetStarted()
+              navController.navigate(Screen.Home.route) {
+                popUpTo(Screen.Welcome.route) { inclusive = true }
+                launchSingleTop = true
+              }
+              sidebarViewModel.emitNavigation(Screen.Home.route)
+            },
+            onExplore = {
+              welcomeViewModel.onExploreFeatures()
+              navController.navigate(Screen.Home.route) {
+                popUpTo(Screen.Welcome.route) { inclusive = true }
+                launchSingleTop = true
+              }
+              sidebarViewModel.emitNavigation(Screen.Home.route)
+            },
+            onSkip = {
+              welcomeViewModel.onSkip()
+              navController.navigate(Screen.Home.route) {
+                popUpTo(Screen.Welcome.route) { inclusive = true }
+                launchSingleTop = true
+              }
+              sidebarViewModel.emitNavigation(Screen.Home.route)
+            },
+            onTooltipHelp = welcomeViewModel::onTooltipHelp,
+            onTooltipDismiss = welcomeViewModel::onTooltipDismiss,
+            onTooltipDontShow = welcomeViewModel::onTooltipDontShowAgain,
+          )
+        }
+        composable(Screen.Home.route) { entry ->
+          val homeViewModel: HomeViewModel = hiltViewModel(entry)
+          val state by homeViewModel.uiState.collectAsStateWithLifecycle()
+
+          LaunchedEffect(Unit) { sidebarViewModel.emitNavigation(Screen.Home.route) }
+
+          HomeScreen(
+            state = state,
+            onToggleTools = homeViewModel::toggleToolsExpanded,
+            onActionClick = homeViewModel::onRecentAction,
+            onTooltipDismiss = homeViewModel::dismissTooltip,
+            onTooltipHelp = homeViewModel::onTooltipHelp,
+            onTooltipDontShow = homeViewModel::dontShowTooltipAgain,
+            onRetryOffline = homeViewModel::retryPendingActions,
+          )
+        }
+        composable(Screen.Chat.route) { ChatScreen() }
+        composable(Screen.ModelLibrary.route) { ModelLibraryScreen() }
+        composable(Screen.Settings.route) { SettingsScreen() }
+      }
     }
+  }
 }
 
 @Composable
 private fun SidebarContent(
-    threads: List<ChatThread>,
-    searchQuery: String,
-    showArchived: Boolean,
-    onSearchQueryChanged: (String) -> Unit,
-    onToggleArchived: () -> Unit,
-    inferenceMode: InferenceMode,
-    onInferenceModeChanged: (InferenceMode) -> Unit,
-    onThreadClick: (ChatThread) -> Unit,
-    onArchiveThread: (java.util.UUID) -> Unit,
-    onDeleteThread: (java.util.UUID) -> Unit,
-    onNewThread: () -> Unit,
-    pinnedTools: List<String>,
-    onNavigateHome: () -> Unit,
-    onNavigateSettings: () -> Unit,
-    modifier: Modifier = Modifier,
+  threads: List<ChatThread>,
+  searchQuery: String,
+  showArchived: Boolean,
+  onSearchQueryChange: (String) -> Unit,
+  onToggleArchive: () -> Unit,
+  inferenceMode: InferenceMode,
+  onInferenceModeChange: (InferenceMode) -> Unit,
+  onThreadClick: (ChatThread) -> Unit,
+  onArchiveThread: (java.util.UUID) -> Unit,
+  onDeleteThread: (java.util.UUID) -> Unit,
+  onNewThread: () -> Unit,
+  pinnedTools: List<String>,
+  onNavigateHome: () -> Unit,
+  onNavigateSettings: () -> Unit,
+  modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier.fillMaxHeight().testTag("sidebar_drawer_container")) {
-        SidebarDrawer(
-            pinnedTools = pinnedTools,
-            onNavigateSettings = onNavigateSettings,
-            onNavigateHome = onNavigateHome,
-            modifier = Modifier.fillMaxWidth(),
+  Column(modifier = modifier.fillMaxHeight().testTag("sidebar_drawer_container")) {
+    SidebarDrawer(
+      pinnedTools = pinnedTools,
+      onNavigateSettings = onNavigateSettings,
+      onNavigateHome = onNavigateHome,
+      modifier = Modifier.fillMaxWidth(),
+    )
+
+    Column(
+      modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+    ) {
+      Spacer(modifier = Modifier.height(12.dp))
+
+      Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
+        Text(
+          text = "Conversations",
+          style = MaterialTheme.typography.titleLarge,
+          fontWeight = FontWeight.Bold,
         )
-
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
+        IconButton(
+          onClick = onNewThread,
+          modifier = Modifier.semantics { contentDescription = "Create new conversation" },
         ) {
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = "Conversations",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                )
-                IconButton(
-                    onClick = onNewThread,
-                    modifier =
-                        Modifier.semantics {
-                            contentDescription = "Create new conversation"
-                        },
-                ) {
-                    Icon(Icons.Default.Add, "New")
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            androidx.compose.material3.TextField(
-                value = searchQuery,
-                onValueChange = onSearchQueryChanged,
-                placeholder = { Text("Search conversations...") },
-                leadingIcon = { Icon(Icons.Default.Search, "Search") },
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .semantics { contentDescription = "Search conversations" },
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = if (showArchived) "Archived" else "Active",
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                AssistChip(
-                    onClick = onToggleArchived,
-                    label = { Text(if (showArchived) "Show Active" else "Show Archived") },
-                    leadingIcon = { Icon(Icons.Default.Delete, null) },
-                    modifier =
-                        Modifier.semantics {
-                            contentDescription = "Toggle archived conversations"
-                        },
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            InferencePreferenceToggleRow(
-                inferenceMode = inferenceMode,
-                onInferenceModeChanged = onInferenceModeChanged,
-                modifier = Modifier.fillMaxWidth(),
-            )
+          Icon(Icons.Default.Add, "New")
         }
+      }
 
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 8.dp),
-            modifier =
-                Modifier
-                    .weight(1f)
-                    .semantics { contentDescription = "Conversation threads list" },
-        ) {
-            items(
-                items = threads,
-                key = { it.threadId.toString() },
-                contentType = { "thread_item" },
-            ) { thread ->
-                ThreadItem(
-                    thread = thread,
-                    onClick = { onThreadClick(thread) },
-                    onArchive = { onArchiveThread(thread.threadId) },
-                    onDelete = { onDeleteThread(thread.threadId) },
-                )
-            }
-        }
+      Spacer(modifier = Modifier.height(16.dp))
+
+      androidx.compose.material3.TextField(
+        value = searchQuery,
+        onValueChange = onSearchQueryChange,
+        placeholder = { Text("Search conversations...") },
+        leadingIcon = { Icon(Icons.Default.Search, "Search") },
+        modifier =
+          Modifier.fillMaxWidth().semantics { contentDescription = "Search conversations" },
+      )
+
+      Spacer(modifier = Modifier.height(12.dp))
+
+      Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
+        Text(
+          text = if (showArchived) "Archived" else "Active",
+          style = MaterialTheme.typography.titleMedium,
+        )
+        AssistChip(
+          onClick = onToggleArchive,
+          label = { Text(if (showArchived) "Show Active" else "Show Archived") },
+          leadingIcon = { Icon(Icons.Default.Delete, null) },
+          modifier = Modifier.semantics { contentDescription = "Toggle archived conversations" },
+        )
+      }
+
+      Spacer(modifier = Modifier.height(12.dp))
+
+      InferencePreferenceToggleRow(
+        inferenceMode = inferenceMode,
+        onInferenceModeChange = onInferenceModeChange,
+        modifier = Modifier.fillMaxWidth(),
+      )
     }
+
+    LazyColumn(
+      verticalArrangement = Arrangement.spacedBy(8.dp),
+      contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 8.dp),
+      modifier = Modifier.weight(1f).semantics { contentDescription = "Conversation threads list" },
+    ) {
+      items(
+        items = threads,
+        key = { it.threadId.toString() },
+        contentType = { "thread_item" },
+      ) { thread ->
+        ThreadItem(
+          thread = thread,
+          onClick = { onThreadClick(thread) },
+          onArchive = { onArchiveThread(thread.threadId) },
+          onDelete = { onDeleteThread(thread.threadId) },
+        )
+      }
+    }
+  }
 }
 
 @VisibleForTesting
 @Composable
 internal fun InferencePreferenceToggleRow(
-    inferenceMode: InferenceMode,
-    onInferenceModeChanged: (InferenceMode) -> Unit,
-    modifier: Modifier = Modifier,
+  inferenceMode: InferenceMode,
+  onInferenceModeChange: (InferenceMode) -> Unit,
+  modifier: Modifier = Modifier
 ) {
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = "Inference Preference",
-                style = MaterialTheme.typography.titleMedium,
-            )
-            Text(
-                text =
-                    if (inferenceMode ==
-                        InferenceMode.LOCAL_FIRST
-                    ) {
-                        "Prefer on-device models when available"
-                    } else {
-                        "Prefer cloud inference when online"
-                    },
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        Switch(
-            checked = inferenceMode == InferenceMode.LOCAL_FIRST,
-            onCheckedChange = { checked ->
-                val mode = if (checked) InferenceMode.LOCAL_FIRST else InferenceMode.CLOUD_FIRST
-                onInferenceModeChanged(mode)
-            },
-            modifier =
-                Modifier.semantics {
-                    contentDescription = "Toggle inference preference"
-                },
-        )
+  Row(
+    modifier = modifier,
+    horizontalArrangement = Arrangement.SpaceBetween,
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    Column(modifier = Modifier.weight(1f)) {
+      Text(
+        text = "Inference Preference",
+        style = MaterialTheme.typography.titleMedium,
+      )
+      Text(
+        text =
+          if (inferenceMode == InferenceMode.LOCAL_FIRST) {
+            "Prefer on-device models when available"
+          } else {
+            "Prefer cloud inference when online"
+          },
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
     }
+    Switch(
+      checked = inferenceMode == InferenceMode.LOCAL_FIRST,
+      onCheckedChange = { checked ->
+        val mode = if (checked) InferenceMode.LOCAL_FIRST else InferenceMode.CLOUD_FIRST
+        onInferenceModeChange(mode)
+      },
+      modifier = Modifier.semantics { contentDescription = "Toggle inference preference" },
+    )
+  }
 }
 
 @Composable
 private fun ThreadItem(
-    thread: ChatThread,
-    onClick: () -> Unit,
-    onArchive: () -> Unit,
-    onDelete: () -> Unit,
-    modifier: Modifier = Modifier,
+  thread: ChatThread,
+  onClick: () -> Unit,
+  onArchive: () -> Unit,
+  onDelete: () -> Unit,
+  modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+  Card(
+    modifier = modifier.fillMaxWidth().clickable(onClick = onClick),
+    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+  ) {
+    Column(
+      modifier = Modifier.fillMaxWidth().padding(12.dp),
     ) {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(12.dp),
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top,
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = thread.title ?: "Untitled Chat",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Medium,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    val timestamp =
-                        thread.updatedAt
-                            .toLocalDateTime(TimeZone.currentSystemDefault())
-                            .let { "${it.monthNumber}/${it.dayOfMonth}" }
-                    Text(
-                        text = timestamp,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-
-                Row {
-                    IconButton(
-                        onClick = onArchive,
-                        modifier =
-                            Modifier.semantics {
-                                contentDescription = "Archive conversation"
-                            },
-                    ) {
-                        Icon(
-                            Icons.Default.Delete,
-                            "Archive",
-                            modifier = Modifier.padding(4.dp),
-                        )
-                    }
-                    IconButton(
-                        onClick = onDelete,
-                        modifier =
-                            Modifier.semantics {
-                                contentDescription = "Delete conversation"
-                            },
-                    ) {
-                        Icon(
-                            Icons.Default.Delete,
-                            "Delete",
-                            modifier = Modifier.padding(4.dp),
-                        )
-                    }
-                }
+      Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.Top,
+      ) {
+        Column(modifier = Modifier.weight(1f)) {
+          Text(
+            text = thread.title ?: "Untitled Chat",
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Medium,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+          )
+          Spacer(modifier = Modifier.height(4.dp))
+          val timestamp =
+            thread.updatedAt.toLocalDateTime(TimeZone.currentSystemDefault()).let {
+              "${it.monthNumber}/${it.dayOfMonth}"
             }
+          Text(
+            text = timestamp,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+          )
         }
+
+        Row {
+          IconButton(
+            onClick = onArchive,
+            modifier = Modifier.semantics { contentDescription = "Archive conversation" },
+          ) {
+            Icon(
+              Icons.Default.Delete,
+              "Archive",
+              modifier = Modifier.padding(4.dp),
+            )
+          }
+          IconButton(
+            onClick = onDelete,
+            modifier = Modifier.semantics { contentDescription = "Delete conversation" },
+          ) {
+            Icon(
+              Icons.Default.Delete,
+              "Delete",
+              modifier = Modifier.padding(4.dp),
+            )
+          }
+        }
+      }
     }
+  }
 }
 
 @Composable
 private fun BottomNavigationBar(
-    currentRoute: String?,
-    onNavigate: (String) -> Unit,
-    modifier: Modifier = Modifier,
+  currentRoute: String?,
+  onNavigate: (String) -> Unit,
+  modifier: Modifier = Modifier
 ) {
-    NavigationBar(
-        modifier =
-            modifier.semantics {
-                contentDescription = "Bottom navigation bar"
-            },
-    ) {
-        NavigationBarItem(
-            selected = currentRoute == Screen.Chat.route,
-            onClick = { onNavigate(Screen.Chat.route) },
-            icon = { Icon(Icons.Default.Menu, "Chat") },
-            label = { Text("Chat") },
-            modifier =
-                Modifier.semantics {
-                    contentDescription = "Navigate to Chat"
-                },
-        )
-        NavigationBarItem(
-            selected = currentRoute == Screen.ModelLibrary.route,
-            onClick = { onNavigate(Screen.ModelLibrary.route) },
-            icon = { Icon(Icons.Default.Menu, "Library") },
-            label = { Text("Library") },
-            modifier =
-                Modifier.semantics {
-                    contentDescription = "Navigate to Model Library"
-                },
-        )
-        NavigationBarItem(
-            selected = currentRoute == Screen.Settings.route,
-            onClick = { onNavigate(Screen.Settings.route) },
-            icon = { Icon(Icons.Default.Settings, "Settings") },
-            label = { Text("Settings") },
-            modifier =
-                Modifier.semantics {
-                    contentDescription = "Navigate to Settings"
-                },
-        )
-    }
+  NavigationBar(
+    modifier = modifier.semantics { contentDescription = "Bottom navigation bar" },
+  ) {
+    NavigationBarItem(
+      selected = currentRoute == Screen.Chat.route,
+      onClick = { onNavigate(Screen.Chat.route) },
+      icon = { Icon(Icons.Default.Menu, "Chat") },
+      label = { Text("Chat") },
+      modifier = Modifier.semantics { contentDescription = "Navigate to Chat" },
+    )
+    NavigationBarItem(
+      selected = currentRoute == Screen.ModelLibrary.route,
+      onClick = { onNavigate(Screen.ModelLibrary.route) },
+      icon = { Icon(Icons.Default.Menu, "Library") },
+      label = { Text("Library") },
+      modifier = Modifier.semantics { contentDescription = "Navigate to Model Library" },
+    )
+    NavigationBarItem(
+      selected = currentRoute == Screen.Settings.route,
+      onClick = { onNavigate(Screen.Settings.route) },
+      icon = { Icon(Icons.Default.Settings, "Settings") },
+      label = { Text("Settings") },
+      modifier = Modifier.semantics { contentDescription = "Navigate to Settings" },
+    )
+  }
 }

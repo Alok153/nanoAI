@@ -15,33 +15,26 @@ import org.junit.runner.RunWith
 /**
  * Instrumentation scenario covering Quickstart Scenario 1 (First-Time Welcome).
  *
- * The assertions intentionally fail until the welcome and home flows wire the
- * specified semantics and navigation hooks.
+ * The assertions intentionally fail until the welcome and home flows wire the specified semantics
+ * and navigation hooks.
  */
 @LargeTest
 @RunWith(AndroidJUnit4::class)
 class FirstTimeWelcomeScenarioTest {
-    @get:Rule
-    val composeRule = createAndroidComposeRule<MainActivity>()
+  @get:Rule val composeRule = createAndroidComposeRule<MainActivity>()
 
-    @Test
-    fun firstTimeUser_progresses_fromWelcome_toHome() {
-        composeRule
-            .onNodeWithTag("welcome_hero_title")
-            .assertIsDisplayed()
+  @Test
+  fun firstTimeUser_progresses_fromWelcome_toHome() {
+    composeRule.onNodeWithTag("welcome_hero_title").assertIsDisplayed()
 
-        composeRule
-            .onNodeWithTag("welcome_cta_get_started")
-            .assertIsDisplayed()
-            .assertHasClickAction()
-            .performClick()
+    composeRule
+      .onNodeWithTag("welcome_cta_get_started")
+      .assertIsDisplayed()
+      .assertHasClickAction()
+      .performClick()
 
-        composeRule
-            .onNodeWithTag("home_single_column_feed")
-            .assertIsDisplayed()
+    composeRule.onNodeWithTag("home_single_column_feed").assertIsDisplayed()
 
-        composeRule
-            .onNodeWithTag("onboarding_tooltip_entry")
-            .assertIsDisplayed()
-    }
+    composeRule.onNodeWithTag("onboarding_tooltip_entry").assertIsDisplayed()
+  }
 }

@@ -10,7 +10,5 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object AnalyticsModule {
-    @Provides
-    @Singleton
-    fun provideWelcomeAnalytics(): WelcomeAnalytics = WelcomeAnalytics.NoOp
+  @Provides @Singleton fun provideWelcomeAnalytics(): WelcomeAnalytics = WelcomeAnalytics.NoOp
 }

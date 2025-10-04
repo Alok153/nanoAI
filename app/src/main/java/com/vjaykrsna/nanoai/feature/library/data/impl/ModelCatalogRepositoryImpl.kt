@@ -9,78 +9,73 @@ import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
 import com.vjaykrsna.nanoai.feature.library.data.daos.ModelPackageDao
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import java.io.File
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 /** Wraps ModelPackageDao, converting between entities and domain models. */
 @Singleton
 class ModelCatalogRepositoryImpl
-    @Inject
-    constructor(
-        private val modelPackageDao: ModelPackageDao,
-        private val chatThreadDao: ChatThreadDao,
-        @ApplicationContext private val context: Context,
-    ) : ModelCatalogRepository {
-        override suspend fun getAllModels(): List<ModelPackage> = modelPackageDao.getAll().map { it.toDomain() }
+@Inject
+constructor(
+  private val modelPackageDao: ModelPackageDao,
+  private val chatThreadDao: ChatThreadDao,
+  @ApplicationContext private val context: Context,
+) : ModelCatalogRepository {
+  override suspend fun getAllModels(): List<ModelPackage> =
+    modelPackageDao.getAll().map { it.toDomain() }
 
-        override suspend fun getModel(modelId: String): ModelPackage? = modelPackageDao.getById(modelId)?.toDomain()
+  override suspend fun getModel(modelId: String): ModelPackage? =
+    modelPackageDao.getById(modelId)?.toDomain()
 
-        override suspend fun getModelById(modelId: String): Flow<ModelPackage?> =
-            modelPackageDao.observeById(modelId).map { it?.toDomain() }
+  override suspend fun getModelById(modelId: String): Flow<ModelPackage?> =
+    modelPackageDao.observeById(modelId).map { it?.toDomain() }
 
-        override suspend fun getInstalledModels(): List<ModelPackage> =
-            modelPackageDao.getByInstallState(InstallState.INSTALLED).map { it.toDomain() }
+  override suspend fun getInstalledModels(): List<ModelPackage> =
+    modelPackageDao.getByInstallState(InstallState.INSTALLED).map { it.toDomain() }
 
-        override suspend fun getModelsByState(state: InstallState): List<ModelPackage> =
-            modelPackageDao.getByInstallState(state).map { it.toDomain() }
+  override suspend fun getModelsByState(state: InstallState): List<ModelPackage> =
+    modelPackageDao.getByInstallState(state).map { it.toDomain() }
 
-        override suspend fun updateModelState(
-            modelId: String,
-            state: InstallState,
-        ) {
-            modelPackageDao.updateInstallState(modelId, state)
+  override suspend fun updateModelState(modelId: String, state: InstallState) {
+    modelPackageDao.updateInstallState(modelId, state)
+  }
+
+  override suspend fun upsertModel(model: ModelPackage) {
+    modelPackageDao.insert(model.toEntity())
+  }
+
+  override suspend fun updateDownloadTaskId(modelId: String, taskId: UUID?) {
+    modelPackageDao.updateDownloadTaskId(modelId, taskId?.toString())
+  }
+
+  override suspend fun updateChecksum(modelId: String, checksum: String) {
+    modelPackageDao.updateChecksum(modelId, checksum)
+  }
+
+  override fun observeAllModels(): Flow<List<ModelPackage>> =
+    modelPackageDao.observeAll().map { models -> models.map { it.toDomain() } }
+
+  override fun observeInstalledModels(): Flow<List<ModelPackage>> =
+    modelPackageDao.observeInstalled().map { models -> models.map { it.toDomain() } }
+
+  override suspend fun isModelActiveInSession(modelId: String): Boolean =
+    chatThreadDao.countActiveByModel(modelId) > 0
+
+  override suspend fun deleteModelFiles(modelId: String) {
+    val modelsDir = File(context.filesDir, "models")
+    listOf(
+        File(modelsDir, "$modelId.bin"),
+        File(modelsDir, "$modelId.tmp"),
+        File(modelsDir, "$modelId.metadata"),
+      )
+      .forEach { file ->
+        if (file.exists()) {
+          file.delete()
         }
-
-        override suspend fun upsertModel(model: ModelPackage) {
-            modelPackageDao.insert(model.toEntity())
-        }
-
-        override suspend fun updateDownloadTaskId(
-            modelId: String,
-            taskId: UUID?,
-        ) {
-            modelPackageDao.updateDownloadTaskId(modelId, taskId?.toString())
-        }
-
-        override suspend fun updateChecksum(
-            modelId: String,
-            checksum: String,
-        ) {
-            modelPackageDao.updateChecksum(modelId, checksum)
-        }
-
-        override fun observeAllModels(): Flow<List<ModelPackage>> =
-            modelPackageDao.observeAll().map { models -> models.map { it.toDomain() } }
-
-        override fun observeInstalledModels(): Flow<List<ModelPackage>> =
-            modelPackageDao.observeInstalled().map { models -> models.map { it.toDomain() } }
-
-        override suspend fun isModelActiveInSession(modelId: String): Boolean = chatThreadDao.countActiveByModel(modelId) > 0
-
-        override suspend fun deleteModelFiles(modelId: String) {
-            val modelsDir = File(context.filesDir, "models")
-            listOf(
-                File(modelsDir, "$modelId.bin"),
-                File(modelsDir, "$modelId.tmp"),
-                File(modelsDir, "$modelId.metadata"),
-            ).forEach { file ->
-                if (file.exists()) {
-                    file.delete()
-                }
-            }
-        }
-    }
+      }
+  }
+}

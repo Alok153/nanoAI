@@ -26,54 +26,56 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
-    @Provides
-    @Singleton
-    fun provideNanoAIDatabase(
-        @ApplicationContext context: Context,
-    ): NanoAIDatabase =
-        Room
-            .databaseBuilder(context, NanoAIDatabase::class.java, NanoAIDatabase.DATABASE_NAME)
-            .addMigrations(NanoAIDatabaseMigrations.MIGRATION_1_2)
-            .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
-            .build()
+  @Provides
+  @Singleton
+  fun provideNanoAIDatabase(@ApplicationContext context: Context): NanoAIDatabase =
+    Room.databaseBuilder(context, NanoAIDatabase::class.java, NanoAIDatabase.DATABASE_NAME)
+      .addMigrations(NanoAIDatabaseMigrations.MIGRATION_1_2)
+      .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
+      .build()
 
-    @Provides
-    @Singleton
-    fun provideChatThreadDao(database: NanoAIDatabase): ChatThreadDao = database.chatThreadDao()
+  @Provides
+  @Singleton
+  fun provideChatThreadDao(database: NanoAIDatabase): ChatThreadDao = database.chatThreadDao()
 
-    @Provides
-    @Singleton
-    fun provideMessageDao(database: NanoAIDatabase): MessageDao = database.messageDao()
+  @Provides
+  @Singleton
+  fun provideMessageDao(database: NanoAIDatabase): MessageDao = database.messageDao()
 
-    @Provides
-    @Singleton
-    fun providePersonaProfileDao(database: NanoAIDatabase): PersonaProfileDao = database.personaProfileDao()
+  @Provides
+  @Singleton
+  fun providePersonaProfileDao(database: NanoAIDatabase): PersonaProfileDao =
+    database.personaProfileDao()
 
-    @Provides
-    @Singleton
-    fun providePersonaSwitchLogDao(database: NanoAIDatabase): PersonaSwitchLogDao = database.personaSwitchLogDao()
+  @Provides
+  @Singleton
+  fun providePersonaSwitchLogDao(database: NanoAIDatabase): PersonaSwitchLogDao =
+    database.personaSwitchLogDao()
 
-    @Provides
-    @Singleton
-    fun provideApiProviderConfigDao(database: NanoAIDatabase): ApiProviderConfigDao = database.apiProviderConfigDao()
+  @Provides
+  @Singleton
+  fun provideApiProviderConfigDao(database: NanoAIDatabase): ApiProviderConfigDao =
+    database.apiProviderConfigDao()
 
-    @Provides
-    @Singleton
-    fun provideModelPackageDao(database: NanoAIDatabase): ModelPackageDao = database.modelPackageDao()
+  @Provides
+  @Singleton
+  fun provideModelPackageDao(database: NanoAIDatabase): ModelPackageDao = database.modelPackageDao()
 
-    @Provides
-    @Singleton
-    fun provideDownloadTaskDao(database: NanoAIDatabase): DownloadTaskDao = database.downloadTaskDao()
+  @Provides
+  @Singleton
+  fun provideDownloadTaskDao(database: NanoAIDatabase): DownloadTaskDao = database.downloadTaskDao()
 
-    @Provides
-    @Singleton
-    fun provideUserProfileDao(database: NanoAIDatabase): UserProfileDao = database.userProfileDao()
+  @Provides
+  @Singleton
+  fun provideUserProfileDao(database: NanoAIDatabase): UserProfileDao = database.userProfileDao()
 
-    @Provides
-    @Singleton
-    fun provideLayoutSnapshotDao(database: NanoAIDatabase): LayoutSnapshotDao = database.layoutSnapshotDao()
+  @Provides
+  @Singleton
+  fun provideLayoutSnapshotDao(database: NanoAIDatabase): LayoutSnapshotDao =
+    database.layoutSnapshotDao()
 
-    @Provides
-    @Singleton
-    fun provideUIStateSnapshotDao(database: NanoAIDatabase): UIStateSnapshotDao = database.uiStateSnapshotDao()
+  @Provides
+  @Singleton
+  fun provideUIStateSnapshotDao(database: NanoAIDatabase): UIStateSnapshotDao =
+    database.uiStateSnapshotDao()
 }

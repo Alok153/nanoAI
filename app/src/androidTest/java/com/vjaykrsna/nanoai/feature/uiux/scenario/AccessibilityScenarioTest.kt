@@ -7,9 +7,9 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class AccessibilityScenarioTest {
-    @Ignore("Pending end-to-end accessibility scenario once dynamic data flows are wired.")
-    @Test
-    fun accessibilityScenarioPending() {
-        // TODO(003-UI-UX#T079): Capture real navigation walk once backend contracts are active.
-    }
+  @Ignore("Pending end-to-end accessibility scenario once dynamic data flows are wired.")
+  @Test
+  fun accessibilityScenarioPending() {
+    // TODO(003-UI-UX#T079): Capture real navigation walk once backend contracts are active.
+  }
 }

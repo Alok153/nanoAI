@@ -11,8 +11,8 @@ import kotlinx.datetime.Instant
 /**
  * Room entity tracking persona switch history for chat threads.
  *
- * Logs when users switch between personas, enabling analytics and
- * context awareness for the UI (e.g., showing switch timeline).
+ * Logs when users switch between personas, enabling analytics and context awareness for the UI
+ * (e.g., showing switch timeline).
  *
  * @property logId Unique identifier (UUID string)
  * @property threadId Parent thread where switch occurred
@@ -22,32 +22,27 @@ import kotlinx.datetime.Instant
  * @property createdAt Timestamp when switch occurred
  */
 @Entity(
-    tableName = "persona_switch_logs",
-    foreignKeys = [
-        ForeignKey(
-            entity = ChatThreadEntity::class,
-            parentColumns = ["thread_id"],
-            childColumns = ["thread_id"],
-            onDelete = ForeignKey.CASCADE,
-        ),
+  tableName = "persona_switch_logs",
+  foreignKeys =
+    [
+      ForeignKey(
+        entity = ChatThreadEntity::class,
+        parentColumns = ["thread_id"],
+        childColumns = ["thread_id"],
+        onDelete = ForeignKey.CASCADE,
+      ),
     ],
-    indices = [
-        Index(value = ["thread_id"]),
-        Index(value = ["new_persona_id"]),
+  indices =
+    [
+      Index(value = ["thread_id"]),
+      Index(value = ["new_persona_id"]),
     ],
 )
 data class PersonaSwitchLogEntity(
-    @PrimaryKey
-    @ColumnInfo(name = "log_id")
-    val logId: String,
-    @ColumnInfo(name = "thread_id")
-    val threadId: String,
-    @ColumnInfo(name = "previous_persona_id")
-    val previousPersonaId: String? = null,
-    @ColumnInfo(name = "new_persona_id")
-    val newPersonaId: String,
-    @ColumnInfo(name = "action_taken")
-    val actionTaken: PersonaSwitchAction,
-    @ColumnInfo(name = "created_at")
-    val createdAt: Instant,
+  @PrimaryKey @ColumnInfo(name = "log_id") val logId: String,
+  @ColumnInfo(name = "thread_id") val threadId: String,
+  @ColumnInfo(name = "previous_persona_id") val previousPersonaId: String? = null,
+  @ColumnInfo(name = "new_persona_id") val newPersonaId: String,
+  @ColumnInfo(name = "action_taken") val actionTaken: PersonaSwitchAction,
+  @ColumnInfo(name = "created_at") val createdAt: Instant,
 )

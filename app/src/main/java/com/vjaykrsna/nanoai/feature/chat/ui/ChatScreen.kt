@@ -53,302 +53,265 @@ import com.vjaykrsna.nanoai.core.domain.model.Message
 import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
 import com.vjaykrsna.nanoai.feature.chat.presentation.ChatError
 import com.vjaykrsna.nanoai.feature.chat.presentation.ChatViewModel
+import java.util.UUID
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import java.util.UUID
 
 @Composable
-fun ChatScreen(
-    modifier: Modifier = Modifier,
-    viewModel: ChatViewModel = hiltViewModel(),
-) {
-    val messages by viewModel.messages.collectAsState()
-    val currentThread by viewModel.currentThread.collectAsState()
-    val availablePersonas by viewModel.availablePersonas.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
+fun ChatScreen(modifier: Modifier = Modifier, viewModel: ChatViewModel = hiltViewModel()) {
+  val messages by viewModel.messages.collectAsState()
+  val currentThread by viewModel.currentThread.collectAsState()
+  val availablePersonas by viewModel.availablePersonas.collectAsState()
+  val isLoading by viewModel.isLoading.collectAsState()
 
-    val snackbarHostState = remember { SnackbarHostState() }
+  val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(Unit) {
-        viewModel.errorEvents.collectLatest { error ->
-            val message =
-                when (error) {
-                    is ChatError.InferenceFailed -> "Inference failed: ${error.message}"
-                    is ChatError.PersonaSwitchFailed -> "Persona switch failed: ${error.message}"
-                    is ChatError.ThreadCreationFailed -> "Thread creation failed: ${error.message}"
-                    is ChatError.ThreadArchiveFailed -> "Archive failed: ${error.message}"
-                    is ChatError.ThreadDeletionFailed -> "Delete failed: ${error.message}"
-                    is ChatError.UnexpectedError -> "Error: ${error.message}"
-                }
-            snackbarHostState.showSnackbar(message)
+  LaunchedEffect(Unit) {
+    viewModel.errorEvents.collectLatest { error ->
+      val message =
+        when (error) {
+          is ChatError.InferenceFailed -> "Inference failed: ${error.message}"
+          is ChatError.PersonaSwitchFailed -> "Persona switch failed: ${error.message}"
+          is ChatError.ThreadCreationFailed -> "Thread creation failed: ${error.message}"
+          is ChatError.ThreadArchiveFailed -> "Archive failed: ${error.message}"
+          is ChatError.ThreadDeletionFailed -> "Delete failed: ${error.message}"
+          is ChatError.UnexpectedError -> "Error: ${error.message}"
         }
+      snackbarHostState.showSnackbar(message)
     }
+  }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        modifier =
-            modifier.semantics {
-                contentDescription = "Chat screen with message history and input"
-            },
-    ) { innerPadding ->
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-        ) {
-            // Top bar with thread info and persona selector
-            ChatTopBar(
-                threadTitle = currentThread?.title ?: "New Chat",
-                availablePersonas = availablePersonas,
-                currentPersonaId = currentThread?.personaId,
-                onPersonaSelected = { persona, action ->
-                    viewModel.switchPersona(persona.personaId, action)
-                },
-                modifier = Modifier.fillMaxWidth(),
-            )
+  Scaffold(
+    snackbarHost = { SnackbarHost(snackbarHostState) },
+    modifier =
+      modifier.semantics { contentDescription = "Chat screen with message history and input" },
+  ) { innerPadding ->
+    Column(
+      modifier = Modifier.fillMaxSize().padding(innerPadding),
+    ) {
+      // Top bar with thread info and persona selector
+      ChatTopBar(
+        threadTitle = currentThread?.title ?: "New Chat",
+        availablePersonas = availablePersonas,
+        currentPersonaId = currentThread?.personaId,
+        onPersonaSelect = { persona, action -> viewModel.switchPersona(persona.personaId, action) },
+        modifier = Modifier.fillMaxWidth(),
+      )
 
-            // Messages list
-            MessagesList(
-                messages = messages,
-                isLoading = isLoading,
-                modifier =
-                    Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-            )
+      // Messages list
+      MessagesList(
+        messages = messages,
+        isLoading = isLoading,
+        modifier = Modifier.weight(1f).fillMaxWidth(),
+      )
 
-            // Input area
-            MessageInputArea(
-                onSendMessage = { text ->
-                    currentThread?.personaId?.let { personaId ->
-                        viewModel.sendMessage(text, personaId)
-                    }
-                },
-                enabled = !isLoading && currentThread != null,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
+      // Input area
+      MessageInputArea(
+        onSendMessage = { text ->
+          currentThread?.personaId?.let { personaId -> viewModel.sendMessage(text, personaId) }
+        },
+        enabled = !isLoading && currentThread != null,
+        modifier = Modifier.fillMaxWidth(),
+      )
     }
+  }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ChatTopBar(
-    threadTitle: String,
-    availablePersonas: List<PersonaProfile>,
-    currentPersonaId: UUID?,
-    onPersonaSelected: (PersonaProfile, com.vjaykrsna.nanoai.core.model.PersonaSwitchAction) -> Unit,
-    modifier: Modifier = Modifier,
+  threadTitle: String,
+  availablePersonas: List<PersonaProfile>,
+  currentPersonaId: UUID?,
+  onPersonaSelect: (PersonaProfile, com.vjaykrsna.nanoai.core.model.PersonaSwitchAction) -> Unit,
+  modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier =
-            modifier
-                .background(MaterialTheme.colorScheme.surface)
-                .padding(16.dp),
+  Column(
+    modifier = modifier.background(MaterialTheme.colorScheme.surface).padding(16.dp),
+  ) {
+    Text(
+      text = threadTitle,
+      style = MaterialTheme.typography.titleLarge,
+      fontWeight = FontWeight.Bold,
+    )
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    Row(
+      horizontalArrangement = Arrangement.spacedBy(8.dp),
+      verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            text = threadTitle,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
+      // Persona selector
+      var expanded by remember { mutableStateOf(false) }
+
+      ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded },
+      ) {
+        val currentPersona = availablePersonas.find { it.personaId == currentPersonaId }
+        OutlinedTextField(
+          value = currentPersona?.name ?: "Select Persona",
+          onValueChange = {},
+          readOnly = true,
+          label = { Text("Persona") },
+          trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+          modifier =
+            Modifier.menuAnchor().semantics { contentDescription = "Persona selector dropdown" },
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
+        ExposedDropdownMenu(
+          expanded = expanded,
+          onDismissRequest = { expanded = false },
         ) {
-            // Persona selector
-            var expanded by remember { mutableStateOf(false) }
-
-            ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = { expanded = !expanded },
-            ) {
-                val currentPersona = availablePersonas.find { it.personaId == currentPersonaId }
-                OutlinedTextField(
-                    value = currentPersona?.name ?: "Select Persona",
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Persona") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                    modifier =
-                        Modifier
-                            .menuAnchor()
-                            .semantics { contentDescription = "Persona selector dropdown" },
+          availablePersonas.forEach { persona ->
+            DropdownMenuItem(
+              text = { Text(persona.name) },
+              onClick = {
+                onPersonaSelect(
+                  persona,
+                  com.vjaykrsna.nanoai.core.model.PersonaSwitchAction.CONTINUE_THREAD
                 )
-
-                ExposedDropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false },
-                ) {
-                    availablePersonas.forEach { persona ->
-                        DropdownMenuItem(
-                            text = { Text(persona.name) },
-                            onClick = {
-                                onPersonaSelected(persona, com.vjaykrsna.nanoai.core.model.PersonaSwitchAction.CONTINUE_THREAD)
-                                expanded = false
-                            },
-                        )
-                    }
-                }
-            }
+                expanded = false
+              },
+            )
+          }
         }
+      }
     }
+  }
 }
 
 @Composable
 private fun MessagesList(
-    messages: List<Message>,
-    isLoading: Boolean,
-    modifier: Modifier = Modifier,
+  messages: List<Message>,
+  isLoading: Boolean,
+  modifier: Modifier = Modifier
 ) {
-    val listState = rememberLazyListState()
+  val listState = rememberLazyListState()
 
-    LaunchedEffect(messages.size) {
-        if (messages.isNotEmpty()) {
-            listState.animateScrollToItem(messages.size - 1)
-        }
+  LaunchedEffect(messages.size) {
+    if (messages.isNotEmpty()) {
+      listState.animateScrollToItem(messages.size - 1)
+    }
+  }
+
+  LazyColumn(
+    state = listState,
+    contentPadding = PaddingValues(16.dp),
+    verticalArrangement = Arrangement.spacedBy(12.dp),
+    reverseLayout = false,
+    modifier = modifier.semantics { contentDescription = "Message history list" },
+  ) {
+    items(
+      items = messages,
+      key = { it.messageId.toString() },
+      contentType = { it.role },
+    ) { message ->
+      MessageBubble(message = message)
     }
 
-    LazyColumn(
-        state = listState,
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        reverseLayout = false,
-        modifier =
-            modifier.semantics {
-                contentDescription = "Message history list"
-            },
-    ) {
-        items(
-            items = messages,
-            key = { it.messageId.toString() },
-            contentType = { it.role },
-        ) { message ->
-            MessageBubble(message = message)
+    if (isLoading) {
+      item {
+        Box(
+          modifier = Modifier.fillMaxWidth(),
+          contentAlignment = Alignment.Center,
+        ) {
+          CircularProgressIndicator(
+            modifier = Modifier.size(24.dp).semantics { contentDescription = "Loading response" },
+          )
         }
-
-        if (isLoading) {
-            item {
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator(
-                        modifier =
-                            Modifier
-                                .size(24.dp)
-                                .semantics { contentDescription = "Loading response" },
-                    )
-                }
-            }
-        }
+      }
     }
+  }
 }
 
 @Composable
-private fun MessageBubble(
-    message: Message,
-    modifier: Modifier = Modifier,
-) {
-    val isUser = message.role == com.vjaykrsna.nanoai.core.model.Role.USER
-    val backgroundColor =
-        if (isUser) {
-            MaterialTheme.colorScheme.primaryContainer
-        } else {
-            MaterialTheme.colorScheme.secondaryContainer
-        }
-
-    val alignment = if (isUser) Alignment.End else Alignment.Start
-
-    Column(
-        horizontalAlignment = alignment,
-        modifier = modifier.fillMaxWidth(),
-    ) {
-        Card(
-            colors = CardDefaults.cardColors(containerColor = backgroundColor),
-            shape = RoundedCornerShape(12.dp),
-            modifier =
-                Modifier
-                    .fillMaxWidth(0.85f)
-                    .semantics {
-                        contentDescription = "${message.role} message: ${message.text ?: ""}"
-                    },
-        ) {
-            Column(
-                modifier = Modifier.padding(12.dp),
-            ) {
-                message.text?.let { text ->
-                    Text(
-                        text = text,
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                val timestamp =
-                    message.createdAt
-                        .toLocalDateTime(TimeZone.currentSystemDefault())
-                        .let { "${it.hour}:${it.minute.toString().padStart(2, '0')}" }
-
-                Text(
-                    text = timestamp,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
+private fun MessageBubble(message: Message, modifier: Modifier = Modifier) {
+  val isUser = message.role == com.vjaykrsna.nanoai.core.model.Role.USER
+  val backgroundColor =
+    if (isUser) {
+      MaterialTheme.colorScheme.primaryContainer
+    } else {
+      MaterialTheme.colorScheme.secondaryContainer
     }
+
+  val alignment = if (isUser) Alignment.End else Alignment.Start
+
+  Column(
+    horizontalAlignment = alignment,
+    modifier = modifier.fillMaxWidth(),
+  ) {
+    Card(
+      colors = CardDefaults.cardColors(containerColor = backgroundColor),
+      shape = RoundedCornerShape(12.dp),
+      modifier =
+        Modifier.fillMaxWidth(0.85f).semantics {
+          contentDescription = "${message.role} message: ${message.text ?: ""}"
+        },
+    ) {
+      Column(
+        modifier = Modifier.padding(12.dp),
+      ) {
+        message.text?.let { text ->
+          Text(
+            text = text,
+            style = MaterialTheme.typography.bodyLarge,
+          )
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        val timestamp =
+          message.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()).let {
+            "${it.hour}:${it.minute.toString().padStart(2, '0')}"
+          }
+
+        Text(
+          text = timestamp,
+          style = MaterialTheme.typography.labelSmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
+    }
+  }
 }
 
 @Composable
 private fun MessageInputArea(
-    onSendMessage: (String) -> Unit,
-    enabled: Boolean,
-    modifier: Modifier = Modifier,
+  onSendMessage: (String) -> Unit,
+  enabled: Boolean,
+  modifier: Modifier = Modifier
 ) {
-    var messageText by rememberSaveable { mutableStateOf("") }
+  var messageText by rememberSaveable { mutableStateOf("") }
 
-    Row(
-        modifier =
-            modifier
-                .background(MaterialTheme.colorScheme.surface)
-                .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        TextField(
-            value = messageText,
-            onValueChange = { messageText = it },
-            placeholder = { Text("Type a message...") },
-            enabled = enabled,
-            modifier =
-                Modifier
-                    .weight(1f)
-                    .semantics { contentDescription = "Message input field" },
-        )
+  Row(
+    modifier = modifier.background(MaterialTheme.colorScheme.surface).padding(16.dp),
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(8.dp),
+  ) {
+    TextField(
+      value = messageText,
+      onValueChange = { messageText = it },
+      placeholder = { Text("Type a message...") },
+      enabled = enabled,
+      modifier = Modifier.weight(1f).semantics { contentDescription = "Message input field" },
+    )
 
-        IconButton(
-            onClick = {
-                if (messageText.isNotBlank()) {
-                    onSendMessage(messageText)
-                    messageText = ""
-                }
-            },
-            enabled = enabled && messageText.isNotBlank(),
-            modifier =
-                Modifier.semantics {
-                    contentDescription = "Send message button"
-                },
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Send,
-                contentDescription = "Send",
-            )
+    IconButton(
+      onClick = {
+        if (messageText.isNotBlank()) {
+          onSendMessage(messageText)
+          messageText = ""
         }
+      },
+      enabled = enabled && messageText.isNotBlank(),
+      modifier = Modifier.semantics { contentDescription = "Send message button" },
+    ) {
+      Icon(
+        imageVector = Icons.Filled.Send,
+        contentDescription = "Send",
+      )
     }
+  }
 }

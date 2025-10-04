@@ -23,60 +23,55 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun OfflineBanner(
-    isOffline: Boolean,
-    queuedActions: Int,
-    onRetry: () -> Unit,
-    modifier: Modifier = Modifier,
+  isOffline: Boolean,
+  queuedActions: Int,
+  onRetry: () -> Unit,
+  modifier: Modifier = Modifier
 ) {
-    if (!isOffline) return
+  if (!isOffline) return
 
-    Surface(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .testTag("offline_banner_container"),
-        color = MaterialTheme.colorScheme.errorContainer,
-        contentColor = MaterialTheme.colorScheme.onErrorContainer,
-        tonalElevation = 2.dp,
+  Surface(
+    modifier = modifier.fillMaxWidth().testTag("offline_banner_container"),
+    color = MaterialTheme.colorScheme.errorContainer,
+    contentColor = MaterialTheme.colorScheme.onErrorContainer,
+    tonalElevation = 2.dp,
+  ) {
+    Column(
+      modifier =
+        Modifier.padding(16.dp).semantics {
+          contentDescription = "Offline status banner"
+          liveRegion = LiveRegionMode.Polite
+        },
     ) {
-        Column(
-            modifier =
-                Modifier
-                    .padding(16.dp)
-                    .semantics {
-                        contentDescription = "Offline status banner"
-                        liveRegion = LiveRegionMode.Polite
-                    },
+      Text(
+        text = "You're offline. Some features are temporarily unavailable.",
+        style = MaterialTheme.typography.bodyMedium,
+        modifier = Modifier.testTag("offline_banner_message"),
+      )
+      Spacer(modifier = Modifier.height(8.dp))
+      Text(
+        text = "Actions will resume when you're back online.",
+        style = MaterialTheme.typography.bodySmall,
+        modifier = Modifier.testTag("offline_banner_disabled_actions"),
+      )
+      Spacer(modifier = Modifier.height(12.dp))
+      Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
+        Text(
+          text = "Queued: $queuedActions",
+          style = MaterialTheme.typography.labelMedium,
+          modifier = Modifier.testTag("offline_banner_queue_status"),
+        )
+        Button(
+          onClick = onRetry,
+          modifier = Modifier.testTag("offline_banner_retry"),
         ) {
-            Text(
-                text = "You're offline. Some features are temporarily unavailable.",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.testTag("offline_banner_message"),
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Actions will resume when you're back online.",
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.testTag("offline_banner_disabled_actions"),
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = "Queued: $queuedActions",
-                    style = MaterialTheme.typography.labelMedium,
-                    modifier = Modifier.testTag("offline_banner_queue_status"),
-                )
-                Button(
-                    onClick = onRetry,
-                    modifier = Modifier.testTag("offline_banner_retry"),
-                ) {
-                    Text("Retry now")
-                }
-            }
+          Text("Retry now")
         }
+      }
     }
+  }
 }

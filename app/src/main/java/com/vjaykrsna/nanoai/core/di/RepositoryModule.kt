@@ -34,43 +34,63 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
-    @Binds
-    @Singleton
-    abstract fun bindConversationRepository(impl: ConversationRepositoryImpl): ConversationRepository
+  @Binds
+  @Singleton
+  abstract fun bindConversationRepository(
+    impl: ConversationRepositoryImpl,
+  ): ConversationRepository
 
-    @Binds
-    @Singleton
-    abstract fun bindPersonaRepository(impl: PersonaRepositoryImpl): PersonaRepository
+  @Binds
+  @Singleton
+  abstract fun bindPersonaRepository(
+    impl: PersonaRepositoryImpl,
+  ): PersonaRepository
 
-    @Binds
-    @Singleton
-    abstract fun bindPersonaSwitchLogRepository(impl: PersonaSwitchLogRepositoryImpl): PersonaSwitchLogRepository
+  @Binds
+  @Singleton
+  abstract fun bindPersonaSwitchLogRepository(
+    impl: PersonaSwitchLogRepositoryImpl,
+  ): PersonaSwitchLogRepository
 
-    @Binds
-    @Singleton
-    abstract fun bindInferencePreferenceRepository(impl: InferencePreferenceRepositoryImpl): InferencePreferenceRepository
+  @Binds
+  @Singleton
+  abstract fun bindInferencePreferenceRepository(
+    impl: InferencePreferenceRepositoryImpl,
+  ): InferencePreferenceRepository
 
-    @Binds
-    @Singleton
-    abstract fun bindApiProviderConfigRepository(impl: ApiProviderConfigRepositoryImpl): ApiProviderConfigRepository
+  @Binds
+  @Singleton
+  abstract fun bindApiProviderConfigRepository(
+    impl: ApiProviderConfigRepositoryImpl,
+  ): ApiProviderConfigRepository
 
-    @Binds
-    @Singleton
-    abstract fun bindModelCatalogRepository(impl: ModelCatalogRepositoryImpl): ModelCatalogRepository
+  @Binds
+  @Singleton
+  abstract fun bindModelCatalogRepository(
+    impl: ModelCatalogRepositoryImpl,
+  ): ModelCatalogRepository
 
-    @Binds
-    @Singleton
-    abstract fun bindDownloadManager(impl: DownloadManagerImpl): DownloadManager
+  @Binds
+  @Singleton
+  abstract fun bindDownloadManager(
+    impl: DownloadManagerImpl,
+  ): DownloadManager
 
-    @Binds
-    @Singleton
-    abstract fun bindExportService(impl: ExportServiceImpl): ExportService
+  @Binds
+  @Singleton
+  abstract fun bindExportService(
+    impl: ExportServiceImpl,
+  ): ExportService
 
-    @Binds
-    @Singleton
-    abstract fun bindImportService(impl: ImportServiceImpl): ImportService
+  @Binds
+  @Singleton
+  abstract fun bindImportService(
+    impl: ImportServiceImpl,
+  ): ImportService
 
-    @Binds
-    @Singleton
-    abstract fun bindUserProfileRepository(impl: UserProfileRepositoryImpl): UserProfileRepository
+  @Binds
+  @Singleton
+  abstract fun bindUserProfileRepository(
+    impl: UserProfileRepositoryImpl,
+  ): UserProfileRepository
 }

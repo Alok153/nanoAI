@@ -30,90 +30,79 @@ import com.vjaykrsna.nanoai.ui.components.OnboardingTooltip
 
 @Composable
 fun WelcomeScreen(
-    state: WelcomeUiState,
-    onGetStarted: () -> Unit,
-    onExplore: () -> Unit,
-    onSkip: () -> Unit,
-    onTooltipHelp: () -> Unit,
-    onTooltipDismiss: () -> Unit,
-    onTooltipDontShow: () -> Unit,
-    modifier: Modifier = Modifier,
+  state: WelcomeUiState,
+  onGetStartedClick: () -> Unit,
+  onExplore: () -> Unit,
+  onSkip: () -> Unit,
+  onTooltipHelp: () -> Unit,
+  onTooltipDismiss: () -> Unit,
+  onTooltipDontShow: () -> Unit,
+  modifier: Modifier = Modifier
 ) {
-    Surface(modifier = modifier.fillMaxSize()) {
-        val scrollState = rememberScrollState()
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .verticalScroll(scrollState)
-                    .padding(horizontal = 24.dp, vertical = 32.dp)
-                    .semantics { contentDescription = "Welcome screen" },
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+  Surface(modifier = modifier.fillMaxSize()) {
+    val scrollState = rememberScrollState()
+    Column(
+      modifier =
+        Modifier.fillMaxSize()
+          .verticalScroll(scrollState)
+          .padding(horizontal = 24.dp, vertical = 32.dp)
+          .semantics { contentDescription = "Welcome screen" },
+      horizontalAlignment = Alignment.CenterHorizontally,
+      verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+      OfflineBanner(
+        isOffline = state.offline,
+        queuedActions = 0,
+        onRetry = onGetStartedClick,
+        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+      )
+      Text(
+        text = "Welcome${state.displayName?.let { ", $it" } ?: ""} to nanoAI",
+        style = MaterialTheme.typography.headlineMedium,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.fillMaxWidth().testTag("welcome_hero_title").semantics { heading() },
+      )
+      Text(
+        text = "A focused interface for trustworthy AI workflows.",
+        style = MaterialTheme.typography.bodyLarge,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.fillMaxWidth(),
+      )
+      Spacer(modifier = Modifier.height(16.dp))
+      Column(
+        modifier = Modifier.fillMaxWidth().semantics { contentDescription = "Welcome actions" },
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+      ) {
+        Button(
+          onClick = onGetStartedClick,
+          modifier = Modifier.fillMaxWidth().testTag("welcome_cta_get_started"),
         ) {
-            OfflineBanner(
-                isOffline = state.offline,
-                queuedActions = 0,
-                onRetry = onGetStarted,
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp),
-            )
-            Text(
-                text = "Welcome${state.displayName?.let { ", $it" } ?: ""} to nanoAI",
-                style = MaterialTheme.typography.headlineMedium,
-                textAlign = TextAlign.Center,
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .testTag("welcome_hero_title")
-                        .semantics { heading() },
-            )
-            Text(
-                text = "A focused interface for trustworthy AI workflows.",
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .semantics { contentDescription = "Welcome actions" },
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Button(
-                    onClick = onGetStarted,
-                    modifier = Modifier.fillMaxWidth().testTag("welcome_cta_get_started"),
-                ) {
-                    Text("Get started", textAlign = TextAlign.Center)
-                }
-                OutlinedButton(
-                    onClick = onExplore,
-                    modifier = Modifier.fillMaxWidth().testTag("welcome_cta_explore"),
-                ) {
-                    Text("Explore features", textAlign = TextAlign.Center)
-                }
-                TextButton(
-                    onClick = onSkip,
-                    enabled = state.skipEnabled,
-                    modifier = Modifier.testTag("welcome_skip"),
-                ) {
-                    Text("Skip for now")
-                }
-            }
-            if (state.showOnboarding) {
-                OnboardingTooltip(
-                    message = "Tip: You can customize theme and layout anytime.",
-                    onDismiss = onTooltipDismiss,
-                    onDontShowAgain = onTooltipDontShow,
-                    onHelp = onTooltipHelp,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
+          Text("Get started", textAlign = TextAlign.Center)
         }
+        OutlinedButton(
+          onClick = onExplore,
+          modifier = Modifier.fillMaxWidth().testTag("welcome_cta_explore"),
+        ) {
+          Text("Explore features", textAlign = TextAlign.Center)
+        }
+        TextButton(
+          onClick = onSkip,
+          enabled = state.skipEnabled,
+          modifier = Modifier.testTag("welcome_skip"),
+        ) {
+          Text("Skip for now")
+        }
+      }
+      if (state.showOnboarding) {
+        OnboardingTooltip(
+          message = "Tip: You can customize theme and layout anytime.",
+          onDismiss = onTooltipDismiss,
+          onDontShowAgain = onTooltipDontShow,
+          onHelp = onTooltipHelp,
+          modifier = Modifier.fillMaxWidth(),
+        )
+      }
     }
+  }
 }

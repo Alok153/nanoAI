@@ -13,36 +13,28 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Contract test for Sidebar navigation per FR-012.
- * Expects keyboard accessibility, navigation targets, and deep-link slot.
+ * Contract test for Sidebar navigation per FR-012. Expects keyboard accessibility, navigation
+ * targets, and deep-link slot.
  */
 @LargeTest
 @RunWith(AndroidJUnit4::class)
 class SidebarContractTest {
-    @get:Rule
-    val composeRule = createAndroidComposeRule<MainActivity>()
+  @get:Rule val composeRule = createAndroidComposeRule<MainActivity>()
 
-    @Test
-    fun sidebar_drawerAccessibleViaToggle_andContainsNavigationTargets() {
-        composeRule
-            .onNodeWithContentDescription("Open navigation drawer")
-            .assertIsDisplayed()
-            .assertHasClickAction()
+  @Test
+  fun sidebar_drawerAccessibleViaToggle_andContainsNavigationTargets() {
+    composeRule
+      .onNodeWithContentDescription("Open navigation drawer")
+      .assertIsDisplayed()
+      .assertHasClickAction()
 
-        composeRule
-            .onNodeWithTag("sidebar_drawer")
-            .assertIsDisplayed()
+    composeRule.onNodeWithTag("sidebar_drawer").assertIsDisplayed()
 
-        composeRule
-            .onNodeWithTag("sidebar_nav_settings")
-            .assertIsDisplayed()
-            .assertHasClickAction()
-    }
+    composeRule.onNodeWithTag("sidebar_nav_settings").assertIsDisplayed().assertHasClickAction()
+  }
 
-    @Test
-    fun sidebar_exposesDeepLinkSlot_forScreenDestinations() {
-        composeRule
-            .onNodeWithTag("sidebar_deeplink_slot")
-            .assertIsDisplayed()
-    }
+  @Test
+  fun sidebar_exposesDeepLinkSlot_forScreenDestinations() {
+    composeRule.onNodeWithTag("sidebar_deeplink_slot").assertIsDisplayed()
+  }
 }

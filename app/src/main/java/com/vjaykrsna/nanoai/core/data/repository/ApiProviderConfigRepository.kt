@@ -9,24 +9,24 @@ import kotlinx.coroutines.flow.Flow
  * Manages cloud API providers for fallback when local models are unavailable.
  */
 interface ApiProviderConfigRepository {
-    /** Get all API providers. */
-    suspend fun getAllProviders(): List<APIProviderConfig>
+  /** Get all API providers. */
+  suspend fun getAllProviders(): List<APIProviderConfig>
 
-    /** Get a specific provider by ID. */
-    suspend fun getProvider(providerId: String): APIProviderConfig?
+  /** Get a specific provider by ID. */
+  suspend fun getProvider(providerId: String): APIProviderConfig?
 
-    /** Add a new provider configuration. */
-    suspend fun addProvider(config: APIProviderConfig)
+  /** Add a new provider configuration. */
+  suspend fun addProvider(config: APIProviderConfig)
 
-    /** Update an existing provider configuration. */
-    suspend fun updateProvider(config: APIProviderConfig)
+  /** Update an existing provider configuration. */
+  suspend fun updateProvider(config: APIProviderConfig)
 
-    /** Delete a provider configuration. */
-    suspend fun deleteProvider(providerId: String)
+  /** Delete a provider configuration. */
+  suspend fun deleteProvider(providerId: String)
 
-    /** Get all enabled providers. */
-    suspend fun getEnabledProviders(): List<APIProviderConfig>
+  /** Get all enabled providers. */
+  suspend fun getEnabledProviders(): List<APIProviderConfig>
 
-    /** Observe all providers (reactive updates). */
-    fun observeAllProviders(): Flow<List<APIProviderConfig>>
+  /** Observe all providers (reactive updates). */
+  fun observeAllProviders(): Flow<List<APIProviderConfig>>
 }

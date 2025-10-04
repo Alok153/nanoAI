@@ -34,51 +34,49 @@ import dagger.hilt.android.AndroidEntryPoint
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+  override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+    enableEdgeToEdge()
 
-        setContent {
-            val appViewModel: AppViewModel = hiltViewModel()
-            val appUiState by appViewModel.uiState.collectAsStateWithLifecycle()
+    setContent {
+      val appViewModel: AppViewModel = hiltViewModel()
+      val appUiState by appViewModel.uiState.collectAsStateWithLifecycle()
 
-            NanoAITheme(themePreference = appUiState.themePreference) {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background,
-                ) {
-                    if (appUiState.isHydrating) {
-                        AppHydrationState(isOffline = appUiState.offline)
-                    } else {
-                        NavigationScaffold(appState = appUiState)
-                    }
-                }
-            }
+      NanoAITheme(themePreference = appUiState.themePreference) {
+        Surface(
+          modifier = Modifier.fillMaxSize(),
+          color = MaterialTheme.colorScheme.background,
+        ) {
+          if (appUiState.isHydrating) {
+            AppHydrationState(isOffline = appUiState.offline)
+          } else {
+            NavigationScaffold(appState = appUiState)
+          }
         }
+      }
     }
+  }
 }
 
 @Composable
-private fun AppHydrationState(
-    isOffline: Boolean,
-    modifier: Modifier = Modifier,
-) {
-    Box(
-        modifier = modifier.fillMaxSize().testTag("app_hydration_state"),
-        contentAlignment = Alignment.Center,
+private fun AppHydrationState(isOffline: Boolean, modifier: Modifier = Modifier) {
+  Box(
+    modifier = modifier.fillMaxSize().testTag("app_hydration_state"),
+    contentAlignment = Alignment.Center,
+  ) {
+    Column(
+      horizontalAlignment = Alignment.CenterHorizontally,
+      verticalArrangement = Arrangement.Center,
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            CircularProgressIndicator()
-            Spacer(modifier = Modifier.height(16.dp))
-            val message = if (isOffline) "Reconnecting to cached workspace…" else "Loading your workspace…"
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+      CircularProgressIndicator()
+      Spacer(modifier = Modifier.height(16.dp))
+      val message =
+        if (isOffline) "Reconnecting to cached workspace…" else "Loading your workspace…"
+      Text(
+        text = message,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
     }
+  }
 }

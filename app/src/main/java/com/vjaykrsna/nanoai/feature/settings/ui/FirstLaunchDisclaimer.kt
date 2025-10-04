@@ -15,49 +15,46 @@ import androidx.compose.ui.semantics.semantics
  */
 @Composable
 fun FirstLaunchDisclaimerDialog(
-    isVisible: Boolean,
-    onAcknowledge: () -> Unit,
-    onDismiss: () -> Unit,
-    modifier: Modifier = Modifier,
+  isVisible: Boolean,
+  onAcknowledge: () -> Unit,
+  onDismiss: () -> Unit,
+  modifier: Modifier = Modifier,
 ) {
-    if (!isVisible) return
+  if (!isVisible) return
 
-    AlertDialog(
-        modifier = modifier,
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = "Use nanoAI responsibly",
-                style = MaterialTheme.typography.headlineSmall,
-            )
-        },
-        text = {
-            Text(
-                text = "AI responses may be inaccurate or incomplete. You're responsible for verifying nanoAI outputs before using them.",
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        },
-        confirmButton = {
-            Button(
-                onClick = onAcknowledge,
-                modifier =
-                    Modifier.semantics {
-                        contentDescription = "Acknowledge disclaimer and continue"
-                    },
-            ) {
-                Text("Acknowledge")
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = onDismiss,
-                modifier =
-                    Modifier.semantics {
-                        contentDescription = "Dismiss disclaimer"
-                    },
-            ) {
-                Text("Dismiss")
-            }
-        },
-    )
+  AlertDialog(
+    modifier = modifier,
+    onDismissRequest = onDismiss,
+    title = {
+      Text(
+        text = "Use nanoAI responsibly",
+        style = MaterialTheme.typography.headlineSmall,
+      )
+    },
+    text = {
+      Text(
+        text =
+          "AI responses may be inaccurate or incomplete. " +
+            "You're responsible for verifying nanoAI outputs before using them.",
+        style = MaterialTheme.typography.bodyMedium,
+      )
+    },
+    confirmButton = {
+      Button(
+        onClick = onAcknowledge,
+        modifier =
+          Modifier.semantics { contentDescription = "Acknowledge disclaimer and continue" },
+      ) {
+        Text("Acknowledge")
+      }
+    },
+    dismissButton = {
+      TextButton(
+        onClick = onDismiss,
+        modifier = Modifier.semantics { contentDescription = "Dismiss disclaimer" },
+      ) {
+        Text("Dismiss")
+      }
+    },
+  )
 }

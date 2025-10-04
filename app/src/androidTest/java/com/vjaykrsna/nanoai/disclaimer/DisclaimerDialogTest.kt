@@ -16,42 +16,40 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Quickstart Scenario 5 instrumentation: First-launch disclaimer accessibility + blocking behaviour.
+ * Quickstart Scenario 5 instrumentation: First-launch disclaimer accessibility + blocking
+ * behaviour.
  *
  * Assertions (expected to fail until dialog wired end-to-end):
- *  - Dialog rendered on first launch with TalkBack semantics (`disclaimer_dialog_container`).
- *  - Primary CTA blocked until user scrolls and acknowledges (`disclaimer_accept_button`).
- *  - Secondary CTA dismisses with clear accessibility label (`disclaimer_decline_button`).
+ * - Dialog rendered on first launch with TalkBack semantics (`disclaimer_dialog_container`).
+ * - Primary CTA blocked until user scrolls and acknowledges (`disclaimer_accept_button`).
+ * - Secondary CTA dismisses with clear accessibility label (`disclaimer_decline_button`).
  */
 @LargeTest
 @RunWith(AndroidJUnit4::class)
 class DisclaimerDialogTest {
-    @get:Rule
-    val composeRule = createAndroidComposeRule<MainActivity>()
+  @get:Rule val composeRule = createAndroidComposeRule<MainActivity>()
 
-    @Test
-    fun disclaimerDialog_requiresAcknowledgement_and_readsWithTalkBack() {
-        composeRule
-            .onNodeWithTag("disclaimer_dialog_container")
-            .assertIsDisplayed()
+  @Test
+  fun disclaimerDialog_requiresAcknowledgement_and_readsWithTalkBack() {
+    composeRule.onNodeWithTag("disclaimer_dialog_container").assertIsDisplayed()
 
-        composeRule
-            .onNodeWithTag("disclaimer_scrollable_content")
-            .assertIsDisplayed()
-            .assertHasScrollAction()
-            .performScrollTo()
+    composeRule
+      .onNodeWithTag("disclaimer_scrollable_content")
+      .assertIsDisplayed()
+      .assertHasScrollAction()
+      .performScrollTo()
 
-        composeRule
-            .onNodeWithTag("disclaimer_accept_button")
-            .assertIsDisplayed()
-            .assertHasClickAction()
-            .assertTextContains("Agree", substring = true)
-            .performClick()
+    composeRule
+      .onNodeWithTag("disclaimer_accept_button")
+      .assertIsDisplayed()
+      .assertHasClickAction()
+      .assertTextContains("Agree", substring = true)
+      .performClick()
 
-        composeRule
-            .onNodeWithTag("disclaimer_decline_button")
-            .assertIsDisplayed()
-            .assertHasClickAction()
-            .assertTextContains("Decline", substring = true)
-    }
+    composeRule
+      .onNodeWithTag("disclaimer_decline_button")
+      .assertIsDisplayed()
+      .assertHasClickAction()
+      .assertTextContains("Decline", substring = true)
+  }
 }

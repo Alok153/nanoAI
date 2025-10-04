@@ -17,44 +17,41 @@ import org.junit.runner.RunWith
  * Quickstart Scenario 5 instrumentation: Offline banner flow.
  *
  * Expectations (not yet met, so assertions fail):
- *  - A developer hook or debug affordance exists to toggle offline mode (tag `debug_toggle_offline`)
- *  - Offline banner surfaces with messaging (`offline_banner_message`)
- *  - Disabled CTA summary (`offline_disabled_actions_summary`) is rendered
- *  - Retry button (`offline_banner_retry`) queues actions for later
+ * - A developer hook or debug affordance exists to toggle offline mode (tag `debug_toggle_offline`)
+ * - Offline banner surfaces with messaging (`offline_banner_message`)
+ * - Disabled CTA summary (`offline_disabled_actions_summary`) is rendered
+ * - Retry button (`offline_banner_retry`) queues actions for later
  */
 @LargeTest
 @RunWith(AndroidJUnit4::class)
 class OfflineModeScenarioTest {
-    @get:Rule
-    val composeRule = createAndroidComposeRule<MainActivity>()
+  @get:Rule val composeRule = createAndroidComposeRule<MainActivity>()
 
-    @Test
-    fun offlineMode_displaysBanner_disablesCtas_andQueuesRetry() {
-        // Use debug hook to simulate offline state until real connectivity API is wired
-        composeRule
-            .onNodeWithTag("debug_toggle_offline")
-            .assertIsDisplayed()
-            .assertHasClickAction()
-            .performClick()
+  @Test
+  fun offlineMode_displaysBanner_disablesCtas_andQueuesRetry() {
+    // Use debug hook to simulate offline state until real connectivity API is wired
+    composeRule
+      .onNodeWithTag("debug_toggle_offline")
+      .assertIsDisplayed()
+      .assertHasClickAction()
+      .performClick()
 
-        composeRule
-            .onNodeWithTag("offline_banner_message")
-            .assertIsDisplayed()
-            .assertTextContains("offline", substring = true, ignoreCase = true)
+    composeRule
+      .onNodeWithTag("offline_banner_message")
+      .assertIsDisplayed()
+      .assertTextContains("offline", substring = true, ignoreCase = true)
 
-        composeRule
-            .onNodeWithTag("offline_disabled_actions_summary")
-            .assertIsDisplayed()
+    composeRule.onNodeWithTag("offline_disabled_actions_summary").assertIsDisplayed()
 
-        composeRule
-            .onNodeWithTag("offline_banner_retry")
-            .assertIsDisplayed()
-            .assertHasClickAction()
-            .performClick()
+    composeRule
+      .onNodeWithTag("offline_banner_retry")
+      .assertIsDisplayed()
+      .assertHasClickAction()
+      .performClick()
 
-        composeRule
-            .onNodeWithTag("offline_retry_queue_status")
-            .assertIsDisplayed()
-            .assertTextContains("queued", substring = true, ignoreCase = true)
-    }
+    composeRule
+      .onNodeWithTag("offline_retry_queue_status")
+      .assertIsDisplayed()
+      .assertTextContains("queued", substring = true, ignoreCase = true)
+  }
 }

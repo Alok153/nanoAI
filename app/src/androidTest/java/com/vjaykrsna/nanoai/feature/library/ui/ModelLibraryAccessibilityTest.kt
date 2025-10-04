@@ -10,80 +10,79 @@ import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
 import com.vjaykrsna.nanoai.feature.library.model.ProviderType
 import com.vjaykrsna.nanoai.ui.theme.NanoAITheme
+import java.util.UUID
 import kotlinx.datetime.Instant
 import org.junit.Rule
 import org.junit.Test
-import java.util.UUID
 
 class ModelLibraryAccessibilityTest {
-    @get:Rule
-    val composeRule = createAndroidComposeRule<ComponentActivity>()
+  @get:Rule val composeRule = createAndroidComposeRule<ComponentActivity>()
 
-    @Test
-    fun modelCard_downloadAndDeleteButtonsExposeContentDescriptions() {
-        val model =
-            ModelPackage(
-                modelId = "demo",
-                displayName = "Demo Model",
-                version = "1.0",
-                providerType = ProviderType.MEDIA_PIPE,
-                sizeBytes = 512L * 1024,
-                capabilities = setOf("chat"),
-                installState = InstallState.NOT_INSTALLED,
-                updatedAt = Instant.fromEpochMilliseconds(0),
-            )
+  @Test
+  fun modelCard_downloadAndDeleteButtonsExposeContentDescriptions() {
+    val model =
+      ModelPackage(
+        modelId = "demo",
+        displayName = "Demo Model",
+        version = "1.0",
+        providerType = ProviderType.MEDIA_PIPE,
+        sizeBytes = 512L * 1024,
+        capabilities = setOf("chat"),
+        installState = InstallState.NOT_INSTALLED,
+        updatedAt = Instant.fromEpochMilliseconds(0),
+      )
 
-        composeRule.setContent {
-            NanoAITheme {
-                ModelCard(
-                    model = model,
-                    isInstalled = false,
-                    onDownload = {},
-                    onDelete = {},
-                )
-            }
-        }
-
-        composeRule.onNodeWithContentDescription("Download Demo Model").assertIsDisplayed()
-
-        composeRule.setContent {
-            NanoAITheme {
-                ModelCard(
-                    model = model.copy(installState = InstallState.INSTALLED),
-                    isInstalled = true,
-                    onDownload = {},
-                    onDelete = {},
-                )
-            }
-        }
-
-        composeRule.onNodeWithContentDescription("Delete Demo Model").assertIsDisplayed()
+    composeRule.setContent {
+      NanoAITheme {
+        ModelCard(
+          model = model,
+          isInstalled = false,
+          onDownload = {},
+          onDelete = {},
+        )
+      }
     }
 
-    @Test
-    fun downloadTaskItem_exposesProgressAndControls() {
-        val download =
-            DownloadTask(
-                taskId = UUID.randomUUID(),
-                modelId = "demo",
-                progress = 0.5f,
-                status = DownloadStatus.DOWNLOADING,
-            )
+    composeRule.onNodeWithContentDescription("Download Demo Model").assertIsDisplayed()
 
-        composeRule.setContent {
-            NanoAITheme {
-                DownloadTaskItem(
-                    download = download,
-                    onPause = {},
-                    onResume = {},
-                    onCancel = {},
-                    onRetry = {},
-                )
-            }
-        }
-
-        composeRule.onNodeWithContentDescription("Pause download").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("Cancel download").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("Download progress 50%").assertIsDisplayed()
+    composeRule.setContent {
+      NanoAITheme {
+        ModelCard(
+          model = model.copy(installState = InstallState.INSTALLED),
+          isInstalled = true,
+          onDownload = {},
+          onDelete = {},
+        )
+      }
     }
+
+    composeRule.onNodeWithContentDescription("Delete Demo Model").assertIsDisplayed()
+  }
+
+  @Test
+  fun downloadTaskItem_exposesProgressAndControls() {
+    val download =
+      DownloadTask(
+        taskId = UUID.randomUUID(),
+        modelId = "demo",
+        progress = 0.5f,
+        status = DownloadStatus.DOWNLOADING,
+      )
+
+    composeRule.setContent {
+      NanoAITheme {
+        DownloadTaskItem(
+          download = download,
+          onPause = {},
+          onResume = {},
+          onCancel = {},
+          onRetry = {},
+        )
+      }
+    }
+
+    composeRule.onNodeWithContentDescription("Pause download").assertIsDisplayed()
+    composeRule.onNodeWithContentDescription("Cancel download").assertIsDisplayed()
+    composeRule.onNodeWithContentDescription("Download progress 50%").assertIsDisplayed()
+  }
 }

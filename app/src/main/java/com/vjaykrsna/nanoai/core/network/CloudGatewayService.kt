@@ -7,15 +7,10 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 
-/**
- * Retrofit definition for the nanoAI cloud gateway API.
- */
+/** Retrofit definition for the nanoAI cloud gateway API. */
 interface CloudGatewayService {
-    @POST("v1/completions")
-    suspend fun createCompletion(
-        @Body request: CompletionRequestDto,
-    ): CompletionResponseDto
+  @POST("v1/completions")
+  suspend fun createCompletion(@Body request: CompletionRequestDto): CompletionResponseDto
 
-    @GET("v1/models")
-    suspend fun listModels(): ModelListResponseDto
+  @GET("v1/models") suspend fun listModels(): ModelListResponseDto
 }

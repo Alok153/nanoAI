@@ -27,49 +27,46 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun PrimaryActionCard(
-    title: String,
-    description: String,
-    tag: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
+  title: String,
+  description: String,
+  tag: String,
+  onClick: () -> Unit,
+  modifier: Modifier = Modifier,
 ) {
-    val haptics = LocalHapticFeedback.current
+  val haptics = LocalHapticFeedback.current
 
-    Card(
-        onClick = {
-            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-            onClick()
-        },
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .testTag(tag)
-                .semantics {
-                    contentDescription = "$title action"
-                    stateDescription = "$description"
-                    role = Role.Button
-                },
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = title, style = MaterialTheme.typography.titleMedium)
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null)
-                Text(
-                    text = "Run",
-                    style = MaterialTheme.typography.labelLarge,
-                    modifier = Modifier.padding(start = 4.dp),
-                )
-            }
-        }
+  Card(
+    onClick = {
+      haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+      onClick()
+    },
+    modifier =
+      modifier.fillMaxWidth().testTag(tag).semantics {
+        contentDescription = "$title action"
+        stateDescription = "$description"
+        role = Role.Button
+      },
+    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+  ) {
+    Column(modifier = Modifier.padding(16.dp)) {
+      Text(text = title, style = MaterialTheme.typography.titleMedium)
+      Text(
+        text = description,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+      Row(
+        modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+        horizontalArrangement = Arrangement.End,
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
+        Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null)
+        Text(
+          text = "Run",
+          style = MaterialTheme.typography.labelLarge,
+          modifier = Modifier.padding(start = 4.dp),
+        )
+      }
     }
+  }
 }

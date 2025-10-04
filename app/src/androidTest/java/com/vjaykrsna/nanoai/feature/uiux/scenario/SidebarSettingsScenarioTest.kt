@@ -14,44 +14,34 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Instrumentation scenario covering Quickstart Scenario 3 (Sidebar and Settings).
- * Assertions fail until the sidebar + settings flows provide the required semantics.
+ * Instrumentation scenario covering Quickstart Scenario 3 (Sidebar and Settings). Assertions fail
+ * until the sidebar + settings flows provide the required semantics.
  */
 @LargeTest
 @RunWith(AndroidJUnit4::class)
 class SidebarSettingsScenarioTest {
-    @get:Rule
-    val composeRule = createAndroidComposeRule<MainActivity>()
+  @get:Rule val composeRule = createAndroidComposeRule<MainActivity>()
 
-    @Test
-    fun sidebarNavigation_reachesSettings_withUndoAffordance() {
-        composeRule
-            .onNodeWithTag("sidebar_toggle")
-            .assertIsDisplayed()
-            .assertHasClickAction()
-            .performClick()
+  @Test
+  fun sidebarNavigation_reachesSettings_withUndoAffordance() {
+    composeRule
+      .onNodeWithTag("sidebar_toggle")
+      .assertIsDisplayed()
+      .assertHasClickAction()
+      .performClick()
 
-        composeRule
-            .onNodeWithTag("sidebar_drawer")
-            .assertIsDisplayed()
+    composeRule.onNodeWithTag("sidebar_drawer").assertIsDisplayed()
 
-        composeRule
-            .onNodeWithTag("sidebar_item_settings")
-            .assertIsDisplayed()
-            .assertHasClickAction()
-            .performClick()
+    composeRule
+      .onNodeWithTag("sidebar_item_settings")
+      .assertIsDisplayed()
+      .assertHasClickAction()
+      .performClick()
 
-        composeRule
-            .onNodeWithTag("settings_grouped_options")
-            .assertIsDisplayed()
+    composeRule.onNodeWithTag("settings_grouped_options").assertIsDisplayed()
 
-        composeRule
-            .onNodeWithTag("settings_inline_help")
-            .assertIsDisplayed()
+    composeRule.onNodeWithTag("settings_inline_help").assertIsDisplayed()
 
-        composeRule
-            .onNodeWithTag("settings_undo_action")
-            .assertIsDisplayed()
-            .assertIsEnabled()
-    }
+    composeRule.onNodeWithTag("settings_undo_action").assertIsDisplayed().assertIsEnabled()
+  }
 }

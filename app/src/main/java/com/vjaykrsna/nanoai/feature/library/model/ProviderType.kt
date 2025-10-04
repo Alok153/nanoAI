@@ -1,32 +1,19 @@
 package com.vjaykrsna.nanoai.feature.library.model
 
-/**
- * Type of AI model runtime provider.
- * Determines how the model is loaded and executed.
- */
+/** Type of AI model runtime provider. Determines how the model is loaded and executed. */
 enum class ProviderType {
-    /**
-     * Google MediaPipe GenAI with LiteRT runtime.
-     */
-    MEDIA_PIPE,
+  /** Google MediaPipe GenAI with LiteRT runtime. */
+  MEDIA_PIPE,
 
-    /**
-     * TensorFlow Lite standalone runtime.
-     */
-    TFLITE,
+  /** TensorFlow Lite standalone runtime. */
+  TFLITE,
 
-    /**
-     * MLC LLM (Machine Learning Compilation) runtime.
-     */
-    MLC_LLM,
+  /** MLC LLM (Machine Learning Compilation) runtime. */
+  MLC_LLM,
 
-    /**
-     * ONNX Runtime for cross-platform inference.
-     */
-    ONNX_RUNTIME,
+  /** ONNX Runtime for cross-platform inference. */
+  ONNX_RUNTIME,
 
-    /**
-     * Cloud-based API (not a local model).
-     */
-    CLOUD_API,
+  /** Cloud-based API (not a local model). */
+  CLOUD_API,
 }

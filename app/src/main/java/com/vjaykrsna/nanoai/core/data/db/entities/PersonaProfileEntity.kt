@@ -8,8 +8,8 @@ import kotlinx.datetime.Instant
 /**
  * Room entity representing a persona profile configuration.
  *
- * Personas define different AI assistant personalities with custom system prompts,
- * model preferences, and generation parameters (temperature, topP).
+ * Personas define different AI assistant personalities with custom system prompts, model
+ * preferences, and generation parameters (temperature, topP).
  *
  * @property personaId Unique identifier (UUID string)
  * @property name Display name of the persona
@@ -25,27 +25,15 @@ import kotlinx.datetime.Instant
  */
 @Entity(tableName = "persona_profiles")
 data class PersonaProfileEntity(
-    @PrimaryKey
-    @ColumnInfo(name = "persona_id")
-    val personaId: String,
-    @ColumnInfo(name = "name")
-    val name: String,
-    @ColumnInfo(name = "description")
-    val description: String,
-    @ColumnInfo(name = "system_prompt")
-    val systemPrompt: String,
-    @ColumnInfo(name = "default_model_preference")
-    val defaultModelPreference: String? = null,
-    @ColumnInfo(name = "temperature")
-    val temperature: Float = 1.0f,
-    @ColumnInfo(name = "top_p")
-    val topP: Float = 1.0f,
-    @ColumnInfo(name = "default_voice")
-    val defaultVoice: String? = null,
-    @ColumnInfo(name = "default_image_style")
-    val defaultImageStyle: String? = null,
-    @ColumnInfo(name = "created_at")
-    val createdAt: Instant,
-    @ColumnInfo(name = "updated_at")
-    val updatedAt: Instant,
+  @PrimaryKey @ColumnInfo(name = "persona_id") val personaId: String,
+  @ColumnInfo(name = "name") val name: String,
+  @ColumnInfo(name = "description") val description: String,
+  @ColumnInfo(name = "system_prompt") val systemPrompt: String,
+  @ColumnInfo(name = "default_model_preference") val defaultModelPreference: String? = null,
+  @ColumnInfo(name = "temperature") val temperature: Float = 1.0f,
+  @ColumnInfo(name = "top_p") val topP: Float = 1.0f,
+  @ColumnInfo(name = "default_voice") val defaultVoice: String? = null,
+  @ColumnInfo(name = "default_image_style") val defaultImageStyle: String? = null,
+  @ColumnInfo(name = "created_at") val createdAt: Instant,
+  @ColumnInfo(name = "updated_at") val updatedAt: Instant,
 )
