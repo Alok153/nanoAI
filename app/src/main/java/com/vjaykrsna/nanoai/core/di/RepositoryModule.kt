@@ -20,6 +20,8 @@ import com.vjaykrsna.nanoai.feature.library.data.impl.ModelCatalogRepositoryImpl
 import com.vjaykrsna.nanoai.feature.library.domain.ExportService
 import com.vjaykrsna.nanoai.feature.settings.data.backup.ImportServiceImpl
 import com.vjaykrsna.nanoai.feature.settings.domain.ImportService
+import com.vjaykrsna.nanoai.model.catalog.ModelManifestRepository
+import com.vjaykrsna.nanoai.model.catalog.ModelManifestRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -69,6 +71,12 @@ abstract class RepositoryModule {
   abstract fun bindModelCatalogRepository(
     impl: ModelCatalogRepositoryImpl,
   ): ModelCatalogRepository
+
+  @Binds
+  @Singleton
+  abstract fun bindModelManifestRepository(
+    impl: ModelManifestRepositoryImpl,
+  ): ModelManifestRepository
 
   @Binds
   @Singleton

@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -65,6 +66,7 @@ import com.vjaykrsna.nanoai.core.domain.model.ChatThread
 import com.vjaykrsna.nanoai.core.model.InferenceMode
 import com.vjaykrsna.nanoai.feature.chat.ui.ChatScreen
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryScreen
+import com.vjaykrsna.nanoai.feature.settings.presentation.FirstLaunchDisclaimerUiState
 import com.vjaykrsna.nanoai.feature.settings.presentation.FirstLaunchDisclaimerViewModel
 import com.vjaykrsna.nanoai.feature.settings.ui.FirstLaunchDisclaimerDialog
 import com.vjaykrsna.nanoai.feature.settings.ui.SettingsScreen
@@ -75,9 +77,35 @@ import com.vjaykrsna.nanoai.feature.uiux.presentation.WelcomeViewModel
 import com.vjaykrsna.nanoai.feature.uiux.ui.HomeScreen
 import com.vjaykrsna.nanoai.feature.uiux.ui.SidebarDrawer
 import com.vjaykrsna.nanoai.feature.uiux.ui.WelcomeScreen
+import java.util.UUID
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+
+private data class NavigationUiState(
+  val currentRoute: String?,
+  val isWelcomeRoute: Boolean,
+)
+
+private data class SidebarDrawerUiState(
+  val threads: List<ChatThread>,
+  val searchQuery: String,
+  val showArchived: Boolean,
+  val inferenceMode: InferenceMode,
+  val pinnedTools: List<String>,
+)
+
+private data class SidebarCallbacks(
+  val onSearchQueryChange: (String) -> Unit,
+  val onToggleArchive: () -> Unit,
+  val onInferenceModeChange: (InferenceMode) -> Unit,
+  val onThreadSelected: (ChatThread) -> Unit,
+  val onArchiveThread: (UUID) -> Unit,
+  val onDeleteThread: (UUID) -> Unit,
+  val onNewThread: () -> Unit,
+  val onNavigateHome: () -> Unit,
+  val onNavigateSettings: () -> Unit,
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -100,18 +128,111 @@ fun NavigationScaffold(
   val inferencePreference by sidebarViewModel.inferencePreference.collectAsState()
   val pinnedTools by sidebarViewModel.pinnedTools.collectAsState()
   val disclaimerUiState by disclaimerViewModel.uiState.collectAsState()
+  val navigationUiState =
+    NavigationUiState(currentRoute = currentRoute, isWelcomeRoute = isWelcomeRoute)
+  val sidebarUiState =
+    SidebarDrawerUiState(
+      threads = threads,
+      searchQuery = searchQuery,
+      showArchived = showArchived,
+      inferenceMode = inferencePreference.mode,
+      pinnedTools = pinnedTools,
+    )
 
-  LaunchedEffect(appState.shouldShowWelcome, currentRoute) {
-    if (navBackStackEntry == null) return@LaunchedEffect
+  HandleNavigationEffects(
+    appState = appState,
+    navigationUiState = navigationUiState,
+    navController = navController,
+    sidebarViewModel = sidebarViewModel,
+    drawerState = drawerState,
+    hasBackStackEntry = navBackStackEntry != null,
+  )
+
+  val sidebarCallbacks =
+    SidebarCallbacks(
+      onSearchQueryChange = sidebarViewModel::setSearchQuery,
+      onToggleArchive = sidebarViewModel::toggleShowArchived,
+      onInferenceModeChange = { mode -> sidebarViewModel.setInferenceMode(mode) },
+      onThreadSelected = { thread ->
+        navController.navigate(Screen.Chat.route)
+        sidebarViewModel.emitNavigation(Screen.Chat.route)
+        scope.launch { drawerState.close() }
+      },
+      onArchiveThread = sidebarViewModel::archiveThread,
+      onDeleteThread = sidebarViewModel::deleteThread,
+      onNewThread = {
+        sidebarViewModel.createNewThread(null)
+        navController.navigate(Screen.Chat.route) {
+          popUpTo(Screen.Home.route) { saveState = true }
+          launchSingleTop = true
+          restoreState = true
+        }
+        sidebarViewModel.emitNavigation(Screen.Chat.route)
+        scope.launch { drawerState.close() }
+      },
+      onNavigateHome = {
+        navController.navigate(Screen.Home.route) {
+          popUpTo(Screen.Home.route) { saveState = true }
+          launchSingleTop = true
+          restoreState = true
+        }
+        sidebarViewModel.emitNavigation(Screen.Home.route)
+        scope.launch { drawerState.close() }
+      },
+      onNavigateSettings = {
+        navController.navigate(Screen.Settings.route)
+        sidebarViewModel.emitNavigation(Screen.Settings.route)
+        scope.launch { drawerState.close() }
+      },
+    )
+
+  val onNavigate: (String) -> Unit = { route ->
+    navController.navigate(route) {
+      popUpTo(Screen.Home.route) { saveState = true }
+      launchSingleTop = true
+      restoreState = true
+    }
+  }
+
+  NavigationScaffoldContent(
+    navigationUiState = navigationUiState,
+    drawerState = drawerState,
+    sidebarUiState = sidebarUiState,
+    sidebarCallbacks = sidebarCallbacks,
+    disclaimerUiState = disclaimerUiState,
+    onDrawerToggle = {
+      scope.launch { if (drawerState.isClosed) drawerState.open() else drawerState.close() }
+    },
+    onNavigate = onNavigate,
+    onCloseDrawer = { scope.launch { drawerState.close() } },
+    onDisclaimerAcknowledge = disclaimerViewModel::onAcknowledge,
+    onDisclaimerDismiss = disclaimerViewModel::onDismiss,
+    navController = navController,
+    sidebarViewModel = sidebarViewModel,
+    modifier = modifier,
+  )
+}
+
+@Composable
+private fun HandleNavigationEffects(
+  appState: AppUiState,
+  navigationUiState: NavigationUiState,
+  navController: NavHostController,
+  sidebarViewModel: SidebarViewModel,
+  drawerState: DrawerState,
+  hasBackStackEntry: Boolean,
+) {
+  LaunchedEffect(appState.shouldShowWelcome, navigationUiState.currentRoute, hasBackStackEntry) {
+    if (!hasBackStackEntry) return@LaunchedEffect
     when {
-      appState.shouldShowWelcome && currentRoute != Screen.Welcome.route -> {
+      appState.shouldShowWelcome && navigationUiState.currentRoute != Screen.Welcome.route -> {
         navController.navigate(Screen.Welcome.route) {
           popUpTo(Screen.Home.route)
           launchSingleTop = true
         }
         sidebarViewModel.emitNavigation(Screen.Welcome.route)
       }
-      !appState.shouldShowWelcome && currentRoute == Screen.Welcome.route -> {
+      !appState.shouldShowWelcome && navigationUiState.currentRoute == Screen.Welcome.route -> {
         navController.navigate(Screen.Home.route) {
           popUpTo(Screen.Welcome.route) { inclusive = true }
           launchSingleTop = true
@@ -121,18 +242,35 @@ fun NavigationScaffold(
     }
   }
 
-  LaunchedEffect(isWelcomeRoute) {
-    if (isWelcomeRoute && drawerState.isOpen) {
+  LaunchedEffect(navigationUiState.isWelcomeRoute) {
+    if (navigationUiState.isWelcomeRoute && drawerState.isOpen) {
       drawerState.close()
     }
   }
+}
 
-  // Handle back button when drawer is open
-  BackHandler(enabled = drawerState.isOpen) { scope.launch { drawerState.close() } }
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun NavigationScaffoldContent(
+  navigationUiState: NavigationUiState,
+  drawerState: DrawerState,
+  sidebarUiState: SidebarDrawerUiState,
+  sidebarCallbacks: SidebarCallbacks,
+  disclaimerUiState: FirstLaunchDisclaimerUiState,
+  onDrawerToggle: () -> Unit,
+  onNavigate: (String) -> Unit,
+  onCloseDrawer: () -> Unit,
+  onDisclaimerAcknowledge: () -> Unit,
+  onDisclaimerDismiss: () -> Unit,
+  navController: NavHostController,
+  sidebarViewModel: SidebarViewModel,
+  modifier: Modifier = Modifier,
+) {
+  BackHandler(enabled = drawerState.isOpen) { onCloseDrawer() }
 
   ModalNavigationDrawer(
     drawerState = drawerState,
-    gesturesEnabled = !isWelcomeRoute,
+    gesturesEnabled = !navigationUiState.isWelcomeRoute,
     drawerContent = {
       ModalDrawerSheet(
         modifier =
@@ -141,40 +279,8 @@ fun NavigationScaffold(
           },
       ) {
         SidebarContent(
-          threads = threads,
-          searchQuery = searchQuery,
-          showArchived = showArchived,
-          onSearchQueryChange = { sidebarViewModel.setSearchQuery(it) },
-          onToggleArchive = { sidebarViewModel.toggleShowArchived() },
-          inferenceMode = inferencePreference.mode,
-          onInferenceModeChange = { mode -> sidebarViewModel.setInferenceMode(mode) },
-          onThreadClick = { thread ->
-            // Navigate to chat with thread
-            navController.navigate(Screen.Chat.route)
-            scope.launch { drawerState.close() }
-          },
-          onArchiveThread = { sidebarViewModel.archiveThread(it) },
-          onDeleteThread = { sidebarViewModel.deleteThread(it) },
-          onNewThread = {
-            sidebarViewModel.createNewThread(null)
-            navController.navigate(Screen.Chat.route)
-            scope.launch { drawerState.close() }
-          },
-          pinnedTools = pinnedTools,
-          onNavigateHome = {
-            navController.navigate(Screen.Home.route) {
-              popUpTo(Screen.Home.route) { saveState = true }
-              launchSingleTop = true
-              restoreState = true
-            }
-            sidebarViewModel.emitNavigation(Screen.Home.route)
-            scope.launch { drawerState.close() }
-          },
-          onNavigateSettings = {
-            navController.navigate(Screen.Settings.route)
-            sidebarViewModel.emitNavigation(Screen.Settings.route)
-            scope.launch { drawerState.close() }
-          },
+          state = sidebarUiState,
+          callbacks = sidebarCallbacks,
           modifier = Modifier.fillMaxHeight(),
         )
       }
@@ -183,147 +289,144 @@ fun NavigationScaffold(
   ) {
     FirstLaunchDisclaimerDialog(
       isVisible = disclaimerUiState.shouldShowDialog,
-      onAcknowledge = { disclaimerViewModel.onAcknowledge() },
-      onDismiss = { disclaimerViewModel.onDismiss() },
+      onAcknowledge = onDisclaimerAcknowledge,
+      onDismiss = onDisclaimerDismiss,
     )
 
     Scaffold(
-      topBar = {
-        if (!isWelcomeRoute) {
-          TopAppBar(
-            title = {
-              Text(
-                text =
-                  when (currentRoute) {
-                    Screen.Home.route -> "Home"
-                    Screen.Chat.route -> "Chat"
-                    Screen.ModelLibrary.route -> "Model Library"
-                    Screen.Settings.route -> "Settings"
-                    else -> "nanoAI"
-                  },
-              )
-            },
-            navigationIcon = {
-              IconButton(
-                onClick = {
-                  scope.launch {
-                    if (drawerState.isClosed) drawerState.open() else drawerState.close()
-                  }
-                },
-                modifier = Modifier.semantics { contentDescription = "Open navigation drawer" },
-              ) {
-                Icon(Icons.Default.Menu, "Menu")
-              }
-            },
-            colors =
-              TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-              ),
-          )
-        }
-      },
+      topBar = { NavigationTopBar(navigationUiState, onDrawerToggle) },
       bottomBar = {
-        if (!isWelcomeRoute) {
+        if (!navigationUiState.isWelcomeRoute) {
           BottomNavigationBar(
-            currentRoute = currentRoute,
-            onNavigate = { route ->
-              navController.navigate(route) {
-                popUpTo(Screen.Home.route) { saveState = true }
-                launchSingleTop = true
-                restoreState = true
-              }
-            },
+            currentRoute = navigationUiState.currentRoute,
+            onNavigate = onNavigate,
           )
         }
       },
     ) { innerPadding ->
-      NavHost(
+      NavigationRoutes(
         navController = navController,
-        startDestination = Screen.Home.route,
+        sidebarViewModel = sidebarViewModel,
         modifier = Modifier.padding(innerPadding),
-      ) {
-        composable(Screen.Welcome.route) { entry ->
-          val welcomeViewModel: WelcomeViewModel = hiltViewModel(entry)
-          val state by welcomeViewModel.uiState.collectAsStateWithLifecycle()
-
-          WelcomeScreen(
-            state = state,
-            onGetStartedClick = {
-              welcomeViewModel.onGetStarted()
-              navController.navigate(Screen.Home.route) {
-                popUpTo(Screen.Welcome.route) { inclusive = true }
-                launchSingleTop = true
-              }
-              sidebarViewModel.emitNavigation(Screen.Home.route)
-            },
-            onExplore = {
-              welcomeViewModel.onExploreFeatures()
-              navController.navigate(Screen.Home.route) {
-                popUpTo(Screen.Welcome.route) { inclusive = true }
-                launchSingleTop = true
-              }
-              sidebarViewModel.emitNavigation(Screen.Home.route)
-            },
-            onSkip = {
-              welcomeViewModel.onSkip()
-              navController.navigate(Screen.Home.route) {
-                popUpTo(Screen.Welcome.route) { inclusive = true }
-                launchSingleTop = true
-              }
-              sidebarViewModel.emitNavigation(Screen.Home.route)
-            },
-            onTooltipHelp = welcomeViewModel::onTooltipHelp,
-            onTooltipDismiss = welcomeViewModel::onTooltipDismiss,
-            onTooltipDontShow = welcomeViewModel::onTooltipDontShowAgain,
-          )
-        }
-        composable(Screen.Home.route) { entry ->
-          val homeViewModel: HomeViewModel = hiltViewModel(entry)
-          val state by homeViewModel.uiState.collectAsStateWithLifecycle()
-
-          LaunchedEffect(Unit) { sidebarViewModel.emitNavigation(Screen.Home.route) }
-
-          HomeScreen(
-            state = state,
-            onToggleTools = homeViewModel::toggleToolsExpanded,
-            onActionClick = homeViewModel::onRecentAction,
-            onTooltipDismiss = homeViewModel::dismissTooltip,
-            onTooltipHelp = homeViewModel::onTooltipHelp,
-            onTooltipDontShow = homeViewModel::dontShowTooltipAgain,
-            onRetryOffline = homeViewModel::retryPendingActions,
-          )
-        }
-        composable(Screen.Chat.route) { ChatScreen() }
-        composable(Screen.ModelLibrary.route) { ModelLibraryScreen() }
-        composable(Screen.Settings.route) { SettingsScreen() }
-      }
+      )
     }
   }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun NavigationTopBar(
+  navigationUiState: NavigationUiState,
+  onDrawerToggle: () -> Unit,
+) {
+  if (navigationUiState.isWelcomeRoute) return
+
+  TopAppBar(
+    title = { Text(text = titleForRoute(navigationUiState.currentRoute)) },
+    navigationIcon = {
+      IconButton(
+        onClick = onDrawerToggle,
+        modifier = Modifier.semantics { contentDescription = "Open navigation drawer" },
+      ) {
+        Icon(Icons.Default.Menu, "Menu")
+      }
+    },
+    colors =
+      TopAppBarDefaults.topAppBarColors(
+        containerColor = MaterialTheme.colorScheme.primaryContainer
+      ),
+  )
+}
+
+@Composable
+private fun NavigationRoutes(
+  navController: NavHostController,
+  sidebarViewModel: SidebarViewModel,
+  modifier: Modifier = Modifier,
+) {
+  NavHost(
+    navController = navController,
+    startDestination = Screen.Home.route,
+    modifier = modifier,
+  ) {
+    composable(Screen.Welcome.route) { entry ->
+      val welcomeViewModel: WelcomeViewModel = hiltViewModel(entry)
+      val state by welcomeViewModel.uiState.collectAsStateWithLifecycle()
+
+      WelcomeScreen(
+        state = state,
+        onGetStartedClick = {
+          welcomeViewModel.onGetStarted()
+          navController.navigate(Screen.Home.route) {
+            popUpTo(Screen.Welcome.route) { inclusive = true }
+            launchSingleTop = true
+          }
+          sidebarViewModel.emitNavigation(Screen.Home.route)
+        },
+        onExplore = {
+          welcomeViewModel.onExploreFeatures()
+          navController.navigate(Screen.Home.route) {
+            popUpTo(Screen.Welcome.route) { inclusive = true }
+            launchSingleTop = true
+          }
+          sidebarViewModel.emitNavigation(Screen.Home.route)
+        },
+        onSkip = {
+          welcomeViewModel.onSkip()
+          navController.navigate(Screen.Home.route) {
+            popUpTo(Screen.Welcome.route) { inclusive = true }
+            launchSingleTop = true
+          }
+          sidebarViewModel.emitNavigation(Screen.Home.route)
+        },
+        onTooltipHelp = welcomeViewModel::onTooltipHelp,
+        onTooltipDismiss = welcomeViewModel::onTooltipDismiss,
+        onTooltipDontShow = welcomeViewModel::onTooltipDontShowAgain,
+      )
+    }
+    composable(Screen.Home.route) { entry ->
+      val homeViewModel: HomeViewModel = hiltViewModel(entry)
+      val state by homeViewModel.uiState.collectAsStateWithLifecycle()
+
+      LaunchedEffect(Unit) { sidebarViewModel.emitNavigation(Screen.Home.route) }
+
+      HomeScreen(
+        state = state,
+        onToggleTools = homeViewModel::toggleToolsExpanded,
+        onActionClick = homeViewModel::onRecentAction,
+        onTooltipDismiss = homeViewModel::dismissTooltip,
+        onTooltipHelp = homeViewModel::onTooltipHelp,
+        onTooltipDontShow = homeViewModel::dontShowTooltipAgain,
+        onRetryOffline = homeViewModel::retryPendingActions,
+      )
+    }
+    composable(Screen.Chat.route) { ChatScreen() }
+    composable(Screen.ModelLibrary.route) { ModelLibraryScreen() }
+    composable(Screen.Settings.route) { SettingsScreen() }
+  }
+}
+
+private fun titleForRoute(route: String?): String =
+  when (route) {
+    Screen.Home.route -> "Home"
+    Screen.Chat.route -> "Chat"
+    Screen.ModelLibrary.route -> "Model Library"
+    Screen.Settings.route -> "Settings"
+    else -> "nanoAI"
+  }
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SidebarContent(
-  threads: List<ChatThread>,
-  searchQuery: String,
-  showArchived: Boolean,
-  onSearchQueryChange: (String) -> Unit,
-  onToggleArchive: () -> Unit,
-  inferenceMode: InferenceMode,
-  onInferenceModeChange: (InferenceMode) -> Unit,
-  onThreadClick: (ChatThread) -> Unit,
-  onArchiveThread: (java.util.UUID) -> Unit,
-  onDeleteThread: (java.util.UUID) -> Unit,
-  onNewThread: () -> Unit,
-  pinnedTools: List<String>,
-  onNavigateHome: () -> Unit,
-  onNavigateSettings: () -> Unit,
+  state: SidebarDrawerUiState,
+  callbacks: SidebarCallbacks,
   modifier: Modifier = Modifier,
 ) {
   Column(modifier = modifier.fillMaxHeight().testTag("sidebar_drawer_container")) {
     SidebarDrawer(
-      pinnedTools = pinnedTools,
-      onNavigateSettings = onNavigateSettings,
-      onNavigateHome = onNavigateHome,
+      pinnedTools = state.pinnedTools,
+      onNavigateSettings = callbacks.onNavigateSettings,
+      onNavigateHome = callbacks.onNavigateHome,
       modifier = Modifier.fillMaxWidth(),
     )
 
@@ -343,7 +446,7 @@ private fun SidebarContent(
           fontWeight = FontWeight.Bold,
         )
         IconButton(
-          onClick = onNewThread,
+          onClick = callbacks.onNewThread,
           modifier = Modifier.semantics { contentDescription = "Create new conversation" },
         ) {
           Icon(Icons.Default.Add, "New")
@@ -353,8 +456,8 @@ private fun SidebarContent(
       Spacer(modifier = Modifier.height(16.dp))
 
       androidx.compose.material3.TextField(
-        value = searchQuery,
-        onValueChange = onSearchQueryChange,
+        value = state.searchQuery,
+        onValueChange = callbacks.onSearchQueryChange,
         placeholder = { Text("Search conversations...") },
         leadingIcon = { Icon(Icons.Default.Search, "Search") },
         modifier =
@@ -369,12 +472,12 @@ private fun SidebarContent(
         verticalAlignment = Alignment.CenterVertically,
       ) {
         Text(
-          text = if (showArchived) "Archived" else "Active",
+          text = if (state.showArchived) "Archived" else "Active",
           style = MaterialTheme.typography.titleMedium,
         )
         AssistChip(
-          onClick = onToggleArchive,
-          label = { Text(if (showArchived) "Show Active" else "Show Archived") },
+          onClick = callbacks.onToggleArchive,
+          label = { Text(if (state.showArchived) "Show Active" else "Show Archived") },
           leadingIcon = { Icon(Icons.Default.Delete, null) },
           modifier = Modifier.semantics { contentDescription = "Toggle archived conversations" },
         )
@@ -383,8 +486,8 @@ private fun SidebarContent(
       Spacer(modifier = Modifier.height(12.dp))
 
       InferencePreferenceToggleRow(
-        inferenceMode = inferenceMode,
-        onInferenceModeChange = onInferenceModeChange,
+        inferenceMode = state.inferenceMode,
+        onInferenceModeChange = callbacks.onInferenceModeChange,
         modifier = Modifier.fillMaxWidth(),
       )
     }
@@ -395,15 +498,15 @@ private fun SidebarContent(
       modifier = Modifier.weight(1f).semantics { contentDescription = "Conversation threads list" },
     ) {
       items(
-        items = threads,
+        items = state.threads,
         key = { it.threadId.toString() },
         contentType = { "thread_item" },
       ) { thread ->
         ThreadItem(
           thread = thread,
-          onClick = { onThreadClick(thread) },
-          onArchive = { onArchiveThread(thread.threadId) },
-          onDelete = { onDeleteThread(thread.threadId) },
+          onClick = { callbacks.onThreadSelected(thread) },
+          onArchive = { callbacks.onArchiveThread(thread.threadId) },
+          onDelete = { callbacks.onDeleteThread(thread.threadId) },
         )
       }
     }
