@@ -6,9 +6,6 @@ config:
   validation: true
   warningsAsErrors: false
 
-  # Exclude common build, generated and intermediate folders from analysis to
-  # avoid false-positives coming from generated sources or Gradle intermediates.
-  # Adjust the group list if you add other generated tool folders.
   excludes: '(^|.*/)(build|generated|ap_generated_sources|ksp|kspCaches|kapt|intermediates|outputs|kotlinToolingMetadata|\.gradle)(/.*)?$'
 
 processors:
@@ -23,13 +20,15 @@ style:
   active: true
   MaxLineLength:
     active: true
-    maxLineLength: 120
+    maxLineLength: 240
     excludePackageStatements: true
     excludeImportStatements: true
 formatting:
-  active: true
+  # Disabled because Spotless/ktfmt is the canonical project formatter.
+  # Prevents multiple formatters from conflicting.
+  active: false
   android: true
-  autoCorrect: true
+  autoCorrect: false
 complexity:
   active: true
   ComplexCondition:

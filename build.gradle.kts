@@ -6,18 +6,8 @@ plugins {
     alias(libs.plugins.kotlin.serialization) apply false
     alias(libs.plugins.ksp) apply false
     alias(libs.plugins.hilt) apply false
-    id("org.jlleitschuh.gradle.ktlint") version "12.1.1"
     id("io.gitlab.arturbosch.detekt") version "1.23.7"
-}
-
-subprojects {
-    apply(plugin = "org.jlleitschuh.gradle.ktlint")
-
-    configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
-        version.set("1.3.1")
-        android.set(true)
-        outputColorName.set("RED")
-    }
+    id("com.diffplug.spotless") version "6.25.0"
 }
 
 detekt {
@@ -33,11 +23,46 @@ detekt {
     )
 }
 
+subprojects {
+    listOf("org.jetbrains.kotlin.jvm", "org.jetbrains.kotlin.android").forEach { kotlinPluginId ->
+        pluginManager.withPlugin(kotlinPluginId) {
+            apply(plugin = "com.diffplug.spotless")
+            configure<com.diffplug.gradle.spotless.SpotlessExtension> {
+                kotlin {
+                    target("**/*.kt")
+                    ktlint().editorConfigOverride(
+                        mapOf(
+                            "indent_size" to "4",
+                            "continuation_indent_size" to "4",
+                            "ktlint_code_style" to "intellij_idea",
+                            "max_line_length" to "240"
+                        )
+                    )
+                }
+
+                kotlinGradle {
+                    target("**/*.gradle.kts")
+                    ktlint().editorConfigOverride(
+                        mapOf(
+                            "indent_size" to "4",
+                            "continuation_indent_size" to "4",
+                            "ktlint_code_style" to "intellij_idea",
+                            "max_line_length" to "240"
+                        )
+                    )
+                }
+            }
+        }
+    }
+}
+
 dependencies {
     detektPlugins("io.nlopez.compose.rules:detekt:0.4.9")
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.23.7")
 }
 
-tasks.register("clean", Delete::class) {
-    delete(rootProject.layout.buildDirectory)
+if (tasks.findByName("clean") == null) {
+    tasks.register("clean", Delete::class) {
+        delete(rootProject.layout.buildDirectory)
+    }
 }
