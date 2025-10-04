@@ -9,6 +9,7 @@ import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
 import com.vjaykrsna.nanoai.feature.library.model.ProviderType
+import com.vjaykrsna.nanoai.model.catalog.DeliveryType
 import com.vjaykrsna.nanoai.ui.theme.NanoAITheme
 import java.util.UUID
 import kotlinx.datetime.Instant
@@ -26,9 +27,15 @@ class ModelLibraryAccessibilityTest {
         displayName = "Demo Model",
         version = "1.0",
         providerType = ProviderType.MEDIA_PIPE,
+        deliveryType = DeliveryType.LOCAL_ARCHIVE,
+        minAppVersion = 1,
         sizeBytes = 512L * 1024,
         capabilities = setOf("chat"),
         installState = InstallState.NOT_INSTALLED,
+        manifestUrl = "https://example.com/demo.json",
+        checksumSha256 = null,
+        signature = null,
+        createdAt = Instant.fromEpochMilliseconds(0),
         updatedAt = Instant.fromEpochMilliseconds(0),
       )
 

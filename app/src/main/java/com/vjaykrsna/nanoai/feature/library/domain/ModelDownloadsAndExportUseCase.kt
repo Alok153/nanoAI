@@ -45,7 +45,7 @@ constructor(
       modelCatalogRepository.getModelById(modelId).first()
         ?: throw IllegalStateException("Model $modelId not found")
     val expectedChecksum =
-      model.checksum
+      model.checksumSha256
         ?: run {
           modelCatalogRepository.updateInstallState(modelId, InstallState.ERROR)
           return@runCatching false

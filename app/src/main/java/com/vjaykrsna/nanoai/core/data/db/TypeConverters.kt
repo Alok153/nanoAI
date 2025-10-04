@@ -4,6 +4,11 @@ import androidx.room.TypeConverter
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ScreenType
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
+import com.vjaykrsna.nanoai.core.maintenance.model.MaintenanceCategory
+import com.vjaykrsna.nanoai.core.maintenance.model.MaintenanceStatus
+import com.vjaykrsna.nanoai.core.maintenance.model.PriorityLevel
+import com.vjaykrsna.nanoai.core.maintenance.model.SeverityLevel
+import com.vjaykrsna.nanoai.model.catalog.DeliveryType
 import kotlinx.datetime.Instant
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.MapSerializer
@@ -75,6 +80,37 @@ class TypeConverters {
       ?.takeIf { it.isNotBlank() }
       ?.let { payload -> json.decodeFromString(stringBooleanMapSerializer, payload) } ?: emptyMap()
 
+  @TypeConverter
+  fun fromMaintenanceCategory(category: MaintenanceCategory?): String? = category?.name
+
+  @TypeConverter
+  fun toMaintenanceCategory(name: String?): MaintenanceCategory? =
+    name?.let { candidate -> enumValueOfOrNull<MaintenanceCategory>(candidate) }
+
+  @TypeConverter fun fromPriorityLevel(priorityLevel: PriorityLevel?): String? = priorityLevel?.name
+
+  @TypeConverter
+  fun toPriorityLevel(name: String?): PriorityLevel? =
+    name?.let { candidate -> enumValueOfOrNull<PriorityLevel>(candidate) }
+
+  @TypeConverter fun fromMaintenanceStatus(status: MaintenanceStatus?): String? = status?.name
+
+  @TypeConverter
+  fun toMaintenanceStatus(name: String?): MaintenanceStatus? =
+    name?.let { candidate -> enumValueOfOrNull<MaintenanceStatus>(candidate) }
+
+  @TypeConverter fun fromSeverityLevel(severityLevel: SeverityLevel?): String? = severityLevel?.name
+
+  @TypeConverter
+  fun toSeverityLevel(name: String?): SeverityLevel? =
+    name?.let { candidate -> enumValueOfOrNull<SeverityLevel>(candidate) }
+
+  @TypeConverter fun fromDeliveryType(deliveryType: DeliveryType?): String? = deliveryType?.name
+
+  @TypeConverter
+  fun toDeliveryType(name: String?): DeliveryType? =
+    name?.let { candidate -> enumValueOfOrNull<DeliveryType>(candidate) }
+
   private companion object {
     val json: Json = Json {
       ignoreUnknownKeys = true
@@ -83,5 +119,8 @@ class TypeConverters {
     }
     val stringListSerializer = ListSerializer(String.serializer())
     val stringBooleanMapSerializer = MapSerializer(String.serializer(), Boolean.serializer())
+
+    private inline fun <reified T : Enum<T>> enumValueOfOrNull(name: String): T? =
+      runCatching { enumValueOf<T>(name) }.getOrNull()
   }
 }

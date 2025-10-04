@@ -19,10 +19,15 @@ import com.vjaykrsna.nanoai.core.data.db.entities.PersonaProfileEntity
 import com.vjaykrsna.nanoai.core.data.db.entities.PersonaSwitchLogEntity
 import com.vjaykrsna.nanoai.core.data.db.entities.UIStateSnapshotEntity
 import com.vjaykrsna.nanoai.core.data.db.entities.UserProfileEntity
+import com.vjaykrsna.nanoai.core.maintenance.db.CodeQualityMetricDao
+import com.vjaykrsna.nanoai.core.maintenance.db.CodeQualityMetricEntity
+import com.vjaykrsna.nanoai.core.maintenance.db.RepoMaintenanceTaskDao
+import com.vjaykrsna.nanoai.core.maintenance.db.RepoMaintenanceTaskEntity
 import com.vjaykrsna.nanoai.feature.library.data.daos.DownloadTaskDao
 import com.vjaykrsna.nanoai.feature.library.data.daos.ModelPackageDao
 import com.vjaykrsna.nanoai.feature.library.data.entities.DownloadTaskEntity
-import com.vjaykrsna.nanoai.feature.library.data.entities.ModelPackageEntity
+import com.vjaykrsna.nanoai.model.catalog.DownloadManifestEntity
+import com.vjaykrsna.nanoai.model.catalog.ModelPackageEntity
 
 /**
  * Room database for nanoAI application.
@@ -49,8 +54,11 @@ import com.vjaykrsna.nanoai.feature.library.data.entities.ModelPackageEntity
       UserProfileEntity::class,
       LayoutSnapshotEntity::class,
       UIStateSnapshotEntity::class,
+      RepoMaintenanceTaskEntity::class,
+      CodeQualityMetricEntity::class,
+      DownloadManifestEntity::class,
     ],
-  version = 2,
+  version = 3,
   exportSchema = true,
 )
 @TypeConverters(com.vjaykrsna.nanoai.core.data.db.TypeConverters::class)
@@ -65,6 +73,10 @@ abstract class NanoAIDatabase : RoomDatabase() {
   abstract fun personaSwitchLogDao(): PersonaSwitchLogDao
 
   abstract fun apiProviderConfigDao(): ApiProviderConfigDao
+
+  abstract fun repoMaintenanceTaskDao(): RepoMaintenanceTaskDao
+
+  abstract fun codeQualityMetricDao(): CodeQualityMetricDao
 
   // Library feature DAOs
   abstract fun modelPackageDao(): ModelPackageDao

@@ -15,6 +15,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.datetime.Clock
 
 /** Wraps ModelPackageDao, converting between entities and domain models. */
 @Singleton
@@ -25,6 +26,8 @@ constructor(
   private val chatThreadDao: ChatThreadDao,
   @ApplicationContext private val context: Context,
 ) : ModelCatalogRepository {
+  private val clock = Clock.System
+
   override suspend fun getAllModels(): List<ModelPackage> =
     modelPackageDao.getAll().map { it.toDomain() }
 
@@ -41,7 +44,7 @@ constructor(
     modelPackageDao.getByInstallState(state).map { it.toDomain() }
 
   override suspend fun updateModelState(modelId: String, state: InstallState) {
-    modelPackageDao.updateInstallState(modelId, state)
+    modelPackageDao.updateInstallState(modelId, state, clock.now())
   }
 
   override suspend fun upsertModel(model: ModelPackage) {
@@ -49,11 +52,11 @@ constructor(
   }
 
   override suspend fun updateDownloadTaskId(modelId: String, taskId: UUID?) {
-    modelPackageDao.updateDownloadTaskId(modelId, taskId?.toString())
+    modelPackageDao.updateDownloadTaskId(modelId, taskId?.toString(), clock.now())
   }
 
   override suspend fun updateChecksum(modelId: String, checksum: String) {
-    modelPackageDao.updateChecksum(modelId, checksum)
+    modelPackageDao.updateIntegrityMetadata(modelId, checksum, null, clock.now())
   }
 
   override fun observeAllModels(): Flow<List<ModelPackage>> =

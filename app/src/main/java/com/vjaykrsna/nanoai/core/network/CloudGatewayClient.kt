@@ -99,7 +99,7 @@ constructor(
       is HttpException -> {
         when (throwable.code()) {
           HttpURLConnection.HTTP_UNAUTHORIZED -> CloudGatewayResult.Unauthorized
-          HttpURLConnection.HTTP_TOO_MANY_REQUESTS -> CloudGatewayResult.RateLimited
+          429 -> CloudGatewayResult.RateLimited
           else -> {
             val message = throwable.response()?.errorBody()?.use { body -> body.string() }
             val parsedMessage =

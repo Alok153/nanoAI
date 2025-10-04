@@ -139,7 +139,7 @@ constructor(
         }
 
         // Update model install state
-        modelPackageDao.updateInstallState(modelId, InstallState.INSTALLED)
+        modelPackageDao.updateInstallState(modelId, InstallState.INSTALLED, Clock.System.now())
 
         Result.success(
           workDataOf(

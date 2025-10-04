@@ -13,6 +13,8 @@ import com.vjaykrsna.nanoai.core.data.db.daos.PersonaProfileDao
 import com.vjaykrsna.nanoai.core.data.db.daos.PersonaSwitchLogDao
 import com.vjaykrsna.nanoai.core.data.db.daos.UIStateSnapshotDao
 import com.vjaykrsna.nanoai.core.data.db.daos.UserProfileDao
+import com.vjaykrsna.nanoai.core.maintenance.db.CodeQualityMetricDao
+import com.vjaykrsna.nanoai.core.maintenance.db.RepoMaintenanceTaskDao
 import com.vjaykrsna.nanoai.feature.library.data.daos.DownloadTaskDao
 import com.vjaykrsna.nanoai.feature.library.data.daos.ModelPackageDao
 import dagger.Module
@@ -30,7 +32,10 @@ object DatabaseModule {
   @Singleton
   fun provideNanoAIDatabase(@ApplicationContext context: Context): NanoAIDatabase =
     Room.databaseBuilder(context, NanoAIDatabase::class.java, NanoAIDatabase.DATABASE_NAME)
-      .addMigrations(NanoAIDatabaseMigrations.MIGRATION_1_2)
+      .addMigrations(
+        NanoAIDatabaseMigrations.MIGRATION_1_2,
+        NanoAIDatabaseMigrations.MIGRATION_2_3,
+      )
       .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
       .build()
 
@@ -78,4 +83,14 @@ object DatabaseModule {
   @Singleton
   fun provideUIStateSnapshotDao(database: NanoAIDatabase): UIStateSnapshotDao =
     database.uiStateSnapshotDao()
+
+  @Provides
+  @Singleton
+  fun provideRepoMaintenanceTaskDao(database: NanoAIDatabase): RepoMaintenanceTaskDao =
+    database.repoMaintenanceTaskDao()
+
+  @Provides
+  @Singleton
+  fun provideCodeQualityMetricDao(database: NanoAIDatabase): CodeQualityMetricDao =
+    database.codeQualityMetricDao()
 }

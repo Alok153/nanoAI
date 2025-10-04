@@ -13,6 +13,7 @@ import com.vjaykrsna.nanoai.feature.library.data.DownloadManager
 import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
 import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
+import com.vjaykrsna.nanoai.model.catalog.DeliveryType
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -259,11 +260,16 @@ class ModelDownloadsAndExportUseCaseTest {
       displayName = "Model $modelId",
       version = "1.0.0",
       providerType = com.vjaykrsna.nanoai.feature.library.model.ProviderType.MEDIA_PIPE,
+      deliveryType = DeliveryType.LOCAL_ARCHIVE,
+      minAppVersion = 1,
       sizeBytes = 1_000_000_000L,
       capabilities = setOf("TEXT_GEN"),
       installState = InstallState.DOWNLOADING,
       downloadTaskId = UUID.randomUUID(),
-      checksum = checksum,
+      manifestUrl = "https://cdn.nanoai.app/catalog/$modelId.json",
+      checksumSha256 = checksum,
+      signature = null,
+      createdAt = Clock.System.now(),
       updatedAt = Clock.System.now(),
     )
 
