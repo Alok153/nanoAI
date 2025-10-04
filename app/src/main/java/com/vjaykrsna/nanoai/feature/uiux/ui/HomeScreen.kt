@@ -35,6 +35,9 @@ import com.vjaykrsna.nanoai.ui.components.OnboardingTooltip
 import com.vjaykrsna.nanoai.ui.components.PrimaryActionCard
 import kotlin.text.titlecase
 
+private const val SKELETON_CARD_COUNT = 3
+private const val SKELETON_ALPHA = 0.5f
+
 data class HomeTooltipCallbacks(
   val onDismiss: () -> Unit,
   val onHelp: () -> Unit,
@@ -217,9 +220,9 @@ private fun HomeSkeleton(modifier: Modifier = Modifier) {
     modifier = modifier.fillMaxWidth(),
     verticalArrangement = Arrangement.spacedBy(12.dp),
   ) {
-    repeat(3) {
+    repeat(SKELETON_CARD_COUNT) {
       Card(
-        modifier = Modifier.fillMaxWidth().alpha(0.5f),
+        modifier = Modifier.fillMaxWidth().alpha(SKELETON_ALPHA),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
       ) {
         Spacer(modifier = Modifier.height(56.dp))

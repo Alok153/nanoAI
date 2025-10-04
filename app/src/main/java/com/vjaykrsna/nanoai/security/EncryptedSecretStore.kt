@@ -73,8 +73,7 @@ private constructor(
     rotatesAfter: Instant? = null,
     metadata: Map<String, String> = emptyMap(),
   ): SecretCredential {
-    val prefs =
-      encryptedPrefs ?: throw IllegalStateException("EncryptedSharedPreferences not initialised")
+    val prefs = encryptedPrefs ?: error("EncryptedSharedPreferences not initialised")
 
     val payload =
       SecretPayload(
@@ -90,6 +89,7 @@ private constructor(
   }
 
   /** Retrieve a stored credential if present. */
+  @Suppress("ReturnCount") // Multiple validation checks
   fun getCredential(providerId: String): SecretCredential? {
     val prefs = encryptedPrefs ?: return null
     val rawPayload = prefs.getString(entryKey(providerId), null) ?: return null

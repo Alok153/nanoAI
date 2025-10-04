@@ -1,3 +1,5 @@
+@file:Suppress("CyclomaticComplexMethod") // Complex chat UI logic
+
 package com.vjaykrsna.nanoai.feature.chat.ui
 
 import androidx.compose.foundation.background
@@ -57,6 +59,8 @@ import java.util.UUID
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+
+private const val MESSAGE_BUBBLE_WIDTH_FRACTION = 0.85f
 
 @Composable
 fun ChatScreen(modifier: Modifier = Modifier, viewModel: ChatViewModel = hiltViewModel()) {
@@ -246,7 +250,7 @@ private fun MessageBubble(message: Message, modifier: Modifier = Modifier) {
       colors = CardDefaults.cardColors(containerColor = backgroundColor),
       shape = RoundedCornerShape(12.dp),
       modifier =
-        Modifier.fillMaxWidth(0.85f).semantics {
+        Modifier.fillMaxWidth(MESSAGE_BUBBLE_WIDTH_FRACTION).semantics {
           contentDescription = "${message.role} message: ${message.text ?: ""}"
         },
     ) {

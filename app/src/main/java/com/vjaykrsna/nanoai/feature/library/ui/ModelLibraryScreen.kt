@@ -1,3 +1,9 @@
+@file:Suppress(
+  "LongMethod",
+  "CyclomaticComplexMethod",
+  "LongParameterList",
+) // Complex UI with many composables
+
 package com.vjaykrsna.nanoai.feature.library.ui
 
 import androidx.annotation.VisibleForTesting
@@ -57,6 +63,8 @@ import com.vjaykrsna.nanoai.feature.library.presentation.LibraryError
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryViewModel
 import java.util.UUID
 import kotlinx.coroutines.flow.collectLatest
+
+private const val PERCENTAGE_MULTIPLIER = 100
 
 @Composable
 fun ModelLibraryScreen(
@@ -260,7 +268,7 @@ internal fun DownloadTaskItem(
           fontWeight = FontWeight.Medium,
         )
 
-        val progressPercent = (download.progress * 100).toInt()
+        val progressPercent = (download.progress * PERCENTAGE_MULTIPLIER).toInt()
         val statusText =
           when (download.status) {
             DownloadStatus.QUEUED -> "Queued"
@@ -327,7 +335,8 @@ internal fun DownloadTaskItem(
         progress = { download.progress },
         modifier =
           Modifier.fillMaxWidth().semantics {
-            contentDescription = "Download progress ${(download.progress * 100).toInt()}%"
+            val progressPercent = (download.progress * PERCENTAGE_MULTIPLIER).toInt()
+            contentDescription = "Download progress $progressPercent%"
           },
       )
     }
@@ -446,10 +455,14 @@ internal fun ModelCard(
   }
 }
 
+private const val BYTES_PER_KB = 1024.0
+private const val BYTES_PER_MB = BYTES_PER_KB * 1024.0
+private const val BYTES_PER_GB = BYTES_PER_MB * 1024.0
+
 private fun formatSize(bytes: Long): String {
-  val kb = bytes / 1024.0
-  val mb = kb / 1024.0
-  val gb = mb / 1024.0
+  val kb = bytes / BYTES_PER_KB
+  val mb = bytes / BYTES_PER_MB
+  val gb = bytes / BYTES_PER_GB
 
   return when {
     gb >= 1 -> "%.2f GB".format(gb)

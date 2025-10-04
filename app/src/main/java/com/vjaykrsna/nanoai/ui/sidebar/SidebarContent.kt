@@ -267,8 +267,9 @@ private fun ThreadItem(
   Card(
     modifier =
       modifier.fillMaxWidth().clickable(onClick = onClick).semantics {
-        contentDescription =
-          "Conversation ${thread.title ?: "Untitled Chat"} last updated ${thread.updatedAt.toLocalDateTime(TimeZone.currentSystemDefault()).let { "${it.monthNumber}/${it.dayOfMonth}" }}"
+        val localDateTime = thread.updatedAt.toLocalDateTime(TimeZone.currentSystemDefault())
+        val dateStr = "${localDateTime.monthNumber}/${localDateTime.dayOfMonth}"
+        contentDescription = "Conversation ${thread.title ?: "Untitled Chat"} last updated $dateStr"
       },
     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
   ) {

@@ -92,6 +92,7 @@ object NanoAIDatabaseMigrations {
 
   /** Migration from schema version 2 to 3 introducing maintenance tracking tables. */
   val MIGRATION_2_3: Migration =
+    @Suppress("MagicNumber") // Database schema version numbers
     object : Migration(2, 3) {
       override fun migrate(database: SupportSQLiteDatabase) {
         upgradeModelPackagesTable(database)

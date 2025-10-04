@@ -31,10 +31,11 @@ import javax.inject.Singleton
 /**
  * Hilt module providing repository implementations.
  *
- * Uses @Binds for efficient interface-to-implementation binding.
+ * Binds repository interfaces to their concrete implementations.
  */
 @Module
 @InstallIn(SingletonComponent::class)
+@Suppress("TooManyFunctions") // DI module binds many repository interfaces
 abstract class RepositoryModule {
   @Binds
   @Singleton

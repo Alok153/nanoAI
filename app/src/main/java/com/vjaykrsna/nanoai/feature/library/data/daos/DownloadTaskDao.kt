@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.Flow
  * Provides methods to manage model download tasks and progress tracking.
  */
 @Dao
+@Suppress("TooManyFunctions") // DAOs naturally have many CRUD operations
 interface DownloadTaskDao {
   /** Insert or update a download task. */
   @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insert(task: DownloadTaskEntity)

@@ -1,3 +1,5 @@
+@file:Suppress("LongMethod", "CyclomaticComplexMethod") // Complex test setup
+
 package com.vjaykrsna.nanoai.feature.uiux.presentation
 
 import androidx.lifecycle.SavedStateHandle
@@ -115,6 +117,7 @@ class WelcomeViewModelTest {
     assertThat(afterSkip).isFalse()
   }
 
+  @Suppress("NestedBlockDepth", "CyclomaticComplexMethod", "LongMethod") // Complex test setup
   private fun instantiateViewModel(
     repository: UserProfileRepositorySpy,
     analytics: AnalyticsRecorder,
@@ -207,7 +210,8 @@ class WelcomeViewModelTest {
       if (value is Boolean) return value
     }
     fail(
-      "Boolean property ${propertyCandidates.joinToString()} not found on ${instance.javaClass.name}"
+      "Boolean property ${propertyCandidates.joinToString()} not found on " +
+        "${instance.javaClass.name}"
     )
   }
 
@@ -219,8 +223,7 @@ class WelcomeViewModelTest {
       candidates
         .asSequence()
         .mapNotNull { name -> instance.javaClass.methods.firstOrNull { it.name == name } }
-        .firstOrNull()
-        ?: throw IllegalStateException("Property $property not found on ${instance.javaClass.name}")
+        .firstOrNull() ?: error("Property $property not found on ${instance.javaClass.name}")
     return method.invoke(instance)
   }
 
@@ -230,7 +233,8 @@ class WelcomeViewModelTest {
         instance.javaClass.methods.firstOrNull { it.name == candidate && it.parameterCount == 0 }
       }
         ?: fail(
-          "None of the method candidates ${candidates.joinToString()} exist on ${instance.javaClass.name}"
+          "None of the method candidates ${candidates.joinToString()} exist on " +
+            "${instance.javaClass.name}"
         )
     method.invoke(instance)
   }

@@ -58,6 +58,12 @@ constructor(
 )
 
 @HiltWorker
+@Suppress(
+  "TooManyFunctions",
+  "LargeClass",
+  "NestedBlockDepth",
+  "ReturnCount",
+) // Complex download/verification logic
 class ModelDownloadWorker
 @AssistedInject
 constructor(
@@ -172,7 +178,6 @@ constructor(
             resp.body!!.saveToFile(
               outputFile = outputFile,
               manifest = manifest,
-              taskId = taskId,
               onProgress = { progress, downloaded, total ->
                 downloadTaskDao.updateProgress(taskId, progress, downloaded)
                 setProgress(
@@ -210,7 +215,6 @@ constructor(
   private fun ResponseBody.saveToFile(
     outputFile: File,
     manifest: DownloadManifest,
-    taskId: String,
     onProgress: (Float, Long, Long) -> Unit,
   ): NanoAIResult.RecoverableError? {
     byteStream().use { input ->

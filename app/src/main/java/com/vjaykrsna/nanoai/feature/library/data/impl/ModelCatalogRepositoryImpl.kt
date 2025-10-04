@@ -19,6 +19,7 @@ import kotlinx.datetime.Clock
 
 /** Wraps ModelPackageDao, converting between entities and domain models. */
 @Singleton
+@Suppress("TooManyFunctions") // Implements comprehensive repository interface
 class ModelCatalogRepositoryImpl
 @Inject
 constructor(

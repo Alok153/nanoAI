@@ -31,6 +31,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 
 @Singleton
+@Suppress("TooManyFunctions", "CyclomaticComplexMethod") // Complex import logic with validation
 class ImportServiceImpl
 @Inject
 constructor(

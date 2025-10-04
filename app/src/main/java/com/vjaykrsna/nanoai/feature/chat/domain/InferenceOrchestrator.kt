@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.first
 
 /** Coordinates local MediaPipe inference with cloud fallback via the gateway client. */
 @Singleton
+@Suppress("TooManyFunctions", "ReturnCount") // Complex orchestration logic with multiple paths
 class InferenceOrchestrator
 @Inject
 constructor(

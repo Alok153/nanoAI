@@ -1,3 +1,5 @@
+@file:Suppress("LongMethod", "CyclomaticComplexMethod", "ReturnCount") // Complex test
+
 package com.vjaykrsna.nanoai.feature.uiux.domain
 
 import com.google.common.truth.Truth.assertThat
@@ -228,7 +230,8 @@ class ObserveUserProfileUseCaseTest {
       if (value is Boolean) return value
     }
     fail(
-      "Result ${result.javaClass.name} missing boolean properties ${propertyCandidates.joinToString()}"
+      "Result ${result.javaClass.name} missing boolean properties " +
+        "${propertyCandidates.joinToString()}"
     )
   }
 }

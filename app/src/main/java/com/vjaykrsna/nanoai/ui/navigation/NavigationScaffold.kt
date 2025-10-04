@@ -1,4 +1,4 @@
-@file:Suppress("FunctionName")
+@file:Suppress("FunctionName", "TooManyFunctions") // Composable navigation helpers
 
 package com.vjaykrsna.nanoai.ui.navigation
 

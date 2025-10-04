@@ -62,6 +62,7 @@ import com.vjaykrsna.nanoai.model.catalog.ModelPackageEntity
   exportSchema = true,
 )
 @TypeConverters(com.vjaykrsna.nanoai.core.data.db.TypeConverters::class)
+@Suppress("TooManyFunctions") // Database provides many DAO accessors
 abstract class NanoAIDatabase : RoomDatabase() {
   // Core DAOs
   abstract fun chatThreadDao(): ChatThreadDao

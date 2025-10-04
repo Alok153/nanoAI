@@ -24,9 +24,10 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
-/** Hilt module providing Room database and DAOs. */
+/** Hilt module providing database and DAO instances. */
 @Module
 @InstallIn(SingletonComponent::class)
+@Suppress("TooManyFunctions") // DI module provides many DAO instances
 object DatabaseModule {
   @Provides
   @Singleton

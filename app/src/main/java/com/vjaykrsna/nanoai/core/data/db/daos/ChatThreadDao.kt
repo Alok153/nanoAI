@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.Flow
  * functions for use with Kotlin coroutines.
  */
 @Dao
+@Suppress("TooManyFunctions") // DAOs naturally have many CRUD operations
 interface ChatThreadDao {
   /** Insert a new chat thread. Replaces if thread with same ID exists. */
   @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insert(thread: ChatThreadEntity)
@@ -77,7 +78,10 @@ interface ChatThreadDao {
 
   /** Update the persona associated with a thread. */
   @Query(
-    "UPDATE chat_threads SET persona_id = :personaId, updated_at = :updatedAt WHERE thread_id = :threadId"
+    """
+      UPDATE chat_threads SET persona_id = :personaId, updated_at = :updatedAt 
+      WHERE thread_id = :threadId
+    """
   )
   suspend fun updatePersona(
     threadId: String,

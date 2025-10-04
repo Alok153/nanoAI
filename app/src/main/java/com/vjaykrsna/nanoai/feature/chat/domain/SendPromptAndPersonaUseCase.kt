@@ -1,3 +1,5 @@
+@file:Suppress("ReturnCount") // Multiple validation paths in use case
+
 package com.vjaykrsna.nanoai.feature.chat.domain
 
 import com.vjaykrsna.nanoai.core.data.repository.ConversationRepository

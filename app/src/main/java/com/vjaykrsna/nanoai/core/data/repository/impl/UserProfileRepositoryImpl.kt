@@ -27,6 +27,7 @@ import kotlinx.coroutines.withTimeout
 private const val REMOTE_FETCH_TIMEOUT_MS = 5_000L
 
 @Singleton
+@Suppress("TooManyFunctions") // Implements comprehensive repository interface
 class UserProfileRepositoryImpl
 @Inject
 constructor(

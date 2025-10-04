@@ -101,7 +101,10 @@ data class NanoAIElevation(
   val level5: Dp = 12.dp,
 )
 
+@Suppress("CompositionLocalAllowlist") // Custom theme tokens for app-wide spacing/elevation
 val LocalNanoAISpacing = staticCompositionLocalOf { NanoAISpacing() }
+
+@Suppress("CompositionLocalAllowlist") // Custom theme tokens for app-wide spacing/elevation
 val LocalNanoAIElevation = staticCompositionLocalOf { NanoAIElevation() }
 
 object NanoAIThemeDefaults {
@@ -112,6 +115,7 @@ object NanoAIThemeDefaults {
     @Composable @ReadOnlyComposable get() = LocalNanoAIElevation.current
 }
 
+@Suppress("CyclomaticComplexMethod") // Theme selection logic with multiple conditions
 @Composable
 fun NanoAITheme(
   themePreference: ThemePreference = ThemePreference.SYSTEM,
