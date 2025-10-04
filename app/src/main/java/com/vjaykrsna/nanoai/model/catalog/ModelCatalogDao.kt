@@ -14,6 +14,7 @@ import kotlinx.datetime.Instant
 
 /** DAO managing model packages and cached download manifests. */
 @Dao
+@Suppress("TooManyFunctions") // DAOs naturally have many CRUD operations
 interface ModelCatalogDao {
   // region Model packages
   @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insert(model: ModelPackageEntity)
@@ -57,17 +58,26 @@ interface ModelCatalogDao {
   suspend fun getDownloading(): List<ModelPackageEntity>
 
   @Query(
-    "UPDATE model_packages SET install_state = :state, updated_at = :updatedAt WHERE model_id = :modelId",
+    """
+      UPDATE model_packages SET install_state = :state, updated_at = :updatedAt 
+      WHERE model_id = :modelId
+    """,
   )
   suspend fun updateInstallState(modelId: String, state: InstallState, updatedAt: Instant)
 
   @Query(
-    "UPDATE model_packages SET download_task_id = :taskId, updated_at = :updatedAt WHERE model_id = :modelId",
+    """
+      UPDATE model_packages SET download_task_id = :taskId, updated_at = :updatedAt 
+      WHERE model_id = :modelId
+    """,
   )
   suspend fun updateDownloadTaskId(modelId: String, taskId: String?, updatedAt: Instant)
 
   @Query(
-    "UPDATE model_packages SET checksum_sha256 = :checksum, signature = :signature, updated_at = :updatedAt WHERE model_id = :modelId",
+    """
+      UPDATE model_packages SET checksum_sha256 = :checksum, signature = :signature, 
+      updated_at = :updatedAt WHERE model_id = :modelId
+    """,
   )
   suspend fun updateIntegrityMetadata(
     modelId: String,

@@ -1,3 +1,5 @@
+@file:Suppress("TooManyFunctions", "LongParameterList") // Composable UI with many helpers
+
 package com.vjaykrsna.nanoai.feature.settings.ui
 
 import android.net.Uri

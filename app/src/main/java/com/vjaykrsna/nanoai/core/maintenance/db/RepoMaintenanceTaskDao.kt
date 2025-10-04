@@ -22,7 +22,13 @@ interface RepoMaintenanceTaskDao {
   suspend fun getById(id: String): RepoMaintenanceTaskEntity?
 
   @Query(
-    "SELECT * FROM repo_maintenance_tasks ORDER BY CASE priority WHEN 'CRITICAL' THEN 4 WHEN 'HIGH' THEN 3 WHEN 'MEDIUM' THEN 2 WHEN 'LOW' THEN 1 ELSE 0 END DESC, updated_at DESC",
+    """
+      SELECT * FROM repo_maintenance_tasks 
+      ORDER BY CASE priority 
+        WHEN 'CRITICAL' THEN 4 WHEN 'HIGH' THEN 3 
+        WHEN 'MEDIUM' THEN 2 WHEN 'LOW' THEN 1 ELSE 0 
+      END DESC, updated_at DESC
+    """,
   )
   fun observeBacklog(): Flow<List<RepoMaintenanceTaskEntity>>
 
@@ -33,7 +39,10 @@ interface RepoMaintenanceTaskDao {
   fun observeByCategory(category: MaintenanceCategory): Flow<List<RepoMaintenanceTaskEntity>>
 
   @Query(
-    "UPDATE repo_maintenance_tasks SET status = :status, updated_at = :updatedAt WHERE task_id = :id",
+    """
+      UPDATE repo_maintenance_tasks SET status = :status, updated_at = :updatedAt 
+      WHERE task_id = :id
+    """,
   )
   suspend fun updateStatus(id: String, status: MaintenanceStatus, updatedAt: Instant)
 

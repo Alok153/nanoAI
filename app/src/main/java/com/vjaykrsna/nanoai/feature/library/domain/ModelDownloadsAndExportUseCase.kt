@@ -1,3 +1,5 @@
+@file:Suppress("ReturnCount") // Multiple validation paths in use case
+
 package com.vjaykrsna.nanoai.feature.library.domain
 
 import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
@@ -42,8 +44,7 @@ constructor(
   /** Validate downloaded checksum and update install state accordingly. */
   suspend fun verifyDownloadChecksum(modelId: String): Result<Boolean> = runCatching {
     val model: ModelPackage =
-      modelCatalogRepository.getModelById(modelId).first()
-        ?: throw IllegalStateException("Model $modelId not found")
+      modelCatalogRepository.getModelById(modelId).first() ?: error("Model $modelId not found")
     val expectedChecksum =
       model.checksumSha256
         ?: run {

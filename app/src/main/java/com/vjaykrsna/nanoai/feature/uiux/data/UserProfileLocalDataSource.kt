@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.map
  * merging.
  */
 @Singleton
+@Suppress("TooManyFunctions") // Local data source handles multiple entities
 class UserProfileLocalDataSource
 @Inject
 constructor(

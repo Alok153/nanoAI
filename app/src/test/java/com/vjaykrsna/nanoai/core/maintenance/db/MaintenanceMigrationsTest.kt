@@ -59,7 +59,10 @@ class MaintenanceMigrationsTest {
 
         db
           .query(
-            "SELECT model_id, manifest_url, checksum_sha256, signature, min_app_version FROM model_packages"
+            """
+              SELECT model_id, manifest_url, checksum_sha256, signature, min_app_version 
+              FROM model_packages
+            """
           )
           .use { cursor ->
             assertThat(cursor.moveToFirst()).isTrue()
@@ -80,7 +83,10 @@ class MaintenanceMigrationsTest {
     NanoAIDatabaseMigrations.MIGRATION_2_3.migrate(db)
     db.execSQL(RoomMasterTable.CREATE_QUERY)
     db.execSQL(
-      "INSERT OR REPLACE INTO ${RoomMasterTable.TABLE_NAME} (id, identity_hash) VALUES(42, '$VERSION_3_IDENTITY')"
+      """
+        INSERT OR REPLACE INTO ${RoomMasterTable.TABLE_NAME} (id, identity_hash) 
+        VALUES(42, '$VERSION_3_IDENTITY')
+      """
     )
     db.execSQL("PRAGMA user_version = 3")
   }
@@ -139,7 +145,10 @@ class MaintenanceMigrationsTest {
             )
             db.execSQL(RoomMasterTable.CREATE_QUERY)
             db.execSQL(
-              "INSERT OR REPLACE INTO ${RoomMasterTable.TABLE_NAME} (id, identity_hash) VALUES(42, '$VERSION_2_IDENTITY')"
+              """
+                INSERT OR REPLACE INTO ${RoomMasterTable.TABLE_NAME} (id, identity_hash) 
+                VALUES(42, '$VERSION_2_IDENTITY')
+              """
             )
           }
 

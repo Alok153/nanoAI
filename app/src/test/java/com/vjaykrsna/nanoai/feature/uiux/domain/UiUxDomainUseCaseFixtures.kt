@@ -1,3 +1,5 @@
+@file:Suppress("LongParameterList", "LongMethod", "CyclomaticComplexMethod") // Test fixtures
+
 package com.vjaykrsna.nanoai.feature.uiux.domain
 
 import com.vjaykrsna.nanoai.feature.uiux.domain.UiUxDomainTestHelper.loadClass
@@ -126,10 +128,10 @@ internal object UiUxDomainReflection {
     val resolvedTheme =
       coerceThemePreference(themePreference)
         ?: coerceThemePreference(getProperty(baseline, "themePreference"))
-        ?: throw IllegalStateException("themePreference must not be null")
+        ?: error("themePreference must not be null")
     val resolvedDensity =
       (visualDensity ?: getProperty(baseline, "visualDensity"))
-        ?: throw IllegalStateException("visualDensity must not be null")
+        ?: error("visualDensity must not be null")
     val resolvedOnboarding =
       onboardingCompleted ?: (getProperty(baseline, "onboardingCompleted") as Boolean)
 
@@ -182,7 +184,7 @@ internal object UiUxDomainReflection {
         .asSequence()
         .mapNotNull { name -> instance.javaClass.methods.firstOrNull { it.name == name } }
         .firstOrNull()
-        ?: throw IllegalStateException("Property $property not found on ${instance.javaClass.name}")
+        ?: error("Property $property not found on ${instance.javaClass.name}")
     return method.invoke(instance)
   }
 
@@ -196,7 +198,7 @@ internal object UiUxDomainReflection {
     val resolved = constructors.firstOrNull()?.apply { isAccessible = true }
     return resolved
       ?: clazz.declaredConstructors.firstOrNull()?.apply { isAccessible = true }
-      ?: throw IllegalStateException("No accessible constructor found for ${clazz.name}")
+      ?: error("No accessible constructor found for ${clazz.name}")
   }
 
   private fun coerceThemePreference(candidate: Any?): Any? =
@@ -217,7 +219,7 @@ internal object UiUxDomainReflection {
     val method =
       baseline.javaClass.methods.firstOrNull { method ->
         method.name == "copy" && method.parameterCount >= 5
-      } ?: throw IllegalStateException("UiPreferencesSnapshot copy method not found")
+      } ?: error("UiPreferencesSnapshot copy method not found")
     return method.invoke(
       baseline,
       themePreference,
@@ -335,7 +337,7 @@ internal class UserProfileRepositorySpy {
       methodName.contains("Offline", ignoreCase = true) ||
         methodName.contains("Network", ignoreCase = true) -> offlineStatusFlow
       methodName.contains("Theme", ignoreCase = true) -> themeEvents
-      else -> throw IllegalStateException("Unknown observe method: $methodName")
+      else -> error("Unknown observe method: $methodName")
     }
 }
 
@@ -364,9 +366,7 @@ internal fun instantiateUiUxUseCase(
       return constructor.newInstance(*args.toTypedArray())
     }
   }
-  throw IllegalStateException(
-    "Unable to instantiate $className with repository/dispatcher test doubles"
-  )
+  error("Unable to instantiate $className with repository/dispatcher test doubles")
 }
 
 internal class AnalyticsRecorder {
@@ -374,9 +374,7 @@ internal class AnalyticsRecorder {
 
   fun asProxy(parameterType: Class<*>): Any {
     if (!parameterType.isInterface) {
-      throw IllegalStateException(
-        "Analytics dependency ${parameterType.name} must be an interface for testing"
-      )
+      error("Analytics dependency ${parameterType.name} must be an interface for testing")
     }
 
     return Proxy.newProxyInstance(

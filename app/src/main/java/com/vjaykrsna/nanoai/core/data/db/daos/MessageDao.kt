@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.Flow
  * ordered by creation timestamp within threads.
  */
 @Dao
+@Suppress("TooManyFunctions") // DAOs naturally have many CRUD operations
 interface MessageDao {
   /** Insert a new message. Replaces if message with same ID exists. */
   @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insert(message: MessageEntity)

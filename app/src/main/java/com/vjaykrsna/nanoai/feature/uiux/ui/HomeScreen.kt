@@ -29,6 +29,9 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+
+private const val SKELETON_CARD_COUNT = 3
+private const val SKELETON_ALPHA = 0.5f
 import com.vjaykrsna.nanoai.feature.uiux.presentation.HomeUiState
 import com.vjaykrsna.nanoai.ui.components.OfflineBanner
 import com.vjaykrsna.nanoai.ui.components.OnboardingTooltip
@@ -217,9 +220,9 @@ private fun HomeSkeleton(modifier: Modifier = Modifier) {
     modifier = modifier.fillMaxWidth(),
     verticalArrangement = Arrangement.spacedBy(12.dp),
   ) {
-    repeat(3) {
+    repeat(SKELETON_CARD_COUNT) {
       Card(
-        modifier = Modifier.fillMaxWidth().alpha(0.5f),
+        modifier = Modifier.fillMaxWidth().alpha(SKELETON_ALPHA),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
       ) {
         Spacer(modifier = Modifier.height(56.dp))

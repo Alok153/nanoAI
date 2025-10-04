@@ -10,8 +10,10 @@ internal object UiUxDomainTestHelper {
     try {
       Class.forName(name)
     } catch (error: ClassNotFoundException) {
+      // Test infrastructure exception - intentionally swallowed to provide clear test failure
       fail(
-        "Missing class $name. Implement the corresponding UI/UX domain task before running tests."
+        "Missing class $name. Implement the corresponding UI/UX domain task before " +
+          "running tests. Error: ${error.message}"
       )
     }
 
@@ -21,7 +23,11 @@ internal object UiUxDomainTestHelper {
     return try {
       java.lang.Enum.valueOf(enumClass, constant)
     } catch (error: IllegalArgumentException) {
-      fail("Enum $className must expose constant $constant to satisfy UI/UX contracts.")
+      // Test infrastructure exception - intentionally swallowed to provide clear test failure
+      fail(
+        "Enum $className must expose constant $constant to satisfy UI/UX contracts. " +
+          "Error: ${error.message}"
+      )
     }
   }
 
@@ -32,6 +38,7 @@ internal object UiUxDomainTestHelper {
       }
       ?.apply { isAccessible = true }
       ?: fail(
-        "Expected ${clazz.name} to declare a primary constructor without DefaultConstructorMarker mask"
+        "Expected ${clazz.name} to declare a primary constructor without " +
+          "DefaultConstructorMarker mask"
       )
 }

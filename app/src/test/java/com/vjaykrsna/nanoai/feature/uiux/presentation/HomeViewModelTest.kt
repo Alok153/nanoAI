@@ -1,3 +1,5 @@
+@file:Suppress("CyclomaticComplexMethod") // Complex test setup with reflection
+
 package com.vjaykrsna.nanoai.feature.uiux.presentation
 
 import com.google.common.truth.Truth.assertThat

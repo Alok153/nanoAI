@@ -23,7 +23,10 @@ interface CodeQualityMetricDao {
   fun observeByTask(taskId: String): Flow<List<CodeQualityMetricEntity>>
 
   @Query(
-    "SELECT * FROM code_quality_metrics WHERE occurrences > 0 ORDER BY CASE severity WHEN 'ERROR' THEN 2 ELSE 1 END DESC, occurrences DESC",
+    """
+      SELECT * FROM code_quality_metrics WHERE occurrences > 0 
+      ORDER BY CASE severity WHEN 'ERROR' THEN 2 ELSE 1 END DESC, occurrences DESC
+    """,
   )
   fun observeOpenIssues(): Flow<List<CodeQualityMetricEntity>>
 
@@ -31,7 +34,10 @@ interface CodeQualityMetricDao {
   fun observeResolved(): Flow<List<CodeQualityMetricEntity>>
 
   @Query(
-    "UPDATE code_quality_metrics SET occurrences = :occurrences, resolved_at = :resolvedAt WHERE metric_id = :id",
+    """
+      UPDATE code_quality_metrics SET occurrences = :occurrences, resolved_at = :resolvedAt 
+      WHERE metric_id = :id
+    """,
   )
   suspend fun updateOccurrences(id: String, occurrences: Int, resolvedAt: Instant?)
 

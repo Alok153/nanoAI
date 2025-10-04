@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+private const val HYDRATION_TIMEOUT_MS = 5000L
+
 /**
  * Top-level application view model responsible for exposing global UI state such as theme
  * preferences, onboarding completion, and hydration status.
@@ -46,7 +48,7 @@ constructor(
     }
     // Timeout hydration after 5 seconds to prevent indefinite loading
     viewModelScope.launch {
-      delay(5000)
+      delay(HYDRATION_TIMEOUT_MS)
       _uiState.update { it.copy(isHydrating = false) }
     }
   }

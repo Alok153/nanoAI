@@ -19,6 +19,7 @@ import kotlinx.serialization.json.Json
  * Room TypeConverters for custom types used in database entities. Handles conversion between Kotlin
  * types and SQLite-compatible types.
  */
+@Suppress("TooManyFunctions") // Type converters require many conversion methods
 class TypeConverters {
   /**
    * Convert Instant to Long (epoch milliseconds) for storage. Note: UUIDs are stored as String

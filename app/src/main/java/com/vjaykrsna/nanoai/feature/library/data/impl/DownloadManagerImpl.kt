@@ -19,6 +19,8 @@ import java.io.File
 import java.io.FileInputStream
 import java.security.MessageDigest
 import java.util.UUID
+
+private const val CHECKSUM_BUFFER_SIZE = 8_192
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
@@ -31,6 +33,7 @@ import kotlinx.datetime.Clock
  * Wraps DownloadTaskDao and integrates with WorkManager for background download orchestration.
  */
 @Singleton
+@Suppress("TooManyFunctions") // Implements comprehensive download manager interface
 class DownloadManagerImpl
 @Inject
 constructor(
@@ -128,7 +131,7 @@ constructor(
     if (!file.exists()) return null
     val digest = MessageDigest.getInstance("SHA-256")
     FileInputStream(file).use { input ->
-      val buffer = ByteArray(8_192)
+      val buffer = ByteArray(CHECKSUM_BUFFER_SIZE)
       var read: Int
       while (input.read(buffer).also { read = it } != -1) {
         digest.update(buffer, 0, read)
