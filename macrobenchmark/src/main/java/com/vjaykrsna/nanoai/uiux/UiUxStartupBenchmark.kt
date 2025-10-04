@@ -33,7 +33,7 @@ class UiUxStartupBenchmark {
   @get:Rule val benchmarkRule = MacrobenchmarkRule()
 
   @Test
-  fun coldStart_meetsFmpBudget_partialCompilation() =
+  fun coldStartMeetsFmpBudgetPartialCompilation() =
     mutableListOf<Long>().let { durations ->
       benchmarkRule.measureRepeated(
         packageName = PACKAGE_NAME,
@@ -60,7 +60,7 @@ class UiUxStartupBenchmark {
     }
 
   @Test
-  fun navigate_home_to_settings_latency() =
+  fun navigateHomeToSettingsLatency() =
     mutableListOf<Long>().let { durations ->
       benchmarkRule.measureRepeated(
         packageName = PACKAGE_NAME,
@@ -89,7 +89,7 @@ class UiUxStartupBenchmark {
     }
 
   @Test
-  fun themeToggle_animation_jankFree() =
+  fun themeToggleAnimationJankFree() =
     mutableListOf<Long>().let { durations ->
       benchmarkRule.measureRepeated(
         packageName = PACKAGE_NAME,

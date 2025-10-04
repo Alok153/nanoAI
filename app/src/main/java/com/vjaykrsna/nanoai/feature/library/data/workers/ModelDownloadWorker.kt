@@ -21,11 +21,13 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.security.MessageDigest
 import java.util.Locale
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.ResponseBody
 
 private const val DOWNLOAD_BUFFER_SIZE = 8_192
 private const val MAX_RETRY_ATTEMPTS = 3
@@ -45,83 +47,93 @@ private const val ERROR_TYPE_FATAL = "fatal"
  * WorkManager worker that downloads model artifacts after fetching signed manifests and enforcing
  * integrity checks.
  */
+class ModelDownloadDependencies
+@Inject
+constructor(
+  val downloadTaskDao: DownloadTaskDao,
+  val modelPackageDao: ModelPackageDao,
+  val okHttpClient: OkHttpClient,
+  val modelManifestRepository: ModelManifestRepository,
+  val telemetryReporter: TelemetryReporter,
+)
+
 @HiltWorker
 class ModelDownloadWorker
 @AssistedInject
 constructor(
   @Assisted appContext: Context,
   @Assisted workerParams: WorkerParameters,
-  private val downloadTaskDao: DownloadTaskDao,
-  private val modelPackageDao: ModelPackageDao,
-  private val okHttpClient: OkHttpClient,
-  private val modelManifestRepository: ModelManifestRepository,
-  private val telemetryReporter: TelemetryReporter,
+  private val dependencies: ModelDownloadDependencies,
 ) : CoroutineWorker(appContext, workerParams) {
 
-  override suspend fun doWork(): Result =
-    withContext(Dispatchers.IO) {
-      val taskId =
-        inputData.getString(KEY_TASK_ID)
-          ?: return@withContext failureFromMissingInput("Missing task id")
-      val modelId =
-        inputData.getString(KEY_MODEL_ID)
-          ?: return@withContext failureFromMissingInput("Missing model id")
+  private val downloadTaskDao: DownloadTaskDao = dependencies.downloadTaskDao
+  private val modelPackageDao: ModelPackageDao = dependencies.modelPackageDao
+  private val okHttpClient: OkHttpClient = dependencies.okHttpClient
+  private val modelManifestRepository: ModelManifestRepository =
+    dependencies.modelManifestRepository
+  private val telemetryReporter: TelemetryReporter = dependencies.telemetryReporter
 
-      val modelPackage =
-        modelPackageDao.getById(modelId)
-          ?: return@withContext failureFromMissingInput("Model not found: $modelId")
+  override suspend fun doWork(): Result = withContext(Dispatchers.IO) { executeWork() }
 
-      markTaskStarting(taskId)
-      modelPackageDao.updateInstallState(modelId, InstallState.DOWNLOADING, Clock.System.now())
+  private suspend fun executeWork(): Result {
+    val taskId = inputData.getString(KEY_TASK_ID) ?: return fatalFailureResult("Missing task id")
+    val modelId = inputData.getString(KEY_MODEL_ID) ?: return fatalFailureResult("Missing model id")
+    val modelPackage =
+      modelPackageDao.getById(modelId) ?: return fatalFailureResult("Model not found: $modelId")
 
+    markTaskStarting(downloadTaskDao, taskId)
+    modelPackageDao.updateInstallState(modelId, InstallState.DOWNLOADING, Clock.System.now())
+
+    return when (
       val manifestResult = modelManifestRepository.refreshManifest(modelId, modelPackage.version)
-      val manifest =
-        when (manifestResult) {
-          is NanoAIResult.Success -> manifestResult.value
-          is NanoAIResult.RecoverableError ->
-            return@withContext handleRecoverable(taskId, modelId, manifestResult)
-          is NanoAIResult.FatalError ->
-            return@withContext handleFatal(taskId, modelId, manifestResult)
-        }
+    ) {
+      is NanoAIResult.Success -> processManifest(taskId, modelId, manifestResult.value)
+      is NanoAIResult.RecoverableError -> handleRecoverable(taskId, modelId, manifestResult)
+      is NanoAIResult.FatalError -> handleFatal(taskId, modelId, manifestResult)
+    }
+  }
 
-      val downloadDir = File(applicationContext.filesDir, "models").apply { mkdirs() }
-      val outputFile = File(downloadDir, "${manifest.modelId}.bin")
+  private suspend fun processManifest(
+    taskId: String,
+    modelId: String,
+    manifest: DownloadManifest,
+  ): Result {
+    val downloadDir = File(applicationContext.filesDir, "models").apply { mkdirs() }
+    val outputFile = File(downloadDir, "${manifest.modelId}.bin")
 
-      when (val downloadOutcome = downloadModel(taskId, manifest, outputFile)) {
-        is NanoAIResult.Success -> {
-          val downloadedFile = downloadOutcome.value
-          when (val integrityResult = validateIntegrity(downloadedFile, manifest)) {
-            is NanoAIResult.Success -> {
-              val checksum = integrityResult.value
-              reportVerification(modelId, manifest, VerificationOutcome.SUCCESS, null)
-              return@withContext markSuccess(taskId, modelId, manifest, downloadedFile, checksum)
-            }
-            is NanoAIResult.RecoverableError -> {
-              reportVerification(
-                modelId,
-                manifest,
-                VerificationOutcome.CORRUPTED,
-                integrityResult.message
-              )
-              return@withContext handleRecoverable(taskId, modelId, integrityResult)
-            }
-            is NanoAIResult.FatalError -> {
-              reportVerification(
-                modelId,
-                manifest,
-                VerificationOutcome.CORRUPTED,
-                integrityResult.message
-              )
-              return@withContext handleFatal(taskId, modelId, integrityResult)
-            }
+    return when (val downloadOutcome = downloadModel(taskId, manifest, outputFile)) {
+      is NanoAIResult.Success -> {
+        val downloadedFile = downloadOutcome.value
+        when (val integrityResult = validateIntegrity(downloadedFile, manifest)) {
+          is NanoAIResult.Success -> {
+            val checksum = integrityResult.value
+            reportVerification(modelId, manifest, VerificationOutcome.SUCCESS, null)
+            markSuccess(taskId, modelId, manifest, downloadedFile, checksum)
+          }
+          is NanoAIResult.RecoverableError -> {
+            reportVerification(
+              modelId,
+              manifest,
+              VerificationOutcome.CORRUPTED,
+              integrityResult.message,
+            )
+            handleRecoverable(taskId, modelId, integrityResult)
+          }
+          is NanoAIResult.FatalError -> {
+            reportVerification(
+              modelId,
+              manifest,
+              VerificationOutcome.CORRUPTED,
+              integrityResult.message,
+            )
+            handleFatal(taskId, modelId, integrityResult)
           }
         }
-        is NanoAIResult.RecoverableError ->
-          return@withContext handleRecoverable(taskId, modelId, downloadOutcome)
-        is NanoAIResult.FatalError ->
-          return@withContext handleFatal(taskId, modelId, downloadOutcome)
       }
+      is NanoAIResult.RecoverableError -> handleRecoverable(taskId, modelId, downloadOutcome)
+      is NanoAIResult.FatalError -> handleFatal(taskId, modelId, downloadOutcome)
     }
+  }
 
   private suspend fun downloadModel(
     taskId: String,
@@ -142,65 +154,92 @@ constructor(
         }
 
     response.use { resp ->
-      if (!resp.isSuccessful) {
-        outputFile.delete()
-        return NanoAIResult.recoverable(
-          message = "Download failed with HTTP ${resp.code}",
-          retryAfterSeconds = 30L,
-          cause = IOException("HTTP ${resp.code}"),
-          context = mapOf("modelId" to manifest.modelId),
-        )
-      }
-
-      val body =
-        resp.body
-          ?: run {
-            outputFile.delete()
-            return NanoAIResult.recoverable(
+      val failure =
+        when {
+          !resp.isSuccessful ->
+            recoverableDownloadError(
+              message = "Download failed with HTTP ${resp.code}",
+              cause = IOException("HTTP ${resp.code}"),
+              manifest = manifest,
+            )
+          resp.body == null ->
+            recoverableDownloadError(
               message = "Empty response body",
-              retryAfterSeconds = 30L,
               cause = IOException("Empty body"),
+              manifest = manifest,
+            )
+          else ->
+            resp.body!!.saveToFile(
+              outputFile = outputFile,
+              manifest = manifest,
+              taskId = taskId,
+              onProgress = { progress, downloaded, total ->
+                downloadTaskDao.updateProgress(taskId, progress, downloaded)
+                setProgress(
+                  workDataOf(
+                    "PROGRESS" to progress,
+                    "BYTES_DOWNLOADED" to downloaded,
+                    "TOTAL_BYTES" to total,
+                  ),
+                )
+              },
+            )
+        }
+
+      return if (failure != null) {
+        outputFile.delete()
+        failure
+      } else {
+        NanoAIResult.success(outputFile)
+      }
+    }
+  }
+
+  private fun recoverableDownloadError(
+    message: String,
+    cause: Throwable?,
+    manifest: DownloadManifest,
+  ): NanoAIResult.RecoverableError =
+    NanoAIResult.recoverable(
+      message = message,
+      retryAfterSeconds = 30L,
+      cause = cause,
+      context = mapOf("modelId" to manifest.modelId),
+    )
+
+  private fun ResponseBody.saveToFile(
+    outputFile: File,
+    manifest: DownloadManifest,
+    taskId: String,
+    onProgress: (Float, Long, Long) -> Unit,
+  ): NanoAIResult.RecoverableError? {
+    byteStream().use { input ->
+      FileOutputStream(outputFile).use { output ->
+        val buffer = ByteArray(DOWNLOAD_BUFFER_SIZE)
+        var downloaded = 0L
+        val totalBytes = manifest.sizeBytes
+
+        while (true) {
+          val read = input.read(buffer)
+          if (read == -1) break
+
+          if (isStopped) {
+            return NanoAIResult.recoverable(
+              message = "Download cancelled",
+              retryAfterSeconds = null,
               context = mapOf("modelId" to manifest.modelId),
             )
           }
 
-      body.byteStream().use { input ->
-        FileOutputStream(outputFile).use { output ->
-          val buffer = ByteArray(DOWNLOAD_BUFFER_SIZE)
-          var downloaded = 0L
-          val totalBytes = manifest.sizeBytes
+          output.write(buffer, 0, read)
+          downloaded += read
 
-          while (true) {
-            val read = input.read(buffer)
-            if (read == -1) break
-
-            if (isStopped) {
-              outputFile.delete()
-              return NanoAIResult.recoverable(
-                message = "Download cancelled",
-                retryAfterSeconds = null,
-                context = mapOf("modelId" to manifest.modelId),
-              )
-            }
-
-            output.write(buffer, 0, read)
-            downloaded += read
-
-            val progress = if (totalBytes > 0) downloaded.toFloat() / totalBytes.toFloat() else 0f
-            downloadTaskDao.updateProgress(taskId, progress, downloaded)
-            setProgress(
-              workDataOf(
-                "PROGRESS" to progress,
-                "BYTES_DOWNLOADED" to downloaded,
-                "TOTAL_BYTES" to totalBytes,
-              ),
-            )
-          }
+          val progress = if (totalBytes > 0) downloaded.toFloat() / totalBytes.toFloat() else 0f
+          onProgress(progress, downloaded, totalBytes)
         }
       }
     }
-
-    return NanoAIResult.success(outputFile)
+    return null
   }
 
   private fun validateIntegrity(
@@ -238,21 +277,6 @@ constructor(
     }
   }
 
-  private fun calculateSha256(file: File): String {
-    val digest = MessageDigest.getInstance("SHA-256")
-    file.inputStream().use { input ->
-      val buffer = ByteArray(DOWNLOAD_BUFFER_SIZE)
-      while (true) {
-        val read = input.read(buffer)
-        if (read == -1) break
-        digest.update(buffer, 0, read)
-      }
-    }
-    return digest.digest().joinToString(separator = "") { byte ->
-      String.format(Locale.US, "%02x", byte)
-    }
-  }
-
   private suspend fun handleRecoverable(
     taskId: String,
     modelId: String,
@@ -260,8 +284,8 @@ constructor(
   ): Result {
     downloadTaskDao.updateStatusWithError(taskId, DownloadStatus.FAILED, error.message)
     modelPackageDao.updateInstallState(modelId, InstallState.ERROR, Clock.System.now())
-    markTaskFinished(taskId)
-    val willRetry = shouldRetry()
+    markTaskFinished(downloadTaskDao, taskId)
+    val willRetry = runAttemptCount < MAX_RETRY_ATTEMPTS - 1
     telemetryReporter.report(
       source = "ModelDownloadWorker",
       result = error,
@@ -276,7 +300,7 @@ constructor(
     return if (willRetry) {
       Result.retry()
     } else {
-      Result.failure(resultData(error))
+      Result.failure(recoverableResultData(error))
     }
   }
 
@@ -287,7 +311,7 @@ constructor(
   ): Result {
     downloadTaskDao.updateStatusWithError(taskId, DownloadStatus.FAILED, error.message)
     modelPackageDao.updateInstallState(modelId, InstallState.ERROR, Clock.System.now())
-    markTaskFinished(taskId)
+    markTaskFinished(downloadTaskDao, taskId)
     telemetryReporter.report(
       source = "ModelDownloadWorker",
       result = error,
@@ -298,7 +322,7 @@ constructor(
           "attempt" to runAttemptCount.toString(),
         ),
     )
-    return Result.failure(resultData(error))
+    return Result.failure(fatalResultData(error))
   }
 
   private suspend fun markSuccess(
@@ -310,7 +334,7 @@ constructor(
   ): Result {
     downloadTaskDao.updateStatus(taskId, DownloadStatus.COMPLETED)
     downloadTaskDao.updateProgress(taskId, 1f, manifest.sizeBytes)
-    markTaskFinished(taskId)
+    markTaskFinished(downloadTaskDao, taskId)
     modelPackageDao.updateInstallState(modelId, InstallState.INSTALLED, Clock.System.now())
 
     return Result.success(
@@ -364,47 +388,66 @@ constructor(
         )
     }
   }
+}
 
-  private suspend fun markTaskStarting(taskId: String) {
-    val task = downloadTaskDao.getById(taskId) ?: return
-    downloadTaskDao.update(
-      task.copy(
-        startedAt = Clock.System.now(),
-        finishedAt = null,
-        errorMessage = null,
-      ),
-    )
-    downloadTaskDao.updateStatus(taskId, DownloadStatus.DOWNLOADING)
-  }
-
-  private suspend fun markTaskFinished(taskId: String) {
-    val task = downloadTaskDao.getById(taskId) ?: return
-    downloadTaskDao.update(task.copy(finishedAt = Clock.System.now()))
-  }
-
-  private fun failureFromMissingInput(message: String): Result =
-    Result.failure(
-      workDataOf(
-        KEY_ERROR_TYPE to ERROR_TYPE_FATAL,
-        KEY_ERROR_MESSAGE to message,
-      ),
-    )
-
-  private fun shouldRetry(): Boolean = runAttemptCount < MAX_RETRY_ATTEMPTS - 1
-
-  private fun resultData(error: NanoAIResult.RecoverableError) =
-    workDataOf(
-      KEY_ERROR_TYPE to ERROR_TYPE_RECOVERABLE,
-      KEY_ERROR_MESSAGE to error.message,
-      KEY_ERROR_TELEMETRY to error.telemetryId,
-      KEY_ERROR_RETRY_AFTER to error.retryAfterSeconds,
-      KEY_ERROR_CONTEXT to error.context.entries.joinToString("&") { "${it.key}=${it.value}" },
-    )
-
-  private fun resultData(error: NanoAIResult.FatalError) =
+private fun fatalFailureResult(message: String): Result =
+  Result.failure(
     workDataOf(
       KEY_ERROR_TYPE to ERROR_TYPE_FATAL,
-      KEY_ERROR_MESSAGE to error.message,
-      KEY_ERROR_TELEMETRY to error.telemetryId,
-    )
+      KEY_ERROR_MESSAGE to message,
+    ),
+  )
+
+private suspend fun markTaskStarting(
+  downloadTaskDao: DownloadTaskDao,
+  taskId: String,
+) {
+  val task = downloadTaskDao.getById(taskId) ?: return
+  downloadTaskDao.update(
+    task.copy(
+      startedAt = Clock.System.now(),
+      finishedAt = null,
+      errorMessage = null,
+    ),
+  )
+  downloadTaskDao.updateStatus(taskId, DownloadStatus.DOWNLOADING)
+}
+
+private suspend fun markTaskFinished(
+  downloadTaskDao: DownloadTaskDao,
+  taskId: String,
+) {
+  val task = downloadTaskDao.getById(taskId) ?: return
+  downloadTaskDao.update(task.copy(finishedAt = Clock.System.now()))
+}
+
+private fun recoverableResultData(error: NanoAIResult.RecoverableError) =
+  workDataOf(
+    KEY_ERROR_TYPE to ERROR_TYPE_RECOVERABLE,
+    KEY_ERROR_MESSAGE to error.message,
+    KEY_ERROR_TELEMETRY to error.telemetryId,
+    KEY_ERROR_RETRY_AFTER to error.retryAfterSeconds,
+    KEY_ERROR_CONTEXT to error.context.entries.joinToString("&") { "${it.key}=${it.value}" },
+  )
+
+private fun fatalResultData(error: NanoAIResult.FatalError) =
+  workDataOf(
+    KEY_ERROR_TYPE to ERROR_TYPE_FATAL,
+    KEY_ERROR_MESSAGE to error.message,
+    KEY_ERROR_TELEMETRY to error.telemetryId,
+  )
+
+private fun calculateSha256(file: File): String {
+  val digest = MessageDigest.getInstance("SHA-256")
+  file.inputStream().use { input ->
+    val buffer = ByteArray(DOWNLOAD_BUFFER_SIZE)
+    while (true) {
+      val read = input.read(buffer)
+      if (read == -1) break
+      digest.update(buffer, 0, read)
+    }
+  }
+  return digest.digest().joinToString(separator = "") { byte ->
+    String.format(Locale.US, "%02x", byte)
+  }
 }

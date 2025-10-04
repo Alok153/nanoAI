@@ -8,7 +8,7 @@ Follow this guide to validate that the stabilization work meets constitutional r
 
 ## Prerequisites
 - Android Studio Iguana+ with Android SDK 36 installed.
-- Pixel 7 (or emulator API 34/36) for instrumentation tests.
+- Connected device via adb.
 - Clean checkout of branch `004-fixes-and-inconsistencies` with Gradle wrapper configured.
 - Test credentials for cloud fallback stored as environment variables (will be migrated to encrypted storage during Scenario 2).
 

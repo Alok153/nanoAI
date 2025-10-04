@@ -35,15 +35,23 @@ import com.vjaykrsna.nanoai.ui.components.OnboardingTooltip
 import com.vjaykrsna.nanoai.ui.components.PrimaryActionCard
 import kotlin.text.titlecase
 
+data class HomeTooltipCallbacks(
+  val onDismiss: () -> Unit,
+  val onHelp: () -> Unit,
+  val onDontShowAgain: () -> Unit,
+)
+
+data class HomeScreenCallbacks(
+  val onToggleTools: () -> Unit,
+  val onActionClick: (String) -> Unit,
+  val onRetryOffline: () -> Unit,
+  val tooltip: HomeTooltipCallbacks,
+)
+
 @Composable
 fun HomeScreen(
   state: HomeUiState,
-  onToggleTools: () -> Unit,
-  onActionClick: (String) -> Unit,
-  onTooltipDismiss: () -> Unit,
-  onTooltipHelp: () -> Unit,
-  onTooltipDontShow: () -> Unit,
-  onRetryOffline: () -> Unit,
+  callbacks: HomeScreenCallbacks,
   modifier: Modifier = Modifier,
 ) {
   Surface(modifier = modifier.fillMaxSize()) {
@@ -57,7 +65,7 @@ fun HomeScreen(
           HomeOfflineBanner(
             isOffline = state.offlineBannerVisible,
             queuedActionsCount = state.queuedActions,
-            onRetryOffline = onRetryOffline,
+            onRetryOffline = callbacks.onRetryOffline,
           )
         }
       }
@@ -65,7 +73,7 @@ fun HomeScreen(
       item("recent_actions_header") {
         HomeRecentActionsHeader(
           toolsExpanded = state.toolsExpanded,
-          onToggleTools = onToggleTools,
+          onToggleTools = callbacks.onToggleTools,
         )
       }
 
@@ -78,7 +86,7 @@ fun HomeScreen(
           HomeRecentActionCard(
             index = index,
             action = action,
-            onActionClick = onActionClick,
+            onActionClick = callbacks.onActionClick,
           )
         }
       }
@@ -88,13 +96,7 @@ fun HomeScreen(
       }
 
       if (state.tooltipEntryVisible) {
-        item("tooltip_entry") {
-          HomeTooltipEntry(
-            onTooltipDismiss = onTooltipDismiss,
-            onTooltipDontShow = onTooltipDontShow,
-            onTooltipHelp = onTooltipHelp,
-          )
-        }
+        item("tooltip_entry") { HomeTooltipEntry(callbacks.tooltip) }
       }
     }
   }
@@ -192,9 +194,7 @@ private fun HomeLatencyIndicator() {
 
 @Composable
 private fun HomeTooltipEntry(
-  onTooltipDismiss: () -> Unit,
-  onTooltipDontShow: () -> Unit,
-  onTooltipHelp: () -> Unit,
+  callbacks: HomeTooltipCallbacks,
 ) {
   Column(
     modifier =
@@ -204,9 +204,9 @@ private fun HomeTooltipEntry(
   ) {
     OnboardingTooltip(
       message = "Tip: Pin your favorite tools for quick access.",
-      onDismiss = onTooltipDismiss,
-      onDontShowAgain = onTooltipDontShow,
-      onHelp = onTooltipHelp,
+      onDismiss = callbacks.onDismiss,
+      onDontShowAgain = callbacks.onDontShowAgain,
+      onHelp = callbacks.onHelp,
     )
   }
 }
