@@ -31,13 +31,9 @@ import com.vjaykrsna.nanoai.ui.components.OnboardingTooltip
 @Composable
 fun WelcomeScreen(
   state: WelcomeUiState,
-  onGetStartedClick: () -> Unit,
-  onExplore: () -> Unit,
-  onSkip: () -> Unit,
-  onTooltipHelp: () -> Unit,
-  onTooltipDismiss: () -> Unit,
-  onTooltipDontShow: () -> Unit,
-  modifier: Modifier = Modifier
+  actions: WelcomePrimaryActions,
+  tooltipActions: WelcomeTooltipActions,
+  modifier: Modifier = Modifier,
 ) {
   Surface(modifier = modifier.fillMaxSize()) {
     val scrollState = rememberScrollState()
@@ -50,59 +46,109 @@ fun WelcomeScreen(
       horizontalAlignment = Alignment.CenterHorizontally,
       verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-      OfflineBanner(
+      WelcomeOfflineBanner(
         isOffline = state.offline,
-        queuedActions = 0,
-        onRetry = onGetStartedClick,
-        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+        onRetry = actions.onGetStarted,
       )
-      Text(
-        text = "Welcome${state.displayName?.let { ", $it" } ?: ""} to nanoAI",
-        style = MaterialTheme.typography.headlineMedium,
-        textAlign = TextAlign.Center,
-        modifier = Modifier.fillMaxWidth().testTag("welcome_hero_title").semantics { heading() },
-      )
-      Text(
-        text = "A focused interface for trustworthy AI workflows.",
-        style = MaterialTheme.typography.bodyLarge,
-        textAlign = TextAlign.Center,
-        modifier = Modifier.fillMaxWidth(),
-      )
+      WelcomeHero(displayName = state.displayName)
       Spacer(modifier = Modifier.height(16.dp))
-      Column(
-        modifier = Modifier.fillMaxWidth().semantics { contentDescription = "Welcome actions" },
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-      ) {
-        Button(
-          onClick = onGetStartedClick,
-          modifier = Modifier.fillMaxWidth().testTag("welcome_cta_get_started"),
-        ) {
-          Text("Get started", textAlign = TextAlign.Center)
-        }
-        OutlinedButton(
-          onClick = onExplore,
-          modifier = Modifier.fillMaxWidth().testTag("welcome_cta_explore"),
-        ) {
-          Text("Explore features", textAlign = TextAlign.Center)
-        }
-        TextButton(
-          onClick = onSkip,
-          enabled = state.skipEnabled,
-          modifier = Modifier.testTag("welcome_skip"),
-        ) {
-          Text("Skip for now")
-        }
-      }
+      WelcomePrimaryActionsSection(
+        skipEnabled = state.skipEnabled,
+        actions = actions,
+      )
       if (state.showOnboarding) {
-        OnboardingTooltip(
-          message = "Tip: You can customize theme and layout anytime.",
-          onDismiss = onTooltipDismiss,
-          onDontShowAgain = onTooltipDontShow,
-          onHelp = onTooltipHelp,
-          modifier = Modifier.fillMaxWidth(),
+        WelcomeTooltip(
+          tooltipActions = tooltipActions,
         )
       }
     }
   }
+}
+
+data class WelcomePrimaryActions(
+  val onGetStarted: () -> Unit = {},
+  val onExplore: () -> Unit = {},
+  val onSkip: () -> Unit = {},
+)
+
+data class WelcomeTooltipActions(
+  val onHelp: () -> Unit = {},
+  val onDismiss: () -> Unit = {},
+  val onDontShowAgain: () -> Unit = {},
+)
+
+@Composable
+private fun WelcomeOfflineBanner(
+  isOffline: Boolean,
+  onRetry: () -> Unit,
+) {
+  OfflineBanner(
+    isOffline = isOffline,
+    queuedActions = 0,
+    onRetry = onRetry,
+    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+  )
+}
+
+@Composable
+private fun WelcomeHero(displayName: String?) {
+  Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Text(
+      text = "Welcome${displayName?.let { ", $it" } ?: ""} to nanoAI",
+      style = MaterialTheme.typography.headlineMedium,
+      textAlign = TextAlign.Center,
+      modifier = Modifier.fillMaxWidth().testTag("welcome_hero_title").semantics { heading() },
+    )
+    Text(
+      text = "A focused interface for trustworthy AI workflows.",
+      style = MaterialTheme.typography.bodyLarge,
+      textAlign = TextAlign.Center,
+      modifier = Modifier.fillMaxWidth(),
+    )
+  }
+}
+
+@Composable
+private fun WelcomePrimaryActionsSection(
+  skipEnabled: Boolean,
+  actions: WelcomePrimaryActions,
+) {
+  Column(
+    modifier = Modifier.fillMaxWidth().semantics { contentDescription = "Welcome actions" },
+    horizontalAlignment = Alignment.CenterHorizontally,
+    verticalArrangement = Arrangement.spacedBy(12.dp),
+  ) {
+    Button(
+      onClick = actions.onGetStarted,
+      modifier = Modifier.fillMaxWidth().testTag("welcome_cta_get_started"),
+    ) {
+      Text("Get started", textAlign = TextAlign.Center)
+    }
+    OutlinedButton(
+      onClick = actions.onExplore,
+      modifier = Modifier.fillMaxWidth().testTag("welcome_cta_explore"),
+    ) {
+      Text("Explore features", textAlign = TextAlign.Center)
+    }
+    TextButton(
+      onClick = actions.onSkip,
+      enabled = skipEnabled,
+      modifier = Modifier.testTag("welcome_skip"),
+    ) {
+      Text("Skip for now")
+    }
+  }
+}
+
+@Composable
+private fun WelcomeTooltip(
+  tooltipActions: WelcomeTooltipActions,
+) {
+  OnboardingTooltip(
+    message = "Tip: You can customize theme and layout anytime.",
+    onDismiss = tooltipActions.onDismiss,
+    onDontShowAgain = tooltipActions.onDontShowAgain,
+    onHelp = tooltipActions.onHelp,
+    modifier = Modifier.fillMaxWidth(),
+  )
 }

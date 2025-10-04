@@ -54,107 +54,160 @@ fun HomeScreen(
     ) {
       if (state.offlineBannerVisible) {
         item("offline_banner") {
-          OfflineBanner(
+          HomeOfflineBanner(
             isOffline = state.offlineBannerVisible,
-            queuedActions = state.queuedActions,
-            onRetry = onRetryOffline,
-            modifier = Modifier.fillMaxWidth().testTag("offline_banner_container_wrapper"),
+            queuedActionsCount = state.queuedActions,
+            onRetryOffline = onRetryOffline,
           )
         }
       }
 
       item("recent_actions_header") {
-        Row(
-          modifier = Modifier.fillMaxWidth(),
-          horizontalArrangement = Arrangement.SpaceBetween,
-          verticalAlignment = Alignment.CenterVertically,
-        ) {
-          Text(
-            text = "Recent actions",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.testTag("home_recent_actions_header").semantics { heading() },
-          )
-          IconButton(
-            onClick = onToggleTools,
-            modifier =
-              Modifier.testTag("home_tools_toggle").semantics {
-                contentDescription =
-                  if (state.toolsExpanded) "Collapse tools panel" else "Expand tools panel"
-              },
-          ) {
-            Icon(
-              imageVector =
-                if (state.toolsExpanded) Icons.Default.KeyboardArrowUp
-                else Icons.Default.KeyboardArrowDown,
-              contentDescription = null,
-            )
-          }
-        }
+        HomeRecentActionsHeader(
+          toolsExpanded = state.toolsExpanded,
+          onToggleTools = onToggleTools,
+        )
       }
 
-      item("tools_panel_state") {
-        if (state.toolsExpanded) {
-          Text(
-            text = "Tools",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.testTag("home_tools_panel_expanded").semantics { heading() },
-          )
-        } else {
-          Text(
-            text = "Advanced tools hidden",
-            style = MaterialTheme.typography.bodySmall,
-            modifier =
-              Modifier.testTag("home_tools_panel_collapsed").semantics {
-                contentDescription =
-                  "Advanced tools are currently hidden. Activate the toggle to reveal tools."
-              },
-          )
-        }
-      }
+      item("tools_panel_state") { HomeToolsPanelState(toolsExpanded = state.toolsExpanded) }
 
       if (state.isHydrating) {
         item("home_skeleton") { HomeSkeleton(modifier = Modifier.testTag("home_skeleton_loader")) }
       } else {
         itemsIndexed(state.recentActions) { index, action ->
-          PrimaryActionCard(
-            title =
-              action.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() },
-            description = "Quick action",
-            tag = "home_recent_action_$index",
-            onClick = { onActionClick(action) },
+          HomeRecentActionCard(
+            index = index,
+            action = action,
+            onActionClick = onActionClick,
           )
         }
       }
 
       if (state.latencyIndicatorVisible) {
-        item("latency_indicator") {
-          Text(
-            text = "Response in under 100ms",
-            style = MaterialTheme.typography.labelMedium,
-            modifier = Modifier.testTag("home_latency_meter"),
-          )
-        }
+        item("latency_indicator") { HomeLatencyIndicator() }
       }
 
       if (state.tooltipEntryVisible) {
         item("tooltip_entry") {
-          Column(
-            modifier =
-              Modifier.fillMaxWidth().testTag("onboarding_tooltip_entry").semantics {
-                contentDescription = "Onboarding tips"
-              },
-          ) {
-            OnboardingTooltip(
-              message = "Tip: Pin your favorite tools for quick access.",
-              onDismiss = onTooltipDismiss,
-              onDontShowAgain = onTooltipDontShow,
-              onHelp = onTooltipHelp,
-            )
-          }
+          HomeTooltipEntry(
+            onTooltipDismiss = onTooltipDismiss,
+            onTooltipDontShow = onTooltipDontShow,
+            onTooltipHelp = onTooltipHelp,
+          )
         }
       }
     }
+  }
+}
+
+@Composable
+private fun HomeOfflineBanner(
+  isOffline: Boolean,
+  queuedActionsCount: Int,
+  onRetryOffline: () -> Unit,
+) {
+  OfflineBanner(
+    isOffline = isOffline,
+    queuedActions = queuedActionsCount,
+    onRetry = onRetryOffline,
+    modifier = Modifier.fillMaxWidth().testTag("offline_banner_container_wrapper"),
+  )
+}
+
+@Composable
+private fun HomeRecentActionsHeader(
+  toolsExpanded: Boolean,
+  onToggleTools: () -> Unit,
+) {
+  Row(
+    modifier = Modifier.fillMaxWidth(),
+    horizontalArrangement = Arrangement.SpaceBetween,
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    Text(
+      text = "Recent actions",
+      style = MaterialTheme.typography.titleLarge,
+      fontWeight = FontWeight.Bold,
+      modifier = Modifier.testTag("home_recent_actions_header").semantics { heading() },
+    )
+    IconButton(
+      onClick = onToggleTools,
+      modifier =
+        Modifier.testTag("home_tools_toggle").semantics {
+          contentDescription = if (toolsExpanded) "Collapse tools panel" else "Expand tools panel"
+        },
+    ) {
+      Icon(
+        imageVector =
+          if (toolsExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+        contentDescription = null,
+      )
+    }
+  }
+}
+
+@Composable
+private fun HomeToolsPanelState(toolsExpanded: Boolean) {
+  if (toolsExpanded) {
+    Text(
+      text = "Tools",
+      style = MaterialTheme.typography.titleMedium,
+      modifier = Modifier.testTag("home_tools_panel_expanded").semantics { heading() },
+    )
+  } else {
+    Text(
+      text = "Advanced tools hidden",
+      style = MaterialTheme.typography.bodySmall,
+      modifier =
+        Modifier.testTag("home_tools_panel_collapsed").semantics {
+          contentDescription =
+            "Advanced tools are currently hidden. Activate the toggle to reveal tools."
+        },
+    )
+  }
+}
+
+@Composable
+private fun HomeRecentActionCard(
+  index: Int,
+  action: String,
+  onActionClick: (String) -> Unit,
+) {
+  PrimaryActionCard(
+    title = action.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() },
+    description = "Quick action",
+    tag = "home_recent_action_$index",
+    onClick = { onActionClick(action) },
+  )
+}
+
+@Composable
+private fun HomeLatencyIndicator() {
+  Text(
+    text = "Response in under 100ms",
+    style = MaterialTheme.typography.labelMedium,
+    modifier = Modifier.testTag("home_latency_meter"),
+  )
+}
+
+@Composable
+private fun HomeTooltipEntry(
+  onTooltipDismiss: () -> Unit,
+  onTooltipDontShow: () -> Unit,
+  onTooltipHelp: () -> Unit,
+) {
+  Column(
+    modifier =
+      Modifier.fillMaxWidth().testTag("onboarding_tooltip_entry").semantics {
+        contentDescription = "Onboarding tips"
+      },
+  ) {
+    OnboardingTooltip(
+      message = "Tip: Pin your favorite tools for quick access.",
+      onDismiss = onTooltipDismiss,
+      onDontShowAgain = onTooltipDontShow,
+      onHelp = onTooltipHelp,
+    )
   }
 }
 

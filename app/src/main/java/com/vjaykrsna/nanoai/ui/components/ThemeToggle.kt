@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai.ui.components
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,8 +19,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
@@ -37,7 +41,8 @@ import kotlin.text.titlecase
 fun ThemeToggle(
   currentTheme: ThemePreference,
   onThemeChange: (ThemePreference) -> Unit,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
+  animationsEnabled: Boolean = true,
 ) {
   val haptics = LocalHapticFeedback.current
   val usingSystem = currentTheme == ThemePreference.SYSTEM
@@ -49,6 +54,35 @@ fun ThemeToggle(
         .semantics { contentDescription = "Theme toggle row" }
         .padding(vertical = 12.dp, horizontal = 16.dp),
   ) {
+    ThemeToggleHeader()
+    Spacer(modifier = Modifier.height(8.dp))
+    ThemeModeChips(
+      currentTheme = currentTheme,
+      usingSystem = usingSystem,
+      haptics = haptics,
+      onThemeChange = onThemeChange,
+    )
+    Spacer(modifier = Modifier.height(12.dp))
+    ThemePreferenceSwitch(
+      currentTheme = currentTheme,
+      usingSystem = usingSystem,
+      haptics = haptics,
+      onThemeChange = onThemeChange,
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+    ThemeStatusRow(
+      currentTheme = currentTheme,
+      animationsEnabled = animationsEnabled,
+    )
+    Spacer(
+      modifier = Modifier.fillMaxWidth().height(1.dp).testTag("theme_layout_stability_check"),
+    )
+  }
+}
+
+@Composable
+private fun ThemeToggleHeader() {
+  Column(modifier = Modifier.fillMaxWidth()) {
     Text(
       text = "Appearance",
       style = MaterialTheme.typography.titleMedium,
@@ -59,107 +93,159 @@ fun ThemeToggle(
       text = "Choose Light, Dark, or System default",
       style = MaterialTheme.typography.bodySmall,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
-      modifier = Modifier.fillMaxWidth(),
-    )
-    Spacer(modifier = Modifier.height(8.dp))
-    Row(
-      modifier = Modifier.fillMaxWidth(),
-      horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-      FilterChip(
-        selected = usingSystem,
-        onClick = {
-          haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-          onThemeChange(ThemePreference.SYSTEM)
-        },
-        label = { Text("System") },
-        leadingIcon = {
-          Icon(
-            imageVector = Icons.Filled.AutoMode,
-            contentDescription = null,
-          )
-        },
-        modifier =
-          Modifier.testTag("theme_toggle_option_system").semantics {
-            contentDescription = "System theme"
-            stateDescription = if (usingSystem) "Selected" else "Not selected"
-          },
-        colors = FilterChipDefaults.filterChipColors(),
-      )
-      FilterChip(
-        selected = !usingSystem && currentTheme == ThemePreference.LIGHT,
-        onClick = {
-          haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-          onThemeChange(ThemePreference.LIGHT)
-        },
-        label = { Text("Light") },
-        leadingIcon = { Icon(imageVector = Icons.Filled.LightMode, contentDescription = null) },
-        modifier =
-          Modifier.testTag("theme_toggle_option_light").semantics {
-            contentDescription = "Light theme"
-            stateDescription =
-              if (!usingSystem && currentTheme == ThemePreference.LIGHT) "Selected"
-              else "Not selected"
-          },
-      )
-      FilterChip(
-        selected = !usingSystem && currentTheme == ThemePreference.DARK,
-        onClick = {
-          haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-          onThemeChange(ThemePreference.DARK)
-        },
-        label = { Text("Dark") },
-        leadingIcon = { Icon(imageVector = Icons.Filled.DarkMode, contentDescription = null) },
-        modifier =
-          Modifier.testTag("theme_toggle_option_dark").semantics {
-            contentDescription = "Dark theme"
-            stateDescription =
-              if (!usingSystem && currentTheme == ThemePreference.DARK) "Selected"
-              else "Not selected"
-          },
-      )
-    }
-
-    Spacer(modifier = Modifier.height(12.dp))
-
-    val darkSelected = currentTheme == ThemePreference.DARK
-    Row(
       modifier =
-        Modifier.fillMaxWidth().semantics {
-          role = Role.Switch
-          stateDescription = if (darkSelected) "Dark mode enabled" else "Light mode enabled"
-        },
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-      Text("Dark mode", style = MaterialTheme.typography.bodyMedium)
-      Switch(
-        checked = darkSelected,
-        onCheckedChange = { checked ->
-          haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-          onThemeChange(if (checked) ThemePreference.DARK else ThemePreference.LIGHT)
-        },
-        enabled = !usingSystem,
-        modifier =
-          Modifier.testTag("theme_toggle_switch").semantics {
-            contentDescription = "Toggle dark theme"
-            stateDescription = if (darkSelected) "Dark" else "Light"
-          },
-      )
-    }
-
-    Spacer(modifier = Modifier.height(8.dp))
-    Text(
-      text =
-        "Current: ${
-                currentTheme.name.lowercase().replaceFirstChar { it.titlecase() }
-            }",
-      style = MaterialTheme.typography.bodySmall,
-      modifier = Modifier.testTag("theme_toggle_persistence_status"),
-    )
-
-    Spacer(
-      modifier = Modifier.fillMaxWidth().height(1.dp).testTag("theme_layout_stability_check"),
+        Modifier.fillMaxWidth().semantics { contentDescription = "Theme selection instructions" },
     )
   }
 }
+
+@Composable
+private fun ThemeModeChips(
+  currentTheme: ThemePreference,
+  usingSystem: Boolean,
+  haptics: HapticFeedback,
+  onThemeChange: (ThemePreference) -> Unit,
+) {
+  val options = remember {
+    listOf(
+      ThemeToggleOption(
+        preference = ThemePreference.SYSTEM,
+        label = "System",
+        icon = Icons.Filled.AutoMode,
+        description = "System theme",
+      ),
+      ThemeToggleOption(
+        preference = ThemePreference.LIGHT,
+        label = "Light",
+        icon = Icons.Filled.LightMode,
+        description = "Light theme",
+      ),
+      ThemeToggleOption(
+        preference = ThemePreference.DARK,
+        label = "Dark",
+        icon = Icons.Filled.DarkMode,
+        description = "Dark theme",
+      ),
+    )
+  }
+
+  Row(
+    modifier = Modifier.fillMaxWidth().semantics { contentDescription = "Theme options" },
+    horizontalArrangement = Arrangement.spacedBy(12.dp),
+  ) {
+    options.forEach { option ->
+      val isSelected = currentTheme == option.preference
+      ThemeModeChip(
+        option = option,
+        selected = isSelected,
+        onSelect = {
+          if (!isSelected) {
+            haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+            onThemeChange(option.preference)
+          }
+        },
+        usingSystem = usingSystem,
+      )
+    }
+  }
+}
+
+@Composable
+private fun ThemeModeChip(
+  option: ThemeToggleOption,
+  selected: Boolean,
+  onSelect: () -> Unit,
+  usingSystem: Boolean,
+) {
+  val stateDescriptionValue =
+    when {
+      option.preference == ThemePreference.SYSTEM -> if (usingSystem) "Selected" else "Not selected"
+      selected -> "Selected"
+      else -> "Not selected"
+    }
+
+  FilterChip(
+    selected = selected,
+    onClick = onSelect,
+    label = { Text(option.label) },
+    leadingIcon = { Icon(imageVector = option.icon, contentDescription = null) },
+    modifier =
+      Modifier.testTag("theme_toggle_option_${option.label.lowercase()}").semantics {
+        contentDescription = option.description
+        stateDescription = stateDescriptionValue
+      },
+    colors = FilterChipDefaults.filterChipColors(),
+  )
+}
+
+@Composable
+private fun ThemePreferenceSwitch(
+  currentTheme: ThemePreference,
+  usingSystem: Boolean,
+  haptics: HapticFeedback,
+  onThemeChange: (ThemePreference) -> Unit,
+) {
+  val darkSelected = currentTheme == ThemePreference.DARK
+
+  Row(
+    modifier =
+      Modifier.fillMaxWidth().semantics {
+        role = Role.Switch
+        contentDescription = "Toggle dark theme"
+        stateDescription = if (darkSelected) "Dark mode enabled" else "Light mode enabled"
+      },
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.SpaceBetween,
+  ) {
+    Text("Dark mode", style = MaterialTheme.typography.bodyMedium)
+    Switch(
+      checked = darkSelected,
+      onCheckedChange = { checked ->
+        val target = if (checked) ThemePreference.DARK else ThemePreference.LIGHT
+        if (target != currentTheme) {
+          haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+          onThemeChange(target)
+        }
+      },
+      enabled = !usingSystem,
+      modifier = Modifier.testTag("theme_toggle_switch"),
+    )
+  }
+}
+
+@Composable
+private fun ThemeStatusRow(
+  currentTheme: ThemePreference,
+  animationsEnabled: Boolean,
+) {
+  val statusText = "Current: ${currentTheme.displayName()}"
+
+  if (animationsEnabled) {
+    AnimatedContent(
+      targetState = statusText,
+      label = "theme_status_animation",
+    ) { animatedText ->
+      Text(
+        text = animatedText,
+        style = MaterialTheme.typography.bodySmall,
+        modifier = Modifier.testTag("theme_toggle_persistence_status"),
+      )
+    }
+  } else {
+    Text(
+      text = statusText,
+      style = MaterialTheme.typography.bodySmall,
+      modifier = Modifier.testTag("theme_toggle_persistence_status"),
+    )
+  }
+}
+
+private data class ThemeToggleOption(
+  val preference: ThemePreference,
+  val label: String,
+  val icon: ImageVector,
+  val description: String,
+)
+
+private fun ThemePreference.displayName(): String =
+  name.lowercase().replaceFirstChar { it.titlecase() }

@@ -8,6 +8,7 @@ import com.vjaykrsna.nanoai.model.catalog.network.dto.ManifestVerificationReques
 import com.vjaykrsna.nanoai.model.catalog.network.dto.ManifestVerificationResponseStatusDto
 import com.vjaykrsna.nanoai.model.catalog.network.dto.ManifestVerificationStatusDto
 import com.vjaykrsna.nanoai.model.catalog.network.dto.ModelManifestDto
+import com.vjaykrsna.nanoai.telemetry.TelemetryReporter
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -48,6 +49,7 @@ constructor(
   private val localDataSource: ModelCatalogLocalDataSource,
   private val json: Json,
   private val deviceIdentityProvider: DeviceIdentityProvider,
+  private val telemetryReporter: TelemetryReporter,
   private val clock: Clock = Clock.System,
 ) : ModelManifestRepository {
   override suspend fun refreshManifest(
@@ -97,14 +99,22 @@ constructor(
         onSuccess = { response ->
           when (response.status) {
             ManifestVerificationResponseStatusDto.ACCEPTED -> NanoAIResult.success(Unit)
-            ManifestVerificationResponseStatusDto.RETRY ->
-              NanoAIResult.recoverable(
-                message = "Verification deferred by server",
-                retryAfterSeconds =
-                  response.nextRetryAfterSeconds?.coerceIn(0, MAX_RETRY_AFTER_SECONDS)?.toLong(),
-                telemetryId = UUID.randomUUID().toString(),
-                context = mapOf("modelId" to modelId, "version" to version),
+            ManifestVerificationResponseStatusDto.RETRY -> {
+              val retryResult =
+                NanoAIResult.recoverable(
+                  message = "Verification deferred by server",
+                  retryAfterSeconds =
+                    response.nextRetryAfterSeconds?.coerceIn(0, MAX_RETRY_AFTER_SECONDS)?.toLong(),
+                  telemetryId = UUID.randomUUID().toString(),
+                  context = mapOf("modelId" to modelId, "version" to version),
+                )
+              telemetryReporter.report(
+                source = "ModelManifestRepository.reportVerification",
+                result = retryResult,
+                extraContext = mapOf("modelId" to modelId, "version" to version),
               )
+              retryResult
+            }
           }
         },
         onFailure = { error -> failure("Failed to report verification", modelId, error) },
@@ -128,34 +138,45 @@ constructor(
     message: String,
     modelId: String,
     error: Throwable,
-  ): NanoAIResult<T> =
-    when (error) {
-      is HttpException -> httpError(message, modelId, error)
-      is IllegalArgumentException ->
-        NanoAIResult.fatal(
-          message =
-            buildString {
-              append(message)
-              error.message
-                ?.takeIf { it.isNotBlank() }
-                ?.let {
-                  append(": ")
-                  append(it)
-                }
-            },
-          supportContact = SUPPORT_CONTACT,
-          telemetryId = UUID.randomUUID().toString(),
-          cause = error,
-        )
-      else ->
-        NanoAIResult.recoverable(
-          message = message,
-          retryAfterSeconds = DEFAULT_RETRY_AFTER_SECONDS,
-          telemetryId = UUID.randomUUID().toString(),
-          cause = error,
-          context = mapOf("modelId" to modelId),
-        )
+  ): NanoAIResult<T> {
+    if (error is HttpException) {
+      return httpError(message, modelId, error)
     }
+
+    val result: NanoAIResult<T> =
+      when (error) {
+        is IllegalArgumentException ->
+          NanoAIResult.fatal(
+            message =
+              buildString {
+                append(message)
+                error.message
+                  ?.takeIf { it.isNotBlank() }
+                  ?.let {
+                    append(": ")
+                    append(it)
+                  }
+              },
+            supportContact = SUPPORT_CONTACT,
+            telemetryId = UUID.randomUUID().toString(),
+            cause = error,
+          )
+        else ->
+          NanoAIResult.recoverable(
+            message = message,
+            retryAfterSeconds = DEFAULT_RETRY_AFTER_SECONDS,
+            telemetryId = UUID.randomUUID().toString(),
+            cause = error,
+            context = mapOf("modelId" to modelId),
+          )
+      }
+    telemetryReporter.report(
+      source = "ModelManifestRepository",
+      result = result as NanoAIResult<*>,
+      extraContext = mapOf("modelId" to modelId),
+    )
+    return result
+  }
 
   private fun <T> httpError(
     message: String,
@@ -163,23 +184,35 @@ constructor(
     exception: HttpException,
   ): NanoAIResult<T> {
     val errorEnvelope = decodeErrorEnvelope(exception)
-    return if (exception.code() in 400..499) {
-      NanoAIResult.fatal(
-        message = errorEnvelope?.message ?: message,
-        supportContact = SUPPORT_CONTACT,
-        telemetryId = errorEnvelope?.telemetryId ?: UUID.randomUUID().toString(),
-        cause = exception,
-      )
-    } else {
-      NanoAIResult.recoverable(
-        message = errorEnvelope?.message ?: message,
-        retryAfterSeconds =
-          errorEnvelope?.retryAfterSeconds?.toLong() ?: DEFAULT_RETRY_AFTER_SECONDS,
-        telemetryId = errorEnvelope?.telemetryId ?: UUID.randomUUID().toString(),
-        cause = exception,
-        context = errorEnvelope?.details ?: mapOf("modelId" to modelId),
-      )
-    }
+    val result: NanoAIResult<T> =
+      if (exception.code() in 400..499) {
+        NanoAIResult.fatal(
+          message = errorEnvelope?.message ?: message,
+          supportContact = SUPPORT_CONTACT,
+          telemetryId = errorEnvelope?.telemetryId ?: UUID.randomUUID().toString(),
+          cause = exception,
+        )
+      } else {
+        NanoAIResult.recoverable(
+          message = errorEnvelope?.message ?: message,
+          retryAfterSeconds =
+            errorEnvelope?.retryAfterSeconds?.toLong() ?: DEFAULT_RETRY_AFTER_SECONDS,
+          telemetryId = errorEnvelope?.telemetryId ?: UUID.randomUUID().toString(),
+          cause = exception,
+          context = errorEnvelope?.details ?: mapOf("modelId" to modelId),
+        )
+      }
+    telemetryReporter.report(
+      source = "ModelManifestRepository",
+      result = result as NanoAIResult<*>,
+      extraContext =
+        buildMap {
+          put("modelId", modelId)
+          put("statusCode", exception.code().toString())
+          errorEnvelope?.details?.let { putAll(it) }
+        },
+    )
+    return result
   }
 
   private fun decodeErrorEnvelope(exception: HttpException): ErrorEnvelopeDto? {

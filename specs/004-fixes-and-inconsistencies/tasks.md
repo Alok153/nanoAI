@@ -28,13 +28,13 @@
 - [X] **T021** Add `ModelManifestRepository` & Retrofit API in `app/src/main/java/com/vjaykrsna/nanoai/model/catalog/ModelManifestRepository.kt` bridging contracts endpoints with Room cache (prereq T016, T004–T006).
 - [X] **T022** Update Hilt modules (`app/src/main/java/com/vjaykrsna/nanoai/di/ModelModules.kt`) to provide new repositories, DAOs, EncryptedSecretStore, and migration initializer (prereq T014–T021).
 - [X] **T023** Refactor `NavigationScaffold` in `app/src/main/java/com/vjaykrsna/nanoai/ui/scaffold/NavigationScaffold.kt` into smaller composables with Material 3 semantics and reduced cyclomatic complexity (prereq T010).
-- [ ] **T024** Refactor `HomeScreen` in `app/src/main/java/com/vjaykrsna/nanoai/ui/home/HomeScreen.kt` splitting recent actions, offline banner, and latency indicator composables while keeping previews/test tags intact (prereq T010).
-- [ ] **T025** Refactor `WelcomeScreen` in `app/src/main/java/com/vjaykrsna/nanoai/ui/onboarding/WelcomeScreen.kt` extracting hero/CTA/tooltips components and aligning parameter bundles (prereq T011).
-- [ ] **T026** Refactor `SidebarContent` in `app/src/main/java/com/vjaykrsna/nanoai/ui/sidebar/SidebarContent.kt` to introduce `SidebarUiState` data class, reduce parameter lists, and add TalkBack semantics (prereq T011).
-- [ ] **T027** Refactor `ThemeToggle` in `app/src/main/java/com/vjaykrsna/nanoai/ui/settings/ThemeToggle.kt` into reusable sub-composables with accessibility labels and animation guards (prereq T011).
-- [ ] **T028** Add Room migration scripts and unit test in `app/src/test/java/com/vjaykrsna/nanoai/core/maintenance/db/MaintenanceMigrationsTest.kt` covering new entities and ensuring backward compatibility (prereq T014–T016).
-- [ ] **T029** Wire telemetry/error logging via sealed results in `app/src/main/java/com/vjaykrsna/nanoai/telemetry/TelemetryReporter.kt`, ensuring `RecoverableError` publishes retry hints (prereq T017, T020).
-- [ ] **T030 [P]** Update `docs/inconsistencies.md`, `docs/todo-next.md`, and `specs/004-fixes-and-inconsistencies/quickstart.md` to reflect resolved blockers, new migrations, and testing instructions (prereq T014–T029).
+- [X] **T024** Refactor `HomeScreen` in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/HomeScreen.kt` splitting recent actions, offline banner, and latency indicator composables while keeping previews/test tags intact (prereq T010).
+- [X] **T025** Refactor `WelcomeScreen` in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/WelcomeScreen.kt` extracting hero/CTA/tooltips components and aligning parameter bundles (prereq T011).
+- [X] **T026** Refactor `SidebarContent` in `app/src/main/java/com/vjaykrsna/nanoai/ui/sidebar/SidebarContent.kt` to introduce `SidebarUiState` data class, reduce parameter lists, and add TalkBack semantics (prereq T011).
+- [X] **T027** Refactor `ThemeToggle` in `app/src/main/java/com/vjaykrsna/nanoai/ui/components/ThemeToggle.kt` into reusable sub-composables with accessibility labels and animation guards (prereq T011).
+- [X] **T028** Add Room migration scripts and unit test in `app/src/test/java/com/vjaykrsna/nanoai/core/maintenance/db/MaintenanceMigrationsTest.kt` covering new entities and ensuring backward compatibility (prereq T014–T016).
+- [X] **T029** Wire telemetry/error logging via sealed results in `app/src/main/java/com/vjaykrsna/nanoai/telemetry/TelemetryReporter.kt`, ensuring `RecoverableError` publishes retry hints (prereq T017, T020).
+- [X] **T030 [P]** Update `docs/inconsistencies.md`, `docs/todo-next.md`, and `specs/004-fixes-and-inconsistencies/quickstart.md` to reflect resolved blockers, new migrations, and testing instructions (prereq T014–T029).
 - [ ] **T031** Execute quickstart scenarios end-to-end, capture detekt/ktlint reports, instrumentation results, and attach artifacts to PR notes (prereq T030).
 
 ## Dependencies

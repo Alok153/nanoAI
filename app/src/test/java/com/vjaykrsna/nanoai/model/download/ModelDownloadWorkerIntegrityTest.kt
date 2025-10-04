@@ -16,6 +16,7 @@ import com.vjaykrsna.nanoai.model.catalog.network.dto.ManifestVerificationReques
 import com.vjaykrsna.nanoai.model.catalog.network.dto.ManifestVerificationResponseDto
 import com.vjaykrsna.nanoai.model.catalog.network.dto.ManifestVerificationResponseStatusDto
 import com.vjaykrsna.nanoai.model.catalog.network.dto.ModelManifestDto
+import com.vjaykrsna.nanoai.telemetry.TelemetryReporter
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Clock
@@ -41,12 +42,14 @@ class ModelDownloadWorkerIntegrityTest {
       override fun deviceId(): String = "device-test"
     }
   private val fakeService = FakeModelCatalogService()
+  private val telemetryReporter = TelemetryReporter()
   private val repository =
     ModelManifestRepositoryImpl(
       service = fakeService,
       localDataSource = localDataSource,
       json = json,
       deviceIdentityProvider = fakeDeviceIdProvider,
+      telemetryReporter = telemetryReporter,
       clock = clock,
     )
 

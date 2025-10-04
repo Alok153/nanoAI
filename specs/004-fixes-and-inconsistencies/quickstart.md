@@ -4,7 +4,7 @@
 **Date**: 2025-10-03  
 
 ## Overview
-Follow this guide to validate that the stabilization work meets constitutional requirements: static analysis gates, secure secrets storage, model download integrity, and deterministic tests for critical flows.
+Follow this guide to validate that the stabilization work meets constitutional requirements: static analysis gates, secure secrets storage, model download integrity, deterministic tests for critical flows, and regression coverage for the new maintenance migrations/telemetry reporting work.
 
 ## Prerequisites
 - Android Studio Iguana+ with Android SDK 36 installed.
@@ -31,13 +31,13 @@ a. Run ktlint + Detekt gates.
 
 **Expected**: Migration reports success, plaintext file deleted, encrypted store present, app restarts without crashes.
 
-## Scenario 3: Model Download Integrity
-1. Start `MockModelCatalogServer` (see instrumentation test utility) or run `./gradlew app:connectedAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.vjaykrsna.nanoai.model.ModelDownloadIntegrityTest`.
-2. Observe logs: `ModelDownloadWorker` fetches manifest, validates SHA-256 before install.
+## Scenario 3: Model Download Integrity & Telemetry
+1. Start `MockModelCatalogServer` (see instrumentation test utility) or run `./gradlew app:connectedAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.vjaykrsna.nanoai.model.ModelDownloadScenarioTest`.
+2. Observe logs: `ModelDownloadWorker` fetches manifest, validates SHA-256 before install, and emits telemetry for successful downloads via `TelemetryReporter`.
 3. Repeat test with corrupted package (set flag `catalog.corrupt=true`).
-4. Confirm worker returns `Result.retry()` up to 3 times, then surfaces `INTEGRITY_FAILURE` error to UI and quick actions to retry.
+4. Confirm worker returns `Result.retry()` up to 3 times, records each retry in telemetry with `RecoverableError` IDs, then surfaces `INTEGRITY_FAILURE` error to UI and quick actions to retry.
 
-**Expected**: Happy path installs model; corrupted path produces decline message and no corrupted file saved.
+**Expected**: Happy path installs model and logs `download.success`; corrupted path produces decline message, telemetry with retry hints, and no corrupted file saved.
 
 ## Scenario 4: Offline Persona Flow
 1. Disable network (airplane mode) before launching the app.
@@ -58,7 +58,14 @@ a. Run ktlint + Detekt gates.
 2. Scenario covers sealed `NanoAIResult` handling when local runtime declines due to low memory.
 3. Ensure `RecoverableError` path logs telemetry ID and surfaces actionable retry instructions.
 
-**Expected**: Tests pass, error envelope displayed in UI snapshot test.
+**Expected**: Tests pass, error envelope displayed in UI snapshot test, and telemetry stream includes `cloud_fallback.recoverable` entries.
+
+## Scenario 7: Maintenance Schema Migrations
+1. Run `./gradlew app:testDebugUnitTest --tests "com.vjaykrsna.nanoai.core.maintenance.db.MaintenanceMigrationsTest"`.
+2. Confirm the test verifies the new `RepoMaintenanceTaskEntity`, `CodeQualityMetricEntity`, and `ModelPackageEntity` schema migrations.
+3. Inspect the generated schema under `app/schemas/` to ensure the migration file for the latest version matches expectations.
+
+**Expected**: Migration test passes and the schema reflects newly added tables/columns without data loss.
 
 ## Automation & Tooling
 - **Unit tests**: `./gradlew testDebugUnitTest`

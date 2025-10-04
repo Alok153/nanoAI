@@ -17,6 +17,7 @@ import com.vjaykrsna.nanoai.feature.uiux.domain.ToggleCompactModeUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.UpdateThemePreferenceUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlin.jvm.JvmName
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -29,7 +30,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
-import kotlin.jvm.JvmName
 
 private const val FLOW_STOP_TIMEOUT_MS = 5_000L
 

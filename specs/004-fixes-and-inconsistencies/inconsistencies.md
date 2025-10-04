@@ -2,6 +2,12 @@
 
 This document catalogs inconsistencies identified across the codebase, including static analysis issues from Detekt, code style violations, architectural mismatches, potential bugs, unimplemented features (from TODOs), and gaps relative to specs. Issues are categorized for prioritization. Fixes should address high-priority items first to improve maintainability, reliability, and completeness.
 
+## Recent Resolutions (2025-10-04)
+- **UI Complexity Refactors**: `HomeScreen`, `WelcomeScreen`, `SidebarContent`, and `ThemeToggle` have been decomposed into focused composables with shared parameter bundles, bringing them under Detekt `LongMethod`/`LongParameterList` thresholds and improving TalkBack semantics.
+- **Telemetry Cohesion**: `TelemetryReporter` now centralizes event emission and is wired into `ModelDownloadWorker` and `ModelManifestRepository`, closing the gap for consistent `RecoverableError` reporting noted under Error Handling.
+- **Maintenance Migrations**: Room migrations for maintenance entities include automated coverage via `MaintenanceMigrationsTest`, preventing future regressions called out in Testing Gaps.
+- **Quickstart Guidance**: Documentation refreshed to align Scenarios 3 and 7 with the new telemetry expectations and migration validation commands.
+
 ## 1. Static Analysis (Detekt) Issues
 Detekt reported 1062 weighted issues. Key categories and examples:
 

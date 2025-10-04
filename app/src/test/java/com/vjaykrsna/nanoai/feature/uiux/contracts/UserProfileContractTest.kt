@@ -72,7 +72,6 @@ class UserProfileContractTest {
     assertThat(body.themePreference).isEqualTo("LIGHT")
 
     assertRequestMatchesOpenApi(server.takeRequest())
-
   }
 
   private fun assertRequestMatchesOpenApi(request: RecordedRequest) {

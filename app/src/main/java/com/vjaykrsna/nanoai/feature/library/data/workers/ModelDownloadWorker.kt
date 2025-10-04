@@ -1,7 +1,6 @@
 package com.vjaykrsna.nanoai.feature.library.data.workers
 
 import android.content.Context
-import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
@@ -14,6 +13,7 @@ import com.vjaykrsna.nanoai.feature.library.model.InstallState
 import com.vjaykrsna.nanoai.model.catalog.DownloadManifest
 import com.vjaykrsna.nanoai.model.catalog.ModelManifestRepository
 import com.vjaykrsna.nanoai.model.catalog.VerificationOutcome
+import com.vjaykrsna.nanoai.telemetry.TelemetryReporter
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import java.io.File
@@ -41,8 +41,6 @@ private const val KEY_ERROR_RETRY_AFTER = "ERROR_RETRY_AFTER"
 private const val KEY_ERROR_CONTEXT = "ERROR_CONTEXT"
 private const val ERROR_TYPE_RECOVERABLE = "recoverable"
 private const val ERROR_TYPE_FATAL = "fatal"
-private const val TAG = "ModelDownloadWorker"
-
 /**
  * WorkManager worker that downloads model artifacts after fetching signed manifests and enforcing
  * integrity checks.
@@ -57,6 +55,7 @@ constructor(
   private val modelPackageDao: ModelPackageDao,
   private val okHttpClient: OkHttpClient,
   private val modelManifestRepository: ModelManifestRepository,
+  private val telemetryReporter: TelemetryReporter,
 ) : CoroutineWorker(appContext, workerParams) {
 
   override suspend fun doWork(): Result =
@@ -262,7 +261,19 @@ constructor(
     downloadTaskDao.updateStatusWithError(taskId, DownloadStatus.FAILED, error.message)
     modelPackageDao.updateInstallState(modelId, InstallState.ERROR, Clock.System.now())
     markTaskFinished(taskId)
-    return if (shouldRetry()) {
+    val willRetry = shouldRetry()
+    telemetryReporter.report(
+      source = "ModelDownloadWorker",
+      result = error,
+      extraContext =
+        mapOf(
+          "taskId" to taskId,
+          "modelId" to modelId,
+          "attempt" to runAttemptCount.toString(),
+          "willRetry" to willRetry.toString(),
+        ),
+    )
+    return if (willRetry) {
       Result.retry()
     } else {
       Result.failure(resultData(error))
@@ -277,6 +288,16 @@ constructor(
     downloadTaskDao.updateStatusWithError(taskId, DownloadStatus.FAILED, error.message)
     modelPackageDao.updateInstallState(modelId, InstallState.ERROR, Clock.System.now())
     markTaskFinished(taskId)
+    telemetryReporter.report(
+      source = "ModelDownloadWorker",
+      result = error,
+      extraContext =
+        mapOf(
+          "taskId" to taskId,
+          "modelId" to modelId,
+          "attempt" to runAttemptCount.toString(),
+        ),
+    )
     return Result.failure(resultData(error))
   }
 
@@ -320,9 +341,27 @@ constructor(
     ) {
       is NanoAIResult.Success -> Unit
       is NanoAIResult.RecoverableError ->
-        Log.w(TAG, "Verification deferred: ${result.message} context=${result.context}")
+        telemetryReporter.report(
+          source = "ModelDownloadWorker.reportVerification",
+          result = result,
+          extraContext =
+            mapOf(
+              "modelId" to modelId,
+              "version" to manifest.version,
+              "outcome" to outcome.name,
+            ),
+        )
       is NanoAIResult.FatalError ->
-        Log.e(TAG, "Verification failed: ${result.message}", result.cause)
+        telemetryReporter.report(
+          source = "ModelDownloadWorker.reportVerification",
+          result = result,
+          extraContext =
+            mapOf(
+              "modelId" to modelId,
+              "version" to manifest.version,
+              "outcome" to outcome.name,
+            ),
+        )
     }
   }
 

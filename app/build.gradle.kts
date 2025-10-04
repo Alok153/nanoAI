@@ -185,6 +185,8 @@ dependencies {
   testImplementation(libs.networknt.json.schema.validator)
   testImplementation(libs.mockwebserver)
   testImplementation(libs.androidx.work.testing)
+  testImplementation(libs.androidx.junit)
+  testImplementation(libs.androidx.test.core)
 
   // Instrumentation Testing
   androidTestImplementation(libs.androidx.junit)
