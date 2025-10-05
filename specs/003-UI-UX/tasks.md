@@ -4,23 +4,23 @@
 **Prerequisites**: plan.md (required), research.md, data-model.md, contracts/, quickstart.md
 
 ## Phase 3.1: Setup
-- [ ] T001 Update Compose/navigation dependencies and enable Compose metrics exports in `app/build.gradle.kts` to support the unified shell instrumentation.  
+- [X] T001 Update Compose/navigation dependencies and enable Compose metrics exports in `app/build.gradle.kts` to support the unified shell instrumentation.  
   _Depends on_: —
-- [ ] T002 Create placeholder shell entry points (`ShellStateRepository`, `ShellViewModel`, `NanoShellScaffold`) under `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/` with `TODO()` bodies so contract tests can compile.  
+- [X] T002 Create placeholder shell entry points (`ShellStateRepository`, `ShellViewModel`, `NanoShellScaffold`) under `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/` with `TODO()` bodies so contract tests can compile.  
   _Depends on_: T001
 
 ## Phase 3.2: Tests First (TDD)
-- [ ] T003 [P] Author failing unit tests in `app/src/test/java/com/vjaykrsna/nanoai/feature/uiux/presentation/ShellViewModelTest.kt` covering all intents from `contracts/shell-interactions.md`.  
+- [X] T003 [P] Author failing unit tests in `app/src/test/java/com/vjaykrsna/nanoai/feature/uiux/presentation/ShellViewModelTest.kt` covering all intents from `contracts/shell-interactions.md`.  
   _Depends on_: T002
-- [ ] T004 [P] Add failing Compose instrumentation tests in `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/CommandPaletteComposeTest.kt` per `contracts/command-palette-ui-tests.md`.  
+- [X] T004 [P] Add failing Compose instrumentation tests in `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/CommandPaletteComposeTest.kt` per `contracts/command-palette-ui-tests.md`.  
   _Depends on_: T002
-- [ ] T005 [P] Add failing offline/progress instrumentation tests in `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/OfflineProgressTest.kt` per `contracts/offline-progress.md`.  
+- [X] T005 [P] Add failing offline/progress instrumentation tests in `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/OfflineProgressTest.kt` per `contracts/offline-progress.md`.  
   _Depends on_: T002
-- [ ] T006 [P] Write Home Hub flow Compose test in `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/HomeHubFlowTest.kt` validating acceptance scenarios from spec (grid launch within two taps, recent activity).  
+- [X] T006 [P] Write Home Hub flow Compose test in `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/HomeHubFlowTest.kt` validating acceptance scenarios from spec (grid launch within two taps, recent activity).  
   _Depends on_: T002
-- [ ] T007 [P] Write adaptive layout Compose test in `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/AdaptiveShellTest.kt` asserting `WindowSizeClass` driven drawer behavior and accessibility focus.  
+- [X] T007 [P] Write adaptive layout Compose test in `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/AdaptiveShellTest.kt` asserting `WindowSizeClass` driven drawer behavior and accessibility focus.  
   _Depends on_: T002
-- [ ] T008 Update macrobenchmark scenario in `macrobenchmark/src/main/java/com/vjaykrsna/nanoai/macrobenchmark/NavigationBenchmarks.kt` to capture Home Hub launch + mode switch latency budgets (<100 ms interactions).  
+- [X] T008 Update macrobenchmark scenario in `macrobenchmark/src/main/java/com/vjaykrsna/nanoai/macrobenchmark/NavigationBenchmarks.kt` to capture Home Hub launch + mode switch latency budgets (<100 ms interactions).  
   _Depends on_: T003–T007
 
 ## Phase 3.3: Core Implementation (only after tests fail)
