@@ -198,13 +198,7 @@ private fun rememberNavigationHandlers(
       }
     }
 
-  val onCloseDrawer =
-    remember(drawerState, scope) {
-      {
-        scope.launch { drawerState.close() }
-        Unit
-      }
-    }
+  val onCloseDrawer = remember(drawerState, scope) { { scope.launch { drawerState.close() } } }
 
   val onDrawerToggle =
     remember(drawerState, scope) {
@@ -216,7 +210,6 @@ private fun rememberNavigationHandlers(
             drawerState.close()
           }
         }
-        Unit
       }
     }
 

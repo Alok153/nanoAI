@@ -1,15 +1,15 @@
 package com.vjaykrsna.nanoai.core.runtime
 
 import android.content.Context
+import com.google.mediapipe.tasks.genai.llminference.LlmInference
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import java.io.FileNotFoundException
-import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.time.ExperimentalTime
-import kotlin.time.measureTimedValue
+import kotlin.time.measureTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -27,6 +27,8 @@ constructor(
   @ApplicationContext private val context: Context,
 ) : LocalModelRuntime {
   private val modelDirectory: File by lazy { File(context.filesDir, "models") }
+
+  private var llmInference: LlmInference? = null
 
   override suspend fun isModelReady(modelId: String): Boolean =
     withContext(Dispatchers.IO) { modelFile(modelId).exists() }
@@ -48,13 +50,19 @@ constructor(
         )
       }
 
-      // TODO(NANO-421): Replace synthesis with actual MediaPipe LiteRT inference pipeline.
-      val timedValue = measureTimedValue { synthesizeResponse(request) }
+      initializeInference(request)
+
+      val prompt =
+        if (request.systemPrompt.isNullOrBlank()) request.prompt
+        else "${request.systemPrompt}\n\n${request.prompt}"
+
+      var resultText = ""
+      val latency = measureTime { resultText = llmInference?.generateResponse(prompt) ?: "" }
 
       Result.success(
         LocalGenerationResult(
-          text = timedValue.value,
-          latencyMs = timedValue.duration.inWholeMilliseconds,
+          text = resultText,
+          latencyMs = latency.inWholeMilliseconds,
           metadata =
             mapOf(
               "modelId" to request.modelId,
@@ -68,20 +76,15 @@ constructor(
 
   private fun modelFile(modelId: String): File = File(modelDirectory, "$modelId.bin")
 
-  private fun synthesizeResponse(request: LocalGenerationRequest): String {
-    val systemContext = request.systemPrompt?.takeIf { it.isNotBlank() }?.let { "$it\n\n" } ?: ""
-    val cappedPrompt = request.prompt.trim().ifBlank { "No prompt provided." }
-    val hint =
-      buildString {
-          request.temperature?.let { append("(temp=${String.format(Locale.US, "%.2f", it)}) ") }
-          request.topP?.let { append("(topP=${String.format(Locale.US, "%.2f", it)}) ") }
-        }
-        .trim()
-
-    val header = "[Local:${request.modelId}]"
-    return listOf(header, hint, systemContext + cappedPrompt)
-      .filter { it.isNotBlank() }
-      .joinToString(separator = " ")
-      .trim()
+  private fun initializeInference(request: LocalGenerationRequest) {
+    if (llmInference == null) {
+      val options =
+        LlmInference.LlmInferenceOptions.builder()
+          .setModelPath(modelFile(request.modelId).absolutePath)
+          .setMaxTokens(request.maxOutputTokens ?: 1024)
+          .setTemperature(request.temperature ?: 0.7f)
+          .build()
+      llmInference = LlmInference.createFromOptions(context, options)
+    }
   }
 }

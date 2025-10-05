@@ -20,7 +20,11 @@ import dagger.assisted.AssistedInject
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.net.URL
+import java.security.KeyFactory
 import java.security.MessageDigest
+import java.security.Signature
+import java.security.spec.X509EncodedKeySpec
 import java.util.Locale
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
@@ -249,7 +253,7 @@ constructor(
     return null
   }
 
-  private fun validateIntegrity(
+  private suspend fun validateIntegrity(
     file: File,
     manifest: DownloadManifest,
   ): NanoAIResult<String> {
@@ -268,11 +272,9 @@ constructor(
     }
 
     val checksum = calculateSha256(file)
-    return if (checksum.equals(manifest.checksumSha256, ignoreCase = true)) {
-      NanoAIResult.success(checksum)
-    } else {
+    if (!checksum.equals(manifest.checksumSha256, ignoreCase = true)) {
       file.delete()
-      NanoAIResult.recoverable(
+      return NanoAIResult.recoverable(
         message = "Checksum mismatch detected",
         retryAfterSeconds = 30L,
         context =
@@ -281,6 +283,49 @@ constructor(
             "actualChecksum" to checksum,
           ),
       )
+    }
+
+    if (manifest.signature != null && manifest.publicKeyUrl != null) {
+      val signatureVerified = verifySignature(file, manifest.signature, manifest.publicKeyUrl)
+      if (!signatureVerified) {
+        file.delete()
+        return NanoAIResult.recoverable(
+          message = "Signature verification failed",
+          retryAfterSeconds = 30L,
+          context = mapOf("modelId" to manifest.modelId),
+        )
+      }
+    }
+
+    return NanoAIResult.success(checksum)
+  }
+
+  private suspend fun verifySignature(
+    file: File,
+    signature: String,
+    publicKeyUrl: String
+  ): Boolean {
+    return withContext(Dispatchers.IO) {
+      try {
+        val keyBytes = URL(publicKeyUrl).readBytes()
+        val spec = X509EncodedKeySpec(keyBytes)
+        val kf = KeyFactory.getInstance("RSA")
+        val publicKey = kf.generatePublic(spec)
+
+        val sig = Signature.getInstance("SHA256withRSA")
+        sig.initVerify(publicKey)
+        file.inputStream().use { input ->
+          val buffer = ByteArray(DOWNLOAD_BUFFER_SIZE)
+          while (true) {
+            val read = input.read(buffer)
+            if (read == -1) break
+            sig.update(buffer, 0, read)
+          }
+        }
+        sig.verify(android.util.Base64.decode(signature, android.util.Base64.DEFAULT))
+      } catch (e: Exception) {
+        false
+      }
     }
   }
 

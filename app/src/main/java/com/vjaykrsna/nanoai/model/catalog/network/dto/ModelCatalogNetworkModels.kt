@@ -12,6 +12,7 @@ data class ModelManifestDto(
   val sizeBytes: Long,
   val downloadUrl: String,
   val signature: String? = null,
+  val publicKeyUrl: String? = null,
   val expiresAt: String? = null,
 )
 

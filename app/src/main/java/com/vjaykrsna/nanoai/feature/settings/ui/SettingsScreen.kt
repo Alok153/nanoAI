@@ -64,6 +64,7 @@ import com.vjaykrsna.nanoai.core.data.preferences.RetentionPolicy
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
 import com.vjaykrsna.nanoai.feature.settings.domain.ImportSummary
 import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsError
+import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsUiUxState
 import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsViewModel
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
@@ -73,6 +74,7 @@ import kotlinx.coroutines.flow.collectLatest
 fun SettingsScreen(modifier: Modifier = Modifier, viewModel: SettingsViewModel = hiltViewModel()) {
   val apiProviders by viewModel.apiProviders.collectAsState()
   val privacyPreferences by viewModel.privacyPreferences.collectAsState()
+  val uiUxState by viewModel.uiUxState.collectAsState()
 
   val snackbarHostState = remember { SnackbarHostState() }
   var showAddProviderDialog by remember { mutableStateOf(false) }
@@ -106,6 +108,7 @@ fun SettingsScreen(modifier: Modifier = Modifier, viewModel: SettingsViewModel =
       SettingsContentState(
         apiProviders = apiProviders,
         privacyPreferences = privacyPreferences,
+        uiUxState = uiUxState,
       ),
     snackbarHostState = snackbarHostState,
     actions = actions,
@@ -296,12 +299,14 @@ private fun createSettingsActions(
     },
     onTelemetryToggle = viewModel::setTelemetryOptIn,
     onRetentionPolicyChange = viewModel::setRetentionPolicy,
+    onDismissMigrationSuccess = viewModel::dismissMigrationSuccessNotification,
   )
 }
 
 private data class SettingsContentState(
   val apiProviders: List<APIProviderConfig>,
   val privacyPreferences: PrivacyPreference,
+  val uiUxState: SettingsUiUxState,
 )
 
 private data class SettingsScreenActions(
@@ -312,6 +317,7 @@ private data class SettingsScreenActions(
   val onExportBackupClick: () -> Unit,
   val onTelemetryToggle: (Boolean) -> Unit,
   val onRetentionPolicyChange: (RetentionPolicy) -> Unit,
+  val onDismissMigrationSuccess: () -> Unit,
 )
 
 @Composable
@@ -342,6 +348,11 @@ private fun SettingsScreenContent(
       modifier = Modifier.fillMaxSize().padding(innerPadding),
     ) {
       item { SettingsHeader() }
+
+      if (state.uiUxState.showMigrationSuccessNotification) {
+        item { MigrationSuccessCard(onDismiss = actions.onDismissMigrationSuccess) }
+      }
+
       item { ApiProvidersSectionHeader(hasProviders = state.apiProviders.isNotEmpty()) }
 
       items(
@@ -479,6 +490,40 @@ private fun PrivacySection(
       onTelemetryToggle = onTelemetryToggle,
       onRetentionPolicyChange = onRetentionPolicyChange,
     )
+  }
+}
+
+@Composable
+fun MigrationSuccessCard(onDismiss: () -> Unit, modifier: Modifier = Modifier) {
+  Card(
+    modifier = modifier.fillMaxWidth(),
+    colors =
+      CardDefaults.cardColors(
+        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+      ),
+  ) {
+    Column(
+      modifier = Modifier.padding(16.dp),
+      verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+      Text(
+        text = "Migration Successful",
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+      )
+      Text(
+        text =
+          "Your provider credentials have been migrated to a more secure storage. " +
+            "For enhanced security, please rotate your provider credentials.",
+        style = MaterialTheme.typography.bodyMedium,
+      )
+      TextButton(
+        onClick = onDismiss,
+        modifier = Modifier.align(Alignment.End),
+      ) {
+        Text("Dismiss")
+      }
+    }
   }
 }
 
