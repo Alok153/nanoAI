@@ -1,0 +1,85 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://nanoai.app/schemas/coverage-report.json",
+    "title": "CoverageReport",
+    "description": "Aggregated coverage metrics emitted after CI runs for nanoAI.",
+    "type": "object",
+    "required": [ "buildId", "generatedAt", "layers", "thresholds", "trend" ],
+    "properties": {
+        "buildId": {
+            "type": "string",
+            "description": "Unique identifier of the CI build (e.g., workflow run ID)."
+        },
+        "branch": {
+            "type": "string",
+            "description": "Git branch or tag associated with the build."
+        },
+        "generatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the report was produced."
+        },
+        "layers": {
+            "type": "object",
+            "description": "Coverage metrics grouped by application layer.",
+            "properties": {
+                "viewModel": { "$ref": "#/definitions/layerMetric" },
+                "ui": { "$ref": "#/definitions/layerMetric" },
+                "data": { "$ref": "#/definitions/layerMetric" }
+            },
+            "required": [ "viewModel", "ui", "data" ]
+        },
+        "thresholds": {
+            "type": "object",
+            "description": "Target percentage thresholds per layer.",
+            "properties": {
+                "viewModel": { "type": "number", "enum": [ 75 ] },
+                "ui": { "type": "number", "enum": [ 65 ] },
+                "data": { "type": "number", "enum": [ 70 ] }
+            },
+            "additionalProperties": false,
+            "required": [ "viewModel", "ui", "data" ]
+        },
+        "trend": {
+            "type": "array",
+            "description": "Historical coverage deltas per layer across recent builds.",
+            "items": {
+                "type": "object",
+                "required": [ "buildId", "layer", "coverage", "delta" ],
+                "properties": {
+                    "buildId": { "type": "string" },
+                    "layer": { "type": "string", "enum": [ "VIEW_MODEL", "UI", "DATA" ] },
+                    "coverage": { "type": "number", "minimum": 0, "maximum": 100 },
+                    "delta": { "type": "number" }
+                }
+            }
+        },
+        "riskRegister": {
+            "type": "array",
+            "description": "Open risks linked to this report.",
+            "items": {
+                "type": "object",
+                "required": [ "riskId", "layer", "severity", "status" ],
+                "properties": {
+                    "riskId": { "type": "string" },
+                    "layer": { "type": "string", "enum": [ "VIEW_MODEL", "UI", "DATA" ] },
+                    "severity": { "type": "string", "enum": [ "LOW", "MEDIUM", "HIGH", "CRITICAL" ] },
+                    "status": { "type": "string", "enum": [ "OPEN", "IN_PROGRESS", "RESOLVED", "DEFERRED" ] },
+                    "targetBuild": { "type": "string" },
+                    "mitigation": { "type": "string" }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "layerMetric": {
+            "type": "object",
+            "required": [ "coverage", "threshold", "status" ],
+            "properties": {
+                "coverage": { "type": "number", "minimum": 0, "maximum": 100 },
+                "threshold": { "type": "number", "minimum": 0, "maximum": 100 },
+                "status": { "type": "string", "enum": [ "BELOW_TARGET", "ON_TARGET", "EXCEEDS_TARGET" ] }
+            }
+        }
+    }
+}
