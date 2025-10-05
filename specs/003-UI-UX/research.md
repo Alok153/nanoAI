@@ -1,61 +1,50 @@
-# Research: UI/UX — Polished Product-Grade Experience
+# Phase 0 Research — UI/UX — Polished Product-Grade Experience
 
-**Feature**: 003-UI-UX  
-**Date**: 2025-10-02  
-**Research Focus**: Best practices for implementing polished UI/UX in Android using Jetpack Compose Material 3, including navigation, theming, accessibility, and performance.
+## Overview
+Assessed the existing nanoAI Android shell, current Compose screen implementations, and the desired UX vision captured in `overview.md`. Focus areas: adaptive navigation shell, global command/feedback systems, and offline/performance guarantees.
 
-## Findings
+## Decisions
 
-### Jetpack Compose Material 3 Implementation
-- **Decision**: Use Material 3 components (MaterialTheme, Card, Button, etc.) with custom design tokens for colors, typography, and shapes to ensure consistency.
-- **Rationale**: Material 3 provides built-in accessibility, theming support, and responsive design. Custom tokens allow branding alignment (minimalist, neutral palette).
-- **Alternatives Considered**: Custom design system from scratch (rejected due to maintenance overhead), Material 2 (outdated, lacks modern features).
+### 1. Adaptive Navigation Shell and Sidebars
+- **Decision**: Consolidate shell into a single `ModalNavigationDrawer` + `PermanentNavigationDrawer` implementation that switches based on `WindowSizeClass`, with Home Hub and mode screens presented inside a shared `Scaffold` managed by `feature/uiux`.
+- **Rationale**: Aligns with spec priorities for consistency and responsiveness; Material 3 guidance recommends modal drawers for compact screens and permanent drawers for wide layouts. A single shell reduces duplicated scaffolds across `feature/chat`, `feature/library`, and `feature/settings` while enabling shared accessibility and theming logic.
+- **Alternatives Considered**:
+  - Keep per-feature `Scaffold` compositions: rejected because it perpetuates inconsistent paddings, top-bar duplication, and makes command palette injection harder.
+  - Navigation rail only for large screens: rejected because right-sidebar (contextual controls) needs simultaneous surface; dual-drawer shell offers better affordance.
+- **References**: Jetpack Compose Material 3 navigation drawer docs (ModalNavigationDrawer, ModalDrawerSheet, PermanentNavigationDrawer) retrieved via Context7 on 2025-10-06.
 
-### Sidebar Navigation Pattern
-- **Decision**: Implement left-side persistent sidebar using NavigationDrawer or ModalNavigationDrawer, collapsible on mobile with DrawerState.
-- **Rationale**: Follows Material guidelines for navigation, supports deep linking, keyboard/screen reader accessible. Collapsible ensures mobile usability.
-- **Alternatives Considered**: Bottom navigation (not suitable for feature-rich app), tab layout (less scalable).
+### 2. Home Hub Layout & Mode Launch Targets
+- **Decision**: Implement the Home Hub as a responsive grid (2-column compact, 3-column medium, 4-column expanded) with quick actions row and recent activity list, backed by existing Room data for recents/history.
+- **Rationale**: Meets spec goal of reaching any mode within two interactions and leverages existing `History` data models. Grid scaling ensures calm but information-rich presentation and prepares for future mode additions.
+- **Alternatives Considered**:
+  - Linear list for modes: rejected because it slows access for larger catalogs and underutilizes wide layouts.
+  - Separate tabs per mode: rejected due to navigation friction and mismatch with sidebar-first architecture.
 
-### Theme Support (Light/Dark)
-- **Decision**: Use dynamic theming with ColorScheme, support system sync and manual toggle via DataStore preference.
-- **Rationale**: Material 3 ColorScheme handles light/dark automatically, ensures contrast compliance. DataStore for persistence.
-- **Alternatives Considered**: Static themes (no user choice), custom theme manager (unnecessary complexity).
+### 3. Global Command Palette & Progress Center
+- **Decision**: Introduce a command palette overlay triggered by keyboard shortcut and top search bar button, sourcing actions from navigation graph + recent jobs. Progress Center will reuse existing WorkManager download telemetry and inference job state, surfaced in a right-side drawer panel with filterable queue.
+- **Rationale**: Overview emphasizes keyboard-first navigation and unified job tracking. Reusing existing repositories avoids new persistence layers while centralizing feedback.
+- **Alternatives Considered**:
+  - Keep disparate snackbars/toasts: rejected because users currently lack a single place to monitor AI jobs or offline queues.
+  - Modal dialogs for progress: rejected for obstructing ongoing workflows.
 
-### Accessibility (WCAG 2.1 AA)
-- **Decision**: Use semantic properties (contentDescription, role), dynamic type scaling, TalkBack support, and test with Accessibility Scanner.
-- **Rationale**: Ensures inclusivity, meets legal requirements. Compose provides built-in support.
-- **Alternatives Considered**: Basic implementation (fails AA), third-party libraries (adds dependencies).
+### 4. Offline & Performance Safeguards
+- **Decision**: Maintain connectivity banner state within shared ViewModel using DataStore-backed preference for dismissal, ensure queued jobs persist via Room, and run macrobenchmark + Compose semantics accessibility tests as part of validation.
+- **Rationale**: Constitution requires offline readiness and measurable performance. Centralizing connectivity state stops duplication (currently each feature re-implements). Macrobenchmark ensures transitions respect <100 ms budgets.
+- **Alternatives Considered**:
+  - Feature-specific offline banners: rejected due to inconsistent messaging and higher maintenance.
+  - Skipping macrobenchmarks: rejected because UI refactor may affect start-up/tap latency.
 
-### Performance Optimizations
-- **Decision**: Use LazyColumn for lists, remember for state, avoid recompositions with keys, profile with Compose UI Tool.
-- **Rationale**: Prevents UI jank, meets FMP targets. Lazy loading for large content.
-- **Alternatives Considered**: Eager loading (higher memory), no profiling (risks performance issues).
+## Current State Audit Highlights
+- Each feature (`feature/chat/ui/ChatScreen`, etc.) defines its own `Scaffold`, leading to inconsistent paddings and no shared command palette injection.
+- `feature/sidebar` currently exposes a narrow Drawer implementation that lacks adaptive behavior and duplicates items between modes.
+- There is no centralized progress queue UI; downloads live in Model Library while generation jobs only show snackbars.
+- Offline handling is per-feature; banners missing in Chat and Code surfaces.
 
-### Offline UX and Local Storage
-- **Decision**: Use Room + DataStore for local-only storage, no remote sync for user preferences.
-- **Rationale**: Privacy-first approach, all user data stays on device, aligns with constitution's data stewardship principles.
-- **Alternatives Considered**: Cloud sync (rejected for privacy), no persistence (poor UX).
+## Validation & Tooling Notes
+- Adopt `calculateWindowSizeClass` in the shell ViewModel and provide Compose previews for compact/medium/expanded states.
+- Extend macrobenchmark module to cover Home Hub launch + mode switch to ensure budgets.
+- Compose testing: use `setContent` with `TestNavHostController` for verifying command palette navigation.
 
-### Onboarding and Help System
-- **Decision**: Single-screen tooltip onboarding with dismissible tips, persistent Help menu.
-- **Rationale**: Minimal friction, re-openable. Uses Compose's Popup or Dialog.
-- **Alternatives Considered**: Full tutorial (too intrusive), no help (poor discoverability).
-
-### Component Library
-- **Decision**: Create reusable composables (PrimaryButton, Card, Modal) in ui/components/.
-- **Rationale**: Ensures consistency, reduces duplication. Follows DRY principle.
-- **Alternatives Considered**: Inline components (hard to maintain), external library (custom branding).
-
-## Research Tasks (Short List)
-1. Verify Compose M3 theming best practices for dynamic color tokens and contrast in dark/light (source: Material docs).
-2. Identify quick FMP measurement approach suitable for CI (Benchmark + Macrobenchmark, or custom instrumentation to measure launch metrics).
-3. Confirm DataStore patterns for storing onboarding state and per-tip "Don't show again" flags.
-4. Review accessibility checklist for TalkBack and dynamic font sizing to meet WCAG AA.
-
-## Resolved Unknowns
-- All technical context items were clarified from project guidelines and best practices.
-- No external research needed; internal knowledge sufficient.
-
-## Output / Next Steps
-- No remaining NEEDS CLARIFICATION entries; Phase 1 (Design & Contracts) can proceed.
-- Produce `data-model.md`, `quickstart.md`, and `contracts/` artifacts in the specs directory.
+## Open Follow-ups
+- Confirm copywriting for command palette categories with product before implementation.
+- Validate if additional telemetry events are needed when palette actions trigger local inference.

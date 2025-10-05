@@ -1,103 +1,47 @@
-# Quickstart: UI/UX — Polished Product-Grade Experience
-
-**Feature**: 003-UI-UX  
-**Date**: 2025-10-02  
-
-## Overview
-Quickstart guide to validate the UI/UX implementation. Follow these steps to test the core user journeys.
+# Quickstart — UI/UX — Polished Product-Grade Experience
 
 ## Prerequisites
-- Android device/emulator with nanoAI app installed.
-- App in clean state (first launch).
+- Android Studio Ladybug (2025.2) with Arctic Fox compatible Compose tooling
+- Java 11 (corretto) installed and configured
+- Pixel 7 / emulator API 36 image with hardware keyboard enabled
+- Node of at least 8 GB RAM for macrobenchmark runs
 
-## Test Scenarios
+## Environment Setup
+1. Sync Gradle:
+   ```bash
+   ./gradlew tasks
+   ```
+2. Install git hooks & formatting:
+   ```bash
+   ./gradlew spotlessApply
+   ```
+3. Launch emulator or connect device (API 36+).
 
-### Scenario 1: First-Time User Welcome
-1. Open the app.
-2. Verify Welcome screen displays hero message and CTAs: Get started, Explore features.
-3. Tap "Get started" → Navigate to Home screen.
-4. Verify onboarding appears if enabled.
+## Running Tests
+- Unit + ViewModel tests (includes new shell specs):
+  ```bash
+  ./gradlew test
+  ```
+- Compose UI tests (command palette, offline banners):
+  ```bash
+  ./gradlew connectedAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.vjaykrsna.nanoai.shell.ShellUiTestSuite
+  ```
+- Macrobenchmark smoke (home hub launch + mode switch):
+  ```bash
+  ./gradlew :macrobenchmark:connectedAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.vjaykrsna.nanoai.macrobenchmark.NavigationBenchmarks
+  ```
 
-**Expected**: Clear, skimmable interface, no clutter.
+## Manual Verification Checklist
+- [ ] Launch app → confirm Home Hub shows grid of mode cards (2/3/4 columns depending on width) and quick actions row.
+- [ ] Toggle left sidebar via menu icon + keyboard shortcut — drawer animates within 100 ms and respects accessibility focus.
+- [ ] Invoke command palette (`Ctrl+K`) — overlay opens instantly, typing filters to "Image" + "New Chat" actions.
+- [ ] Start image generation while offline — job queued in progress center, offline banner surfaces with CTA.
+- [ ] Reconnect network — queued job resumes automatically, banner transitions to "Syncing" then disappears.
+- [ ] Open right contextual drawer for Chat — displays model selector + progress center stack, closing respects `Esc`.
+- [ ] Switch to Settings — layout reuses shell, sections match table in spec with consistent breadcrumbs.
+- [ ] Verify theme toggle toggles instantly and persists after process death.
 
-### Scenario 2: Home Screen Navigation
-1. From Home screen, verify single-column content with recent actions.
-2. Tap expand tools → Collapsible panel opens with advanced features.
-3. Interact with a recent action → Responds within 100ms.
-
-**Expected**: Prioritized actions, discoverable tools.
-
-### Scenario 3: Sidebar and Settings
-1. Open sidebar (swipe or button).
-2. Navigate to Settings.
-3. Verify options grouped with descriptions.
-4. Change a setting → Save/Undo available.
-
-**Expected**: Logical grouping, inline help.
-
-### Scenario 4: Theme Toggle
-1. In Settings, toggle theme.
-2. Verify instant switch, no layout jumps.
-3. Check contrast in both themes.
-
-**Expected**: Seamless theme support.
-
-### Scenario 5: Offline Mode
-1. Enable airplane mode.
-2. Perform an action.
-3. Verify offline banner, disabled features with messaging.
-
-**Expected**: Graceful degradation.
-
-### Scenario 6: Accessibility
-1. Enable TalkBack.
-2. Navigate screens using voice.
-3. Verify all controls accessible.
-
-**Expected**: WCAG 2.1 AA compliance.
-
-## Automation
-
-Run the focused instrumentation suites to validate UI contracts, scenarios, and visual snapshots:
-
-```bash
-./gradlew app:connectedAndroidTest \
-  -Pandroid.testInstrumentationRunnerArguments.class=com.vjaykrsna.nanoai.feature.uiux.scenario.FirstTimeWelcomeScenarioTest
-./gradlew app:connectedAndroidTest \
-  -Pandroid.testInstrumentationRunnerArguments.class=com.vjaykrsna.nanoai.feature.uiux.scenario.ThemeToggleScenarioTest
-./gradlew app:connectedAndroidTest \
-  -Pandroid.testInstrumentationRunnerArguments.class=com.vjaykrsna.nanoai.feature.uiux.visual.ThemeToggleVisualTest
-```
-
-Visual regression snapshots are written to `files/visual/uiux/` inside the app sandbox. Pull them for review with:
-
-```bash
-adb pull /data/data/com.vjaykrsna.nanoai/files/visual/uiux ./artifacts/theme-toggle
-```
-
-## Performance Validation
-- Measure FMP: Should be <= 300ms.
-- Interaction latency: <= 100ms.
-- Use Android Profiler to verify.
-
-**Offline Validation Notes**:
-- Toggle airplane mode before launching Scenario 5 to confirm the offline banner announces status changes (TalkBack should read "Offline status banner").
-- Queue one or two actions while offline, then reconnect and verify the banner dismisses automatically after retry.
-- Confirm the queued count increments and decrements correctly.
-
-## Automated Smoke Test (Recommended)
-- Add an instrumentation test that:
-  - Measures launch FMP and asserts p75 <= 300ms in lab environment.
-  - Verifies theme toggle persists preference across restarts.
-  - Confirms onboarding flow appears only for fresh installs.
-
-## Completion Criteria
-- All scenarios pass without errors.
-- UI feels polished and trustworthy.
-- No accessibility issues.
-
-## Expected Screenshots
-- Welcome screen (hero + CTAs) — annotate with light and dark themes.
-- Theme toggle component (light/dark snapshots from `ThemeToggleVisualTest`).
-- Offline banner state (with queued count).
-- Sidebar navigation with TalkBack focus order overlay.
+## Troubleshooting
+- Palette fails to open: ensure hardware keyboard is connected; fallback to search bar icon in top app bar.
+- Tests timing out on CI: run `adb shell settings put global window_animation_scale 0.0` before instrumentation to reduce variance.
+- Macrobenchmark requires Profile installer: first run debug build to warm caches (`./gradlew installBenchmark`).
