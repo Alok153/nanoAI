@@ -89,7 +89,8 @@ constructor(
   }
 
   fun retryPendingActions() {
-    observeUserProfile.refresh(UIUX_DEFAULT_USER_ID, force = true)
+    // No remote sync - all data is local
+    _uiState.update { it.copy(lastInteractedAction = "retry") }
   }
 
   override fun onCleared() {

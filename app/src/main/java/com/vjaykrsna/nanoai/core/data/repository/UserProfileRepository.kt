@@ -61,15 +61,6 @@ interface UserProfileRepository {
   /** Observe UI state snapshot (session restoration) as Flow. */
   fun observeUIStateSnapshot(userId: String): Flow<UIStateSnapshot?>
 
-  /** Sync local profile to remote (best-effort). Returns true if sync succeeded. */
-  suspend fun syncToRemote(userId: String): Boolean
-
-  /**
-   * Explicitly refresh the user profile from remote and persist results. Returns true when fresh
-   * data was saved successfully.
-   */
-  suspend fun refreshUserProfile(userId: String, force: Boolean = false): Boolean
-
   /** Debug/override hook for instrumentation tests to emulate offline mode. */
   suspend fun setOfflineOverride(isOffline: Boolean)
 }

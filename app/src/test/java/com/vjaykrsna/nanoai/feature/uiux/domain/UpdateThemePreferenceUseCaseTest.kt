@@ -42,7 +42,7 @@ class UpdateThemePreferenceUseCaseTest {
     val theme = UiUxDomainReflection.getProperty(updatedPreferences, "themePreference")
     assertThat(theme.toString()).isEqualTo("DARK")
 
-    assertThat(spy.invocations.any { it.contains("refresh", ignoreCase = true) }).isTrue()
+    // No remote sync - only local theme update
     assertThat(spy.invocations.any { it.contains("theme", ignoreCase = true) }).isTrue()
     advanceUntilIdle()
     themeJob.cancel()

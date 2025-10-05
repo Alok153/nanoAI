@@ -21,7 +21,6 @@ constructor(
   fun toggle(enabled: Boolean, userId: String = UIUX_DEFAULT_USER_ID) {
     scope.launch {
       repository.updateCompactMode(userId, enabled)
-      repository.refreshUserProfile(userId, force = true)
     }
   }
 

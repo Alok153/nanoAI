@@ -25,12 +25,10 @@ constructor(
 
   fun updateThemeForUser(
     userId: String,
-    themePreference: ThemePreference,
-    forceRefresh: Boolean = true
+    themePreference: ThemePreference
   ) {
     scope.launch {
       repository.updateThemePreference(userId, themePreference.name)
-      repository.refreshUserProfile(userId, force = forceRefresh)
     }
   }
 }

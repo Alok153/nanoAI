@@ -37,9 +37,6 @@ constructor(
 
     scope.launch {
       repository.recordOnboardingProgress(userId, snapshot, completed)
-      if (completed) {
-        repository.refreshUserProfile(userId, force = true)
-      }
     }
   }
 

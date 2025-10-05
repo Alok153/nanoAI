@@ -6,7 +6,7 @@
 ## Entities
 
 ### UserProfile
-Represents user-specific UI preferences and metadata.
+Represents user-specific UI preferences and metadata stored locally.
 
 **Fields**:
 - `id`: String (unique identifier, e.g., UUID)
@@ -19,6 +19,8 @@ Represents user-specific UI preferences and metadata.
 - `compactMode`: Boolean (default false, for advanced users)
 - `pinnedTools`: List<String> (list of tool IDs for quick access)
 - `savedLayouts`: List<LayoutSnapshot> (user-saved UI layouts)
+
+**Storage**: Local only (Room + DataStore)
 
 **Validation Rules**:
 - `id` must be non-empty

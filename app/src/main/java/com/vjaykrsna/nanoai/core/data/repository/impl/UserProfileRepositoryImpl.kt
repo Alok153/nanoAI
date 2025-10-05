@@ -9,22 +9,15 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferencesSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UserProfile
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
 import com.vjaykrsna.nanoai.feature.uiux.data.UserProfileLocalDataSource
-import com.vjaykrsna.nanoai.feature.uiux.data.UserProfileRemoteDataSource
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
-
-private const val REMOTE_FETCH_TIMEOUT_MS = 5_000L
 
 @Singleton
 @Suppress("TooManyFunctions") // Implements comprehensive repository interface
@@ -32,14 +25,23 @@ class UserProfileRepositoryImpl
 @Inject
 constructor(
   private val local: UserProfileLocalDataSource,
-  private val remote: UserProfileRemoteDataSource,
   @IoDispatcher private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : UserProfileRepository {
-  private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
   private val offlineState = MutableStateFlow(false)
 
   override fun observeUserProfile(userId: String): Flow<UserProfile?> =
-    local.observeUserProfile(userId).onStart { scope.launch { refreshUserProfile(userId) } }
+    local.observeUserProfile(userId).onStart {
+      // Ensure default profile exists on first access
+      withContext(ioDispatcher) {
+        if (local.getUserProfile(userId) == null) {
+          val defaultProfile = UserProfile.fromPreferences(
+            id = userId,
+            preferences = UiPreferencesSnapshot(),
+          )
+          local.saveUserProfile(defaultProfile)
+        }
+      }
+    }
 
   override fun observeOfflineStatus(): Flow<Boolean> = offlineState.asStateFlow()
 
@@ -100,28 +102,4 @@ constructor(
 
   override fun observeUIStateSnapshot(userId: String): Flow<UIStateSnapshot?> =
     local.observeUIStateSnapshot(userId)
-
-  override suspend fun syncToRemote(userId: String): Boolean =
-    withContext(ioDispatcher) {
-      runCatching {
-          val profile = local.getUserProfile(userId) ?: return@withContext false
-          remote.updateUserProfile(profile).isSuccess
-        }
-        .getOrElse { false }
-    }
-
-  override suspend fun refreshUserProfile(userId: String, force: Boolean): Boolean =
-    withContext(ioDispatcher) {
-      runCatching {
-          val result = withTimeout(REMOTE_FETCH_TIMEOUT_MS) { remote.fetchUserProfile() }
-          val profile = result.getOrNull()
-          if (profile != null) {
-            local.saveUserProfile(profile)
-            true
-          } else {
-            false
-          }
-        }
-        .getOrElse { false }
-    }
 }
