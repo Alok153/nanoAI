@@ -16,6 +16,7 @@ import org.robolectric.annotation.Config
 private const val TEST_DB = "maintenance-migration-test"
 private const val VERSION_2_IDENTITY = "e2a4721f193ffd510a2671baeaabeb9d"
 private const val VERSION_3_IDENTITY = "60b31829a0f49c3f9f070c9d12ef4d2e"
+private const val VERSION_4_IDENTITY = "042c7d4e5d78c94b26aa7c37d4a385fb"
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
@@ -79,6 +80,24 @@ class MaintenanceMigrationsTest {
     context.deleteDatabase(TEST_DB)
   }
 
+  @Test
+  fun migrate3To4_addsPublicKeyUrlColumn() {
+    val configuration = legacyConfiguration()
+
+    helperFactory.create(configuration).use { helper ->
+      helper.writableDatabase.use { db ->
+        db.execSQL("PRAGMA user_version = 2")
+        applyMigrationToVersion3(db)
+        seedLegacyManifest(db)
+        applyMigrationToVersion4(db)
+        assertHasPublicKeyColumn(db)
+        assertLegacyManifestHasNullPublicKey(db)
+      }
+    }
+
+    context.deleteDatabase(TEST_DB)
+  }
+
   private fun applyMigrationToVersion3(db: SupportSQLiteDatabase) {
     NanoAIDatabaseMigrations.MIGRATION_2_3.migrate(db)
     db.execSQL(RoomMasterTable.CREATE_QUERY)
@@ -89,6 +108,78 @@ class MaintenanceMigrationsTest {
       """
     )
     db.execSQL("PRAGMA user_version = 3")
+  }
+
+  private fun seedLegacyManifest(db: SupportSQLiteDatabase) {
+    db.execSQL(
+      """
+        INSERT INTO download_manifests (
+          model_id,
+          version,
+          checksum_sha256,
+          size_bytes,
+          download_url,
+          signature,
+          expires_at,
+          fetched_at,
+          release_notes
+        ) VALUES (
+          'persona-text-delta',
+          '1.0.0',
+          'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
+          524288000,
+          'https://example.com/model.zip',
+          NULL,
+          NULL,
+          1700000000000,
+          NULL
+        )
+      """
+        .trimIndent(),
+    )
+  }
+
+  private fun assertHasPublicKeyColumn(db: SupportSQLiteDatabase) {
+    db.query("PRAGMA table_info(download_manifests)").use { cursor ->
+      val columns = mutableListOf<String>()
+      while (cursor.moveToNext()) {
+        columns += cursor.getString(cursor.getColumnIndexOrThrow("name"))
+      }
+
+      assertThat(columns)
+        .containsAtLeast(
+          "model_id",
+          "version",
+          "checksum_sha256",
+          "size_bytes",
+          "download_url",
+          "public_key_url",
+        )
+    }
+  }
+
+  private fun assertLegacyManifestHasNullPublicKey(db: SupportSQLiteDatabase) {
+    db
+      .query(
+        "SELECT public_key_url FROM download_manifests WHERE model_id = ?",
+        arrayOf("persona-text-delta"),
+      )
+      .use { cursor ->
+        assertThat(cursor.moveToFirst()).isTrue()
+        assertThat(cursor.isNull(0)).isTrue()
+      }
+  }
+
+  private fun applyMigrationToVersion4(db: SupportSQLiteDatabase) {
+    NanoAIDatabaseMigrations.MIGRATION_3_4.migrate(db)
+    db.execSQL(RoomMasterTable.CREATE_QUERY)
+    db.execSQL(
+      """
+        INSERT OR REPLACE INTO ${RoomMasterTable.TABLE_NAME} (id, identity_hash) 
+        VALUES(42, '$VERSION_4_IDENTITY')
+      """
+    )
+    db.execSQL("PRAGMA user_version = 4")
   }
 
   private fun legacyConfiguration(): SupportSQLiteOpenHelper.Configuration {

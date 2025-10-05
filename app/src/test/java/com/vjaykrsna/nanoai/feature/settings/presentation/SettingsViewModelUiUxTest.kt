@@ -16,10 +16,14 @@ class SettingsViewModelUiUxTest {
   @Test
   fun settingsViewModel_providesThemeTogglePersistenceHook() {
     val themeMethod =
-      SettingsViewModel::class.java.methods.firstOrNull { method ->
-        method.name.contains("Theme", ignoreCase = true) &&
-          method.parameterTypes.firstOrNull() == ThemePreference::class.java
-      }
+      runCatching {
+          SettingsViewModel::class.java.getDeclaredMethod(
+            "setThemePreference",
+            ThemePreference::class.java,
+          )
+        }
+        .getOrNull()
+
     assertNotNull(themeMethod)
     assertThat(themeMethod!!.returnType).isEqualTo(Void.TYPE)
   }
@@ -27,16 +31,18 @@ class SettingsViewModelUiUxTest {
   @Test
   fun settingsViewModel_exposesDensityToggles_andUndoSupport() {
     val densityMethod =
-      SettingsViewModel::class.java.methods.firstOrNull { method ->
-        method.name.contains("Density", ignoreCase = true) ||
-          method.name.contains("Compact", ignoreCase = true)
-      }
+      runCatching {
+          SettingsViewModel::class.java.getDeclaredMethod(
+            "applyDensityPreference",
+            java.lang.Boolean.TYPE,
+          )
+        }
+        .getOrNull()
     assertNotNull(densityMethod)
 
     val undoMethod =
-      SettingsViewModel::class.java.methods.firstOrNull { method ->
-        method.name.contains("Undo", ignoreCase = true)
-      }
+      runCatching { SettingsViewModel::class.java.getDeclaredMethod("undoUiPreferenceChange") }
+        .getOrNull()
     assertNotNull(undoMethod)
 
     assertThat(densityMethod!!.returnType).isEqualTo(Void.TYPE)

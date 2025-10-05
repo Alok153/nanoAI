@@ -1,3 +1,7 @@
+# Preserve SettingsViewModel UI/UX hooks referenced via reflection in tests and runtime
+-keep class com.vjaykrsna.nanoai.feature.settings.presentation.SettingsViewModel {
+	public *;
+}
 # Add project specific ProGuard rules here.
 # You can control the set of applied configuration files using the
 # proguardFiles setting in build.gradle.

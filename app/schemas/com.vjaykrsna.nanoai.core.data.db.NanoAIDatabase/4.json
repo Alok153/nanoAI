@@ -1,8 +1,8 @@
 {
   "formatVersion": 1,
   "database": {
-    "version": 3,
-  "identityHash": "60b31829a0f49c3f9f070c9d12ef4d2e",
+    "version": 4,
+    "identityHash": "042c7d4e5d78c94b26aa7c37d4a385fb",
     "entities": [
       {
         "tableName": "chat_threads",
@@ -1035,7 +1035,7 @@
       },
       {
         "tableName": "download_manifests",
-  "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`model_id` TEXT NOT NULL, `version` TEXT NOT NULL, `checksum_sha256` TEXT NOT NULL, `size_bytes` INTEGER NOT NULL, `download_url` TEXT NOT NULL, `signature` TEXT, `expires_at` INTEGER, `fetched_at` INTEGER NOT NULL, `release_notes` TEXT, PRIMARY KEY(`model_id`, `version`), FOREIGN KEY(`model_id`) REFERENCES `model_packages`(`model_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`model_id` TEXT NOT NULL, `version` TEXT NOT NULL, `checksum_sha256` TEXT NOT NULL, `size_bytes` INTEGER NOT NULL, `download_url` TEXT NOT NULL, `signature` TEXT, `public_key_url` TEXT, `expires_at` INTEGER, `fetched_at` INTEGER NOT NULL, `release_notes` TEXT, PRIMARY KEY(`model_id`, `version`), FOREIGN KEY(`model_id`) REFERENCES `model_packages`(`model_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "modelId",
@@ -1070,6 +1070,12 @@
           {
             "fieldPath": "signature",
             "columnName": "signature",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "publicKeyUrl",
+            "columnName": "public_key_url",
             "affinity": "TEXT",
             "notNull": false
           },
@@ -1146,7 +1152,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-  "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '60b31829a0f49c3f9f070c9d12ef4d2e')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '042c7d4e5d78c94b26aa7c37d4a385fb')"
     ]
   }
 }

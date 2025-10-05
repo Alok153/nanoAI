@@ -325,4 +325,30 @@ object NanoAIDatabaseMigrations {
         )
       }
     }
+
+  /** Migration from schema version 3 to 4 adding public key metadata for manifests. */
+  val MIGRATION_3_4: Migration =
+    @Suppress("MagicNumber")
+    object : Migration(3, 4) {
+      override fun migrate(database: SupportSQLiteDatabase) {
+        addPublicKeyUrlColumn(database)
+      }
+
+      private fun addPublicKeyUrlColumn(database: SupportSQLiteDatabase) {
+        var hasColumn = false
+        database.query("PRAGMA table_info('download_manifests')").use { cursor ->
+          val nameIndex = cursor.getColumnIndexOrThrow("name")
+          while (cursor.moveToNext()) {
+            if (cursor.getString(nameIndex).equals("public_key_url", ignoreCase = true)) {
+              hasColumn = true
+              break
+            }
+          }
+        }
+
+        if (!hasColumn) {
+          database.execSQL("ALTER TABLE download_manifests ADD COLUMN public_key_url TEXT")
+        }
+      }
+    }
 }
