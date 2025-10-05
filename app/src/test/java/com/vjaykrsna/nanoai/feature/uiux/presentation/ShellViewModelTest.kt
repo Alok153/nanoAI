@@ -5,6 +5,11 @@ import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.google.common.truth.Truth.assertThat
+import com.vjaykrsna.nanoai.core.data.repository.UserProfileRepository
+import com.vjaykrsna.nanoai.core.domain.model.uiux.LayoutSnapshot
+import com.vjaykrsna.nanoai.core.domain.model.uiux.UIStateSnapshot
+import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferencesSnapshot
+import com.vjaykrsna.nanoai.core.domain.model.uiux.UserProfile
 import com.vjaykrsna.nanoai.feature.uiux.data.ShellStateRepository
 import com.vjaykrsna.nanoai.feature.uiux.state.CommandAction
 import com.vjaykrsna.nanoai.feature.uiux.state.CommandCategory
@@ -28,6 +33,7 @@ import java.time.Instant
 import java.util.UUID
 import kotlin.test.Test
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -136,7 +142,7 @@ class ShellViewModelTest {
     initialMode: ModeId = ModeId.HOME,
     initialConnectivity: ConnectivityStatus = ConnectivityStatus.ONLINE,
     initialJobs: List<ProgressJob> = emptyList(),
-  ) : ShellStateRepository() {
+  ) : ShellStateRepository(NoopUserProfileRepository()) {
     private val testWindowSizeClass: WindowSizeClass =
       WindowSizeClass.calculateFromSize(DpSize(width = 600.dp, height = 800.dp))
     private val initialLayout =
@@ -269,5 +275,58 @@ class ShellViewModelTest {
     override suspend fun recordUndoPayload(payload: UndoPayload?) {
       _layout.value = _layout.value.copy(pendingUndoAction = payload)
     }
+  }
+}
+
+private class NoopUserProfileRepository : UserProfileRepository {
+  private val profileFlow = MutableStateFlow<UserProfile?>(null)
+  private val preferencesFlow = MutableStateFlow(UiPreferencesSnapshot())
+  private val uiStateFlow = MutableStateFlow<UIStateSnapshot?>(null)
+  private val offlineFlow = MutableStateFlow(false)
+
+  override fun observeUserProfile(userId: String): Flow<UserProfile?> = profileFlow
+
+  override fun observeOfflineStatus(): Flow<Boolean> = offlineFlow
+
+  override suspend fun getUserProfile(userId: String): UserProfile? = null
+
+  override fun observePreferences(): Flow<UiPreferencesSnapshot> = preferencesFlow
+
+  override suspend fun updateThemePreference(userId: String, themePreferenceName: String) = Unit
+
+  override suspend fun updateVisualDensity(userId: String, visualDensityName: String) = Unit
+
+  override suspend fun recordOnboardingProgress(
+    userId: String,
+    dismissedTips: Map<String, Boolean>,
+    completed: Boolean,
+  ) = Unit
+
+  override suspend fun updateCompactMode(userId: String, enabled: Boolean) = Unit
+
+  override suspend fun updatePinnedTools(userId: String, pinnedTools: List<String>) = Unit
+
+  override suspend fun saveLayoutSnapshot(userId: String, layout: LayoutSnapshot, position: Int) = Unit
+
+  override suspend fun deleteLayoutSnapshot(layoutId: String) = Unit
+
+  override fun observeUIStateSnapshot(userId: String): Flow<UIStateSnapshot?> = uiStateFlow
+
+  override suspend fun updateLeftDrawerOpen(userId: String, open: Boolean) = Unit
+
+  override suspend fun updateRightDrawerState(userId: String, open: Boolean, panel: String?) = Unit
+
+  override suspend fun updateActiveModeRoute(userId: String, route: String) = Unit
+
+  override suspend fun updateCommandPaletteVisibility(userId: String, visible: Boolean) = Unit
+
+  override suspend fun recordCommandPaletteRecent(commandId: String) = Unit
+
+  override suspend fun setCommandPaletteRecents(commandIds: List<String>) = Unit
+
+  override suspend fun setConnectivityBannerDismissed(dismissedAt: kotlinx.datetime.Instant?) = Unit
+
+  override suspend fun setOfflineOverride(isOffline: Boolean) {
+    offlineFlow.value = isOffline
   }
 }

@@ -1,5 +1,17 @@
 package com.vjaykrsna.nanoai.feature.uiux.data
 
+import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.windowsizeclass.WindowSizeClass
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
+import com.vjaykrsna.nanoai.core.common.IoDispatcher
+import com.vjaykrsna.nanoai.core.data.repository.UserProfileRepository
+import com.vjaykrsna.nanoai.core.domain.model.uiux.UIStateSnapshot
+import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferencesSnapshot as DomainUiPreferencesSnapshot
+import com.vjaykrsna.nanoai.feature.uiux.domain.UIUX_DEFAULT_USER_ID
+import com.vjaykrsna.nanoai.feature.uiux.state.CommandAction
+import com.vjaykrsna.nanoai.feature.uiux.state.CommandCategory
+import com.vjaykrsna.nanoai.feature.uiux.state.CommandDestination
 import com.vjaykrsna.nanoai.feature.uiux.state.CommandPaletteState
 import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityBannerState
 import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityStatus
@@ -13,58 +25,264 @@ import com.vjaykrsna.nanoai.feature.uiux.state.UiPreferenceSnapshot
 import com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload
 import java.util.UUID
 import javax.inject.Inject
+import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.withContext
+import kotlinx.datetime.toJavaInstant
 
 /** Repository surface that coordinates shell state persistence and observations. */
-open class ShellStateRepository @Inject constructor() {
-  open val shellLayoutState: Flow<ShellLayoutState>
-    get() = TODO("Phase 3.3 will expose shell layout state")
+@Singleton
+open class ShellStateRepository
+@Inject
+constructor(
+  private val userProfileRepository: UserProfileRepository,
+  @IoDispatcher private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+) {
+  private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
+  private val userId: String = UIUX_DEFAULT_USER_ID
 
-  open val commandPaletteState: Flow<CommandPaletteState>
-    get() = TODO("Phase 3.3 will expose command palette state")
+  private val windowSizeClass = MutableStateFlow(defaultWindowSizeClass())
+  private val undoPayload = MutableStateFlow<UndoPayload?>(null)
+  private val progressJobs = MutableStateFlow<List<ProgressJob>>(emptyList())
+  private val _recentActivity = MutableStateFlow<List<RecentActivityItem>>(emptyList())
+  private val commandPalette = MutableStateFlow(CommandPaletteState.Empty)
+  private val connectivity = MutableStateFlow(ConnectivityStatus.ONLINE)
 
-  open val connectivityBannerState: Flow<ConnectivityBannerState>
-    get() = TODO("Phase 3.3 will expose connectivity banner state")
+  private val preferences: StateFlow<DomainUiPreferencesSnapshot> =
+    userProfileRepository
+      .observePreferences()
+      .stateIn(scope, SharingStarted.Eagerly, DomainUiPreferencesSnapshot())
 
-  open val uiPreferenceSnapshot: Flow<UiPreferenceSnapshot>
-    get() = TODO("Phase 3.3 will expose UI preferences")
+  private val uiSnapshot: StateFlow<UIStateSnapshot> =
+    userProfileRepository
+      .observeUIStateSnapshot(userId)
+      .map { snapshot -> snapshot ?: defaultSnapshot(userId) }
+      .stateIn(scope, SharingStarted.Eagerly, defaultSnapshot(userId))
 
-  open val recentActivity: Flow<List<RecentActivityItem>>
-    get() = TODO("Phase 3.3 will expose recent activity")
+  private val shellLayout: StateFlow<ShellLayoutState> =
+    windowSizeClass
+      .combine(uiSnapshot) { window, snapshot -> window to snapshot }
+      .combine(connectivity) { (window, snapshot), connectivityStatus ->
+        Triple(window, snapshot, connectivityStatus)
+      }
+      .combine(undoPayload) { triple, undo -> triple to undo }
+      .combine(progressJobs) { (triple, undo), jobs -> Pair(triple, undo) to jobs }
+      .combine(_recentActivity) { (quadruple, jobs), activity ->
+        val (triple, undo) = quadruple
+        val (window, snapshot, connectivityStatus) = triple
+        buildShellLayoutState(window, snapshot, connectivityStatus, undo, jobs, activity)
+      }
+      .stateIn(scope, SharingStarted.Eagerly, buildShellLayoutState(
+        windowSizeClass.value,
+        uiSnapshot.value,
+        connectivity.value,
+        undoPayload.value,
+        progressJobs.value,
+        _recentActivity.value,
+      ))
+
+  private val preferencesSnapshot: StateFlow<UiPreferenceSnapshot> =
+    preferences
+      .map { snapshot -> snapshot.toUiPreferenceSnapshot() }
+      .stateIn(scope, SharingStarted.Eagerly, UiPreferenceSnapshot())
+
+  private val connectivityBanner: StateFlow<ConnectivityBannerState> =
+    combine(connectivity, progressJobs, preferences) { status, jobs, prefs ->
+        ConnectivityBannerState(
+          status = status,
+          lastDismissedAt = prefs.connectivityBannerLastDismissed?.toJavaInstant(),
+          queuedActionCount = jobs.count { !it.isTerminal },
+          cta = progressCenterCta(status),
+        )
+      }
+      .stateIn(
+        scope,
+        SharingStarted.Eagerly,
+        ConnectivityBannerState(status = connectivity.value),
+      )
+
+  open val shellLayoutState: Flow<ShellLayoutState> = shellLayout
+
+  open val commandPaletteState: Flow<CommandPaletteState> = commandPalette.asStateFlow()
+
+  open val connectivityBannerState: Flow<ConnectivityBannerState> = connectivityBanner
+
+  open val uiPreferenceSnapshot: Flow<UiPreferenceSnapshot> = preferencesSnapshot
+
+  open val recentActivity: Flow<List<RecentActivityItem>> = _recentActivity.asStateFlow()
+
+  open fun updateWindowSizeClass(sizeClass: WindowSizeClass) {
+    windowSizeClass.value = sizeClass
+  }
 
   open suspend fun openMode(modeId: ModeId) {
-    TODO("Phase 3.3 will persist mode changes")
+    val route = modeId.toRoute()
+    withContext(ioDispatcher) {
+      userProfileRepository.updateActiveModeRoute(userId, route)
+      userProfileRepository.updateLeftDrawerOpen(userId, false)
+      userProfileRepository.updateCommandPaletteVisibility(userId, false)
+    }
+    commandPalette.update { state -> state.cleared() }
   }
 
   open suspend fun toggleLeftDrawer() {
-    TODO("Phase 3.3 will persist drawer state")
+    val current = uiSnapshot.value
+    val newOpen = !current.isLeftDrawerOpen
+    withContext(ioDispatcher) {
+      userProfileRepository.updateLeftDrawerOpen(userId, newOpen)
+      if (newOpen && current.isCommandPaletteVisible) {
+        userProfileRepository.updateCommandPaletteVisibility(userId, false)
+      }
+    }
   }
 
   open suspend fun toggleRightDrawer(panel: RightPanel) {
-    TODO("Phase 3.3 will persist drawer state")
+    val snapshot = uiSnapshot.value
+    val activePanel = snapshot.activeRightPanel.toRightPanel()
+    val currentlyOpen = snapshot.isRightDrawerOpen && activePanel == panel
+    val newOpen = !currentlyOpen
+    val panelValue = if (newOpen) panel.toStorageValue() else null
+    withContext(ioDispatcher) {
+      userProfileRepository.updateRightDrawerState(userId, newOpen, panelValue)
+      if (newOpen && snapshot.isCommandPaletteVisible) {
+        userProfileRepository.updateCommandPaletteVisibility(userId, false)
+      }
+    }
   }
 
   open suspend fun showCommandPalette(source: PaletteSource) {
-    TODO("Phase 3.3 will manage command palette visibility")
+    commandPalette.update { state ->
+      state.copy(surfaceTarget = source.toCategory()).clearSelection()
+    }
+    withContext(ioDispatcher) {
+      userProfileRepository.updateLeftDrawerOpen(userId, false)
+      userProfileRepository.updateCommandPaletteVisibility(userId, true)
+    }
   }
 
   open suspend fun hideCommandPalette() {
-    TODO("Phase 3.3 will manage command palette visibility")
+    commandPalette.update { state -> state.cleared() }
+    withContext(ioDispatcher) { userProfileRepository.updateCommandPaletteVisibility(userId, false) }
   }
 
   open suspend fun queueJob(job: ProgressJob) {
-    TODO("Phase 3.3 will enqueue jobs")
+    progressJobs.update { jobs -> (jobs + job).sortedBy(ProgressJob::queuedAt) }
   }
 
   open suspend fun completeJob(jobId: UUID) {
-    TODO("Phase 3.3 will complete jobs")
+    progressJobs.update { jobs -> jobs.filterNot { it.jobId == jobId } }
   }
 
   open suspend fun updateConnectivity(status: ConnectivityStatus) {
-    TODO("Phase 3.3 will update connectivity")
+    connectivity.value = status
+    userProfileRepository.setOfflineOverride(status != ConnectivityStatus.ONLINE)
   }
 
   open suspend fun recordUndoPayload(payload: UndoPayload?) {
-    TODO("Phase 3.3 will persist undo payload")
+    undoPayload.value = payload
+  }
+
+  @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
+  private fun defaultWindowSizeClass(): WindowSizeClass =
+    WindowSizeClass.calculateFromSize(DpSize(width = 640.dp, height = 360.dp))
+
+  private fun buildShellLayoutState(
+    window: WindowSizeClass,
+    snapshot: UIStateSnapshot,
+    connectivityStatus: ConnectivityStatus,
+    undo: UndoPayload?,
+    jobs: List<ProgressJob>,
+    activity: List<RecentActivityItem>,
+  ): ShellLayoutState =
+    ShellLayoutState(
+      windowSizeClass = window,
+      isLeftDrawerOpen = snapshot.isLeftDrawerOpen,
+      isRightDrawerOpen = snapshot.isRightDrawerOpen,
+      activeRightPanel = snapshot.activeRightPanel.toRightPanel(),
+      activeMode = snapshot.activeModeRoute.toModeId(),
+      showCommandPalette = snapshot.isCommandPaletteVisible,
+      connectivity = connectivityStatus,
+      pendingUndoAction = undo,
+      progressJobs = jobs,
+      recentActivity = activity,
+    )
+
+  private fun DomainUiPreferencesSnapshot.toUiPreferenceSnapshot(): UiPreferenceSnapshot =
+    UiPreferenceSnapshot(
+      theme = themePreference,
+      density = visualDensity,
+      fontScale = 1f,
+      onboardingCompleted = onboardingCompleted,
+      dismissedTooltips = dismissedTips.filterValues { it }.keys,
+    )
+
+  private fun String?.toRightPanel(): RightPanel? {
+    val value = this ?: return null
+    return RightPanel.entries.firstOrNull { panel -> panel.name.equals(value, ignoreCase = true) }
+  }
+
+  private fun RightPanel.toStorageValue(): String = name.lowercase()
+
+  private fun ModeId.toRoute(): String =
+    when (this) {
+      ModeId.HOME -> "home"
+      ModeId.CHAT -> "chat"
+      ModeId.IMAGE -> "image"
+      ModeId.AUDIO -> "audio"
+      ModeId.CODE -> "code"
+      ModeId.TRANSLATE -> "translate"
+      ModeId.HISTORY -> "history"
+      ModeId.LIBRARY -> "library"
+      ModeId.SETTINGS -> "settings"
+      ModeId.TOOLS -> "tools"
+    }
+
+  private fun String.toModeId(): ModeId =
+    ModeId.entries.firstOrNull { entry -> entry.toRoute().equals(this, ignoreCase = true) }
+      ?: ModeId.HOME
+
+  private fun PaletteSource.toCategory(): CommandCategory =
+    when (this) {
+      PaletteSource.KEYBOARD_SHORTCUT -> CommandCategory.MODES
+      PaletteSource.TOP_APP_BAR -> CommandCategory.SETTINGS
+      PaletteSource.QUICK_ACTION -> CommandCategory.JOBS
+      PaletteSource.UNKNOWN -> CommandCategory.MODES
+    }
+
+  private fun defaultSnapshot(userId: String): UIStateSnapshot =
+    UIStateSnapshot(
+      userId = userId,
+      expandedPanels = emptyList(),
+      recentActions = emptyList(),
+      isSidebarCollapsed = false,
+    )
+
+  private fun progressCenterCta(status: ConnectivityStatus): CommandAction? =
+    when (status) {
+      ConnectivityStatus.OFFLINE,
+      ConnectivityStatus.LIMITED -> PROGRESS_CENTER_CTA
+      ConnectivityStatus.ONLINE -> null
+    }
+
+  private companion object {
+    private val PROGRESS_CENTER_CTA =
+      CommandAction(
+        id = "open-progress-center",
+        title = "View queue",
+        category = CommandCategory.JOBS,
+        destination = CommandDestination.OpenRightPanel(RightPanel.PROGRESS_CENTER),
+      )
   }
 }

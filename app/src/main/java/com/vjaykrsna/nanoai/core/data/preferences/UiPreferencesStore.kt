@@ -13,6 +13,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.datetime.Instant
 
 /**
  * DataStore-based storage for UI/UX preferences.
@@ -36,7 +37,11 @@ class UiPreferencesStore(
     private val KEY_ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
     private val KEY_DISMISSED_TIPS = stringPreferencesKey("dismissed_tips")
     private val KEY_PINNED_TOOL_IDS = stringPreferencesKey("pinned_tool_ids")
+    private val KEY_COMMAND_PALETTE_RECENTS = stringPreferencesKey("command_palette_recents")
+    private val KEY_CONNECTIVITY_BANNER_DISMISSED =
+      stringPreferencesKey("connectivity_banner_last_dismissed")
     private const val MAX_PINNED_TOOLS = 10
+    const val MAX_RECENT_COMMANDS = 12
   }
 
   /** Flow of current UI preferences. Emits whenever preferences change. */
@@ -58,6 +63,14 @@ class UiPreferencesStore(
         pinnedToolIds =
           converters.decodeStringList(
             preferences[KEY_PINNED_TOOL_IDS],
+          ),
+        commandPaletteRecents =
+          converters.decodeStringList(
+            preferences[KEY_COMMAND_PALETTE_RECENTS],
+          ),
+        connectivityBannerLastDismissed =
+          converters.decodeInstant(
+            preferences[KEY_CONNECTIVITY_BANNER_DISMISSED],
           ),
       )
     }
@@ -180,6 +193,53 @@ class UiPreferencesStore(
    */
   suspend fun reorderPinnedTools(orderedToolIds: List<String>) {
     setPinnedToolIds(orderedToolIds)
+  }
+
+  /**
+   * Replace the cached command palette recent commands list.
+   *
+   * @param commandIds Ordered list of most recent command identifiers
+   */
+  suspend fun setCommandPaletteRecents(commandIds: List<String>) {
+    context.dataStore.edit { preferences ->
+      val trimmed = commandIds.distinct().take(MAX_RECENT_COMMANDS)
+      preferences[KEY_COMMAND_PALETTE_RECENTS] = converters.encodeStringList(trimmed)
+    }
+  }
+
+  /**
+   * Record a command execution, moving it to the front of the recents list.
+   *
+   * @param commandId The executed command identifier
+   */
+  suspend fun recordCommandPaletteRecent(commandId: String) {
+    if (commandId.isBlank()) return
+    context.dataStore.edit { preferences ->
+      val current = converters.decodeStringList(preferences[KEY_COMMAND_PALETTE_RECENTS])
+      val updated =
+        buildList {
+          add(commandId)
+          current.filterTo(this) { it != commandId }
+        }.take(MAX_RECENT_COMMANDS)
+      preferences[KEY_COMMAND_PALETTE_RECENTS] = converters.encodeStringList(updated)
+    }
+  }
+
+  /**
+   * Persist the last time the connectivity banner was dismissed to honour cooldowns.
+   *
+   * @param dismissedAt Timestamp of dismissal or null to clear the record
+   */
+  suspend fun setConnectivityBannerDismissed(dismissedAt: Instant?) {
+    context.dataStore.edit { preferences ->
+      if (dismissedAt == null) {
+        preferences.remove(KEY_CONNECTIVITY_BANNER_DISMISSED)
+      } else {
+        converters.encodeInstant(dismissedAt)?.let { encoded ->
+          preferences[KEY_CONNECTIVITY_BANNER_DISMISSED] = encoded
+        }
+      }
+    }
   }
 
   /** Reset all UI preferences to defaults (for testing). */

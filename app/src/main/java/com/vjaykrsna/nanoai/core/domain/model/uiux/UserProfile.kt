@@ -1,9 +1,11 @@
 package com.vjaykrsna.nanoai.core.domain.model.uiux
 
+import com.vjaykrsna.nanoai.core.data.preferences.UiPreferencesStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.datetime.Instant
 
 /** Aggregate domain model capturing persisted UI/UX preferences and layout state for a user. */
 data class UserProfile(
@@ -141,10 +143,13 @@ data class UiPreferencesSnapshot(
   val onboardingCompleted: Boolean = false,
   var dismissedTips: Map<String, Boolean> = emptyMap(),
   var pinnedTools: List<String> = emptyList(),
+  var commandPaletteRecents: List<String> = emptyList(),
+  val connectivityBannerLastDismissed: Instant? = null,
 ) {
   init {
     dismissedTips = sanitizeDismissedTips(dismissedTips)
     pinnedTools = sanitizePinnedTools(pinnedTools)
+    commandPaletteRecents = sanitizeCommandPaletteRecents(commandPaletteRecents)
   }
 }
 
@@ -157,6 +162,8 @@ fun UserProfile.toPreferencesSnapshot(): UiPreferencesSnapshot =
     onboardingCompleted = onboardingCompleted,
     dismissedTips = dismissedTips,
     pinnedTools = pinnedTools,
+    commandPaletteRecents = emptyList(),
+    connectivityBannerLastDismissed = null,
   )
 
 fun Flow<UserProfileRecord?>.mapToUserProfile(): Flow<UserProfile?> = map { record ->
@@ -196,6 +203,12 @@ private fun sanitizePinnedTools(tools: List<String>): List<String> {
     "Pinned tools cannot exceed ${UserProfile.MAX_PINNED_TOOLS}."
   }
   return unique
+}
+
+private fun sanitizeCommandPaletteRecents(commands: List<String>): List<String> {
+  val sanitized = commands.filter { it.isNotBlank() }
+  require(sanitized.size == commands.size) { "Command palette recents must be non-blank." }
+  return sanitized.distinct().take(UiPreferencesStore.MAX_RECENT_COMMANDS)
 }
 
 private fun sanitizeSavedLayouts(layouts: List<LayoutSnapshot>): List<LayoutSnapshot> =

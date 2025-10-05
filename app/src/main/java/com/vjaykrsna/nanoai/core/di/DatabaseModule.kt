@@ -37,6 +37,7 @@ object DatabaseModule {
         NanoAIDatabaseMigrations.MIGRATION_1_2,
         NanoAIDatabaseMigrations.MIGRATION_2_3,
         NanoAIDatabaseMigrations.MIGRATION_3_4,
+        NanoAIDatabaseMigrations.MIGRATION_4_5,
       )
       .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
       .build()

@@ -49,10 +49,25 @@ internal object UiUxDomainReflection {
     userId: String = "user-123",
     expandedPanels: List<String> = emptyList(),
     recentActions: List<String> = emptyList(),
-    sidebarCollapsed: Boolean = false
+    sidebarCollapsed: Boolean = false,
+    leftDrawerOpen: Boolean = false,
+    rightDrawerOpen: Boolean = false,
+    activeModeRoute: String = "home",
+    activeRightPanel: String? = null,
+    paletteVisible: Boolean = false,
   ): Any {
     val ctor = primaryConstructor(loadClass(UI_STATE_SNAPSHOT))
-    return ctor.newInstance(userId, expandedPanels, recentActions, sidebarCollapsed)
+    return ctor.newInstance(
+      userId,
+      expandedPanels,
+      recentActions,
+      sidebarCollapsed,
+      leftDrawerOpen,
+      rightDrawerOpen,
+      activeModeRoute,
+      activeRightPanel,
+      paletteVisible,
+    )
   }
 
   fun newUiPreferences(

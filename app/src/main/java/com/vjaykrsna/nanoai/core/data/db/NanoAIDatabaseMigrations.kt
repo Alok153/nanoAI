@@ -351,4 +351,63 @@ object NanoAIDatabaseMigrations {
         }
       }
     }
+
+  /** Migration from schema version 4 to 5 extending ui_state_snapshots for unified shell. */
+  val MIGRATION_4_5: Migration =
+    @Suppress("MagicNumber")
+    object : Migration(4, 5) {
+      override fun migrate(database: SupportSQLiteDatabase) {
+        addColumnIfMissing(
+          database,
+          table = "ui_state_snapshots",
+          column = "left_drawer_open",
+          definition = "INTEGER NOT NULL DEFAULT 0",
+        )
+        addColumnIfMissing(
+          database,
+          table = "ui_state_snapshots",
+          column = "right_drawer_open",
+          definition = "INTEGER NOT NULL DEFAULT 0",
+        )
+        addColumnIfMissing(
+          database,
+          table = "ui_state_snapshots",
+          column = "active_mode",
+          definition = "TEXT NOT NULL DEFAULT 'home'",
+        )
+        addColumnIfMissing(
+          database,
+          table = "ui_state_snapshots",
+          column = "active_right_panel",
+          definition = "TEXT",
+        )
+        addColumnIfMissing(
+          database,
+          table = "ui_state_snapshots",
+          column = "palette_visible",
+          definition = "INTEGER NOT NULL DEFAULT 0",
+        )
+      }
+
+      private fun addColumnIfMissing(
+        database: SupportSQLiteDatabase,
+        table: String,
+        column: String,
+        definition: String,
+      ) {
+        var hasColumn = false
+        database.query("PRAGMA table_info('$table')").use { cursor ->
+          val nameIndex = cursor.getColumnIndexOrThrow("name")
+          while (cursor.moveToNext()) {
+            if (cursor.getString(nameIndex).equals(column, ignoreCase = true)) {
+              hasColumn = true
+              break
+            }
+          }
+        }
+        if (!hasColumn) {
+          database.execSQL("ALTER TABLE $table ADD COLUMN $column $definition")
+        }
+      }
+    }
 }

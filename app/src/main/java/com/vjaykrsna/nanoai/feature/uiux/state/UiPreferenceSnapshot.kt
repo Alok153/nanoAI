@@ -10,4 +10,19 @@ data class UiPreferenceSnapshot(
   val fontScale: Float = 1f,
   val onboardingCompleted: Boolean = false,
   val dismissedTooltips: Set<String> = emptySet(),
-)
+) {
+  /** True when onboarding prompts should still be presented. */
+  val shouldShowOnboarding: Boolean
+    get() = !onboardingCompleted
+
+  /** True when a tooltip with the provided [id] has been dismissed previously. */
+  fun isTooltipDismissed(id: String): Boolean = dismissedTooltips.contains(id)
+
+  /** Returns a copy with an additional dismissed tooltip tracked. */
+  fun withTooltipDismissed(id: String): UiPreferenceSnapshot =
+    copy(dismissedTooltips = dismissedTooltips + id)
+
+  /** Normalized font scale applied to typography (min 0.85f, max 1.4f). */
+  val normalizedFontScale: Float
+    get() = fontScale.coerceIn(0.85f, 1.4f)
+}

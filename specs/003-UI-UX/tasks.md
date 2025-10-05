@@ -24,25 +24,25 @@
   _Depends on_: T003–T007
 
 ## Phase 3.3: Core Implementation (only after tests fail)
-- [ ] T009 [P] Implement `ShellLayoutState` data class and helpers in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/state/ShellLayoutState.kt` matching data-model.md.  
+- [X] T009 [P] Implement `ShellLayoutState` data class and helpers in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/state/ShellLayoutState.kt` matching data-model.md.  
   _Depends on_: T003
-- [ ] T010 [P] Implement `ModeCard` model in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/state/ModeCard.kt` with localized labels and primary actions per research.  
+- [X] T010 [P] Implement `ModeCard` model in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/state/ModeCard.kt` with localized labels and primary actions per research.  
   _Depends on_: T006
-- [ ] T011 [P] Implement `CommandPaletteState` in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/state/CommandPaletteState.kt` including selection handling and recent commands.  
+- [X] T011 [P] Implement `CommandPaletteState` in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/state/CommandPaletteState.kt` including selection handling and recent commands.  
   _Depends on_: T004
-- [ ] T012 [P] Implement `ProgressJob` domain model in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/state/ProgressJob.kt` representing WorkManager/inference jobs.  
+- [X] T012 [P] Implement `ProgressJob` domain model in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/state/ProgressJob.kt` representing WorkManager/inference jobs.  
   _Depends on_: T005
-- [ ] T013 [P] Implement `ConnectivityBannerState` in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/state/ConnectivityBannerState.kt` with CTA metadata.  
+- [X] T013 [P] Implement `ConnectivityBannerState` in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/state/ConnectivityBannerState.kt` with CTA metadata.  
   _Depends on_: T005
-- [ ] T014 [P] Implement `UiPreferenceSnapshot` extensions in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/state/UiPreferenceSnapshot.kt` capturing theme, density, font scale, onboarding, dismissed tooltips.  
+- [X] T014 [P] Implement `UiPreferenceSnapshot` extensions in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/state/UiPreferenceSnapshot.kt` capturing theme, density, font scale, onboarding, dismissed tooltips.  
   _Depends on_: T005
-- [ ] T015 [P] Implement `RecentActivityItem` model in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/state/RecentActivityItem.kt` for history cards.  
+- [X] T015 [P] Implement `RecentActivityItem` model in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/state/RecentActivityItem.kt` for history cards.  
   _Depends on_: T006
-- [ ] T016 Extend `UIStateSnapshotEntity`, `UIStateSnapshot` domain model, and add migration in `app/src/main/java/com/vjaykrsna/nanoai/core/data/db/entities/UIStateSnapshotEntity.kt` & `.../NanoAIDatabaseMigrations.kt` for drawer/palette persistence.  
+- [X] T016 Extend `UIStateSnapshotEntity`, `UIStateSnapshot` domain model, and add migration in `app/src/main/java/com/vjaykrsna/nanoai/core/data/db/entities/UIStateSnapshotEntity.kt` & `.../NanoAIDatabaseMigrations.kt` for drawer/palette persistence.  
   _Depends on_: T009, T015
-- [ ] T017 Expand `UiPreferencesStore` in `app/src/main/java/com/vjaykrsna/nanoai/core/data/preferences/UiPreferencesStore.kt` with keys for command palette recents, connectivity banner dismissal, and density defaults.  
+- [X] T017 Expand `UiPreferencesStore` in `app/src/main/java/com/vjaykrsna/nanoai/core/data/preferences/UiPreferencesStore.kt` with keys for command palette recents, connectivity banner dismissal, and density defaults.  
   _Depends on_: T014
-- [ ] T018 Build `ShellStateRepository` in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/data/ShellStateRepository.kt` combining preferences, progress, connectivity, and activity flows into `ShellLayoutState`.  
+- [X] T018 Build `ShellStateRepository` in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/data/ShellStateRepository.kt` combining preferences, progress, connectivity, and activity flows into `ShellLayoutState`.  
   _Depends on_: T009–T017
 - [ ] T019 Implement `CommandPaletteActionProvider` in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/domain/CommandPaletteActionProvider.kt` aggregating navigation + quick actions.  
   _Depends on_: T011, T015, T018
