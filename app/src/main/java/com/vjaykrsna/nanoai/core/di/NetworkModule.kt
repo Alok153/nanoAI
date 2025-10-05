@@ -2,7 +2,6 @@ package com.vjaykrsna.nanoai.core.di
 
 import com.vjaykrsna.nanoai.core.network.AndroidConnectivityStatusProvider
 import com.vjaykrsna.nanoai.core.network.ConnectivityStatusProvider
-import com.vjaykrsna.nanoai.core.network.UserProfileService
 import com.vjaykrsna.nanoai.model.catalog.network.ModelCatalogService
 import dagger.Binds
 import dagger.Module
@@ -28,7 +27,6 @@ abstract class NetworkModule {
   ): ConnectivityStatusProvider
 
   companion object {
-    private const val USER_PROFILE_BASE_URL = "https://api.nanoai.dev/"
     private const val MODEL_CATALOG_BASE_URL = "https://api.nanoai.app/"
     private val jsonMediaType = "application/json".toMediaType()
 
@@ -39,25 +37,6 @@ abstract class NetworkModule {
       encodeDefaults = true
       explicitNulls = false
     }
-
-    @Provides
-    @Singleton
-    @Named("UserProfile")
-    fun provideUserProfileRetrofit(
-      json: Json,
-      okHttpClient: OkHttpClient,
-    ): Retrofit =
-      Retrofit.Builder()
-        .baseUrl(USER_PROFILE_BASE_URL)
-        .client(okHttpClient)
-        .addConverterFactory(json.asConverterFactory(jsonMediaType))
-        .build()
-
-    @Provides
-    @Singleton
-    fun provideUserProfileService(
-      @Named("UserProfile") retrofit: Retrofit,
-    ): UserProfileService = retrofit.create(UserProfileService::class.java)
 
     @Provides
     @Singleton

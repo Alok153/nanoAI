@@ -6,14 +6,11 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.feature.uiux.domain.ObserveUserProfileUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-
-private const val HYDRATION_TIMEOUT_MS = 5000L
 
 /**
  * Top-level application view model responsible for exposing global UI state such as theme
@@ -45,11 +42,6 @@ constructor(
           )
         }
       }
-    }
-    // Timeout hydration after 5 seconds to prevent indefinite loading
-    viewModelScope.launch {
-      delay(HYDRATION_TIMEOUT_MS)
-      _uiState.update { it.copy(isHydrating = false) }
     }
   }
 }

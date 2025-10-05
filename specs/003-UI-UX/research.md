@@ -31,10 +31,10 @@
 - **Rationale**: Prevents UI jank, meets FMP targets. Lazy loading for large content.
 - **Alternatives Considered**: Eager loading (higher memory), no profiling (risks performance issues).
 
-### Offline UX and Caching
-- **Decision**: Use Room for local data, show skeleton loaders, disable features with messaging.
-- **Rationale**: Provides seamless offline experience, aligns with constitution.
-- **Alternatives Considered**: No caching (poor UX), complex sync (overkill for UI focus).
+### Offline UX and Local Storage
+- **Decision**: Use Room + DataStore for local-only storage, no remote sync for user preferences.
+- **Rationale**: Privacy-first approach, all user data stays on device, aligns with constitution's data stewardship principles.
+- **Alternatives Considered**: Cloud sync (rejected for privacy), no persistence (poor UX).
 
 ### Onboarding and Help System
 - **Decision**: Single-screen tooltip onboarding with dismissible tips, persistent Help menu.

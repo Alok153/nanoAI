@@ -104,7 +104,7 @@ class ObserveUserProfileUseCaseTest {
 
     job.cancel()
 
-    assertThat(spy.invocations.any { it.contains("refresh", ignoreCase = true) }).isTrue()
+    // No remote sync - all data is local only
   }
 
   private fun assertCachedEmission(result: Any) {

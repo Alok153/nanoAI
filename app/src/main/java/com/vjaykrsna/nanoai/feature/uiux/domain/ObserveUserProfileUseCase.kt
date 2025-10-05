@@ -71,15 +71,9 @@ constructor(
             }
             .launchIn(this)
 
-        launch { repository.refreshUserProfile(userId) }
-
         awaitClose { job.cancel() }
       }
       .flowOn(dispatcher)
-
-  fun refresh(userId: String = UIUX_DEFAULT_USER_ID, force: Boolean = true) {
-    scope.launch { repository.refreshUserProfile(userId, force) }
-  }
 
   private fun Any?.toSnapshot(): UiPreferencesSnapshot =
     when (this) {
