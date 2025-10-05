@@ -61,7 +61,12 @@ import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
 import com.vjaykrsna.nanoai.feature.library.presentation.InstallStateFilter
 import com.vjaykrsna.nanoai.feature.library.presentation.LibraryError
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryViewModel
-import java.util.UUID\nimport kotlinx.coroutines.flow.collectLatest\n\nprivate const val PERCENTAGE_MULTIPLIER = 100\n\n@Composable
+import java.util.UUID
+import kotlinx.coroutines.flow.collectLatest
+
+private const val PERCENTAGE_MULTIPLIER = 100
+
+@Composable
 fun ModelLibraryScreen(
   modifier: Modifier = Modifier,
   viewModel: ModelLibraryViewModel = hiltViewModel()

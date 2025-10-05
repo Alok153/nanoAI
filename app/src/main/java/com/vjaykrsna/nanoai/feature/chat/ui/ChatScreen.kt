@@ -46,7 +46,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -205,7 +207,11 @@ private fun MessagesList(
     contentPadding = PaddingValues(16.dp),
     verticalArrangement = Arrangement.spacedBy(12.dp),
     reverseLayout = false,
-    modifier = modifier.semantics { contentDescription = "Message history list" },
+    modifier =
+      modifier.semantics {
+        liveRegion = LiveRegionMode.Polite
+        contentDescription = "Message history list"
+      },
   ) {
     items(
       items = messages,
@@ -251,7 +257,8 @@ private fun MessageBubble(message: Message, modifier: Modifier = Modifier) {
       shape = RoundedCornerShape(12.dp),
       modifier =
         Modifier.fillMaxWidth(MESSAGE_BUBBLE_WIDTH_FRACTION).semantics {
-          contentDescription = "${message.role} message: ${message.text ?: ""}"
+          val roleDescription = if (isUser) "Your" else "Assistant's"
+          contentDescription = "$roleDescription message: ${message.text ?: ""}"
         },
     ) {
       Column(

@@ -17,6 +17,7 @@ data class DownloadManifest(
   val sizeBytes: Long,
   val downloadUrl: String,
   val signature: String?,
+  val publicKeyUrl: String?,
   val expiresAt: Instant?,
   val fetchedAt: Instant,
 )
@@ -33,6 +34,7 @@ fun com.vjaykrsna.nanoai.model.catalog.network.dto.ModelManifestDto.toDomain(
     sizeBytes = sizeBytes,
     downloadUrl = downloadUrl,
     signature = signature,
+    publicKeyUrl = publicKeyUrl,
     expiresAt = expiresAt?.let(expiresParser),
     fetchedAt = fetchedAt,
   )
@@ -46,6 +48,7 @@ fun DownloadManifest.toEntity(): DownloadManifestEntity =
     sizeBytes = sizeBytes,
     downloadUrl = downloadUrl,
     signature = signature,
+    publicKeyUrl = publicKeyUrl,
     expiresAt = expiresAt,
     fetchedAt = fetchedAt,
     releaseNotes = null,

@@ -32,6 +32,7 @@ data class DownloadManifestEntity(
   @ColumnInfo(name = "size_bytes") val sizeBytes: Long,
   @ColumnInfo(name = "download_url") val downloadUrl: String,
   @ColumnInfo(name = "signature") val signature: String?,
+  @ColumnInfo(name = "public_key_url") val publicKeyUrl: String?,
   @ColumnInfo(name = "expires_at") val expiresAt: Instant?,
   @ColumnInfo(name = "fetched_at") val fetchedAt: Instant,
   @ColumnInfo(name = "release_notes") val releaseNotes: String?,

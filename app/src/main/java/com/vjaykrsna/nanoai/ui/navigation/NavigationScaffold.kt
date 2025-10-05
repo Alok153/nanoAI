@@ -198,12 +198,12 @@ private fun rememberNavigationHandlers(
       }
     }
 
-  val onCloseDrawer = remember(drawerState, scope) { { scope.launch { drawerState.close() } } }
+  val onCloseDrawer = remember(drawerState, scope) { { val job = scope.launch { drawerState.close() } } }
 
   val onDrawerToggle =
     remember(drawerState, scope) {
       {
-        scope.launch {
+        val job = scope.launch {
           if (drawerState.isClosed) {
             drawerState.open()
           } else {

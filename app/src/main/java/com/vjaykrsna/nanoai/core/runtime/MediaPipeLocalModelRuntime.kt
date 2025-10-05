@@ -1,15 +1,15 @@
 package com.vjaykrsna.nanoai.core.runtime
 
 import android.content.Context
+import com.google.mediapipe.tasks.genai.llminference.LlmInference
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import java.io.FileNotFoundException
-import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.time.ExperimentalTime
-import kotlin.time.measureTimedValue
+import kotlin.time.measureTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -24,64 +24,69 @@ import kotlinx.coroutines.withContext
 class MediaPipeLocalModelRuntime
 @Inject
 constructor(
-  @ApplicationContext private val context: Context,
+    @ApplicationContext private val context: Context,
 ) : LocalModelRuntime {
-  private val modelDirectory: File by lazy { File(context.filesDir, "models") }
+    private val modelDirectory: File by lazy { File(context.filesDir, "models") }
 
-  override suspend fun isModelReady(modelId: String): Boolean =
-    withContext(Dispatchers.IO) { modelFile(modelId).exists() }
+    private var llmInference: LlmInference? = null
 
-  override suspend fun hasReadyModel(models: List<ModelPackage>): Boolean {
-    if (models.isEmpty()) return false
-    return models.any { model ->
-      model.providerType.name != "CLOUD_API" && isModelReady(model.modelId)
-    }
-  }
+    override suspend fun isModelReady(modelId: String): Boolean =
+        withContext(Dispatchers.IO) { modelFile(modelId).exists() }
 
-  @OptIn(ExperimentalTime::class)
-  override suspend fun generate(request: LocalGenerationRequest): Result<LocalGenerationResult> {
-    return withContext(Dispatchers.Default) {
-      val file = modelFile(request.modelId)
-      if (!file.exists()) {
-        return@withContext Result.failure(
-          FileNotFoundException("Local model ${request.modelId} is not installed"),
-        )
-      }
-
-      // TODO(NANO-421): Replace synthesis with actual MediaPipe LiteRT inference pipeline.
-      val timedValue = measureTimedValue { synthesizeResponse(request) }
-
-      Result.success(
-        LocalGenerationResult(
-          text = timedValue.value,
-          latencyMs = timedValue.duration.inWholeMilliseconds,
-          metadata =
-            mapOf(
-              "modelId" to request.modelId,
-              "temperature" to request.temperature,
-              "topP" to request.topP,
-            ),
-        ),
-      )
-    }
-  }
-
-  private fun modelFile(modelId: String): File = File(modelDirectory, "$modelId.bin")
-
-  private fun synthesizeResponse(request: LocalGenerationRequest): String {
-    val systemContext = request.systemPrompt?.takeIf { it.isNotBlank() }?.let { "$it\n\n" } ?: ""
-    val cappedPrompt = request.prompt.trim().ifBlank { "No prompt provided." }
-    val hint =
-      buildString {
-          request.temperature?.let { append("(temp=${String.format(Locale.US, "%.2f", it)}) ") }
-          request.topP?.let { append("(topP=${String.format(Locale.US, "%.2f", it)}) ") }
+    override suspend fun hasReadyModel(models: List<ModelPackage>): Boolean {
+        if (models.isEmpty()) return false
+        return models.any { model ->
+            model.providerType.name != "CLOUD_API" && isModelReady(model.modelId)
         }
-        .trim()
+    }
 
-    val header = "[Local:${request.modelId}]"
-    return listOf(header, hint, systemContext + cappedPrompt)
-      .filter { it.isNotBlank() }
-      .joinToString(separator = " ")
-      .trim()
-  }
+    @OptIn(ExperimentalTime::class)
+    override suspend fun generate(request: LocalGenerationRequest): Result<LocalGenerationResult> {
+        return withContext(Dispatchers.Default) {
+            val file = modelFile(request.modelId)
+            if (!file.exists()) {
+                return@withContext Result.failure(
+                    FileNotFoundException("Local model ${request.modelId} is not installed"),
+                )
+            }
+
+            initializeInference(request)
+
+            val prompt =
+                if (request.systemPrompt.isNullOrBlank()) request.prompt
+                else "${request.systemPrompt}\n\n${request.prompt}"
+
+            var resultText = ""
+            val latency = measureTime {
+                resultText = llmInference?.generateResponse(prompt) ?: ""
+            }
+
+            Result.success(
+                LocalGenerationResult(
+                    text = resultText,
+                    latencyMs = latency.inWholeMilliseconds,
+                    metadata =
+                    mapOf(
+                        "modelId" to request.modelId,
+                        "temperature" to request.temperature,
+                        "topP" to request.topP,
+                    ),
+                ),
+            )
+        }
+    }
+
+    private fun modelFile(modelId: String): File = File(modelDirectory, "$modelId.bin")
+
+    private fun initializeInference(request: LocalGenerationRequest) {
+        if (llmInference == null) {
+            val options =
+                LlmInference.LlmInferenceOptions.builder()
+                    .setModelPath(modelFile(request.modelId).absolutePath)
+                    .setMaxTokens(request.maxOutputTokens ?: 1024)
+                    .setTemperature(request.temperature ?: 0.7f)
+                    .build()
+            llmInference = LlmInference.createFromOptions(context, options)
+        }
+    }
 }

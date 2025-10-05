@@ -3,6 +3,7 @@ package com.vjaykrsna.nanoai.feature.library.data.workers
 import android.content.Context
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
+import androidx.work.ListenableWorker.Result
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
@@ -19,7 +20,11 @@ import dagger.assisted.AssistedInject
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.net.URL
+import java.security.KeyFactory
 import java.security.MessageDigest
+import java.security.Signature
+import java.security.spec.X509EncodedKeySpec
 import java.util.Locale
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
@@ -212,10 +217,10 @@ constructor(
       context = mapOf("modelId" to manifest.modelId),
     )
 
-  private fun ResponseBody.saveToFile(
+  private suspend fun ResponseBody.saveToFile(
     outputFile: File,
     manifest: DownloadManifest,
-    onProgress: (Float, Long, Long) -> Unit,
+    onProgress: suspend (Float, Long, Long) -> Unit,
   ): NanoAIResult.RecoverableError? {
     byteStream().use { input ->
       FileOutputStream(outputFile).use { output ->
@@ -246,39 +251,76 @@ constructor(
     return null
   }
 
-  private fun validateIntegrity(
-    file: File,
-    manifest: DownloadManifest,
+  private suspend fun validateIntegrity(
+      file: File,
+      manifest: DownloadManifest,
   ): NanoAIResult<String> {
-    val fileSize = file.length()
-    if (fileSize != manifest.sizeBytes) {
-      file.delete()
-      return NanoAIResult.recoverable(
-        message = "Size mismatch detected",
-        retryAfterSeconds = 30L,
-        context =
-          mapOf(
-            "expectedSize" to manifest.sizeBytes.toString(),
-            "actualSize" to fileSize.toString(),
-          ),
-      )
-    }
+      val fileSize = file.length()
+      if (fileSize != manifest.sizeBytes) {
+          file.delete()
+          return NanoAIResult.recoverable(
+              message = "Size mismatch detected",
+              retryAfterSeconds = 30L,
+              context =
+              mapOf(
+                  "expectedSize" to manifest.sizeBytes.toString(),
+                  "actualSize" to fileSize.toString(),
+              ),
+          )
+      }
 
-    val checksum = calculateSha256(file)
-    return if (checksum.equals(manifest.checksumSha256, ignoreCase = true)) {
-      NanoAIResult.success(checksum)
-    } else {
-      file.delete()
-      NanoAIResult.recoverable(
-        message = "Checksum mismatch detected",
-        retryAfterSeconds = 30L,
-        context =
-          mapOf(
-            "expectedChecksum" to manifest.checksumSha256,
-            "actualChecksum" to checksum,
-          ),
-      )
-    }
+      val checksum = calculateSha256(file)
+      if (!checksum.equals(manifest.checksumSha256, ignoreCase = true)) {
+          file.delete()
+          return NanoAIResult.recoverable(
+              message = "Checksum mismatch detected",
+              retryAfterSeconds = 30L,
+              context =
+              mapOf(
+                  "expectedChecksum" to manifest.checksumSha256,
+                  "actualChecksum" to checksum,
+              ),
+          )
+      }
+
+      if (manifest.signature != null && manifest.publicKeyUrl != null) {
+          val signatureVerified = verifySignature(file, manifest.signature, manifest.publicKeyUrl)
+          if (!signatureVerified) {
+              file.delete()
+              return NanoAIResult.recoverable(
+                  message = "Signature verification failed",
+                  retryAfterSeconds = 30L,
+                  context = mapOf("modelId" to manifest.modelId),
+              )
+          }
+      }
+
+      return NanoAIResult.success(checksum)
+  }
+
+  private suspend fun verifySignature(file: File, signature: String, publicKeyUrl: String): Boolean {
+      return withContext(Dispatchers.IO) {
+          try {
+              val keyBytes = URL(publicKeyUrl).readBytes()
+              val spec = X509EncodedKeySpec(keyBytes)
+              val kf = KeyFactory.getInstance("RSA")
+              val publicKey = kf.generatePublic(spec)
+
+              val sig = Signature.getInstance("SHA256withRSA")
+              sig.initVerify(publicKey)
+              file.inputStream().use { input ->
+                  val buffer = ByteArray(DOWNLOAD_BUFFER_SIZE)
+                  while (true) {
+                      val read = input.read(buffer)
+                      if (read == -1) break
+                      sig.update(buffer, 0, read)
+                  }
+              }
+              sig.verify(android.util.Base64.decode(signature, android.util.Base64.DEFAULT))
+          } catch (e: Exception) {
+              false
+          }
+      }
   }
 
   private suspend fun handleRecoverable(

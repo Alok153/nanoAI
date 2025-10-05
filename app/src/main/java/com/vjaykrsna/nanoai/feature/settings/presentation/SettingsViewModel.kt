@@ -274,6 +274,14 @@ constructor(
       toggleCompactModeUseCase.toggle(previous.compactModeEnabled)
     }
   }
+
+  fun onMigrationSuccess() {
+    _uiUxState.update { it.copy(showMigrationSuccessNotification = true) }
+  }
+
+  fun dismissMigrationSuccessNotification() {
+    _uiUxState.update { it.copy(showMigrationSuccessNotification = false) }
+  }
 }
 
 sealed class SettingsError {
@@ -311,4 +319,5 @@ data class SettingsUiUxState(
   val compactModeEnabled: Boolean = false,
   val undoAvailable: Boolean = false,
   val statusMessage: String? = null,
+  val showMigrationSuccessNotification: Boolean = false,
 )

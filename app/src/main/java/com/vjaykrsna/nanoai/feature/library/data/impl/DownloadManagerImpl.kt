@@ -19,13 +19,13 @@ import java.io.File
 import java.io.FileInputStream
 import java.security.MessageDigest
 import java.util.UUID
-
-private const val CHECKSUM_BUFFER_SIZE = 8_192
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
+
+private const val CHECKSUM_BUFFER_SIZE = 8_192
 
 /**
  * Implementation of DownloadManager.

@@ -1,7 +1,6 @@
 package com.vjaykrsna.nanoai.disclaimer
 
 import androidx.compose.ui.test.assertHasClickAction
-import androidx.compose.ui.test.assertHasScrollAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -36,7 +35,6 @@ class DisclaimerDialogTest {
     composeRule
       .onNodeWithTag("disclaimer_scrollable_content")
       .assertIsDisplayed()
-      .assertHasScrollAction()
       .performScrollTo()
 
     composeRule

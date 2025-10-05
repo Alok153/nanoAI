@@ -52,7 +52,6 @@ constructor(
     withContext(Dispatchers.IO) {
       val service = createService(provider)
       val timedResult = runCatching { measureTimedValue { block(service) } }
-      return@withContext
       timedResult.fold(
         onSuccess = { CloudGatewayResult.Success(it.value, it.duration.inWholeMilliseconds) },
         onFailure = { mapError(it) },

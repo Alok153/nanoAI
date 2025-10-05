@@ -30,13 +30,14 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
-private const val SKELETON_CARD_COUNT = 3
-private const val SKELETON_ALPHA = 0.5f
 import com.vjaykrsna.nanoai.feature.uiux.presentation.HomeUiState
 import com.vjaykrsna.nanoai.ui.components.OfflineBanner
 import com.vjaykrsna.nanoai.ui.components.OnboardingTooltip
 import com.vjaykrsna.nanoai.ui.components.PrimaryActionCard
 import kotlin.text.titlecase
+
+private const val SKELETON_CARD_COUNT = 3
+private const val SKELETON_ALPHA = 0.5f
 
 data class HomeTooltipCallbacks(
   val onDismiss: () -> Unit,
