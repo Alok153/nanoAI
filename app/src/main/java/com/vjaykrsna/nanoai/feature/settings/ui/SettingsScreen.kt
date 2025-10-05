@@ -46,6 +46,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -72,57 +73,88 @@ import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun SettingsScreen(modifier: Modifier = Modifier, viewModel: SettingsViewModel = hiltViewModel()) {
-  val apiProviders by viewModel.apiProviders.collectAsState()
-  val privacyPreferences by viewModel.privacyPreferences.collectAsState()
-  val uiUxState by viewModel.uiUxState.collectAsState()
-
-  val snackbarHostState = remember { SnackbarHostState() }
-  var showAddProviderDialog by remember { mutableStateOf(false) }
-  var showExportDialog by remember { mutableStateOf(false) }
-  var editingProvider by remember { mutableStateOf<APIProviderConfig?>(null) }
-
-  val importBackupLauncher = rememberImportBackupLauncher(viewModel::importBackup)
-
-  CollectSettingsErrorEvents(viewModel.errorEvents, snackbarHostState)
-  CollectExportSuccessEvents(viewModel.exportSuccess, snackbarHostState)
-  CollectImportSuccessEvents(viewModel.importSuccess, snackbarHostState)
-
-  fun hideProviderDialog() {
-    showAddProviderDialog = false
-    editingProvider = null
-  }
-
-  val actions =
-    createSettingsActions(
-      viewModel = viewModel,
-      privacyPreferences = privacyPreferences,
-      importBackupLauncher = importBackupLauncher,
-      onAddProviderClick = { showAddProviderDialog = true },
-      onEditProvider = { editingProvider = it },
-      onDeleteProvider = { provider -> viewModel.deleteApiProvider(provider.providerId) },
-      onShowExportDialog = { showExportDialog = true },
-    )
+  val coordinator = rememberSettingsScreenState(viewModel)
 
   SettingsScreenContent(
-    state =
-      SettingsContentState(
-        apiProviders = apiProviders,
-        privacyPreferences = privacyPreferences,
-        uiUxState = uiUxState,
-      ),
-    snackbarHostState = snackbarHostState,
-    actions = actions,
+    state = coordinator.contentState,
+    snackbarHostState = coordinator.snackbarHostState,
+    actions = coordinator.actions,
     modifier = modifier,
   )
 
   SettingsDialogs(
-    showAddProviderDialog = showAddProviderDialog,
-    editingProvider = editingProvider,
-    showExportDialog = showExportDialog,
+    showAddProviderDialog = coordinator.dialogState.showAddProviderDialog,
+    editingProvider = coordinator.dialogState.editingProvider,
+    showExportDialog = coordinator.dialogState.showExportDialog,
+    onProviderDismiss = coordinator.dialogHandlers.onProviderDismiss,
+    onProviderSave = coordinator.dialogHandlers.onProviderSave,
+    onExportDismiss = coordinator.dialogHandlers.onExportDismiss,
+    onExportConfirm = coordinator.dialogHandlers.onExportConfirm,
+  )
+}
+
+private data class SettingsDialogState(
+  val showAddProviderDialog: Boolean,
+  val showExportDialog: Boolean,
+  val editingProvider: APIProviderConfig?,
+)
+
+private data class SettingsDialogHandlers(
+  val onProviderDismiss: () -> Unit,
+  val onProviderSave: (name: String, baseUrl: String, apiKey: String?) -> Unit,
+  val onExportDismiss: () -> Unit,
+  val onExportConfirm: (dontShowAgain: Boolean) -> Unit,
+)
+
+private data class SettingsScreenCoordinator(
+  val contentState: SettingsContentState,
+  val snackbarHostState: SnackbarHostState,
+  val actions: SettingsScreenActions,
+  val dialogState: SettingsDialogState,
+  val dialogHandlers: SettingsDialogHandlers,
+)
+
+private data class MutableSettingsDialogState(
+  val showAddProviderDialog: MutableState<Boolean>,
+  val showExportDialog: MutableState<Boolean>,
+  val editingProvider: MutableState<APIProviderConfig?>,
+)
+
+@Composable
+private fun rememberMutableSettingsDialogState(): MutableSettingsDialogState {
+  val showAddDialogState = remember { mutableStateOf(false) }
+  val showExportDialogState = remember { mutableStateOf(false) }
+  val editingProviderState = remember { mutableStateOf<APIProviderConfig?>(null) }
+  return remember {
+    MutableSettingsDialogState(
+      showAddProviderDialog = showAddDialogState,
+      showExportDialog = showExportDialogState,
+      editingProvider = editingProviderState,
+    )
+  }
+}
+
+private fun MutableSettingsDialogState.snapshot(): SettingsDialogState =
+  SettingsDialogState(
+    showAddProviderDialog = showAddProviderDialog.value,
+    showExportDialog = showExportDialog.value,
+    editingProvider = editingProvider.value,
+  )
+
+private fun createDialogHandlers(
+  viewModel: SettingsViewModel,
+  dialogState: MutableSettingsDialogState,
+): SettingsDialogHandlers {
+  fun hideProviderDialog() {
+    dialogState.showAddProviderDialog.value = false
+    dialogState.editingProvider.value = null
+  }
+
+  return SettingsDialogHandlers(
     onProviderDismiss = { hideProviderDialog() },
     onProviderSave = { name, baseUrl, apiKey ->
       saveProvider(
-        editingProvider = editingProvider,
+        editingProvider = dialogState.editingProvider.value,
         name = name,
         baseUrl = baseUrl,
         apiKey = apiKey,
@@ -131,15 +163,68 @@ fun SettingsScreen(modifier: Modifier = Modifier, viewModel: SettingsViewModel =
       )
       hideProviderDialog()
     },
-    onExportDismiss = { showExportDialog = false },
+    onExportDismiss = { dialogState.showExportDialog.value = false },
     onExportConfirm = { dontShowAgain ->
       confirmExport(
         dontShowAgain = dontShowAgain,
         dismissWarnings = viewModel::dismissExportWarnings,
         export = { viewModel.exportBackupToDownloads() },
       )
-      showExportDialog = false
+      dialogState.showExportDialog.value = false
     },
+  )
+}
+
+private fun createActions(
+  viewModel: SettingsViewModel,
+  privacyPreferences: PrivacyPreference,
+  importBackupLauncher: ManagedActivityResultLauncher<Array<String>, Uri?>,
+  dialogState: MutableSettingsDialogState,
+): SettingsScreenActions {
+  return createSettingsActions(
+    viewModel = viewModel,
+    privacyPreferences = privacyPreferences,
+    importBackupLauncher = importBackupLauncher,
+    onAddProviderClick = { dialogState.showAddProviderDialog.value = true },
+    onEditProvider = { provider -> dialogState.editingProvider.value = provider },
+    onDeleteProvider = { provider -> viewModel.deleteApiProvider(provider.providerId) },
+    onShowExportDialog = { dialogState.showExportDialog.value = true },
+  )
+}
+
+@Composable
+private fun rememberSettingsScreenState(viewModel: SettingsViewModel): SettingsScreenCoordinator {
+  val apiProviders by viewModel.apiProviders.collectAsState()
+  val privacyPreferences by viewModel.privacyPreferences.collectAsState()
+  val uiUxState by viewModel.uiUxState.collectAsState()
+
+  val snackbarHostState = remember { SnackbarHostState() }
+  val dialogState = rememberMutableSettingsDialogState()
+
+  val importBackupLauncher = rememberImportBackupLauncher(viewModel::importBackup)
+
+  CollectSettingsErrorEvents(viewModel.errorEvents, snackbarHostState)
+  CollectExportSuccessEvents(viewModel.exportSuccess, snackbarHostState)
+  CollectImportSuccessEvents(viewModel.importSuccess, snackbarHostState)
+
+  val actions = createActions(viewModel, privacyPreferences, importBackupLauncher, dialogState)
+  val dialogHandlers = createDialogHandlers(viewModel, dialogState)
+
+  val contentState =
+    SettingsContentState(
+      apiProviders = apiProviders,
+      privacyPreferences = privacyPreferences,
+      uiUxState = uiUxState,
+    )
+
+  val dialogSnapshot = dialogState.snapshot()
+
+  return SettingsScreenCoordinator(
+    contentState = contentState,
+    snackbarHostState = snackbarHostState,
+    actions = actions,
+    dialogState = dialogSnapshot,
+    dialogHandlers = dialogHandlers,
   )
 }
 

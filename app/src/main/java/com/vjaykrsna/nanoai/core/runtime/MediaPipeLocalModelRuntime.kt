@@ -13,6 +13,9 @@ import kotlin.time.measureTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+private const val DEFAULT_MAX_TOKENS = 1024
+private const val DEFAULT_TEMPERATURE = 0.7f
+
 /**
  * MediaPipe-backed implementation of [LocalModelRuntime].
  *
@@ -81,8 +84,8 @@ constructor(
       val options =
         LlmInference.LlmInferenceOptions.builder()
           .setModelPath(modelFile(request.modelId).absolutePath)
-          .setMaxTokens(request.maxOutputTokens ?: 1024)
-          .setTemperature(request.temperature ?: 0.7f)
+          .setMaxTokens(request.maxOutputTokens ?: DEFAULT_MAX_TOKENS)
+          .setTemperature(request.temperature ?: DEFAULT_TEMPERATURE)
           .build()
       llmInference = LlmInference.createFromOptions(context, options)
     }

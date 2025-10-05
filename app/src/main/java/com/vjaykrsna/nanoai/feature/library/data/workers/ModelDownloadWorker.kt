@@ -21,6 +21,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.net.URL
+import java.security.GeneralSecurityException
 import java.security.KeyFactory
 import java.security.MessageDigest
 import java.security.Signature
@@ -303,31 +304,51 @@ constructor(
   private suspend fun verifySignature(
     file: File,
     signature: String,
-    publicKeyUrl: String
-  ): Boolean {
-    return withContext(Dispatchers.IO) {
+    publicKeyUrl: String,
+  ): Boolean =
+    withContext(Dispatchers.IO) {
       try {
         val keyBytes = URL(publicKeyUrl).readBytes()
         val spec = X509EncodedKeySpec(keyBytes)
-        val kf = KeyFactory.getInstance("RSA")
-        val publicKey = kf.generatePublic(spec)
+        val keyFactory = KeyFactory.getInstance("RSA")
+        val publicKey = keyFactory.generatePublic(spec)
 
-        val sig = Signature.getInstance("SHA256withRSA")
-        sig.initVerify(publicKey)
+        val verifier = Signature.getInstance("SHA256withRSA")
+        verifier.initVerify(publicKey)
         file.inputStream().use { input ->
           val buffer = ByteArray(DOWNLOAD_BUFFER_SIZE)
           while (true) {
             val read = input.read(buffer)
             if (read == -1) break
-            sig.update(buffer, 0, read)
+            verifier.update(buffer, 0, read)
           }
         }
-        sig.verify(android.util.Base64.decode(signature, android.util.Base64.DEFAULT))
-      } catch (e: Exception) {
+
+        verifier.verify(android.util.Base64.decode(signature, android.util.Base64.DEFAULT))
+      } catch (ioException: IOException) {
+        telemetryReporter.report(
+          source = "ModelDownloadWorker.verifySignature",
+          result =
+            NanoAIResult.recoverable(
+              message = "Failed to download verification key",
+              cause = ioException,
+              context = mapOf("publicKeyUrl" to publicKeyUrl),
+            ),
+        )
+        false
+      } catch (securityException: GeneralSecurityException) {
+        telemetryReporter.report(
+          source = "ModelDownloadWorker.verifySignature",
+          result =
+            NanoAIResult.recoverable(
+              message = "Signature verification failed",
+              cause = securityException,
+              context = mapOf("modelId" to file.nameWithoutExtension),
+            ),
+        )
         false
       }
     }
-  }
 
   private suspend fun handleRecoverable(
     taskId: String,

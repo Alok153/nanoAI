@@ -1,7 +1,9 @@
 package com.vjaykrsna.nanoai.ui.theme
 
-import android.app.Activity
 import android.os.Build
+import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -18,8 +20,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 
 private val LightColorScheme =
@@ -147,15 +147,32 @@ fun NanoAITheme(
 
   val view = LocalView.current
   if (!view.isInEditMode) {
-    val activity = view.context as Activity
-    val window = activity.window
-    SideEffect {
-      WindowCompat.setDecorFitsSystemWindows(window, false)
-      window.statusBarColor = colorScheme.surface.toArgb()
-      window.navigationBarColor = colorScheme.surface.toArgb()
-      WindowInsetsControllerCompat(window, window.decorView).apply {
-        isAppearanceLightStatusBars = !darkTheme
-        isAppearanceLightNavigationBars = !darkTheme
+    val activity = view.context as? ComponentActivity
+    if (activity != null) {
+      val statusBarStyle =
+        if (darkTheme) {
+          SystemBarStyle.dark(colorScheme.surface.toArgb())
+        } else {
+          SystemBarStyle.light(
+            colorScheme.surface.toArgb(),
+            colorScheme.onSurface.toArgb(),
+          )
+        }
+      val navigationBarStyle =
+        if (darkTheme) {
+          SystemBarStyle.dark(colorScheme.surface.toArgb())
+        } else {
+          SystemBarStyle.light(
+            colorScheme.surface.toArgb(),
+            colorScheme.onSurface.toArgb(),
+          )
+        }
+
+      SideEffect {
+        activity.enableEdgeToEdge(
+          statusBarStyle = statusBarStyle,
+          navigationBarStyle = navigationBarStyle,
+        )
       }
     }
   }
