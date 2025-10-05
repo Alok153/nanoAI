@@ -3,6 +3,7 @@ package com.vjaykrsna.nanoai.feature.library.data.workers
 import android.content.Context
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
+import androidx.work.ListenableWorker.Result as WorkResult
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
@@ -79,9 +80,9 @@ constructor(
     dependencies.modelManifestRepository
   private val telemetryReporter: TelemetryReporter = dependencies.telemetryReporter
 
-  override suspend fun doWork(): Result = withContext(Dispatchers.IO) { executeWork() }
+  override suspend fun doWork(): WorkResult = withContext(Dispatchers.IO) { executeWork() }
 
-  private suspend fun executeWork(): Result {
+  private suspend fun executeWork(): WorkResult {
     val taskId = inputData.getString(KEY_TASK_ID) ?: return fatalFailureResult("Missing task id")
     val modelId = inputData.getString(KEY_MODEL_ID) ?: return fatalFailureResult("Missing model id")
     val modelPackage =
@@ -103,7 +104,7 @@ constructor(
     taskId: String,
     modelId: String,
     manifest: DownloadManifest,
-  ): Result {
+  ): WorkResult {
     val downloadDir = File(applicationContext.filesDir, "models").apply { mkdirs() }
     val outputFile = File(downloadDir, "${manifest.modelId}.bin")
 
@@ -123,7 +124,7 @@ constructor(
               VerificationOutcome.CORRUPTED,
               integrityResult.message,
             )
-            handleRecoverable(taskId, modelId, integrityResult)
+            return handleRecoverable(taskId, modelId, integrityResult)
           }
           is NanoAIResult.FatalError -> {
             reportVerification(
@@ -132,13 +133,15 @@ constructor(
               VerificationOutcome.CORRUPTED,
               integrityResult.message,
             )
-            handleFatal(taskId, modelId, integrityResult)
+            return handleFatal(taskId, modelId, integrityResult)
           }
         }
       }
-      is NanoAIResult.RecoverableError -> handleRecoverable(taskId, modelId, downloadOutcome)
-      is NanoAIResult.FatalError -> handleFatal(taskId, modelId, downloadOutcome)
+      is NanoAIResult.RecoverableError -> return handleRecoverable(taskId, modelId, downloadOutcome)
+      is NanoAIResult.FatalError -> return handleFatal(taskId, modelId, downloadOutcome)
     }
+    // Shouldn't reach here but return failure to satisfy compiler
+    return WorkResult.failure(fatalResultData(NanoAIResult.FatalError("Unknown error", null)))
   }
 
   private suspend fun downloadModel(
@@ -212,10 +215,10 @@ constructor(
       context = mapOf("modelId" to manifest.modelId),
     )
 
-  private fun ResponseBody.saveToFile(
+  private suspend fun ResponseBody.saveToFile(
     outputFile: File,
     manifest: DownloadManifest,
-    onProgress: (Float, Long, Long) -> Unit,
+    onProgress: suspend (Float, Long, Long) -> Unit,
   ): NanoAIResult.RecoverableError? {
     byteStream().use { input ->
       FileOutputStream(outputFile).use { output ->
@@ -285,7 +288,7 @@ constructor(
     taskId: String,
     modelId: String,
     error: NanoAIResult.RecoverableError,
-  ): Result {
+  ): WorkResult {
     downloadTaskDao.updateStatusWithError(taskId, DownloadStatus.FAILED, error.message)
     modelPackageDao.updateInstallState(modelId, InstallState.ERROR, Clock.System.now())
     markTaskFinished(downloadTaskDao, taskId)
@@ -302,9 +305,9 @@ constructor(
         ),
     )
     return if (willRetry) {
-      Result.retry()
+      WorkResult.retry()
     } else {
-      Result.failure(recoverableResultData(error))
+      WorkResult.failure(recoverableResultData(error))
     }
   }
 
@@ -312,7 +315,7 @@ constructor(
     taskId: String,
     modelId: String,
     error: NanoAIResult.FatalError,
-  ): Result {
+  ): WorkResult {
     downloadTaskDao.updateStatusWithError(taskId, DownloadStatus.FAILED, error.message)
     modelPackageDao.updateInstallState(modelId, InstallState.ERROR, Clock.System.now())
     markTaskFinished(downloadTaskDao, taskId)
@@ -326,7 +329,7 @@ constructor(
           "attempt" to runAttemptCount.toString(),
         ),
     )
-    return Result.failure(fatalResultData(error))
+    return WorkResult.failure(fatalResultData(error))
   }
 
   private suspend fun markSuccess(
@@ -335,13 +338,13 @@ constructor(
     manifest: DownloadManifest,
     outputFile: File,
     checksum: String,
-  ): Result {
+  ): WorkResult {
     downloadTaskDao.updateStatus(taskId, DownloadStatus.COMPLETED)
     downloadTaskDao.updateProgress(taskId, 1f, manifest.sizeBytes)
     markTaskFinished(downloadTaskDao, taskId)
     modelPackageDao.updateInstallState(modelId, InstallState.INSTALLED, Clock.System.now())
 
-    return Result.success(
+    return WorkResult.success(
       workDataOf(
         KEY_FILE_PATH to outputFile.absolutePath,
         KEY_MODEL_ID to modelId,
@@ -394,8 +397,8 @@ constructor(
   }
 }
 
-private fun fatalFailureResult(message: String): Result =
-  Result.failure(
+private fun fatalFailureResult(message: String): WorkResult =
+  WorkResult.failure(
     workDataOf(
       KEY_ERROR_TYPE to ERROR_TYPE_FATAL,
       KEY_ERROR_MESSAGE to message,

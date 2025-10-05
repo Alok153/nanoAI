@@ -160,8 +160,7 @@ private fun ChatTopBar(
           readOnly = true,
           label = { Text("Persona") },
           trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-          modifier =
-            Modifier.menuAnchor().semantics { contentDescription = "Persona selector dropdown" },
+          modifier = Modifier.semantics { contentDescription = "Persona selector dropdown" },
         )
 
         ExposedDropdownMenu(
@@ -281,6 +280,7 @@ private fun MessageBubble(message: Message, modifier: Modifier = Modifier) {
   }
 }
 
+@Suppress("DEPRECATION")
 @Composable
 private fun MessageInputArea(
   onSendMessage: (String) -> Unit,

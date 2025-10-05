@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 
 private val LightColorScheme =
@@ -101,10 +102,7 @@ data class NanoAIElevation(
   val level5: Dp = 12.dp,
 )
 
-@Suppress("CompositionLocalAllowlist") // Custom theme tokens for app-wide spacing/elevation
 val LocalNanoAISpacing = staticCompositionLocalOf { NanoAISpacing() }
-
-@Suppress("CompositionLocalAllowlist") // Custom theme tokens for app-wide spacing/elevation
 val LocalNanoAIElevation = staticCompositionLocalOf { NanoAIElevation() }
 
 object NanoAIThemeDefaults {
@@ -115,7 +113,6 @@ object NanoAIThemeDefaults {
     @Composable @ReadOnlyComposable get() = LocalNanoAIElevation.current
 }
 
-@Suppress("CyclomaticComplexMethod") // Theme selection logic with multiple conditions
 @Composable
 fun NanoAITheme(
   themePreference: ThemePreference = ThemePreference.SYSTEM,
@@ -146,10 +143,16 @@ fun NanoAITheme(
 
   val view = LocalView.current
   if (!view.isInEditMode) {
+    val activity = view.context as Activity
+    val window = activity.window
     SideEffect {
-      val window = (view.context as Activity).window
+      WindowCompat.setDecorFitsSystemWindows(window, false)
       window.statusBarColor = colorScheme.surface.toArgb()
-      WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+      window.navigationBarColor = colorScheme.surface.toArgb()
+      WindowInsetsControllerCompat(window, window.decorView).apply {
+        isAppearanceLightStatusBars = !darkTheme
+        isAppearanceLightNavigationBars = !darkTheme
+      }
     }
   }
 
