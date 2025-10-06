@@ -69,8 +69,9 @@ constructor(
       repository.uiPreferenceSnapshot,
       progressCoordinator.progressJobs,
     ) { layout, palette, banner, prefs, jobs ->
+      val mergedJobs = mergeProgressJobs(layout.progressJobs, jobs)
       ShellUiState(
-        layout = layout.copy(progressJobs = jobs),
+        layout = layout.copy(progressJobs = mergedJobs),
         commandPalette = palette,
         connectivityBanner = banner,
         preferences = prefs,
@@ -202,6 +203,19 @@ constructor(
     viewModelScope.launch(dispatcher) {
       repository.updateConnectivity(status)
     }
+  }
+
+  private fun mergeProgressJobs(
+    repositoryJobs: List<ProgressJob>,
+    coordinatorJobs: List<ProgressJob>,
+  ): List<ProgressJob> {
+    if (coordinatorJobs.isEmpty()) return repositoryJobs
+    if (repositoryJobs.isEmpty()) return coordinatorJobs
+
+    val merged = linkedMapOf<UUID, ProgressJob>()
+    repositoryJobs.forEach { job -> merged[job.jobId] = job }
+    coordinatorJobs.forEach { job -> merged[job.jobId] = job }
+    return merged.values.toList()
   }
 
   /**

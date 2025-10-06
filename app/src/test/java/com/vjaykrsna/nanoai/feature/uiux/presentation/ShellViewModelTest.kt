@@ -1,9 +1,11 @@
 package com.vjaykrsna.nanoai.feature.uiux.presentation
 
+import android.os.Build
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.data.repository.UserProfileRepository
 import com.vjaykrsna.nanoai.core.domain.model.uiux.LayoutSnapshot
@@ -36,10 +38,16 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalMaterial3WindowSizeClassApi::class)
 class ShellViewModelTest {
   private val dispatcher = StandardTestDispatcher()
@@ -54,7 +62,10 @@ class ShellViewModelTest {
     viewModel.openMode(ModeId.CHAT)
     advanceUntilIdle()
 
-    val uiState = viewModel.uiState.value
+    val uiState =
+      viewModel.uiState.first { state ->
+        repository.openModeCalls.isNotEmpty() && state.layout.activeMode == ModeId.CHAT
+      }
     assertThat(uiState.layout.activeMode).isEqualTo(ModeId.CHAT)
     assertThat(uiState.layout.isLeftDrawerOpen).isFalse()
     assertThat(uiState.layout.showCommandPalette).isFalse()
@@ -71,7 +82,11 @@ class ShellViewModelTest {
     viewModel.toggleRightDrawer(RightPanel.PROGRESS_CENTER)
     advanceUntilIdle()
 
-    val uiState = viewModel.uiState.value
+    val uiState =
+      viewModel.uiState.first { state ->
+        repository.rightDrawerToggles.contains(RightPanel.PROGRESS_CENTER) &&
+          state.layout.activeRightPanel == RightPanel.PROGRESS_CENTER
+      }
     assertThat(uiState.layout.isRightDrawerOpen).isTrue()
     assertThat(uiState.layout.activeRightPanel).isEqualTo(RightPanel.PROGRESS_CENTER)
     assertThat(repository.rightDrawerToggles).containsExactly(RightPanel.PROGRESS_CENTER)
@@ -97,7 +112,10 @@ class ShellViewModelTest {
     viewModel.queueGeneration(job)
     advanceUntilIdle()
 
-    val uiState = viewModel.uiState.value
+    val uiState =
+      viewModel.uiState.first { state ->
+        repository.queuedJobs.contains(job) && state.layout.progressJobs.contains(job)
+      }
     assertThat(uiState.layout.progressJobs).contains(job)
     assertThat(uiState.layout.pendingUndoAction).isNotNull()
     assertThat(repository.queuedJobs).contains(job)
@@ -127,7 +145,11 @@ class ShellViewModelTest {
     viewModel.completeJob(jobId)
     advanceUntilIdle()
 
-    val uiState = viewModel.uiState.value
+    val uiState =
+      viewModel.uiState.first { state ->
+        repository.completedJobs.contains(jobId) &&
+          state.layout.progressJobs.none { it.jobId == jobId }
+      }
     assertThat(uiState.layout.progressJobs).isEmpty()
     assertThat(repository.completedJobs).contains(jobId)
   }
@@ -142,7 +164,11 @@ class ShellViewModelTest {
     viewModel.updateConnectivity(ConnectivityStatus.ONLINE)
     advanceUntilIdle()
 
-    val uiState = viewModel.uiState.value
+    val uiState =
+      viewModel.uiState.first { state ->
+        repository.connectivityUpdates.contains(ConnectivityStatus.ONLINE) &&
+          state.layout.connectivity == ConnectivityStatus.ONLINE
+      }
     assertThat(uiState.layout.connectivity).isEqualTo(ConnectivityStatus.ONLINE)
     assertThat(uiState.connectivityBanner.status).isEqualTo(ConnectivityStatus.ONLINE)
     assertThat(repository.connectivityUpdates).containsExactly(ConnectivityStatus.ONLINE)
@@ -346,9 +372,13 @@ private fun FakeCommandPaletteActionProvider(): com.vjaykrsna.nanoai.feature.uiu
 
 private fun FakeProgressCenterCoordinator(): com.vjaykrsna.nanoai.feature.uiux.domain.ProgressCenterCoordinator {
   val downloadManager = FakeDownloadManager()
-  val workManager = androidx.work.testing.TestWorkManagerImpl(
-    androidx.test.core.app.ApplicationProvider.getApplicationContext(),
-  )
+  val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+  try {
+    androidx.work.testing.WorkManagerTestInitHelper.initializeTestWorkManager(context)
+  } catch (illegalState: IllegalStateException) {
+    // WorkManager was already initialized for this process; safe to proceed.
+  }
+  val workManager = androidx.work.WorkManager.getInstance(context)
   return com.vjaykrsna.nanoai.feature.uiux.domain.ProgressCenterCoordinator(
     downloadManager = downloadManager,
     workManager = workManager,

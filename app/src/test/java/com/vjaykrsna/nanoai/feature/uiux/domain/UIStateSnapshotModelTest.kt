@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai.feature.uiux.domain
 
+import android.os.Build
 import com.vjaykrsna.nanoai.feature.uiux.domain.UiUxDomainTestHelper.loadClass
 import com.vjaykrsna.nanoai.feature.uiux.domain.UiUxDomainTestHelper.primaryConstructor
 import java.lang.reflect.InvocationTargetException
@@ -7,11 +8,16 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 /**
  * Validation-oriented tests for the UIStateSnapshot domain model (T032). Verifies recent action
  * rotation, expanded panel dedupe, and sidebar collapsed persistence.
  */
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
 class UIStateSnapshotModelTest {
   @Test
   fun uiState_recentActionsTrimmedToFive() {
@@ -76,6 +82,11 @@ class UIStateSnapshotModelTest {
       "user-123",
       listOf("panel-1"),
       listOf("action-0"),
+      false,
+      false,
+      false,
+      "home",
+      null,
       false,
     )
 

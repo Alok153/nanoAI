@@ -2,9 +2,13 @@
 
 package com.vjaykrsna.nanoai.feature.uiux.domain
 
+import android.os.Build
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.Test
 import kotlin.test.fail
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
@@ -14,6 +18,8 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
 class UpdateThemePreferenceUseCaseTest {
   @Test
   fun `updates theme preferences, syncs repository, and notifies observers`() = runTest {

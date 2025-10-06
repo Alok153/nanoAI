@@ -50,13 +50,13 @@
   _Depends on_: T012, T018
 - [X] T021 Implement `ShellViewModel` in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/presentation/ShellViewModel.kt` to satisfy all contract intents with proper state reducers.  
   _Depends on_: T003–T020
-- [ ] T022 Build `NanoShellScaffold` composable in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/shell/NanoShellScaffold.kt` hosting drawers, command palette overlay, and offline banner surfaces.  
+- [X] T022 Build `NanoShellScaffold` composable in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/shell/NanoShellScaffold.kt` hosting drawers, command palette overlay, and offline banner surfaces.  
   _Depends on_: T004, T021
-- [ ] T023 Implement `CommandPaletteSheet` UI in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/commandpalette/CommandPaletteSheet.kt` with keyboard navigation + semantics.  
+- [X] T023 Implement `CommandPaletteSheet` UI in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/commandpalette/CommandPaletteSheet.kt` with keyboard navigation + semantics.  
   _Depends on_: T004, T019, T022
-- [ ] T024 Implement `ProgressCenterPanel` UI in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/progress/ProgressCenterPanel.kt` rendering job queue + retry logic.  
+- [X] T024 Implement `ProgressCenterPanel` UI in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/progress/ProgressCenterPanel.kt` rendering job queue + retry logic.  
   _Depends on_: T005, T012, T020
-- [ ] T025 Implement `ConnectivityBanner` composable in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/components/ConnectivityBanner.kt` wired to dismissal cooldown.  
+- [X] T025 Implement `ConnectivityBanner` composable in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/components/ConnectivityBanner.kt` wired to dismissal cooldown.  
   _Depends on_: T013, T017, T022
 - [ ] T026 Rebuild `HomeScreen` in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/HomeScreen.kt` as responsive grid with quick actions and recent activity list.  
   _Depends on_: T006, T010, T015, T022

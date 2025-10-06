@@ -59,6 +59,6 @@ nanoAI/
 
 <!-- MANUAL ADDITIONS START -->
 
-- When implementing new features or working with unfamiliar technologies (e.g., libraries or AI runtimes), MUST use the Context7 MCP tool to retrieve up-to-date documentation and code examples from official sources.
+- When implementing new features or working with unfamiliar technologies (e.g., libraries or AI runtimes), use the Context7 MCP tool to retrieve up-to-date documentation and code examples from official sources.
 
 <!-- MANUAL ADDITIONS END -->

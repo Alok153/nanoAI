@@ -2,6 +2,7 @@
 
 package com.vjaykrsna.nanoai.feature.uiux.presentation
 
+import android.os.Build
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.feature.uiux.domain.AnalyticsRecorder
@@ -11,6 +12,9 @@ import com.vjaykrsna.nanoai.feature.uiux.domain.instantiateUiUxUseCase
 import java.lang.reflect.Proxy
 import kotlin.test.Test
 import kotlin.test.fail
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -18,6 +22,8 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
 class WelcomeViewModelTest {
   @Test
   fun `uiState branches based on onboarding completion`() = runTest {
