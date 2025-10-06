@@ -61,6 +61,4 @@ nanoAI/
 
 - When implementing new features or working with unfamiliar technologies (e.g., libraries or AI runtimes), MUST use the Context7 MCP tool to retrieve up-to-date documentation and code examples from official sources.
 
-- Prefer reading whole files unless its large (more than 200 line) or you don't really need the whole file context.
-
 <!-- MANUAL ADDITIONS END -->

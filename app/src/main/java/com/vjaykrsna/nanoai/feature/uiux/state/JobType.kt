@@ -9,3 +9,15 @@ enum class JobType {
   TRANSLATION,
   OTHER,
 }
+
+/** Human-readable display name for the job type. */
+val JobType.displayName: String
+  get() =
+    when (this) {
+      JobType.IMAGE_GENERATION -> "Image Generation"
+      JobType.AUDIO_RECORDING -> "Audio Recording"
+      JobType.MODEL_DOWNLOAD -> "Model Download"
+      JobType.TEXT_GENERATION -> "Text Generation"
+      JobType.TRANSLATION -> "Translation"
+      JobType.OTHER -> "Background Task"
+    }

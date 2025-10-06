@@ -1,0 +1,268 @@
+package com.vjaykrsna.nanoai.feature.uiux.domain
+
+import com.vjaykrsna.nanoai.feature.uiux.state.CommandAction
+import com.vjaykrsna.nanoai.feature.uiux.state.CommandCategory
+import com.vjaykrsna.nanoai.feature.uiux.state.CommandDestination
+import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityStatus
+import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
+import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
+import com.vjaykrsna.nanoai.feature.uiux.state.RecentActivityItem
+import com.vjaykrsna.nanoai.feature.uiux.state.RightPanel
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+
+/**
+ * Aggregates navigation targets, quick actions, recent activity, and progress jobs into
+ * command palette actions grouped by category.
+ */
+@Singleton
+class CommandPaletteActionProvider
+@Inject
+constructor() {
+
+  /**
+   * Provides a combined flow of all available command actions, grouped by category.
+   *
+   * @param recentActivity Flow of recent user activity items
+   * @param progressJobs Flow of current progress jobs
+   * @param connectivity Current connectivity status
+   * @return Flow of all command actions available in the palette
+   */
+  fun provideActions(
+    recentActivity: Flow<List<RecentActivityItem>>,
+    progressJobs: Flow<List<ProgressJob>>,
+    connectivity: Flow<ConnectivityStatus>,
+  ): Flow<List<CommandAction>> =
+    combine(recentActivity, progressJobs, connectivity) { recent, jobs, status ->
+      buildList {
+        addAll(provideModeActions(status))
+        addAll(provideHistoryActions(recent))
+        addAll(provideJobActions(jobs))
+        addAll(provideSettingsActions())
+        addAll(provideHelpActions())
+      }
+    }
+
+  /**
+   * Provides mode navigation actions.
+   */
+  fun provideModeActions(connectivity: ConnectivityStatus): List<CommandAction> {
+    val isOnline = connectivity == ConnectivityStatus.ONLINE
+    return listOf(
+      CommandAction(
+        id = "mode_home",
+        title = "Home",
+        subtitle = "Return to home hub",
+        shortcut = "Ctrl+H",
+        category = CommandCategory.MODES,
+        destination = CommandDestination.Navigate(ModeId.HOME.toRoute()),
+      ),
+      CommandAction(
+        id = "mode_chat",
+        title = "New Chat",
+        subtitle = "Start a conversation",
+        shortcut = "Ctrl+N",
+        category = CommandCategory.MODES,
+        destination = CommandDestination.Navigate(ModeId.CHAT.toRoute()),
+      ),
+      CommandAction(
+        id = "mode_image",
+        title = "Generate Image",
+        subtitle = "Create images from text",
+        shortcut = "Ctrl+I",
+        enabled = isOnline,
+        category = CommandCategory.MODES,
+        destination = CommandDestination.Navigate(ModeId.IMAGE.toRoute()),
+      ),
+      CommandAction(
+        id = "mode_audio",
+        title = "Audio Session",
+        subtitle = "Voice and audio processing",
+        shortcut = "Ctrl+A",
+        category = CommandCategory.MODES,
+        destination = CommandDestination.Navigate(ModeId.AUDIO.toRoute()),
+      ),
+      CommandAction(
+        id = "mode_code",
+        title = "Code Assistant",
+        subtitle = "Programming help",
+        shortcut = "Ctrl+Shift+C",
+        category = CommandCategory.MODES,
+        destination = CommandDestination.Navigate(ModeId.CODE.toRoute()),
+      ),
+      CommandAction(
+        id = "mode_translate",
+        title = "Translation",
+        subtitle = "Language translation",
+        shortcut = "Ctrl+T",
+        category = CommandCategory.MODES,
+        destination = CommandDestination.Navigate(ModeId.TRANSLATE.toRoute()),
+      ),
+      CommandAction(
+        id = "mode_history",
+        title = "History",
+        subtitle = "View recent activity",
+        category = CommandCategory.MODES,
+        destination = CommandDestination.Navigate(ModeId.HISTORY.toRoute()),
+      ),
+      CommandAction(
+        id = "mode_library",
+        title = "Model Library",
+        subtitle = "Manage AI models",
+        category = CommandCategory.MODES,
+        destination = CommandDestination.Navigate(ModeId.LIBRARY.toRoute()),
+      ),
+    )
+  }
+
+  /**
+   * Provides history/recent activity actions.
+   */
+  fun provideHistoryActions(recentActivity: List<RecentActivityItem>): List<CommandAction> =
+    recentActivity.take(5).map { item ->
+      val timestampKotlinx = kotlinx.datetime.Instant.fromEpochSeconds(item.timestamp.epochSecond, item.timestamp.nano)
+      val timestampText = formatTimestamp(timestampKotlinx)
+      CommandAction(
+        id = "recent_${item.id}",
+        title = item.title,
+        subtitle = "${item.modeId.name} • $timestampText",
+        category = CommandCategory.HISTORY,
+        destination = CommandDestination.Navigate(item.toRoute()),
+      )
+    }
+
+  /**
+   * Provides progress/job-related actions.
+   */
+  fun provideJobActions(progressJobs: List<ProgressJob>): List<CommandAction> =
+    buildList {
+      if (progressJobs.isNotEmpty()) {
+        add(
+          CommandAction(
+            id = "jobs_view_all",
+            title = "View Progress Center",
+            subtitle = "${progressJobs.size} active job${if (progressJobs.size != 1) "s" else ""}",
+            category = CommandCategory.JOBS,
+            destination = CommandDestination.OpenRightPanel(RightPanel.PROGRESS_CENTER),
+          )
+        )
+      }
+      progressJobs.take(3).forEach { job ->
+        val jobTypeDisplay = when (job.type) {
+          com.vjaykrsna.nanoai.feature.uiux.state.JobType.IMAGE_GENERATION -> "Image Generation"
+          com.vjaykrsna.nanoai.feature.uiux.state.JobType.AUDIO_RECORDING -> "Audio Recording"
+          com.vjaykrsna.nanoai.feature.uiux.state.JobType.MODEL_DOWNLOAD -> "Model Download"
+          com.vjaykrsna.nanoai.feature.uiux.state.JobType.TEXT_GENERATION -> "Text Generation"
+          com.vjaykrsna.nanoai.feature.uiux.state.JobType.TRANSLATION -> "Translation"
+          com.vjaykrsna.nanoai.feature.uiux.state.JobType.OTHER -> "Background Task"
+        }
+        val jobStatusDisplay = job.statusLabel
+        add(
+          CommandAction(
+            id = "job_${job.jobId}",
+            title = jobTypeDisplay,
+            subtitle = "${(job.progress * 100).toInt()}% • $jobStatusDisplay",
+            enabled = job.canRetry,
+            category = CommandCategory.JOBS,
+            destination = CommandDestination.OpenRightPanel(RightPanel.PROGRESS_CENTER),
+          )
+        )
+      }
+    }
+
+  /**
+   * Provides settings-related actions.
+   */
+  fun provideSettingsActions(): List<CommandAction> =
+    listOf(
+      CommandAction(
+        id = "settings_main",
+        title = "Settings",
+        subtitle = "App preferences and configuration",
+        shortcut = "Ctrl+,",
+        category = CommandCategory.SETTINGS,
+        destination = CommandDestination.Navigate(ModeId.SETTINGS.toRoute()),
+      ),
+      CommandAction(
+        id = "settings_appearance",
+        title = "Appearance",
+        subtitle = "Theme and visual settings",
+        category = CommandCategory.SETTINGS,
+        destination = CommandDestination.Navigate("${ModeId.SETTINGS.toRoute()}/appearance"),
+      ),
+      CommandAction(
+        id = "settings_models",
+        title = "Model Settings",
+        subtitle = "Configure AI models",
+        category = CommandCategory.SETTINGS,
+        destination = CommandDestination.Navigate("${ModeId.SETTINGS.toRoute()}/models"),
+      ),
+    )
+
+  /**
+   * Provides help-related actions.
+   */
+  fun provideHelpActions(): List<CommandAction> =
+    listOf(
+      CommandAction(
+        id = "help_docs",
+        title = "Documentation",
+        subtitle = "View help and guides",
+        category = CommandCategory.HELP,
+        destination = CommandDestination.Navigate("help/docs"),
+      ),
+      CommandAction(
+        id = "help_shortcuts",
+        title = "Keyboard Shortcuts",
+        subtitle = "View all shortcuts",
+        shortcut = "Ctrl+/",
+        category = CommandCategory.HELP,
+        destination = CommandDestination.Navigate("help/shortcuts"),
+      ),
+    )
+
+  /**
+   * Filters actions based on a search query.
+   */
+  fun filterActions(actions: List<CommandAction>, query: String): List<CommandAction> {
+    if (query.isBlank()) return actions
+    val lowerQuery = query.lowercase()
+    return actions.filter { action ->
+      action.title.lowercase().contains(lowerQuery) ||
+        action.subtitle?.lowercase()?.contains(lowerQuery) == true ||
+        action.category.name.lowercase().contains(lowerQuery)
+    }
+  }
+
+  private fun formatTimestamp(timestamp: kotlinx.datetime.Instant): String {
+    val now = kotlinx.datetime.Clock.System.now()
+    val duration = now - timestamp
+    return when {
+      duration.inWholeMinutes < 1 -> "Just now"
+      duration.inWholeMinutes < 60 -> "${duration.inWholeMinutes}m ago"
+      duration.inWholeHours < 24 -> "${duration.inWholeHours}h ago"
+      duration.inWholeDays < 7 -> "${duration.inWholeDays}d ago"
+      else -> "Over a week ago"
+    }
+  }
+}
+
+/** Extension to convert ModeId to route string. */
+fun ModeId.toRoute(): String =
+  when (this) {
+    ModeId.HOME -> "home"
+    ModeId.CHAT -> "chat"
+    ModeId.IMAGE -> "image"
+    ModeId.AUDIO -> "audio"
+    ModeId.CODE -> "code"
+    ModeId.TRANSLATE -> "translate"
+    ModeId.HISTORY -> "history"
+    ModeId.LIBRARY -> "library"
+    ModeId.SETTINGS -> "settings"
+    ModeId.TOOLS -> "tools"
+  }
+
+/** Extension to convert RecentActivityItem to route string. */
+private fun RecentActivityItem.toRoute(): String = "${modeId.toRoute()}/$id"

@@ -44,11 +44,11 @@
   _Depends on_: T014
 - [X] T018 Build `ShellStateRepository` in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/data/ShellStateRepository.kt` combining preferences, progress, connectivity, and activity flows into `ShellLayoutState`.  
   _Depends on_: T009–T017
-- [ ] T019 Implement `CommandPaletteActionProvider` in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/domain/CommandPaletteActionProvider.kt` aggregating navigation + quick actions.  
+- [X] T019 Implement `CommandPaletteActionProvider` in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/domain/CommandPaletteActionProvider.kt` aggregating navigation + quick actions.  
   _Depends on_: T011, T015, T018
-- [ ] T020 Implement `ProgressCenterCoordinator` in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/domain/ProgressCenterCoordinator.kt` syncing WorkManager progress with `ProgressJob`.  
+- [X] T020 Implement `ProgressCenterCoordinator` in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/domain/ProgressCenterCoordinator.kt` syncing WorkManager progress with `ProgressJob`.  
   _Depends on_: T012, T018
-- [ ] T021 Implement `ShellViewModel` in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/presentation/ShellViewModel.kt` to satisfy all contract intents with proper state reducers.  
+- [X] T021 Implement `ShellViewModel` in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/presentation/ShellViewModel.kt` to satisfy all contract intents with proper state reducers.  
   _Depends on_: T003–T020
 - [ ] T022 Build `NanoShellScaffold` composable in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/shell/NanoShellScaffold.kt` hosting drawers, command palette overlay, and offline banner surfaces.  
   _Depends on_: T004, T021

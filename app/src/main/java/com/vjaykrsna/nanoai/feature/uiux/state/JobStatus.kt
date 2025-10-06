@@ -9,3 +9,15 @@ enum class JobStatus {
   COMPLETED,
   STREAMING,
 }
+
+/** Human-readable display name for the job status. */
+val JobStatus.displayName: String
+  get() =
+    when (this) {
+      JobStatus.PENDING -> "Waiting"
+      JobStatus.RUNNING -> "Running"
+      JobStatus.PAUSED -> "Paused"
+      JobStatus.FAILED -> "Failed"
+      JobStatus.COMPLETED -> "Completed"
+      JobStatus.STREAMING -> "Streaming"
+    }

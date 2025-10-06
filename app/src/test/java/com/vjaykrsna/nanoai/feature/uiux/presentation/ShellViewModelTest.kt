@@ -47,7 +47,9 @@ class ShellViewModelTest {
   @Test
   fun openMode_closesDrawersAndHidesPalette() = runTest(dispatcher) {
     val repository = FakeShellStateRepository()
-    val viewModel = ShellViewModel(repository, dispatcher)
+    val actionProvider = FakeCommandPaletteActionProvider()
+    val progressCoordinator = FakeProgressCenterCoordinator()
+    val viewModel = ShellViewModel(repository, actionProvider, progressCoordinator, dispatcher)
 
     viewModel.openMode(ModeId.CHAT)
     advanceUntilIdle()
@@ -62,7 +64,9 @@ class ShellViewModelTest {
   @Test
   fun toggleRightDrawer_setsPanelAndReflectsInState() = runTest(dispatcher) {
     val repository = FakeShellStateRepository()
-    val viewModel = ShellViewModel(repository, dispatcher)
+    val actionProvider = FakeCommandPaletteActionProvider()
+    val progressCoordinator = FakeProgressCenterCoordinator()
+    val viewModel = ShellViewModel(repository, actionProvider, progressCoordinator, dispatcher)
 
     viewModel.toggleRightDrawer(RightPanel.PROGRESS_CENTER)
     advanceUntilIdle()
@@ -76,7 +80,9 @@ class ShellViewModelTest {
   @Test
   fun queueGeneration_offline_jobQueuedWithPendingUndo() = runTest(dispatcher) {
     val repository = FakeShellStateRepository(initialConnectivity = ConnectivityStatus.OFFLINE)
-    val viewModel = ShellViewModel(repository, dispatcher)
+    val actionProvider = FakeCommandPaletteActionProvider()
+    val progressCoordinator = FakeProgressCenterCoordinator()
+    val viewModel = ShellViewModel(repository, actionProvider, progressCoordinator, dispatcher)
 
     val job = ProgressJob(
       jobId = UUID.randomUUID(),
@@ -114,7 +120,9 @@ class ShellViewModelTest {
           )
         ),
       )
-    val viewModel = ShellViewModel(repository, dispatcher)
+    val actionProvider = FakeCommandPaletteActionProvider()
+    val progressCoordinator = FakeProgressCenterCoordinator()
+    val viewModel = ShellViewModel(repository, actionProvider, progressCoordinator, dispatcher)
 
     viewModel.completeJob(jobId)
     advanceUntilIdle()
@@ -127,7 +135,9 @@ class ShellViewModelTest {
   @Test
   fun updateConnectivity_flushesQueuedJobsAndBanner() = runTest(dispatcher) {
     val repository = FakeShellStateRepository(initialConnectivity = ConnectivityStatus.OFFLINE)
-    val viewModel = ShellViewModel(repository, dispatcher)
+    val actionProvider = FakeCommandPaletteActionProvider()
+    val progressCoordinator = FakeProgressCenterCoordinator()
+    val viewModel = ShellViewModel(repository, actionProvider, progressCoordinator, dispatcher)
 
     viewModel.updateConnectivity(ConnectivityStatus.ONLINE)
     advanceUntilIdle()
@@ -329,4 +339,38 @@ private class NoopUserProfileRepository : UserProfileRepository {
   override suspend fun setOfflineOverride(isOffline: Boolean) {
     offlineFlow.value = isOffline
   }
+}
+
+private fun FakeCommandPaletteActionProvider(): com.vjaykrsna.nanoai.feature.uiux.domain.CommandPaletteActionProvider =
+  com.vjaykrsna.nanoai.feature.uiux.domain.CommandPaletteActionProvider()
+
+private fun FakeProgressCenterCoordinator(): com.vjaykrsna.nanoai.feature.uiux.domain.ProgressCenterCoordinator {
+  val downloadManager = FakeDownloadManager()
+  val workManager = androidx.work.testing.TestWorkManagerImpl(
+    androidx.test.core.app.ApplicationProvider.getApplicationContext(),
+  )
+  return com.vjaykrsna.nanoai.feature.uiux.domain.ProgressCenterCoordinator(
+    downloadManager = downloadManager,
+    workManager = workManager,
+  )
+}
+
+private class FakeDownloadManager : com.vjaykrsna.nanoai.feature.library.data.DownloadManager {
+  override suspend fun startDownload(modelId: String): UUID = UUID.randomUUID()
+  override suspend fun queueDownload(modelId: String): UUID = UUID.randomUUID()
+  override suspend fun pauseDownload(taskId: UUID) = Unit
+  override suspend fun resumeDownload(taskId: UUID) = Unit
+  override suspend fun cancelDownload(taskId: UUID) = Unit
+  override suspend fun retryDownload(taskId: UUID) = Unit
+  override suspend fun resetTask(taskId: UUID) = Unit
+  override suspend fun getDownloadStatus(taskId: UUID): com.vjaykrsna.nanoai.core.domain.model.DownloadTask? = null
+  override suspend fun getTaskById(taskId: UUID): Flow<com.vjaykrsna.nanoai.core.domain.model.DownloadTask?> = kotlinx.coroutines.flow.flowOf(null)
+  override suspend fun getActiveDownloads(): Flow<List<com.vjaykrsna.nanoai.core.domain.model.DownloadTask>> = kotlinx.coroutines.flow.flowOf(emptyList())
+  override fun getQueuedDownloads(): Flow<List<com.vjaykrsna.nanoai.core.domain.model.DownloadTask>> = kotlinx.coroutines.flow.flowOf(emptyList())
+  override fun observeProgress(taskId: UUID): Flow<Float> = kotlinx.coroutines.flow.flowOf(0f)
+  override suspend fun getMaxConcurrentDownloads(): Int = 2
+  override suspend fun updateTaskStatus(taskId: UUID, status: com.vjaykrsna.nanoai.feature.library.model.DownloadStatus) = Unit
+  override suspend fun getModelIdForTask(taskId: UUID): String? = null
+  override suspend fun getDownloadedChecksum(modelId: String): String? = null
+  override suspend fun deletePartialFiles(modelId: String) = Unit
 }
