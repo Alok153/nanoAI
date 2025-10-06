@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -24,7 +25,6 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
 import com.vjaykrsna.nanoai.feature.uiux.data.ShellStateRepository
 import com.vjaykrsna.nanoai.feature.uiux.domain.CommandPaletteActionProvider
 import com.vjaykrsna.nanoai.feature.uiux.domain.ProgressCenterCoordinator
-import com.vjaykrsna.nanoai.feature.uiux.domain.toRoute
 import com.vjaykrsna.nanoai.feature.uiux.state.CommandAction
 import com.vjaykrsna.nanoai.feature.uiux.state.CommandCategory
 import com.vjaykrsna.nanoai.feature.uiux.state.CommandDestination
@@ -39,6 +39,7 @@ import com.vjaykrsna.nanoai.feature.uiux.state.RightPanel
 import com.vjaykrsna.nanoai.feature.uiux.state.ShellLayoutState
 import com.vjaykrsna.nanoai.feature.uiux.state.UiPreferenceSnapshot
 import com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload
+import com.vjaykrsna.nanoai.feature.uiux.state.toRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.UUID
 import javax.inject.Inject
@@ -52,6 +53,94 @@ import kotlinx.coroutines.launch
 
 /** ViewModel coordinating shell layout state and user intents. */
 private const val SUBSCRIPTION_TIMEOUT_MILLIS = 5_000L
+
+private data class ModeCardDefinition(
+  val id: ModeId,
+  val title: String,
+  val subtitle: String,
+  val icon: ImageVector,
+  val actionId: String,
+  val actionTitle: String,
+  val actionCategory: CommandCategory,
+  val requiresOnline: Boolean = false,
+)
+
+private val MODE_CARD_DEFINITIONS =
+  listOf(
+    ModeCardDefinition(
+      id = ModeId.CHAT,
+      title = "Chat",
+      subtitle = "Conversational AI assistant",
+      icon = Icons.AutoMirrored.Filled.Chat,
+      actionId = "new_chat",
+      actionTitle = "New Chat",
+      actionCategory = CommandCategory.MODES,
+    ),
+    ModeCardDefinition(
+      id = ModeId.IMAGE,
+      title = "Image",
+      subtitle = "Generate images from text",
+      icon = Icons.Default.Image,
+      actionId = "new_image",
+      actionTitle = "Generate",
+      actionCategory = CommandCategory.MODES,
+      requiresOnline = true,
+    ),
+    ModeCardDefinition(
+      id = ModeId.AUDIO,
+      title = "Audio",
+      subtitle = "Voice and audio processing",
+      icon = Icons.Default.Mic,
+      actionId = "new_audio",
+      actionTitle = "Record",
+      actionCategory = CommandCategory.MODES,
+    ),
+    ModeCardDefinition(
+      id = ModeId.CODE,
+      title = "Code",
+      subtitle = "Programming assistant",
+      icon = Icons.Default.Code,
+      actionId = "new_code",
+      actionTitle = "New Session",
+      actionCategory = CommandCategory.MODES,
+    ),
+    ModeCardDefinition(
+      id = ModeId.TRANSLATE,
+      title = "Translate",
+      subtitle = "Language translation",
+      icon = Icons.Default.Language,
+      actionId = "new_translate",
+      actionTitle = "Translate",
+      actionCategory = CommandCategory.MODES,
+    ),
+    ModeCardDefinition(
+      id = ModeId.HISTORY,
+      title = "History",
+      subtitle = "View recent activity",
+      icon = Icons.Default.History,
+      actionId = "view_history",
+      actionTitle = "View",
+      actionCategory = CommandCategory.MODES,
+    ),
+    ModeCardDefinition(
+      id = ModeId.LIBRARY,
+      title = "Library",
+      subtitle = "Manage AI models",
+      icon = Icons.AutoMirrored.Filled.LibraryBooks,
+      actionId = "view_library",
+      actionTitle = "Manage",
+      actionCategory = CommandCategory.MODES,
+    ),
+    ModeCardDefinition(
+      id = ModeId.SETTINGS,
+      title = "Settings",
+      subtitle = "App preferences",
+      icon = Icons.Default.Settings,
+      actionId = "open_settings",
+      actionTitle = "Configure",
+      actionCategory = CommandCategory.SETTINGS,
+    ),
+  )
 
 @HiltViewModel
 class ShellViewModel
@@ -211,113 +300,23 @@ constructor(
   /** Builds the list of mode cards for the home hub grid. */
   private fun buildModeCards(connectivity: ConnectivityStatus): List<ModeCard> {
     val isOnline = connectivity == ConnectivityStatus.ONLINE
-    return listOf(
+    return MODE_CARD_DEFINITIONS.map { definition ->
+      val enabled = if (definition.requiresOnline) isOnline else true
       ModeCard(
-        id = ModeId.CHAT,
-        title = "Chat",
-        subtitle = "Conversational AI assistant",
-        icon = Icons.AutoMirrored.Filled.Chat,
+        id = definition.id,
+        title = definition.title,
+        subtitle = definition.subtitle,
+        icon = definition.icon,
+        enabled = enabled,
         primaryAction =
           CommandAction(
-            id = "new_chat",
-            title = "New Chat",
-            category = CommandCategory.MODES,
-            destination = CommandDestination.Navigate(ModeId.CHAT.toRoute()),
+            id = definition.actionId,
+            title = definition.actionTitle,
+            category = definition.actionCategory,
+            destination = CommandDestination.Navigate(definition.id.toRoute()),
           ),
-      ),
-      ModeCard(
-        id = ModeId.IMAGE,
-        title = "Image",
-        subtitle = "Generate images from text",
-        icon = Icons.Default.Image,
-        enabled = isOnline,
-        primaryAction =
-          CommandAction(
-            id = "new_image",
-            title = "Generate",
-            category = CommandCategory.MODES,
-            destination = CommandDestination.Navigate(ModeId.IMAGE.toRoute()),
-          ),
-      ),
-      ModeCard(
-        id = ModeId.AUDIO,
-        title = "Audio",
-        subtitle = "Voice and audio processing",
-        icon = Icons.Default.Mic,
-        primaryAction =
-          CommandAction(
-            id = "new_audio",
-            title = "Record",
-            category = CommandCategory.MODES,
-            destination = CommandDestination.Navigate(ModeId.AUDIO.toRoute()),
-          ),
-      ),
-      ModeCard(
-        id = ModeId.CODE,
-        title = "Code",
-        subtitle = "Programming assistant",
-        icon = Icons.Default.Code,
-        primaryAction =
-          CommandAction(
-            id = "new_code",
-            title = "New Session",
-            category = CommandCategory.MODES,
-            destination = CommandDestination.Navigate(ModeId.CODE.toRoute()),
-          ),
-      ),
-      ModeCard(
-        id = ModeId.TRANSLATE,
-        title = "Translate",
-        subtitle = "Language translation",
-        icon = Icons.Default.Language,
-        primaryAction =
-          CommandAction(
-            id = "new_translate",
-            title = "Translate",
-            category = CommandCategory.MODES,
-            destination = CommandDestination.Navigate(ModeId.TRANSLATE.toRoute()),
-          ),
-      ),
-      ModeCard(
-        id = ModeId.HISTORY,
-        title = "History",
-        subtitle = "View recent activity",
-        icon = Icons.Default.History,
-        primaryAction =
-          CommandAction(
-            id = "view_history",
-            title = "View",
-            category = CommandCategory.MODES,
-            destination = CommandDestination.Navigate(ModeId.HISTORY.toRoute()),
-          ),
-      ),
-      ModeCard(
-        id = ModeId.LIBRARY,
-        title = "Library",
-        subtitle = "Manage AI models",
-        icon = Icons.AutoMirrored.Filled.LibraryBooks,
-        primaryAction =
-          CommandAction(
-            id = "view_library",
-            title = "Manage",
-            category = CommandCategory.MODES,
-            destination = CommandDestination.Navigate(ModeId.LIBRARY.toRoute()),
-          ),
-      ),
-      ModeCard(
-        id = ModeId.SETTINGS,
-        title = "Settings",
-        subtitle = "App preferences",
-        icon = Icons.Default.Settings,
-        primaryAction =
-          CommandAction(
-            id = "open_settings",
-            title = "Configure",
-            category = CommandCategory.SETTINGS,
-            destination = CommandDestination.Navigate(ModeId.SETTINGS.toRoute()),
-          ),
-      ),
-    )
+      )
+    }
   }
 
   /** Builds quick action commands shown on the home screen. */

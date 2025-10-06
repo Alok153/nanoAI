@@ -73,6 +73,7 @@ import com.vjaykrsna.nanoai.model.catalog.ModelPackageWriteDao
   MaintenanceTypeConverters::class,
   DeliveryTypeConverters::class,
 )
+@Suppress("TooManyFunctions")
 abstract class NanoAIDatabase : RoomDatabase() {
   // Core DAOs
   abstract fun chatThreadDao(): ChatThreadDao

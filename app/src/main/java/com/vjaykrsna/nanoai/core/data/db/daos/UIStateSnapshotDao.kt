@@ -19,6 +19,7 @@ private const val MAX_RECENT_ACTIONS = 5
  * recent actions tracking.
  */
 @Dao
+@Suppress("TooManyFunctions")
 interface UIStateSnapshotDao {
   /**
    * Observe the UI state snapshot for a user.

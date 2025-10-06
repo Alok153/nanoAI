@@ -25,6 +25,8 @@ import com.vjaykrsna.nanoai.feature.uiux.state.RightPanel
 import com.vjaykrsna.nanoai.feature.uiux.state.ShellLayoutState
 import com.vjaykrsna.nanoai.feature.uiux.state.UiPreferenceSnapshot
 import com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload
+import com.vjaykrsna.nanoai.feature.uiux.state.toModeIdOrDefault
+import com.vjaykrsna.nanoai.feature.uiux.state.toRoute
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -84,19 +86,30 @@ constructor(
       .combine(_recentActivity) { (quadruple, jobs), activity ->
         val (triple, undo) = quadruple
         val (window, snapshot, connectivityStatus) = triple
-        buildShellLayoutState(window, snapshot, connectivityStatus, undo, jobs, activity)
+        buildShellLayoutState(
+          ShellLayoutInputs(
+            window = window,
+            snapshot = snapshot,
+            connectivityStatus = connectivityStatus,
+            undo = undo,
+            jobs = jobs,
+            activity = activity,
+          ),
+        )
       }
       .stateIn(
         scope,
         SharingStarted.Eagerly,
         buildShellLayoutState(
-          windowSizeClass.value,
-          uiSnapshot.value,
-          connectivity.value,
-          undoPayload.value,
-          progressJobs.value,
-          _recentActivity.value,
-        )
+          ShellLayoutInputs(
+            window = windowSizeClass.value,
+            snapshot = uiSnapshot.value,
+            connectivityStatus = connectivity.value,
+            undo = undoPayload.value,
+            jobs = progressJobs.value,
+            activity = _recentActivity.value,
+          ),
+        ),
       )
 
   private val preferencesSnapshot: StateFlow<UiPreferenceSnapshot> =
@@ -214,26 +227,35 @@ constructor(
   private fun defaultWindowSizeClass(): WindowSizeClass =
     WindowSizeClass.calculateFromSize(DpSize(width = 640.dp, height = 360.dp))
 
-  private fun buildShellLayoutState(
-    window: WindowSizeClass,
-    snapshot: UIStateSnapshot,
-    connectivityStatus: ConnectivityStatus,
-    undo: UndoPayload?,
-    jobs: List<ProgressJob>,
-    activity: List<RecentActivityItem>,
-  ): ShellLayoutState =
-    ShellLayoutState(
+  private data class ShellLayoutInputs(
+    val window: WindowSizeClass,
+    val snapshot: UIStateSnapshot,
+    val connectivityStatus: ConnectivityStatus,
+    val undo: UndoPayload?,
+    val jobs: List<ProgressJob>,
+    val activity: List<RecentActivityItem>,
+  )
+
+  private fun buildShellLayoutState(inputs: ShellLayoutInputs): ShellLayoutState {
+    val window = inputs.window
+    val snapshot = inputs.snapshot
+    val connectivityStatus = inputs.connectivityStatus
+    val undo = inputs.undo
+    val jobs = inputs.jobs
+    val activity = inputs.activity
+    return ShellLayoutState(
       windowSizeClass = window,
       isLeftDrawerOpen = snapshot.isLeftDrawerOpen,
       isRightDrawerOpen = snapshot.isRightDrawerOpen,
       activeRightPanel = snapshot.activeRightPanel.toRightPanel(),
-      activeMode = snapshot.activeModeRoute.toModeId(),
+      activeMode = snapshot.activeModeRoute.toModeIdOrDefault(),
       showCommandPalette = snapshot.isCommandPaletteVisible,
       connectivity = connectivityStatus,
       pendingUndoAction = undo,
       progressJobs = jobs,
       recentActivity = activity,
     )
+  }
 
   private fun DomainUiPreferencesSnapshot.toUiPreferenceSnapshot(): UiPreferenceSnapshot =
     UiPreferenceSnapshot(
@@ -250,24 +272,6 @@ constructor(
   }
 
   private fun RightPanel.toStorageValue(): String = name.lowercase()
-
-  private fun ModeId.toRoute(): String =
-    when (this) {
-      ModeId.HOME -> "home"
-      ModeId.CHAT -> "chat"
-      ModeId.IMAGE -> "image"
-      ModeId.AUDIO -> "audio"
-      ModeId.CODE -> "code"
-      ModeId.TRANSLATE -> "translate"
-      ModeId.HISTORY -> "history"
-      ModeId.LIBRARY -> "library"
-      ModeId.SETTINGS -> "settings"
-      ModeId.TOOLS -> "tools"
-    }
-
-  private fun String.toModeId(): ModeId =
-    ModeId.entries.firstOrNull { entry -> entry.toRoute().equals(this, ignoreCase = true) }
-      ?: ModeId.HOME
 
   private fun PaletteSource.toCategory(): CommandCategory =
     when (this) {

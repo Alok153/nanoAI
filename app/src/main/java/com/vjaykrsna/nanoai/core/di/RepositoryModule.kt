@@ -35,6 +35,7 @@ import javax.inject.Singleton
  */
 @Module
 @InstallIn(SingletonComponent::class)
+@Suppress("TooManyFunctions")
 abstract class RepositoryModule {
   @Binds
   @Singleton

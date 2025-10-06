@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.Flow
  * Provides methods to manage AI assistant persona configurations.
  */
 @Dao
+@Suppress("TooManyFunctions")
 interface PersonaProfileDao {
   /** Insert a new persona profile. Replaces if persona with same ID exists. */
   @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insert(persona: PersonaProfileEntity)

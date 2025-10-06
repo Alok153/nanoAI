@@ -76,6 +76,7 @@ import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
 import com.vjaykrsna.nanoai.feature.uiux.state.RightPanel
 import com.vjaykrsna.nanoai.feature.uiux.state.ShellLayoutState
 import com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload
+import com.vjaykrsna.nanoai.feature.uiux.state.toModeIdOrNull
 import com.vjaykrsna.nanoai.feature.uiux.ui.HomeScreen
 import com.vjaykrsna.nanoai.feature.uiux.ui.commandpalette.CommandPaletteSheet
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.ConnectivityBanner
@@ -519,24 +520,7 @@ private fun handleCommandAction(action: CommandAction, onEvent: (ShellUiEvent) -
   }
 }
 
-private fun routeToMode(route: String): ModeId? =
-  ModeId.entries.firstOrNull { entry ->
-    entry.name.equals(route, ignoreCase = true) || entry.toRoute().equals(route, ignoreCase = true)
-  }
-
-private fun ModeId.toRoute(): String =
-  when (this) {
-    ModeId.HOME -> "home"
-    ModeId.CHAT -> "chat"
-    ModeId.IMAGE -> "image"
-    ModeId.AUDIO -> "audio"
-    ModeId.CODE -> "code"
-    ModeId.TRANSLATE -> "translate"
-    ModeId.HISTORY -> "history"
-    ModeId.LIBRARY -> "library"
-    ModeId.SETTINGS -> "settings"
-    ModeId.TOOLS -> "tools"
-  }
+private fun routeToMode(route: String): ModeId? = route.substringBefore('/').toModeIdOrNull()
 
 private fun handleShellShortcuts(
   event: KeyEvent,

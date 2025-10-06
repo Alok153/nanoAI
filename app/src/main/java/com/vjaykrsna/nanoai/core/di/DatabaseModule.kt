@@ -29,6 +29,7 @@ import javax.inject.Singleton
 /** Hilt module providing database and DAO instances. */
 @Module
 @InstallIn(SingletonComponent::class)
+@Suppress("TooManyFunctions")
 object DatabaseModule {
   @Provides
   @Singleton

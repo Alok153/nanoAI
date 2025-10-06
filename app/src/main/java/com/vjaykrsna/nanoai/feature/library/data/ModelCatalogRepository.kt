@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.Flow
  *
  * Provides access to available AI models, their installation status, and metadata.
  */
+@Suppress("TooManyFunctions")
 interface ModelCatalogRepository {
   /** Get all available models in the catalog. */
   suspend fun getAllModels(): List<ModelPackage>

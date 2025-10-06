@@ -1,10 +1,5 @@
 package com.vjaykrsna.nanoai.core.domain.model.uiux
 
-import com.vjaykrsna.nanoai.core.data.preferences.UiPreferencesStore
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.datetime.Instant
 
 /** Aggregate domain model capturing persisted UI/UX preferences and layout state for a user. */
@@ -165,60 +160,3 @@ fun UserProfile.toPreferencesSnapshot(): UiPreferencesSnapshot =
     commandPaletteRecents = emptyList(),
     connectivityBannerLastDismissed = null,
   )
-
-fun Flow<UserProfileRecord?>.mapToUserProfile(): Flow<UserProfile?> = map { record ->
-  record?.toDomain()
-}
-
-fun Flow<UserProfileRecord?>.mergeWithPreferences(
-  preferences: Flow<UiPreferencesSnapshot>,
-  fallback: (UiPreferencesSnapshot) -> UserProfile? = { null },
-): Flow<UserProfile?> {
-  return combine(this, preferences) { record, prefs ->
-    val normalized = prefs.normalized()
-    val base = record?.toDomain() ?: fallback(normalized)
-    base?.withPreferences(normalized)
-  }
-}
-
-fun Flow<UserProfileRecord?>.requireUserProfile(
-  preferences: Flow<UiPreferencesSnapshot>,
-  fallback: (UiPreferencesSnapshot) -> UserProfile,
-): Flow<UserProfile> {
-  return mergeWithPreferences(preferences, fallback).mapNotNull { it }
-}
-
-private fun sanitizeDismissedTips(tips: Map<String, Boolean>): Map<String, Boolean> {
-  val sanitized = tips.filterKeys { it.isNotBlank() }
-  require(sanitized.size == tips.size) { "Dismissed tip identifiers must be non-blank." }
-  return sanitized
-}
-
-private fun sanitizePinnedTools(tools: List<String>): List<String> {
-  val sanitized = tools.filter { it.isNotBlank() }
-  require(sanitized.size == tools.size) { "Pinned tool identifiers must be non-blank." }
-  val unique = sanitized.distinct()
-  require(unique.size == sanitized.size) { "Pinned tool identifiers must be unique." }
-  require(unique.size <= UserProfile.MAX_PINNED_TOOLS) {
-    "Pinned tools cannot exceed ${UserProfile.MAX_PINNED_TOOLS}."
-  }
-  return unique
-}
-
-private fun sanitizeCommandPaletteRecents(commands: List<String>): List<String> {
-  val sanitized = commands.filter { it.isNotBlank() }
-  require(sanitized.size == commands.size) { "Command palette recents must be non-blank." }
-  return sanitized.distinct().take(UiPreferencesStore.MAX_RECENT_COMMANDS)
-}
-
-private fun sanitizeSavedLayouts(layouts: List<LayoutSnapshot>): List<LayoutSnapshot> =
-  try {
-    require(layouts.size <= UserProfile.MAX_SAVED_LAYOUTS) {
-      "Saved layouts cannot exceed ${UserProfile.MAX_SAVED_LAYOUTS}."
-    }
-    val distinct = layouts.distinctBy(LayoutSnapshot::id)
-    require(distinct.size == layouts.size) { "Saved layouts must have unique identifiers." }
-    distinct
-  } catch (error: ClassCastException) {
-    throw IllegalArgumentException("Saved layouts must contain LayoutSnapshot entries.", error)
-  }

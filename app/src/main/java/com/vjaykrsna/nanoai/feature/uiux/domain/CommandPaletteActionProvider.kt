@@ -4,10 +4,12 @@ import com.vjaykrsna.nanoai.feature.uiux.state.CommandAction
 import com.vjaykrsna.nanoai.feature.uiux.state.CommandCategory
 import com.vjaykrsna.nanoai.feature.uiux.state.CommandDestination
 import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityStatus
+import com.vjaykrsna.nanoai.feature.uiux.state.JobType
 import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
 import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
 import com.vjaykrsna.nanoai.feature.uiux.state.RecentActivityItem
 import com.vjaykrsna.nanoai.feature.uiux.state.RightPanel
+import com.vjaykrsna.nanoai.feature.uiux.state.toRoute
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
@@ -23,6 +25,74 @@ private const val PERCENT_MULTIPLIER = 100
 private const val MINUTES_PER_HOUR = 60
 private const val HOURS_PER_DAY = 24
 private const val DAYS_PER_WEEK = 7
+
+private data class ModeActionDefinition(
+  val idSuffix: String,
+  val title: String,
+  val subtitle: String,
+  val shortcut: String?,
+  val modeId: ModeId,
+  val requiresOnline: Boolean = false,
+)
+
+private val MODE_ACTION_DEFINITIONS =
+  listOf(
+    ModeActionDefinition("home", "Home", "Return to home hub", "Ctrl+H", ModeId.HOME),
+    ModeActionDefinition("chat", "New Chat", "Start a conversation", "Ctrl+N", ModeId.CHAT),
+    ModeActionDefinition(
+      idSuffix = "image",
+      title = "Generate Image",
+      subtitle = "Create images from text",
+      shortcut = "Ctrl+I",
+      modeId = ModeId.IMAGE,
+      requiresOnline = true,
+    ),
+    ModeActionDefinition(
+      idSuffix = "audio",
+      title = "Audio Session",
+      subtitle = "Voice and audio processing",
+      shortcut = "Ctrl+A",
+      modeId = ModeId.AUDIO,
+    ),
+    ModeActionDefinition(
+      idSuffix = "code",
+      title = "Code Assistant",
+      subtitle = "Programming help",
+      shortcut = "Ctrl+Shift+C",
+      modeId = ModeId.CODE,
+    ),
+    ModeActionDefinition(
+      idSuffix = "translate",
+      title = "Translation",
+      subtitle = "Language translation",
+      shortcut = "Ctrl+T",
+      modeId = ModeId.TRANSLATE,
+    ),
+    ModeActionDefinition(
+      idSuffix = "history",
+      title = "History",
+      subtitle = "View recent activity",
+      shortcut = null,
+      modeId = ModeId.HISTORY,
+    ),
+    ModeActionDefinition(
+      idSuffix = "library",
+      title = "Model Library",
+      subtitle = "Manage AI models",
+      shortcut = null,
+      modeId = ModeId.LIBRARY,
+    ),
+  )
+
+private val JOB_TYPE_LABELS =
+  mapOf(
+    JobType.IMAGE_GENERATION to "Image Generation",
+    JobType.AUDIO_RECORDING to "Audio Recording",
+    JobType.MODEL_DOWNLOAD to "Model Download",
+    JobType.TEXT_GENERATION to "Text Generation",
+    JobType.TRANSLATION to "Translation",
+    JobType.OTHER to "Background Task",
+  )
 
 @Singleton
 class CommandPaletteActionProvider @Inject constructor() {
@@ -53,71 +123,17 @@ class CommandPaletteActionProvider @Inject constructor() {
   /** Provides mode navigation actions. */
   fun provideModeActions(connectivity: ConnectivityStatus): List<CommandAction> {
     val isOnline = connectivity == ConnectivityStatus.ONLINE
-    return listOf(
+    return MODE_ACTION_DEFINITIONS.map { definition ->
       CommandAction(
-        id = "mode_home",
-        title = "Home",
-        subtitle = "Return to home hub",
-        shortcut = "Ctrl+H",
+        id = "mode_${definition.idSuffix}",
+        title = definition.title,
+        subtitle = definition.subtitle,
+        shortcut = definition.shortcut,
+        enabled = if (definition.requiresOnline) isOnline else true,
         category = CommandCategory.MODES,
-        destination = CommandDestination.Navigate(ModeId.HOME.toRoute()),
-      ),
-      CommandAction(
-        id = "mode_chat",
-        title = "New Chat",
-        subtitle = "Start a conversation",
-        shortcut = "Ctrl+N",
-        category = CommandCategory.MODES,
-        destination = CommandDestination.Navigate(ModeId.CHAT.toRoute()),
-      ),
-      CommandAction(
-        id = "mode_image",
-        title = "Generate Image",
-        subtitle = "Create images from text",
-        shortcut = "Ctrl+I",
-        enabled = isOnline,
-        category = CommandCategory.MODES,
-        destination = CommandDestination.Navigate(ModeId.IMAGE.toRoute()),
-      ),
-      CommandAction(
-        id = "mode_audio",
-        title = "Audio Session",
-        subtitle = "Voice and audio processing",
-        shortcut = "Ctrl+A",
-        category = CommandCategory.MODES,
-        destination = CommandDestination.Navigate(ModeId.AUDIO.toRoute()),
-      ),
-      CommandAction(
-        id = "mode_code",
-        title = "Code Assistant",
-        subtitle = "Programming help",
-        shortcut = "Ctrl+Shift+C",
-        category = CommandCategory.MODES,
-        destination = CommandDestination.Navigate(ModeId.CODE.toRoute()),
-      ),
-      CommandAction(
-        id = "mode_translate",
-        title = "Translation",
-        subtitle = "Language translation",
-        shortcut = "Ctrl+T",
-        category = CommandCategory.MODES,
-        destination = CommandDestination.Navigate(ModeId.TRANSLATE.toRoute()),
-      ),
-      CommandAction(
-        id = "mode_history",
-        title = "History",
-        subtitle = "View recent activity",
-        category = CommandCategory.MODES,
-        destination = CommandDestination.Navigate(ModeId.HISTORY.toRoute()),
-      ),
-      CommandAction(
-        id = "mode_library",
-        title = "Model Library",
-        subtitle = "Manage AI models",
-        category = CommandCategory.MODES,
-        destination = CommandDestination.Navigate(ModeId.LIBRARY.toRoute()),
-      ),
-    )
+        destination = CommandDestination.Navigate(definition.modeId.toRoute()),
+      )
+    }
   }
 
   /** Provides history/recent activity actions. */
@@ -149,15 +165,7 @@ class CommandPaletteActionProvider @Inject constructor() {
       )
     }
     progressJobs.take(MAX_PROGRESS_ACTIONS).forEach { job ->
-      val jobTypeDisplay =
-        when (job.type) {
-          com.vjaykrsna.nanoai.feature.uiux.state.JobType.IMAGE_GENERATION -> "Image Generation"
-          com.vjaykrsna.nanoai.feature.uiux.state.JobType.AUDIO_RECORDING -> "Audio Recording"
-          com.vjaykrsna.nanoai.feature.uiux.state.JobType.MODEL_DOWNLOAD -> "Model Download"
-          com.vjaykrsna.nanoai.feature.uiux.state.JobType.TEXT_GENERATION -> "Text Generation"
-          com.vjaykrsna.nanoai.feature.uiux.state.JobType.TRANSLATION -> "Translation"
-          com.vjaykrsna.nanoai.feature.uiux.state.JobType.OTHER -> "Background Task"
-        }
+      val jobTypeDisplay = JOB_TYPE_LABELS[job.type] ?: "Background Task"
       val jobStatusDisplay = job.statusLabel
       add(
         CommandAction(
@@ -242,21 +250,6 @@ class CommandPaletteActionProvider @Inject constructor() {
     }
   }
 }
-
-/** Extension to convert ModeId to route string. */
-fun ModeId.toRoute(): String =
-  when (this) {
-    ModeId.HOME -> "home"
-    ModeId.CHAT -> "chat"
-    ModeId.IMAGE -> "image"
-    ModeId.AUDIO -> "audio"
-    ModeId.CODE -> "code"
-    ModeId.TRANSLATE -> "translate"
-    ModeId.HISTORY -> "history"
-    ModeId.LIBRARY -> "library"
-    ModeId.SETTINGS -> "settings"
-    ModeId.TOOLS -> "tools"
-  }
 
 /** Extension to convert RecentActivityItem to route string. */
 private fun RecentActivityItem.toRoute(): String = "${modeId.toRoute()}/$id"

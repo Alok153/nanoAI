@@ -108,23 +108,45 @@ constructor(
     existing: PersonaProfile?,
     defaultTimestamp: Instant
   ): PersonaProfile {
-    val persistedCreatedAt =
-      existing?.createdAt ?: this.createdAt?.let(::parseInstant) ?: defaultTimestamp
-    val persistedUpdatedAt = this.updatedAt?.let(::parseInstant) ?: defaultTimestamp
+    val persistedCreatedAt = resolveCreatedAt(existing, defaultTimestamp)
+    val persistedUpdatedAt = resolveUpdatedAt(defaultTimestamp)
     return PersonaProfile(
       personaId = personaId,
       name = name,
       description = description.orEmpty(),
       systemPrompt = systemPrompt,
-      defaultModelPreference = defaultModelPreference ?: existing?.defaultModelPreference,
-      temperature = temperature ?: existing?.temperature ?: DEFAULT_TEMPERATURE,
-      topP = topP ?: existing?.topP ?: DEFAULT_TOP_P,
-      defaultVoice = defaultVoice ?: existing?.defaultVoice,
-      defaultImageStyle = defaultImageStyle ?: existing?.defaultImageStyle,
+      defaultModelPreference = resolveModelPreference(existing),
+      temperature = resolveTemperature(existing),
+      topP = resolveTopP(existing),
+      defaultVoice = resolveDefaultVoice(existing),
+      defaultImageStyle = resolveDefaultImageStyle(existing),
       createdAt = persistedCreatedAt,
       updatedAt = persistedUpdatedAt,
     )
   }
+
+  private fun BackupPersonaDto.resolveCreatedAt(
+    existing: PersonaProfile?,
+    fallback: Instant,
+  ): Instant = existing?.createdAt ?: createdAt?.let(::parseInstant) ?: fallback
+
+  private fun BackupPersonaDto.resolveUpdatedAt(fallback: Instant): Instant =
+    updatedAt?.let(::parseInstant) ?: fallback
+
+  private fun BackupPersonaDto.resolveModelPreference(existing: PersonaProfile?): String? =
+    defaultModelPreference ?: existing?.defaultModelPreference
+
+  private fun BackupPersonaDto.resolveTemperature(existing: PersonaProfile?): Float =
+    temperature ?: existing?.temperature ?: DEFAULT_TEMPERATURE
+
+  private fun BackupPersonaDto.resolveTopP(existing: PersonaProfile?): Float =
+    topP ?: existing?.topP ?: DEFAULT_TOP_P
+
+  private fun BackupPersonaDto.resolveDefaultVoice(existing: PersonaProfile?): String? =
+    defaultVoice ?: existing?.defaultVoice
+
+  private fun BackupPersonaDto.resolveDefaultImageStyle(existing: PersonaProfile?): String? =
+    defaultImageStyle ?: existing?.defaultImageStyle
 
   private fun BackupPersonaDto.resolvePersonaId(): UUID {
     val parsed = id?.let { runCatching { UUID.fromString(it) }.getOrNull() }

@@ -21,6 +21,7 @@ import dagger.assisted.AssistedInject
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.io.InputStream
 import java.net.URL
 import java.security.GeneralSecurityException
 import java.security.KeyFactory
@@ -231,33 +232,51 @@ constructor(
     manifest: DownloadManifest,
     onProgress: suspend (Float, Long, Long) -> Unit,
   ): NanoAIResult.RecoverableError? {
+    var status: NanoAIResult.RecoverableError? = null
     byteStream().use { input ->
       FileOutputStream(outputFile).use { output ->
-        val buffer = ByteArray(DOWNLOAD_BUFFER_SIZE)
-        var downloaded = 0L
-        val totalBytes = manifest.sizeBytes
-
-        while (true) {
-          val read = input.read(buffer)
-          if (read == -1) break
-
-          if (isStopped) {
-            return NanoAIResult.recoverable(
-              message = "Download cancelled",
-              retryAfterSeconds = null,
-              context = mapOf("modelId" to manifest.modelId),
-            )
-          }
-
-          output.write(buffer, 0, read)
-          downloaded += read
-
-          val progress = if (totalBytes > 0) downloaded.toFloat() / totalBytes.toFloat() else 0f
-          onProgress(progress, downloaded, totalBytes)
-        }
+        status = processDownloadStream(input, output, manifest, onProgress)
       }
     }
-    return null
+    return status
+  }
+
+  private suspend fun processDownloadStream(
+    input: InputStream,
+    output: FileOutputStream,
+    manifest: DownloadManifest,
+    onProgress: suspend (Float, Long, Long) -> Unit,
+  ): NanoAIResult.RecoverableError? {
+    val buffer = ByteArray(DOWNLOAD_BUFFER_SIZE)
+    var downloaded = 0L
+    val totalBytes = manifest.sizeBytes
+    var status: NanoAIResult.RecoverableError? = null
+    var read = input.read(buffer)
+    while (status == null && read != -1) {
+      if (isStopped) {
+        status =
+          NanoAIResult.recoverable(
+            message = "Download cancelled",
+            retryAfterSeconds = null,
+            context = mapOf("modelId" to manifest.modelId),
+          )
+      } else {
+        output.write(buffer, 0, read)
+        downloaded += read
+        onProgress(
+          progressFor(downloaded, totalBytes),
+          downloaded,
+          totalBytes,
+        )
+        read = input.read(buffer)
+      }
+    }
+    return status
+  }
+
+  private fun progressFor(downloaded: Long, totalBytes: Long): Float {
+    if (totalBytes <= 0) return 0f
+    return downloaded.toFloat() / totalBytes.toFloat()
   }
 
   private suspend fun validateIntegrity(

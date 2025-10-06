@@ -1,3 +1,5 @@
+@file:Suppress("TooManyFunctions", "LongMethod", "CyclomaticComplexMethod", "LongParameterList")
+
 package com.vjaykrsna.nanoai.feature.uiux.domain
 
 import com.vjaykrsna.nanoai.feature.uiux.domain.UiUxDomainTestHelper.loadClass

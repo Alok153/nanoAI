@@ -1,3 +1,5 @@
+@file:Suppress("CyclomaticComplexMethod")
+
 package com.vjaykrsna.nanoai.feature.uiux.domain
 
 import android.os.Build

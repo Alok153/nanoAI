@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.Flow
  * synchronization for saved layout configurations.
  */
 @Dao
+@Suppress("TooManyFunctions")
 interface LayoutSnapshotDao {
   /**
    * Observe all layout snapshots for a user, ordered by position.

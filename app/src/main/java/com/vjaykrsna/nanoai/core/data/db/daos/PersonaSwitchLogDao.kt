@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.Flow
  * Provides methods to track and query persona switching history.
  */
 @Dao
+@Suppress("TooManyFunctions")
 interface PersonaSwitchLogDao {
   /** Insert a new persona switch log entry. */
   @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insert(log: PersonaSwitchLogEntity)
