@@ -45,7 +45,9 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -95,6 +97,7 @@ fun NanoShellScaffold(
   val focusRequester = remember { FocusRequester() }
   val drawerState =
     rememberDrawerState(initialValue = androidx.compose.material3.DrawerValue.Closed)
+  val currentOnEvent by rememberUpdatedState(newValue = onEvent)
 
   LaunchedEffect(layout.useModalNavigation, layout.isLeftDrawerOpen) {
     if (!layout.useModalNavigation) {
@@ -114,7 +117,7 @@ fun NanoShellScaffold(
       .collect { value ->
         val isOpen = value == androidx.compose.material3.DrawerValue.Open
         if (isOpen != layout.isLeftDrawerOpen) {
-          onEvent(ShellUiEvent.ToggleLeftDrawer)
+          currentOnEvent(ShellUiEvent.ToggleLeftDrawer)
         }
       }
   }
@@ -128,7 +131,7 @@ fun NanoShellScaffold(
         actionLabel = "Undo",
       )
     if (result == SnackbarResult.ActionPerformed) {
-      onEvent(ShellUiEvent.Undo(payload))
+      currentOnEvent(ShellUiEvent.Undo(payload))
     }
   }
 
@@ -151,7 +154,7 @@ fun NanoShellScaffold(
             variant = DrawerVariant.Permanent,
             modeCards = state.modeCards,
             activeMode = layout.activeMode,
-            onModeSelected = { modeId -> onEvent(ShellUiEvent.ModeSelected(modeId)) },
+            onModeSelect = { modeId -> onEvent(ShellUiEvent.ModeSelected(modeId)) },
             onOpenCommandPalette = {
               onEvent(ShellUiEvent.ShowCommandPalette(PaletteSource.TOP_APP_BAR))
             },
@@ -173,7 +176,7 @@ fun NanoShellScaffold(
             variant = DrawerVariant.Modal,
             modeCards = state.modeCards,
             activeMode = layout.activeMode,
-            onModeSelected = { modeId -> onEvent(ShellUiEvent.ModeSelected(modeId)) },
+            onModeSelect = { modeId -> onEvent(ShellUiEvent.ModeSelected(modeId)) },
             onOpenCommandPalette = {
               onEvent(ShellUiEvent.ShowCommandPalette(PaletteSource.TOP_APP_BAR))
             },
@@ -200,7 +203,7 @@ fun NanoShellScaffold(
       CommandPaletteSheet(
         state = state.commandPalette,
         onDismissRequest = { onEvent(ShellUiEvent.HideCommandPalette) },
-        onCommandSelected = { action -> handleCommandAction(action, onEvent) },
+        onCommandSelect = { action -> handleCommandAction(action, onEvent) },
         modifier = Modifier.fillMaxSize(),
       )
     }
@@ -243,7 +246,7 @@ private fun ShellDrawerContent(
   variant: DrawerVariant,
   modeCards: List<ModeCard>,
   activeMode: ModeId,
-  onModeSelected: (ModeId) -> Unit,
+  onModeSelect: (ModeId) -> Unit,
   onOpenCommandPalette: () -> Unit,
 ) {
   when (variant) {
@@ -252,7 +255,7 @@ private fun ShellDrawerContent(
         DrawerSheetContent(
           modeCards = modeCards,
           activeMode = activeMode,
-          onModeSelected = onModeSelected,
+          onModeSelect = onModeSelect,
           onOpenCommandPalette = onOpenCommandPalette,
         )
       }
@@ -261,7 +264,7 @@ private fun ShellDrawerContent(
         DrawerSheetContent(
           modeCards = modeCards,
           activeMode = activeMode,
-          onModeSelected = onModeSelected,
+          onModeSelect = onModeSelect,
           onOpenCommandPalette = onOpenCommandPalette,
         )
       }
@@ -272,7 +275,7 @@ private fun ShellDrawerContent(
 private fun DrawerSheetContent(
   modeCards: List<ModeCard>,
   activeMode: ModeId,
-  onModeSelected: (ModeId) -> Unit,
+  onModeSelect: (ModeId) -> Unit,
   onOpenCommandPalette: () -> Unit,
 ) {
   Column(
@@ -289,7 +292,7 @@ private fun DrawerSheetContent(
         DrawerModeItem(
           modeCard = card,
           selected = card.id == activeMode,
-          onClick = { onModeSelected(card.id) },
+          onClick = { onModeSelect(card.id) },
         )
       }
     }
@@ -421,7 +424,7 @@ private fun ShellMainSurface(
           state = bannerState,
           onCtaClick = { bannerState.cta?.let { action -> handleCommandAction(action, onEvent) } },
           onDismiss = {
-            // TODO: hook into persistence once repository exposes dismissal event.
+            // Persist dismissal once the repository exposes the corresponding event.
           },
           modifier = Modifier.fillMaxWidth().testTag("connectivity_banner"),
         )
@@ -434,9 +437,9 @@ private fun ShellMainSurface(
             modeCards = state.modeCards,
             quickActions = state.quickActions,
             recentActivity = layout.recentActivity,
-            onModeSelected = { modeId -> onEvent(ShellUiEvent.ModeSelected(modeId)) },
-            onQuickActionSelected = { action -> handleCommandAction(action, onEvent) },
-            onRecentActivitySelected = { item -> onEvent(ShellUiEvent.ModeSelected(item.modeId)) },
+            onModeSelect = { modeId -> onEvent(ShellUiEvent.ModeSelected(modeId)) },
+            onQuickActionSelect = { action -> handleCommandAction(action, onEvent) },
+            onRecentActivitySelect = { item -> onEvent(ShellUiEvent.ModeSelected(item.modeId)) },
             modifier = Modifier.fillMaxSize(),
           )
         else -> modeContent(layout.activeMode)

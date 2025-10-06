@@ -103,7 +103,7 @@ private fun rememberShellEventHandler(shellViewModel: ShellViewModel): (ShellUiE
   }
 
 @Composable
-private fun ShellModeContent(modeId: ModeId, modifier: Modifier) {
+private fun ShellModeContent(modeId: ModeId, modifier: Modifier = Modifier) {
   when (modeId) {
     ModeId.HOME -> Unit
     ModeId.CHAT -> ChatScreen(modifier = modifier)
@@ -119,7 +119,7 @@ private fun ShellModeContent(modeId: ModeId, modifier: Modifier) {
 }
 
 @Composable
-private fun ModePlaceholder(title: String, modifier: Modifier) {
+private fun ModePlaceholder(title: String, modifier: Modifier = Modifier) {
   Box(
     modifier =
       modifier.fillMaxSize().semantics { contentDescription = "$title surface placeholder" },

@@ -61,4 +61,6 @@ nanoAI/
 
 - When implementing new features or working with unfamiliar technologies (e.g., libraries or AI runtimes), use the Context7 MCP tool to retrieve up-to-date documentation and code examples from official sources.
 
+- avoid using old/deprecated stuff (Icons/libraries)
+
 <!-- MANUAL ADDITIONS END -->

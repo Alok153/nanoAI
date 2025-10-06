@@ -74,7 +74,7 @@ fun RightSidebarPanels(
 
       RightPanelSwitcher(
         activePanel = activePanel,
-        onPanelSelected = { panel ->
+        onPanelSelect = { panel ->
           if (panel != activePanel) {
             onEvent(ShellUiEvent.ToggleRightDrawer(panel))
           }
@@ -93,7 +93,7 @@ fun RightSidebarPanels(
             activeMode = layout.activeMode,
             modeCards = state.modeCards,
             connectivity = layout.connectivity,
-            onModeSelected = { modeId -> onEvent(ShellUiEvent.ModeSelected(modeId)) },
+            onModeSelect = { modeId -> onEvent(ShellUiEvent.ModeSelected(modeId)) },
             onOpenPalette = {
               onEvent(ShellUiEvent.ShowCommandPalette(PaletteSource.QUICK_ACTION))
             },
@@ -102,8 +102,8 @@ fun RightSidebarPanels(
         RightPanel.SETTINGS_SHORTCUT ->
           SettingsShortcutsPanel(
             preferences = state.preferences,
-            onThemeSelected = { theme -> onEvent(ShellUiEvent.UpdateTheme(theme)) },
-            onDensitySelected = { density -> onEvent(ShellUiEvent.UpdateDensity(density)) },
+            onThemeSelect = { theme -> onEvent(ShellUiEvent.UpdateTheme(theme)) },
+            onDensitySelect = { density -> onEvent(ShellUiEvent.UpdateDensity(density)) },
             onOpenSettings = { onEvent(ShellUiEvent.ModeSelected(ModeId.SETTINGS)) },
           )
       }
@@ -146,7 +146,7 @@ private fun RightSidebarHeader(
 @Composable
 private fun RightPanelSwitcher(
   activePanel: RightPanel,
-  onPanelSelected: (RightPanel) -> Unit,
+  onPanelSelect: (RightPanel) -> Unit,
 ) {
   val panels = remember { RightPanel.entries }
   Row(
@@ -157,7 +157,7 @@ private fun RightPanelSwitcher(
       val (label, icon) = panelLabel(panel)
       FilterChip(
         selected = panel == activePanel,
-        onClick = { onPanelSelected(panel) },
+        onClick = { onPanelSelect(panel) },
         label = { Text(label) },
         leadingIcon = { Icon(icon, contentDescription = null) },
         modifier = Modifier.weight(1f, fill = false)
@@ -185,7 +185,7 @@ private fun ModelSelectorPanel(
   activeMode: ModeId,
   modeCards: List<ModeCard>,
   connectivity: ConnectivityStatus,
-  onModeSelected: (ModeId) -> Unit,
+  onModeSelect: (ModeId) -> Unit,
   onOpenPalette: () -> Unit,
   onOpenLibrary: () -> Unit,
 ) {
@@ -197,9 +197,11 @@ private fun ModelSelectorPanel(
     verticalArrangement = Arrangement.spacedBy(16.dp),
     modifier = Modifier.testTag("model_selector_panel")
   ) {
+    val fallbackModeName =
+      remember(activeMode) { activeMode.name.lowercase().replaceFirstChar { it.uppercase() } }
+    val headerLabel = "Adjust models for ${activeCard?.title ?: fallbackModeName}"
     Text(
-      text =
-        "Adjust models for ${activeCard?.title ?: activeMode.name.lowercase().replaceFirstChar { it.uppercase() }}",
+      text = headerLabel,
       style = MaterialTheme.typography.bodyMedium,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
@@ -214,11 +216,7 @@ private fun ModelSelectorPanel(
         )
       }
     } else {
-      ModeStrip(
-        modeCards = supportedCards,
-        activeMode = activeMode,
-        onModeSelected = onModeSelected
-      )
+      ModeStrip(modeCards = supportedCards, activeMode = activeMode, onModeSelect = onModeSelect)
     }
 
     if (connectivity != ConnectivityStatus.ONLINE) {
@@ -267,7 +265,7 @@ private fun ModelSelectorPanel(
 private fun ModeStrip(
   modeCards: List<ModeCard>,
   activeMode: ModeId,
-  onModeSelected: (ModeId) -> Unit,
+  onModeSelect: (ModeId) -> Unit,
 ) {
   Row(
     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -276,7 +274,7 @@ private fun ModeStrip(
     modeCards.forEach { card ->
       FilterChip(
         selected = card.id == activeMode,
-        onClick = { onModeSelected(card.id) },
+        onClick = { onModeSelect(card.id) },
         label = { Text(card.title) },
       )
     }
@@ -337,8 +335,8 @@ private fun ModelOptionCard(
 @Composable
 private fun SettingsShortcutsPanel(
   preferences: UiPreferenceSnapshot,
-  onThemeSelected: (ThemePreference) -> Unit,
-  onDensitySelected: (VisualDensity) -> Unit,
+  onThemeSelect: (ThemePreference) -> Unit,
+  onDensitySelect: (VisualDensity) -> Unit,
   onOpenSettings: () -> Unit,
 ) {
   Column(
@@ -357,7 +355,7 @@ private fun SettingsShortcutsPanel(
         ThemePreference.entries.forEach { theme ->
           FilterChip(
             selected = preferences.theme == theme,
-            onClick = { if (preferences.theme != theme) onThemeSelected(theme) },
+            onClick = { if (preferences.theme != theme) onThemeSelect(theme) },
             label = { Text(themeLabel(theme)) },
             modifier = Modifier.testTag("theme_option_${theme.name.lowercase()}")
           )
@@ -371,7 +369,7 @@ private fun SettingsShortcutsPanel(
         VisualDensity.entries.forEach { density ->
           FilterChip(
             selected = preferences.density == density,
-            onClick = { if (preferences.density != density) onDensitySelected(density) },
+            onClick = { if (preferences.density != density) onDensitySelect(density) },
             label = { Text(densityLabel(density)) },
             modifier = Modifier.testTag("density_option_${density.name.lowercase()}")
           )

@@ -8,8 +8,8 @@ import kotlin.test.Test
 import kotlin.test.fail
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.take
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -63,7 +63,7 @@ class ObserveUserProfileUseCaseTest {
 
     val resultFlow = extractResultFlow(useCase)
     val emissions = mutableListOf<Any>()
-    val job = launch { resultFlow.take(2).toList(emissions) }
+    val job = launch { resultFlow.take(2).collect { emissions += it as Any } }
 
     advanceUntilIdle()
 
@@ -125,22 +125,22 @@ class ObserveUserProfileUseCaseTest {
       UiUxDomainReflection.getProperty(profile, "onboardingCompleted") as Boolean
     assertThat(onboardingCompleted).isTrue()
 
-    @Suppress("UNCHECKED_CAST")
-    val dismissedTips =
-      UiUxDomainReflection.getProperty(profile, "dismissedTips") as Map<String, Boolean>
-    assertThat(dismissedTips).containsExactlyEntriesIn(mapOf("welcome" to true))
+    val dismissedTipsAny =
+      UiUxDomainReflection.getProperty(profile, "dismissedTips") as? Map<*, *>
+        ?: fail("Missing dismissedTips map on profile")
+    assertThat(dismissedTipsAny).containsExactlyEntriesIn(mapOf("welcome" to true))
 
-    @Suppress("UNCHECKED_CAST")
-    val layoutSnapshots = getReference(result, "layoutSnapshots", "layouts") as? List<Any>
+    val layoutSnapshots = getReference(result, "layoutSnapshots", "layouts") as? List<*>
     val firstLayout = layoutSnapshots?.firstOrNull() ?: fail("Missing cached layout snapshot")
     val isCompact = UiUxDomainReflection.getProperty(firstLayout, "compact") as Boolean
     assertThat(isCompact).isTrue()
 
     val uiState = requireNotNull(getReference(result, "uiState", "state"))
 
-    @Suppress("UNCHECKED_CAST")
-    val recentActions = UiUxDomainReflection.getProperty(uiState, "recentActions") as List<String>
-    assertThat(recentActions).containsExactly("cache-action")
+    val recentActionsAny =
+      UiUxDomainReflection.getProperty(uiState, "recentActions") as? List<*>
+        ?: fail("Missing recentActions on uiState")
+    assertThat(recentActionsAny).containsExactly("cache-action")
 
     val hydratedFromCache = getBoolean(result, "hydratedFromCache", "fromCache")
     assertThat(hydratedFromCache).isTrue()
@@ -157,12 +157,12 @@ class ObserveUserProfileUseCaseTest {
     val theme = UiUxDomainReflection.getProperty(profile, "themePreference")
     assertThat(theme.toString()).isEqualTo("LIGHT")
 
-    @Suppress("UNCHECKED_CAST")
-    val pinnedTools = UiUxDomainReflection.getProperty(profile, "pinnedTools") as List<String>
-    assertThat(pinnedTools).contains("tool-remote")
+    val pinnedToolsAny =
+      UiUxDomainReflection.getProperty(profile, "pinnedTools") as? List<*>
+        ?: fail("Missing pinnedTools on profile")
+    assertThat(pinnedToolsAny).contains("tool-remote")
 
-    @Suppress("UNCHECKED_CAST")
-    val layoutSnapshots = getReference(result, "layoutSnapshots", "layouts") as? List<Any>
+    val layoutSnapshots = getReference(result, "layoutSnapshots", "layouts") as? List<*>
     val firstLayout = layoutSnapshots?.firstOrNull() ?: fail("Missing synced layout snapshot")
     val isCompact = UiUxDomainReflection.getProperty(firstLayout, "compact") as Boolean
     assertThat(isCompact).isFalse()
@@ -175,18 +175,21 @@ class ObserveUserProfileUseCaseTest {
 
     val uiState = requireNotNull(getReference(result, "uiState", "state"))
 
-    @Suppress("UNCHECKED_CAST")
-    val recentActions = UiUxDomainReflection.getProperty(uiState, "recentActions") as List<String>
-    assertThat(recentActions).containsExactly("remote-action")
+    val recentActionsAny =
+      UiUxDomainReflection.getProperty(uiState, "recentActions") as? List<*>
+        ?: fail("Missing recentActions on uiState")
+    assertThat(recentActionsAny).containsExactly("remote-action")
   }
 
-  private fun extractResultFlow(instance: Any): Flow<Any> {
+  private fun extractResultFlow(instance: Any): Flow<*> {
     val flowClass = Flow::class.java
     val method =
       instance.javaClass.methods.firstOrNull { method ->
         method.parameterCount == 0 && flowClass.isAssignableFrom(method.returnType)
       } ?: fail("Expected zero-argument Flow source on ${instance.javaClass.name}")
-    @Suppress("UNCHECKED_CAST") return method.invoke(instance) as Flow<Any>
+    val result = method.invoke(instance)
+    return result as? Flow<*>
+      ?: fail("Expected Flow return from method on ${instance.javaClass.name}")
   }
 
   private fun instantiateUseCase(

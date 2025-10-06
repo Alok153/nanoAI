@@ -14,7 +14,6 @@ import kotlinx.datetime.Instant
  * updating preferences, layouts, and UI state. Implementations should prefer offline-first
  * semantics, merging local cached data with remote sources when available.
  */
-@Suppress("TooManyFunctions") // Repository pattern requires comprehensive API surface
 interface UserProfileRepository {
   /**
    * Observe the merged user profile including DB and DataStore overlays. Emits null if no profile

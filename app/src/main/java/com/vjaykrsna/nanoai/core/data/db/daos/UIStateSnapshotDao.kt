@@ -19,7 +19,6 @@ private const val MAX_RECENT_ACTIONS = 5
  * recent actions tracking.
  */
 @Dao
-@Suppress("TooManyFunctions") // DAOs naturally have many CRUD operations
 interface UIStateSnapshotDao {
   /**
    * Observe the UI state snapshot for a user.
@@ -93,7 +92,12 @@ interface UIStateSnapshotDao {
    * @return Number of rows updated (should be 1 if successful)
    */
   @Query(
-    "UPDATE ui_state_snapshots SET right_drawer_open = :open, active_right_panel = :panel WHERE user_id = :userId",
+    """
+      UPDATE ui_state_snapshots
+      SET right_drawer_open = :open,
+          active_right_panel = :panel
+      WHERE user_id = :userId
+    """,
   )
   suspend fun updateRightDrawerState(userId: String, open: Boolean, panel: String?): Int
 

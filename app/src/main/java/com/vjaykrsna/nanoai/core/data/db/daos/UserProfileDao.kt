@@ -18,7 +18,6 @@ import kotlinx.coroutines.flow.Flow
  * for the user profile.
  */
 @Dao
-@Suppress("TooManyFunctions") // DAOs naturally have many CRUD operations
 interface UserProfileDao {
   /**
    * Observe a single user profile by ID.

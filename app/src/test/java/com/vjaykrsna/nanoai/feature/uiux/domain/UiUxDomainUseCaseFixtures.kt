@@ -1,5 +1,3 @@
-@file:Suppress("LongParameterList", "LongMethod", "CyclomaticComplexMethod") // Test fixtures
-
 package com.vjaykrsna.nanoai.feature.uiux.domain
 
 import com.vjaykrsna.nanoai.feature.uiux.domain.UiUxDomainTestHelper.loadClass
@@ -167,28 +165,38 @@ internal object UiUxDomainReflection {
       (visualDensity ?: getProperty(baseline, "visualDensity"))
         ?: error("visualDensity must not be null")
     val resolvedOnboarding =
-      onboardingCompleted ?: (getProperty(baseline, "onboardingCompleted") as Boolean)
+      onboardingCompleted ?: (getProperty(baseline, "onboardingCompleted") as? Boolean ?: false)
 
-    @Suppress("UNCHECKED_CAST")
-    val resolvedDismissed =
-      dismissedTips ?: (getProperty(baseline, "dismissedTips") as Map<String, Boolean>)
+    val resolvedDismissed: Map<String, Boolean> =
+      dismissedTips
+        ?: run {
+          val raw = getProperty(baseline, "dismissedTips") as? Map<*, *>
+          raw
+            ?.mapNotNull { (k, v) ->
+              val key = k?.toString()
+              val value = v as? Boolean
+              if (key != null && value != null) key to value else null
+            }
+            ?.toMap() ?: emptyMap()
+        }
 
-    @Suppress("UNCHECKED_CAST")
-    val resolvedPinned = pinnedTools ?: (getProperty(baseline, "pinnedTools") as List<String>)
+    val resolvedPinned: List<String> =
+      pinnedTools
+        ?: run {
+          val raw = getProperty(baseline, "pinnedTools") as? List<*>
+          raw?.mapNotNull { it?.toString() } ?: emptyList()
+        }
 
-    val resolvedCommandRecents =
+    val resolvedCommandRecents: List<String> =
       commandPaletteRecents
-        ?: runCatching {
-            @Suppress("UNCHECKED_CAST")
-            getProperty(baseline, "commandPaletteRecents") as List<String>
-          }
-          .getOrDefault(emptyList())
+        ?: run {
+          val raw =
+            runCatching { getProperty(baseline, "commandPaletteRecents") as? List<*> }.getOrNull()
+          raw?.mapNotNull { it?.toString() } ?: emptyList()
+        }
     val resolvedConnectivityDismissed =
       connectivityBannerLastDismissed
-        ?: runCatching {
-            @Suppress("UNCHECKED_CAST")
-            getProperty(baseline, "connectivityBannerLastDismissed") as Instant?
-          }
+        ?: runCatching { getProperty(baseline, "connectivityBannerLastDismissed") as Instant? }
           .getOrNull()
 
     return when (ctor.parameterCount) {
@@ -228,11 +236,12 @@ internal object UiUxDomainReflection {
   fun updateLayoutCompact(layout: Any, isCompact: Boolean): Any {
     val clazz = layout.javaClass
     val ctor = primaryConstructor(clazz)
-    val id = getProperty(layout, "id") as String
-    val name = getProperty(layout, "name") as String
-    val lastOpened = getProperty(layout, "lastOpenedScreen") as String
+    val id = getProperty(layout, "id") as? String ?: ""
+    val name = getProperty(layout, "name") as? String ?: ""
+    val lastOpened = getProperty(layout, "lastOpenedScreen") as? String ?: ""
 
-    @Suppress("UNCHECKED_CAST") val pinned = getProperty(layout, "pinnedTools") as List<String>
+    val pinned =
+      (getProperty(layout, "pinnedTools") as? List<*>)?.mapNotNull { it?.toString() } ?: emptyList()
     return ctor.newInstance(id, name, lastOpened, pinned, isCompact)
   }
 
@@ -365,7 +374,6 @@ internal class UserProfileRepositorySpy {
         }
         name.contains("onboarding", ignoreCase = true) -> {
           invocations += name
-          @Suppress("UNCHECKED_CAST")
           val dismissed =
             args?.firstOrNull { it is Map<*, *> } as? Map<String, Boolean> ?: emptyMap()
           val completed = args?.firstOrNull { it is Boolean } as? Boolean ?: false

@@ -35,7 +35,6 @@ import javax.inject.Singleton
  */
 @Module
 @InstallIn(SingletonComponent::class)
-@Suppress("TooManyFunctions") // DI module binds many repository interfaces
 abstract class RepositoryModule {
   @Binds
   @Singleton

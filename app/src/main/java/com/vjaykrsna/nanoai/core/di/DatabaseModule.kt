@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.vjaykrsna.nanoai.core.data.db.NanoAIDatabase
-import com.vjaykrsna.nanoai.core.data.db.NanoAIDatabaseMigrations
 import com.vjaykrsna.nanoai.core.data.db.daos.ApiProviderConfigDao
 import com.vjaykrsna.nanoai.core.data.db.daos.ChatThreadDao
 import com.vjaykrsna.nanoai.core.data.db.daos.LayoutSnapshotDao
@@ -15,8 +14,11 @@ import com.vjaykrsna.nanoai.core.data.db.daos.UIStateSnapshotDao
 import com.vjaykrsna.nanoai.core.data.db.daos.UserProfileDao
 import com.vjaykrsna.nanoai.core.maintenance.db.CodeQualityMetricDao
 import com.vjaykrsna.nanoai.core.maintenance.db.RepoMaintenanceTaskDao
+import com.vjaykrsna.nanoai.feature.library.data.daos.DownloadManifestDao
 import com.vjaykrsna.nanoai.feature.library.data.daos.DownloadTaskDao
-import com.vjaykrsna.nanoai.feature.library.data.daos.ModelPackageDao
+import com.vjaykrsna.nanoai.feature.library.data.daos.ModelPackageReadDao
+import com.vjaykrsna.nanoai.feature.library.data.daos.ModelPackageRelationsDao
+import com.vjaykrsna.nanoai.feature.library.data.daos.ModelPackageWriteDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -27,18 +29,11 @@ import javax.inject.Singleton
 /** Hilt module providing database and DAO instances. */
 @Module
 @InstallIn(SingletonComponent::class)
-@Suppress("TooManyFunctions") // DI module provides many DAO instances
 object DatabaseModule {
   @Provides
   @Singleton
   fun provideNanoAIDatabase(@ApplicationContext context: Context): NanoAIDatabase =
     Room.databaseBuilder(context, NanoAIDatabase::class.java, NanoAIDatabase.DATABASE_NAME)
-      .addMigrations(
-        NanoAIDatabaseMigrations.MIGRATION_1_2,
-        NanoAIDatabaseMigrations.MIGRATION_2_3,
-        NanoAIDatabaseMigrations.MIGRATION_3_4,
-        NanoAIDatabaseMigrations.MIGRATION_4_5,
-      )
       .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
       .build()
 
@@ -67,7 +62,23 @@ object DatabaseModule {
 
   @Provides
   @Singleton
-  fun provideModelPackageDao(database: NanoAIDatabase): ModelPackageDao = database.modelPackageDao()
+  fun provideModelPackageReadDao(database: NanoAIDatabase): ModelPackageReadDao =
+    database.modelPackageReadDao()
+
+  @Provides
+  @Singleton
+  fun provideModelPackageWriteDao(database: NanoAIDatabase): ModelPackageWriteDao =
+    database.modelPackageWriteDao()
+
+  @Provides
+  @Singleton
+  fun provideModelPackageRelationsDao(database: NanoAIDatabase): ModelPackageRelationsDao =
+    database.modelPackageRelationsDao()
+
+  @Provides
+  @Singleton
+  fun provideDownloadManifestDao(database: NanoAIDatabase): DownloadManifestDao =
+    database.downloadManifestDao()
 
   @Provides
   @Singleton

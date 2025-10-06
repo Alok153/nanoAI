@@ -17,7 +17,6 @@ import kotlinx.datetime.Instant
  * Provides methods to manage cloud API provider configurations and status.
  */
 @Dao
-@Suppress("TooManyFunctions") // DAOs naturally have many CRUD operations
 interface ApiProviderConfigDao {
   /** Insert or update an API provider configuration. */
   @Insert(onConflict = OnConflictStrategy.REPLACE)

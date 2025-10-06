@@ -1,5 +1,3 @@
-@file:Suppress("CyclomaticComplexMethod") // Complex test setup with reflection
-
 package com.vjaykrsna.nanoai.feature.uiux.presentation
 
 import android.os.Build
@@ -131,7 +129,9 @@ class HomeViewModelTest {
           StateFlow::class.java.isAssignableFrom(method.returnType) &&
           method.name.lowercase().contains("state")
       } ?: fail("HomeViewModel must expose a StateFlow state accessor")
-    @Suppress("UNCHECKED_CAST") return method.invoke(viewModel) as StateFlow<HomeUiState>
+    val result = method.invoke(viewModel)
+    return result as? StateFlow<HomeUiState>
+      ?: fail("HomeViewModel state accessor did not return StateFlow<HomeUiState>")
   }
 
   private fun invokeToggleTools(viewModel: Any) {

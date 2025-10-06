@@ -22,7 +22,6 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.toJavaInstant
 
 @Singleton
-@Suppress("TooManyFunctions") // Implements comprehensive repository interface
 class UserProfileRepositoryImpl
 @Inject
 constructor(

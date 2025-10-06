@@ -33,7 +33,6 @@ private const val CHECKSUM_BUFFER_SIZE = 8_192
  * Wraps DownloadTaskDao and integrates with WorkManager for background download orchestration.
  */
 @Singleton
-@Suppress("TooManyFunctions") // Implements comprehensive download manager interface
 class DownloadManagerImpl
 @Inject
 constructor(

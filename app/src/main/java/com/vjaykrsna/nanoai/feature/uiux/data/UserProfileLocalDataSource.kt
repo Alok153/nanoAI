@@ -32,7 +32,6 @@ import kotlinx.datetime.toKotlinInstant
  * merging.
  */
 @Singleton
-@Suppress("TooManyFunctions") // Local data source handles multiple entities
 class UserProfileLocalDataSource
 @Inject
 constructor(

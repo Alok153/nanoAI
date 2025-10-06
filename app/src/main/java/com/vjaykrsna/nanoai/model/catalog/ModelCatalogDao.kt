@@ -8,24 +8,12 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
-import com.vjaykrsna.nanoai.feature.library.model.ProviderType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.Instant
 
-/** DAO managing model packages and cached download manifests. */
+/** Read-only queries for model packages. */
 @Dao
-@Suppress("TooManyFunctions") // DAOs naturally have many CRUD operations
-interface ModelCatalogDao {
-  // region Model packages
-  @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insert(model: ModelPackageEntity)
-
-  @Insert(onConflict = OnConflictStrategy.REPLACE)
-  suspend fun insertAll(models: List<ModelPackageEntity>)
-
-  @Update suspend fun update(model: ModelPackageEntity)
-
-  @Delete suspend fun delete(model: ModelPackageEntity)
-
+interface ModelPackageReadDao {
   @Query("SELECT * FROM model_packages WHERE model_id = :modelId")
   suspend fun getById(modelId: String): ModelPackageEntity?
 
@@ -43,19 +31,19 @@ interface ModelCatalogDao {
 
   @Query("SELECT * FROM model_packages WHERE install_state = 'INSTALLED' ORDER BY display_name ASC")
   fun observeInstalled(): Flow<List<ModelPackageEntity>>
+}
 
-  @Query(
-    "SELECT * FROM model_packages WHERE provider_type = :providerType ORDER BY display_name ASC",
-  )
-  suspend fun getByProviderType(providerType: ProviderType): List<ModelPackageEntity>
+/** Write operations for model packages. */
+@Dao
+interface ModelPackageWriteDao {
+  @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insert(model: ModelPackageEntity)
 
-  @Query("SELECT * FROM model_packages WHERE capabilities LIKE '%' || :capability || '%'")
-  suspend fun getByCapability(capability: String): List<ModelPackageEntity>
+  @Insert(onConflict = OnConflictStrategy.REPLACE)
+  suspend fun insertAll(models: List<ModelPackageEntity>)
 
-  @Query(
-    "SELECT * FROM model_packages WHERE install_state = 'DOWNLOADING' ORDER BY display_name ASC",
-  )
-  suspend fun getDownloading(): List<ModelPackageEntity>
+  @Update suspend fun update(model: ModelPackageEntity)
+
+  @Delete suspend fun delete(model: ModelPackageEntity)
 
   @Query(
     """
@@ -85,17 +73,23 @@ interface ModelCatalogDao {
     signature: String?,
     updatedAt: Instant,
   )
+}
 
-  @Query("DELETE FROM model_packages") suspend fun deleteAll()
+/** Relations between model packages and their manifests. */
+@Dao
+interface ModelPackageRelationsDao {
+  @Transaction
+  @Query("SELECT * FROM model_packages WHERE model_id = :modelId LIMIT 1")
+  suspend fun getModelWithManifests(modelId: String): ModelPackageWithManifests?
 
-  @Query("SELECT SUM(size_bytes) FROM model_packages WHERE install_state = 'INSTALLED'")
-  suspend fun getTotalInstalledSize(): Long?
+  @Transaction
+  @Query("SELECT * FROM model_packages WHERE model_id = :modelId LIMIT 1")
+  fun observeModelWithManifests(modelId: String): Flow<ModelPackageWithManifests?>
+}
 
-  @Query("SELECT COUNT(*) FROM model_packages WHERE install_state = 'INSTALLED'")
-  suspend fun countInstalled(): Int
-  // endregion
-
-  // region Manifests
+/** DAO for cached download manifests. */
+@Dao
+interface DownloadManifestDao {
   @Insert(onConflict = OnConflictStrategy.REPLACE)
   suspend fun upsertManifest(manifest: DownloadManifestEntity)
 
@@ -119,13 +113,4 @@ interface ModelCatalogDao {
   suspend fun deleteExpiredManifests(now: Instant)
 
   @Query("DELETE FROM download_manifests") suspend fun clearManifests()
-
-  @Transaction
-  @Query("SELECT * FROM model_packages WHERE model_id = :modelId LIMIT 1")
-  suspend fun getModelWithManifests(modelId: String): ModelPackageWithManifests?
-
-  @Transaction
-  @Query("SELECT * FROM model_packages WHERE model_id = :modelId LIMIT 1")
-  fun observeModelWithManifests(modelId: String): Flow<ModelPackageWithManifests?>
-  // endregion
 }

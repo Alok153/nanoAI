@@ -17,6 +17,13 @@ import kotlinx.coroutines.flow.combine
  * Aggregates navigation targets, quick actions, recent activity, and progress jobs into command
  * palette actions grouped by category.
  */
+private const val RECENT_ACTIVITY_LIMIT = 5
+private const val MAX_PROGRESS_ACTIONS = 3
+private const val PERCENT_MULTIPLIER = 100
+private const val MINUTES_PER_HOUR = 60
+private const val HOURS_PER_DAY = 24
+private const val DAYS_PER_WEEK = 7
+
 @Singleton
 class CommandPaletteActionProvider @Inject constructor() {
 
@@ -115,7 +122,7 @@ class CommandPaletteActionProvider @Inject constructor() {
 
   /** Provides history/recent activity actions. */
   fun provideHistoryActions(recentActivity: List<RecentActivityItem>): List<CommandAction> =
-    recentActivity.take(5).map { item ->
+    recentActivity.take(RECENT_ACTIVITY_LIMIT).map { item ->
       val timestampKotlinx =
         kotlinx.datetime.Instant.fromEpochSeconds(item.timestamp.epochSecond, item.timestamp.nano)
       val timestampText = formatTimestamp(timestampKotlinx)
@@ -141,7 +148,7 @@ class CommandPaletteActionProvider @Inject constructor() {
         )
       )
     }
-    progressJobs.take(3).forEach { job ->
+    progressJobs.take(MAX_PROGRESS_ACTIONS).forEach { job ->
       val jobTypeDisplay =
         when (job.type) {
           com.vjaykrsna.nanoai.feature.uiux.state.JobType.IMAGE_GENERATION -> "Image Generation"
@@ -156,7 +163,7 @@ class CommandPaletteActionProvider @Inject constructor() {
         CommandAction(
           id = "job_${job.jobId}",
           title = jobTypeDisplay,
-          subtitle = "${(job.progress * 100).toInt()}% • $jobStatusDisplay",
+          subtitle = "${(job.progress * PERCENT_MULTIPLIER).toInt()}% • $jobStatusDisplay",
           enabled = job.canRetry,
           category = CommandCategory.JOBS,
           destination = CommandDestination.OpenRightPanel(RightPanel.PROGRESS_CENTER),
@@ -228,9 +235,9 @@ class CommandPaletteActionProvider @Inject constructor() {
     val duration = now - timestamp
     return when {
       duration.inWholeMinutes < 1 -> "Just now"
-      duration.inWholeMinutes < 60 -> "${duration.inWholeMinutes}m ago"
-      duration.inWholeHours < 24 -> "${duration.inWholeHours}h ago"
-      duration.inWholeDays < 7 -> "${duration.inWholeDays}d ago"
+      duration.inWholeMinutes < MINUTES_PER_HOUR -> "${duration.inWholeMinutes}m ago"
+      duration.inWholeHours < HOURS_PER_DAY -> "${duration.inWholeHours}h ago"
+      duration.inWholeDays < DAYS_PER_WEEK -> "${duration.inWholeDays}d ago"
       else -> "Over a week ago"
     }
   }

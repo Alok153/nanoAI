@@ -25,11 +25,6 @@ style:
     excludeImportStatements: true
   ForbiddenComment:
     active: true
-    comments:
-      - 'TODO:'
-      - 'FIXME:'
-      - 'STOPSHIP:'
-    allowedPatterns: 'TODO\([A-Z]+-[0-9]+\):'
 formatting:
   # Disabled because Spotless/ktfmt is the canonical project formatter.
   # Prevents multiple formatters from conflicting.

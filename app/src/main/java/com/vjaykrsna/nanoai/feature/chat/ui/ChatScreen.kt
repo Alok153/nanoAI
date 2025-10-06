@@ -1,5 +1,3 @@
-@file:Suppress("CyclomaticComplexMethod") // Complex chat UI logic
-
 package com.vjaykrsna.nanoai.feature.chat.ui
 
 import androidx.compose.foundation.layout.Arrangement
@@ -18,7 +16,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -292,7 +290,6 @@ private fun MessageBubble(message: Message, modifier: Modifier = Modifier) {
   }
 }
 
-@Suppress("DEPRECATION")
 @Composable
 private fun MessageInputArea(
   onSendMessage: (String) -> Unit,
@@ -325,7 +322,7 @@ private fun MessageInputArea(
       modifier = Modifier.semantics { contentDescription = "Send message button" },
     ) {
       Icon(
-        imageVector = Icons.Filled.Send,
+        imageVector = Icons.AutoMirrored.Filled.Send,
         contentDescription = "Send",
       )
     }

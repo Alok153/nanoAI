@@ -48,7 +48,7 @@ class ToggleCompactModeUseCaseTest {
     assertThat(density.toString()).isEqualTo("COMPACT")
     assertThat(
         spy.layoutSnapshotsFlow.value.all {
-          UiUxDomainReflection.getProperty(it, "compact") as Boolean
+          UiUxDomainReflection.getProperty(it, "compact") as? Boolean ?: false
         }
       )
       .isTrue()
@@ -64,7 +64,7 @@ class ToggleCompactModeUseCaseTest {
     assertThat(densityDefault.toString()).isEqualTo("DEFAULT")
     assertThat(
         spy.layoutSnapshotsFlow.value.any {
-          UiUxDomainReflection.getProperty(it, "compact") as Boolean
+          UiUxDomainReflection.getProperty(it, "compact") as? Boolean ?: false
         }
       )
       .isFalse()

@@ -1,12 +1,16 @@
+@file:OptIn(
+  androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi::class
+)
+
 package com.vjaykrsna.nanoai.feature.uiux.presentation
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.automirrored.filled.LibraryBooks
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Language
-import androidx.compose.material.icons.filled.LibraryBooks
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
@@ -47,7 +51,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /** ViewModel coordinating shell layout state and user intents. */
-@OptIn(androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi::class)
+private const val SUBSCRIPTION_TIMEOUT_MILLIS = 5_000L
+
 @HiltViewModel
 class ShellViewModel
 @Inject
@@ -77,12 +82,12 @@ constructor(
           connectivityBanner = banner,
           preferences = prefs,
           modeCards = buildModeCards(layout.connectivity),
-          quickActions = buildQuickActions(),
+          quickActions = buildQuickActions(layout.connectivity),
         )
       }
       .stateIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
+        started = SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MILLIS),
         initialValue = buildInitialState(),
       )
 
@@ -189,8 +194,13 @@ constructor(
     repositoryJobs: List<ProgressJob>,
     coordinatorJobs: List<ProgressJob>,
   ): List<ProgressJob> {
-    if (coordinatorJobs.isEmpty()) return repositoryJobs
-    if (repositoryJobs.isEmpty()) return coordinatorJobs
+    if (coordinatorJobs.isEmpty() || repositoryJobs.isEmpty()) {
+      return when {
+        coordinatorJobs.isEmpty() -> repositoryJobs
+        repositoryJobs.isEmpty() -> coordinatorJobs
+        else -> emptyList()
+      }
+    }
 
     val merged = linkedMapOf<UUID, ProgressJob>()
     repositoryJobs.forEach { job -> merged[job.jobId] = job }
@@ -206,7 +216,7 @@ constructor(
         id = ModeId.CHAT,
         title = "Chat",
         subtitle = "Conversational AI assistant",
-        icon = Icons.Filled.Chat,
+        icon = Icons.AutoMirrored.Filled.Chat,
         primaryAction =
           CommandAction(
             id = "new_chat",
@@ -219,7 +229,7 @@ constructor(
         id = ModeId.IMAGE,
         title = "Image",
         subtitle = "Generate images from text",
-        icon = Icons.Filled.Image,
+        icon = Icons.Default.Image,
         enabled = isOnline,
         primaryAction =
           CommandAction(
@@ -233,7 +243,7 @@ constructor(
         id = ModeId.AUDIO,
         title = "Audio",
         subtitle = "Voice and audio processing",
-        icon = Icons.Filled.Mic,
+        icon = Icons.Default.Mic,
         primaryAction =
           CommandAction(
             id = "new_audio",
@@ -246,7 +256,7 @@ constructor(
         id = ModeId.CODE,
         title = "Code",
         subtitle = "Programming assistant",
-        icon = Icons.Filled.Code,
+        icon = Icons.Default.Code,
         primaryAction =
           CommandAction(
             id = "new_code",
@@ -259,7 +269,7 @@ constructor(
         id = ModeId.TRANSLATE,
         title = "Translate",
         subtitle = "Language translation",
-        icon = Icons.Filled.Language,
+        icon = Icons.Default.Language,
         primaryAction =
           CommandAction(
             id = "new_translate",
@@ -272,7 +282,7 @@ constructor(
         id = ModeId.HISTORY,
         title = "History",
         subtitle = "View recent activity",
-        icon = Icons.Filled.History,
+        icon = Icons.Default.History,
         primaryAction =
           CommandAction(
             id = "view_history",
@@ -285,7 +295,7 @@ constructor(
         id = ModeId.LIBRARY,
         title = "Library",
         subtitle = "Manage AI models",
-        icon = Icons.Filled.LibraryBooks,
+        icon = Icons.AutoMirrored.Filled.LibraryBooks,
         primaryAction =
           CommandAction(
             id = "view_library",
@@ -298,7 +308,7 @@ constructor(
         id = ModeId.SETTINGS,
         title = "Settings",
         subtitle = "App preferences",
-        icon = Icons.Filled.Settings,
+        icon = Icons.Default.Settings,
         primaryAction =
           CommandAction(
             id = "open_settings",
@@ -311,30 +321,14 @@ constructor(
   }
 
   /** Builds quick action commands shown on the home screen. */
-  private fun buildQuickActions(): List<CommandAction> =
-    listOf(
-      CommandAction(
-        id = "quick_new_chat",
-        title = "New Chat",
-        shortcut = "Ctrl+N",
-        category = CommandCategory.MODES,
-        destination = CommandDestination.Navigate(ModeId.CHAT.toRoute()),
-      ),
-      CommandAction(
-        id = "quick_generate_image",
-        title = "Generate Image",
-        shortcut = "Ctrl+I",
-        category = CommandCategory.MODES,
-        destination = CommandDestination.Navigate(ModeId.IMAGE.toRoute()),
-      ),
-      CommandAction(
-        id = "quick_voice",
-        title = "Voice Session",
-        shortcut = "Ctrl+A",
-        category = CommandCategory.MODES,
-        destination = CommandDestination.Navigate(ModeId.AUDIO.toRoute()),
-      ),
+  private fun buildQuickActions(connectivity: ConnectivityStatus): List<CommandAction> {
+    val modeActionsById = actionProvider.provideModeActions(connectivity).associateBy { it.id }
+    return listOfNotNull(
+      modeActionsById["mode_chat"]?.copy(id = "quick_new_chat"),
+      modeActionsById["mode_image"]?.copy(id = "quick_generate_image"),
+      modeActionsById["mode_audio"]?.copy(id = "quick_voice", title = "Voice Session"),
     )
+  }
 
   /** Updates the current window size class so adaptive layouts respond to device changes. */
   fun updateWindowSizeClass(sizeClass: WindowSizeClass) {

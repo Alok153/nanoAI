@@ -82,8 +82,8 @@ class LayoutSnapshotModelTest {
 
   private fun assertValidInstance(instance: Any): Pair<String, Boolean> {
     val clazz = instance.javaClass
-    val id = clazz.getMethod("getId").invoke(instance) as String
-    val isCompact = clazz.getMethod("isCompact").invoke(instance) as Boolean
+    val id = clazz.getMethod("getId").invoke(instance) as? String ?: ""
+    val isCompact = clazz.getMethod("isCompact").invoke(instance) as? Boolean ?: false
     return id to isCompact
   }
 }

@@ -11,38 +11,40 @@ import kotlinx.datetime.Instant
 class ModelCatalogLocalDataSource
 @Inject
 constructor(
-  private val dao: ModelCatalogDao,
+  private val modelPackageWriteDao: ModelPackageWriteDao,
+  private val relationsDao: ModelPackageRelationsDao,
+  private val downloadManifestDao: DownloadManifestDao,
 ) {
   private val clock: Clock = Clock.System
 
   fun observeModel(modelId: String): Flow<ModelPackageWithManifests?> =
-    dao.observeModelWithManifests(modelId)
+    relationsDao.observeModelWithManifests(modelId)
 
   suspend fun getModel(modelId: String): ModelPackageWithManifests? =
-    dao.getModelWithManifests(modelId)
+    relationsDao.getModelWithManifests(modelId)
 
   suspend fun upsertPackages(packages: List<ModelPackageEntity>) {
-    dao.insertAll(packages)
+    modelPackageWriteDao.insertAll(packages)
   }
 
   suspend fun upsertPackage(model: ModelPackageEntity) {
-    dao.insert(model)
+    modelPackageWriteDao.insert(model)
   }
 
   suspend fun cacheManifest(manifest: DownloadManifestEntity) {
-    dao.upsertManifest(manifest.copy(fetchedAt = clock.now()))
+    downloadManifestDao.upsertManifest(manifest.copy(fetchedAt = clock.now()))
   }
 
   suspend fun cacheManifests(manifests: List<DownloadManifestEntity>) {
     val now = clock.now()
-    dao.upsertManifests(manifests.map { it.copy(fetchedAt = now) })
+    downloadManifestDao.upsertManifests(manifests.map { it.copy(fetchedAt = now) })
   }
 
   suspend fun pruneExpired(now: Instant = clock.now()) {
-    dao.deleteExpiredManifests(now)
+    downloadManifestDao.deleteExpiredManifests(now)
   }
 
   suspend fun updateIntegrityMetadata(modelId: String, checksum: String, signature: String?) {
-    dao.updateIntegrityMetadata(modelId, checksum, signature, clock.now())
+    modelPackageWriteDao.updateIntegrityMetadata(modelId, checksum, signature, clock.now())
   }
 }

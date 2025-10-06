@@ -20,7 +20,6 @@ import kotlinx.datetime.Clock
  * Wraps ChatThreadDao and MessageDao, converting between entities and domain models.
  */
 @Singleton
-@Suppress("TooManyFunctions") // Implements comprehensive repository interface
 class ConversationRepositoryImpl
 @Inject
 constructor(

@@ -1,5 +1,3 @@
-@file:Suppress("CyclomaticComplexMethod") // Complex test setup with reflection
-
 package com.vjaykrsna.nanoai.feature.uiux.domain
 
 import android.os.Build
@@ -47,13 +45,14 @@ class RecordOnboardingProgressUseCaseTest {
     val updatedPrefs =
       spy.preferencesFlow.value ?: fail("Expected preferences emission after dismissal")
 
-    @Suppress("UNCHECKED_CAST")
-    val dismissedTips =
-      UiUxDomainReflection.getProperty(updatedPrefs, "dismissedTips") as Map<String, Boolean>
-    assertThat(dismissedTips).containsExactlyEntriesIn(mapOf("welcome" to true))
-    val onboardingComplete =
-      UiUxDomainReflection.getProperty(updatedPrefs, "onboardingCompleted") as Boolean
-    assertThat(onboardingComplete).isFalse()
+    val dismissedTipsAny =
+      UiUxDomainReflection.getProperty(updatedPrefs, "dismissedTips") as? Map<*, *>
+        ?: fail("Missing dismissedTips on updatedPrefs")
+    assertThat(dismissedTipsAny).containsExactlyEntriesIn(mapOf("welcome" to true))
+    val onboardingCompleteAny =
+      UiUxDomainReflection.getProperty(updatedPrefs, "onboardingCompleted") as? Boolean
+        ?: fail("Missing onboardingCompleted on updatedPrefs")
+    assertThat(onboardingCompleteAny).isFalse()
 
     invokeOnboarding(useCase, tipId = null, dismissed = false, completed = true)
 
@@ -62,11 +61,12 @@ class RecordOnboardingProgressUseCaseTest {
     val finalPrefs =
       spy.preferencesFlow.value ?: fail("Expected preferences emission after completion")
     val finalCompleted =
-      UiUxDomainReflection.getProperty(finalPrefs, "onboardingCompleted") as Boolean
+      UiUxDomainReflection.getProperty(finalPrefs, "onboardingCompleted") as? Boolean
+        ?: fail("Missing onboardingCompleted on finalPrefs")
     assertThat(finalCompleted).isTrue()
-    @Suppress("UNCHECKED_CAST")
     val finalTips =
-      UiUxDomainReflection.getProperty(finalPrefs, "dismissedTips") as Map<String, Boolean>
+      UiUxDomainReflection.getProperty(finalPrefs, "dismissedTips") as? Map<*, *>
+        ?: fail("Missing dismissedTips on finalPrefs")
     assertThat(finalTips).containsKey("welcome")
 
     assertThat(spy.invocations.any { it.contains("onboarding", ignoreCase = true) }).isTrue()

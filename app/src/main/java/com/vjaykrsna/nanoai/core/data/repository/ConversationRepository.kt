@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.Flow
  * Provides clean API for chat threads and messages, abstracting database access through domain
  * models.
  */
-@Suppress("TooManyFunctions") // Repository pattern requires comprehensive API surface
 interface ConversationRepository {
   /** Get a specific chat thread by ID. */
   suspend fun getThread(threadId: UUID): ChatThread?

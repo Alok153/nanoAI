@@ -4,13 +4,14 @@ import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.device.DeviceIdentityProvider
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
-import com.vjaykrsna.nanoai.feature.library.model.ProviderType
+import com.vjaykrsna.nanoai.model.catalog.DownloadManifestDao
 import com.vjaykrsna.nanoai.model.catalog.DownloadManifestEntity
-import com.vjaykrsna.nanoai.model.catalog.ModelCatalogDao
 import com.vjaykrsna.nanoai.model.catalog.ModelCatalogLocalDataSource
 import com.vjaykrsna.nanoai.model.catalog.ModelManifestRepositoryImpl
 import com.vjaykrsna.nanoai.model.catalog.ModelPackageEntity
+import com.vjaykrsna.nanoai.model.catalog.ModelPackageRelationsDao
 import com.vjaykrsna.nanoai.model.catalog.ModelPackageWithManifests
+import com.vjaykrsna.nanoai.model.catalog.ModelPackageWriteDao
 import com.vjaykrsna.nanoai.model.catalog.network.ModelCatalogService
 import com.vjaykrsna.nanoai.model.catalog.network.dto.ManifestVerificationRequestDto
 import com.vjaykrsna.nanoai.model.catalog.network.dto.ManifestVerificationResponseDto
@@ -18,6 +19,7 @@ import com.vjaykrsna.nanoai.model.catalog.network.dto.ManifestVerificationRespon
 import com.vjaykrsna.nanoai.model.catalog.network.dto.ModelManifestDto
 import com.vjaykrsna.nanoai.telemetry.TelemetryReporter
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
@@ -34,8 +36,14 @@ class ModelDownloadWorkerIntegrityTest {
     encodeDefaults = true
     explicitNulls = false
   }
-  private val fakeDao = FakeModelCatalogDao()
-  private val localDataSource = ModelCatalogLocalDataSource(fakeDao)
+  private val fakeManifestDao = FakeDownloadManifestDao()
+  private val fakeWriteDao = FakeModelPackageWriteDao()
+  private val localDataSource =
+    ModelCatalogLocalDataSource(
+      modelPackageWriteDao = fakeWriteDao,
+      relationsDao = NoopModelPackageRelationsDao,
+      downloadManifestDao = fakeManifestDao,
+    )
   private val clock = Clock.System
   private val fakeDeviceIdProvider =
     object : DeviceIdentityProvider {
@@ -70,7 +78,7 @@ class ModelDownloadWorkerIntegrityTest {
     val fatal = result as? NanoAIResult.FatalError
     assertThat(fatal).isNotNull()
     assertThat(fatal!!.message).contains("checksum")
-    assertThat(fakeDao.cachedManifest).isNull()
+    assertThat(fakeManifestDao.cachedManifest).isNull()
   }
 
   @Test
@@ -90,7 +98,7 @@ class ModelDownloadWorkerIntegrityTest {
     val fatal = result as? NanoAIResult.FatalError
     assertThat(fatal).isNotNull()
     assertThat(fatal!!.message).contains("HTTPS")
-    assertThat(fakeDao.cachedManifest).isNull()
+    assertThat(fakeManifestDao.cachedManifest).isNull()
   }
 
   @Test
@@ -109,9 +117,9 @@ class ModelDownloadWorkerIntegrityTest {
 
     val success = result as? NanoAIResult.Success
     assertThat(success).isNotNull()
-    assertThat(fakeDao.cachedManifest).isNotNull()
-    assertThat(fakeDao.cachedManifest!!.checksumSha256).isEqualTo(VALID_CHECKSUM)
-    assertThat(fakeDao.updatedIntegrity["persona-text-delta"]).isEqualTo(VALID_CHECKSUM)
+    assertThat(fakeManifestDao.cachedManifest).isNotNull()
+    assertThat(fakeManifestDao.cachedManifest!!.checksumSha256).isEqualTo(VALID_CHECKSUM)
+    assertThat(fakeWriteDao.updatedIntegrity["persona-text-delta"]).isEqualTo(VALID_CHECKSUM)
   }
 
   private class FakeModelCatalogService : ModelCatalogService {
@@ -129,22 +137,15 @@ class ModelDownloadWorkerIntegrityTest {
       )
   }
 
-  private class FakeModelCatalogDao : ModelCatalogDao {
-    var cachedManifest: DownloadManifestEntity? = null
+  private object NoopModelPackageRelationsDao : ModelPackageRelationsDao {
+    override suspend fun getModelWithManifests(modelId: String): ModelPackageWithManifests? = null
+
+    override fun observeModelWithManifests(modelId: String): Flow<ModelPackageWithManifests?> =
+      flowOf(null)
+  }
+
+  private class FakeModelPackageWriteDao : ModelPackageWriteDao {
     val updatedIntegrity = mutableMapOf<String, String>()
-
-    override suspend fun upsertManifest(manifest: DownloadManifestEntity) {
-      cachedManifest = manifest
-    }
-
-    override suspend fun updateIntegrityMetadata(
-      modelId: String,
-      checksum: String,
-      signature: String?,
-      updatedAt: Instant,
-    ) {
-      updatedIntegrity[modelId] = checksum
-    }
 
     override suspend fun insert(model: ModelPackageEntity) = throw UnsupportedOperationException()
 
@@ -155,32 +156,6 @@ class ModelDownloadWorkerIntegrityTest {
 
     override suspend fun delete(model: ModelPackageEntity) = throw UnsupportedOperationException()
 
-    override suspend fun getById(modelId: String): ModelPackageEntity? =
-      throw UnsupportedOperationException()
-
-    override fun observeById(modelId: String): Flow<ModelPackageEntity?> =
-      throw UnsupportedOperationException()
-
-    override suspend fun getAll(): List<ModelPackageEntity> = throw UnsupportedOperationException()
-
-    override fun observeAll(): Flow<List<ModelPackageEntity>> =
-      throw UnsupportedOperationException()
-
-    override suspend fun getByInstallState(state: InstallState): List<ModelPackageEntity> =
-      throw UnsupportedOperationException()
-
-    override fun observeInstalled(): Flow<List<ModelPackageEntity>> =
-      throw UnsupportedOperationException()
-
-    override suspend fun getByProviderType(providerType: ProviderType): List<ModelPackageEntity> =
-      throw UnsupportedOperationException()
-
-    override suspend fun getByCapability(capability: String): List<ModelPackageEntity> =
-      throw UnsupportedOperationException()
-
-    override suspend fun getDownloading(): List<ModelPackageEntity> =
-      throw UnsupportedOperationException()
-
     override suspend fun updateInstallState(
       modelId: String,
       state: InstallState,
@@ -190,17 +165,29 @@ class ModelDownloadWorkerIntegrityTest {
     override suspend fun updateDownloadTaskId(
       modelId: String,
       taskId: String?,
-      updatedAt: Instant
+      updatedAt: Instant,
     ) = throw UnsupportedOperationException()
 
-    override suspend fun deleteAll() = throw UnsupportedOperationException()
+    override suspend fun updateIntegrityMetadata(
+      modelId: String,
+      checksum: String,
+      signature: String?,
+      updatedAt: Instant,
+    ) {
+      updatedIntegrity[modelId] = checksum
+    }
+  }
 
-    override suspend fun getTotalInstalledSize(): Long? = throw UnsupportedOperationException()
+  private class FakeDownloadManifestDao : DownloadManifestDao {
+    var cachedManifest: DownloadManifestEntity? = null
 
-    override suspend fun countInstalled(): Int = throw UnsupportedOperationException()
+    override suspend fun upsertManifest(manifest: DownloadManifestEntity) {
+      cachedManifest = manifest
+    }
 
-    override suspend fun upsertManifests(manifests: List<DownloadManifestEntity>) =
-      throw UnsupportedOperationException()
+    override suspend fun upsertManifests(manifests: List<DownloadManifestEntity>) {
+      cachedManifest = manifests.lastOrNull()
+    }
 
     override suspend fun getManifest(modelId: String, version: String): DownloadManifestEntity? =
       cachedManifest
@@ -215,12 +202,6 @@ class ModelDownloadWorkerIntegrityTest {
     override suspend fun clearManifests() {
       cachedManifest = null
     }
-
-    override suspend fun getModelWithManifests(modelId: String): ModelPackageWithManifests? =
-      throw UnsupportedOperationException()
-
-    override fun observeModelWithManifests(modelId: String): Flow<ModelPackageWithManifests?> =
-      throw UnsupportedOperationException()
   }
 
   companion object {

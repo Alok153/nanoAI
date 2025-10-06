@@ -1,5 +1,3 @@
-@file:Suppress("LongMethod", "CyclomaticComplexMethod") // Complex test setup
-
 package com.vjaykrsna.nanoai.feature.uiux.presentation
 
 import android.os.Build
@@ -123,7 +121,6 @@ class WelcomeViewModelTest {
     assertThat(afterSkip).isFalse()
   }
 
-  @Suppress("NestedBlockDepth", "CyclomaticComplexMethod", "LongMethod") // Complex test setup
   private fun instantiateViewModel(
     repository: UserProfileRepositorySpy,
     analytics: AnalyticsRecorder,
@@ -207,7 +204,9 @@ class WelcomeViewModelTest {
           stateFlowClass.isAssignableFrom(method.returnType) &&
           method.name.lowercase().contains("state")
       } ?: fail("Expected StateFlow state property on ${viewModel.javaClass.name}")
-    @Suppress("UNCHECKED_CAST") return method.invoke(viewModel) as StateFlow<Any>
+    val result = method.invoke(viewModel)
+    return result as? StateFlow<Any>
+      ?: fail("Expected StateFlow state property on ${viewModel.javaClass.name}")
   }
 
   private fun resolveBoolean(instance: Any, vararg propertyCandidates: String): Boolean {

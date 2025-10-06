@@ -5,21 +5,17 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 
 private val LightColorScheme =
@@ -84,39 +80,6 @@ private val DarkColorScheme =
     inversePrimary = DarkInversePrimary,
   )
 
-data class NanoAISpacing(
-  val xs: Dp = 4.dp,
-  val sm: Dp = 8.dp,
-  val md: Dp = 16.dp,
-  val lg: Dp = 24.dp,
-  val xl: Dp = 32.dp,
-  val xxl: Dp = 40.dp,
-)
-
-data class NanoAIElevation(
-  val level0: Dp = 0.dp,
-  val level1: Dp = 1.dp,
-  val level2: Dp = 3.dp,
-  val level3: Dp = 6.dp,
-  val level4: Dp = 8.dp,
-  val level5: Dp = 12.dp,
-)
-
-@Suppress("CompositionLocalAllowlist") // Custom theme tokens for app-wide spacing/elevation
-val LocalNanoAISpacing = staticCompositionLocalOf { NanoAISpacing() }
-
-@Suppress("CompositionLocalAllowlist") // Custom theme tokens for app-wide spacing/elevation
-val LocalNanoAIElevation = staticCompositionLocalOf { NanoAIElevation() }
-
-object NanoAIThemeDefaults {
-  val spacing: NanoAISpacing
-    @Composable @ReadOnlyComposable get() = LocalNanoAISpacing.current
-
-  val elevation: NanoAIElevation
-    @Composable @ReadOnlyComposable get() = LocalNanoAIElevation.current
-}
-
-@Suppress("CyclomaticComplexMethod") // Theme selection logic with multiple conditions
 @Composable
 fun NanoAITheme(
   themePreference: ThemePreference = ThemePreference.SYSTEM,
@@ -124,67 +87,78 @@ fun NanoAITheme(
   content: @Composable () -> Unit,
 ) {
   val systemDarkTheme = isSystemInDarkTheme()
-  val darkTheme =
-    when (themePreference) {
-      ThemePreference.SYSTEM -> systemDarkTheme
-      ThemePreference.DARK -> true
-      ThemePreference.LIGHT -> false
-    }
+  val darkTheme = resolveDarkTheme(themePreference, systemDarkTheme)
+  val colorScheme = rememberNanoAIColorScheme(darkTheme = darkTheme, dynamicColor = dynamicColor)
 
-  val colorScheme =
-    when {
-      dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-        val context = LocalContext.current
-        if (darkTheme) {
-          dynamicDarkColorScheme(context)
-        } else {
-          dynamicLightColorScheme(context)
-        }
+  ApplySystemBars(colorScheme = colorScheme, darkTheme = darkTheme)
+
+  MaterialTheme(
+    colorScheme = colorScheme,
+    typography = NanoAITypography,
+    content = content,
+  )
+}
+
+private fun resolveDarkTheme(
+  themePreference: ThemePreference,
+  systemDarkTheme: Boolean,
+): Boolean {
+  return when (themePreference) {
+    ThemePreference.SYSTEM -> systemDarkTheme
+    ThemePreference.DARK -> true
+    ThemePreference.LIGHT -> false
+  }
+}
+
+@Composable
+private fun rememberNanoAIColorScheme(
+  darkTheme: Boolean,
+  dynamicColor: Boolean,
+): ColorScheme {
+  return when {
+    dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+      val context = LocalContext.current
+      if (darkTheme) {
+        dynamicDarkColorScheme(context)
+      } else {
+        dynamicLightColorScheme(context)
       }
-      darkTheme -> DarkColorScheme
-      else -> LightColorScheme
     }
+    darkTheme -> DarkColorScheme
+    else -> LightColorScheme
+  }
+}
 
+@Composable
+private fun ApplySystemBars(
+  colorScheme: ColorScheme,
+  darkTheme: Boolean,
+) {
   val view = LocalView.current
-  if (!view.isInEditMode) {
-    val activity = view.context as? ComponentActivity
-    if (activity != null) {
-      val statusBarStyle =
-        if (darkTheme) {
-          SystemBarStyle.dark(colorScheme.surface.toArgb())
-        } else {
-          SystemBarStyle.light(
-            colorScheme.surface.toArgb(),
-            colorScheme.onSurface.toArgb(),
-          )
-        }
-      val navigationBarStyle =
-        if (darkTheme) {
-          SystemBarStyle.dark(colorScheme.surface.toArgb())
-        } else {
-          SystemBarStyle.light(
-            colorScheme.surface.toArgb(),
-            colorScheme.onSurface.toArgb(),
-          )
-        }
-
-      SideEffect {
-        activity.enableEdgeToEdge(
-          statusBarStyle = statusBarStyle,
-          navigationBarStyle = navigationBarStyle,
-        )
-      }
-    }
+  if (view.isInEditMode) {
+    return
   }
 
-  CompositionLocalProvider(
-    LocalNanoAISpacing provides NanoAISpacing(),
-    LocalNanoAIElevation provides NanoAIElevation(),
-  ) {
-    MaterialTheme(
-      colorScheme = colorScheme,
-      typography = NanoAITypography,
-      content = content,
+  val activity = view.context as? ComponentActivity ?: return
+  val surfaceColor = colorScheme.surface.toArgb()
+  val onSurfaceColor = colorScheme.onSurface.toArgb()
+  val statusBarStyle =
+    if (darkTheme) {
+      SystemBarStyle.dark(surfaceColor)
+    } else {
+      SystemBarStyle.light(surfaceColor, onSurfaceColor)
+    }
+  val navigationBarStyle =
+    if (darkTheme) {
+      SystemBarStyle.dark(surfaceColor)
+    } else {
+      SystemBarStyle.light(surfaceColor, onSurfaceColor)
+    }
+
+  SideEffect {
+    activity.enableEdgeToEdge(
+      statusBarStyle = statusBarStyle,
+      navigationBarStyle = navigationBarStyle,
     )
   }
 }

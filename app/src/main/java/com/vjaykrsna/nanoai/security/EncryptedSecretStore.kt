@@ -84,15 +84,13 @@ private constructor(
   }
 
   /** Retrieve a stored credential if present. */
-  @Suppress("ReturnCount") // Multiple validation checks
-  fun getCredential(providerId: String): SecretCredential? {
-    val prefs = encryptedPrefs ?: return null
-    val rawPayload = prefs.getString(entryKey(providerId), null) ?: return null
-    val payload =
-      runCatching { json.decodeFromString<SecretPayload>(rawPayload) }.getOrNull() ?: return null
-
-    return payload.toCredential(providerId, MASTER_KEY_ALIAS)
-  }
+  fun getCredential(providerId: String): SecretCredential? =
+    encryptedPrefs
+      ?.getString(entryKey(providerId), null)
+      ?.let { rawPayload ->
+        runCatching { json.decodeFromString<SecretPayload>(rawPayload) }.getOrNull()
+      }
+      ?.toCredential(providerId, MASTER_KEY_ALIAS)
 
   /** Remove a stored credential. */
   fun deleteCredential(providerId: String) {

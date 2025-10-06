@@ -92,6 +92,9 @@ class UIStateSnapshotModelTest {
 
   private fun getListProperty(instance: Any, getterName: String): List<String> {
     val method = instance.javaClass.getMethod(getterName)
-    @Suppress("UNCHECKED_CAST") return method.invoke(instance) as List<String>
+    val raw =
+      method.invoke(instance) as? List<*>
+        ?: error("Expected list return from $getterName on ${instance.javaClass.name}")
+    return raw.map { it?.toString() ?: "" }
   }
 }

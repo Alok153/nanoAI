@@ -290,7 +290,7 @@ internal fun DownloadTaskItem(
               onClick = { onPause(download.taskId) },
               modifier = Modifier.semantics { contentDescription = "Pause download" },
             ) {
-              Icon(Icons.Filled.PlayArrow, "Pause")
+              Icon(Icons.Default.PlayArrow, "Pause")
             }
             IconButton(
               onClick = { onCancel(download.taskId) },
@@ -444,7 +444,7 @@ internal fun ModelCard(
             onClick = onDownload,
             modifier = Modifier.semantics { contentDescription = "Download ${model.displayName}" },
           ) {
-            Icon(Icons.Filled.Refresh, "Download")
+            Icon(Icons.Default.Refresh, "Download")
           }
         }
       }

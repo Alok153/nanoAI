@@ -5,7 +5,6 @@ import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSiz
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.data.repository.UserProfileRepository
 import com.vjaykrsna.nanoai.core.domain.model.uiux.LayoutSnapshot
@@ -386,16 +385,8 @@ private fun FakeCommandPaletteActionProvider():
 private fun FakeProgressCenterCoordinator():
   com.vjaykrsna.nanoai.feature.uiux.domain.ProgressCenterCoordinator {
   val downloadManager = FakeDownloadManager()
-  val context = ApplicationProvider.getApplicationContext<android.content.Context>()
-  try {
-    androidx.work.testing.WorkManagerTestInitHelper.initializeTestWorkManager(context)
-  } catch (illegalState: IllegalStateException) {
-    // WorkManager was already initialized for this process; safe to proceed.
-  }
-  val workManager = androidx.work.WorkManager.getInstance(context)
   return com.vjaykrsna.nanoai.feature.uiux.domain.ProgressCenterCoordinator(
     downloadManager = downloadManager,
-    workManager = workManager,
   )
 }
 

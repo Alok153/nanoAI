@@ -34,7 +34,6 @@ import kotlinx.datetime.Clock
 private const val FLOW_STOP_TIMEOUT_MS = 5_000L
 
 @HiltViewModel
-@Suppress("TooManyFunctions", "LongParameterList") // Complex settings management
 class SettingsViewModel
 @Inject
 constructor(

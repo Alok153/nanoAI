@@ -6,68 +6,47 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.vjaykrsna.nanoai.feature.uiux.presentation.HomeUiState
-import com.vjaykrsna.nanoai.feature.uiux.state.BadgeInfo
-import com.vjaykrsna.nanoai.feature.uiux.state.BadgeType
 import com.vjaykrsna.nanoai.feature.uiux.state.CommandAction
 import com.vjaykrsna.nanoai.feature.uiux.state.ModeCard
 import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
 import com.vjaykrsna.nanoai.feature.uiux.state.RecentActivityItem
 import com.vjaykrsna.nanoai.feature.uiux.state.ShellLayoutState
-import com.vjaykrsna.nanoai.ui.components.OfflineBanner
-import com.vjaykrsna.nanoai.ui.components.OnboardingTooltip
-import com.vjaykrsna.nanoai.ui.components.PrimaryActionCard
-import java.time.Duration
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.Locale
-import kotlin.math.max
-import kotlin.text.titlecase
 
-private const val SKELETON_CARD_COUNT = 3
-private const val SKELETON_ALPHA = 0.5f
+private const val MAX_INLINE_QUICK_ACTIONS = 3
+private const val MODE_COLUMNS_COMPACT = 2
+private const val MODE_COLUMNS_MEDIUM = 3
+private const val MODE_COLUMNS_EXPANDED = 4
 
 /** Home hub surface rendered inside the unified shell when [ModeId.HOME] is active. */
 @OptIn(ExperimentalLayoutApi::class)
@@ -77,9 +56,9 @@ fun HomeScreen(
   modeCards: List<ModeCard>,
   quickActions: List<CommandAction>,
   recentActivity: List<RecentActivityItem>,
-  onModeSelected: (ModeId) -> Unit,
-  onQuickActionSelected: (CommandAction) -> Unit,
-  onRecentActivitySelected: (RecentActivityItem) -> Unit,
+  onModeSelect: (ModeId) -> Unit,
+  onQuickActionSelect: (CommandAction) -> Unit,
+  onRecentActivitySelect: (RecentActivityItem) -> Unit,
   modifier: Modifier = Modifier,
 ) {
   val scrollState = rememberScrollState()
@@ -101,20 +80,20 @@ fun HomeScreen(
     if (quickActions.isNotEmpty()) {
       QuickActionsRow(
         actions = quickActions,
-        onQuickActionSelected = onQuickActionSelected,
+        onQuickActionSelect = onQuickActionSelect,
       )
     }
 
     ModeGrid(
       columns = columnCount,
       modeCards = modeCards,
-      onModeSelected = onModeSelected,
+      onModeSelect = onModeSelect,
     )
 
     RecentActivitySection(
       recentActivity = recentActivity,
       modeById = modeById,
-      onRecentActivitySelected = onRecentActivitySelected,
+      onRecentActivitySelect = onRecentActivitySelect,
     )
   }
 }
@@ -150,7 +129,7 @@ private fun HomeSearchPrompt() {
 @Composable
 private fun QuickActionsRow(
   actions: List<CommandAction>,
-  onQuickActionSelected: (CommandAction) -> Unit,
+  onQuickActionSelect: (CommandAction) -> Unit,
 ) {
   Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
     Row(
@@ -163,7 +142,7 @@ private fun QuickActionsRow(
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.SemiBold,
       )
-      if (actions.size > 3) {
+      if (actions.size > MAX_INLINE_QUICK_ACTIONS) {
         Text(
           text = "${actions.size} available",
           style = MaterialTheme.typography.bodySmall,
@@ -177,7 +156,7 @@ private fun QuickActionsRow(
     ) {
       items(actions, key = { it.id }) { action ->
         AssistChip(
-          onClick = { if (action.enabled) onQuickActionSelected(action) },
+          onClick = { if (action.enabled) onQuickActionSelect(action) },
           enabled = action.enabled,
           label = { Text(action.title) },
           modifier = Modifier.semantics { contentDescription = action.title },
@@ -192,7 +171,7 @@ private fun QuickActionsRow(
 private fun ModeGrid(
   columns: Int,
   modeCards: List<ModeCard>,
-  onModeSelected: (ModeId) -> Unit,
+  onModeSelect: (ModeId) -> Unit,
 ) {
   Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
     Text(
@@ -209,7 +188,7 @@ private fun ModeGrid(
       modeCards.forEach { card ->
         ModeCardItem(
           card = card,
-          onClick = { onModeSelected(card.id) },
+          onClick = { onModeSelect(card.id) },
         )
       }
     }
@@ -280,7 +259,7 @@ private fun ModeCardItem(
 private fun RecentActivitySection(
   recentActivity: List<RecentActivityItem>,
   modeById: Map<ModeId, ModeCard>,
-  onRecentActivitySelected: (RecentActivityItem) -> Unit,
+  onRecentActivitySelect: (RecentActivityItem) -> Unit,
 ) {
   Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
     Row(
@@ -294,7 +273,9 @@ private fun RecentActivitySection(
         fontWeight = FontWeight.SemiBold,
       )
       if (recentActivity.isNotEmpty()) {
-        TextButton(onClick = { /* TODO: hook into history navigation */}) { Text("View history") }
+        TextButton(onClick = { /* placeholder until history navigation is wired */}) {
+          Text("View history")
+        }
       }
     }
 
@@ -320,7 +301,7 @@ private fun RecentActivitySection(
           RecentActivityItemCard(
             item = item,
             modeCard = modeById[item.modeId],
-            onClick = { onRecentActivitySelected(item) },
+            onClick = { onRecentActivitySelect(item) },
           )
         }
       }
@@ -393,242 +374,8 @@ private fun RecentActivityItemCard(
 
 private fun columnsForLayout(layout: ShellLayoutState): Int =
   when (layout.windowSizeClass.widthSizeClass) {
-    androidx.compose.material3.windowsizeclass.WindowWidthSizeClass.Compact -> 2
-    androidx.compose.material3.windowsizeclass.WindowWidthSizeClass.Medium -> 3
-    androidx.compose.material3.windowsizeclass.WindowWidthSizeClass.Expanded -> 4
-    else -> 2
+    WindowWidthSizeClass.Compact -> MODE_COLUMNS_COMPACT
+    WindowWidthSizeClass.Medium -> MODE_COLUMNS_MEDIUM
+    WindowWidthSizeClass.Expanded -> MODE_COLUMNS_EXPANDED
+    else -> MODE_COLUMNS_COMPACT
   }
-
-private fun badgeText(info: BadgeInfo): String =
-  when (info.type) {
-    BadgeType.NEW -> if (info.count > 0) "${info.count} new" else "New"
-    BadgeType.PRO -> "Pro"
-    BadgeType.SYNCING -> if (info.count > 0) "${info.count}" else "Sync"
-  }
-
-private fun formatRelativeTime(timestamp: Instant, reference: Instant = Instant.now()): String {
-  val duration = Duration.between(timestamp, reference)
-  val totalSeconds = max(0L, duration.seconds)
-  val minutes = totalSeconds / 60
-  val hours = minutes / 60
-  val days = hours / 24
-  return when {
-    minutes < 1 -> "Just now"
-    minutes < 60 -> "${minutes}m ago"
-    hours < 24 -> "${hours}h ago"
-    days < 7 -> "${days}d ago"
-    else ->
-      DateTimeFormatter.ofPattern("MMM d")
-        .withLocale(Locale.getDefault())
-        .format(
-          timestamp.atZone(ZoneId.systemDefault()),
-        )
-  }
-}
-
-private fun formatAbsoluteTime(timestamp: Instant): String {
-  val localDateTime = timestamp.atZone(ZoneId.systemDefault()).toLocalDateTime()
-  val formatter = DateTimeFormatter.ofPattern("MMM d · HH:mm")
-  return formatter.format(localDateTime)
-}
-
-private fun ModeId.displayName(): String =
-  name.lowercase(Locale.getDefault()).replaceFirstChar {
-    if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
-  }
-
-// Legacy composable kept temporarily for navigation scaffold until shell integration lands
-// everywhere.
-@Deprecated("Use HomeScreen with shell layout state")
-@Composable
-fun HomeScreen(
-  state: HomeUiState,
-  callbacks: HomeScreenCallbacks,
-  modifier: Modifier = Modifier,
-) {
-  Surface(modifier = modifier.fillMaxSize()) {
-    LazyColumn(
-      modifier = Modifier.fillMaxSize().testTag("home_single_column_feed"),
-      contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
-      verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-      if (state.offlineBannerVisible) {
-        item("offline_banner") {
-          HomeOfflineBanner(
-            isOffline = state.offlineBannerVisible,
-            queuedActionsCount = state.queuedActions,
-            onRetryOffline = callbacks.onRetryOffline,
-          )
-        }
-      }
-
-      item("recent_actions_header") {
-        HomeRecentActionsHeader(
-          toolsExpanded = state.toolsExpanded,
-          onToggleTools = callbacks.onToggleTools,
-        )
-      }
-
-      item("tools_panel_state") { HomeToolsPanelState(toolsExpanded = state.toolsExpanded) }
-
-      if (state.isHydrating) {
-        item("home_skeleton") { HomeSkeleton(modifier = Modifier.testTag("home_skeleton_loader")) }
-      } else {
-        itemsIndexed(state.recentActions) { index, action ->
-          HomeRecentActionCard(
-            index = index,
-            action = action,
-            onActionClick = callbacks.onActionClick,
-          )
-        }
-      }
-
-      if (state.latencyIndicatorVisible) {
-        item("latency_indicator") { HomeLatencyIndicator() }
-      }
-
-      if (state.tooltipEntryVisible) {
-        item("tooltip_entry") { HomeTooltipEntry(callbacks.tooltip) }
-      }
-    }
-  }
-}
-
-data class HomeTooltipCallbacks(
-  val onDismiss: () -> Unit,
-  val onHelp: () -> Unit,
-  val onDontShowAgain: () -> Unit,
-)
-
-data class HomeScreenCallbacks(
-  val onToggleTools: () -> Unit,
-  val onActionClick: (String) -> Unit,
-  val onRetryOffline: () -> Unit,
-  val tooltip: HomeTooltipCallbacks,
-)
-
-@Composable
-private fun HomeOfflineBanner(
-  isOffline: Boolean,
-  queuedActionsCount: Int,
-  onRetryOffline: () -> Unit,
-) {
-  OfflineBanner(
-    isOffline = isOffline,
-    queuedActions = queuedActionsCount,
-    onRetry = onRetryOffline,
-    modifier = Modifier.fillMaxWidth().testTag("offline_banner_container_wrapper"),
-  )
-}
-
-@Composable
-private fun HomeRecentActionsHeader(
-  toolsExpanded: Boolean,
-  onToggleTools: () -> Unit,
-) {
-  Row(
-    modifier = Modifier.fillMaxWidth(),
-    horizontalArrangement = Arrangement.SpaceBetween,
-    verticalAlignment = Alignment.CenterVertically,
-  ) {
-    Text(
-      text = "Recent actions",
-      style = MaterialTheme.typography.titleLarge,
-      fontWeight = FontWeight.Bold,
-      modifier = Modifier.testTag("home_recent_actions_header").semantics { heading() },
-    )
-    IconButton(
-      onClick = onToggleTools,
-      modifier =
-        Modifier.testTag("home_tools_toggle").semantics {
-          contentDescription = if (toolsExpanded) "Collapse tools panel" else "Expand tools panel"
-        },
-    ) {
-      Icon(
-        imageVector =
-          if (toolsExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-        contentDescription = null,
-      )
-    }
-  }
-}
-
-@Composable
-private fun HomeToolsPanelState(toolsExpanded: Boolean) {
-  if (toolsExpanded) {
-    Text(
-      text = "Tools",
-      style = MaterialTheme.typography.titleMedium,
-      modifier = Modifier.testTag("home_tools_panel_expanded").semantics { heading() },
-    )
-  } else {
-    Text(
-      text = "Advanced tools hidden",
-      style = MaterialTheme.typography.bodySmall,
-      modifier =
-        Modifier.testTag("home_tools_panel_collapsed").semantics {
-          contentDescription =
-            "Advanced tools are currently hidden. Activate the toggle to reveal tools."
-        },
-    )
-  }
-}
-
-@Composable
-private fun HomeRecentActionCard(
-  index: Int,
-  action: String,
-  onActionClick: (String) -> Unit,
-) {
-  PrimaryActionCard(
-    title = action.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() },
-    description = "Quick action",
-    tag = "home_recent_action_$index",
-    onClick = { onActionClick(action) },
-  )
-}
-
-@Composable
-private fun HomeLatencyIndicator() {
-  Text(
-    text = "Response in under 100ms",
-    style = MaterialTheme.typography.labelMedium,
-    modifier = Modifier.testTag("home_latency_meter"),
-  )
-}
-
-@Composable
-private fun HomeTooltipEntry(
-  callbacks: HomeTooltipCallbacks,
-) {
-  Column(
-    modifier =
-      Modifier.fillMaxWidth().testTag("onboarding_tooltip_entry").semantics {
-        contentDescription = "Onboarding tips"
-      },
-  ) {
-    OnboardingTooltip(
-      message = "Tip: Pin your favorite tools for quick access.",
-      onDismiss = callbacks.onDismiss,
-      onDontShowAgain = callbacks.onDontShowAgain,
-      onHelp = callbacks.onHelp,
-    )
-  }
-}
-
-@Composable
-private fun HomeSkeleton(modifier: Modifier = Modifier) {
-  Column(
-    modifier = modifier.fillMaxWidth(),
-    verticalArrangement = Arrangement.spacedBy(12.dp),
-  ) {
-    repeat(SKELETON_CARD_COUNT) {
-      Card(
-        modifier = Modifier.fillMaxWidth().alpha(SKELETON_ALPHA),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-      ) {
-        Spacer(modifier = Modifier.height(56.dp))
-      }
-    }
-  }
-}

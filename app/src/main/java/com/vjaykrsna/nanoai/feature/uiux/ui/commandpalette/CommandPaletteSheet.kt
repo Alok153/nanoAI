@@ -60,7 +60,7 @@ import com.vjaykrsna.nanoai.feature.uiux.state.CommandPaletteState
 fun CommandPaletteSheet(
   state: CommandPaletteState,
   onDismissRequest: () -> Unit,
-  onCommandSelected: (CommandAction) -> Unit,
+  onCommandSelect: (CommandAction) -> Unit,
   modifier: Modifier = Modifier,
 ) {
   val focusRequester = remember { FocusRequester() }
@@ -110,7 +110,7 @@ fun CommandPaletteSheet(
           }
           Key.Enter -> {
             filteredResults.getOrNull(selectedIndex)?.takeIf(CommandAction::enabled)?.let {
-              onCommandSelected(it)
+              onCommandSelect(it)
             }
             true
           }
@@ -177,7 +177,7 @@ fun CommandPaletteSheet(
                   filteredResults
                     .firstOrNull()
                     ?.takeIf(CommandAction::enabled)
-                    ?.let(onCommandSelected)
+                    ?.let(onCommandSelect)
                 }
               ),
           )
@@ -197,7 +197,7 @@ fun CommandPaletteSheet(
             results = filteredResults,
             selectedIndex = selectedIndex,
             onSelect = { index -> selectedIndex = index },
-            onCommandSelected = onCommandSelected,
+            onCommandSelect = onCommandSelect,
             keyHandler = keyHandler,
           )
         }
@@ -211,7 +211,7 @@ private fun CommandPaletteResultList(
   results: List<CommandAction>,
   selectedIndex: Int,
   onSelect: (Int) -> Unit,
-  onCommandSelected: (CommandAction) -> Unit,
+  onCommandSelect: (CommandAction) -> Unit,
   keyHandler: (KeyEvent) -> Boolean,
 ) {
   LazyColumn(
@@ -231,7 +231,7 @@ private fun CommandPaletteResultList(
         onSelect = {
           onSelect(index)
           if (action.enabled) {
-            onCommandSelected(action)
+            onCommandSelect(action)
           }
         },
       )

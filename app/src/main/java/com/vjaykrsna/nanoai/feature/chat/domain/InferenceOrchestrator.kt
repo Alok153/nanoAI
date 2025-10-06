@@ -24,7 +24,6 @@ import kotlinx.coroutines.flow.first
 
 /** Coordinates local MediaPipe inference with cloud fallback via the gateway client. */
 @Singleton
-@Suppress("TooManyFunctions", "ReturnCount") // Complex orchestration logic with multiple paths
 class InferenceOrchestrator
 @Inject
 constructor(
@@ -154,11 +153,17 @@ constructor(
     prompt: String,
     options: GenerationOptions
   ): InferenceResult {
-    val provider = selectCloudProvider() ?: return noProviderError()
-    val cloudModelId = resolveCloudModel(options.cloudModel) ?: return missingModelError()
-    val messages = buildCloudMessages(prompt, options)
-    val request = buildCompletionRequest(cloudModelId, messages, options)
-    return executeCloudRequest(provider, cloudModelId, request)
+    val provider = selectCloudProvider()
+    val cloudModelId = resolveCloudModel(options.cloudModel)
+    return when {
+      provider == null -> noProviderError()
+      cloudModelId == null -> missingModelError()
+      else -> {
+        val messages = buildCloudMessages(prompt, options)
+        val request = buildCompletionRequest(cloudModelId, messages, options)
+        executeCloudRequest(provider, cloudModelId, request)
+      }
+    }
   }
 
   private suspend fun fallbackToLocal(
@@ -167,9 +172,8 @@ constructor(
     prompt: String,
     options: GenerationOptions
   ): InferenceResult? {
-    if (preferLocal) return null
-    val model = preferredLocalModel ?: return null
-    return runLocalInference(model, prompt, options)
+    if (preferLocal || preferredLocalModel == null) return null
+    return runLocalInference(preferredLocalModel, prompt, options)
   }
 
   private suspend fun selectCloudProvider(): APIProviderConfig? {
