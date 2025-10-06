@@ -58,19 +58,19 @@
   _Depends on_: T005, T012, T020
 - [X] T025 Implement `ConnectivityBanner` composable in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/components/ConnectivityBanner.kt` wired to dismissal cooldown.  
   _Depends on_: T013, T017, T022
-- [ ] T026 Rebuild `HomeScreen` in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/HomeScreen.kt` as responsive grid with quick actions and recent activity list.  
+- [X] T026 Rebuild `HomeScreen` in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/HomeScreen.kt` as responsive grid with quick actions and recent activity list.  
   _Depends on_: T006, T010, T015, T022
-- [ ] T027 Implement right-sidebar contextual panels (model selector, settings shortcuts, progress) in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/sidebar/RightSidebarPanels.kt`.  
+- [X] T027 Implement right-sidebar contextual panels (model selector, settings shortcuts, progress) in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/sidebar/RightSidebarPanels.kt`.  
   _Depends on_: T012, T024, T026
-- [ ] T028 Refactor `feature/sidebar` components in `app/src/main/java/com/vjaykrsna/nanoai/ui/sidebar/` to consume new navigation data and highlight active routes.  
+- [X] T028 Refactor `feature/sidebar` components in `app/src/main/java/com/vjaykrsna/nanoai/ui/sidebar/` to consume new navigation data and highlight active routes.  
   _Depends on_: T022, T026, T027
-- [ ] T029 Update `MainActivity.kt` and `app/src/main/java/com/vjaykrsna/nanoai/ui/navigation/NavigationScaffold.kt` to mount `NanoShellScaffold`, supply `WindowSizeClass`, and remove legacy per-screen scaffolds.  
+- [X] T029 Update `MainActivity.kt` and `app/src/main/java/com/vjaykrsna/nanoai/ui/navigation/NavigationScaffold.kt` to mount `NanoShellScaffold`, supply `WindowSizeClass`, and remove legacy per-screen scaffolds.  
   _Depends on_: T022, T026–T028
-- [ ] T030 Refactor Chat UI (`app/src/main/java/com/vjaykrsna/nanoai/feature/chat/ui/ChatScreen.kt`) to use shell slots (header/composer) instead of its own `Scaffold`.  
+- [X] T030 Refactor Chat UI (`app/src/main/java/com/vjaykrsna/nanoai/feature/chat/ui/ChatScreen.kt`) to use shell slots (header/composer) instead of its own `Scaffold`.  
   _Depends on_: T029
-- [ ] T031 Refactor Model Library/History UI (`app/src/main/java/com/vjaykrsna/nanoai/feature/library/ui/ModelLibraryScreen.kt` and related) to rely on shell scaffolding and right drawer hooks.  
+- [X] T031 Refactor Model Library/History UI (`app/src/main/java/com/vjaykrsna/nanoai/feature/library/ui/ModelLibraryScreen.kt` and related) to rely on shell scaffolding and right drawer hooks.  
   _Depends on_: T029
-- [ ] T032 Refactor Settings UI (`app/src/main/java/com/vjaykrsna/nanoai/feature/settings/ui/SettingsScreen.kt`) to match tabbed sections and shell layout, including persistent Save/Undo controls.  
+- [X] T032 Refactor Settings UI (`app/src/main/java/com/vjaykrsna/nanoai/feature/settings/ui/SettingsScreen.kt`) to match tabbed sections and shell layout, including persistent Save/Undo controls.  
   _Depends on_: T029
 
 ## Phase 3.4: Integration

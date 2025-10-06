@@ -32,8 +32,7 @@ data class ConnectivityBannerState(
         ConnectivityStatus.OFFLINE ->
           if (queuedActionCount > 0) "${queuedActionCount} action(s) will run when online"
           else "Changes are saved locally"
-        ConnectivityStatus.LIMITED ->
-          "Some requests may be delayed"
+        ConnectivityStatus.LIMITED -> "Some requests may be delayed"
       }
 
   /** Recommended CTA label derived either from provided [cta] or default heuristics. */

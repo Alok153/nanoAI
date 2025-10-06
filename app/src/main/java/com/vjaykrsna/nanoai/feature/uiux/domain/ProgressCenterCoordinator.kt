@@ -18,19 +18,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 
 /**
  * Coordinates WorkManager job progress with the Progress Center UI state.
  *
- * Observes active downloads and other background jobs, transforming them into
- * [ProgressJob] instances for display in the unified progress center panel.
+ * Observes active downloads and other background jobs, transforming them into [ProgressJob]
+ * instances for display in the unified progress center panel.
  */
 @Singleton
 class ProgressCenterCoordinator
@@ -42,21 +37,17 @@ constructor(
 ) {
   private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
 
-  /**
-   * Flow of all active progress jobs, combining downloads and other WorkManager tasks.
-   */
+  /** Flow of all active progress jobs, combining downloads and other WorkManager tasks. */
   val progressJobs: Flow<List<ProgressJob>> = observeOtherJobs()
 
   /**
-   * Observes other WorkManager jobs (future expansion for inference, generation, etc.).
-   * Currently returns an empty flow as placeholder that will be replaced with
-   * actual download and inference job observations.
+   * Observes other WorkManager jobs (future expansion for inference, generation, etc.). Currently
+   * returns an empty flow as placeholder that will be replaced with actual download and inference
+   * job observations.
    */
   private fun observeOtherJobs(): Flow<List<ProgressJob>> = flowOf(emptyList())
 
-  /**
-   * Retries a failed job by its ID.
-   */
+  /** Retries a failed job by its ID. */
   suspend fun retryJob(jobId: UUID) {
     withContext(ioDispatcher) {
       // Check if it's a download job
@@ -68,9 +59,7 @@ constructor(
     }
   }
 
-  /**
-   * Cancels an active job by its ID.
-   */
+  /** Cancels an active job by its ID. */
   suspend fun cancelJob(jobId: UUID) {
     withContext(ioDispatcher) {
       val task = downloadManager.getDownloadStatus(jobId)
@@ -81,9 +70,7 @@ constructor(
     }
   }
 
-  /**
-   * Pauses a running job by its ID.
-   */
+  /** Pauses a running job by its ID. */
   suspend fun pauseJob(jobId: UUID) {
     withContext(ioDispatcher) {
       val task = downloadManager.getDownloadStatus(jobId)
@@ -94,9 +81,7 @@ constructor(
     }
   }
 
-  /**
-   * Resumes a paused job by its ID.
-   */
+  /** Resumes a paused job by its ID. */
   suspend fun resumeJob(jobId: UUID) {
     withContext(ioDispatcher) {
       val task = downloadManager.getDownloadStatus(jobId)
@@ -132,10 +117,11 @@ private fun DownloadTask.toProgressJob(): ProgressJob {
   // Estimate ETA based on progress and elapsed time
   val eta =
     if (status == DownloadStatus.DOWNLOADING && progress > 0f && startedAt != null) {
-      val elapsed = java.time.Duration.between(
-        startedAt!!.toJavaInstant(),
-        kotlinx.datetime.Clock.System.now().toJavaInstant()
-      )
+      val elapsed =
+        java.time.Duration.between(
+          startedAt!!.toJavaInstant(),
+          kotlinx.datetime.Clock.System.now().toJavaInstant()
+        )
       val estimatedTotal = elapsed.toMillis() / progress
       val remaining = estimatedTotal - elapsed.toMillis()
       Duration.ofMillis(remaining.toLong())

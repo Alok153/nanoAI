@@ -114,8 +114,7 @@ internal object UiUxDomainReflection {
           commandPaletteRecents,
           connectivityBannerLastDismissed,
         )
-      else ->
-        error("Unsupported UiPreferencesSnapshot constructor arity ${ctor.parameterCount}")
+      else -> error("Unsupported UiPreferencesSnapshot constructor arity ${ctor.parameterCount}")
     }
   }
 
@@ -222,8 +221,7 @@ internal object UiUxDomainReflection {
           resolvedCommandRecents,
           resolvedConnectivityDismissed,
         )
-      else ->
-        error("Unsupported UiPreferencesSnapshot constructor arity ${ctor.parameterCount}")
+      else -> error("Unsupported UiPreferencesSnapshot constructor arity ${ctor.parameterCount}")
     }
   }
 
@@ -307,8 +305,7 @@ internal object UiUxDomainReflection {
           commandPaletteRecents,
           connectivityBannerLastDismissed,
         )
-      else ->
-        error("Unsupported UiPreferencesSnapshot#copy arity ${method.parameterCount}")
+      else -> error("Unsupported UiPreferencesSnapshot#copy arity ${method.parameterCount}")
     }
   }
 }

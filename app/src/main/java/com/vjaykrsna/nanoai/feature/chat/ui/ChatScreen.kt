@@ -2,7 +2,6 @@
 
 package com.vjaykrsna.nanoai.feature.chat.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,7 +30,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -88,15 +86,16 @@ fun ChatScreen(modifier: Modifier = Modifier, viewModel: ChatViewModel = hiltVie
     }
   }
 
-  Scaffold(
-    snackbarHost = { SnackbarHost(snackbarHostState) },
+  Box(
     modifier =
-      modifier.semantics { contentDescription = "Chat screen with message history and input" },
-  ) { innerPadding ->
+      modifier.fillMaxSize().semantics {
+        contentDescription = "Chat screen with message history and input"
+      },
+  ) {
     Column(
-      modifier = Modifier.fillMaxSize().padding(innerPadding),
+      modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 12.dp),
+      verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-      // Top bar with thread info and persona selector
       ChatTopBar(
         threadTitle = currentThread?.title ?: "New Chat",
         availablePersonas = availablePersonas,
@@ -105,14 +104,14 @@ fun ChatScreen(modifier: Modifier = Modifier, viewModel: ChatViewModel = hiltVie
         modifier = Modifier.fillMaxWidth(),
       )
 
-      // Messages list
       MessagesList(
         messages = messages,
         isLoading = isLoading,
         modifier = Modifier.weight(1f).fillMaxWidth(),
       )
 
-      // Input area
+      Spacer(modifier = Modifier.height(8.dp))
+
       MessageInputArea(
         onSendMessage = { text ->
           currentThread?.personaId?.let { personaId -> viewModel.sendMessage(text, personaId) }
@@ -121,6 +120,12 @@ fun ChatScreen(modifier: Modifier = Modifier, viewModel: ChatViewModel = hiltVie
         modifier = Modifier.fillMaxWidth(),
       )
     }
+
+    SnackbarHost(
+      hostState = snackbarHostState,
+      modifier =
+        Modifier.align(Alignment.BottomCenter).padding(horizontal = 16.dp, vertical = 24.dp),
+    )
   }
 }
 
@@ -134,7 +139,7 @@ private fun ChatTopBar(
   modifier: Modifier = Modifier,
 ) {
   Column(
-    modifier = modifier.background(MaterialTheme.colorScheme.surface).padding(16.dp),
+    modifier = modifier.padding(16.dp),
   ) {
     Text(
       text = threadTitle,
@@ -297,7 +302,7 @@ private fun MessageInputArea(
   var messageText by rememberSaveable { mutableStateOf("") }
 
   Row(
-    modifier = modifier.background(MaterialTheme.colorScheme.surface).padding(16.dp),
+    modifier = modifier.padding(horizontal = 4.dp, vertical = 8.dp),
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(8.dp),
   ) {

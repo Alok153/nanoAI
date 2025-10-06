@@ -52,7 +52,7 @@ class OfflineProgressTest {
   @Test
   fun offlineBanner_showsQueuedCount() {
     val state = mutableStateOf(sampleState(ConnectivityStatus.OFFLINE, queuedJobs = 2))
-    composeRule.setContent { NanoShellScaffold(state = state.value, onEvent = { }) }
+    composeRule.setContent { NanoShellScaffold(state = state.value, onEvent = {}) }
 
     composeRule.onNodeWithTag("connectivity_banner").assertIsDisplayed()
     composeRule.onNodeWithTag("connectivity_banner_cta").assertIsDisplayed()
@@ -61,7 +61,7 @@ class OfflineProgressTest {
   @Test
   fun progressList_displaysQueuedJobs() {
     val state = mutableStateOf(sampleState(ConnectivityStatus.OFFLINE, queuedJobs = 3))
-    composeRule.setContent { NanoShellScaffold(state = state.value, onEvent = { }) }
+    composeRule.setContent { NanoShellScaffold(state = state.value, onEvent = {}) }
 
     composeRule.onAllNodesWithTag("progress_list_item").assertCountEquals(3)
   }
@@ -69,9 +69,9 @@ class OfflineProgressTest {
   @Test
   fun reconnect_flushesQueue_andHidesBanner() {
     val state = mutableStateOf(sampleState(ConnectivityStatus.OFFLINE, queuedJobs = 1))
-    composeRule.setContent { NanoShellScaffold(state = state.value, onEvent = { intent ->
-      handleIntent(state, intent)
-    }) }
+    composeRule.setContent {
+      NanoShellScaffold(state = state.value, onEvent = { intent -> handleIntent(state, intent) })
+    }
 
     handleIntent(state, ShellUiEvent.ConnectivityChanged(ConnectivityStatus.ONLINE))
 
@@ -82,22 +82,31 @@ class OfflineProgressTest {
   @Test
   fun retryFailedJob_emitsQueueIntent() {
     val jobId = UUID.randomUUID()
-    val failingJob = ProgressJob(
-      jobId = jobId,
-      type = JobType.MODEL_DOWNLOAD,
-      status = JobStatus.FAILED,
-      progress = 0.2f,
-      eta = Duration.ofSeconds(30),
-      canRetry = true,
-      queuedAt = Instant.now(),
-    )
-    val state = mutableStateOf(sampleState(ConnectivityStatus.ONLINE, queuedJobs = 0, jobs = listOf(failingJob)))
+    val failingJob =
+      ProgressJob(
+        jobId = jobId,
+        type = JobType.MODEL_DOWNLOAD,
+        status = JobStatus.FAILED,
+        progress = 0.2f,
+        eta = Duration.ofSeconds(30),
+        canRetry = true,
+        queuedAt = Instant.now(),
+      )
+    val state =
+      mutableStateOf(
+        sampleState(ConnectivityStatus.ONLINE, queuedJobs = 0, jobs = listOf(failingJob))
+      )
     val events = mutableListOf<ShellUiEvent>()
 
-    composeRule.setContent { NanoShellScaffold(state = state.value, onEvent = { intent ->
-      events += intent
-      handleIntent(state, intent)
-    }) }
+    composeRule.setContent {
+      NanoShellScaffold(
+        state = state.value,
+        onEvent = { intent ->
+          events += intent
+          handleIntent(state, intent)
+        }
+      )
+    }
 
     composeRule.onNodeWithTag("progress_retry_button").assertIsEnabled().performClick()
     assertThat(events.filterIsInstance<ShellUiEvent.QueueJob>()).isNotEmpty()
@@ -130,7 +139,10 @@ class OfflineProgressTest {
       is ShellUiEvent.ModeSelected ->
         state.value = current.copy(layout = current.layout.copy(activeMode = intent.modeId))
       ShellUiEvent.ToggleLeftDrawer ->
-        state.value = current.copy(layout = current.layout.copy(isLeftDrawerOpen = !current.layout.isLeftDrawerOpen))
+        state.value =
+          current.copy(
+            layout = current.layout.copy(isLeftDrawerOpen = !current.layout.isLeftDrawerOpen)
+          )
       is ShellUiEvent.ToggleRightDrawer ->
         state.value =
           current.copy(
@@ -146,23 +158,28 @@ class OfflineProgressTest {
         state.value = current.copy(layout = current.layout.copy(showCommandPalette = false))
       is ShellUiEvent.Undo ->
         state.value = current.copy(layout = current.layout.copy(pendingUndoAction = null))
+      is ShellUiEvent.UpdateTheme ->
+        state.value = current.copy(preferences = current.preferences.copy(theme = intent.theme))
+      is ShellUiEvent.UpdateDensity ->
+        state.value = current.copy(preferences = current.preferences.copy(density = intent.density))
     }
   }
 
   private fun sampleState(
     connectivity: ConnectivityStatus,
     queuedJobs: Int,
-    jobs: List<ProgressJob> = List(queuedJobs) { index ->
-      ProgressJob(
-        jobId = UUID.randomUUID(),
-        type = JobType.IMAGE_GENERATION,
-        status = JobStatus.PENDING,
-        progress = 0f,
-        eta = Duration.ofSeconds(60),
-        canRetry = true,
-        queuedAt = Instant.now().minusSeconds(index.toLong()),
-      )
-    },
+    jobs: List<ProgressJob> =
+      List(queuedJobs) { index ->
+        ProgressJob(
+          jobId = UUID.randomUUID(),
+          type = JobType.IMAGE_GENERATION,
+          status = JobStatus.PENDING,
+          progress = 0f,
+          eta = Duration.ofSeconds(60),
+          canRetry = true,
+          queuedAt = Instant.now().minusSeconds(index.toLong()),
+        )
+      },
   ): ShellUiState {
     val windowSizeClass = WindowSizeClass.calculateFromSize(DpSize(600.dp, 800.dp))
     val layout =
@@ -190,7 +207,8 @@ class OfflineProgressTest {
             destination = CommandDestination.OpenRightPanel(RightPanel.PROGRESS_CENTER),
           ),
       )
-    val palette = CommandPaletteState(query = "", results = emptyList(), recentCommands = emptyList())
+    val palette =
+      CommandPaletteState(query = "", results = emptyList(), recentCommands = emptyList())
     return ShellUiState(
       layout = layout,
       commandPalette = palette,

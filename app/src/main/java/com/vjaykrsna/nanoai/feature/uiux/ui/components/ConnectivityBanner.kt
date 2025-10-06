@@ -26,9 +26,7 @@ import androidx.compose.ui.unit.dp
 import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityBannerState
 import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityStatus
 
-/**
- * Elevated banner communicating connectivity state and queued actions.
- */
+/** Elevated banner communicating connectivity state and queued actions. */
 @Composable
 fun ConnectivityBanner(
   state: ConnectivityBannerState,
@@ -36,21 +34,24 @@ fun ConnectivityBanner(
   onDismiss: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  val containerColor = when (state.status) {
-    ConnectivityStatus.ONLINE -> MaterialTheme.colorScheme.secondaryContainer
-    ConnectivityStatus.OFFLINE -> MaterialTheme.colorScheme.errorContainer
-    ConnectivityStatus.LIMITED -> MaterialTheme.colorScheme.tertiaryContainer
-  }
-  val contentColor = when (state.status) {
-    ConnectivityStatus.ONLINE -> MaterialTheme.colorScheme.onSecondaryContainer
-    ConnectivityStatus.OFFLINE -> MaterialTheme.colorScheme.onErrorContainer
-    ConnectivityStatus.LIMITED -> MaterialTheme.colorScheme.onTertiaryContainer
-  }
-  val icon = when (state.status) {
-    ConnectivityStatus.ONLINE -> Icons.Rounded.Wifi
-    ConnectivityStatus.OFFLINE -> Icons.Rounded.CloudOff
-    ConnectivityStatus.LIMITED -> Icons.Rounded.Speed
-  }
+  val containerColor =
+    when (state.status) {
+      ConnectivityStatus.ONLINE -> MaterialTheme.colorScheme.secondaryContainer
+      ConnectivityStatus.OFFLINE -> MaterialTheme.colorScheme.errorContainer
+      ConnectivityStatus.LIMITED -> MaterialTheme.colorScheme.tertiaryContainer
+    }
+  val contentColor =
+    when (state.status) {
+      ConnectivityStatus.ONLINE -> MaterialTheme.colorScheme.onSecondaryContainer
+      ConnectivityStatus.OFFLINE -> MaterialTheme.colorScheme.onErrorContainer
+      ConnectivityStatus.LIMITED -> MaterialTheme.colorScheme.onTertiaryContainer
+    }
+  val icon =
+    when (state.status) {
+      ConnectivityStatus.ONLINE -> Icons.Rounded.Wifi
+      ConnectivityStatus.OFFLINE -> Icons.Rounded.CloudOff
+      ConnectivityStatus.LIMITED -> Icons.Rounded.Speed
+    }
 
   Surface(
     modifier = modifier,
@@ -60,9 +61,7 @@ fun ConnectivityBanner(
     shape = MaterialTheme.shapes.large,
   ) {
     Row(
-      modifier = Modifier
-        .fillMaxWidth()
-        .padding(horizontal = 16.dp, vertical = 12.dp),
+      modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
       horizontalArrangement = Arrangement.spacedBy(16.dp),
       verticalAlignment = Alignment.CenterVertically,
     ) {

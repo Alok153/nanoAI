@@ -37,7 +37,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -95,28 +94,23 @@ fun ModelLibraryScreen(
     }
   }
 
-  Scaffold(
-    snackbarHost = { SnackbarHost(snackbarHostState) },
+  Box(
     modifier =
-      modifier.semantics {
+      modifier.fillMaxSize().semantics {
         contentDescription = "Model library screen with available and installed models"
       },
-  ) { innerPadding ->
+  ) {
     Column(
-      modifier = Modifier.fillMaxSize().padding(innerPadding),
+      modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 16.dp),
+      verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-      // Header
-      LibraryHeader(
-        modifier = Modifier.fillMaxWidth().padding(16.dp),
-      )
+      LibraryHeader(modifier = Modifier.fillMaxWidth())
 
-      // Filter chips
       FilterSection(
         onFilterChange = { filter -> viewModel.setFilter(filter) },
         modifier = Modifier.fillMaxWidth(),
       )
 
-      // Download queue section
       if (queuedDownloads.isNotEmpty()) {
         DownloadQueueSection(
           downloads = queuedDownloads,
@@ -124,16 +118,13 @@ fun ModelLibraryScreen(
           onResume = { viewModel.resumeDownload(it) },
           onCancel = { viewModel.cancelDownload(it) },
           onRetry = { viewModel.retryDownload(it) },
-          modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+          modifier = Modifier.fillMaxWidth(),
         )
-
-        Spacer(modifier = Modifier.height(16.dp))
       }
 
-      // Models list
       if (isLoading) {
         Box(
-          modifier = Modifier.fillMaxSize(),
+          modifier = Modifier.fillMaxWidth().weight(1f, fill = true),
           contentAlignment = Alignment.Center,
         ) {
           CircularProgressIndicator(
@@ -146,10 +137,16 @@ fun ModelLibraryScreen(
           installedModels = installedModels,
           onDownload = { viewModel.downloadModel(it.modelId) },
           onDelete = { viewModel.deleteModel(it.modelId) },
-          modifier = Modifier.fillMaxWidth().weight(1f),
+          modifier = Modifier.fillMaxWidth().weight(1f, fill = true),
         )
       }
     }
+
+    SnackbarHost(
+      hostState = snackbarHostState,
+      modifier =
+        Modifier.align(Alignment.BottomCenter).padding(horizontal = 16.dp, vertical = 24.dp),
+    )
   }
 }
 

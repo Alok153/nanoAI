@@ -14,13 +14,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 
 /**
- * Aggregates navigation targets, quick actions, recent activity, and progress jobs into
- * command palette actions grouped by category.
+ * Aggregates navigation targets, quick actions, recent activity, and progress jobs into command
+ * palette actions grouped by category.
  */
 @Singleton
-class CommandPaletteActionProvider
-@Inject
-constructor() {
+class CommandPaletteActionProvider @Inject constructor() {
 
   /**
    * Provides a combined flow of all available command actions, grouped by category.
@@ -45,9 +43,7 @@ constructor() {
       }
     }
 
-  /**
-   * Provides mode navigation actions.
-   */
+  /** Provides mode navigation actions. */
   fun provideModeActions(connectivity: ConnectivityStatus): List<CommandAction> {
     val isOnline = connectivity == ConnectivityStatus.ONLINE
     return listOf(
@@ -117,12 +113,11 @@ constructor() {
     )
   }
 
-  /**
-   * Provides history/recent activity actions.
-   */
+  /** Provides history/recent activity actions. */
   fun provideHistoryActions(recentActivity: List<RecentActivityItem>): List<CommandAction> =
     recentActivity.take(5).map { item ->
-      val timestampKotlinx = kotlinx.datetime.Instant.fromEpochSeconds(item.timestamp.epochSecond, item.timestamp.nano)
+      val timestampKotlinx =
+        kotlinx.datetime.Instant.fromEpochSeconds(item.timestamp.epochSecond, item.timestamp.nano)
       val timestampText = formatTimestamp(timestampKotlinx)
       CommandAction(
         id = "recent_${item.id}",
@@ -133,24 +128,22 @@ constructor() {
       )
     }
 
-  /**
-   * Provides progress/job-related actions.
-   */
-  fun provideJobActions(progressJobs: List<ProgressJob>): List<CommandAction> =
-    buildList {
-      if (progressJobs.isNotEmpty()) {
-        add(
-          CommandAction(
-            id = "jobs_view_all",
-            title = "View Progress Center",
-            subtitle = "${progressJobs.size} active job${if (progressJobs.size != 1) "s" else ""}",
-            category = CommandCategory.JOBS,
-            destination = CommandDestination.OpenRightPanel(RightPanel.PROGRESS_CENTER),
-          )
+  /** Provides progress/job-related actions. */
+  fun provideJobActions(progressJobs: List<ProgressJob>): List<CommandAction> = buildList {
+    if (progressJobs.isNotEmpty()) {
+      add(
+        CommandAction(
+          id = "jobs_view_all",
+          title = "View Progress Center",
+          subtitle = "${progressJobs.size} active job${if (progressJobs.size != 1) "s" else ""}",
+          category = CommandCategory.JOBS,
+          destination = CommandDestination.OpenRightPanel(RightPanel.PROGRESS_CENTER),
         )
-      }
-      progressJobs.take(3).forEach { job ->
-        val jobTypeDisplay = when (job.type) {
+      )
+    }
+    progressJobs.take(3).forEach { job ->
+      val jobTypeDisplay =
+        when (job.type) {
           com.vjaykrsna.nanoai.feature.uiux.state.JobType.IMAGE_GENERATION -> "Image Generation"
           com.vjaykrsna.nanoai.feature.uiux.state.JobType.AUDIO_RECORDING -> "Audio Recording"
           com.vjaykrsna.nanoai.feature.uiux.state.JobType.MODEL_DOWNLOAD -> "Model Download"
@@ -158,23 +151,21 @@ constructor() {
           com.vjaykrsna.nanoai.feature.uiux.state.JobType.TRANSLATION -> "Translation"
           com.vjaykrsna.nanoai.feature.uiux.state.JobType.OTHER -> "Background Task"
         }
-        val jobStatusDisplay = job.statusLabel
-        add(
-          CommandAction(
-            id = "job_${job.jobId}",
-            title = jobTypeDisplay,
-            subtitle = "${(job.progress * 100).toInt()}% • $jobStatusDisplay",
-            enabled = job.canRetry,
-            category = CommandCategory.JOBS,
-            destination = CommandDestination.OpenRightPanel(RightPanel.PROGRESS_CENTER),
-          )
+      val jobStatusDisplay = job.statusLabel
+      add(
+        CommandAction(
+          id = "job_${job.jobId}",
+          title = jobTypeDisplay,
+          subtitle = "${(job.progress * 100).toInt()}% • $jobStatusDisplay",
+          enabled = job.canRetry,
+          category = CommandCategory.JOBS,
+          destination = CommandDestination.OpenRightPanel(RightPanel.PROGRESS_CENTER),
         )
-      }
+      )
     }
+  }
 
-  /**
-   * Provides settings-related actions.
-   */
+  /** Provides settings-related actions. */
   fun provideSettingsActions(): List<CommandAction> =
     listOf(
       CommandAction(
@@ -201,9 +192,7 @@ constructor() {
       ),
     )
 
-  /**
-   * Provides help-related actions.
-   */
+  /** Provides help-related actions. */
   fun provideHelpActions(): List<CommandAction> =
     listOf(
       CommandAction(
@@ -223,9 +212,7 @@ constructor() {
       ),
     )
 
-  /**
-   * Filters actions based on a search query.
-   */
+  /** Filters actions based on a search query. */
   fun filterActions(actions: List<CommandAction>, query: String): List<CommandAction> {
     if (query.isBlank()) return actions
     val lowerQuery = query.lowercase()

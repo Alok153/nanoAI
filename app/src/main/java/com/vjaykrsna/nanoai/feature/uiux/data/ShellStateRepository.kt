@@ -6,8 +6,10 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.vjaykrsna.nanoai.core.common.IoDispatcher
 import com.vjaykrsna.nanoai.core.data.repository.UserProfileRepository
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UIStateSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferencesSnapshot as DomainUiPreferencesSnapshot
+import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
 import com.vjaykrsna.nanoai.feature.uiux.domain.UIUX_DEFAULT_USER_ID
 import com.vjaykrsna.nanoai.feature.uiux.state.CommandAction
 import com.vjaykrsna.nanoai.feature.uiux.state.CommandCategory
@@ -84,14 +86,18 @@ constructor(
         val (window, snapshot, connectivityStatus) = triple
         buildShellLayoutState(window, snapshot, connectivityStatus, undo, jobs, activity)
       }
-      .stateIn(scope, SharingStarted.Eagerly, buildShellLayoutState(
-        windowSizeClass.value,
-        uiSnapshot.value,
-        connectivity.value,
-        undoPayload.value,
-        progressJobs.value,
-        _recentActivity.value,
-      ))
+      .stateIn(
+        scope,
+        SharingStarted.Eagerly,
+        buildShellLayoutState(
+          windowSizeClass.value,
+          uiSnapshot.value,
+          connectivity.value,
+          undoPayload.value,
+          progressJobs.value,
+          _recentActivity.value,
+        )
+      )
 
   private val preferencesSnapshot: StateFlow<UiPreferenceSnapshot> =
     preferences
@@ -174,7 +180,9 @@ constructor(
 
   open suspend fun hideCommandPalette() {
     commandPalette.update { state -> state.cleared() }
-    withContext(ioDispatcher) { userProfileRepository.updateCommandPaletteVisibility(userId, false) }
+    withContext(ioDispatcher) {
+      userProfileRepository.updateCommandPaletteVisibility(userId, false)
+    }
   }
 
   open suspend fun queueJob(job: ProgressJob) {
@@ -188,6 +196,14 @@ constructor(
   open suspend fun updateConnectivity(status: ConnectivityStatus) {
     connectivity.value = status
     userProfileRepository.setOfflineOverride(status != ConnectivityStatus.ONLINE)
+  }
+
+  open suspend fun updateThemePreference(theme: ThemePreference) {
+    withContext(ioDispatcher) { userProfileRepository.updateThemePreference(userId, theme.name) }
+  }
+
+  open suspend fun updateVisualDensity(density: VisualDensity) {
+    withContext(ioDispatcher) { userProfileRepository.updateVisualDensity(userId, density.name) }
   }
 
   open suspend fun recordUndoPayload(payload: UndoPayload?) {

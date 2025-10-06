@@ -17,10 +17,12 @@ class SettingsViewModelUiUxTest {
   fun settingsViewModel_providesThemeTogglePersistenceHook() {
     val themeMethod =
       runCatching {
-          SettingsViewModel::class.java.getDeclaredMethod(
-            "setThemePreference",
-            ThemePreference::class.java,
-          )
+          SettingsViewModel::class
+            .java
+            .getDeclaredMethod(
+              "setThemePreference",
+              ThemePreference::class.java,
+            )
         }
         .getOrNull()
 
@@ -32,10 +34,12 @@ class SettingsViewModelUiUxTest {
   fun settingsViewModel_exposesDensityToggles_andUndoSupport() {
     val densityMethod =
       runCatching {
-          SettingsViewModel::class.java.getDeclaredMethod(
-            "applyDensityPreference",
-            java.lang.Boolean.TYPE,
-          )
+          SettingsViewModel::class
+            .java
+            .getDeclaredMethod(
+              "applyDensityPreference",
+              java.lang.Boolean.TYPE,
+            )
         }
         .getOrNull()
     assertNotNull(densityMethod)

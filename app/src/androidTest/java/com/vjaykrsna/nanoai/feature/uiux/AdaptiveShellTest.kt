@@ -35,24 +35,27 @@ class AdaptiveShellTest {
 
   @Test
   fun compactWidth_usesModalDrawer() {
-    val state = mutableStateOf(sampleState(WindowWidthSizeClass.Compact, WindowHeightSizeClass.Expanded))
-    composeRule.setContent { NanoShellScaffold(state = state.value, onEvent = { }) }
+    val state =
+      mutableStateOf(sampleState(WindowWidthSizeClass.Compact, WindowHeightSizeClass.Expanded))
+    composeRule.setContent { NanoShellScaffold(state = state.value, onEvent = {}) }
 
     composeRule.onNodeWithTag("left_drawer_modal").assertIsDisplayed()
   }
 
   @Test
   fun expandedWidth_showsPermanentDrawer() {
-    val state = mutableStateOf(sampleState(WindowWidthSizeClass.Expanded, WindowHeightSizeClass.Medium))
-    composeRule.setContent { NanoShellScaffold(state = state.value, onEvent = { }) }
+    val state =
+      mutableStateOf(sampleState(WindowWidthSizeClass.Expanded, WindowHeightSizeClass.Medium))
+    composeRule.setContent { NanoShellScaffold(state = state.value, onEvent = {}) }
 
     composeRule.onNodeWithTag("left_drawer_permanent").assertIsDisplayed()
   }
 
   @Test
   fun accessibility_focusMovesIntoContent() {
-    val state = mutableStateOf(sampleState(WindowWidthSizeClass.Medium, WindowHeightSizeClass.Medium))
-    composeRule.setContent { NanoShellScaffold(state = state.value, onEvent = { }) }
+    val state =
+      mutableStateOf(sampleState(WindowWidthSizeClass.Medium, WindowHeightSizeClass.Medium))
+    composeRule.setContent { NanoShellScaffold(state = state.value, onEvent = {}) }
 
     composeRule.onNodeWithTag("shell_content").assertIsDisplayed()
   }
@@ -67,7 +70,8 @@ class AdaptiveShellTest {
         windowSizeClass = windowSizeClass,
         isLeftDrawerOpen = width == WindowWidthSizeClass.Compact,
         isRightDrawerOpen = false,
-        activeRightPanel = if (width >= WindowWidthSizeClass.Medium) RightPanel.PROGRESS_CENTER else null,
+        activeRightPanel =
+          if (width >= WindowWidthSizeClass.Medium) RightPanel.PROGRESS_CENTER else null,
         activeMode = ModeId.HOME,
         showCommandPalette = false,
         connectivity = ConnectivityStatus.ONLINE,
@@ -80,7 +84,13 @@ class AdaptiveShellTest {
       ConnectivityBannerState(
         status = ConnectivityStatus.ONLINE,
         queuedActionCount = 0,
-        cta = CommandAction("view-queue", "View queue", category = CommandCategory.JOBS, destination = CommandDestination.OpenRightPanel(RightPanel.PROGRESS_CENTER)),
+        cta =
+          CommandAction(
+            "view-queue",
+            "View queue",
+            category = CommandCategory.JOBS,
+            destination = CommandDestination.OpenRightPanel(RightPanel.PROGRESS_CENTER)
+          ),
       )
 
     return ShellUiState(

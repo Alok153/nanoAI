@@ -53,6 +53,7 @@ data class SidebarUiState(
   val showArchived: Boolean,
   val inferenceMode: InferenceMode,
   val pinnedTools: List<String>,
+  val activeRoute: String? = null,
 )
 
 /** Aggregated callbacks for sidebar interactions to keep composables lightweight. */
@@ -83,6 +84,7 @@ fun SidebarContent(
   ) {
     SidebarDrawer(
       pinnedTools = state.pinnedTools,
+      activeRoute = state.activeRoute,
       onNavigateSettings = interactions.onNavigateSettings,
       onNavigateHome = interactions.onNavigateHome,
       modifier =

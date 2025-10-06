@@ -25,7 +25,6 @@ import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
 import com.vjaykrsna.nanoai.feature.uiux.state.PaletteSource
 import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
 import com.vjaykrsna.nanoai.feature.uiux.state.RecentActivityItem
-import com.vjaykrsna.nanoai.feature.uiux.state.RecentStatus
 import com.vjaykrsna.nanoai.feature.uiux.state.RightPanel
 import com.vjaykrsna.nanoai.feature.uiux.state.ShellLayoutState
 import com.vjaykrsna.nanoai.feature.uiux.state.UiPreferenceSnapshot
@@ -53,126 +52,133 @@ class ShellViewModelTest {
   private val dispatcher = StandardTestDispatcher()
 
   @Test
-  fun openMode_closesDrawersAndHidesPalette() = runTest(dispatcher) {
-    val repository = FakeShellStateRepository()
-    val actionProvider = FakeCommandPaletteActionProvider()
-    val progressCoordinator = FakeProgressCenterCoordinator()
-    val viewModel = ShellViewModel(repository, actionProvider, progressCoordinator, dispatcher)
+  fun openMode_closesDrawersAndHidesPalette() =
+    runTest(dispatcher) {
+      val repository = FakeShellStateRepository()
+      val actionProvider = FakeCommandPaletteActionProvider()
+      val progressCoordinator = FakeProgressCenterCoordinator()
+      val viewModel = ShellViewModel(repository, actionProvider, progressCoordinator, dispatcher)
 
-    viewModel.openMode(ModeId.CHAT)
-    advanceUntilIdle()
+      viewModel.openMode(ModeId.CHAT)
+      advanceUntilIdle()
 
-    val uiState =
-      viewModel.uiState.first { state ->
-        repository.openModeCalls.isNotEmpty() && state.layout.activeMode == ModeId.CHAT
-      }
-    assertThat(uiState.layout.activeMode).isEqualTo(ModeId.CHAT)
-    assertThat(uiState.layout.isLeftDrawerOpen).isFalse()
-    assertThat(uiState.layout.showCommandPalette).isFalse()
-    assertThat(repository.openModeCalls).containsExactly(ModeId.CHAT)
-  }
-
-  @Test
-  fun toggleRightDrawer_setsPanelAndReflectsInState() = runTest(dispatcher) {
-    val repository = FakeShellStateRepository()
-    val actionProvider = FakeCommandPaletteActionProvider()
-    val progressCoordinator = FakeProgressCenterCoordinator()
-    val viewModel = ShellViewModel(repository, actionProvider, progressCoordinator, dispatcher)
-
-    viewModel.toggleRightDrawer(RightPanel.PROGRESS_CENTER)
-    advanceUntilIdle()
-
-    val uiState =
-      viewModel.uiState.first { state ->
-        repository.rightDrawerToggles.contains(RightPanel.PROGRESS_CENTER) &&
-          state.layout.activeRightPanel == RightPanel.PROGRESS_CENTER
-      }
-    assertThat(uiState.layout.isRightDrawerOpen).isTrue()
-    assertThat(uiState.layout.activeRightPanel).isEqualTo(RightPanel.PROGRESS_CENTER)
-    assertThat(repository.rightDrawerToggles).containsExactly(RightPanel.PROGRESS_CENTER)
-  }
+      val uiState =
+        viewModel.uiState.first { state ->
+          repository.openModeCalls.isNotEmpty() && state.layout.activeMode == ModeId.CHAT
+        }
+      assertThat(uiState.layout.activeMode).isEqualTo(ModeId.CHAT)
+      assertThat(uiState.layout.isLeftDrawerOpen).isFalse()
+      assertThat(uiState.layout.showCommandPalette).isFalse()
+      assertThat(repository.openModeCalls).containsExactly(ModeId.CHAT)
+    }
 
   @Test
-  fun queueGeneration_offline_jobQueuedWithPendingUndo() = runTest(dispatcher) {
-    val repository = FakeShellStateRepository(initialConnectivity = ConnectivityStatus.OFFLINE)
-    val actionProvider = FakeCommandPaletteActionProvider()
-    val progressCoordinator = FakeProgressCenterCoordinator()
-    val viewModel = ShellViewModel(repository, actionProvider, progressCoordinator, dispatcher)
+  fun toggleRightDrawer_setsPanelAndReflectsInState() =
+    runTest(dispatcher) {
+      val repository = FakeShellStateRepository()
+      val actionProvider = FakeCommandPaletteActionProvider()
+      val progressCoordinator = FakeProgressCenterCoordinator()
+      val viewModel = ShellViewModel(repository, actionProvider, progressCoordinator, dispatcher)
 
-    val job = ProgressJob(
-      jobId = UUID.randomUUID(),
-      type = JobType.IMAGE_GENERATION,
-      status = JobStatus.PENDING,
-      progress = 0f,
-      eta = Duration.ofSeconds(90),
-      canRetry = true,
-      queuedAt = Instant.parse("2025-10-06T00:00:00Z"),
-    )
+      viewModel.toggleRightDrawer(RightPanel.PROGRESS_CENTER)
+      advanceUntilIdle()
 
-    viewModel.queueGeneration(job)
-    advanceUntilIdle()
-
-    val uiState =
-      viewModel.uiState.first { state ->
-        repository.queuedJobs.contains(job) && state.layout.progressJobs.contains(job)
-      }
-    assertThat(uiState.layout.progressJobs).contains(job)
-    assertThat(uiState.layout.pendingUndoAction).isNotNull()
-    assertThat(repository.queuedJobs).contains(job)
-  }
+      val uiState =
+        viewModel.uiState.first { state ->
+          repository.rightDrawerToggles.contains(RightPanel.PROGRESS_CENTER) &&
+            state.layout.activeRightPanel == RightPanel.PROGRESS_CENTER
+        }
+      assertThat(uiState.layout.isRightDrawerOpen).isTrue()
+      assertThat(uiState.layout.activeRightPanel).isEqualTo(RightPanel.PROGRESS_CENTER)
+      assertThat(repository.rightDrawerToggles).containsExactly(RightPanel.PROGRESS_CENTER)
+    }
 
   @Test
-  fun completeJob_removesJobAndClearsUndo() = runTest(dispatcher) {
-    val jobId = UUID.randomUUID()
-    val repository =
-      FakeShellStateRepository(
-        initialJobs = listOf(
-          ProgressJob(
-            jobId = jobId,
-            type = JobType.MODEL_DOWNLOAD,
-            status = JobStatus.RUNNING,
-            progress = 0.5f,
-            eta = Duration.ofSeconds(30),
-            canRetry = false,
-            queuedAt = Instant.parse("2025-10-06T00:00:00Z"),
-          )
-        ),
-      )
-    val actionProvider = FakeCommandPaletteActionProvider()
-    val progressCoordinator = FakeProgressCenterCoordinator()
-    val viewModel = ShellViewModel(repository, actionProvider, progressCoordinator, dispatcher)
+  fun queueGeneration_offline_jobQueuedWithPendingUndo() =
+    runTest(dispatcher) {
+      val repository = FakeShellStateRepository(initialConnectivity = ConnectivityStatus.OFFLINE)
+      val actionProvider = FakeCommandPaletteActionProvider()
+      val progressCoordinator = FakeProgressCenterCoordinator()
+      val viewModel = ShellViewModel(repository, actionProvider, progressCoordinator, dispatcher)
 
-    viewModel.completeJob(jobId)
-    advanceUntilIdle()
+      val job =
+        ProgressJob(
+          jobId = UUID.randomUUID(),
+          type = JobType.IMAGE_GENERATION,
+          status = JobStatus.PENDING,
+          progress = 0f,
+          eta = Duration.ofSeconds(90),
+          canRetry = true,
+          queuedAt = Instant.parse("2025-10-06T00:00:00Z"),
+        )
 
-    val uiState =
-      viewModel.uiState.first { state ->
-        repository.completedJobs.contains(jobId) &&
-          state.layout.progressJobs.none { it.jobId == jobId }
-      }
-    assertThat(uiState.layout.progressJobs).isEmpty()
-    assertThat(repository.completedJobs).contains(jobId)
-  }
+      viewModel.queueGeneration(job)
+      advanceUntilIdle()
+
+      val uiState =
+        viewModel.uiState.first { state ->
+          repository.queuedJobs.contains(job) && state.layout.progressJobs.contains(job)
+        }
+      assertThat(uiState.layout.progressJobs).contains(job)
+      assertThat(uiState.layout.pendingUndoAction).isNotNull()
+      assertThat(repository.queuedJobs).contains(job)
+    }
 
   @Test
-  fun updateConnectivity_flushesQueuedJobsAndBanner() = runTest(dispatcher) {
-    val repository = FakeShellStateRepository(initialConnectivity = ConnectivityStatus.OFFLINE)
-    val actionProvider = FakeCommandPaletteActionProvider()
-    val progressCoordinator = FakeProgressCenterCoordinator()
-    val viewModel = ShellViewModel(repository, actionProvider, progressCoordinator, dispatcher)
+  fun completeJob_removesJobAndClearsUndo() =
+    runTest(dispatcher) {
+      val jobId = UUID.randomUUID()
+      val repository =
+        FakeShellStateRepository(
+          initialJobs =
+            listOf(
+              ProgressJob(
+                jobId = jobId,
+                type = JobType.MODEL_DOWNLOAD,
+                status = JobStatus.RUNNING,
+                progress = 0.5f,
+                eta = Duration.ofSeconds(30),
+                canRetry = false,
+                queuedAt = Instant.parse("2025-10-06T00:00:00Z"),
+              )
+            ),
+        )
+      val actionProvider = FakeCommandPaletteActionProvider()
+      val progressCoordinator = FakeProgressCenterCoordinator()
+      val viewModel = ShellViewModel(repository, actionProvider, progressCoordinator, dispatcher)
 
-    viewModel.updateConnectivity(ConnectivityStatus.ONLINE)
-    advanceUntilIdle()
+      viewModel.completeJob(jobId)
+      advanceUntilIdle()
 
-    val uiState =
-      viewModel.uiState.first { state ->
-        repository.connectivityUpdates.contains(ConnectivityStatus.ONLINE) &&
-          state.layout.connectivity == ConnectivityStatus.ONLINE
-      }
-    assertThat(uiState.layout.connectivity).isEqualTo(ConnectivityStatus.ONLINE)
-    assertThat(uiState.connectivityBanner.status).isEqualTo(ConnectivityStatus.ONLINE)
-    assertThat(repository.connectivityUpdates).containsExactly(ConnectivityStatus.ONLINE)
-  }
+      val uiState =
+        viewModel.uiState.first { state ->
+          repository.completedJobs.contains(jobId) &&
+            state.layout.progressJobs.none { it.jobId == jobId }
+        }
+      assertThat(uiState.layout.progressJobs).isEmpty()
+      assertThat(repository.completedJobs).contains(jobId)
+    }
+
+  @Test
+  fun updateConnectivity_flushesQueuedJobsAndBanner() =
+    runTest(dispatcher) {
+      val repository = FakeShellStateRepository(initialConnectivity = ConnectivityStatus.OFFLINE)
+      val actionProvider = FakeCommandPaletteActionProvider()
+      val progressCoordinator = FakeProgressCenterCoordinator()
+      val viewModel = ShellViewModel(repository, actionProvider, progressCoordinator, dispatcher)
+
+      viewModel.updateConnectivity(ConnectivityStatus.ONLINE)
+      advanceUntilIdle()
+
+      val uiState =
+        viewModel.uiState.first { state ->
+          repository.connectivityUpdates.contains(ConnectivityStatus.ONLINE) &&
+            state.layout.connectivity == ConnectivityStatus.ONLINE
+        }
+      assertThat(uiState.layout.connectivity).isEqualTo(ConnectivityStatus.ONLINE)
+      assertThat(uiState.connectivityBanner.status).isEqualTo(ConnectivityStatus.ONLINE)
+      assertThat(repository.connectivityUpdates).containsExactly(ConnectivityStatus.ONLINE)
+    }
 
   private class FakeShellStateRepository(
     initialMode: ModeId = ModeId.HOME,
@@ -206,12 +212,13 @@ class ShellViewModelTest {
       ConnectivityBannerState(
         status = initialConnectivity,
         queuedActionCount = initialJobs.size,
-        cta = CommandAction(
-          id = "open-progress",
-          title = "View queue",
-          category = CommandCategory.JOBS,
-          destination = CommandDestination.OpenRightPanel(RightPanel.PROGRESS_CENTER),
-        ),
+        cta =
+          CommandAction(
+            id = "open-progress",
+            title = "View queue",
+            category = CommandCategory.JOBS,
+            destination = CommandDestination.OpenRightPanel(RightPanel.PROGRESS_CENTER),
+          ),
       )
     private val initialPreferences = UiPreferenceSnapshot()
 
@@ -261,12 +268,16 @@ class ShellViewModelTest {
     }
 
     override suspend fun showCommandPalette(source: PaletteSource) {
-      _palette.value = _palette.value.copy(surfaceTarget = when (source) {
-        PaletteSource.KEYBOARD_SHORTCUT -> CommandCategory.MODES
-        PaletteSource.TOP_APP_BAR -> CommandCategory.SETTINGS
-        PaletteSource.QUICK_ACTION -> CommandCategory.JOBS
-        PaletteSource.UNKNOWN -> CommandCategory.MODES
-      })
+      _palette.value =
+        _palette.value.copy(
+          surfaceTarget =
+            when (source) {
+              PaletteSource.KEYBOARD_SHORTCUT -> CommandCategory.MODES
+              PaletteSource.TOP_APP_BAR -> CommandCategory.SETTINGS
+              PaletteSource.QUICK_ACTION -> CommandCategory.JOBS
+              PaletteSource.UNKNOWN -> CommandCategory.MODES
+            }
+        )
       _layout.value = _layout.value.copy(showCommandPalette = true, isLeftDrawerOpen = false)
     }
 
@@ -342,7 +353,8 @@ private class NoopUserProfileRepository : UserProfileRepository {
 
   override suspend fun updatePinnedTools(userId: String, pinnedTools: List<String>) = Unit
 
-  override suspend fun saveLayoutSnapshot(userId: String, layout: LayoutSnapshot, position: Int) = Unit
+  override suspend fun saveLayoutSnapshot(userId: String, layout: LayoutSnapshot, position: Int) =
+    Unit
 
   override suspend fun deleteLayoutSnapshot(layoutId: String) = Unit
 
@@ -367,10 +379,12 @@ private class NoopUserProfileRepository : UserProfileRepository {
   }
 }
 
-private fun FakeCommandPaletteActionProvider(): com.vjaykrsna.nanoai.feature.uiux.domain.CommandPaletteActionProvider =
+private fun FakeCommandPaletteActionProvider():
+  com.vjaykrsna.nanoai.feature.uiux.domain.CommandPaletteActionProvider =
   com.vjaykrsna.nanoai.feature.uiux.domain.CommandPaletteActionProvider()
 
-private fun FakeProgressCenterCoordinator(): com.vjaykrsna.nanoai.feature.uiux.domain.ProgressCenterCoordinator {
+private fun FakeProgressCenterCoordinator():
+  com.vjaykrsna.nanoai.feature.uiux.domain.ProgressCenterCoordinator {
   val downloadManager = FakeDownloadManager()
   val context = ApplicationProvider.getApplicationContext<android.content.Context>()
   try {
@@ -387,20 +401,48 @@ private fun FakeProgressCenterCoordinator(): com.vjaykrsna.nanoai.feature.uiux.d
 
 private class FakeDownloadManager : com.vjaykrsna.nanoai.feature.library.data.DownloadManager {
   override suspend fun startDownload(modelId: String): UUID = UUID.randomUUID()
+
   override suspend fun queueDownload(modelId: String): UUID = UUID.randomUUID()
+
   override suspend fun pauseDownload(taskId: UUID) = Unit
+
   override suspend fun resumeDownload(taskId: UUID) = Unit
+
   override suspend fun cancelDownload(taskId: UUID) = Unit
+
   override suspend fun retryDownload(taskId: UUID) = Unit
+
   override suspend fun resetTask(taskId: UUID) = Unit
-  override suspend fun getDownloadStatus(taskId: UUID): com.vjaykrsna.nanoai.core.domain.model.DownloadTask? = null
-  override suspend fun getTaskById(taskId: UUID): Flow<com.vjaykrsna.nanoai.core.domain.model.DownloadTask?> = kotlinx.coroutines.flow.flowOf(null)
-  override suspend fun getActiveDownloads(): Flow<List<com.vjaykrsna.nanoai.core.domain.model.DownloadTask>> = kotlinx.coroutines.flow.flowOf(emptyList())
-  override fun getQueuedDownloads(): Flow<List<com.vjaykrsna.nanoai.core.domain.model.DownloadTask>> = kotlinx.coroutines.flow.flowOf(emptyList())
+
+  override suspend fun getDownloadStatus(
+    taskId: UUID
+  ): com.vjaykrsna.nanoai.core.domain.model.DownloadTask? = null
+
+  override suspend fun getTaskById(
+    taskId: UUID
+  ): Flow<com.vjaykrsna.nanoai.core.domain.model.DownloadTask?> =
+    kotlinx.coroutines.flow.flowOf(null)
+
+  override suspend fun getActiveDownloads():
+    Flow<List<com.vjaykrsna.nanoai.core.domain.model.DownloadTask>> =
+    kotlinx.coroutines.flow.flowOf(emptyList())
+
+  override fun getQueuedDownloads():
+    Flow<List<com.vjaykrsna.nanoai.core.domain.model.DownloadTask>> =
+    kotlinx.coroutines.flow.flowOf(emptyList())
+
   override fun observeProgress(taskId: UUID): Flow<Float> = kotlinx.coroutines.flow.flowOf(0f)
+
   override suspend fun getMaxConcurrentDownloads(): Int = 2
-  override suspend fun updateTaskStatus(taskId: UUID, status: com.vjaykrsna.nanoai.feature.library.model.DownloadStatus) = Unit
+
+  override suspend fun updateTaskStatus(
+    taskId: UUID,
+    status: com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
+  ) = Unit
+
   override suspend fun getModelIdForTask(taskId: UUID): String? = null
+
   override suspend fun getDownloadedChecksum(modelId: String): String? = null
+
   override suspend fun deletePartialFiles(modelId: String) = Unit
 }

@@ -21,7 +21,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -43,8 +43,8 @@ import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -65,84 +65,88 @@ fun CommandPaletteSheet(
 ) {
   val focusRequester = remember { FocusRequester() }
   var query by remember(state.results, state.query) { mutableStateOf(state.query) }
-  var selectedIndex by remember(state.results, state.selectedIndex) {
-    mutableStateOf(
-      state.selectedIndex.takeIf { state.results.isNotEmpty() && it in state.results.indices } ?: 0
-    )
-  }
+  var selectedIndex by
+    remember(state.results, state.selectedIndex) {
+      mutableStateOf(
+        state.selectedIndex.takeIf { state.results.isNotEmpty() && it in state.results.indices }
+          ?: 0
+      )
+    }
 
-  val filteredResults = remember(query, state.results) {
-    filterCommands(state.results, query)
-  }
+  val filteredResults = remember(query, state.results) { filterCommands(state.results, query) }
 
   LaunchedEffect(filteredResults) {
-    selectedIndex = when {
-      filteredResults.isEmpty() -> -1
-      selectedIndex in filteredResults.indices -> selectedIndex
-      else -> 0
-    }
+    selectedIndex =
+      when {
+        filteredResults.isEmpty() -> -1
+        selectedIndex in filteredResults.indices -> selectedIndex
+        else -> 0
+      }
   }
 
   LaunchedEffect(Unit) { focusRequester.requestFocus() }
 
   val interactionSource = remember { MutableInteractionSource() }
-  val keyHandler: (KeyEvent) -> Boolean = remember(filteredResults, selectedIndex) {
-    { event ->
-      if (event.type != KeyEventType.KeyDown) return@remember false
-      when (event.key) {
-        Key.DirectionDown -> {
-          if (filteredResults.isNotEmpty()) {
-            val next = if (selectedIndex == -1) 0 else (selectedIndex + 1) % filteredResults.size
-            selectedIndex = next
+  val keyHandler: (KeyEvent) -> Boolean =
+    remember(filteredResults, selectedIndex) {
+      { event ->
+        if (event.type != KeyEventType.KeyDown) return@remember false
+        when (event.key) {
+          Key.DirectionDown -> {
+            if (filteredResults.isNotEmpty()) {
+              val next = if (selectedIndex == -1) 0 else (selectedIndex + 1) % filteredResults.size
+              selectedIndex = next
+            }
+            true
           }
-          true
-        }
-        Key.DirectionUp -> {
-          if (filteredResults.isNotEmpty()) {
-            val next =
-              if (selectedIndex == -1) filteredResults.lastIndex
-              else (selectedIndex - 1 + filteredResults.size) % filteredResults.size
-            selectedIndex = next
+          Key.DirectionUp -> {
+            if (filteredResults.isNotEmpty()) {
+              val next =
+                if (selectedIndex == -1) filteredResults.lastIndex
+                else (selectedIndex - 1 + filteredResults.size) % filteredResults.size
+              selectedIndex = next
+            }
+            true
           }
-          true
-        }
-        Key.Enter -> {
-          filteredResults.getOrNull(selectedIndex)?.takeIf(CommandAction::enabled)?.let {
-            onCommandSelected(it)
+          Key.Enter -> {
+            filteredResults.getOrNull(selectedIndex)?.takeIf(CommandAction::enabled)?.let {
+              onCommandSelected(it)
+            }
+            true
           }
-          true
-        }
-        Key.Escape -> {
-          onDismissRequest()
-          true
-        }
-        Key.K -> {
-          if (event.isCtrlPressed) {
+          Key.Escape -> {
             onDismissRequest()
             true
-          } else {
-            false
           }
+          Key.K -> {
+            if (event.isCtrlPressed) {
+              onDismissRequest()
+              true
+            } else {
+              false
+            }
+          }
+          else -> false
         }
-        else -> false
       }
     }
-  }
 
   Box(modifier = modifier.fillMaxSize().testTag("command_palette")) {
     Box(
-      modifier = Modifier
-        .fillMaxSize()
-        .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.45f))
-        .clickable(interactionSource = interactionSource, indication = null) { onDismissRequest() },
+      modifier =
+        Modifier.fillMaxSize()
+          .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.45f))
+          .clickable(interactionSource = interactionSource, indication = null) {
+            onDismissRequest()
+          },
     )
 
     Surface(
-      modifier = Modifier
-        .align(Alignment.TopCenter)
-        .padding(horizontal = 24.dp, vertical = 64.dp)
-        .fillMaxWidth()
-        .onPreviewKeyEvent(keyHandler),
+      modifier =
+        Modifier.align(Alignment.TopCenter)
+          .padding(horizontal = 24.dp, vertical = 64.dp)
+          .fillMaxWidth()
+          .onPreviewKeyEvent(keyHandler),
       tonalElevation = 6.dp,
       shape = RoundedCornerShape(28.dp),
     ) {
@@ -154,10 +158,8 @@ fun CommandPaletteSheet(
           OutlinedTextField(
             value = query,
             onValueChange = { query = it },
-            modifier = Modifier
-              .weight(1f)
-              .focusRequester(focusRequester)
-              .testTag("command_palette_search"),
+            modifier =
+              Modifier.weight(1f).focusRequester(focusRequester).testTag("command_palette_search"),
             placeholder = { Text("Search commands…") },
             singleLine = true,
             leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
@@ -169,13 +171,19 @@ fun CommandPaletteSheet(
               }
             },
             keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
-            keyboardActions = KeyboardActions(onSearch = {
-              filteredResults.firstOrNull()?.takeIf(CommandAction::enabled)?.let(onCommandSelected)
-            }),
+            keyboardActions =
+              KeyboardActions(
+                onSearch = {
+                  filteredResults
+                    .firstOrNull()
+                    ?.takeIf(CommandAction::enabled)
+                    ?.let(onCommandSelected)
+                }
+              ),
           )
         }
 
-        Divider()
+        HorizontalDivider()
 
         if (filteredResults.isEmpty()) {
           Text(
@@ -207,12 +215,12 @@ private fun CommandPaletteResultList(
   keyHandler: (KeyEvent) -> Boolean,
 ) {
   LazyColumn(
-    modifier = Modifier
-      .fillMaxWidth()
-      .heightIn(max = 360.dp)
-      .selectableGroup()
-      .testTag("command_palette_list")
-      .onPreviewKeyEvent(keyHandler),
+    modifier =
+      Modifier.fillMaxWidth()
+        .heightIn(max = 360.dp)
+        .selectableGroup()
+        .testTag("command_palette_list")
+        .onPreviewKeyEvent(keyHandler),
     verticalArrangement = Arrangement.spacedBy(6.dp),
   ) {
     itemsIndexed(results, key = { _, action -> action.id }) { index, action ->
@@ -237,28 +245,33 @@ private fun CommandPaletteItem(
   selected: Boolean,
   onSelect: () -> Unit,
 ) {
-  val indicatorColor = if (selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceVariant
-  val titleColor = if (action.enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
-  val disabledModifier = if (!action.enabled) {
-    Modifier.semantics {
-      contentDescription = "Unavailable offline"
-      disabled()
+  val indicatorColor =
+    if (selected) MaterialTheme.colorScheme.secondaryContainer
+    else MaterialTheme.colorScheme.surfaceVariant
+  val titleColor =
+    if (action.enabled) MaterialTheme.colorScheme.onSurface
+    else MaterialTheme.colorScheme.onSurfaceVariant
+  val disabledModifier =
+    if (!action.enabled) {
+      Modifier.semantics {
+        contentDescription = "Unavailable offline"
+        disabled()
+      }
+    } else {
+      Modifier
     }
-  } else {
-    Modifier
-  }
 
   Surface(
-    modifier = Modifier
-      .fillMaxWidth()
-      .testTag("command_palette_item")
-      .then(disabledModifier)
-      .selectable(
-        selected = selected,
-        enabled = action.enabled,
-  role = Role.Button,
-        onClick = onSelect,
-      ),
+    modifier =
+      Modifier.fillMaxWidth()
+        .testTag("command_palette_item")
+        .then(disabledModifier)
+        .selectable(
+          selected = selected,
+          enabled = action.enabled,
+          role = Role.Button,
+          onClick = onSelect,
+        ),
     shape = RoundedCornerShape(16.dp),
     tonalElevation = if (selected) 3.dp else 0.dp,
     color = indicatorColor,
@@ -299,17 +312,19 @@ private fun CommandPaletteItem(
 private fun filterCommands(actions: List<CommandAction>, query: String): List<CommandAction> {
   if (query.isBlank()) return actions
   val needle = query.lowercase()
-  return actions.mapNotNull { action ->
-    val title = action.title.lowercase()
-    val subtitle = action.subtitle?.lowercase()
-    val priority = when {
-      title.startsWith(needle) -> 0
-      title.contains(needle) -> 1
-      subtitle?.contains(needle) == true -> 2
-      else -> null
+  return actions
+    .mapNotNull { action ->
+      val title = action.title.lowercase()
+      val subtitle = action.subtitle?.lowercase()
+      val priority =
+        when {
+          title.startsWith(needle) -> 0
+          title.contains(needle) -> 1
+          subtitle?.contains(needle) == true -> 2
+          else -> null
+        }
+      priority?.let { it to action }
     }
-    priority?.let { it to action }
-  }
     .sortedWith(compareBy({ it.first }, { it.second.title.length }))
     .map { it.second }
 }

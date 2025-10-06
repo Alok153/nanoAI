@@ -21,7 +21,9 @@ data class UIStateSnapshot(
     expandedPanels = sanitizePanels(expandedPanels)
     recentActions = sanitizeRecentActions(recentActions)
     require(activeModeRoute.isNotBlank()) { "Active mode route must not be blank." }
-    require(activeRightPanel?.isNotBlank() ?: true) { "Active right panel identifier must be non-blank when provided." }
+    require(activeRightPanel?.isNotBlank() ?: true) {
+      "Active right panel identifier must be non-blank when provided."
+    }
   }
 
   fun withExpandedPanels(panels: List<String>): UIStateSnapshot =

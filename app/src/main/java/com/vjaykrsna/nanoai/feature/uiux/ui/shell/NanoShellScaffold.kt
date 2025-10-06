@@ -56,11 +56,13 @@ import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
+import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellUiState
 import com.vjaykrsna.nanoai.feature.uiux.state.CommandAction
 import com.vjaykrsna.nanoai.feature.uiux.state.CommandDestination
@@ -72,6 +74,7 @@ import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
 import com.vjaykrsna.nanoai.feature.uiux.state.RightPanel
 import com.vjaykrsna.nanoai.feature.uiux.state.ShellLayoutState
 import com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload
+import com.vjaykrsna.nanoai.feature.uiux.ui.HomeScreen
 import com.vjaykrsna.nanoai.feature.uiux.ui.commandpalette.CommandPaletteSheet
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.ConnectivityBanner
 import com.vjaykrsna.nanoai.feature.uiux.ui.sidebar.RightSidebarPanels
@@ -90,7 +93,8 @@ fun NanoShellScaffold(
   val layout = state.layout
   val snackbarHostState = remember { SnackbarHostState() }
   val focusRequester = remember { FocusRequester() }
-  val drawerState = rememberDrawerState(initialValue = androidx.compose.material3.DrawerValue.Closed)
+  val drawerState =
+    rememberDrawerState(initialValue = androidx.compose.material3.DrawerValue.Closed)
 
   LaunchedEffect(layout.useModalNavigation, layout.isLeftDrawerOpen) {
     if (!layout.useModalNavigation) {
@@ -118,10 +122,11 @@ fun NanoShellScaffold(
   LaunchedEffect(layout.pendingUndoAction) {
     val payload = layout.pendingUndoAction ?: return@LaunchedEffect
     val message = payload.metadata["message"] as? String ?: "Action completed"
-    val result = snackbarHostState.showSnackbar(
-      message = message,
-      actionLabel = "Undo",
-    )
+    val result =
+      snackbarHostState.showSnackbar(
+        message = message,
+        actionLabel = "Undo",
+      )
     if (result == SnackbarResult.ActionPerformed) {
       onEvent(ShellUiEvent.Undo(payload))
     }
@@ -130,13 +135,14 @@ fun NanoShellScaffold(
   LaunchedEffect(Unit) { focusRequester.requestFocus() }
 
   Box(
-    modifier = modifier
-      .fillMaxSize()
-      .focusRequester(focusRequester)
-      .onPreviewKeyEvent { event ->
-        handleShellShortcuts(event, layout.isPaletteVisible, onEvent)
-      }
-      .testTag("shell_root"),
+    modifier =
+      modifier
+        .fillMaxSize()
+        .focusRequester(focusRequester)
+        .onPreviewKeyEvent { event ->
+          handleShellShortcuts(event, layout.isPaletteVisible, onEvent)
+        }
+        .testTag("shell_root"),
   ) {
     if (layout.usesPermanentLeftDrawer) {
       PermanentNavigationDrawer(
@@ -204,17 +210,32 @@ fun NanoShellScaffold(
 /** Events emitted by [NanoShellScaffold] to interact with view models. */
 sealed interface ShellUiEvent {
   data class ModeSelected(val modeId: ModeId) : ShellUiEvent
+
   data object ToggleLeftDrawer : ShellUiEvent
+
   data class ToggleRightDrawer(val panel: RightPanel) : ShellUiEvent
+
   data class ShowCommandPalette(val source: PaletteSource) : ShellUiEvent
+
   data object HideCommandPalette : ShellUiEvent
+
   data class QueueJob(val job: ProgressJob) : ShellUiEvent
+
   data class CompleteJob(val jobId: UUID) : ShellUiEvent
+
   data class Undo(val payload: UndoPayload) : ShellUiEvent
+
   data class ConnectivityChanged(val status: ConnectivityStatus) : ShellUiEvent
+
+  data class UpdateTheme(val theme: ThemePreference) : ShellUiEvent
+
+  data class UpdateDensity(val density: VisualDensity) : ShellUiEvent
 }
 
-private enum class DrawerVariant { Modal, Permanent }
+private enum class DrawerVariant {
+  Modal,
+  Permanent
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -226,22 +247,24 @@ private fun ShellDrawerContent(
   onOpenCommandPalette: () -> Unit,
 ) {
   when (variant) {
-    DrawerVariant.Modal -> ModalDrawerSheet {
-      DrawerSheetContent(
-        modeCards = modeCards,
-        activeMode = activeMode,
-        onModeSelected = onModeSelected,
-        onOpenCommandPalette = onOpenCommandPalette,
-      )
-    }
-    DrawerVariant.Permanent -> PermanentDrawerSheet {
-      DrawerSheetContent(
-        modeCards = modeCards,
-        activeMode = activeMode,
-        onModeSelected = onModeSelected,
-        onOpenCommandPalette = onOpenCommandPalette,
-      )
-    }
+    DrawerVariant.Modal ->
+      ModalDrawerSheet {
+        DrawerSheetContent(
+          modeCards = modeCards,
+          activeMode = activeMode,
+          onModeSelected = onModeSelected,
+          onOpenCommandPalette = onOpenCommandPalette,
+        )
+      }
+    DrawerVariant.Permanent ->
+      PermanentDrawerSheet {
+        DrawerSheetContent(
+          modeCards = modeCards,
+          activeMode = activeMode,
+          onModeSelected = onModeSelected,
+          onOpenCommandPalette = onOpenCommandPalette,
+        )
+      }
   }
 }
 
@@ -273,10 +296,10 @@ private fun DrawerSheetContent(
     Spacer(modifier = Modifier.height(8.dp))
     Surface(tonalElevation = 1.dp) {
       Row(
-        modifier = Modifier
-          .fillMaxWidth()
-          .padding(horizontal = 16.dp, vertical = 12.dp)
-          .testTag("drawer_command_palette"),
+        modifier =
+          Modifier.fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .testTag("drawer_command_palette"),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
       ) {
@@ -302,9 +325,8 @@ private fun DrawerModeItem(
   Surface(
     onClick = onClick,
     tonalElevation = if (selected) 6.dp else 0.dp,
-    modifier = Modifier
-      .fillMaxWidth()
-      .testTag("drawer_mode_${modeCard.id.name.lowercase(Locale.ROOT)}"),
+    modifier =
+      Modifier.fillMaxWidth().testTag("drawer_mode_${modeCard.id.name.lowercase(Locale.ROOT)}"),
   ) {
     Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
       Text(text = modeCard.title, style = MaterialTheme.typography.titleSmall)
@@ -338,10 +360,7 @@ private fun ShellRightRailHost(
     if (showPermanentRail) {
       Surface(
         tonalElevation = 3.dp,
-        modifier = Modifier
-          .fillMaxHeight()
-          .width(320.dp)
-          .testTag("right_sidebar_permanent"),
+        modifier = Modifier.fillMaxHeight().width(320.dp).testTag("right_sidebar_permanent"),
       ) {
         RightSidebarPanels(
           state = state,
@@ -357,10 +376,7 @@ private fun ShellRightRailHost(
       ) {
         Surface(
           tonalElevation = 6.dp,
-          modifier = Modifier
-            .fillMaxHeight()
-            .width(320.dp)
-            .testTag("right_sidebar_modal"),
+          modifier = Modifier.fillMaxHeight().width(320.dp).testTag("right_sidebar_modal"),
         ) {
           RightSidebarPanels(
             state = state,
@@ -396,19 +412,14 @@ private fun ShellMainSurface(
     snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
   ) { innerPadding ->
     Column(
-      modifier = Modifier
-        .fillMaxSize()
-        .padding(innerPadding)
-        .testTag("shell_content"),
+      modifier = Modifier.fillMaxSize().padding(innerPadding).testTag("shell_content"),
       verticalArrangement = Arrangement.Top,
     ) {
       val bannerState = state.connectivityBanner
       if (!layout.isPaletteVisible && bannerState.isVisible) {
         ConnectivityBanner(
           state = bannerState,
-          onCtaClick = {
-            bannerState.cta?.let { action -> handleCommandAction(action, onEvent) }
-          },
+          onCtaClick = { bannerState.cta?.let { action -> handleCommandAction(action, onEvent) } },
           onDismiss = {
             // TODO: hook into persistence once repository exposes dismissal event.
           },
@@ -417,7 +428,17 @@ private fun ShellMainSurface(
       }
 
       when (layout.activeMode) {
-        ModeId.HOME -> HomeHubPlaceholder(state)
+        ModeId.HOME ->
+          HomeScreen(
+            layout = layout,
+            modeCards = state.modeCards,
+            quickActions = state.quickActions,
+            recentActivity = layout.recentActivity,
+            onModeSelected = { modeId -> onEvent(ShellUiEvent.ModeSelected(modeId)) },
+            onQuickActionSelected = { action -> handleCommandAction(action, onEvent) },
+            onRecentActivitySelected = { item -> onEvent(ShellUiEvent.ModeSelected(item.modeId)) },
+            modifier = Modifier.fillMaxSize(),
+          )
         else -> modeContent(layout.activeMode)
       }
     }
@@ -435,7 +456,10 @@ private fun ShellTopAppBar(
   TopAppBar(
     title = {
       Text(
-        text = layout.activeMode.name.lowercase(Locale.ROOT).replaceFirstChar { it.titlecase(Locale.ROOT) },
+        text =
+          layout.activeMode.name.lowercase(Locale.ROOT).replaceFirstChar {
+            it.titlecase(Locale.ROOT)
+          },
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
       )
@@ -478,28 +502,6 @@ private fun ShellTopAppBar(
   )
 }
 
-@Composable
-private fun HomeHubPlaceholder(state: ShellUiState) {
-  Column(
-    modifier = Modifier
-      .fillMaxSize()
-      .padding(24.dp)
-      .testTag("home_placeholder"),
-    verticalArrangement = Arrangement.Center,
-    horizontalAlignment = Alignment.CenterHorizontally,
-  ) {
-    Text(
-      text = "Home hub pending implementation",
-      style = MaterialTheme.typography.titleMedium,
-    )
-    Spacer(modifier = Modifier.height(12.dp))
-    Text(
-      text = "Active mode: ${state.layout.activeMode}",
-      style = MaterialTheme.typography.bodyMedium,
-    )
-  }
-}
-
 private fun handleCommandAction(action: CommandAction, onEvent: (ShellUiEvent) -> Unit) {
   when (val destination = action.destination) {
     is CommandDestination.Navigate -> {
@@ -508,26 +510,30 @@ private fun handleCommandAction(action: CommandAction, onEvent: (ShellUiEvent) -
         onEvent(ShellUiEvent.ModeSelected(modeId))
       }
     }
-    is CommandDestination.OpenRightPanel -> onEvent(ShellUiEvent.ToggleRightDrawer(destination.panel))
+    is CommandDestination.OpenRightPanel ->
+      onEvent(ShellUiEvent.ToggleRightDrawer(destination.panel))
     CommandDestination.None -> Unit
   }
 }
 
 private fun routeToMode(route: String): ModeId? =
-  ModeId.entries.firstOrNull { entry -> entry.name.equals(route, ignoreCase = true) || entry.toRoute().equals(route, ignoreCase = true) }
+  ModeId.entries.firstOrNull { entry ->
+    entry.name.equals(route, ignoreCase = true) || entry.toRoute().equals(route, ignoreCase = true)
+  }
 
-private fun ModeId.toRoute(): String = when (this) {
-  ModeId.HOME -> "home"
-  ModeId.CHAT -> "chat"
-  ModeId.IMAGE -> "image"
-  ModeId.AUDIO -> "audio"
-  ModeId.CODE -> "code"
-  ModeId.TRANSLATE -> "translate"
-  ModeId.HISTORY -> "history"
-  ModeId.LIBRARY -> "library"
-  ModeId.SETTINGS -> "settings"
-  ModeId.TOOLS -> "tools"
-}
+private fun ModeId.toRoute(): String =
+  when (this) {
+    ModeId.HOME -> "home"
+    ModeId.CHAT -> "chat"
+    ModeId.IMAGE -> "image"
+    ModeId.AUDIO -> "audio"
+    ModeId.CODE -> "code"
+    ModeId.TRANSLATE -> "translate"
+    ModeId.HISTORY -> "history"
+    ModeId.LIBRARY -> "library"
+    ModeId.SETTINGS -> "settings"
+    ModeId.TOOLS -> "tools"
+  }
 
 private fun handleShellShortcuts(
   event: KeyEvent,

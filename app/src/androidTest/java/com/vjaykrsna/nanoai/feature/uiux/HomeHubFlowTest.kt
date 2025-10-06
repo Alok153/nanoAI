@@ -54,9 +54,7 @@ class HomeHubFlowTest {
     val state = mutableStateOf(sampleState())
 
     composeRule.setContent {
-      NanoShellScaffold(state = state.value, onEvent = { event ->
-        events += event
-      })
+      NanoShellScaffold(state = state.value, onEvent = { event -> events += event })
     }
 
     composeRule.onAllNodesWithTag("mode_card").assertCountEquals(3)
@@ -68,7 +66,7 @@ class HomeHubFlowTest {
   @Test
   fun recentActivity_showsLatestEntries() {
     val state = mutableStateOf(sampleState())
-    composeRule.setContent { NanoShellScaffold(state = state.value, onEvent = { }) }
+    composeRule.setContent { NanoShellScaffold(state = state.value, onEvent = {}) }
 
     composeRule.onNodeWithTag("recent_activity_list").assertIsDisplayed()
     composeRule.onAllNodesWithTag("recent_activity_item").assertCountEquals(2)
@@ -77,7 +75,7 @@ class HomeHubFlowTest {
   @Test
   fun quickActions_sectionVisible() {
     val state = mutableStateOf(sampleState())
-    composeRule.setContent { NanoShellScaffold(state = state.value, onEvent = { }) }
+    composeRule.setContent { NanoShellScaffold(state = state.value, onEvent = {}) }
 
     composeRule.onNodeWithTag("quick_actions_row").assertIsDisplayed()
     composeRule.onNodeWithContentDescription("New Chat").assertIsDisplayed()
@@ -85,11 +83,12 @@ class HomeHubFlowTest {
 
   private fun sampleState(): ShellUiState {
     val windowSizeClass = WindowSizeClass.calculateFromSize(DpSize(720.dp, 1024.dp))
-    val modeCards = listOf(
-      modeCard(ModeId.CHAT, "Chat", Icons.Filled.Chat),
-      modeCard(ModeId.IMAGE, "Image", Icons.Filled.Image),
-      modeCard(ModeId.AUDIO, "Audio", Icons.Filled.Mic),
-    )
+    val modeCards =
+      listOf(
+        modeCard(ModeId.CHAT, "Chat", Icons.Filled.Chat),
+        modeCard(ModeId.IMAGE, "Image", Icons.Filled.Image),
+        modeCard(ModeId.AUDIO, "Audio", Icons.Filled.Mic),
+      )
     val recent =
       listOf(
         RecentActivityItem(
@@ -150,12 +149,13 @@ class HomeHubFlowTest {
       id = id,
       title = title,
       icon = icon,
-      primaryAction = CommandAction(
-        id = "quick-$title",
-        title = "New $title",
-        category = CommandCategory.MODES,
-        destination = CommandDestination.Navigate(id.name.lowercase()),
-      ),
+      primaryAction =
+        CommandAction(
+          id = "quick-$title",
+          title = "New $title",
+          category = CommandCategory.MODES,
+          destination = CommandDestination.Navigate(id.name.lowercase()),
+        ),
       enabled = true,
       badge = null,
     )

@@ -218,9 +218,10 @@ class UiPreferencesStore(
       val current = converters.decodeStringList(preferences[KEY_COMMAND_PALETTE_RECENTS])
       val updated =
         buildList {
-          add(commandId)
-          current.filterTo(this) { it != commandId }
-        }.take(MAX_RECENT_COMMANDS)
+            add(commandId)
+            current.filterTo(this) { it != commandId }
+          }
+          .take(MAX_RECENT_COMMANDS)
       preferences[KEY_COMMAND_PALETTE_RECENTS] = converters.encodeStringList(updated)
     }
   }

@@ -33,23 +33,24 @@ import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityBannerState
 import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityStatus
 import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
 import com.vjaykrsna.nanoai.feature.uiux.state.PaletteSource
-import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
 import com.vjaykrsna.nanoai.feature.uiux.state.RecentActivityItem
 import com.vjaykrsna.nanoai.feature.uiux.state.RecentStatus
-import com.vjaykrsna.nanoai.feature.uiux.state.RightPanel
 import com.vjaykrsna.nanoai.feature.uiux.state.ShellLayoutState
 import com.vjaykrsna.nanoai.feature.uiux.state.UiPreferenceSnapshot
 import com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload
 import com.vjaykrsna.nanoai.feature.uiux.ui.shell.NanoShellScaffold
 import com.vjaykrsna.nanoai.feature.uiux.ui.shell.ShellUiEvent
 import java.time.Instant
-import java.util.UUID
 import kotlin.test.Test
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Rule
 import org.junit.runner.RunWith
 
-@OptIn(ExperimentalCoroutinesApi::class, ExperimentalTestApi::class, ExperimentalMaterial3WindowSizeClassApi::class)
+@OptIn(
+  ExperimentalCoroutinesApi::class,
+  ExperimentalTestApi::class,
+  ExperimentalMaterial3WindowSizeClassApi::class
+)
 @RunWith(AndroidJUnit4::class)
 class CommandPaletteComposeTest {
   @get:Rule val composeTestRule = createAndroidComposeRule<ComponentActivity>()
@@ -60,10 +61,13 @@ class CommandPaletteComposeTest {
     val state = mutableStateOf(sampleState(showPalette = false))
 
     composeTestRule.setContent {
-      NanoShellScaffold(state = state.value, onEvent = { intent ->
-        recorder.record(intent)
-        handleIntent(state, intent)
-      })
+      NanoShellScaffold(
+        state = state.value,
+        onEvent = { intent ->
+          recorder.record(intent)
+          handleIntent(state, intent)
+        }
+      )
     }
 
     composeTestRule.onRoot().performKeyInput {
@@ -73,17 +77,19 @@ class CommandPaletteComposeTest {
 
     composeTestRule.onNodeWithTag("command_palette").assertIsDisplayed()
     composeTestRule.onNodeWithTag("command_palette_search").assertIsDisplayed()
-    assertThat(recorder.events).contains(ShellUiEvent.ShowCommandPalette(PaletteSource.KEYBOARD_SHORTCUT))
+    assertThat(recorder.events)
+      .contains(ShellUiEvent.ShowCommandPalette(PaletteSource.KEYBOARD_SHORTCUT))
   }
 
   @Test
   fun palette_filtersActions_prioritizesMatches() {
-    val state = mutableStateOf(
-      sampleState(
-        showPalette = true,
-        commandPalette = samplePaletteState().copy(results = sampleCommands()),
+    val state =
+      mutableStateOf(
+        sampleState(
+          showPalette = true,
+          commandPalette = samplePaletteState().copy(results = sampleCommands()),
+        )
       )
-    )
 
     composeTestRule.setContent {
       NanoShellScaffold(state = state.value, onEvent = { intent -> handleIntent(state, intent) })
@@ -95,24 +101,23 @@ class CommandPaletteComposeTest {
 
   @Test
   fun palette_keyboardNavigation_wrapsSelection() {
-    val state = mutableStateOf(
-      sampleState(
-        showPalette = true,
-        commandPalette = samplePaletteState().copy(results = sampleCommands()),
+    val state =
+      mutableStateOf(
+        sampleState(
+          showPalette = true,
+          commandPalette = samplePaletteState().copy(results = sampleCommands()),
+        )
       )
-    )
 
     composeTestRule.setContent {
       NanoShellScaffold(state = state.value, onEvent = { intent -> handleIntent(state, intent) })
     }
 
-    composeTestRule
-      .onNodeWithTag("command_palette_list")
-      .performKeyInput {
-        pressKey(Key.DirectionDown)
-        pressKey(Key.DirectionDown)
-        pressKey(Key.DirectionDown)
-      }
+    composeTestRule.onNodeWithTag("command_palette_list").performKeyInput {
+      pressKey(Key.DirectionDown)
+      pressKey(Key.DirectionDown)
+      pressKey(Key.DirectionDown)
+    }
 
     composeTestRule.onAllNodes(hasTestTag("command_palette_item"))[0].assertIsSelectable()
   }
@@ -120,18 +125,22 @@ class CommandPaletteComposeTest {
   @Test
   fun palette_executesAction_andCloses() {
     val recorder = EventRecorder()
-    val state = mutableStateOf(
-      sampleState(
-        showPalette = true,
-        commandPalette = samplePaletteState().copy(results = sampleCommands()),
+    val state =
+      mutableStateOf(
+        sampleState(
+          showPalette = true,
+          commandPalette = samplePaletteState().copy(results = sampleCommands()),
+        )
       )
-    )
 
     composeTestRule.setContent {
-      NanoShellScaffold(state = state.value, onEvent = { intent ->
-        recorder.record(intent)
-        handleIntent(state, intent)
-      })
+      NanoShellScaffold(
+        state = state.value,
+        onEvent = { intent ->
+          recorder.record(intent)
+          handleIntent(state, intent)
+        }
+      )
     }
 
     composeTestRule.onAllNodes(hasTestTag("command_palette_item"))[0].performClick()
@@ -142,12 +151,13 @@ class CommandPaletteComposeTest {
   @Test
   fun palette_disabledMode_showsErrorState() {
     val disabledCommand = sampleCommands().last().copy(enabled = false)
-    val state = mutableStateOf(
-      sampleState(
-        showPalette = true,
-        commandPalette = samplePaletteState().copy(results = listOf(disabledCommand)),
+    val state =
+      mutableStateOf(
+        sampleState(
+          showPalette = true,
+          commandPalette = samplePaletteState().copy(results = listOf(disabledCommand)),
+        )
       )
-    )
 
     composeTestRule.setContent {
       NanoShellScaffold(state = state.value, onEvent = { intent -> handleIntent(state, intent) })
@@ -217,6 +227,10 @@ class CommandPaletteComposeTest {
             layout = current.layout.copy(connectivity = intent.status),
             connectivityBanner = current.connectivityBanner.copy(status = intent.status),
           )
+      is ShellUiEvent.UpdateTheme ->
+        state.value = current.copy(preferences = current.preferences.copy(theme = intent.theme))
+      is ShellUiEvent.UpdateDensity ->
+        state.value = current.copy(preferences = current.preferences.copy(density = intent.density))
     }
   }
 

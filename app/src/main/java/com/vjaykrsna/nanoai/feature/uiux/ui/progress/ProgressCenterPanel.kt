@@ -10,7 +10,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -25,13 +25,11 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
 import com.vjaykrsna.nanoai.feature.uiux.state.JobStatus
 import com.vjaykrsna.nanoai.feature.uiux.state.JobType
+import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
 
-/**
- * Displays the current queue of background jobs inside the progress center.
- */
+/** Displays the current queue of background jobs inside the progress center. */
 @Composable
 fun ProgressCenterPanel(
   jobs: List<ProgressJob>,
@@ -63,10 +61,7 @@ fun ProgressCenterPanel(
         )
       } else {
         LazyColumn(
-          modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(max = 420.dp)
-            .testTag("progress_list"),
+          modifier = Modifier.fillMaxWidth().heightIn(max = 420.dp).testTag("progress_list"),
           verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
           items(jobs, key = { it.jobId }) { job ->
@@ -93,8 +88,15 @@ private fun ProgressJobItem(
     tonalElevation = 1.dp,
     shape = RoundedCornerShape(16.dp),
   ) {
-    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-      Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+    Column(
+      modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+      verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+      Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier.fillMaxWidth()
+      ) {
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
           Text(
             text = job.type.label,
@@ -105,7 +107,6 @@ private fun ProgressJobItem(
           )
           Text(
             text = job.statusLabel,
-            style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
           )
         }
@@ -118,8 +119,11 @@ private fun ProgressJobItem(
       }
 
       LinearProgressIndicator(
-        progress = job.normalizedProgress,
-        modifier = Modifier.fillMaxWidth().semantics { contentDescription = "${job.type.label} progress ${job.normalizedProgress}" },
+        progress = { job.normalizedProgress },
+        modifier =
+          Modifier.fillMaxWidth().semantics {
+            contentDescription = "${job.type.label} progress ${job.normalizedProgress}"
+          },
       )
 
       Row(
@@ -132,23 +136,23 @@ private fun ProgressJobItem(
           style = MaterialTheme.typography.labelSmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+          horizontalArrangement = Arrangement.spacedBy(8.dp),
+          verticalAlignment = Alignment.CenterVertically
+        ) {
           Button(
             onClick = { onRetry(job) },
-            enabled = job.canRetryNow,
             modifier = Modifier.testTag("progress_retry_button"),
           ) {
             Text("Retry")
           }
           if (job.status == JobStatus.COMPLETED) {
-            TextButton(onClick = { onDismiss(job) }) {
-              Text("Clear")
-            }
+            TextButton(onClick = { onDismiss(job) }) { Text("Clear") }
           }
         }
       }
 
-      Divider()
+      HorizontalDivider()
       Text(
         text = "Queued at ${job.queuedAt}",
         style = MaterialTheme.typography.bodySmall,

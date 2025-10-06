@@ -23,12 +23,7 @@ constructor(
     updateThemeForUser(UIUX_DEFAULT_USER_ID, themePreference)
   }
 
-  fun updateThemeForUser(
-    userId: String,
-    themePreference: ThemePreference
-  ) {
-    scope.launch {
-      repository.updateThemePreference(userId, themePreference.name)
-    }
+  fun updateThemeForUser(userId: String, themePreference: ThemePreference) {
+    scope.launch { repository.updateThemePreference(userId, themePreference.name) }
   }
 }

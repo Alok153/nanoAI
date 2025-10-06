@@ -35,9 +35,7 @@ constructor(
 
     val snapshot = dismissedTips.toMap()
 
-    scope.launch {
-      repository.recordOnboardingProgress(userId, snapshot, completed)
-    }
+    scope.launch { repository.recordOnboardingProgress(userId, snapshot, completed) }
   }
 
   fun recordDismissal(tipId: String?, dismissed: Boolean, completed: Boolean) {

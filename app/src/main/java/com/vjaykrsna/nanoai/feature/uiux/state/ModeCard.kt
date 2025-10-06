@@ -36,10 +36,8 @@ data class ModeCard(
 
   private fun badgeDescription(info: BadgeInfo): String =
     when (info.type) {
-      BadgeType.NEW ->
-        if (info.count > 0) "New (${info.count})" else "New"
+      BadgeType.NEW -> if (info.count > 0) "New (${info.count})" else "New"
       BadgeType.PRO -> "Pro"
-      BadgeType.SYNCING ->
-        if (info.count > 0) "Syncing (${info.count})" else "Syncing"
+      BadgeType.SYNCING -> if (info.count > 0) "Syncing (${info.count})" else "Syncing"
     }
 }

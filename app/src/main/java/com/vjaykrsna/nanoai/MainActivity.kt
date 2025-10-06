@@ -14,6 +14,8 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -34,11 +36,12 @@ import dagger.hilt.android.AndroidEntryPoint
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+  @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     enableEdgeToEdge()
-
     setContent {
+      val windowSizeClass = calculateWindowSizeClass(activity = this@MainActivity)
       val appViewModel: AppViewModel = hiltViewModel()
       val appUiState by appViewModel.uiState.collectAsStateWithLifecycle()
 
@@ -50,7 +53,10 @@ class MainActivity : ComponentActivity() {
           if (appUiState.isHydrating) {
             AppHydrationState(isOffline = appUiState.offline)
           } else {
-            NavigationScaffold(appState = appUiState)
+            NavigationScaffold(
+              appState = appUiState,
+              windowSizeClass = windowSizeClass,
+            )
           }
         }
       }

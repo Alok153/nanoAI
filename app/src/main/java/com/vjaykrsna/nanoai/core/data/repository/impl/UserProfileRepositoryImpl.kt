@@ -36,10 +36,11 @@ constructor(
       // Ensure default profile exists on first access
       withContext(ioDispatcher) {
         if (local.getUserProfile(userId) == null) {
-          val defaultProfile = UserProfile.fromPreferences(
-            id = userId,
-            preferences = UiPreferencesSnapshot(),
-          )
+          val defaultProfile =
+            UserProfile.fromPreferences(
+              id = userId,
+              preferences = UiPreferencesSnapshot(),
+            )
           local.saveUserProfile(defaultProfile)
         }
       }
