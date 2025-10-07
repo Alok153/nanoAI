@@ -3,6 +3,7 @@ package com.vjaykrsna.nanoai.core.di
 import android.content.Context
 import com.vjaykrsna.nanoai.core.data.preferences.UiPreferencesConverters
 import com.vjaykrsna.nanoai.core.data.preferences.UiPreferencesStore
+import com.vjaykrsna.nanoai.feature.uiux.domain.CommandPaletteActionProvider
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -26,4 +27,9 @@ object PreferencesModule {
     @ApplicationContext context: Context,
     converters: UiPreferencesConverters,
   ): UiPreferencesStore = UiPreferencesStore(context, converters)
+
+  @Provides
+  @Singleton
+  fun provideCommandPaletteActionProvider(): CommandPaletteActionProvider =
+    CommandPaletteActionProvider()
 }

@@ -68,9 +68,11 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellUiState
 import com.vjaykrsna.nanoai.feature.uiux.state.CommandAction
 import com.vjaykrsna.nanoai.feature.uiux.state.CommandDestination
+import com.vjaykrsna.nanoai.feature.uiux.state.CommandInvocationSource
 import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityStatus
 import com.vjaykrsna.nanoai.feature.uiux.state.ModeCard
 import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
+import com.vjaykrsna.nanoai.feature.uiux.state.PaletteDismissReason
 import com.vjaykrsna.nanoai.feature.uiux.state.PaletteSource
 import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
 import com.vjaykrsna.nanoai.feature.uiux.state.RightPanel
@@ -203,8 +205,10 @@ fun NanoShellScaffold(
     ) {
       CommandPaletteSheet(
         state = state.commandPalette,
-        onDismissRequest = { onEvent(ShellUiEvent.HideCommandPalette) },
-        onCommandSelect = { action -> handleCommandAction(action, onEvent) },
+        onDismissRequest = { reason -> onEvent(ShellUiEvent.HideCommandPalette(reason)) },
+        onCommandSelect = { action ->
+          handleCommandAction(action, CommandInvocationSource.PALETTE, onEvent)
+        },
         modifier = Modifier.fillMaxSize(),
       )
     }
@@ -221,7 +225,12 @@ sealed interface ShellUiEvent {
 
   data class ShowCommandPalette(val source: PaletteSource) : ShellUiEvent
 
-  data object HideCommandPalette : ShellUiEvent
+  data class HideCommandPalette(val reason: PaletteDismissReason) : ShellUiEvent
+
+  data class CommandInvoked(
+    val action: CommandAction,
+    val source: CommandInvocationSource,
+  ) : ShellUiEvent
 
   data class QueueJob(val job: ProgressJob) : ShellUiEvent
 
@@ -423,7 +432,11 @@ private fun ShellMainSurface(
       if (!layout.isPaletteVisible && bannerState.isVisible) {
         ConnectivityBanner(
           state = bannerState,
-          onCtaClick = { bannerState.cta?.let { action -> handleCommandAction(action, onEvent) } },
+          onCtaClick = {
+            bannerState.cta?.let { action ->
+              handleCommandAction(action, CommandInvocationSource.BANNER, onEvent)
+            }
+          },
           onDismiss = {
             // Persist dismissal once the repository exposes the corresponding event.
           },
@@ -439,7 +452,13 @@ private fun ShellMainSurface(
             quickActions = state.quickActions,
             recentActivity = layout.recentActivity,
             onModeSelect = { modeId -> onEvent(ShellUiEvent.ModeSelected(modeId)) },
-            onQuickActionSelect = { action -> handleCommandAction(action, onEvent) },
+            onQuickActionSelect = { action ->
+              handleCommandAction(
+                action = action,
+                source = CommandInvocationSource.QUICK_ACTION,
+                onEvent = onEvent,
+              )
+            },
             onRecentActivitySelect = { item -> onEvent(ShellUiEvent.ModeSelected(item.modeId)) },
             modifier = Modifier.fillMaxSize(),
           )
@@ -506,7 +525,12 @@ private fun ShellTopAppBar(
   )
 }
 
-private fun handleCommandAction(action: CommandAction, onEvent: (ShellUiEvent) -> Unit) {
+private fun handleCommandAction(
+  action: CommandAction,
+  source: CommandInvocationSource,
+  onEvent: (ShellUiEvent) -> Unit,
+) {
+  onEvent(ShellUiEvent.CommandInvoked(action, source))
   when (val destination = action.destination) {
     is CommandDestination.Navigate -> {
       val modeId = routeToMode(destination.route)
@@ -534,7 +558,7 @@ private fun handleShellShortcuts(
       true
     }
     event.key == Key.Escape && paletteVisible -> {
-      onEvent(ShellUiEvent.HideCommandPalette)
+      onEvent(ShellUiEvent.HideCommandPalette(PaletteDismissReason.BACK_PRESSED))
       true
     }
     else -> false

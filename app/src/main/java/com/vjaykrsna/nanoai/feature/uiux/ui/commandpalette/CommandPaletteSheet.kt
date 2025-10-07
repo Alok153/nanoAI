@@ -55,11 +55,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.vjaykrsna.nanoai.feature.uiux.state.CommandAction
 import com.vjaykrsna.nanoai.feature.uiux.state.CommandPaletteState
+import com.vjaykrsna.nanoai.feature.uiux.state.PaletteDismissReason
 
 @Composable
 fun CommandPaletteSheet(
   state: CommandPaletteState,
-  onDismissRequest: () -> Unit,
+  onDismissRequest: (PaletteDismissReason) -> Unit,
   onCommandSelect: (CommandAction) -> Unit,
   modifier: Modifier = Modifier,
 ) {
@@ -115,12 +116,12 @@ fun CommandPaletteSheet(
             true
           }
           Key.Escape -> {
-            onDismissRequest()
+            onDismissRequest(PaletteDismissReason.BACK_PRESSED)
             true
           }
           Key.K -> {
             if (event.isCtrlPressed) {
-              onDismissRequest()
+              onDismissRequest(PaletteDismissReason.BACK_PRESSED)
               true
             } else {
               false
@@ -137,7 +138,7 @@ fun CommandPaletteSheet(
         Modifier.fillMaxSize()
           .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.45f))
           .clickable(interactionSource = interactionSource, indication = null) {
-            onDismissRequest()
+            onDismissRequest(PaletteDismissReason.HIDDEN)
           },
     )
 

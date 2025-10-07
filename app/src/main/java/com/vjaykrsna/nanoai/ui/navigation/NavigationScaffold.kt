@@ -91,7 +91,9 @@ private fun rememberShellEventHandler(shellViewModel: ShellViewModel): (ShellUiE
         ShellUiEvent.ToggleLeftDrawer -> shellViewModel.toggleLeftDrawer()
         is ShellUiEvent.ToggleRightDrawer -> shellViewModel.toggleRightDrawer(event.panel)
         is ShellUiEvent.ShowCommandPalette -> shellViewModel.showCommandPalette(event.source)
-        ShellUiEvent.HideCommandPalette -> shellViewModel.hideCommandPalette()
+        is ShellUiEvent.HideCommandPalette -> shellViewModel.hideCommandPalette(event.reason)
+        is ShellUiEvent.CommandInvoked ->
+          shellViewModel.onCommandInvoked(event.action, event.source)
         is ShellUiEvent.QueueJob -> shellViewModel.queueGeneration(event.job)
         is ShellUiEvent.CompleteJob -> shellViewModel.completeJob(event.jobId)
         is ShellUiEvent.Undo -> shellViewModel.undoAction(event.payload)

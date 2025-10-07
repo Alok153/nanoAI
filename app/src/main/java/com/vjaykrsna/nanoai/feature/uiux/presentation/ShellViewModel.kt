@@ -28,11 +28,14 @@ import com.vjaykrsna.nanoai.feature.uiux.domain.ProgressCenterCoordinator
 import com.vjaykrsna.nanoai.feature.uiux.state.CommandAction
 import com.vjaykrsna.nanoai.feature.uiux.state.CommandCategory
 import com.vjaykrsna.nanoai.feature.uiux.state.CommandDestination
+import com.vjaykrsna.nanoai.feature.uiux.state.CommandInvocationSource
 import com.vjaykrsna.nanoai.feature.uiux.state.CommandPaletteState
 import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityBannerState
 import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityStatus
+import com.vjaykrsna.nanoai.feature.uiux.state.DrawerSide
 import com.vjaykrsna.nanoai.feature.uiux.state.ModeCard
 import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
+import com.vjaykrsna.nanoai.feature.uiux.state.PaletteDismissReason
 import com.vjaykrsna.nanoai.feature.uiux.state.PaletteSource
 import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
 import com.vjaykrsna.nanoai.feature.uiux.state.RightPanel
@@ -40,6 +43,7 @@ import com.vjaykrsna.nanoai.feature.uiux.state.ShellLayoutState
 import com.vjaykrsna.nanoai.feature.uiux.state.UiPreferenceSnapshot
 import com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload
 import com.vjaykrsna.nanoai.feature.uiux.state.toRoute
+import com.vjaykrsna.nanoai.telemetry.ShellTelemetry
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.UUID
 import javax.inject.Inject
@@ -149,6 +153,7 @@ constructor(
   private val repository: ShellStateRepository,
   private val actionProvider: CommandPaletteActionProvider,
   private val progressCoordinator: ProgressCenterCoordinator,
+  private val telemetry: ShellTelemetry,
   @MainImmediateDispatcher private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
 ) : ViewModel() {
 
@@ -212,29 +217,63 @@ constructor(
 
   /** Toggles the left navigation drawer. */
   fun toggleLeftDrawer() {
-    viewModelScope.launch(dispatcher) { repository.toggleLeftDrawer() }
+    val layout = uiState.value.layout
+    val newOpen = !layout.isLeftDrawerOpen
+    viewModelScope.launch(dispatcher) {
+      repository.toggleLeftDrawer()
+      telemetry.trackDrawerToggle(
+        side = DrawerSide.LEFT,
+        isOpen = newOpen,
+        panel = null,
+        activeMode = layout.activeMode,
+      )
+    }
   }
 
   /** Toggles the right contextual drawer for a specific panel. */
   fun toggleRightDrawer(panel: RightPanel) {
-    viewModelScope.launch(dispatcher) { repository.toggleRightDrawer(panel) }
+    val layout = uiState.value.layout
+    val currentlyOpen = layout.isRightDrawerOpen && layout.activeRightPanel == panel
+    val newOpen = !currentlyOpen
+    val panelForTelemetry = if (newOpen) panel else layout.activeRightPanel
+    viewModelScope.launch(dispatcher) {
+      repository.toggleRightDrawer(panel)
+      telemetry.trackDrawerToggle(
+        side = DrawerSide.RIGHT,
+        isOpen = newOpen,
+        panel = panelForTelemetry,
+        activeMode = layout.activeMode,
+      )
+    }
   }
 
   /** Shows the command palette overlay from a specific source. */
   fun showCommandPalette(source: PaletteSource) {
-    viewModelScope.launch(dispatcher) { repository.showCommandPalette(source) }
+    val activeMode = uiState.value.layout.activeMode
+    viewModelScope.launch(dispatcher) {
+      repository.showCommandPalette(source)
+      telemetry.trackCommandPaletteOpened(source, activeMode)
+    }
   }
 
   /** Hides the command palette overlay. */
-  fun hideCommandPalette() {
-    viewModelScope.launch(dispatcher) { repository.hideCommandPalette() }
+  fun hideCommandPalette(reason: PaletteDismissReason) {
+    val activeMode = uiState.value.layout.activeMode
+    viewModelScope.launch(dispatcher) {
+      repository.hideCommandPalette()
+      if (reason != PaletteDismissReason.EXECUTED) {
+        telemetry.trackCommandPaletteDismissed(reason, activeMode)
+      }
+    }
   }
 
   /** Queues a generation job (e.g., when offline or model busy). */
   fun queueGeneration(job: ProgressJob) {
+    val layout = uiState.value.layout
     viewModelScope.launch(dispatcher) {
       repository.queueJob(job)
       repository.recordUndoPayload(UndoPayload(actionId = "queue-${job.jobId}"))
+      telemetry.trackProgressJobQueued(job, layout.isOffline, layout.activeMode)
     }
   }
 
@@ -277,6 +316,15 @@ constructor(
   /** Updates persisted density preference for the active user. */
   fun updateVisualDensity(density: VisualDensity) {
     viewModelScope.launch(dispatcher) { repository.updateVisualDensity(density) }
+  }
+
+  /** Records telemetry for command invocations to understand palette usage. */
+  fun onCommandInvoked(action: CommandAction, source: CommandInvocationSource) {
+    val layout = uiState.value.layout
+    telemetry.trackCommandInvocation(action, source, layout.activeMode)
+    if (source == CommandInvocationSource.PALETTE && layout.isPaletteVisible) {
+      telemetry.trackCommandPaletteDismissed(PaletteDismissReason.EXECUTED, layout.activeMode)
+    }
   }
 
   private fun mergeProgressJobs(

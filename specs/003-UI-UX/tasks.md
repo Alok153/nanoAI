@@ -73,14 +73,14 @@
 - [X] T032 Refactor Settings UI (`app/src/main/java/com/vjaykrsna/nanoai/feature/settings/ui/SettingsScreen.kt`) to match tabbed sections and shell layout, including persistent Save/Undo controls.  
   _Depends on_: T029
 
-## Phase 3.4: Integration
-- [ ] T033 Wire new repositories/providers in Hilt (`app/src/main/java/com/vjaykrsna/nanoai/core/di/PreferencesModule.kt`, `.../RepositoryModule.kt`) for `ShellStateRepository`, `CommandPaletteActionProvider`, and `ProgressCenterCoordinator`.  
+# Phase 3.4: Integration
+- [X] T033 Wire new repositories/providers in Hilt (`app/src/main/java/com/vjaykrsna/nanoai/core/di/PreferencesModule.kt`, `.../RepositoryModule.kt`) for `ShellStateRepository`, `CommandPaletteActionProvider`, and `ProgressCenterCoordinator`.  
   _Depends on_: T018–T021
-- [ ] T034 Update navigation routing + deep links in `app/src/main/java/com/vjaykrsna/nanoai/ui/navigation/Screen.kt` and command palette registry so actions invoke the correct destinations.  
+- [X] T034 Update navigation routing + deep links in `app/src/main/java/com/vjaykrsna/nanoai/ui/navigation/Screen.kt` and command palette registry so actions invoke the correct destinations.  
   _Depends on_: T019, T029–T032
-- [ ] T035 Connect analytics/telemetry events for command palette usage, drawer toggles, and queued jobs in `app/src/main/java/com/vjaykrsna/nanoai/telemetry/` respecting consent flags.  
+- [X] T035 Connect analytics/telemetry events for command palette usage, drawer toggles, and queued jobs in `app/src/main/java/com/vjaykrsna/nanoai/telemetry/` respecting consent flags.  
   _Depends on_: T017, T021, T024, T032
-- [ ] T036 Refresh macrobenchmark assertions in `macrobenchmark/src/main/java/com/vjaykrsna/nanoai/macrobenchmark/NavigationBenchmarks.kt` and add new scenario for command palette open latency.  
+- [X] T036 Refresh macrobenchmark assertions in `macrobenchmark/src/main/java/com/vjaykrsna/nanoai/macrobenchmark/NavigationBenchmarks.kt` and add new scenario for command palette open latency.  
   _Depends on_: T022–T035
 
 ## Phase 3.5: Polish

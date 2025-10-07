@@ -18,6 +18,7 @@ import com.vjaykrsna.nanoai.model.catalog.network.dto.ManifestVerificationRespon
 import com.vjaykrsna.nanoai.model.catalog.network.dto.ManifestVerificationResponseStatusDto
 import com.vjaykrsna.nanoai.model.catalog.network.dto.ModelManifestDto
 import com.vjaykrsna.nanoai.telemetry.TelemetryReporter
+import io.mockk.mockk
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
@@ -50,7 +51,7 @@ class ModelDownloadWorkerIntegrityTest {
       override fun deviceId(): String = "device-test"
     }
   private val fakeService = FakeModelCatalogService()
-  private val telemetryReporter = TelemetryReporter()
+  private val telemetryReporter = mockk<TelemetryReporter>(relaxed = true)
   private val repository =
     ModelManifestRepositoryImpl(
       service = fakeService,

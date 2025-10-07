@@ -10,6 +10,7 @@ import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
 import com.vjaykrsna.nanoai.feature.uiux.state.RecentActivityItem
 import com.vjaykrsna.nanoai.feature.uiux.state.RightPanel
 import com.vjaykrsna.nanoai.feature.uiux.state.toRoute
+import com.vjaykrsna.nanoai.ui.navigation.Screen
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
@@ -81,6 +82,13 @@ private val MODE_ACTION_DEFINITIONS =
       subtitle = "Manage AI models",
       shortcut = null,
       modeId = ModeId.LIBRARY,
+    ),
+    ModeActionDefinition(
+      idSuffix = "tools",
+      title = "Tools",
+      subtitle = "Utilities and extensions",
+      shortcut = null,
+      modeId = ModeId.TOOLS,
     ),
   )
 
@@ -189,21 +197,21 @@ class CommandPaletteActionProvider @Inject constructor() {
         subtitle = "App preferences and configuration",
         shortcut = "Ctrl+,",
         category = CommandCategory.SETTINGS,
-        destination = CommandDestination.Navigate(ModeId.SETTINGS.toRoute()),
+        destination = CommandDestination.Navigate(Screen.Settings.route),
       ),
       CommandAction(
         id = "settings_appearance",
         title = "Appearance",
         subtitle = "Theme and visual settings",
         category = CommandCategory.SETTINGS,
-        destination = CommandDestination.Navigate("${ModeId.SETTINGS.toRoute()}/appearance"),
+        destination = CommandDestination.Navigate(Screen.SettingsAppearance.route),
       ),
       CommandAction(
         id = "settings_models",
         title = "Model Settings",
         subtitle = "Configure AI models",
         category = CommandCategory.SETTINGS,
-        destination = CommandDestination.Navigate("${ModeId.SETTINGS.toRoute()}/models"),
+        destination = CommandDestination.Navigate(Screen.SettingsModels.route),
       ),
     )
 
@@ -215,7 +223,7 @@ class CommandPaletteActionProvider @Inject constructor() {
         title = "Documentation",
         subtitle = "View help and guides",
         category = CommandCategory.HELP,
-        destination = CommandDestination.Navigate("help/docs"),
+        destination = CommandDestination.Navigate(Screen.HelpDocs.route),
       ),
       CommandAction(
         id = "help_shortcuts",
@@ -223,7 +231,7 @@ class CommandPaletteActionProvider @Inject constructor() {
         subtitle = "View all shortcuts",
         shortcut = "Ctrl+/",
         category = CommandCategory.HELP,
-        destination = CommandDestination.Navigate("help/shortcuts"),
+        destination = CommandDestination.Navigate(Screen.HelpShortcuts.route),
       ),
     )
 

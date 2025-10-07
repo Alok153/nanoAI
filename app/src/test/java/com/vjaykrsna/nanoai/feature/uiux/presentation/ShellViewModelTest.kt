@@ -28,6 +28,8 @@ import com.vjaykrsna.nanoai.feature.uiux.state.RightPanel
 import com.vjaykrsna.nanoai.feature.uiux.state.ShellLayoutState
 import com.vjaykrsna.nanoai.feature.uiux.state.UiPreferenceSnapshot
 import com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload
+import com.vjaykrsna.nanoai.telemetry.ShellTelemetry
+import io.mockk.mockk
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
@@ -49,6 +51,7 @@ import org.robolectric.annotation.Config
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalMaterial3WindowSizeClassApi::class)
 class ShellViewModelTest {
   private val dispatcher = StandardTestDispatcher()
+  private val telemetry = mockk<ShellTelemetry>(relaxed = true)
 
   @Test
   fun openMode_closesDrawersAndHidesPalette() =
@@ -56,7 +59,14 @@ class ShellViewModelTest {
       val repository = FakeShellStateRepository()
       val actionProvider = FakeCommandPaletteActionProvider()
       val progressCoordinator = FakeProgressCenterCoordinator()
-      val viewModel = ShellViewModel(repository, actionProvider, progressCoordinator, dispatcher)
+      val viewModel =
+        ShellViewModel(
+          repository,
+          actionProvider,
+          progressCoordinator,
+          telemetry,
+          dispatcher,
+        )
 
       viewModel.openMode(ModeId.CHAT)
       advanceUntilIdle()
@@ -77,7 +87,14 @@ class ShellViewModelTest {
       val repository = FakeShellStateRepository()
       val actionProvider = FakeCommandPaletteActionProvider()
       val progressCoordinator = FakeProgressCenterCoordinator()
-      val viewModel = ShellViewModel(repository, actionProvider, progressCoordinator, dispatcher)
+      val viewModel =
+        ShellViewModel(
+          repository,
+          actionProvider,
+          progressCoordinator,
+          telemetry,
+          dispatcher,
+        )
 
       viewModel.toggleRightDrawer(RightPanel.PROGRESS_CENTER)
       advanceUntilIdle()
@@ -98,7 +115,14 @@ class ShellViewModelTest {
       val repository = FakeShellStateRepository(initialConnectivity = ConnectivityStatus.OFFLINE)
       val actionProvider = FakeCommandPaletteActionProvider()
       val progressCoordinator = FakeProgressCenterCoordinator()
-      val viewModel = ShellViewModel(repository, actionProvider, progressCoordinator, dispatcher)
+      val viewModel =
+        ShellViewModel(
+          repository,
+          actionProvider,
+          progressCoordinator,
+          telemetry,
+          dispatcher,
+        )
 
       val job =
         ProgressJob(
@@ -144,7 +168,14 @@ class ShellViewModelTest {
         )
       val actionProvider = FakeCommandPaletteActionProvider()
       val progressCoordinator = FakeProgressCenterCoordinator()
-      val viewModel = ShellViewModel(repository, actionProvider, progressCoordinator, dispatcher)
+      val viewModel =
+        ShellViewModel(
+          repository,
+          actionProvider,
+          progressCoordinator,
+          telemetry,
+          dispatcher,
+        )
 
       viewModel.completeJob(jobId)
       advanceUntilIdle()
@@ -164,7 +195,14 @@ class ShellViewModelTest {
       val repository = FakeShellStateRepository(initialConnectivity = ConnectivityStatus.OFFLINE)
       val actionProvider = FakeCommandPaletteActionProvider()
       val progressCoordinator = FakeProgressCenterCoordinator()
-      val viewModel = ShellViewModel(repository, actionProvider, progressCoordinator, dispatcher)
+      val viewModel =
+        ShellViewModel(
+          repository,
+          actionProvider,
+          progressCoordinator,
+          telemetry,
+          dispatcher,
+        )
 
       viewModel.updateConnectivity(ConnectivityStatus.ONLINE)
       advanceUntilIdle()
