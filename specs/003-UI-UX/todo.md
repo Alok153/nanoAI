@@ -6,38 +6,34 @@
 - **Status**: ✅ Resolved (2025-10-07).
 - **Summary**: Welcome/onboarding overlay and view model removed. `NavigationScaffold` now renders the shell immediately and launches land on Home Hub every time.
 - **Follow-up**: If a future first-run experience is desired, design a lightweight in-context surface (card/banner) that does not block Home.
+  - **Latest Reinforcement (2025-10-07 PM)**: `ShellStateRepository` now coerces the initial persisted UI snapshot to Home and clears modal drawers/palette state so relaunches never reopen the previous mode.
 
 ### 2. Back Navigation Closes App Instead of Going Home
-- **Issue**: Pressing back from Chat UI closes the app instead of navigating back to Home screen.
-- **Location**: `MainActivity.kt` has no `onBackPressed` handling.
-- **Expected Behavior**: Per overview.md, back should navigate to previous screen or Home.
-- **Fix**: Add `OnBackPressedCallback` in `MainActivity` to:
-  - If right drawer open, close it.
-  - If left drawer open, close it.
-  - If active mode != HOME, switch to HOME.
-  - Else, allow default (close app).
+- **Status**: ✅ Resolved (2025-10-07 PM).
+- **Summary**: `MainActivity` now registers an `OnBackPressedCallback` that consults the shared `ShellViewModel` state. Back closes the right drawer first, then the left drawer, then routes to Home before propagating the default action to finish the activity.
+- **Follow-up**: Consider adding lightweight snackbar copy to communicate the transition when returning to Home.
 
 ### 3. Right Sidebar Squeezes Main UI
-- **Issue**: When opening the right sidebar, the entire app UI/Chat UI gets squeezed horizontally.
-- **Location**: `NanoShellScaffold.kt` in `ShellRightRailHost`, uses `Row` with main `weight(1f)` and sidebar `320.dp`.
-- **Root Cause**: On small screens, the modal right sidebar pushes the main content, reducing its width.
-- **Fix**: Change right sidebar to overlay instead of pushing. Use `Box` with absolute positioning for modal right drawer, similar to left `ModalNavigationDrawer`.
+- **Status**: ✅ Resolved (2025-10-07 PM).
+- **Summary**: `ShellRightRailHost` now renders the compact right drawer as an overlay inside a `Box`, sliding it over the content from the edge instead of reserving layout width. Permanent rails on wide screens continue to reserve space.
+- **Follow-up**: Add a transient scrim/blur behind the overlay drawer to focus attention when open.
 
 ### 4. Left Sidebar Toggle Button Broken
-- **Issue**: The button to open the left sidebar may not be working properly.
-- **Location**: `ShellTopAppBar.kt` has `navigationIcon` with `onClick = onToggleLeftDrawer`.
-- **Investigation Needed**: Verify if the toggle logic in `ShellViewModel.toggleLeftDrawer()` and `ShellStateRepository.toggleLeftDrawer()` works correctly. Check if `useModalNavigation` logic affects it.
+- **Status**: ✅ Resolved (2025-10-07 PM).
+- **Summary**: Modal drawer interactions now immediately collapse after a destination tap by emitting a `ToggleLeftDrawer` event, and the system back handler also routes through the same logic. Drawer toggles on app bar remain functional.
+- **Follow-up**: Instrument a UI test that asserts drawer closure after selecting a mode in compact layouts.
 
 ## Major Inconsistencies with Overview.md
 
 ### 5. Navigation Architecture
-- **Current**: Left sidebar is modal on small screens, permanent on large. Right sidebar is permanent on large, modal (pushing) on small.
-- **Overview**: Left sidebar persistent or collapsible. Right sidebar dynamic controls.
-- **Issue**: Right sidebar should not squeeze on small screens; should be overlay/modal like left.
+- **Status**: ✅ Resolved (2025-10-07 PM).
+- **Summary**: Left sidebar stays modal on compact and permanent on wide layouts, while the right contextual rail now overlays the main content on compact devices using the Box-based host in `NanoShellScaffold`. Permanent rails still reserve width on expanded screens, preserving parity with the overview guidance.
+- **Follow-up**: Consider adding a light scrim or blur behind the right overlay to further emphasize focus when open.
 
 ### 6. Home-First Architecture
 - **Current**: App opens directly to HOME mode on every launch.
 - **Status**: ✅ Aligned after removing the welcome overlay.
+  - Additional guardrails ensure persisted UI state cannot override this at startup.
 
 ### 7. Chat Screen Layout
 - **Current**: Top bar with thread title and persona selector, messages list, input area.
@@ -93,8 +89,9 @@
 - **Suggestion**: Track navigation history to allow proper back navigation between modes.
 
 ### 17. Drawer Behavior Consistency
-- **Improvement**: Make both left and right drawers behave consistently (overlay, not push).
-- **Current**: Left overlays, right pushes on small screens.
+- **Status**: ✅ Resolved (2025-10-07 PM).
+- **Summary**: Modal left drawers stay in sync with repository state, and the right contextual drawer now overlays in compact layouts instead of pushing the main surface, bringing both sides into alignment.
+- **Follow-up**: Evaluate adding a shared scrim/animation treatment so the drawers feel visually cohesive across window sizes.
 
 ### 18. Onboarding/Welcome Integration
 - **Status**: Deferred. Full-screen onboarding was removed; any new first-run UX should avoid modal takeovers and live within Home.

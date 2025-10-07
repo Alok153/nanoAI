@@ -48,6 +48,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -64,8 +65,10 @@ import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
@@ -105,6 +108,51 @@ fun NanoShellScaffold(
   val drawerState =
     rememberDrawerState(initialValue = androidx.compose.material3.DrawerValue.Closed)
   val currentOnEvent by rememberUpdatedState(newValue = onEvent)
+
+  fun closeLeftDrawerIfOpen() {
+    if (layout.isLeftDrawerOpen) {
+      currentOnEvent(ShellUiEvent.ToggleLeftDrawer)
+    }
+  }
+
+  fun closeRightDrawerIfOpen() {
+    if (layout.isRightDrawerOpen) {
+      val panel = layout.activeRightPanel ?: RightPanel.PROGRESS_CENTER
+      currentOnEvent(ShellUiEvent.ToggleRightDrawer(panel))
+    }
+  }
+
+  fun toggleLeftDrawerWithRules() {
+    if (layout.isRightDrawerOpen) {
+      closeRightDrawerIfOpen()
+    }
+    currentOnEvent(ShellUiEvent.ToggleLeftDrawer)
+  }
+
+  fun toggleRightDrawerWithRules(panel: RightPanel) {
+    if (layout.isLeftDrawerOpen) {
+      closeLeftDrawerIfOpen()
+    }
+    currentOnEvent(ShellUiEvent.ToggleRightDrawer(panel))
+  }
+
+  val dispatchEvent: (ShellUiEvent) -> Unit = { event ->
+    when (event) {
+      ShellUiEvent.ToggleLeftDrawer -> toggleLeftDrawerWithRules()
+      is ShellUiEvent.ToggleRightDrawer -> toggleRightDrawerWithRules(event.panel)
+      is ShellUiEvent.ShowCommandPalette -> {
+        closeLeftDrawerIfOpen()
+        closeRightDrawerIfOpen()
+        currentOnEvent(event)
+      }
+      is ShellUiEvent.ModeSelected -> {
+        closeLeftDrawerIfOpen()
+        closeRightDrawerIfOpen()
+        currentOnEvent(event)
+      }
+      else -> currentOnEvent(event)
+    }
+  }
 
   LaunchedEffect(layout.useModalNavigation, layout.isLeftDrawerOpen) {
     if (!layout.useModalNavigation) {
@@ -148,22 +196,26 @@ fun NanoShellScaffold(
     modifier =
       modifier
         .fillMaxSize()
+        .let {
+          val thresholds = rememberShellDrawerThresholds()
+          it.shellDrawerGestures(layout, thresholds, dispatchEvent)
+        }
         .focusRequester(focusRequester)
         .onPreviewKeyEvent { event ->
-          handleShellShortcuts(event, layout.isPaletteVisible, onEvent)
+          handleShellShortcuts(event, layout.isPaletteVisible, dispatchEvent)
         }
         .testTag("shell_root"),
   ) {
-    if (layout.usesPermanentLeftDrawer) {
+    if (layout.usesPermanentLeftDrawer && layout.isLeftDrawerOpen) {
       PermanentNavigationDrawer(
         drawerContent = {
           ShellDrawerContent(
             variant = DrawerVariant.Permanent,
             modeCards = state.modeCards,
             activeMode = layout.activeMode,
-            onModeSelect = { modeId -> onEvent(ShellUiEvent.ModeSelected(modeId)) },
+            onModeSelect = { modeId -> dispatchEvent(ShellUiEvent.ModeSelected(modeId)) },
             onOpenCommandPalette = {
-              onEvent(ShellUiEvent.ShowCommandPalette(PaletteSource.TOP_APP_BAR))
+              dispatchEvent(ShellUiEvent.ShowCommandPalette(PaletteSource.TOP_APP_BAR))
             },
           )
         },
@@ -172,10 +224,19 @@ fun NanoShellScaffold(
         ShellRightRailHost(
           state = state,
           snackbarHostState = snackbarHostState,
-          onEvent = onEvent,
+          onEvent = dispatchEvent,
           modeContent = modeContent,
+          originalOnEvent = onEvent,
         )
       }
+    } else if (layout.usesPermanentLeftDrawer && !layout.isLeftDrawerOpen) {
+      ShellRightRailHost(
+        state = state,
+        snackbarHostState = snackbarHostState,
+        onEvent = dispatchEvent,
+        modeContent = modeContent,
+        originalOnEvent = onEvent,
+      )
     } else {
       ModalNavigationDrawer(
         drawerContent = {
@@ -183,21 +244,23 @@ fun NanoShellScaffold(
             variant = DrawerVariant.Modal,
             modeCards = state.modeCards,
             activeMode = layout.activeMode,
-            onModeSelect = { modeId -> onEvent(ShellUiEvent.ModeSelected(modeId)) },
+            onModeSelect = { modeId -> dispatchEvent(ShellUiEvent.ModeSelected(modeId)) },
             onOpenCommandPalette = {
-              onEvent(ShellUiEvent.ShowCommandPalette(PaletteSource.TOP_APP_BAR))
+              dispatchEvent(ShellUiEvent.ShowCommandPalette(PaletteSource.TOP_APP_BAR))
             },
+            onCloseDrawer = { closeLeftDrawerIfOpen() },
           )
         },
         drawerState = drawerState,
-        gesturesEnabled = layout.useModalNavigation,
+        gesturesEnabled = layout.useModalNavigation && !layout.isRightDrawerOpen,
         modifier = Modifier.testTag("left_drawer_modal"),
       ) {
         ShellRightRailHost(
           state = state,
           snackbarHostState = snackbarHostState,
-          onEvent = onEvent,
+          onEvent = dispatchEvent,
           modeContent = modeContent,
+          originalOnEvent = onEvent,
         )
       }
     }
@@ -209,9 +272,9 @@ fun NanoShellScaffold(
     ) {
       CommandPaletteSheet(
         state = state.commandPalette,
-        onDismissRequest = { reason -> onEvent(ShellUiEvent.HideCommandPalette(reason)) },
+        onDismissRequest = { reason -> dispatchEvent(ShellUiEvent.HideCommandPalette(reason)) },
         onCommandSelect = { action ->
-          handleCommandAction(action, CommandInvocationSource.PALETTE, onEvent)
+          handleCommandAction(action, CommandInvocationSource.PALETTE, dispatchEvent)
         },
         modifier = Modifier.fillMaxSize(),
       )
@@ -262,6 +325,7 @@ private fun ShellDrawerContent(
   activeMode: ModeId,
   onModeSelect: (ModeId) -> Unit,
   onOpenCommandPalette: () -> Unit,
+  onCloseDrawer: (() -> Unit)? = null,
 ) {
   when (variant) {
     DrawerVariant.Modal ->
@@ -271,6 +335,7 @@ private fun ShellDrawerContent(
           activeMode = activeMode,
           onModeSelect = onModeSelect,
           onOpenCommandPalette = onOpenCommandPalette,
+          onCloseDrawer = onCloseDrawer,
         )
       }
     DrawerVariant.Permanent ->
@@ -280,6 +345,7 @@ private fun ShellDrawerContent(
           activeMode = activeMode,
           onModeSelect = onModeSelect,
           onOpenCommandPalette = onOpenCommandPalette,
+          onCloseDrawer = onCloseDrawer,
         )
       }
   }
@@ -291,6 +357,7 @@ private fun DrawerSheetContent(
   activeMode: ModeId,
   onModeSelect: (ModeId) -> Unit,
   onOpenCommandPalette: () -> Unit,
+  onCloseDrawer: (() -> Unit)? = null,
 ) {
   Column(
     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 24.dp),
@@ -306,7 +373,10 @@ private fun DrawerSheetContent(
         DrawerModeItem(
           modeCard = card,
           selected = card.id == activeMode,
-          onClick = { onModeSelect(card.id) },
+          onClick = {
+            onModeSelect(card.id)
+            onCloseDrawer?.invoke()
+          },
         )
       }
     }
@@ -325,7 +395,12 @@ private fun DrawerSheetContent(
           Text("Command palette", style = MaterialTheme.typography.titleSmall)
           Text("Ctrl+K", style = MaterialTheme.typography.bodySmall)
         }
-        IconButton(onClick = onOpenCommandPalette) {
+        IconButton(
+          onClick = {
+            onOpenCommandPalette()
+            onCloseDrawer?.invoke()
+          }
+        ) {
           Icon(Icons.Outlined.MoreVert, contentDescription = "Open command palette")
         }
       }
@@ -360,21 +435,20 @@ private fun ShellRightRailHost(
   snackbarHostState: SnackbarHostState,
   onEvent: (ShellUiEvent) -> Unit,
   modeContent: @Composable (ModeId) -> Unit,
+  originalOnEvent: (ShellUiEvent) -> Unit = onEvent,
 ) {
-  Row(modifier = Modifier.fillMaxSize()) {
-    ShellMainSurface(
-      state = state,
-      snackbarHostState = snackbarHostState,
-      onEvent = onEvent,
-      modeContent = modeContent,
-      modifier = Modifier.weight(1f),
-    )
+  val layout = state.layout
+  if (layout.supportsRightRail) {
+    Row(modifier = Modifier.fillMaxSize()) {
+      ShellMainSurface(
+        state = state,
+        snackbarHostState = snackbarHostState,
+        onEvent = onEvent,
+        modeContent = modeContent,
+        modifier = Modifier.weight(1f),
+        originalOnEvent = originalOnEvent,
+      )
 
-    val layout = state.layout
-    val showPermanentRail = layout.supportsRightRail
-    val showFloatingDrawer = !showPermanentRail && layout.isRightDrawerOpen
-
-    if (showPermanentRail) {
       Surface(
         tonalElevation = 3.dp,
         modifier = Modifier.fillMaxHeight().width(320.dp).testTag("right_sidebar_permanent"),
@@ -385,31 +459,51 @@ private fun ShellRightRailHost(
           modifier = Modifier.fillMaxSize(),
         )
       }
-    } else {
-      AnimatedVisibility(
-        visible = showFloatingDrawer,
-        enter =
-          slideInHorizontally(
-            animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing)
-          ) { fullWidth ->
-            fullWidth / 2
-          },
-        exit =
-          slideOutHorizontally(
-            animationSpec = tween(durationMillis = 160, easing = LinearOutSlowInEasing)
-          ) { fullWidth ->
-            fullWidth / 2
-          },
-      ) {
-        Surface(
-          tonalElevation = 6.dp,
-          modifier = Modifier.fillMaxHeight().width(320.dp).testTag("right_sidebar_modal"),
-        ) {
-          RightSidebarPanels(
+    }
+  } else {
+    val parentLayoutDirection = LocalLayoutDirection.current
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+      Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopEnd) {
+        CompositionLocalProvider(LocalLayoutDirection provides parentLayoutDirection) {
+          ShellMainSurface(
             state = state,
+            snackbarHostState = snackbarHostState,
             onEvent = onEvent,
-            modifier = Modifier.fillMaxSize(),
+            modeContent = modeContent,
+            modifier = Modifier.fillMaxSize().align(Alignment.TopStart),
+            originalOnEvent = originalOnEvent,
           )
+        }
+
+        AnimatedVisibility(
+          visible = layout.isRightDrawerOpen,
+          enter =
+            slideInHorizontally(
+              animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing)
+            ) { drawerWidth ->
+              drawerWidth
+            },
+          exit =
+            slideOutHorizontally(
+              animationSpec = tween(durationMillis = 160, easing = LinearOutSlowInEasing)
+            ) { drawerWidth ->
+              drawerWidth
+            },
+        ) {
+          Surface(
+            tonalElevation = 6.dp,
+            modifier =
+              Modifier.align(Alignment.TopEnd)
+                .fillMaxHeight()
+                .width(320.dp)
+                .testTag("right_sidebar_modal"),
+          ) {
+            RightSidebarPanels(
+              state = state,
+              onEvent = onEvent,
+              modifier = Modifier.fillMaxSize(),
+            )
+          }
         }
       }
     }
@@ -424,6 +518,7 @@ private fun ShellMainSurface(
   onEvent: (ShellUiEvent) -> Unit,
   modeContent: @Composable (ModeId) -> Unit,
   modifier: Modifier = Modifier,
+  originalOnEvent: (ShellUiEvent) -> Unit = onEvent,
 ) {
   val layout = state.layout
   Scaffold(
@@ -431,9 +526,11 @@ private fun ShellMainSurface(
     topBar = {
       ShellTopAppBar(
         layout = layout,
-        onToggleLeftDrawer = { onEvent(ShellUiEvent.ToggleLeftDrawer) },
-        onToggleRightDrawer = { panel -> onEvent(ShellUiEvent.ToggleRightDrawer(panel)) },
-        onShowCommandPalette = { source -> onEvent(ShellUiEvent.ShowCommandPalette(source)) },
+        onToggleLeftDrawer = { originalOnEvent(ShellUiEvent.ToggleLeftDrawer) },
+        onToggleRightDrawer = { panel -> originalOnEvent(ShellUiEvent.ToggleRightDrawer(panel)) },
+        onShowCommandPalette = { source ->
+          originalOnEvent(ShellUiEvent.ShowCommandPalette(source))
+        },
       )
     },
     snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
@@ -502,10 +599,8 @@ private fun ShellTopAppBar(
       )
     },
     navigationIcon = {
-      if (layout.useModalNavigation) {
-        IconButton(onClick = onToggleLeftDrawer, modifier = Modifier.testTag("topbar_nav_icon")) {
-          Icon(Icons.Outlined.Menu, contentDescription = "Toggle navigation drawer")
-        }
+      IconButton(onClick = onToggleLeftDrawer, modifier = Modifier.testTag("topbar_nav_icon")) {
+        Icon(Icons.Outlined.Menu, contentDescription = "Toggle navigation drawer")
       }
     },
     actions = {

@@ -244,175 +244,175 @@ class CommandPaletteComposeTest {
       recorder.events.any { it is ShellUiEvent.Undo && it.payload == payload }
     }
   }
-
-  private fun handleIntent(state: MutableState<ShellUiState>, intent: ShellUiEvent) {
-    val current = state.value
-    when (intent) {
-      is ShellUiEvent.ShowCommandPalette ->
-        state.value =
-          current.copy(
-            layout = current.layout.copy(showCommandPalette = true, isLeftDrawerOpen = false),
-          )
-      ShellUiEvent.HideCommandPalette ->
-        state.value = current.copy(layout = current.layout.copy(showCommandPalette = false))
-      is ShellUiEvent.ModeSelected ->
-        state.value =
-          current.copy(
-            layout =
-              current.layout.copy(
-                activeMode = intent.modeId,
-                showCommandPalette = false,
-                isLeftDrawerOpen = false,
-              ),
-          )
-      is ShellUiEvent.ToggleRightDrawer ->
-        state.value =
-          current.copy(
-            layout =
-              current.layout.copy(
-                isRightDrawerOpen = !current.layout.isRightDrawerOpen,
-                activeRightPanel = intent.panel,
-              ),
-          )
-      ShellUiEvent.ToggleLeftDrawer ->
-        state.value =
-          current.copy(
-            layout =
-              current.layout.copy(
-                isLeftDrawerOpen = !current.layout.isLeftDrawerOpen,
-                showCommandPalette = false,
-              ),
-          )
-      is ShellUiEvent.QueueJob ->
-        state.value =
-          current.copy(
-            layout = current.layout.copy(progressJobs = current.layout.progressJobs + intent.job),
-          )
-      is ShellUiEvent.CompleteJob ->
-        state.value =
-          current.copy(
-            layout =
-              current.layout.copy(
-                progressJobs =
-                  current.layout.progressJobs.filterNot { job -> job.jobId == intent.jobId },
-              ),
-          )
-      is ShellUiEvent.Undo ->
-        state.value = current.copy(layout = current.layout.copy(pendingUndoAction = null))
-      is ShellUiEvent.ConnectivityChanged ->
-        state.value =
-          current.copy(
-            layout = current.layout.copy(connectivity = intent.status),
-            connectivityBanner = current.connectivityBanner.copy(status = intent.status),
-          )
-      is ShellUiEvent.UpdateTheme ->
-        state.value = current.copy(preferences = current.preferences.copy(theme = intent.theme))
-      is ShellUiEvent.UpdateDensity ->
-        state.value = current.copy(preferences = current.preferences.copy(density = intent.density))
-    }
-  }
-
-  private class EventRecorder {
-    val events = mutableListOf<ShellUiEvent>()
-
-    fun record(event: ShellUiEvent) {
-      events += event
-    }
-  }
-
-  private fun sampleState(
-    showPalette: Boolean,
-    commandPalette: CommandPaletteState = samplePaletteState(),
-    pendingUndo: UndoPayload? = null,
-    progressJobs: List<ProgressJob> = emptyList(),
-    connectivity: ConnectivityStatus = ConnectivityStatus.ONLINE,
-    rightPanel: RightPanel? = RightPanel.PROGRESS_CENTER,
-  ): ShellUiState {
-    val windowSizeClass = WindowSizeClass.calculateFromSize(DpSize(600.dp, 800.dp))
-    val layout =
-      ShellLayoutState(
-        windowSizeClass = windowSizeClass,
-        isLeftDrawerOpen = false,
-        isRightDrawerOpen = true,
-        activeRightPanel = rightPanel,
-        activeMode = ModeId.HOME,
-        showCommandPalette = showPalette,
-        connectivity = connectivity,
-        pendingUndoAction = pendingUndo,
-        progressJobs = progressJobs,
-        recentActivity = sampleRecentActivity(),
-      )
-    val banner =
-      ConnectivityBannerState(
-        status = connectivity,
-        queuedActionCount = progressJobs.count { !it.isTerminal },
-        cta = sampleCommands().first(),
-      )
-
-    return ShellUiState(
-      layout = layout,
-      commandPalette = commandPalette,
-      connectivityBanner = banner,
-      preferences = UiPreferenceSnapshot(),
-    )
-  }
-
-  private fun sampleCommands(): List<CommandAction> =
-    listOf(
-      CommandAction(
-        id = "mode-chat",
-        title = "Chat",
-        subtitle = "Converse with AI",
-        category = CommandCategory.MODES,
-        destination = CommandDestination.Navigate("chat"),
-      ),
-      CommandAction(
-        id = "mode-image",
-        title = "Image",
-        subtitle = "Generate visuals",
-        category = CommandCategory.MODES,
-        destination = CommandDestination.Navigate("image"),
-      ),
-      CommandAction(
-        id = "mode-audio",
-        title = "Audio",
-        subtitle = "Process sound",
-        category = CommandCategory.MODES,
-        destination = CommandDestination.Navigate("audio"),
-      ),
-    )
-
-  private fun samplePaletteState(): CommandPaletteState =
-    CommandPaletteState(
-      query = "",
-      results = sampleCommands(),
-      recentCommands = sampleCommands().take(1),
-      selectedIndex = 0,
-      surfaceTarget = CommandCategory.MODES,
-    )
-
-  private fun sampleRecentActivity(): List<RecentActivityItem> =
-    listOf(
-      RecentActivityItem(
-        id = "recent-chat",
-        modeId = ModeId.CHAT,
-        title = "Chat with Nova",
-        timestamp = Instant.now().minusSeconds(120),
-        status = RecentStatus.COMPLETED,
-      )
-    )
-
-  private fun sampleProgressJob(
-    status: JobStatus = JobStatus.FAILED,
-    canRetry: Boolean = true,
-  ): ProgressJob =
-    ProgressJob(
-      jobId = UUID.randomUUID(),
-      type = JobType.MODEL_DOWNLOAD,
-      status = status,
-      progress = if (status == JobStatus.FAILED) 0f else 0.35f,
-      eta = Duration.ofSeconds(45),
-      canRetry = canRetry,
-      queuedAt = Instant.now(),
-    )
 }
+
+private fun handleIntent(state: MutableState<ShellUiState>, intent: ShellUiEvent) {
+  val current = state.value
+  when (intent) {
+    is ShellUiEvent.ShowCommandPalette ->
+      state.value =
+        current.copy(
+          layout = current.layout.copy(showCommandPalette = true, isLeftDrawerOpen = false),
+        )
+    ShellUiEvent.HideCommandPalette ->
+      state.value = current.copy(layout = current.layout.copy(showCommandPalette = false))
+    is ShellUiEvent.ModeSelected ->
+      state.value =
+        current.copy(
+          layout =
+            current.layout.copy(
+              activeMode = intent.modeId,
+              showCommandPalette = false,
+              isLeftDrawerOpen = false,
+            ),
+        )
+    is ShellUiEvent.ToggleRightDrawer ->
+      state.value =
+        current.copy(
+          layout =
+            current.layout.copy(
+              isRightDrawerOpen = !current.layout.isRightDrawerOpen,
+              activeRightPanel = intent.panel,
+            ),
+        )
+    ShellUiEvent.ToggleLeftDrawer ->
+      state.value =
+        current.copy(
+          layout =
+            current.layout.copy(
+              isLeftDrawerOpen = !current.layout.isLeftDrawerOpen,
+              showCommandPalette = false,
+            ),
+        )
+    is ShellUiEvent.QueueJob ->
+      state.value =
+        current.copy(
+          layout = current.layout.copy(progressJobs = current.layout.progressJobs + intent.job),
+        )
+    is ShellUiEvent.CompleteJob ->
+      state.value =
+        current.copy(
+          layout =
+            current.layout.copy(
+              progressJobs =
+                current.layout.progressJobs.filterNot { job -> job.jobId == intent.jobId },
+            ),
+        )
+    is ShellUiEvent.Undo ->
+      state.value = current.copy(layout = current.layout.copy(pendingUndoAction = null))
+    is ShellUiEvent.ConnectivityChanged ->
+      state.value =
+        current.copy(
+          layout = current.layout.copy(connectivity = intent.status),
+          connectivityBanner = current.connectivityBanner.copy(status = intent.status),
+        )
+    is ShellUiEvent.UpdateTheme ->
+      state.value = current.copy(preferences = current.preferences.copy(theme = intent.theme))
+    is ShellUiEvent.UpdateDensity ->
+      state.value = current.copy(preferences = current.preferences.copy(density = intent.density))
+  }
+}
+
+private class EventRecorder {
+  val events = mutableListOf<ShellUiEvent>()
+
+  fun record(event: ShellUiEvent) {
+    events += event
+  }
+}
+
+private fun sampleState(
+  showPalette: Boolean,
+  commandPalette: CommandPaletteState = samplePaletteState(),
+  pendingUndo: UndoPayload? = null,
+  progressJobs: List<ProgressJob> = emptyList(),
+  connectivity: ConnectivityStatus = ConnectivityStatus.ONLINE,
+  rightPanel: RightPanel? = RightPanel.PROGRESS_CENTER,
+): ShellUiState {
+  val windowSizeClass = WindowSizeClass.calculateFromSize(DpSize(600.dp, 800.dp))
+  val layout =
+    ShellLayoutState(
+      windowSizeClass = windowSizeClass,
+      isLeftDrawerOpen = false,
+      isRightDrawerOpen = true,
+      activeRightPanel = rightPanel,
+      activeMode = ModeId.HOME,
+      showCommandPalette = showPalette,
+      connectivity = connectivity,
+      pendingUndoAction = pendingUndo,
+      progressJobs = progressJobs,
+      recentActivity = sampleRecentActivity(),
+    )
+  val banner =
+    ConnectivityBannerState(
+      status = connectivity,
+      queuedActionCount = progressJobs.count { !it.isTerminal },
+      cta = sampleCommands().first(),
+    )
+
+  return ShellUiState(
+    layout = layout,
+    commandPalette = commandPalette,
+    connectivityBanner = banner,
+    preferences = UiPreferenceSnapshot(),
+  )
+}
+
+private fun sampleCommands(): List<CommandAction> =
+  listOf(
+    CommandAction(
+      id = "mode-chat",
+      title = "Chat",
+      subtitle = "Converse with AI",
+      category = CommandCategory.MODES,
+      destination = CommandDestination.Navigate("chat"),
+    ),
+    CommandAction(
+      id = "mode-image",
+      title = "Image",
+      subtitle = "Generate visuals",
+      category = CommandCategory.MODES,
+      destination = CommandDestination.Navigate("image"),
+    ),
+    CommandAction(
+      id = "mode-audio",
+      title = "Audio",
+      subtitle = "Process sound",
+      category = CommandCategory.MODES,
+      destination = CommandDestination.Navigate("audio"),
+    ),
+  )
+
+private fun samplePaletteState(): CommandPaletteState =
+  CommandPaletteState(
+    query = "",
+    results = sampleCommands(),
+    recentCommands = sampleCommands().take(1),
+    selectedIndex = 0,
+    surfaceTarget = CommandCategory.MODES,
+  )
+
+private fun sampleRecentActivity(): List<RecentActivityItem> =
+  listOf(
+    RecentActivityItem(
+      id = "recent-chat",
+      modeId = ModeId.CHAT,
+      title = "Chat with Nova",
+      timestamp = Instant.now().minusSeconds(120),
+      status = RecentStatus.COMPLETED,
+    )
+  )
+
+private fun sampleProgressJob(
+  status: JobStatus = JobStatus.FAILED,
+  canRetry: Boolean = true,
+): ProgressJob =
+  ProgressJob(
+    jobId = UUID.randomUUID(),
+    type = JobType.MODEL_DOWNLOAD,
+    status = status,
+    progress = if (status == JobStatus.FAILED) 0f else 0.35f,
+    eta = Duration.ofSeconds(45),
+    canRetry = canRetry,
+    queuedAt = Instant.now(),
+  )

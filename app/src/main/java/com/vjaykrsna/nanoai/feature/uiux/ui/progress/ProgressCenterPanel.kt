@@ -32,6 +32,24 @@ import com.vjaykrsna.nanoai.feature.uiux.state.JobStatus
 import com.vjaykrsna.nanoai.feature.uiux.state.JobType
 import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
 
+private val PROGRESS_PANEL_HORIZONTAL_PADDING = 20.dp
+private val PROGRESS_PANEL_VERTICAL_PADDING = 16.dp
+private val PROGRESS_SECTION_SPACING = 16.dp
+private val PROGRESS_EMPTY_STATE_TOP_PADDING = 48.dp
+private val PROGRESS_LIST_MAX_HEIGHT = 420.dp
+private val PROGRESS_LIST_ITEM_SPACING = 12.dp
+private val PROGRESS_ITEM_HORIZONTAL_PADDING = 16.dp
+private val PROGRESS_ITEM_VERTICAL_PADDING = 12.dp
+private val PROGRESS_ITEM_SPACING = 8.dp
+private val PROGRESS_SUBTITLE_SPACING = 2.dp
+private val PROGRESS_ACTION_SPACING = 8.dp
+private val PROGRESS_PERCENT_LABEL_START_PADDING = 12.dp
+private val PROGRESS_PANEL_CORNER_RADIUS = 24.dp
+private val PROGRESS_ITEM_CORNER_RADIUS = 16.dp
+private const val PROGRESS_PERCENT_SCALE = 100
+private const val PROGRESS_PERCENT_MIN = 0
+private const val PROGRESS_PERCENT_MAX = 100
+
 /** Displays the current queue of background jobs inside the progress center. */
 @Composable
 fun ProgressCenterPanel(
@@ -43,11 +61,19 @@ fun ProgressCenterPanel(
   Surface(
     modifier = modifier.testTag("progress_center_panel"),
     tonalElevation = 3.dp,
-    shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+    shape =
+      RoundedCornerShape(
+        topStart = PROGRESS_PANEL_CORNER_RADIUS,
+        topEnd = PROGRESS_PANEL_CORNER_RADIUS,
+      ),
   ) {
     Column(
-      modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
-      verticalArrangement = Arrangement.spacedBy(16.dp),
+      modifier =
+        Modifier.padding(
+          horizontal = PROGRESS_PANEL_HORIZONTAL_PADDING,
+          vertical = PROGRESS_PANEL_VERTICAL_PADDING,
+        ),
+      verticalArrangement = Arrangement.spacedBy(PROGRESS_SECTION_SPACING),
     ) {
       Text(
         text = "Progress center",
@@ -60,12 +86,17 @@ fun ProgressCenterPanel(
           text = "No queued tasks",
           style = MaterialTheme.typography.bodyMedium,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
-          modifier = Modifier.padding(top = 48.dp).align(Alignment.CenterHorizontally),
+          modifier =
+            Modifier.padding(top = PROGRESS_EMPTY_STATE_TOP_PADDING)
+              .align(Alignment.CenterHorizontally),
         )
       } else {
         LazyColumn(
-          modifier = Modifier.fillMaxWidth().heightIn(max = 420.dp).testTag("progress_list"),
-          verticalArrangement = Arrangement.spacedBy(12.dp),
+          modifier =
+            Modifier.fillMaxWidth()
+              .heightIn(max = PROGRESS_LIST_MAX_HEIGHT)
+              .testTag("progress_list"),
+          verticalArrangement = Arrangement.spacedBy(PROGRESS_LIST_ITEM_SPACING),
         ) {
           items(jobs, key = { it.jobId }) { job ->
             ProgressJobItem(
@@ -89,7 +120,10 @@ private fun ProgressJobItem(
   Surface(
     modifier =
       Modifier.fillMaxWidth().testTag("progress_list_item").semantics {
-        val percent = (job.normalizedProgress * 100).toInt().coerceIn(0, 100)
+        val percent =
+          (job.normalizedProgress * PROGRESS_PERCENT_SCALE)
+            .toInt()
+            .coerceIn(PROGRESS_PERCENT_MIN, PROGRESS_PERCENT_MAX)
         contentDescription = buildString {
           append(job.type.label)
           append(", ")
@@ -100,18 +134,25 @@ private fun ProgressJobItem(
         }
       },
     tonalElevation = 1.dp,
-    shape = RoundedCornerShape(16.dp),
+    shape = RoundedCornerShape(PROGRESS_ITEM_CORNER_RADIUS),
   ) {
     Column(
-      modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-      verticalArrangement = Arrangement.spacedBy(8.dp)
+      modifier =
+        Modifier.padding(
+          horizontal = PROGRESS_ITEM_HORIZONTAL_PADDING,
+          vertical = PROGRESS_ITEM_VERTICAL_PADDING,
+        ),
+      verticalArrangement = Arrangement.spacedBy(PROGRESS_ITEM_SPACING)
     ) {
       Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
         modifier = Modifier.fillMaxWidth()
       ) {
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Column(
+          modifier = Modifier.weight(1f),
+          verticalArrangement = Arrangement.spacedBy(PROGRESS_SUBTITLE_SPACING),
+        ) {
           Text(
             text = job.type.label,
             style = MaterialTheme.typography.titleSmall,
@@ -124,12 +165,15 @@ private fun ProgressJobItem(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
           )
         }
-        val percent = (job.normalizedProgress * 100).toInt().coerceIn(0, 100)
+        val percent =
+          (job.normalizedProgress * PROGRESS_PERCENT_SCALE)
+            .toInt()
+            .coerceIn(PROGRESS_PERCENT_MIN, PROGRESS_PERCENT_MAX)
         Text(
           text = "$percent%",
           style = MaterialTheme.typography.labelMedium,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
-          modifier = Modifier.padding(start = 12.dp),
+          modifier = Modifier.padding(start = PROGRESS_PERCENT_LABEL_START_PADDING),
         )
       }
 
@@ -137,7 +181,10 @@ private fun ProgressJobItem(
         progress = { job.normalizedProgress },
         modifier =
           Modifier.fillMaxWidth().semantics {
-            val percent = (job.normalizedProgress * 100).toInt().coerceIn(0, 100)
+            val percent =
+              (job.normalizedProgress * PROGRESS_PERCENT_SCALE)
+                .toInt()
+                .coerceIn(PROGRESS_PERCENT_MIN, PROGRESS_PERCENT_MAX)
             contentDescription = "${job.type.label} progress $percent percent"
             progressBarRangeInfo = ProgressBarRangeInfo(job.normalizedProgress, 0f..1f)
             stateDescription = "$percent percent"
@@ -155,7 +202,7 @@ private fun ProgressJobItem(
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Row(
-          horizontalArrangement = Arrangement.spacedBy(8.dp),
+          horizontalArrangement = Arrangement.spacedBy(PROGRESS_ACTION_SPACING),
           verticalAlignment = Alignment.CenterVertically
         ) {
           Button(

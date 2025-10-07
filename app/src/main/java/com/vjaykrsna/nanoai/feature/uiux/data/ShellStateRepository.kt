@@ -28,6 +28,7 @@ import com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload
 import com.vjaykrsna.nanoai.feature.uiux.state.toModeIdOrDefault
 import com.vjaykrsna.nanoai.feature.uiux.state.toRoute
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
@@ -43,6 +44,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.toJavaInstant
 
@@ -63,6 +65,7 @@ constructor(
   private val _recentActivity = MutableStateFlow<List<RecentActivityItem>>(emptyList())
   private val commandPalette = MutableStateFlow(CommandPaletteState.Empty)
   private val connectivity = MutableStateFlow(ConnectivityStatus.ONLINE)
+  private val hasAppliedHomeStartup = AtomicBoolean(false)
 
   private val preferences: StateFlow<DomainUiPreferencesSnapshot> =
     userProfileRepository
@@ -73,29 +76,28 @@ constructor(
     userProfileRepository
       .observeUIStateSnapshot(userId)
       .map { snapshot -> snapshot ?: defaultSnapshot(userId) }
+      .map { snapshot -> coerceInitialActiveMode(snapshot) }
       .stateIn(scope, SharingStarted.Eagerly, defaultSnapshot(userId))
 
   private val shellLayout: StateFlow<ShellLayoutState> =
-    windowSizeClass
-      .combine(uiSnapshot) { window, snapshot -> window to snapshot }
-      .combine(connectivity) { (window, snapshot), connectivityStatus ->
-        Triple(window, snapshot, connectivityStatus)
-      }
-      .combine(undoPayload) { triple, undo -> triple to undo }
-      .combine(progressJobs) { (triple, undo), jobs -> Pair(triple, undo) to jobs }
-      .combine(_recentActivity) { (quadruple, jobs), activity ->
-        val (triple, undo) = quadruple
-        val (window, snapshot, connectivityStatus) = triple
-        buildShellLayoutState(
-          ShellLayoutInputs(
-            window = window,
-            snapshot = snapshot,
-            connectivityStatus = connectivityStatus,
-            undo = undo,
-            jobs = jobs,
-            activity = activity,
-          ),
+    combine(
+        windowSizeClass,
+        uiSnapshot,
+        connectivity,
+        undoPayload,
+        progressJobs,
+      ) { window, snapshot, connectivityStatus, undo, jobs ->
+        ShellLayoutInputs(
+          window = window,
+          snapshot = snapshot,
+          connectivityStatus = connectivityStatus,
+          undo = undo,
+          jobs = jobs,
+          activity = emptyList(),
         )
+      }
+      .combine(_recentActivity) { inputs, activity ->
+        buildShellLayoutState(inputs.copy(activity = activity))
       }
       .stateIn(
         scope,
@@ -255,6 +257,38 @@ constructor(
       progressJobs = jobs,
       recentActivity = activity,
     )
+  }
+
+  private fun coerceInitialActiveMode(snapshot: UIStateSnapshot): UIStateSnapshot {
+    if (hasAppliedHomeStartup.compareAndSet(false, true)) {
+      val resetSnapshot =
+        snapshot
+          .updateActiveMode(UIStateSnapshot.DEFAULT_MODE_ROUTE)
+          .toggleLeftDrawer(open = false)
+          .toggleRightDrawer(open = false, panelId = null)
+          .updatePaletteVisibility(visible = false)
+
+      scope.launch {
+        if (
+          !snapshot.activeModeRoute.equals(UIStateSnapshot.DEFAULT_MODE_ROUTE, ignoreCase = true)
+        ) {
+          userProfileRepository.updateActiveModeRoute(userId, ModeId.HOME.toRoute())
+        }
+        if (snapshot.isLeftDrawerOpen) {
+          userProfileRepository.updateLeftDrawerOpen(userId, false)
+        }
+        if (snapshot.isRightDrawerOpen || snapshot.activeRightPanel != null) {
+          userProfileRepository.updateRightDrawerState(userId, false, null)
+        }
+        if (snapshot.isCommandPaletteVisible) {
+          userProfileRepository.updateCommandPaletteVisibility(userId, false)
+        }
+      }
+
+      return resetSnapshot
+    }
+
+    return snapshot
   }
 
   private fun DomainUiPreferencesSnapshot.toUiPreferenceSnapshot(): UiPreferenceSnapshot =
