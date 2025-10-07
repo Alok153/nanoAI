@@ -1,9 +1,10 @@
 package com.vjaykrsna.nanoai.ui.navigation
 
+// Welcome / onboarding UI removed — onboarding is no longer part of the shell flow.
+// Welcome UI imports removed
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.runtime.Composable
@@ -18,7 +19,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.metrics.performance.PerformanceMetricsState
@@ -27,13 +27,8 @@ import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryScreen
 import com.vjaykrsna.nanoai.feature.settings.ui.SettingsScreen
 import com.vjaykrsna.nanoai.feature.uiux.presentation.AppUiState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellViewModel
-import com.vjaykrsna.nanoai.feature.uiux.presentation.WelcomeUiState
-import com.vjaykrsna.nanoai.feature.uiux.presentation.WelcomeViewModel
 import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityStatus
 import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
-import com.vjaykrsna.nanoai.feature.uiux.ui.WelcomePrimaryActions
-import com.vjaykrsna.nanoai.feature.uiux.ui.WelcomeScreen
-import com.vjaykrsna.nanoai.feature.uiux.ui.WelcomeTooltipActions
 import com.vjaykrsna.nanoai.feature.uiux.ui.shell.NanoShellScaffold
 import com.vjaykrsna.nanoai.feature.uiux.ui.shell.ShellUiEvent
 
@@ -44,10 +39,8 @@ fun NavigationScaffold(
   windowSizeClass: WindowSizeClass,
   modifier: Modifier = Modifier,
   shellViewModel: ShellViewModel = hiltViewModel(),
-  welcomeViewModel: WelcomeViewModel = hiltViewModel(),
 ) {
   val shellUiState by shellViewModel.uiState.collectAsStateWithLifecycle()
-  val welcomeUiState by welcomeViewModel.uiState.collectAsStateWithLifecycle()
 
   val view = LocalView.current
   val metricsStateHolder = remember(view) { PerformanceMetricsState.getHolderForHierarchy(view) }
@@ -83,23 +76,7 @@ fun NavigationScaffold(
       modeContent = { modeId -> ShellModeContent(modeId, Modifier.fillMaxSize()) },
     )
 
-    if (appState.shouldShowWelcome) {
-      WelcomeOverlay(
-        state = welcomeUiState,
-        actions =
-          WelcomePrimaryActions(
-            onGetStarted = welcomeViewModel::onGetStarted,
-            onExplore = welcomeViewModel::onExploreFeatures,
-            onSkip = welcomeViewModel::onSkip,
-          ),
-        tooltipActions =
-          WelcomeTooltipActions(
-            onHelp = welcomeViewModel::onTooltipHelp,
-            onDismiss = welcomeViewModel::onTooltipDismiss,
-            onDontShowAgain = welcomeViewModel::onTooltipDontShowAgain,
-          ),
-      )
-    }
+    // Onboarding / welcome removed — main shell is shown directly.
   }
 }
 
@@ -157,21 +134,4 @@ private fun ModePlaceholder(title: String, modifier: Modifier = Modifier) {
   }
 }
 
-@Composable
-private fun WelcomeOverlay(
-  state: WelcomeUiState,
-  actions: WelcomePrimaryActions,
-  tooltipActions: WelcomeTooltipActions,
-) {
-  Surface(
-    modifier = Modifier.fillMaxSize(),
-    tonalElevation = 8.dp,
-    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
-  ) {
-    WelcomeScreen(
-      state = state,
-      actions = actions,
-      tooltipActions = tooltipActions,
-    )
-  }
-}
+// WelcomeOverlay and WelcomeScreen removed from the app. See specs/003-UI-UX for rationale.

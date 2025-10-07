@@ -14,8 +14,6 @@ sealed class Screen(
   val deepLinks: List<String> = emptyList(),
   val modeId: ModeId? = null,
 ) {
-  data object Welcome : Screen(route = "welcome")
-
   data object Home :
     Screen(
       route = "home",
@@ -116,7 +114,6 @@ sealed class Screen(
     /** Stable listing of screens for lookup helpers. */
     val all: List<Screen> =
       listOf(
-        Welcome,
         Home,
         Chat,
         Image,

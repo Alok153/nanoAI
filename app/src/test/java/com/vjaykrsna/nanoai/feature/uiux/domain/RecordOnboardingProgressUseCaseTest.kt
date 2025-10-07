@@ -35,13 +35,15 @@ class RecordOnboardingProgressUseCaseTest {
         dispatcher = dispatcher,
       )
 
-    invokeOnboarding(useCase, tipId = "welcome", dismissed = true, completed = false)
+    // Use a generic tip id for onboarding persistence; onboarding feature removed but persistence
+    // should still work
+    invokeOnboarding(useCase, tipId = "onboarding_tip", dismissed = true, completed = false)
 
     advanceUntilIdle()
 
     val intermediateRecord =
       spy.lastOnboardingRecord ?: fail("Expected onboarding record for dismissal")
-    assertThat(intermediateRecord.first).containsExactlyEntriesIn(mapOf("welcome" to true))
+    assertThat(intermediateRecord.first).containsExactlyEntriesIn(mapOf("onboarding_tip" to true))
     assertThat(intermediateRecord.second).isFalse()
 
     val updatedPrefs =
@@ -50,7 +52,7 @@ class RecordOnboardingProgressUseCaseTest {
     val dismissedTipsAny =
       UiUxDomainReflection.getProperty(updatedPrefs, "dismissedTips") as? Map<*, *>
         ?: fail("Missing dismissedTips on updatedPrefs")
-    assertThat(dismissedTipsAny).containsExactlyEntriesIn(mapOf("welcome" to true))
+    assertThat(dismissedTipsAny).containsExactlyEntriesIn(mapOf("onboarding_tip" to true))
     val onboardingCompleteAny =
       UiUxDomainReflection.getProperty(updatedPrefs, "onboardingCompleted") as? Boolean
         ?: fail("Missing onboardingCompleted on updatedPrefs")
@@ -69,7 +71,7 @@ class RecordOnboardingProgressUseCaseTest {
     val finalTips =
       UiUxDomainReflection.getProperty(finalPrefs, "dismissedTips") as? Map<*, *>
         ?: fail("Missing dismissedTips on finalPrefs")
-    assertThat(finalTips).containsKey("welcome")
+    assertThat(finalTips).containsKey("onboarding_tip")
 
     assertThat(spy.invocations.any { it.contains("onboarding", ignoreCase = true) }).isTrue()
   }

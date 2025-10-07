@@ -262,7 +262,6 @@ constructor(
       theme = themePreference,
       density = visualDensity,
       fontScale = 1f,
-      onboardingCompleted = onboardingCompleted,
       dismissedTooltips = dismissedTips.filterValues { it }.keys,
     )
 

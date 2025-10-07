@@ -145,7 +145,7 @@ Response 200
   "themePreference": "SYSTEM",
   "visualDensity": "DEFAULT",
   "pinnedTools": ["summarize", "translator"],
-  "dismissedTips": {"welcome_tooltip": true},
+  "dismissedTips": {"home_tools_tip": true},
   "savedLayouts": [
     {
       "id": "layout-01",

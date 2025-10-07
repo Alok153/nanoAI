@@ -43,7 +43,7 @@ class ObserveUserProfileUseCaseTest {
       UiUxDomainReflection.newUiPreferences(
         themePreference = UiUxDomainReflection.themePreference("DARK"),
         onboardingCompleted = true,
-        dismissedTips = mapOf("welcome" to true),
+        dismissedTips = mapOf("onboarding_tip" to true),
         pinnedTools = listOf("tool-cache"),
       )
 
@@ -99,7 +99,7 @@ class ObserveUserProfileUseCaseTest {
         spy.preferencesFlow.value,
         themePreference = UiUxDomainReflection.themePreference("LIGHT"),
         pinnedTools = listOf("tool-remote"),
-        dismissedTips = mapOf("welcome" to true, "home" to true),
+        dismissedTips = mapOf("onboarding_tip" to true, "home" to true),
       )
     spy.offlineStatusFlow.value = false
 
@@ -128,7 +128,7 @@ class ObserveUserProfileUseCaseTest {
     val dismissedTipsAny =
       UiUxDomainReflection.getProperty(profile, "dismissedTips") as? Map<*, *>
         ?: fail("Missing dismissedTips map on profile")
-    assertThat(dismissedTipsAny).containsExactlyEntriesIn(mapOf("welcome" to true))
+    assertThat(dismissedTipsAny).containsExactlyEntriesIn(mapOf("onboarding_tip" to true))
 
     val layoutSnapshots = getReference(result, "layoutSnapshots", "layouts") as? List<*>
     val firstLayout = layoutSnapshots?.firstOrNull() ?: fail("Missing cached layout snapshot")

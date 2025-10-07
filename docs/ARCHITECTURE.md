@@ -165,7 +165,8 @@
 ```
 1. App launch
    └─► `NavigationScaffold`
-       └─► `WelcomeViewModel` & `HomeViewModel`
+       ├─► `AppViewModel` (global theme/offline state)
+       └─► `ShellViewModel` → `HomeViewModel`
            └─► `ObserveUserProfileUseCase`
                ├─► `UserProfileRepository.observe()`
                │   ├─► `UserProfileLocalDataSource`
@@ -173,7 +174,7 @@
                │   │   └─► `UiPreferencesStore.read()` *(DataStore theme + density prefs)*
                │   └─► `UserProfileRemoteDataSource.fetch()` *(Retrofit GET /user/profile)*
                └─► Merge flows → `UserProfile` domain model
-                   └─► Emit `HomeUiState` / `WelcomeUiState`
+                   └─► Emit `HomeUiState`
 ```
 
 ```
@@ -197,7 +198,7 @@
 ### UI/UX Caching & Privacy Guardrails
 
 - **Room** stores `UserProfileEntity`, `LayoutSnapshotEntity`, and `UIStateSnapshotEntity` with encrypted pinned tools and tooltip dismissals.
-- **DataStore** keeps lightweight preferences: theme, density, onboarding completion, dismissed tips. Writes occur on background dispatcher.
+- **DataStore** keeps lightweight preferences: theme, density, and dismissed tips (legacy onboarding flag retained for analytics gating only). Writes occur on background dispatcher.
 - **WorkManager** batches sync to avoid exposing UI metadata when the user has opted out of telemetry.
 - **Privacy Hooks**: `UserProfileRepository` redacts display names and pinned tool identifiers before telemetry, and `UiPreferencesStore` enforces consent gates prior to sharing personalization metadata.
 
