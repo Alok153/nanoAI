@@ -124,9 +124,10 @@ class ShellViewModelTest {
           dispatcher,
         )
 
+      val jobId = UUID.randomUUID()
       val job =
         ProgressJob(
-          jobId = UUID.randomUUID(),
+          jobId = jobId,
           type = JobType.IMAGE_GENERATION,
           status = JobStatus.PENDING,
           progress = 0f,
@@ -138,13 +139,91 @@ class ShellViewModelTest {
       viewModel.queueGeneration(job)
       advanceUntilIdle()
 
-      val uiState =
-        viewModel.uiState.first { state ->
-          repository.queuedJobs.contains(job) && state.layout.progressJobs.contains(job)
-        }
-      assertThat(uiState.layout.progressJobs).contains(job)
-      assertThat(uiState.layout.pendingUndoAction).isNotNull()
-      assertThat(repository.queuedJobs).contains(job)
+      val layout = repository.layoutSnapshot
+      assertThat(layout.progressJobs.map { it.jobId }).contains(jobId)
+      val undoPayload = layout.pendingUndoAction
+      assertThat(undoPayload).isNotNull()
+      val message = undoPayload?.metadata?.get("message") as? String
+      assertThat(message).isEqualTo("Image generation queued for reconnect")
+      assertThat(repository.queuedJobs.map { it.jobId }).contains(jobId)
+    }
+
+  @Test
+  fun queueGeneration_retryableFailure_setsRetryMessage() =
+    runTest(dispatcher) {
+      val repository = FakeShellStateRepository()
+      val actionProvider = FakeCommandPaletteActionProvider()
+      val progressCoordinator = FakeProgressCenterCoordinator()
+      val viewModel =
+        ShellViewModel(
+          repository,
+          actionProvider,
+          progressCoordinator,
+          telemetry,
+          dispatcher,
+        )
+
+      val jobId = UUID.randomUUID()
+      val job =
+        ProgressJob(
+          jobId = jobId,
+          type = JobType.MODEL_DOWNLOAD,
+          status = JobStatus.FAILED,
+          progress = 0f,
+          eta = Duration.ofSeconds(60),
+          canRetry = true,
+          queuedAt = Instant.parse("2025-10-06T01:00:00Z"),
+        )
+
+      viewModel.queueGeneration(job)
+      advanceUntilIdle()
+
+      val layout = repository.layoutSnapshot
+      val message = layout.pendingUndoAction?.metadata?.get("message") as? String
+      assertThat(message).isEqualTo("Model download retry scheduled")
+      assertThat(layout.progressJobs.map { it.jobId }).contains(jobId)
+    }
+
+  @Test
+  fun undoAction_clearsPendingJobAndUndoPayload() =
+    runTest(dispatcher) {
+      val repository = FakeShellStateRepository(initialConnectivity = ConnectivityStatus.OFFLINE)
+      val actionProvider = FakeCommandPaletteActionProvider()
+      val progressCoordinator = FakeProgressCenterCoordinator()
+      val viewModel =
+        ShellViewModel(
+          repository,
+          actionProvider,
+          progressCoordinator,
+          telemetry,
+          dispatcher,
+        )
+
+      val jobId = UUID.randomUUID()
+      val job =
+        ProgressJob(
+          jobId = jobId,
+          type = JobType.IMAGE_GENERATION,
+          status = JobStatus.PENDING,
+          progress = 0f,
+          eta = Duration.ofSeconds(120),
+          canRetry = true,
+          queuedAt = Instant.parse("2025-10-06T02:00:00Z"),
+        )
+
+      viewModel.queueGeneration(job)
+      advanceUntilIdle()
+
+      val queuedLayout = repository.layoutSnapshot
+      val payload = requireNotNull(queuedLayout.pendingUndoAction)
+
+      viewModel.undoAction(payload)
+      advanceUntilIdle()
+
+      val clearedLayout = repository.layoutSnapshot
+      assertThat(clearedLayout.pendingUndoAction).isNull()
+      assertThat(clearedLayout.progressJobs).isEmpty()
+      assertThat(repository.completedJobs).contains(jobId)
     }
 
   @Test
@@ -275,6 +354,9 @@ class ShellViewModelTest {
     val queuedJobs = mutableListOf<ProgressJob>()
     val completedJobs = mutableListOf<UUID>()
     val connectivityUpdates = mutableListOf<ConnectivityStatus>()
+
+    val layoutSnapshot: ShellLayoutState
+      get() = _layout.value
 
     override suspend fun openMode(modeId: ModeId) {
       openModeCalls += modeId

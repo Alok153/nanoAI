@@ -22,8 +22,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellUiState
@@ -47,7 +51,18 @@ fun RightSidebarPanels(
   val layout = state.layout
   val activePanel = layout.activeRightPanel ?: RightPanel.PROGRESS_CENTER
 
-  Surface(modifier = modifier.testTag("right_sidebar_panels"), tonalElevation = 2.dp) {
+  Surface(
+    modifier =
+      modifier.testTag("right_sidebar_panels").semantics {
+        stateDescription =
+          when (activePanel) {
+            RightPanel.PROGRESS_CENTER -> "Progress"
+            RightPanel.MODEL_SELECTOR -> "Model controls"
+            RightPanel.SETTINGS_SHORTCUT -> "Settings shortcuts"
+          }
+      },
+    tonalElevation = 2.dp,
+  ) {
     Column(
       modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 16.dp),
       verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -121,6 +136,7 @@ private fun RightSidebarHeader(
         },
       style = MaterialTheme.typography.titleMedium,
       fontWeight = FontWeight.SemiBold,
+      modifier = Modifier.semantics { heading() },
     )
     if (isDrawerOpen) {
       IconButton(
@@ -149,8 +165,12 @@ private fun RightPanelSwitcher(
         selected = panel == activePanel,
         onClick = { onPanelSelect(panel) },
         label = { Text(label) },
-        leadingIcon = { Icon(icon, contentDescription = null) },
-        modifier = Modifier.weight(1f, fill = false)
+        leadingIcon = { Icon(icon, contentDescription = "$label panel") },
+        modifier =
+          Modifier.weight(1f, fill = false).semantics {
+            role = Role.Tab
+            stateDescription = if (panel == activePanel) "Selected" else "Not selected"
+          },
       )
     }
   }

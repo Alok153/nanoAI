@@ -174,6 +174,7 @@ dependencies {
 
   // ProfileInstaller for baseline profiles
   implementation(libs.androidx.profileinstaller)
+  implementation(libs.androidx.metrics.performance)
 
   // Unit Testing
   testImplementation(kotlin("test"))

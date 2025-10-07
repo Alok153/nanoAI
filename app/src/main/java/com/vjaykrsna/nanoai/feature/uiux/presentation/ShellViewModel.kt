@@ -33,6 +33,8 @@ import com.vjaykrsna.nanoai.feature.uiux.state.CommandPaletteState
 import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityBannerState
 import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityStatus
 import com.vjaykrsna.nanoai.feature.uiux.state.DrawerSide
+import com.vjaykrsna.nanoai.feature.uiux.state.JobStatus
+import com.vjaykrsna.nanoai.feature.uiux.state.JobType
 import com.vjaykrsna.nanoai.feature.uiux.state.ModeCard
 import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
 import com.vjaykrsna.nanoai.feature.uiux.state.PaletteDismissReason
@@ -52,6 +54,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -269,11 +272,25 @@ constructor(
 
   /** Queues a generation job (e.g., when offline or model busy). */
   fun queueGeneration(job: ProgressJob) {
-    val layout = uiState.value.layout
     viewModelScope.launch(dispatcher) {
+      val layout = repository.shellLayoutState.first()
       repository.queueJob(job)
-      repository.recordUndoPayload(UndoPayload(actionId = "queue-${job.jobId}"))
-      telemetry.trackProgressJobQueued(job, layout.isOffline, layout.activeMode)
+      repository.recordUndoPayload(
+        UndoPayload(
+          actionId = "queue-${job.jobId}",
+          metadata =
+            mapOf(
+              "message" to
+                buildQueuedJobMessage(job, layout.connectivity != ConnectivityStatus.ONLINE),
+              "jobId" to job.jobId.toString(),
+            ),
+        )
+      )
+      telemetry.trackProgressJobQueued(
+        job,
+        layout.connectivity != ConnectivityStatus.ONLINE,
+        layout.activeMode,
+      )
     }
   }
 
@@ -376,6 +393,26 @@ constructor(
       modeActionsById["mode_audio"]?.copy(id = "quick_voice", title = "Voice Session"),
     )
   }
+
+  private fun buildQueuedJobMessage(job: ProgressJob, isOffline: Boolean): String {
+    val label = jobLabel(job)
+    return when {
+      job.status == JobStatus.FAILED && job.canRetry -> "$label retry scheduled"
+      isOffline -> "$label queued for reconnect"
+      job.status == JobStatus.PENDING -> "$label queued"
+      else -> "$label updated"
+    }
+  }
+
+  private fun jobLabel(job: ProgressJob): String =
+    when (job.type) {
+      JobType.IMAGE_GENERATION -> "Image generation"
+      JobType.AUDIO_RECORDING -> "Audio recording"
+      JobType.MODEL_DOWNLOAD -> "Model download"
+      JobType.TEXT_GENERATION -> "Text generation"
+      JobType.TRANSLATION -> "Translation"
+      JobType.OTHER -> "Background task"
+    }
 
   /** Updates the current window size class so adaptive layouts respond to device changes. */
   fun updateWindowSizeClass(sizeClass: WindowSizeClass) {

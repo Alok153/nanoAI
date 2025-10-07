@@ -1,6 +1,7 @@
 package com.vjaykrsna.nanoai
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -24,6 +25,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.metrics.performance.JankStats
 import com.vjaykrsna.nanoai.feature.uiux.presentation.AppViewModel
 import com.vjaykrsna.nanoai.ui.navigation.NavigationScaffold
 import com.vjaykrsna.nanoai.ui.theme.NanoAITheme
@@ -36,10 +38,20 @@ import dagger.hilt.android.AndroidEntryPoint
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+  private var jankStats: JankStats? = null
+
   @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     enableEdgeToEdge()
+    jankStats =
+      JankStats.createAndTrack(window) { frameData ->
+        if (frameData.isJank) {
+          val durationMs = frameData.frameDurationUiNanos / 1_000_000f
+          Log.w(JANK_TAG, "Jank frame detected: duration=${"%.2f".format(durationMs)}ms")
+        }
+      }
+    jankStats?.isTrackingEnabled = false
     setContent {
       val windowSizeClass = calculateWindowSizeClass(activity = this@MainActivity)
       val appViewModel: AppViewModel = hiltViewModel()
@@ -61,6 +73,26 @@ class MainActivity : ComponentActivity() {
         }
       }
     }
+  }
+
+  override fun onResume() {
+    super.onResume()
+    jankStats?.isTrackingEnabled = true
+  }
+
+  override fun onPause() {
+    jankStats?.isTrackingEnabled = false
+    super.onPause()
+  }
+
+  override fun onDestroy() {
+    jankStats?.isTrackingEnabled = false
+    jankStats = null
+    super.onDestroy()
+  }
+
+  private companion object {
+    const val JANK_TAG = "NanoAI-Jank"
   }
 }
 

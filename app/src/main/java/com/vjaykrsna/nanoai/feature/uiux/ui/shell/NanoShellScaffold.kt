@@ -1,6 +1,10 @@
 package com.vjaykrsna.nanoai.feature.uiux.ui.shell
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -200,8 +204,8 @@ fun NanoShellScaffold(
 
     AnimatedVisibility(
       visible = layout.isPaletteVisible,
-      enter = fadeIn(),
-      exit = fadeOut(),
+      enter = fadeIn(animationSpec = tween(durationMillis = 120, easing = FastOutLinearInEasing)),
+      exit = fadeOut(animationSpec = tween(durationMillis = 100, easing = LinearOutSlowInEasing)),
     ) {
       CommandPaletteSheet(
         state = state.commandPalette,
@@ -384,8 +388,18 @@ private fun ShellRightRailHost(
     } else {
       AnimatedVisibility(
         visible = showFloatingDrawer,
-        enter = slideInHorizontally { fullWidth -> fullWidth / 2 },
-        exit = slideOutHorizontally { fullWidth -> fullWidth / 2 },
+        enter =
+          slideInHorizontally(
+            animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing)
+          ) { fullWidth ->
+            fullWidth / 2
+          },
+        exit =
+          slideOutHorizontally(
+            animationSpec = tween(durationMillis = 160, easing = LinearOutSlowInEasing)
+          ) { fullWidth ->
+            fullWidth / 2
+          },
       ) {
         Surface(
           tonalElevation = 6.dp,

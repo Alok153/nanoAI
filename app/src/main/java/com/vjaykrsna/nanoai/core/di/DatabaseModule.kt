@@ -36,6 +36,7 @@ object DatabaseModule {
   fun provideNanoAIDatabase(@ApplicationContext context: Context): NanoAIDatabase =
     Room.databaseBuilder(context, NanoAIDatabase::class.java, NanoAIDatabase.DATABASE_NAME)
       .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
+      .fallbackToDestructiveMigration()
       .build()
 
   @Provides

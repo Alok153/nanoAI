@@ -20,8 +20,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -84,7 +87,18 @@ private fun ProgressJobItem(
   onDismiss: (ProgressJob) -> Unit,
 ) {
   Surface(
-    modifier = Modifier.fillMaxWidth().testTag("progress_list_item"),
+    modifier =
+      Modifier.fillMaxWidth().testTag("progress_list_item").semantics {
+        val percent = (job.normalizedProgress * 100).toInt().coerceIn(0, 100)
+        contentDescription = buildString {
+          append(job.type.label)
+          append(", ")
+          append(job.statusLabel)
+          append(", ")
+          append(percent)
+          append(" percent complete")
+        }
+      },
     tonalElevation = 1.dp,
     shape = RoundedCornerShape(16.dp),
   ) {
@@ -110,8 +124,9 @@ private fun ProgressJobItem(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
           )
         }
+        val percent = (job.normalizedProgress * 100).toInt().coerceIn(0, 100)
         Text(
-          text = "${(job.normalizedProgress * 100).toInt()}%",
+          text = "$percent%",
           style = MaterialTheme.typography.labelMedium,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
           modifier = Modifier.padding(start = 12.dp),
@@ -122,7 +137,10 @@ private fun ProgressJobItem(
         progress = { job.normalizedProgress },
         modifier =
           Modifier.fillMaxWidth().semantics {
-            contentDescription = "${job.type.label} progress ${job.normalizedProgress}"
+            val percent = (job.normalizedProgress * 100).toInt().coerceIn(0, 100)
+            contentDescription = "${job.type.label} progress $percent percent"
+            progressBarRangeInfo = ProgressBarRangeInfo(job.normalizedProgress, 0f..1f)
+            stateDescription = "$percent percent"
           },
       )
 
@@ -142,7 +160,11 @@ private fun ProgressJobItem(
         ) {
           Button(
             onClick = { onRetry(job) },
-            modifier = Modifier.testTag("progress_retry_button"),
+            enabled = job.canRetryNow,
+            modifier =
+              Modifier.testTag("progress_retry_button").semantics {
+                stateDescription = if (job.canRetryNow) "Retry available" else "Retry unavailable"
+              },
           ) {
             Text("Retry")
           }

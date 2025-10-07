@@ -20,6 +20,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -52,9 +55,33 @@ fun ConnectivityBanner(
       ConnectivityStatus.OFFLINE -> Icons.Rounded.CloudOff
       ConnectivityStatus.LIMITED -> Icons.Rounded.Speed
     }
+  val statusLabel =
+    when (state.status) {
+      ConnectivityStatus.ONLINE -> "Online"
+      ConnectivityStatus.OFFLINE -> "Offline"
+      ConnectivityStatus.LIMITED -> "Limited connectivity"
+    }
 
   Surface(
-    modifier = modifier,
+    modifier =
+      modifier.semantics {
+        contentDescription = buildString {
+          append(statusLabel)
+          append(", ")
+          append(state.headline)
+          state.supportingText
+            .takeIf { it.isNotBlank() }
+            ?.let { text ->
+              append(". ")
+              append(text)
+            }
+          if (state.queuedActionCount > 0) {
+            append(". ")
+            append("Queued actions: ${state.queuedActionCount}")
+          }
+        }
+        stateDescription = statusLabel
+      },
     color = containerColor,
     contentColor = contentColor,
     tonalElevation = 2.dp,
@@ -65,7 +92,7 @@ fun ConnectivityBanner(
       horizontalArrangement = Arrangement.spacedBy(16.dp),
       verticalAlignment = Alignment.CenterVertically,
     ) {
-      Icon(icon, contentDescription = null)
+      Icon(icon, contentDescription = "$statusLabel icon")
       Column(modifier = Modifier.weight(1f)) {
         Text(
           text = state.headline,

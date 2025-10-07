@@ -32,8 +32,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -105,6 +109,7 @@ private fun HomeHeaderSection(modeCardsCount: Int) {
       text = "Home hub",
       style = MaterialTheme.typography.headlineSmall,
       fontWeight = FontWeight.SemiBold,
+      modifier = Modifier.semantics { heading() },
     )
     Text(
       text = "Choose from $modeCardsCount modes or jump back into recent work.",
@@ -122,7 +127,12 @@ private fun HomeSearchPrompt() {
     readOnly = true,
     leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
     label = { Text("Search or jump to action") },
-    modifier = Modifier.fillMaxWidth().semantics { contentDescription = "Open command palette" },
+    modifier =
+      Modifier.fillMaxWidth().semantics {
+        role = Role.Button
+        contentDescription = "Open command palette"
+        stateDescription = "Opens global command search"
+      },
   )
 }
 
@@ -141,6 +151,7 @@ private fun QuickActionsRow(
         text = "Quick actions",
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.SemiBold,
+        modifier = Modifier.semantics { heading() },
       )
       if (actions.size > MAX_INLINE_QUICK_ACTIONS) {
         Text(
@@ -159,7 +170,11 @@ private fun QuickActionsRow(
           onClick = { if (action.enabled) onQuickActionSelect(action) },
           enabled = action.enabled,
           label = { Text(action.title) },
-          modifier = Modifier.semantics { contentDescription = action.title },
+          modifier =
+            Modifier.semantics {
+              contentDescription = action.title
+              stateDescription = if (action.enabled) "Enabled" else "Disabled"
+            },
         )
       }
     }
@@ -178,6 +193,7 @@ private fun ModeGrid(
       text = "Modes",
       style = MaterialTheme.typography.titleMedium,
       fontWeight = FontWeight.SemiBold,
+      modifier = Modifier.semantics { heading() },
     )
     FlowRow(
       modifier = Modifier.fillMaxWidth(),
@@ -207,6 +223,8 @@ private fun ModeCardItem(
     modifier =
       Modifier.widthIn(min = 220.dp).testTag("mode_card").semantics {
         contentDescription = card.contentDescription
+        role = Role.Button
+        stateDescription = if (card.enabled) "Available" else "Unavailable"
       },
     shape = MaterialTheme.shapes.extraLarge,
   ) {
@@ -271,6 +289,7 @@ private fun RecentActivitySection(
         text = "Recent activity",
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.SemiBold,
+        modifier = Modifier.semantics { heading() },
       )
       if (recentActivity.isNotEmpty()) {
         TextButton(onClick = { /* placeholder until history navigation is wired */}) {
@@ -318,7 +337,17 @@ private fun RecentActivityItemCard(
   Surface(
     onClick = onClick,
     tonalElevation = 1.dp,
-    modifier = Modifier.fillMaxWidth().testTag("recent_activity_item"),
+    modifier =
+      Modifier.fillMaxWidth().testTag("recent_activity_item").semantics {
+        role = Role.Button
+        contentDescription = buildString {
+          append(item.title)
+          append(", status ")
+          append(item.statusLabel)
+          append(", updated ")
+          append(formatRelativeTime(item.timestamp))
+        }
+      },
     shape = MaterialTheme.shapes.large,
   ) {
     Column(

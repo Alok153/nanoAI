@@ -11,13 +11,17 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsSelectable
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodes
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performTextInput
@@ -33,8 +37,11 @@ import com.vjaykrsna.nanoai.feature.uiux.state.CommandDestination
 import com.vjaykrsna.nanoai.feature.uiux.state.CommandPaletteState
 import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityBannerState
 import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityStatus
+import com.vjaykrsna.nanoai.feature.uiux.state.JobStatus
+import com.vjaykrsna.nanoai.feature.uiux.state.JobType
 import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
 import com.vjaykrsna.nanoai.feature.uiux.state.PaletteSource
+import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
 import com.vjaykrsna.nanoai.feature.uiux.state.RecentActivityItem
 import com.vjaykrsna.nanoai.feature.uiux.state.RecentStatus
 import com.vjaykrsna.nanoai.feature.uiux.state.ShellLayoutState
@@ -42,7 +49,9 @@ import com.vjaykrsna.nanoai.feature.uiux.state.UiPreferenceSnapshot
 import com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload
 import com.vjaykrsna.nanoai.feature.uiux.ui.shell.NanoShellScaffold
 import com.vjaykrsna.nanoai.feature.uiux.ui.shell.ShellUiEvent
+import java.time.Duration
 import java.time.Instant
+import java.util.UUID
 import kotlin.test.Test
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Rule
@@ -169,6 +178,73 @@ class CommandPaletteComposeTest {
     composeTestRule.onNodeWithContentDescription("Unavailable offline").assertIsDisplayed()
   }
 
+  @Test
+  fun progressRetryButton_reflectsRetryAvailability() {
+    val retryable = sampleProgressJob(canRetry = true)
+    val nonRetryable = sampleProgressJob(canRetry = false)
+    val recorder = EventRecorder()
+    val state =
+      mutableStateOf(
+        sampleState(
+          showPalette = false,
+          progressJobs = listOf(retryable, nonRetryable),
+        )
+      )
+
+    composeTestRule.setContent {
+      NanoShellScaffold(
+        state = state.value,
+        onEvent = { intent ->
+          recorder.record(intent)
+          handleIntent(state, intent)
+        }
+      )
+    }
+
+    val retryButtons = composeTestRule.onAllNodesWithTag("progress_retry_button")
+    retryButtons[0].assertIsEnabled()
+    retryButtons[1].assertIsNotEnabled()
+
+    retryButtons[0].performClick()
+
+    composeTestRule.waitUntil {
+      recorder.events.any { it is ShellUiEvent.QueueJob && it.job.jobId == retryable.jobId }
+    }
+  }
+
+  @Test
+  fun snackbar_displaysUndoAction_andDispatchesEvent() {
+    val payload =
+      UndoPayload(
+        actionId = "queue-${UUID.randomUUID()}",
+        metadata = mapOf("message" to "Image generation queued for reconnect"),
+      )
+    val recorder = EventRecorder()
+    val state = mutableStateOf(sampleState(showPalette = false, pendingUndo = payload))
+
+    composeTestRule.setContent {
+      NanoShellScaffold(
+        state = state.value,
+        onEvent = { intent ->
+          recorder.record(intent)
+          handleIntent(state, intent)
+        }
+      )
+    }
+
+    composeTestRule.waitUntilExactlyOneExists(
+      hasText("Image generation queued for reconnect"),
+      timeoutMillis = 5_000,
+    )
+
+    composeTestRule.onNodeWithText("Image generation queued for reconnect").assertIsDisplayed()
+    composeTestRule.onNodeWithText("Undo").performClick()
+
+    composeTestRule.waitUntil {
+      recorder.events.any { it is ShellUiEvent.Undo && it.payload == payload }
+    }
+  }
+
   private fun handleIntent(state: MutableState<ShellUiState>, intent: ShellUiEvent) {
     val current = state.value
     when (intent) {
@@ -247,25 +323,29 @@ class CommandPaletteComposeTest {
   private fun sampleState(
     showPalette: Boolean,
     commandPalette: CommandPaletteState = samplePaletteState(),
+    pendingUndo: UndoPayload? = null,
+    progressJobs: List<ProgressJob> = emptyList(),
+    connectivity: ConnectivityStatus = ConnectivityStatus.ONLINE,
+    rightPanel: RightPanel? = RightPanel.PROGRESS_CENTER,
   ): ShellUiState {
     val windowSizeClass = WindowSizeClass.calculateFromSize(DpSize(600.dp, 800.dp))
     val layout =
       ShellLayoutState(
         windowSizeClass = windowSizeClass,
         isLeftDrawerOpen = false,
-        isRightDrawerOpen = false,
-        activeRightPanel = null,
+        isRightDrawerOpen = true,
+        activeRightPanel = rightPanel,
         activeMode = ModeId.HOME,
         showCommandPalette = showPalette,
-        connectivity = ConnectivityStatus.ONLINE,
-        pendingUndoAction = UndoPayload(actionId = "none"),
-        progressJobs = emptyList(),
+        connectivity = connectivity,
+        pendingUndoAction = pendingUndo,
+        progressJobs = progressJobs,
         recentActivity = sampleRecentActivity(),
       )
     val banner =
       ConnectivityBannerState(
-        status = ConnectivityStatus.ONLINE,
-        queuedActionCount = 0,
+        status = connectivity,
+        queuedActionCount = progressJobs.count { !it.isTerminal },
         cta = sampleCommands().first(),
       )
 
@@ -320,5 +400,19 @@ class CommandPaletteComposeTest {
         timestamp = Instant.now().minusSeconds(120),
         status = RecentStatus.COMPLETED,
       )
+    )
+
+  private fun sampleProgressJob(
+    status: JobStatus = JobStatus.FAILED,
+    canRetry: Boolean = true,
+  ): ProgressJob =
+    ProgressJob(
+      jobId = UUID.randomUUID(),
+      type = JobType.MODEL_DOWNLOAD,
+      status = status,
+      progress = if (status == JobStatus.FAILED) 0f else 0.35f,
+      eta = Duration.ofSeconds(45),
+      canRetry = canRetry,
+      queuedAt = Instant.now(),
     )
 }

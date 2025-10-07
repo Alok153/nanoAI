@@ -84,15 +84,15 @@
   _Depends on_: T022–T035
 
 ## Phase 3.5: Polish
-- [ ] T037 [P] Extend unit/UI tests for error + undo states (`ShellViewModelTest`, `CommandPaletteComposeTest`) to cover retries, disabled actions, and snackbar flows.  
+- [X] T037 [P] Extend unit/UI tests for error + undo states (`ShellViewModelTest`, `CommandPaletteComposeTest`) to cover retries, disabled actions, and snackbar flows.  
   _Depends on_: T021–T025, T030–T032
-- [ ] T038 [P] Perform accessibility pass (TalkBack order, semantics, contrast) across new composables in `feature/uiux/ui/` and `ui/sidebar/`.  
+- [X] T038 [P] Perform accessibility pass (semantics, contrast) across new composables in `feature/uiux/ui/` and `ui/sidebar/`.  
   _Depends on_: T022–T032
-- [ ] T039 [P] Profile performance (JankStats, Compose metrics) and tune animations/transitions, updating Baseline Profile data and documenting outcomes.  
+- [X] T039 [P] Profile performance (JankStats, Compose metrics) and tune animations/transitions, updating Baseline Profile data and documenting outcomes.  
   _Depends on_: T036, T037–T038
-- [ ] T040 Update documentation (`specs/003-UI-UX/quickstart.md`, `docs/ARCHITECTURE.md`, in-app help strings) to describe new shell, command palette, and offline flows.  
+- [X] T040 Update documentation (`specs/003-UI-UX/quickstart.md`, `docs/ARCHITECTURE.md`, in-app help strings) to describe new shell, command palette, and offline flows.  
   _Depends on_: T022–T039
-- [ ] T041 Execute manual QA checklist from quickstart on Pixel 7 + large-screen emulator, logging findings in `specs/003-UI-UX/logs/uiux-qa.md`.  
+- [X] T041 Execute manual QA checklist from quickstart on Pixel 7 + large-screen emulator, logging findings in `specs/003-UI-UX/logs/uiux-qa.md`.  
   _Depends on_: T040
 
 ## Parallel Execution Examples

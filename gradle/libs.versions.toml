@@ -67,6 +67,7 @@ androidxTestCore = "1.5.0"
 benchmark = "1.3.2"
 uiautomator = "2.3.0"
 profileinstaller = "1.4.1"
+metricsPerformance = "1.0.0-beta01"
 
 # JSON Schema Validation
 networknt-json-schema = "1.5.2"
@@ -160,6 +161,7 @@ androidx-benchmark-macro = { group = "androidx.benchmark", name = "benchmark-mac
 androidx-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
 androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
 androidx-window = { group = "androidx.window", name = "window", version.ref = "window" }
+androidx-metrics-performance = { group = "androidx.metrics", name = "metrics-performance", version.ref = "metricsPerformance" }
 
 # JSON Schema Validation
 networknt-json-schema-validator = { group = "com.networknt", name = "json-schema-validator", version.ref = "networknt-json-schema" }
