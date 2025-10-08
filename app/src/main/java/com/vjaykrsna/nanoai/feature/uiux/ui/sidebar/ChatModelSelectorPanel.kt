@@ -3,7 +3,6 @@ package com.vjaykrsna.nanoai.feature.uiux.ui.sidebar
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -37,9 +36,11 @@ internal fun ChatModelSelectorPanel(
       val isSelected = persona.personaId == currentPersonaId
       Button(
         onClick = { onPersonaSelect(persona) },
-        modifier = Modifier.fillMaxWidth().semantics {
-          contentDescription = "Select ${persona.name} model${if (isSelected) " (currently selected)" else ""}"
-        },
+        modifier =
+          Modifier.fillMaxWidth().semantics {
+            contentDescription =
+              "Select ${persona.name} model${if (isSelected) " (currently selected)" else ""}"
+          },
         enabled = !isSelected,
       ) {
         Text(persona.name)

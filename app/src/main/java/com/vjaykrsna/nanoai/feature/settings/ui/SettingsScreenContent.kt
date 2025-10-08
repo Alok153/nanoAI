@@ -1,6 +1,6 @@
 package com.vjaykrsna.nanoai.feature.settings.ui
 
-import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
@@ -27,17 +29,14 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.Saver
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 
 private enum class SettingsCategory(val title: String, val subtitle: String) {
   GENERAL(title = "General", subtitle = "Language, startup behavior, input preferences"),
@@ -52,9 +51,7 @@ private enum class SettingsCategory(val title: String, val subtitle: String) {
   ABOUT_HELP(title = "About & Help", subtitle = "Version info, feedback, policies"),
 }
 
-private val SettingsCategorySaver: Saver<SettingsCategory, String> =
-  Saver(save = { it.name }, restore = { SettingsCategory.valueOf(it) })
-
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun SettingsScreenContent(
   state: SettingsContentState,
@@ -62,14 +59,15 @@ internal fun SettingsScreenContent(
   actions: SettingsScreenActions,
   modifier: Modifier = Modifier,
 ) {
-  var selectedCategory by
-    rememberSaveable(stateSaver = SettingsCategorySaver) { mutableStateOf(SettingsCategory.GENERAL) }
+  val categories = SettingsCategory.entries.toList()
+  val pagerState = rememberPagerState(initialPage = 0) { categories.size }
+  val coroutineScope = rememberCoroutineScope()
+  val currentCategory = categories[pagerState.currentPage]
 
   Scaffold(
     modifier =
       modifier.fillMaxSize().semantics {
-        contentDescription =
-          "Settings screen organized by tabs with contextual sections"
+        contentDescription = "Settings screen organized by tabs with contextual sections"
       },
     snackbarHost = {
       SnackbarHost(
@@ -78,13 +76,10 @@ internal fun SettingsScreenContent(
       )
     },
     floatingActionButton = {
-      if (selectedCategory == SettingsCategory.OFFLINE_AND_MODELS) {
+      if (currentCategory == SettingsCategory.OFFLINE_AND_MODELS) {
         FloatingActionButton(
           onClick = actions.onAddProviderClick,
-          modifier =
-            Modifier.semantics {
-              contentDescription = "Add API provider"
-            },
+          modifier = Modifier.semantics { contentDescription = "Add API provider" },
         ) {
           Icon(Icons.Default.Add, contentDescription = "Add")
         }
@@ -98,22 +93,26 @@ internal fun SettingsScreenContent(
     ) {
       SettingsHeader()
       Text(
-        text = selectedCategory.subtitle,
+        text = currentCategory.subtitle,
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
 
       SettingsCategoryTabs(
-        categories = SettingsCategory.entries.toList(),
-        selectedCategory = selectedCategory,
-        onCategorySelected = { selectedCategory = it },
+        categories = categories,
+        selectedCategory = currentCategory,
+        onCategorySelect = { category ->
+          val targetIndex = categories.indexOf(category).coerceAtLeast(0)
+          coroutineScope.launch { pagerState.animateScrollToPage(targetIndex) }
+        },
       )
 
       Box(modifier = Modifier.weight(1f, fill = true)) {
-        Crossfade(
-          targetState = selectedCategory,
-          label = "settings_category_crossfade",
-        ) { category ->
+        HorizontalPager(
+          state = pagerState,
+          modifier = Modifier.fillMaxSize(),
+        ) { pageIndex ->
+          val category = categories[pageIndex]
           SettingsCategoryContent(
             category = category,
             state = state,
@@ -157,7 +156,7 @@ internal fun SettingsSection(
 private fun SettingsCategoryTabs(
   categories: List<SettingsCategory>,
   selectedCategory: SettingsCategory,
-  onCategorySelected: (SettingsCategory) -> Unit,
+  onCategorySelect: (SettingsCategory) -> Unit,
   modifier: Modifier = Modifier,
 ) {
   val selectedIndex = categories.indexOf(selectedCategory).coerceAtLeast(0)
@@ -170,7 +169,7 @@ private fun SettingsCategoryTabs(
       val isSelected = category == selectedCategory
       Tab(
         selected = isSelected,
-        onClick = { onCategorySelected(category) },
+        onClick = { onCategorySelect(category) },
         text = {
           Text(
             text = category.title,
@@ -202,49 +201,42 @@ private fun SettingsCategoryContent(
           SettingsPlaceholderSection(
             title = "Language & Region",
             description = "Choose the interface language, locale, and measurement units.",
-            supportingText = "Design scaffolding is ready; controls will connect to DataStore preferences soon.",
+            supportingText =
+              "Design scaffolding is ready; controls will connect to DataStore preferences soon.",
           )
         }
         item {
           SettingsPlaceholderSection(
             title = "Startup & Home",
-            description = "Define the screen nanoAI opens to and whether to restore previous sessions.",
+            description =
+              "Define the screen nanoAI opens to and whether to restore previous sessions.",
             supportingText = "Upcoming implementation will hook into Shell launch policies.",
           )
         }
         item {
           SettingsPlaceholderSection(
             title = "Input Preferences",
-            description = "Configure keyboard shortcuts, compose send behavior, and voice activation cues.",
+            description =
+              "Configure keyboard shortcuts, compose send behavior, and voice activation cues.",
             supportingText = "Tracked for Phase 2 once mode-specific composers land.",
           )
         }
       }
-
       SettingsCategory.APPEARANCE -> {
         item {
-          SettingsPlaceholderSection(
-            title = "Theme",
-            description = "Switch between light, dark, and adaptive themes with scheduling support.",
-            supportingText = "Theme toggles will integrate with AppViewModel theming.",
+          AppearanceThemeSection(
+            uiUxState = state.uiUxState,
+            onThemeChange = actions.onThemePreferenceChange,
           )
         }
         item {
-          SettingsPlaceholderSection(
-            title = "Typography",
-            description = "Adjust font scale, chat bubble density, and compact mode presets.",
-            supportingText = "Type scale tokens are defined in specs/003-UI-UX/plan.md.",
+          AppearanceDensitySection(
+            uiUxState = state.uiUxState,
+            onDensityChange = actions.onVisualDensityChange,
           )
         }
-        item {
-          SettingsPlaceholderSection(
-            title = "Layout Density",
-            description = "Choose compact, comfortable, or spacious layouts for primary surfaces.",
-            supportingText = "Implementation will reuse density tokens shared across feature modules.",
-          )
-        }
+        item { AppearanceTypographyPlaceholder() }
       }
-
       SettingsCategory.PRIVACY_SECURITY -> {
         item {
           PrivacySection(
@@ -256,8 +248,10 @@ private fun SettingsCategoryContent(
         item {
           SettingsPlaceholderSection(
             title = "App Lock",
-            description = "Secure nanoAI with biometrics or a passcode and configure auto-lock timers.",
-            supportingText = "Security shell will integrate with the existing `AppLockManager` stub.",
+            description =
+              "Secure nanoAI with biometrics or a passcode and configure auto-lock timers.",
+            supportingText =
+              "Security shell will integrate with the existing `AppLockManager` stub.",
           )
         }
         item {
@@ -268,15 +262,12 @@ private fun SettingsCategoryContent(
           )
         }
       }
-
       SettingsCategory.OFFLINE_AND_MODELS -> {
         if (state.uiUxState.showMigrationSuccessNotification) {
           item { MigrationSuccessCard(onDismiss = actions.onDismissMigrationSuccess) }
         }
 
-        item {
-          ApiProvidersSectionHeader(hasProviders = state.apiProviders.isNotEmpty())
-        }
+        item { ApiProvidersSectionHeader(hasProviders = state.apiProviders.isNotEmpty()) }
 
         items(
           items = state.apiProviders,
@@ -294,11 +285,11 @@ private fun SettingsCategoryContent(
           SettingsPlaceholderSection(
             title = "On-device Models",
             description = "Download, update, and reclaim storage for offline-capable models.",
-            supportingText = "Hooks will connect to ModelRepository once the LiteRT pipeline lands.",
+            supportingText =
+              "Hooks will connect to ModelRepository once the LiteRT pipeline lands.",
           )
         }
       }
-
       SettingsCategory.MODES -> {
         item {
           SettingsPlaceholderSection(
@@ -310,12 +301,13 @@ private fun SettingsCategoryContent(
         item {
           SettingsPlaceholderSection(
             title = "Creation Modes",
-            description = "Configure prompts, presets, and output options for Image, Audio, Code, and Translate.",
+            description =
+              "Configure prompts, presets, and output options " +
+                "for Image, Audio, Code, and Translate.",
             supportingText = "Specs outline per-mode defaults in specs/003-UI-UX/data-model.md.",
           )
         }
       }
-
       SettingsCategory.NOTIFICATIONS -> {
         item {
           SettingsPlaceholderSection(
@@ -332,7 +324,6 @@ private fun SettingsCategoryContent(
           )
         }
       }
-
       SettingsCategory.ACCESSIBILITY -> {
         item {
           SettingsPlaceholderSection(
@@ -349,7 +340,6 @@ private fun SettingsCategoryContent(
           )
         }
       }
-
       SettingsCategory.BACKUP_RESTORE -> {
         item {
           DataManagementSection(
@@ -365,7 +355,6 @@ private fun SettingsCategoryContent(
           )
         }
       }
-
       SettingsCategory.ADVANCED -> {
         item {
           SettingsPlaceholderSection(
@@ -385,11 +374,11 @@ private fun SettingsCategoryContent(
           SettingsPlaceholderSection(
             title = "Experimental Features",
             description = "Opt in to beta capabilities and Labs integrations.",
-            supportingText = "Feature flag descriptors live in specs/004-fixes-and-inconsistencies/plan.md.",
+            supportingText =
+              "Feature flag descriptors live in specs/004-fixes-and-inconsistencies/plan.md.",
           )
         }
       }
-
       SettingsCategory.ABOUT_HELP -> {
         item {
           SettingsPlaceholderSection(
@@ -422,39 +411,6 @@ private fun SettingsPlaceholderSection(
       description = description,
       supportingText = supportingText,
     )
-  }
-}
-
-@Composable
-private fun SettingsPlaceholderCard(
-  description: String,
-  supportingText: String,
-  modifier: Modifier = Modifier,
-) {
-  Card(
-    modifier = modifier.fillMaxWidth(),
-    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-  ) {
-    Column(
-      modifier = Modifier.fillMaxWidth().padding(16.dp),
-      verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-      Text(
-        text = "Foundation in progress",
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.primary,
-        fontWeight = FontWeight.SemiBold,
-      )
-      Text(
-        text = description,
-        style = MaterialTheme.typography.bodyMedium,
-      )
-      Text(
-        text = supportingText,
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-    }
   }
 }
 

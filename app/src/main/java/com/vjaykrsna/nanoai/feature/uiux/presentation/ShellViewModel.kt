@@ -4,6 +4,7 @@
 
 package com.vjaykrsna.nanoai.feature.uiux.presentation
 
+// import com.vjaykrsna.telemetry.ShellTelemetry
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.automirrored.filled.LibraryBooks
@@ -32,7 +33,6 @@ import com.vjaykrsna.nanoai.feature.uiux.state.CommandInvocationSource
 import com.vjaykrsna.nanoai.feature.uiux.state.CommandPaletteState
 import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityBannerState
 import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityStatus
-import com.vjaykrsna.nanoai.feature.uiux.state.DrawerSide
 import com.vjaykrsna.nanoai.feature.uiux.state.JobStatus
 import com.vjaykrsna.nanoai.feature.uiux.state.JobType
 import com.vjaykrsna.nanoai.feature.uiux.state.ModeCard
@@ -45,7 +45,6 @@ import com.vjaykrsna.nanoai.feature.uiux.state.ShellLayoutState
 import com.vjaykrsna.nanoai.feature.uiux.state.UiPreferenceSnapshot
 import com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload
 import com.vjaykrsna.nanoai.feature.uiux.state.toRoute
-// import com.vjaykrsna.telemetry.ShellTelemetry
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.UUID
 import javax.inject.Inject
@@ -61,6 +60,13 @@ import kotlinx.coroutines.launch
 
 /** ViewModel coordinating shell layout state and user intents. */
 private const val SUBSCRIPTION_TIMEOUT_MILLIS = 5_000L
+
+private const val LAYOUT_INDEX = 0
+private const val PALETTE_INDEX = 1
+private const val BANNER_INDEX = 2
+private const val PREFS_INDEX = 3
+private const val JOBS_INDEX = 4
+private const val CHAT_STATE_INDEX = 5
 
 private data class ModeCardDefinition(
   val id: ModeId,
@@ -175,13 +181,13 @@ constructor(
         repository.uiPreferenceSnapshot,
         progressCoordinator.progressJobs,
         _chatState,
-      ) { it ->
-        val layout = it[0] as ShellLayoutState
-        val palette = it[1] as CommandPaletteState
-        val banner = it[2] as ConnectivityBannerState
-        val prefs = it[3] as UiPreferenceSnapshot
-        val jobs = it[4] as List<ProgressJob>
-        val chatState = it[5] as ChatState?
+      ) { values ->
+        val layout = values[LAYOUT_INDEX] as ShellLayoutState
+        val palette = values[PALETTE_INDEX] as CommandPaletteState
+        val banner = values[BANNER_INDEX] as ConnectivityBannerState
+        val prefs = values[PREFS_INDEX] as UiPreferenceSnapshot
+        val jobs = values[JOBS_INDEX] as List<ProgressJob>
+        val chatState = values[CHAT_STATE_INDEX] as ChatState?
         val mergedJobs = mergeProgressJobs(layout.progressJobs, jobs)
         ShellUiState(
           layout = layout.copy(progressJobs = mergedJobs),
@@ -255,9 +261,6 @@ constructor(
   /** Toggles the right contextual drawer for a specific panel. */
   fun toggleRightDrawer(panel: RightPanel) {
     val layout = uiState.value.layout
-    val currentlyOpen = layout.isRightDrawerOpen && layout.activeRightPanel == panel
-    val newOpen = !currentlyOpen
-    val panelForTelemetry = if (newOpen) panel else layout.activeRightPanel
     viewModelScope.launch(dispatcher) {
       repository.toggleRightDrawer(panel)
       /*
@@ -359,6 +362,7 @@ constructor(
   }
 
   /** Records telemetry for command invocations to understand palette usage. */
+  @Suppress("UnusedParameter")
   fun onCommandInvoked(action: CommandAction, source: CommandInvocationSource) {
     val layout = uiState.value.layout
     /*
@@ -390,23 +394,25 @@ constructor(
   /** Builds the list of mode cards for the home hub grid. */
   private fun buildModeCards(connectivity: ConnectivityStatus): List<ModeCard> {
     val isOnline = connectivity == ConnectivityStatus.ONLINE
-    return MODE_CARD_DEFINITIONS.map { definition ->
-      val enabled = if (definition.requiresOnline) isOnline else true
-      ModeCard(
-        id = definition.id,
-        title = definition.title,
-        subtitle = definition.subtitle,
-        icon = definition.icon,
-        enabled = enabled,
-        primaryAction =
-          CommandAction(
-            id = definition.actionId,
-            title = definition.actionTitle,
-            category = definition.actionCategory,
-            destination = CommandDestination.Navigate(definition.id.toRoute()),
-          ),
-      )
-    }
+    return MODE_CARD_DEFINITIONS
+      .filter { it.id != ModeId.SETTINGS } // Exclude settings from home page
+      .map { definition ->
+        val enabled = if (definition.requiresOnline) isOnline else true
+        ModeCard(
+          id = definition.id,
+          title = definition.title,
+          subtitle = definition.subtitle,
+          icon = definition.icon,
+          enabled = enabled,
+          primaryAction =
+            CommandAction(
+              id = definition.actionId,
+              title = definition.actionTitle,
+              category = definition.actionCategory,
+              destination = CommandDestination.Navigate(definition.id.toRoute()),
+            ),
+        )
+      }
   }
 
   /** Builds quick action commands shown on the home screen. */

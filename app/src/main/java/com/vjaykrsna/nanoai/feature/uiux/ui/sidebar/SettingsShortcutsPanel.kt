@@ -2,13 +2,11 @@ package com.vjaykrsna.nanoai.feature.uiux.ui.sidebar
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -21,6 +19,8 @@ import androidx.compose.ui.unit.dp
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
 import com.vjaykrsna.nanoai.feature.uiux.state.UiPreferenceSnapshot
+import com.vjaykrsna.nanoai.feature.uiux.ui.components.ThemePreferenceChips
+import com.vjaykrsna.nanoai.feature.uiux.ui.components.VisualDensityChips
 
 @Composable
 internal fun SettingsShortcutsPanel(
@@ -39,8 +39,8 @@ internal fun SettingsShortcutsPanel(
       color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 
-    ThemeSelector(preferences.theme, onThemeSelect)
-    DensitySelector(preferences.density, onDensitySelect)
+    ShortcutThemeSelector(preferences.theme, onThemeSelect)
+    ShortcutDensitySelector(preferences.density, onDensitySelect)
 
     OutlinedButton(
       onClick = onOpenSettings,
@@ -57,55 +57,32 @@ internal fun SettingsShortcutsPanel(
 }
 
 @Composable
-private fun ThemeSelector(
+private fun ShortcutThemeSelector(
   selected: ThemePreference,
   onSelect: (ThemePreference) -> Unit,
 ) {
   Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
     Text("Theme", style = MaterialTheme.typography.titleSmall)
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-      ThemePreference.entries.forEach { theme ->
-        FilterChip(
-          selected = selected == theme,
-          onClick = { if (selected != theme) onSelect(theme) },
-          label = { Text(themeLabel(theme)) },
-          modifier = Modifier.testTag("theme_option_${theme.name.lowercase()}")
-        )
-      }
-    }
+    ThemePreferenceChips(
+      selected = selected,
+      onSelect = onSelect,
+      chipModifier = { theme -> Modifier.testTag("theme_option_${theme.name.lowercase()}") },
+    )
   }
 }
 
 @Composable
-private fun DensitySelector(
+private fun ShortcutDensitySelector(
   selected: VisualDensity,
   onSelect: (VisualDensity) -> Unit,
 ) {
   Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
     Text("Density", style = MaterialTheme.typography.titleSmall)
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-      VisualDensity.entries.forEach { density ->
-        FilterChip(
-          selected = selected == density,
-          onClick = { if (selected != density) onSelect(density) },
-          label = { Text(densityLabel(density)) },
-          modifier = Modifier.testTag("density_option_${density.name.lowercase()}")
-        )
-      }
-    }
+    VisualDensityChips(
+      selected = selected,
+      onSelect = onSelect,
+      modifier = Modifier.fillMaxWidth(),
+      onUnsupportedSelect = null,
+    )
   }
 }
-
-private fun themeLabel(theme: ThemePreference): String =
-  when (theme) {
-    ThemePreference.LIGHT -> "Light"
-    ThemePreference.DARK -> "Dark"
-    ThemePreference.SYSTEM -> "System"
-  }
-
-private fun densityLabel(density: VisualDensity): String =
-  when (density) {
-    VisualDensity.DEFAULT -> "Comfortable"
-    VisualDensity.COMPACT -> "Compact"
-    VisualDensity.EXPANDED -> "Spacious"
-  }

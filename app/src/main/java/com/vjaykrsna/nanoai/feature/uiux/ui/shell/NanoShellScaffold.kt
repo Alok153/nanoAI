@@ -19,18 +19,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Tune
-import androidx.compose.material.icons.rounded.Download
-import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -85,7 +83,6 @@ import com.vjaykrsna.nanoai.feature.uiux.state.PaletteDismissReason
 import com.vjaykrsna.nanoai.feature.uiux.state.PaletteSource
 import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
 import com.vjaykrsna.nanoai.feature.uiux.state.RightPanel
-import com.vjaykrsna.nanoai.feature.uiux.state.ShellLayoutState
 import com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload
 import com.vjaykrsna.nanoai.feature.uiux.state.toModeIdOrNull
 import com.vjaykrsna.nanoai.feature.uiux.ui.HomeScreen
@@ -254,8 +251,8 @@ fun NanoShellScaffold(
             onCloseDrawer = { closeLeftDrawerIfOpen() },
           )
         },
-  drawerState = drawerState,
-  gesturesEnabled = layout.useModalNavigation && !layout.isRightDrawerOpen,
+        drawerState = drawerState,
+        gesturesEnabled = layout.useModalNavigation && !layout.isRightDrawerOpen,
         modifier = Modifier.testTag("left_drawer_modal"),
       ) {
         ShellRightRailHost(
@@ -316,7 +313,10 @@ sealed interface ShellUiEvent {
 
   data class UpdateDensity(val density: VisualDensity) : ShellUiEvent
 
-  data class ChatPersonaSelected(val personaId: java.util.UUID, val action: com.vjaykrsna.nanoai.core.model.PersonaSwitchAction) : ShellUiEvent
+  data class ChatPersonaSelected(
+    val personaId: java.util.UUID,
+    val action: com.vjaykrsna.nanoai.core.model.PersonaSwitchAction
+  ) : ShellUiEvent
 }
 
 private enum class DrawerVariant {
@@ -370,25 +370,15 @@ private fun DrawerSheetContent(
     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 24.dp),
     verticalArrangement = Arrangement.spacedBy(16.dp),
   ) {
-    Text(
-      text = "Navigate",
-      style = MaterialTheme.typography.titleMedium,
-      modifier = Modifier.testTag("drawer_header"),
-    )
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-      modeCards.forEach { card ->
-        DrawerModeItem(
-          modeCard = card,
-          selected = card.id == activeMode,
-          onClick = {
-            onModeSelect(card.id)
-            onCloseDrawer?.invoke()
-          },
-        )
+    // Search/Command palette at the top
+    Surface(
+      tonalElevation = 1.dp,
+      shape = RoundedCornerShape(12.dp),
+      onClick = {
+        onOpenCommandPalette()
+        onCloseDrawer?.invoke()
       }
-    }
-    Spacer(modifier = Modifier.height(8.dp))
-    Surface(tonalElevation = 1.dp) {
+    ) {
       Row(
         modifier =
           Modifier.fillMaxWidth()
@@ -398,40 +388,76 @@ private fun DrawerSheetContent(
         verticalAlignment = Alignment.CenterVertically,
       ) {
         Icon(Icons.Outlined.Search, contentDescription = null)
-        Column(modifier = Modifier.weight(1f)) {
-          Text("Command palette", style = MaterialTheme.typography.titleSmall)
-          Text("Ctrl+K", style = MaterialTheme.typography.bodySmall)
-        }
-        IconButton(
-          onClick = {
-            onOpenCommandPalette()
-            onCloseDrawer?.invoke()
-          }
+        Row(
+          modifier = Modifier.weight(1f),
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-          Icon(Icons.Outlined.MoreVert, contentDescription = "Open command palette")
+          Text("Search", style = MaterialTheme.typography.titleSmall)
+          Text(
+            "Ctrl+K",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+          )
         }
       }
+    }
+
+    // Navigation items
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+      // Home button
+      DrawerNavigationItem(
+        icon = Icons.Outlined.Home,
+        title = "Home",
+        selected = activeMode == ModeId.HOME,
+        onClick = {
+          onModeSelect(ModeId.HOME)
+          onCloseDrawer?.invoke()
+        },
+      )
+
+      // Settings button
+      DrawerNavigationItem(
+        icon = Icons.Outlined.Settings,
+        title = "Settings",
+        selected = activeMode == ModeId.SETTINGS,
+        onClick = {
+          onModeSelect(ModeId.SETTINGS)
+          onCloseDrawer?.invoke()
+        },
+      )
     }
   }
 }
 
 @Composable
-private fun DrawerModeItem(
-  modeCard: ModeCard,
+private fun DrawerNavigationItem(
+  icon: androidx.compose.ui.graphics.vector.ImageVector,
+  title: String,
   selected: Boolean,
   onClick: () -> Unit,
 ) {
   Surface(
     onClick = onClick,
     tonalElevation = if (selected) 6.dp else 0.dp,
-    modifier =
-      Modifier.fillMaxWidth().testTag("drawer_mode_${modeCard.id.name.lowercase(Locale.ROOT)}"),
+    shape = RoundedCornerShape(12.dp),
+    modifier = Modifier.fillMaxWidth().testTag("drawer_nav_${title.lowercase()}"),
   ) {
-    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-      Text(text = modeCard.title, style = MaterialTheme.typography.titleSmall)
-      modeCard.subtitle?.let { subtitle ->
-        Text(text = subtitle, style = MaterialTheme.typography.bodySmall)
-      }
+    Row(
+      modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+      verticalAlignment = Alignment.CenterVertically,
+      horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+      Icon(
+        imageVector = icon,
+        contentDescription = null,
+        modifier = Modifier.size(24.dp)
+      )
+      Text(
+        text = title,
+        style = MaterialTheme.typography.titleSmall,
+        modifier = Modifier.weight(1f)
+      )
     }
   }
 }
@@ -599,13 +625,16 @@ private fun ShellTopAppBar(
 
   TopAppBar(
     title = {
-      val titleText = if (layout.activeMode == ModeId.CHAT && state.chatState != null) {
-        state.chatState.availablePersonas.find { it.personaId == state.chatState.currentPersonaId }?.name ?: "Chat"
-      } else {
-        layout.activeMode.name.lowercase(Locale.ROOT).replaceFirstChar {
-          it.titlecase(Locale.ROOT)
+      val titleText =
+        if (layout.activeMode == ModeId.CHAT && state.chatState != null) {
+          state.chatState.availablePersonas
+            .find { it.personaId == state.chatState.currentPersonaId }
+            ?.name ?: "Chat"
+        } else {
+          layout.activeMode.name.lowercase(Locale.ROOT).replaceFirstChar {
+            it.titlecase(Locale.ROOT)
+          }
         }
-      }
       Text(
         text = titleText,
         maxLines = 1,

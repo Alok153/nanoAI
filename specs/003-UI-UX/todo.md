@@ -60,11 +60,13 @@
 - **Current**: Settings screen with API providers, privacy, UI/UX.
 - **Overview**: Structured tabs: General, Appearance, Privacy & Security, etc.
 - **Issue**: Check if it matches the exact sections.
+- **Note (2025-10-08)**: Tabbed scaffold now supports horizontal swipes between categories, and the Appearance tab exposes real theme & density controls while other sections retain placeholders.
 
 ### 11. Reusable Components
 - **Current**: Some components like MessageBubble, but not shared.
 - **Overview**: Compact system of primitives and composed widgets (ComposerBar, ChatBubble, etc.).
 - **Issue**: Components not reusable across modes; e.g., no shared ComposerBar.
+- **Note (2025-10-08)**: Introduced reusable theme/density chip primitives shared between the settings screen and sidebar shortcuts.
 
 ### 12. User Flow Principles
 - **Current**: Create → Edit → Review not fully implemented per mode.

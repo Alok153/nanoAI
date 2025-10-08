@@ -6,6 +6,8 @@ import androidx.activity.compose.ManagedActivityResultLauncher
 import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreference
 import com.vjaykrsna.nanoai.core.data.preferences.RetentionPolicy
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
+import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
 import com.vjaykrsna.nanoai.core.model.APIType
 import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsViewModel
 import java.util.UUID
@@ -19,6 +21,8 @@ internal data class SettingsScreenActions(
   val onTelemetryToggle: (Boolean) -> Unit,
   val onRetentionPolicyChange: (RetentionPolicy) -> Unit,
   val onDismissMigrationSuccess: () -> Unit,
+  val onThemePreferenceChange: (ThemePreference) -> Unit,
+  val onVisualDensityChange: (VisualDensity) -> Unit,
 )
 
 internal data class SettingsActionDependencies(
@@ -86,6 +90,14 @@ internal fun createSettingsActions(
     onTelemetryToggle = viewModel::setTelemetryOptIn,
     onRetentionPolicyChange = viewModel::setRetentionPolicy,
     onDismissMigrationSuccess = viewModel::dismissMigrationSuccessNotification,
+    onThemePreferenceChange = viewModel::setThemePreference,
+    onVisualDensityChange = { density ->
+      when (density) {
+        VisualDensity.COMPACT -> viewModel.setCompactMode(true)
+        VisualDensity.DEFAULT,
+        VisualDensity.EXPANDED -> viewModel.setCompactMode(false)
+      }
+    },
   )
 }
 

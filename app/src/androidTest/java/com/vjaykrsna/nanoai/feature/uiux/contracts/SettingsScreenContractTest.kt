@@ -27,8 +27,8 @@ import org.junit.runner.RunWith
 /**
  * Contract test for Settings screen (FR-008).
  *
- * Validates the new tabbed architecture exposes core categories, contextual actions, and carries the
- * legacy provider/backup controls in their dedicated sections.
+ * Validates the new tabbed architecture exposes core categories, contextual actions, and carries
+ * the legacy provider/backup controls in their dedicated sections.
  */
 @LargeTest
 @RunWith(AndroidJUnit4::class)
@@ -62,6 +62,8 @@ class SettingsScreenContractTest {
       onTelemetryToggle = {},
       onRetentionPolicyChange = {},
       onDismissMigrationSuccess = {},
+      onThemePreferenceChange = {},
+      onVisualDensityChange = {},
     )
 
   @Test
@@ -78,9 +80,15 @@ class SettingsScreenContractTest {
 
     composeRule.onNodeWithText("Settings").assertIsDisplayed()
     composeRule.onNode(hasText("General") and hasClickAction()).assertIsDisplayed()
-    composeRule.onNode(hasText("Appearance") and hasClickAction()).assertIsDisplayed()
     composeRule
       .onNodeWithText("Choose the interface language, locale, and measurement units.")
+      .assertIsDisplayed()
+    composeRule
+      .onNode(hasText("Appearance") and hasClickAction())
+      .assertIsDisplayed()
+      .performClick()
+    composeRule
+      .onNodeWithText("Switch between light, dark, or follow the system theme.")
       .assertIsDisplayed()
   }
 
@@ -102,7 +110,8 @@ class SettingsScreenContractTest {
       .performClick()
 
     composeRule.onNodeWithText("Test Provider").assertIsDisplayed()
-    composeRule.onNodeWithText("Connect remote APIs or local runtimes to power nanoAI's modes.")
+    composeRule
+      .onNodeWithText("Connect remote APIs or local runtimes to power nanoAI's modes.")
       .assertIsDisplayed()
     composeRule.onNodeWithContentDescription("Add API provider").assertIsDisplayed()
   }

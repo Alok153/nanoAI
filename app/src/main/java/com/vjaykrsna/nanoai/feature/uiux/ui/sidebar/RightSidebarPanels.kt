@@ -30,7 +30,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
 import com.vjaykrsna.nanoai.core.model.PersonaSwitchAction
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellUiState
 import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
@@ -101,7 +100,12 @@ fun RightSidebarPanels(
               availablePersonas = state.chatState.availablePersonas,
               currentPersonaId = state.chatState.currentPersonaId,
               onPersonaSelect = { persona ->
-                onEvent(ShellUiEvent.ChatPersonaSelected(persona.personaId, com.vjaykrsna.nanoai.core.model.PersonaSwitchAction.CONTINUE_THREAD))
+                onEvent(
+                  ShellUiEvent.ChatPersonaSelected(
+                    persona.personaId,
+                    com.vjaykrsna.nanoai.core.model.PersonaSwitchAction.CONTINUE_THREAD
+                  )
+                )
               },
             )
           } else {

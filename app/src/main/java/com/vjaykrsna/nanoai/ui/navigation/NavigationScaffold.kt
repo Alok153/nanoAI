@@ -75,7 +75,9 @@ fun NavigationScaffold(
       state = shellUiState,
       onEvent = shellEventHandler,
       modifier = Modifier.fillMaxSize(),
-      modeContent = { modeId -> ShellModeContent(modeId, Modifier.fillMaxSize(), shellViewModel::updateChatState) },
+      modeContent = { modeId ->
+        ShellModeContent(modeId, Modifier.fillMaxSize(), shellViewModel::updateChatState)
+      },
     )
 
     // Onboarding / welcome removed — main shell is shown directly.
@@ -83,13 +85,16 @@ fun NavigationScaffold(
 }
 
 @Composable
-private fun rememberShellEventHandler(shellViewModel: ShellViewModel, chatViewModel: ChatViewModel): (ShellUiEvent) -> Unit =
+private fun rememberShellEventHandler(
+  shellViewModel: ShellViewModel,
+  chatViewModel: ChatViewModel
+): (ShellUiEvent) -> Unit =
   remember(shellViewModel, chatViewModel) {
     { event ->
       when (event) {
         is ShellUiEvent.ModeSelected -> shellViewModel.openMode(event.modeId)
         ShellUiEvent.ToggleLeftDrawer -> shellViewModel.toggleLeftDrawer()
-  is ShellUiEvent.SetLeftDrawer -> shellViewModel.setLeftDrawer(event.open)
+        is ShellUiEvent.SetLeftDrawer -> shellViewModel.setLeftDrawer(event.open)
         is ShellUiEvent.ToggleRightDrawer -> shellViewModel.toggleRightDrawer(event.panel)
         is ShellUiEvent.ShowCommandPalette -> shellViewModel.showCommandPalette(event.source)
         is ShellUiEvent.HideCommandPalette -> shellViewModel.hideCommandPalette(event.reason)
@@ -101,7 +106,8 @@ private fun rememberShellEventHandler(shellViewModel: ShellViewModel, chatViewMo
         is ShellUiEvent.ConnectivityChanged -> shellViewModel.updateConnectivity(event.status)
         is ShellUiEvent.UpdateTheme -> shellViewModel.updateThemePreference(event.theme)
         is ShellUiEvent.UpdateDensity -> shellViewModel.updateVisualDensity(event.density)
-        is ShellUiEvent.ChatPersonaSelected -> chatViewModel.switchPersona(event.personaId, event.action)
+        is ShellUiEvent.ChatPersonaSelected ->
+          chatViewModel.switchPersona(event.personaId, event.action)
       }
     }
   }

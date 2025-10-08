@@ -64,7 +64,6 @@ class ShellViewModelTest {
           repository,
           actionProvider,
           progressCoordinator,
-          telemetry,
           dispatcher,
         )
 
@@ -92,7 +91,6 @@ class ShellViewModelTest {
           repository,
           actionProvider,
           progressCoordinator,
-          telemetry,
           dispatcher,
         )
 
@@ -120,7 +118,6 @@ class ShellViewModelTest {
           repository,
           actionProvider,
           progressCoordinator,
-          telemetry,
           dispatcher,
         )
 
@@ -159,7 +156,6 @@ class ShellViewModelTest {
           repository,
           actionProvider,
           progressCoordinator,
-          telemetry,
           dispatcher,
         )
 
@@ -195,7 +191,6 @@ class ShellViewModelTest {
           repository,
           actionProvider,
           progressCoordinator,
-          telemetry,
           dispatcher,
         )
 
@@ -252,7 +247,6 @@ class ShellViewModelTest {
           repository,
           actionProvider,
           progressCoordinator,
-          telemetry,
           dispatcher,
         )
 
@@ -279,7 +273,6 @@ class ShellViewModelTest {
           repository,
           actionProvider,
           progressCoordinator,
-          telemetry,
           dispatcher,
         )
 
