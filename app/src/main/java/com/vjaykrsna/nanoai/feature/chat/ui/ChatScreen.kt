@@ -4,29 +4,23 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -46,6 +40,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.vjaykrsna.nanoai.core.domain.model.Message
 import com.vjaykrsna.nanoai.feature.chat.presentation.ChatError
 import com.vjaykrsna.nanoai.feature.chat.presentation.ChatViewModel
+import com.vjaykrsna.nanoai.feature.uiux.state.NanoError
+import com.vjaykrsna.nanoai.feature.uiux.ui.components.composer.NanoComposerBar
+import com.vjaykrsna.nanoai.feature.uiux.ui.components.feedback.NanoErrorHandler
+import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoRadii
+import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoSpacing
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -64,6 +63,8 @@ fun ChatScreen(
   val isLoading by viewModel.isLoading.collectAsState()
 
   val snackbarHostState = remember { SnackbarHostState() }
+  var composerText by rememberSaveable { mutableStateOf("") }
+  var activeError by remember { mutableStateOf<NanoError?>(null) }
 
   LaunchedEffect(availablePersonas, currentThread) {
     onUpdateChatState?.invoke(
@@ -75,18 +76,7 @@ fun ChatScreen(
   }
 
   LaunchedEffect(Unit) {
-    viewModel.errorEvents.collectLatest { error ->
-      val message =
-        when (error) {
-          is ChatError.InferenceFailed -> "Inference failed: ${error.message}"
-          is ChatError.PersonaSwitchFailed -> "Persona switch failed: ${error.message}"
-          is ChatError.ThreadCreationFailed -> "Thread creation failed: ${error.message}"
-          is ChatError.ThreadArchiveFailed -> "Archive failed: ${error.message}"
-          is ChatError.ThreadDeletionFailed -> "Delete failed: ${error.message}"
-          is ChatError.UnexpectedError -> "Error: ${error.message}"
-        }
-      snackbarHostState.showSnackbar(message)
-    }
+    viewModel.errorEvents.collectLatest { error -> activeError = error.toNanoError() }
   }
 
   Box(
@@ -96,8 +86,9 @@ fun ChatScreen(
       },
   ) {
     Column(
-      modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 12.dp),
-      verticalArrangement = Arrangement.spacedBy(12.dp),
+      modifier =
+        Modifier.fillMaxSize().padding(horizontal = NanoSpacing.lg, vertical = NanoSpacing.md),
+      verticalArrangement = Arrangement.spacedBy(NanoSpacing.md),
     ) {
       MessagesList(
         messages = messages,
@@ -105,14 +96,38 @@ fun ChatScreen(
         modifier = Modifier.weight(1f).fillMaxWidth(),
       )
 
-      Spacer(modifier = Modifier.height(8.dp))
-
-      MessageInputArea(
-        onSendMessage = { text ->
-          currentThread?.personaId?.let { personaId -> viewModel.sendMessage(text, personaId) }
-        },
-        enabled = !isLoading && currentThread != null,
+      NanoErrorHandler(
+        error = activeError,
+        snackbarHostState = snackbarHostState,
         modifier = Modifier.fillMaxWidth(),
+        onDismiss = { activeError = null },
+      )
+
+      NanoComposerBar(
+        value = composerText,
+        onValueChange = { composerText = it },
+        modifier = Modifier.fillMaxWidth(),
+        placeholder = "Type a message…",
+        enabled = !isLoading && currentThread != null,
+        onSend = {
+          val trimmed = composerText.trim()
+          if (trimmed.isNotEmpty()) {
+            val personaId = currentThread?.personaId
+            if (personaId != null) {
+              viewModel.sendMessage(trimmed, personaId)
+              composerText = ""
+              activeError = null
+            } else {
+              activeError =
+                NanoError.Inline(
+                  title = "No persona selected",
+                  description = "Choose a persona before sending messages.",
+                )
+            }
+          }
+        },
+        sendEnabled = composerText.isNotBlank() && currentThread != null && !isLoading,
+        isSending = isLoading,
       )
     }
 
@@ -140,8 +155,8 @@ private fun MessagesList(
 
   LazyColumn(
     state = listState,
-    contentPadding = PaddingValues(16.dp),
-    verticalArrangement = Arrangement.spacedBy(12.dp),
+    contentPadding = PaddingValues(NanoSpacing.md),
+    verticalArrangement = Arrangement.spacedBy(NanoSpacing.md),
     reverseLayout = false,
     modifier =
       modifier.semantics {
@@ -190,7 +205,7 @@ private fun MessageBubble(message: Message, modifier: Modifier = Modifier) {
   ) {
     Card(
       colors = CardDefaults.cardColors(containerColor = backgroundColor),
-      shape = RoundedCornerShape(12.dp),
+      shape = RoundedCornerShape(NanoRadii.medium),
       modifier =
         Modifier.fillMaxWidth(MESSAGE_BUBBLE_WIDTH_FRACTION).semantics {
           val roleDescription = if (isUser) "Your" else "Assistant's"
@@ -198,7 +213,7 @@ private fun MessageBubble(message: Message, modifier: Modifier = Modifier) {
         },
     ) {
       Column(
-        modifier = Modifier.padding(12.dp),
+        modifier = Modifier.padding(NanoSpacing.md),
       ) {
         message.text?.let { text ->
           Text(
@@ -207,7 +222,7 @@ private fun MessageBubble(message: Message, modifier: Modifier = Modifier) {
           )
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(NanoSpacing.xs))
 
         val timestamp =
           message.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()).let {
@@ -224,41 +239,37 @@ private fun MessageBubble(message: Message, modifier: Modifier = Modifier) {
   }
 }
 
-@Composable
-private fun MessageInputArea(
-  onSendMessage: (String) -> Unit,
-  enabled: Boolean,
-  modifier: Modifier = Modifier
-) {
-  var messageText by rememberSaveable { mutableStateOf("") }
-
-  Row(
-    modifier = modifier.padding(horizontal = 4.dp, vertical = 8.dp),
-    verticalAlignment = Alignment.CenterVertically,
-    horizontalArrangement = Arrangement.spacedBy(8.dp),
-  ) {
-    TextField(
-      value = messageText,
-      onValueChange = { messageText = it },
-      placeholder = { Text("Type a message...") },
-      enabled = enabled,
-      modifier = Modifier.weight(1f).semantics { contentDescription = "Message input field" },
-    )
-
-    IconButton(
-      onClick = {
-        if (messageText.isNotBlank()) {
-          onSendMessage(messageText)
-          messageText = ""
-        }
-      },
-      enabled = enabled && messageText.isNotBlank(),
-      modifier = Modifier.semantics { contentDescription = "Send message button" },
-    ) {
-      Icon(
-        imageVector = Icons.AutoMirrored.Filled.Send,
-        contentDescription = "Send",
+private fun ChatError.toNanoError(): NanoError {
+  return when (this) {
+    is ChatError.InferenceFailed ->
+      NanoError.Inline(
+        title = "Couldn't complete inference",
+        description = message,
       )
-    }
+    is ChatError.PersonaSwitchFailed ->
+      NanoError.Inline(
+        title = "Persona switch failed",
+        description = message,
+      )
+    is ChatError.ThreadCreationFailed ->
+      NanoError.Inline(
+        title = "Couldn't start conversation",
+        description = message,
+      )
+    is ChatError.ThreadArchiveFailed ->
+      NanoError.Inline(
+        title = "Couldn't archive conversation",
+        description = message,
+      )
+    is ChatError.ThreadDeletionFailed ->
+      NanoError.Inline(
+        title = "Couldn't delete conversation",
+        description = message,
+      )
+    is ChatError.UnexpectedError ->
+      NanoError.Inline(
+        title = "Something went wrong",
+        description = message,
+      )
   }
 }

@@ -394,8 +394,9 @@ constructor(
   /** Builds the list of mode cards for the home hub grid. */
   private fun buildModeCards(connectivity: ConnectivityStatus): List<ModeCard> {
     val isOnline = connectivity == ConnectivityStatus.ONLINE
-    return MODE_CARD_DEFINITIONS
-      .filter { it.id != ModeId.SETTINGS } // Exclude settings from home page
+    return MODE_CARD_DEFINITIONS.filter {
+        it.id != ModeId.SETTINGS
+      } // Exclude settings from home page
       .map { definition ->
         val enabled = if (definition.requiresOnline) isOnline else true
         ModeCard(

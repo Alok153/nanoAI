@@ -4,11 +4,10 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -36,6 +35,8 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoSpacing
+import com.vjaykrsna.nanoai.feature.uiux.ui.components.layout.NanoSection
 import kotlinx.coroutines.launch
 
 private enum class SettingsCategory(val title: String, val subtitle: String) {
@@ -88,8 +89,10 @@ internal fun SettingsScreenContent(
   ) { innerPadding ->
     Column(
       modifier =
-        Modifier.fillMaxSize().padding(innerPadding).padding(horizontal = 20.dp, vertical = 16.dp),
-      verticalArrangement = Arrangement.spacedBy(16.dp),
+        Modifier.fillMaxSize()
+          .padding(innerPadding)
+          .padding(horizontal = NanoSpacing.lg, vertical = NanoSpacing.md),
+      verticalArrangement = Arrangement.spacedBy(NanoSpacing.md),
     ) {
       SettingsHeader()
       Text(
@@ -139,15 +142,12 @@ private fun SettingsHeader(modifier: Modifier = Modifier) {
 internal fun SettingsSection(
   title: String,
   modifier: Modifier = Modifier,
-  content: @Composable () -> Unit,
+  content: @Composable ColumnScope.() -> Unit,
 ) {
-  Column(modifier = modifier.fillMaxWidth()) {
-    Text(
-      text = title,
-      style = MaterialTheme.typography.titleLarge,
-      fontWeight = FontWeight.Bold,
-    )
-    Spacer(modifier = Modifier.height(12.dp))
+  NanoSection(
+    title = title,
+    modifier = modifier.fillMaxWidth(),
+  ) {
     content()
   }
 }
@@ -192,7 +192,7 @@ private fun SettingsCategoryContent(
 ) {
   LazyColumn(
     modifier = modifier.fillMaxSize(),
-    verticalArrangement = Arrangement.spacedBy(16.dp),
+    verticalArrangement = Arrangement.spacedBy(NanoSpacing.lg),
     contentPadding = PaddingValues(bottom = 112.dp),
   ) {
     when (category) {
