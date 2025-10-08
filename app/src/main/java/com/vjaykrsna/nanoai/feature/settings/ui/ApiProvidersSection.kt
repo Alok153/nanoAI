@@ -30,14 +30,20 @@ internal fun ApiProvidersSectionHeader(
   hasProviders: Boolean,
   modifier: Modifier = Modifier,
 ) {
-  SettingsSection(title = "API Providers", modifier = modifier) {
-    if (!hasProviders) {
+  SettingsSection(title = "Model Providers", modifier = modifier) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
       Text(
-        text = "No API providers configured",
+        text = "Connect remote APIs or local runtimes to power nanoAI's modes.",
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(vertical = 16.dp),
       )
+      if (!hasProviders) {
+        Text(
+          text = "No providers configured yet — use the Add button to link one.",
+          style = MaterialTheme.typography.bodyMedium,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
     }
   }
 }

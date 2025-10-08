@@ -101,6 +101,7 @@
 
 ### 18. Onboarding/Welcome Integration
 - **Status**: Deferred. Full-screen onboarding was removed; any new first-run UX should avoid modal takeovers and live within Home.
+- **Note (2025-10-08)**: Retired the unused first-launch disclaimer UI/ViewModel to keep the stack lean. Future onboarding flows can introduce fresh surfaces without legacy coupling.
 
 ### 19. Tone & Microcopy
 - **Current**: Basic text, no specific microcopy.

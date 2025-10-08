@@ -27,7 +27,7 @@ internal fun DataManagementSection(
   onExportBackupClick: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  SettingsSection(title = "Data Management", modifier = modifier) {
+  SettingsSection(title = "Backup & Restore", modifier = modifier) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
       DataManagementCard(
         title = "Import Backup",
