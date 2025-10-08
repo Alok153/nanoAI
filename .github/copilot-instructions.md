@@ -45,7 +45,6 @@ nanoAI/
 ```
 ./gradlew assembleDebug          # Build debug APK
 ./gradlew assembleRelease        # Build release APK
-./gradlew connectedAndroidTest   # Run instrumented tests on connected device
 ./gradlew test                   # Run unit tests
 ./gradlew clean                  # Clean build outputs
 ./gradlew spotlessApply          # Check code formatting with ktlint

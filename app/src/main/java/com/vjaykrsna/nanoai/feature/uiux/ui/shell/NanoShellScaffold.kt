@@ -29,6 +29,8 @@ import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -108,6 +110,7 @@ fun NanoShellScaffold(
   val drawerState =
     rememberDrawerState(initialValue = androidx.compose.material3.DrawerValue.Closed)
   val currentOnEvent by rememberUpdatedState(newValue = onEvent)
+  val latestLeftDrawerOpen by rememberUpdatedState(layout.isLeftDrawerOpen)
 
   fun closeLeftDrawerIfOpen() {
     if (layout.isLeftDrawerOpen) {
@@ -166,13 +169,13 @@ fun NanoShellScaffold(
     }
   }
 
-  LaunchedEffect(drawerState, layout.useModalNavigation, layout.isLeftDrawerOpen) {
+  LaunchedEffect(drawerState, layout.useModalNavigation) {
     if (!layout.useModalNavigation) return@LaunchedEffect
     snapshotFlow { drawerState.currentValue }
       .collect { value ->
         val isOpen = value == androidx.compose.material3.DrawerValue.Open
-        if (isOpen != layout.isLeftDrawerOpen) {
-          currentOnEvent(ShellUiEvent.ToggleLeftDrawer)
+        if (isOpen != latestLeftDrawerOpen) {
+          currentOnEvent(ShellUiEvent.SetLeftDrawer(isOpen))
         }
       }
   }
@@ -251,8 +254,8 @@ fun NanoShellScaffold(
             onCloseDrawer = { closeLeftDrawerIfOpen() },
           )
         },
-        drawerState = drawerState,
-        gesturesEnabled = layout.useModalNavigation && !layout.isRightDrawerOpen,
+  drawerState = drawerState,
+  gesturesEnabled = layout.useModalNavigation && !layout.isRightDrawerOpen,
         modifier = Modifier.testTag("left_drawer_modal"),
       ) {
         ShellRightRailHost(
@@ -288,6 +291,8 @@ sealed interface ShellUiEvent {
 
   data object ToggleLeftDrawer : ShellUiEvent
 
+  data class SetLeftDrawer(val open: Boolean) : ShellUiEvent
+
   data class ToggleRightDrawer(val panel: RightPanel) : ShellUiEvent
 
   data class ShowCommandPalette(val source: PaletteSource) : ShellUiEvent
@@ -310,6 +315,8 @@ sealed interface ShellUiEvent {
   data class UpdateTheme(val theme: ThemePreference) : ShellUiEvent
 
   data class UpdateDensity(val density: VisualDensity) : ShellUiEvent
+
+  data class ChatPersonaSelected(val personaId: java.util.UUID, val action: com.vjaykrsna.nanoai.core.model.PersonaSwitchAction) : ShellUiEvent
 }
 
 private enum class DrawerVariant {
@@ -525,7 +532,7 @@ private fun ShellMainSurface(
     modifier = modifier,
     topBar = {
       ShellTopAppBar(
-        layout = layout,
+        state = state,
         onToggleLeftDrawer = { originalOnEvent(ShellUiEvent.ToggleLeftDrawer) },
         onToggleRightDrawer = { panel -> originalOnEvent(ShellUiEvent.ToggleRightDrawer(panel)) },
         onShowCommandPalette = { source ->
@@ -582,18 +589,25 @@ private fun ShellMainSurface(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ShellTopAppBar(
-  layout: ShellLayoutState,
+  state: ShellUiState,
   onToggleLeftDrawer: () -> Unit,
   onToggleRightDrawer: (RightPanel) -> Unit,
   onShowCommandPalette: (PaletteSource) -> Unit,
 ) {
+  val layout = state.layout
+  // var expanded by remember { mutableStateOf(false) }
+
   TopAppBar(
     title = {
+      val titleText = if (layout.activeMode == ModeId.CHAT && state.chatState != null) {
+        state.chatState.availablePersonas.find { it.personaId == state.chatState.currentPersonaId }?.name ?: "Chat"
+      } else {
+        layout.activeMode.name.lowercase(Locale.ROOT).replaceFirstChar {
+          it.titlecase(Locale.ROOT)
+        }
+      }
       Text(
-        text =
-          layout.activeMode.name.lowercase(Locale.ROOT).replaceFirstChar {
-            it.titlecase(Locale.ROOT)
-          },
+        text = titleText,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
       )
@@ -610,25 +624,34 @@ private fun ShellTopAppBar(
       ) {
         Icon(Icons.Outlined.Search, contentDescription = "Open command palette")
       }
-      val activeJobs = layout.progressJobs.count { !it.isTerminal }
-      IconButton(
-        onClick = { onToggleRightDrawer(RightPanel.PROGRESS_CENTER) },
-        modifier = Modifier.testTag("topbar_progress_center"),
-      ) {
-        if (activeJobs > 0) {
-          BadgedBox(badge = { Badge { Text(activeJobs.toString()) } }) {
-            Icon(Icons.Rounded.Refresh, contentDescription = "Open progress center")
-          }
-        } else {
-          Icon(Icons.Rounded.Download, contentDescription = "Open progress center")
-        }
-      }
       IconButton(
         onClick = { onToggleRightDrawer(RightPanel.MODEL_SELECTOR) },
         modifier = Modifier.testTag("topbar_model_selector"),
       ) {
         Icon(Icons.Outlined.Tune, contentDescription = "Open model selector")
       }
+      /*
+      if (layout.activeMode == ModeId.CHAT) {
+        IconButton(
+          onClick = { expanded = true },
+          modifier = Modifier.testTag("topbar_chat_menu"),
+        ) {
+          Icon(Icons.Outlined.MoreVert, contentDescription = "Chat menu")
+        }
+        DropdownMenu(
+          expanded = expanded,
+          onDismissRequest = { expanded = false },
+        ) {
+          DropdownMenuItem(
+            text = { Text("Select model") },
+            onClick = {
+              onToggleRightDrawer(RightPanel.MODEL_SELECTOR)
+              expanded = false
+            },
+          )
+        }
+      }
+      */
     },
     colors = TopAppBarDefaults.topAppBarColors(),
   )

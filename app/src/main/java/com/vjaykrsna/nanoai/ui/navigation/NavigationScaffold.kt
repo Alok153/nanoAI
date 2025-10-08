@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.metrics.performance.PerformanceMetricsState
+import com.vjaykrsna.nanoai.feature.chat.presentation.ChatViewModel
 import com.vjaykrsna.nanoai.feature.chat.ui.ChatScreen
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryScreen
 import com.vjaykrsna.nanoai.feature.settings.ui.SettingsScreen
@@ -39,6 +40,7 @@ fun NavigationScaffold(
   windowSizeClass: WindowSizeClass,
   modifier: Modifier = Modifier,
   shellViewModel: ShellViewModel = hiltViewModel(),
+  chatViewModel: ChatViewModel = hiltViewModel(),
 ) {
   val shellUiState by shellViewModel.uiState.collectAsStateWithLifecycle()
 
@@ -66,14 +68,14 @@ fun NavigationScaffold(
     }
   }
 
-  val shellEventHandler = rememberShellEventHandler(shellViewModel)
+  val shellEventHandler = rememberShellEventHandler(shellViewModel, chatViewModel)
 
   Box(modifier = modifier.fillMaxSize()) {
     NanoShellScaffold(
       state = shellUiState,
       onEvent = shellEventHandler,
       modifier = Modifier.fillMaxSize(),
-      modeContent = { modeId -> ShellModeContent(modeId, Modifier.fillMaxSize()) },
+      modeContent = { modeId -> ShellModeContent(modeId, Modifier.fillMaxSize(), shellViewModel::updateChatState) },
     )
 
     // Onboarding / welcome removed — main shell is shown directly.
@@ -81,12 +83,13 @@ fun NavigationScaffold(
 }
 
 @Composable
-private fun rememberShellEventHandler(shellViewModel: ShellViewModel): (ShellUiEvent) -> Unit =
-  remember(shellViewModel) {
+private fun rememberShellEventHandler(shellViewModel: ShellViewModel, chatViewModel: ChatViewModel): (ShellUiEvent) -> Unit =
+  remember(shellViewModel, chatViewModel) {
     { event ->
       when (event) {
         is ShellUiEvent.ModeSelected -> shellViewModel.openMode(event.modeId)
         ShellUiEvent.ToggleLeftDrawer -> shellViewModel.toggleLeftDrawer()
+  is ShellUiEvent.SetLeftDrawer -> shellViewModel.setLeftDrawer(event.open)
         is ShellUiEvent.ToggleRightDrawer -> shellViewModel.toggleRightDrawer(event.panel)
         is ShellUiEvent.ShowCommandPalette -> shellViewModel.showCommandPalette(event.source)
         is ShellUiEvent.HideCommandPalette -> shellViewModel.hideCommandPalette(event.reason)
@@ -98,15 +101,20 @@ private fun rememberShellEventHandler(shellViewModel: ShellViewModel): (ShellUiE
         is ShellUiEvent.ConnectivityChanged -> shellViewModel.updateConnectivity(event.status)
         is ShellUiEvent.UpdateTheme -> shellViewModel.updateThemePreference(event.theme)
         is ShellUiEvent.UpdateDensity -> shellViewModel.updateVisualDensity(event.density)
+        is ShellUiEvent.ChatPersonaSelected -> chatViewModel.switchPersona(event.personaId, event.action)
       }
     }
   }
 
 @Composable
-private fun ShellModeContent(modeId: ModeId, modifier: Modifier = Modifier) {
+private fun ShellModeContent(
+  modeId: ModeId,
+  modifier: Modifier = Modifier,
+  onUpdateChatState: (com.vjaykrsna.nanoai.feature.uiux.presentation.ChatState?) -> Unit,
+) {
   when (modeId) {
     ModeId.HOME -> Unit
-    ModeId.CHAT -> ChatScreen(modifier = modifier)
+    ModeId.CHAT -> ChatScreen(modifier = modifier, onUpdateChatState = onUpdateChatState)
     ModeId.LIBRARY -> ModelLibraryScreen(modifier = modifier)
     ModeId.SETTINGS -> SettingsScreen(modifier = modifier)
     ModeId.IMAGE -> ModePlaceholder("Image generation", modifier)

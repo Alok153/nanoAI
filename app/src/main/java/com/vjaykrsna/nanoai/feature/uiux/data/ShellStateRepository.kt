@@ -160,10 +160,17 @@ constructor(
 
   open suspend fun toggleLeftDrawer() {
     val current = uiSnapshot.value
-    val newOpen = !current.isLeftDrawerOpen
+    setLeftDrawer(!current.isLeftDrawerOpen)
+  }
+
+  open suspend fun setLeftDrawer(open: Boolean) {
+    val current = uiSnapshot.value
+    if (current.isLeftDrawerOpen == open && !(open && current.isCommandPaletteVisible)) {
+      return
+    }
     withContext(ioDispatcher) {
-      userProfileRepository.updateLeftDrawerOpen(userId, newOpen)
-      if (newOpen && current.isCommandPaletteVisible) {
+      userProfileRepository.updateLeftDrawerOpen(userId, open)
+      if (open && current.isCommandPaletteVisible) {
         userProfileRepository.updateCommandPaletteVisibility(userId, false)
       }
     }

@@ -45,12 +45,13 @@ import com.vjaykrsna.nanoai.feature.uiux.state.ShellLayoutState
 import com.vjaykrsna.nanoai.feature.uiux.state.UiPreferenceSnapshot
 import com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload
 import com.vjaykrsna.nanoai.feature.uiux.state.toRoute
-import com.vjaykrsna.nanoai.telemetry.ShellTelemetry
+// import com.vjaykrsna.telemetry.ShellTelemetry
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -156,9 +157,11 @@ constructor(
   private val repository: ShellStateRepository,
   private val actionProvider: CommandPaletteActionProvider,
   private val progressCoordinator: ProgressCenterCoordinator,
-  private val telemetry: ShellTelemetry,
+  // private val telemetry: ShellTelemetry,
   @MainImmediateDispatcher private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
 ) : ViewModel() {
+
+  private val _chatState = MutableStateFlow<ChatState?>(null)
 
   /**
    * Combined UI state exposing shell layout, command palette, connectivity banner, preferences,
@@ -171,7 +174,14 @@ constructor(
         repository.connectivityBannerState,
         repository.uiPreferenceSnapshot,
         progressCoordinator.progressJobs,
-      ) { layout, palette, banner, prefs, jobs ->
+        _chatState,
+      ) { it ->
+        val layout = it[0] as ShellLayoutState
+        val palette = it[1] as CommandPaletteState
+        val banner = it[2] as ConnectivityBannerState
+        val prefs = it[3] as UiPreferenceSnapshot
+        val jobs = it[4] as List<ProgressJob>
+        val chatState = it[5] as ChatState?
         val mergedJobs = mergeProgressJobs(layout.progressJobs, jobs)
         ShellUiState(
           layout = layout.copy(progressJobs = mergedJobs),
@@ -180,6 +190,7 @@ constructor(
           preferences = prefs,
           modeCards = buildModeCards(layout.connectivity),
           quickActions = buildQuickActions(layout.connectivity),
+          chatState = chatState,
         )
       }
       .stateIn(
@@ -221,15 +232,23 @@ constructor(
   /** Toggles the left navigation drawer. */
   fun toggleLeftDrawer() {
     val layout = uiState.value.layout
-    val newOpen = !layout.isLeftDrawerOpen
+    setLeftDrawer(!layout.isLeftDrawerOpen)
+  }
+
+  /** Sets the left drawer to a specific open/closed state. */
+  fun setLeftDrawer(open: Boolean) {
+    val layout = uiState.value.layout
+    if (layout.isLeftDrawerOpen == open) return
     viewModelScope.launch(dispatcher) {
-      repository.toggleLeftDrawer()
-      telemetry.trackDrawerToggle(
+      repository.setLeftDrawer(open)
+      /*
+      // // telemetry.trackDrawerToggle(
         side = DrawerSide.LEFT,
-        isOpen = newOpen,
+        isOpen = open,
         panel = null,
         activeMode = layout.activeMode,
       )
+      */
     }
   }
 
@@ -241,12 +260,14 @@ constructor(
     val panelForTelemetry = if (newOpen) panel else layout.activeRightPanel
     viewModelScope.launch(dispatcher) {
       repository.toggleRightDrawer(panel)
-      telemetry.trackDrawerToggle(
+      /*
+      // // telemetry.trackDrawerToggle(
         side = DrawerSide.RIGHT,
         isOpen = newOpen,
         panel = panelForTelemetry,
         activeMode = layout.activeMode,
       )
+      */
     }
   }
 
@@ -255,7 +276,7 @@ constructor(
     val activeMode = uiState.value.layout.activeMode
     viewModelScope.launch(dispatcher) {
       repository.showCommandPalette(source)
-      telemetry.trackCommandPaletteOpened(source, activeMode)
+      // // telemetry.trackCommandPaletteOpened(source, activeMode)
     }
   }
 
@@ -265,7 +286,7 @@ constructor(
     viewModelScope.launch(dispatcher) {
       repository.hideCommandPalette()
       if (reason != PaletteDismissReason.EXECUTED) {
-        telemetry.trackCommandPaletteDismissed(reason, activeMode)
+        // // telemetry.trackCommandPaletteDismissed(reason, activeMode)
       }
     }
   }
@@ -286,11 +307,13 @@ constructor(
             ),
         )
       )
-      telemetry.trackProgressJobQueued(
+      /*
+      // // telemetry.trackProgressJobQueued(
         job,
         layout.connectivity != ConnectivityStatus.ONLINE,
         layout.activeMode,
       )
+      */
     }
   }
 
@@ -338,10 +361,12 @@ constructor(
   /** Records telemetry for command invocations to understand palette usage. */
   fun onCommandInvoked(action: CommandAction, source: CommandInvocationSource) {
     val layout = uiState.value.layout
-    telemetry.trackCommandInvocation(action, source, layout.activeMode)
+    /*
+    // // telemetry.trackCommandInvocation(action, source, layout.activeMode)
     if (source == CommandInvocationSource.PALETTE && layout.isPaletteVisible) {
-      telemetry.trackCommandPaletteDismissed(PaletteDismissReason.EXECUTED, layout.activeMode)
+      // // telemetry.trackCommandPaletteDismissed(PaletteDismissReason.EXECUTED, layout.activeMode)
     }
+    */
   }
 
   private fun mergeProgressJobs(
@@ -418,6 +443,11 @@ constructor(
   fun updateWindowSizeClass(sizeClass: WindowSizeClass) {
     viewModelScope.launch(dispatcher) { repository.updateWindowSizeClass(sizeClass) }
   }
+
+  /** Updates the chat-specific state for contextual UI. */
+  fun updateChatState(chatState: ChatState?) {
+    _chatState.value = chatState
+  }
 }
 
 /** Aggregated UI state exposed by [ShellViewModel]. */
@@ -428,4 +458,5 @@ data class ShellUiState(
   val preferences: UiPreferenceSnapshot,
   val modeCards: List<ModeCard> = emptyList(),
   val quickActions: List<CommandAction> = emptyList(),
+  val chatState: ChatState? = null,
 )

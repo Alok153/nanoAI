@@ -36,16 +36,22 @@
   - Additional guardrails ensure persisted UI state cannot override this at startup.
 
 ### 7. Chat Screen Layout
+- **Status**: ✅ Resolved (2025-10-08).
+- **Summary**: Updated `ChatScreen.kt` to include model label in header and support for right drawer in Chat mode.
 - **Current**: Top bar with thread title and persona selector, messages list, input area.
 - **Overview**: Header with model label and menu; main threaded chat; bottom composer; optional right drawer.
 - **Issue**: Missing model label in header (persona is different), no right drawer for Chat mode, no menu in header.
 
 ### 8. Right Sidebar Contextuality
+- **Status**: ✅ Resolved (2025-10-08).
+- **Summary**: Introduced `ChatModelSelectorPanel` and updated `RightSidebarPanels` to make the right sidebar contextual, with model selector for Chat mode.
 - **Current**: Right sidebar has fixed panels: Progress Center, Model Selector, Settings Shortcuts.
 - **Overview**: Dynamic controls related to the active mode (model selector, input options, etc.).
 - **Issue**: Not contextual to mode; Model Selector panel switches modes, not selects models for current mode.
 
 ### 9. Model Selector vs Persona Confusion
+- **Status**: ✅ Resolved (2025-10-08).
+- **Summary**: Disambiguated model selector in right sidebar for Chat from persona selector in top bar.
 - **Current**: Chat has persona selector in top bar (different AI personalities/models).
 - **Overview**: Model selector in right sidebar for Chat.
 - **Issue**: Confusion between persona (chat-specific) and model (global).

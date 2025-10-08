@@ -30,6 +30,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
+import com.vjaykrsna.nanoai.core.model.PersonaSwitchAction
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellUiState
 import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
 import com.vjaykrsna.nanoai.feature.uiux.state.PaletteSource
@@ -94,16 +96,26 @@ fun RightSidebarPanels(
             onDismiss = { job -> onEvent(ShellUiEvent.CompleteJob(job.jobId)) },
           )
         RightPanel.MODEL_SELECTOR ->
-          ModelSelectorPanel(
-            activeMode = layout.activeMode,
-            modeCards = state.modeCards,
-            connectivity = layout.connectivity,
-            onModeSelect = { modeId -> onEvent(ShellUiEvent.ModeSelected(modeId)) },
-            onOpenPalette = {
-              onEvent(ShellUiEvent.ShowCommandPalette(PaletteSource.QUICK_ACTION))
-            },
-            onOpenLibrary = { onEvent(ShellUiEvent.ModeSelected(ModeId.LIBRARY)) },
-          )
+          if (layout.activeMode == ModeId.CHAT && state.chatState != null) {
+            ChatModelSelectorPanel(
+              availablePersonas = state.chatState.availablePersonas,
+              currentPersonaId = state.chatState.currentPersonaId,
+              onPersonaSelect = { persona ->
+                onEvent(ShellUiEvent.ChatPersonaSelected(persona.personaId, com.vjaykrsna.nanoai.core.model.PersonaSwitchAction.CONTINUE_THREAD))
+              },
+            )
+          } else {
+            ModelSelectorPanel(
+              activeMode = layout.activeMode,
+              modeCards = state.modeCards,
+              connectivity = layout.connectivity,
+              onModeSelect = { modeId -> onEvent(ShellUiEvent.ModeSelected(modeId)) },
+              onOpenPalette = {
+                onEvent(ShellUiEvent.ShowCommandPalette(PaletteSource.QUICK_ACTION))
+              },
+              onOpenLibrary = { onEvent(ShellUiEvent.ModeSelected(ModeId.LIBRARY)) },
+            )
+          }
         RightPanel.SETTINGS_SHORTCUT ->
           SettingsShortcutsPanel(
             preferences = state.preferences,

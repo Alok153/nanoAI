@@ -61,13 +61,26 @@ import kotlinx.datetime.toLocalDateTime
 private const val MESSAGE_BUBBLE_WIDTH_FRACTION = 0.85f
 
 @Composable
-fun ChatScreen(modifier: Modifier = Modifier, viewModel: ChatViewModel = hiltViewModel()) {
+fun ChatScreen(
+  modifier: Modifier = Modifier,
+  viewModel: ChatViewModel = hiltViewModel(),
+  onUpdateChatState: ((com.vjaykrsna.nanoai.feature.uiux.presentation.ChatState?) -> Unit)? = null,
+) {
   val messages by viewModel.messages.collectAsState()
   val currentThread by viewModel.currentThread.collectAsState()
   val availablePersonas by viewModel.availablePersonas.collectAsState()
   val isLoading by viewModel.isLoading.collectAsState()
 
   val snackbarHostState = remember { SnackbarHostState() }
+
+  LaunchedEffect(availablePersonas, currentThread) {
+    onUpdateChatState?.invoke(
+      com.vjaykrsna.nanoai.feature.uiux.presentation.ChatState(
+        availablePersonas = availablePersonas,
+        currentPersonaId = currentThread?.personaId,
+      )
+    )
+  }
 
   LaunchedEffect(Unit) {
     viewModel.errorEvents.collectLatest { error ->
@@ -94,14 +107,6 @@ fun ChatScreen(modifier: Modifier = Modifier, viewModel: ChatViewModel = hiltVie
       modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 12.dp),
       verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-      ChatTopBar(
-        threadTitle = currentThread?.title ?: "New Chat",
-        availablePersonas = availablePersonas,
-        currentPersonaId = currentThread?.personaId,
-        onPersonaSelect = { persona, action -> viewModel.switchPersona(persona.personaId, action) },
-        modifier = Modifier.fillMaxWidth(),
-      )
-
       MessagesList(
         messages = messages,
         isLoading = isLoading,
@@ -124,69 +129,6 @@ fun ChatScreen(modifier: Modifier = Modifier, viewModel: ChatViewModel = hiltVie
       modifier =
         Modifier.align(Alignment.BottomCenter).padding(horizontal = 16.dp, vertical = 24.dp),
     )
-  }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ChatTopBar(
-  threadTitle: String,
-  availablePersonas: List<PersonaProfile>,
-  currentPersonaId: UUID?,
-  onPersonaSelect: (PersonaProfile, com.vjaykrsna.nanoai.core.model.PersonaSwitchAction) -> Unit,
-  modifier: Modifier = Modifier,
-) {
-  Column(
-    modifier = modifier.padding(16.dp),
-  ) {
-    Text(
-      text = threadTitle,
-      style = MaterialTheme.typography.titleLarge,
-      fontWeight = FontWeight.Bold,
-    )
-
-    Spacer(modifier = Modifier.height(8.dp))
-
-    Row(
-      horizontalArrangement = Arrangement.spacedBy(8.dp),
-      verticalAlignment = Alignment.CenterVertically,
-    ) {
-      // Persona selector
-      var expanded by remember { mutableStateOf(false) }
-
-      ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = !expanded },
-      ) {
-        val currentPersona = availablePersonas.find { it.personaId == currentPersonaId }
-        OutlinedTextField(
-          value = currentPersona?.name ?: "Select Persona",
-          onValueChange = {},
-          readOnly = true,
-          label = { Text("Persona") },
-          trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-          modifier = Modifier.semantics { contentDescription = "Persona selector dropdown" },
-        )
-
-        ExposedDropdownMenu(
-          expanded = expanded,
-          onDismissRequest = { expanded = false },
-        ) {
-          availablePersonas.forEach { persona ->
-            DropdownMenuItem(
-              text = { Text(persona.name) },
-              onClick = {
-                onPersonaSelect(
-                  persona,
-                  com.vjaykrsna.nanoai.core.model.PersonaSwitchAction.CONTINUE_THREAD
-                )
-                expanded = false
-              },
-            )
-          }
-        }
-      }
-    }
   }
 }
 

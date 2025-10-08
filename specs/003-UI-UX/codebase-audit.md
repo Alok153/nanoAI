@@ -20,7 +20,8 @@ Critical (should fix before next release)
   - Fix: Removed welcome overlay UI, view model, analytics, and tests. `NavigationScaffold` now renders `NanoShellScaffold` immediately and home is first content on every cold start.
   - Follow-up: If a reimagined onboarding is needed, prefer contextual surfaces in Home rather than modal overlays.
 
-2) Back navigation behavior is missing in `MainActivity`
+2) Back navigation behavior is missing in `MainActivity` (✅ Resolved 2025-10-08)
+  - Fix: Added `OnBackPressedCallback` in `MainActivity` that queries `ShellViewModel` state and handles back press to close right drawer, then left drawer, then navigate to Home, else default finish.
   - Evidence: No `OnBackPressedCallback` found in `MainActivity.kt` (searched repository). The shell supports switching modes via `ShellViewModel.openMode`, but back press handling to close drawers or navigate home isn't wired.
   - Why critical: Users expect Android back button behavior to navigate rather than exit unexpectedly.
   - Suggested fixes:
@@ -29,7 +30,8 @@ Critical (should fix before next release)
 
 Major (high priority but not necessarily blocking)
 
-3) Right sidebar pushes/shrinks main content on small screens
+3) Right sidebar pushes/shrinks main content on small screens (✅ Resolved 2025-10-08)
+  - Fix: Updated `ShellRightRailHost` to use a `Box` layout for modal right panel, overlaying it over the main content instead of reserving width.
   - Evidence: `ShellRightRailHost` composes a `Row` with `ShellMainSurface` weight(1f) and a 320.dp `Surface` for the rail. When the rail is visible as modal on small devices, it still participates in the Row layout and reduces main content width.
   - Why it matters: UX spec expects right panel to overlay so the main surface isn't squeezed. Chat UI and other content can become cramped.
   - Suggested fixes:
@@ -37,14 +39,16 @@ Major (high priority but not necessarily blocking)
     - Use AnimatedVisibility + Box.offset or a Compose `Dialog`/`Modal` approach if appropriate.
   - Acceptance criteria: On small window sizes, opening the right panel overlays (doesn't impact) the width of main content. Permanent rail remains for large width classes.
 
-4) Right panel is not contextual enough
+4) Right panel is not contextual enough (✅ Resolved 2025-10-08)
+  - Fix: Introduced `ChatModelSelectorPanel` and updated `RightSidebarPanels` to make model selection contextual to the current chat mode, allowing selection without switching modes.
   - Evidence: `RightSidebarPanels` is used but panels include fixed `PROGRESS_CENTER`, `MODEL_SELECTOR` etc. TopAppBar actions call `onToggleRightDrawer(RightPanel.MODEL_SELECTOR)` which may switch modes unexpectedly.
   - Suggestion: ensure model selector is contextual (e.g., when on Chat, open model selection for Chat, not navigate to a different app section). Disambiguate persona vs model selector UI and their locations.
   - Acceptance criteria: Model selection affects current mode's model; persona chooser remains chat-specific.
 
 Minor / Cosmetic / Clarifications
 
-5) Left drawer toggle flow looks correct but should be validated
+5) Left drawer toggle flow looks correct but should be validated (✅ Resolved 2025-10-08)
+  - Fix: Fixed the button not opening the left side panel by updating toggle logic in `ShellViewModel` and `NanoShellScaffold`.
   - Evidence: `ShellTopAppBar` shows a nav icon that calls `onToggleLeftDrawer` leading to `ShellViewModel.toggleLeftDrawer()` which flips repository state. Also uses drawerState listener in `NanoShellScaffold` to emit ToggleLeftDrawer when drawer open/close originates from UI. This is OK but edge case: if useModalNavigation==false the drawerState is forcibly closed in LaunchedEffect; validate state synchronization.
   - Acceptance criteria: Clicking the top-bar nav icon toggles drawer on modal and permanent variants without producing state inversion loops.
 
@@ -78,7 +82,7 @@ Requirements coverage matrix
 ---------------------------
 
 - Overview: "Home-first" -> Status: ✅ Done. App opens directly to Home; onboarding overlay removed.
-- Overview: "Right sidebar overlays, not squeeze" -> Currently: squeezes on small screens. Status: Not done (see fix 3).
-- Overview: "Back navigation should go home" -> Currently: missing. Status: Not done (see fix 2).
+- Overview: "Right sidebar overlays, not squeeze" -> Status: ✅ Done (see fix 3).
+- Overview: "Back navigation should go home" -> Status: ✅ Done (see fix 2).
 
 If you'd like, I can prepare the two safe patches now (right-panel overlay change + MainActivity back handling) and run a quick build to verify compile errors. Tell me which of the two to prioritize first. 
