@@ -238,6 +238,15 @@ The project follows Test-Driven Development (TDD) principles with comprehensive 
 4. Monitor progress in download queue section
 5. Pause/resume/cancel downloads as needed
 
+### Hugging Face catalog integration
+
+- Accept the gated terms for the official model on [huggingface.co](https://huggingface.co/) using the same account that owns your access token.
+- Store your Hugging Face access token with `HuggingFaceCredentialRepository.saveAccessToken(token)` (the value is persisted inside Jetpack Security's encrypted shared preferences until a settings surface ships).
+- Seed catalog entries with a manifest URL that uses the `hf://` scheme, for example:
+    - `hf://google/gemma-2-2b-it?artifact=LiteRT/gemma-2-2b-it.bin&revision=main`
+- When a model marked with an `hf://` manifest is downloaded, `ModelManifestRepository` resolves size and SHA-256 metadata via the Hugging Face API and feeds it into the existing integrity pipeline.
+- Verification reports are skipped for Hugging Face models because the upstream API does not accept manifest verification callbacks.
+
 ### Exporting Data
 
 1. Navigate to Settings → Data Management

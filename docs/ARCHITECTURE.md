@@ -4,7 +4,7 @@
 
 ```
 ┌───────────────────────────────────────────────────────────────────────┐
-│                          Android Application                          |
+│                          Android Application                          │
 └───────────────────────────────────────────────────────────────────────┘
                                     │
                 ┌───────────────────┼───────────────────┐
@@ -77,28 +77,28 @@
                         │   Data Sources        │
                         └───────────────────────┘
                                     │
-        ┌───────────────────────────┼───────────────────────────┐
-        │                           │                           │
-        ▼                           ▼                           ▼
-┌──────────────┐        ┌────────────────────┐      ┌──────────────────┐
-│  Room DB     │        │  DataStore         │      │  WorkManager     │
-│  (SQLite)    │        │  (Preferences)     │      │  (Background)    │
-└──────────────┘        └────────────────────┘      └──────────────────┘
-        │                           │                           │
-        ▼                           ▼                           ▼
-┌──────────────┐        ┌────────────────────┐      ┌───────────────-───┐
-│  7 DAOs      │        │ PrivacyPreference  │      │ModelDownloadWorker│
-│  - ChatThread│        │ Store              │      │ - progress track  │
-│  - Message   │        │ - telemetry opt-in │      │ - checksum verify │
-│  - Persona   │        │ - retention policy │      │ - queue mgmt      │
-│  - Model     │        │ - consent timestamp│      │                   │
-│  - Download  │        └────────────────────┘      └──────────────────-┘
+        ┌───────────────────────────┼───────────────────────────────┐
+        │                           │                               │
+        ▼                           ▼                               ▼
+┌──────────────┐        ┌────────────────────┐          ┌──────────────────┐
+│  Room DB     │        │  DataStore         │          │  WorkManager     │
+│  (SQLite)    │        │  (Preferences)     │          │  (Background)    │
+└──────────────┘        └────────────────────┘          └──────────────────┘
+        │                           │                             │
+        ▼                           ▼                             ▼
+┌──────────────┐        ┌────────────────────┐          ┌───────────────────┐
+│  7 DAOs      │        │ PrivacyPreference  │          │ModelDownloadWorker│
+│  - ChatThread│        │ Store              │          │ - progress track  │
+│  - Message   │        │ - telemetry opt-in │          │ - checksum verify │
+│  - Persona   │        │ - retention policy │          │ - queue mgmt      │
+│  - Model     │        │ - consent timestamp│          │                   │
+│  - Download  │        └────────────────────┘          └───────────────────┘
 │  - ApiConfig │
 │  - SwitchLog │
 └──────────────┘
         │
         ▼
-┌──────────────────────────────────────────────────────────-────┐
+┌───────────────────────────────────────────────────────────────┐
 │              External Systems & Services                      │
 ├───────────────────────────────────────────────────────────────┤
 │  📱 MediaPipe (Local Inference)                               │
@@ -266,72 +266,84 @@
 └──────────────────────────────────────────────────────────────┘
     │
     ├─► ChatThread
-    │   ├─ id: UUID (PK)
-    │   ├─ personaId: UUID (FK → PersonaProfile)
+    │   ├─ threadId: String (PK, UUID)
     │   ├─ title: String?
+    │   ├─ personaId: String? (FK → PersonaProfile)
+    │   ├─ activeModelId: String
     │   ├─ createdAt: Instant
     │   ├─ updatedAt: Instant
     │   └─ isArchived: Boolean
     │
     ├─► Message
-    │   ├─ id: UUID (PK)
-    │   ├─ threadId: UUID (FK → ChatThread, CASCADE)
-    │   ├─ role: MessageRole (USER/ASSISTANT/SYSTEM)
-    │   ├─ content: String
-    │   ├─ timestamp: Instant
+    │   ├─ messageId: String (PK, UUID)
+    │   ├─ threadId: String (FK → ChatThread, CASCADE)
+    │   ├─ role: Role (USER/ASSISTANT/SYSTEM)
+    │   ├─ text: String?
+    │   ├─ audioUri: String?
+    │   ├─ imageUri: String?
+    │   ├─ source: MessageSource (LOCAL_MODEL/CLOUD_API)
     │   ├─ latencyMs: Long?
+    │   ├─ createdAt: Instant
     │   ├─ errorCode: String?
-    │   └─ INDEX(threadId, timestamp)
+    │   └─ INDEX(threadId, createdAt)
     │
     ├─► PersonaProfile
-    │   ├─ id: UUID (PK)
+    │   ├─ personaId: String (PK, UUID)
     │   ├─ name: String
+    │   ├─ description: String
     │   ├─ systemPrompt: String
+    │   ├─ defaultModelPreference: String?
     │   ├─ temperature: Float
     │   ├─ topP: Float
-    │   ├─ modelPreference: String?
-    │   └─ createdAt: Instant
-    │
-    ├─► PersonaSwitchLog
-    │   ├─ id: UUID (PK)
-    │   ├─ threadId: UUID (FK → ChatThread, CASCADE)
-    │   ├─ fromPersonaId: UUID?
-    │   ├─ toPersonaId: UUID (FK → PersonaProfile)
-    │   ├─ timestamp: Instant
-    │   └─ action: SwitchAction (CONTINUE/START_NEW)
-    │
-    ├─► ModelPackage
-    │   ├─ id: UUID (PK)
-    │   ├─ name: String
-    │   ├─ version: String
-    │   ├─ provider: ProviderType
-    │   ├─ capabilities: Set<Capability>
-    │   ├─ sizeBytes: Long
-    │   ├─ localPath: String?
-    │   ├─ isInstalled: Boolean
-    │   └─ metadata: String (JSON)
-    │
-    ├─► DownloadTask
-    │   ├─ id: UUID (PK)
-    │   ├─ modelPackageId: UUID (FK → ModelPackage)
-    │   ├─ status: DownloadStatus
-    │   ├─ progressPercent: Int
-    │   ├─ downloadedBytes: Long
-    │   ├─ totalBytes: Long
-    │   ├─ workRequestId: String?
-    │   ├─ errorMessage: String?
+    │   ├─ defaultVoice: String?
+    │   ├─ defaultImageStyle: String?
     │   ├─ createdAt: Instant
     │   └─ updatedAt: Instant
     │
+    ├─► PersonaSwitchLog
+    │   ├─ logId: String (PK, UUID)
+    │   ├─ threadId: String (FK → ChatThread, CASCADE)
+    │   ├─ previousPersonaId: String?
+    │   ├─ newPersonaId: String
+    │   ├─ actionTaken: PersonaSwitchAction (CONTINUE/START_NEW)
+    │   └─ createdAt: Instant
+    │
+    ├─► ModelPackage
+    │   ├─ modelId: String
+    │   ├─ displayName: String
+    │   ├─ version: String
+    │   ├─ providerType: ProviderType
+    │   ├─ deliveryType: DeliveryType
+    │   ├─ minAppVersion: Int
+    │   ├─ sizeBytes: Long
+    │   ├─ capabilities: Set<String>
+    │   ├─ installState: InstallState
+    │   ├─ downloadTaskId: UUID?
+    │   ├─ manifestUrl: String
+    │   ├─ checksumSha256: String?
+    │   ├─ signature: String?
+    │   ├─ createdAt: Instant
+    │   └─ updatedAt: Instant
+    │
+    ├─► DownloadTask
+    │   ├─ taskId: UUID
+    │   ├─ modelId: String
+    │   ├─ progress: Float
+    │   ├─ status: DownloadStatus
+    │   ├─ bytesDownloaded: Long
+    │   ├─ startedAt: Instant?
+    │   ├─ finishedAt: Instant?
+    │   └─ errorMessage: String?
+    │
     └─► ApiProviderConfig
-        ├─ id: UUID (PK)
-        ├─ name: String
+        ├─ providerId: String (PK)
+        ├─ providerName: String
         ├─ baseUrl: String
-        ├─ apiKey: String?
-        ├─ isDefault: Boolean
-        ├─ status: ProviderStatus
+        ├─ apiKey: String
+        ├─ apiType: APIType
+        ├─ isEnabled: Boolean
         ├─ quotaResetAt: Instant?
-        └─ createdAt: Instant
+        └─ lastStatus: ProviderStatus
 ```
 
 ## State Management (Reactive Flows)
