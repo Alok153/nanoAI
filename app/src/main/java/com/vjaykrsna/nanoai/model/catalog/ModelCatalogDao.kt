@@ -41,6 +41,16 @@ interface ModelPackageWriteDao {
   @Insert(onConflict = OnConflictStrategy.REPLACE)
   suspend fun insertAll(models: List<ModelPackageEntity>)
 
+  @Transaction
+  suspend fun replaceCatalog(models: List<ModelPackageEntity>) {
+    if (models.isEmpty()) {
+      clearAll()
+    } else {
+      insertAll(models)
+      deleteModelsNotIn(models.map(ModelPackageEntity::modelId))
+    }
+  }
+
   @Update suspend fun update(model: ModelPackageEntity)
 
   @Delete suspend fun delete(model: ModelPackageEntity)
@@ -73,6 +83,11 @@ interface ModelPackageWriteDao {
     signature: String?,
     updatedAt: Instant,
   )
+
+  @Query("DELETE FROM model_packages") suspend fun clearAll()
+
+  @Query("DELETE FROM model_packages WHERE model_id NOT IN (:modelIds)")
+  suspend fun deleteModelsNotIn(modelIds: List<String>)
 }
 
 /** Relations between model packages and their manifests. */

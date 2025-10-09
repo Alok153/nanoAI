@@ -43,6 +43,9 @@ interface ModelCatalogRepository {
   /** Insert or update a model in the catalog. */
   suspend fun upsertModel(model: ModelPackage)
 
+  /** Replace catalog entries, preserving local install states. */
+  suspend fun replaceCatalog(models: List<ModelPackage>)
+
   /** Observe all models (reactive updates). */
   fun observeAllModels(): Flow<List<ModelPackage>>
 

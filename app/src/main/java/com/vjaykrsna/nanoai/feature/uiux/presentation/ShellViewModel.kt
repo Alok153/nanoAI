@@ -138,7 +138,7 @@ private val MODE_CARD_DEFINITIONS =
     ),
     ModeCardDefinition(
       id = ModeId.LIBRARY,
-      title = "Library",
+      title = "Model Library",
       subtitle = "Manage AI models",
       icon = Icons.AutoMirrored.Filled.LibraryBooks,
       actionId = "view_library",

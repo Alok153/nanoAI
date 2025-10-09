@@ -53,6 +53,28 @@ constructor(
     modelPackageWriteDao.insert(model.toEntity())
   }
 
+  override suspend fun replaceCatalog(models: List<ModelPackage>) {
+    val existingById = modelPackageReadDao.getAll().associateBy { it.modelId }
+    val mergedEntities =
+      models.map { model ->
+        val incoming = model.toEntity()
+        val persisted = existingById[incoming.modelId]
+        if (persisted != null) {
+          incoming.copy(
+            installState = persisted.installState,
+            downloadTaskId = persisted.downloadTaskId,
+            checksumSha256 = incoming.checksumSha256 ?: persisted.checksumSha256,
+            signature = incoming.signature ?: persisted.signature,
+            createdAt = persisted.createdAt,
+            updatedAt = maxOf(incoming.updatedAt, persisted.updatedAt),
+          )
+        } else {
+          incoming
+        }
+      }
+    modelPackageWriteDao.replaceCatalog(mergedEntities)
+  }
+
   override suspend fun updateDownloadTaskId(modelId: String, taskId: UUID?) {
     modelPackageWriteDao.updateDownloadTaskId(modelId, taskId?.toString(), clock.now())
   }

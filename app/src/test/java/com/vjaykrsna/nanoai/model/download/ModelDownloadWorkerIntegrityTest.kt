@@ -180,6 +180,11 @@ class ModelDownloadWorkerIntegrityTest {
     ) {
       updatedIntegrity[modelId] = checksum
     }
+
+    override suspend fun clearAll() = throw UnsupportedOperationException()
+
+    override suspend fun deleteModelsNotIn(modelIds: List<String>) =
+      throw UnsupportedOperationException()
   }
 
   private class FakeDownloadManifestDao : DownloadManifestDao {

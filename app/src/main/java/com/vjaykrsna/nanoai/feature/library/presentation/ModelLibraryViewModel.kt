@@ -6,6 +6,7 @@ import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
 import com.vjaykrsna.nanoai.feature.library.domain.ModelDownloadsAndExportUseCase
+import com.vjaykrsna.nanoai.feature.library.domain.RefreshModelCatalogUseCase
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
 import com.vjaykrsna.nanoai.feature.library.model.ProviderType
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -32,9 +33,13 @@ class ModelLibraryViewModel
 constructor(
   private val modelDownloadsAndExportUseCase: ModelDownloadsAndExportUseCase,
   private val modelCatalogRepository: ModelCatalogRepository,
+  private val refreshModelCatalogUseCase: RefreshModelCatalogUseCase,
 ) : ViewModel() {
   private val _isLoading = MutableStateFlow(false)
   val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+  private val _isRefreshing = MutableStateFlow(false)
+  val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
   private val _errorEvents = MutableSharedFlow<LibraryError>()
   val errorEvents = _errorEvents.asSharedFlow()
@@ -74,13 +79,8 @@ constructor(
     combine(allModels, filters) { models, filterState ->
         val filtered = models.filterBy(filterState)
         ModelLibrarySections(
-          activeDownloads =
-            filtered.filter {
-              it.installState == InstallState.DOWNLOADING || it.installState == InstallState.PAUSED
-            },
           attention = filtered.filter { it.installState == InstallState.ERROR },
           installed = filtered.filter { it.installState == InstallState.INSTALLED },
-          available = filtered.filter { it.installState == InstallState.NOT_INSTALLED },
         )
       }
       .stateIn(
@@ -91,15 +91,10 @@ constructor(
 
   val summary: StateFlow<ModelLibrarySummary> =
     combine(allModels, installedModels) { all, installed ->
-        val activeCount =
-          all.count {
-            it.installState == InstallState.DOWNLOADING || it.installState == InstallState.PAUSED
-          }
         val attentionCount = all.count { it.installState == InstallState.ERROR }
         ModelLibrarySummary(
           total = all.size,
           installed = installed.size,
-          active = activeCount,
           attention = attentionCount,
           installedBytes = installed.sumOf(ModelPackage::sizeBytes),
         )
@@ -119,6 +114,32 @@ constructor(
     modelDownloadsAndExportUseCase
       .getQueuedDownloads()
       .stateIn(viewModelScope, SharingStarted.WhileSubscribed(FLOW_STOP_TIMEOUT_MS), emptyList())
+
+  init {
+    refreshCatalog()
+  }
+
+  fun refreshCatalog() {
+    viewModelScope.launch {
+      if (_isRefreshing.value) return@launch
+      val shouldToggleLoading = allModels.value.isEmpty() && !_isLoading.value
+      if (shouldToggleLoading) {
+        _isLoading.value = true
+      }
+      _isRefreshing.value = true
+      refreshModelCatalogUseCase().onFailure { error ->
+        _errorEvents.emit(
+          LibraryError.UnexpectedError(
+            error.message ?: "Failed to refresh model catalog",
+          ),
+        )
+      }
+      _isRefreshing.value = false
+      if (shouldToggleLoading) {
+        _isLoading.value = false
+      }
+    }
+  }
 
   fun updateSearchQuery(query: String) {
     _filters.update { it.copy(searchQuery = query) }
@@ -327,16 +348,13 @@ data class LibraryFilterState(
 }
 
 data class ModelLibrarySections(
-  val activeDownloads: List<ModelPackage> = emptyList(),
   val attention: List<ModelPackage> = emptyList(),
   val installed: List<ModelPackage> = emptyList(),
-  val available: List<ModelPackage> = emptyList(),
 )
 
 data class ModelLibrarySummary(
   val total: Int = 0,
   val installed: Int = 0,
-  val active: Int = 0,
   val attention: Int = 0,
   val installedBytes: Long = 0,
 )

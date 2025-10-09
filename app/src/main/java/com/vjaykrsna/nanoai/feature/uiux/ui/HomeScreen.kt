@@ -11,8 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -32,7 +30,6 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vjaykrsna.nanoai.feature.uiux.state.CommandAction
 import com.vjaykrsna.nanoai.feature.uiux.state.ModeCard
@@ -68,10 +65,7 @@ fun HomeScreen(
 
   NanoScreen(
     modifier = modifier.testTag("home_hub"),
-    header = { HomeHeaderSection(modeCardsCount = modeCards.size) },
   ) {
-    HomeSearchPrompt()
-
     if (quickActions.isNotEmpty()) {
       QuickActionsSection(
         actions = quickActions,
@@ -104,41 +98,6 @@ fun HomeScreen(
       )
     }
   }
-}
-
-@Composable
-private fun HomeHeaderSection(modeCardsCount: Int) {
-  Column(verticalArrangement = Arrangement.spacedBy(NanoSpacing.sm)) {
-    Text(
-      text = "Home hub",
-      style = MaterialTheme.typography.headlineSmall,
-      fontWeight = FontWeight.SemiBold,
-      modifier = Modifier.semantics { heading() },
-    )
-    Text(
-      text = "Choose from $modeCardsCount modes or jump back into recent work.",
-      style = MaterialTheme.typography.bodyMedium,
-      color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-  }
-}
-
-@Composable
-private fun HomeSearchPrompt() {
-  NanoInputField(
-    value = "",
-    onValueChange = {},
-    label = "Search or jump to action",
-    placeholder = "Search or jump to action",
-    leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
-    readOnly = true,
-    modifier =
-      Modifier.fillMaxWidth().semantics {
-        role = Role.Button
-        contentDescription = "Open command palette"
-        stateDescription = "Opens global command search"
-      },
-  )
 }
 
 @Composable

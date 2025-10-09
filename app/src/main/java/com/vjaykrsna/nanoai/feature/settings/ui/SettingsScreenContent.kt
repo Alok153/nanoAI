@@ -39,17 +39,17 @@ import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoSpacing
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.layout.NanoSection
 import kotlinx.coroutines.launch
 
-private enum class SettingsCategory(val title: String, val subtitle: String) {
-  GENERAL(title = "General", subtitle = "Language, startup behavior, input preferences"),
-  APPEARANCE(title = "Appearance", subtitle = "Theme, font scale, layout density"),
-  PRIVACY_SECURITY(title = "Privacy & Security", subtitle = "Local data, telemetry, app lock"),
-  OFFLINE_AND_MODELS(title = "Offline & Models", subtitle = "Model management, storage control"),
-  MODES(title = "Modes", subtitle = "Default preferences for each mode"),
-  NOTIFICATIONS(title = "Notifications", subtitle = "Completion alerts and reminders"),
-  ACCESSIBILITY(title = "Accessibility", subtitle = "Text size, contrast, voice navigation"),
-  BACKUP_RESTORE(title = "Backup & Restore", subtitle = "Export and import your data"),
-  ADVANCED(title = "Advanced", subtitle = "Diagnostics, cache reset, experiments"),
-  ABOUT_HELP(title = "About & Help", subtitle = "Version info, feedback, policies"),
+private enum class SettingsCategory(val title: String) {
+  GENERAL(title = "General"),
+  APPEARANCE(title = "Appearance"),
+  PRIVACY_SECURITY(title = "Privacy & Security"),
+  OFFLINE_AND_MODELS(title = "Offline & Models"),
+  MODES(title = "Modes"),
+  NOTIFICATIONS(title = "Notifications"),
+  ACCESSIBILITY(title = "Accessibility"),
+  BACKUP_RESTORE(title = "Backup & Restore"),
+  ADVANCED(title = "Advanced"),
+  ABOUT_HELP(title = "About & Help"),
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -90,17 +90,8 @@ internal fun SettingsScreenContent(
     Column(
       modifier =
         Modifier.fillMaxSize()
-          .padding(innerPadding)
-          .padding(horizontal = NanoSpacing.lg, vertical = NanoSpacing.md),
-      verticalArrangement = Arrangement.spacedBy(NanoSpacing.md),
+          .padding(horizontal = NanoSpacing.lg),
     ) {
-      SettingsHeader()
-      Text(
-        text = currentCategory.subtitle,
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-
       SettingsCategoryTabs(
         categories = categories,
         selectedCategory = currentCategory,
@@ -126,16 +117,6 @@ internal fun SettingsScreenContent(
       }
     }
   }
-}
-
-@Composable
-private fun SettingsHeader(modifier: Modifier = Modifier) {
-  Text(
-    text = "Settings",
-    style = MaterialTheme.typography.headlineMedium,
-    fontWeight = FontWeight.Bold,
-    modifier = modifier,
-  )
 }
 
 @Composable
@@ -193,7 +174,7 @@ private fun SettingsCategoryContent(
   LazyColumn(
     modifier = modifier.fillMaxSize(),
     verticalArrangement = Arrangement.spacedBy(NanoSpacing.lg),
-    contentPadding = PaddingValues(bottom = 112.dp),
+    contentPadding = PaddingValues(top = NanoSpacing.lg, bottom = 112.dp),
   ) {
     when (category) {
       SettingsCategory.GENERAL -> {
@@ -281,14 +262,7 @@ private fun SettingsCategoryContent(
           )
         }
 
-        item {
-          SettingsPlaceholderSection(
-            title = "On-device Models",
-            description = "Download, update, and reclaim storage for offline-capable models.",
-            supportingText =
-              "Hooks will connect to ModelRepository once the LiteRT pipeline lands.",
-          )
-        }
+        item { OnDeviceModelsSection(statusMessage = state.uiUxState.statusMessage) }
       }
       SettingsCategory.MODES -> {
         item {
@@ -411,6 +385,51 @@ private fun SettingsPlaceholderSection(
       description = description,
       supportingText = supportingText,
     )
+  }
+}
+
+@Composable
+private fun OnDeviceModelsSection(
+  statusMessage: String?,
+  modifier: Modifier = Modifier,
+) {
+  Card(
+    modifier = modifier.fillMaxWidth(),
+    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+  ) {
+    Column(
+      modifier = Modifier.padding(NanoSpacing.lg),
+      verticalArrangement = Arrangement.spacedBy(NanoSpacing.md),
+    ) {
+      Text(
+        text = "On-device Models",
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+      )
+      Text(
+        text =
+          "Models added by nanoAI sync automatically appear in the library. Pull down on the " +
+            "library list to refresh from the catalog.",
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+
+      if (statusMessage != null) {
+        Text(
+          text = statusMessage,
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.primary,
+          modifier = Modifier.padding(vertical = NanoSpacing.sm),
+        )
+      }
+
+      Text(
+        text =
+          "If the catalog changes, the library keeps your install status and local downloads intact.",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+    }
   }
 }
 

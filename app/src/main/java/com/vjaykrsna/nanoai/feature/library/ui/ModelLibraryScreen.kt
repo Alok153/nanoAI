@@ -8,6 +8,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -28,6 +32,7 @@ import com.vjaykrsna.nanoai.feature.library.presentation.LibraryError
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryViewModel
 import kotlinx.coroutines.flow.collectLatest
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun ModelLibraryScreen(
   modifier: Modifier = Modifier,
@@ -41,6 +46,7 @@ fun ModelLibraryScreen(
   val queuedDownloads by viewModel.queuedDownloads.collectAsState()
   val hasActiveFilters by viewModel.hasActiveFilters.collectAsState()
   val isLoading by viewModel.isLoading.collectAsState()
+  val isRefreshing by viewModel.isRefreshing.collectAsState()
 
   val snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 
@@ -60,9 +66,15 @@ fun ModelLibraryScreen(
     }
   }
 
+  val pullRefreshState =
+    rememberPullRefreshState(
+      refreshing = isRefreshing,
+      onRefresh = viewModel::refreshCatalog,
+    )
+
   Box(
     modifier =
-      modifier.fillMaxSize().semantics {
+      modifier.fillMaxSize().pullRefresh(pullRefreshState).semantics {
         contentDescription = "Model library screen with enhanced management controls"
       },
   ) {
@@ -96,13 +108,8 @@ fun ModelLibraryScreen(
         ModelLibraryContent(
           modifier = Modifier.weight(1f),
           sections = sections,
-          downloads = queuedDownloads,
           onDownload = { model -> viewModel.downloadModel(model.modelId) },
           onDelete = { model -> viewModel.deleteModel(model.modelId) },
-          onPause = viewModel::pauseDownload,
-          onResume = viewModel::resumeDownload,
-          onCancel = viewModel::cancelDownload,
-          onRetry = viewModel::retryDownload,
         )
       }
     }
@@ -110,6 +117,12 @@ fun ModelLibraryScreen(
     SnackbarHost(
       hostState = snackbarHostState,
       modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp),
+    )
+
+    PullRefreshIndicator(
+      refreshing = isRefreshing,
+      state = pullRefreshState,
+      modifier = Modifier.align(Alignment.TopCenter),
     )
   }
 }

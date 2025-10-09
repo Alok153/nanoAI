@@ -80,22 +80,7 @@ internal object ModelLibraryComponentsConstants {
 
 @Composable
 internal fun LibraryHeader(summary: ModelLibrarySummary) {
-  Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-      Text(
-        text = "Model Library",
-        style = MaterialTheme.typography.headlineMedium,
-        fontWeight = FontWeight.Bold,
-      )
-      Text(
-        text = "Manage on-device AI runtimes, downloads, and provider metadata",
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-    }
-
-    LibrarySummaryRow(summary = summary)
-  }
+  LibrarySummaryRow(summary = summary)
 }
 
 @Composable
@@ -109,12 +94,6 @@ internal fun LibrarySummaryRow(summary: ModelLibrarySummary) {
       value = summary.installed.toString(),
       modifier = Modifier.weight(1f)
     )
-    SummaryCard(
-      title = "Available",
-      value = (summary.total - summary.installed).coerceAtLeast(0).toString(),
-      modifier = Modifier.weight(1f)
-    )
-    SummaryCard(title = "Active", value = summary.active.toString(), modifier = Modifier.weight(1f))
     SummaryCard(
       title = "Storage",
       value = formatSize(summary.installedBytes),
@@ -255,42 +234,25 @@ internal fun ModelLibraryToolbar(
 @Composable
 internal fun ModelLibraryContent(
   sections: ModelLibrarySections,
-  downloads: List<DownloadTask>,
   onDownload: (ModelPackage) -> Unit,
   onDelete: (ModelPackage) -> Unit,
-  onPause: (UUID) -> Unit,
-  onResume: (UUID) -> Unit,
-  onCancel: (UUID) -> Unit,
   modifier: Modifier = Modifier,
-  onRetry: (UUID) -> Unit,
 ) {
-  val listHasContent = downloads.isNotEmpty() || sections.hasModels()
+  val listHasContent = sections.attention.isNotEmpty() || sections.installed.isNotEmpty()
 
   LazyColumn(
     modifier = modifier.fillMaxWidth(),
     contentPadding = PaddingValues(bottom = 32.dp),
     verticalArrangement = Arrangement.spacedBy(16.dp),
   ) {
-    if (downloads.isNotEmpty()) {
-      item(key = "downloads_header") {
-        SectionHeader(title = "Active tasks", subtitle = "Monitor downloads, pauses, and failures")
-      }
-      item(key = "downloads_list") {
-        ActiveDownloadSection(
-          downloads = downloads,
-          onPause = onPause,
-          onResume = onResume,
-          onCancel = onCancel,
-          onRetry = onRetry,
-        )
-      }
-    }
-
     if (sections.attention.isNotEmpty()) {
       item(key = "attention_header") {
         SectionHeader(title = "Needs attention", subtitle = "Downloads that require manual action")
       }
-      items(items = sections.attention, key = { "attention_${'$'}{it.modelId}" }) { model ->
+      items(
+        items = sections.attention,
+        key = { "attention_${it.modelId}_${it.providerType}_${it.version}" }
+      ) { model ->
         ModelManagementCard(
           model = model,
           primaryActionLabel = "Retry",
@@ -306,7 +268,10 @@ internal fun ModelLibraryContent(
       item(key = "installed_header") {
         SectionHeader(title = "Installed", subtitle = "Local runtimes ready for inference")
       }
-      items(items = sections.installed, key = { "installed_${'$'}{it.modelId}" }) { model ->
+      items(
+        items = sections.installed,
+        key = { "installed_${it.modelId}_${it.providerType}_${it.version}" }
+      ) { model ->
         ModelManagementCard(
           model = model,
           primaryActionLabel = "Remove",
@@ -316,19 +281,6 @@ internal fun ModelLibraryContent(
           emphasizeSecondary = false,
           primaryActionIcon = Icons.Filled.Delete,
           secondaryActionIcon = Icons.Filled.Download,
-        )
-      }
-    }
-
-    if (sections.available.isNotEmpty()) {
-      item(key = "available_header") {
-        SectionHeader(title = "Available", subtitle = "Models you can download for offline use")
-      }
-      items(items = sections.available, key = { "available_${'$'}{it.modelId}" }) { model ->
-        ModelManagementCard(
-          model = model,
-          primaryActionLabel = "Download",
-          onPrimaryAction = { onDownload(model) },
         )
       }
     }
@@ -628,10 +580,7 @@ private fun downloadStatusLabel(task: DownloadTask): String {
 }
 
 private fun ModelLibrarySections.hasModels(): Boolean =
-  activeDownloads.isNotEmpty() ||
-    attention.isNotEmpty() ||
-    installed.isNotEmpty() ||
-    available.isNotEmpty()
+  attention.isNotEmpty() || installed.isNotEmpty()
 
 private fun ProviderType.displayName(): String =
   name.lowercase(Locale.US).replace('_', ' ').replaceFirstChar {
