@@ -202,7 +202,6 @@ private fun ModeCardItem(
   NanoCard(
     title = card.title,
     subtitle = card.subtitle,
-    supportingText = card.primaryActionLabel,
     icon = card.icon,
     badge = card.badge?.let { badgeText(it) },
     enabled = card.enabled,
@@ -309,7 +308,6 @@ private fun RecentActivityItemCard(
       },
   )
 }
-
 
 private fun columnsForLayout(layout: ShellLayoutState): Int =
   when (layout.windowSizeClass.widthSizeClass) {

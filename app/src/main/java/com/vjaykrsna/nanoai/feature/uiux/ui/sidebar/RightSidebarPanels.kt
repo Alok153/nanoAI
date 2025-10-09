@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -34,9 +33,7 @@ import com.vjaykrsna.nanoai.core.model.PersonaSwitchAction
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellUiState
 import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
 import com.vjaykrsna.nanoai.feature.uiux.state.PaletteSource
-import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
 import com.vjaykrsna.nanoai.feature.uiux.state.RightPanel
-import com.vjaykrsna.nanoai.feature.uiux.ui.progress.ProgressCenterPanel
 import com.vjaykrsna.nanoai.feature.uiux.ui.shell.ShellUiEvent
 
 /**
@@ -50,14 +47,13 @@ fun RightSidebarPanels(
   modifier: Modifier = Modifier,
 ) {
   val layout = state.layout
-  val activePanel = layout.activeRightPanel ?: RightPanel.PROGRESS_CENTER
+  val activePanel = layout.activeRightPanel ?: RightPanel.MODEL_SELECTOR
 
   Surface(
     modifier =
       modifier.testTag("right_sidebar_panels").semantics {
         stateDescription =
           when (activePanel) {
-            RightPanel.PROGRESS_CENTER -> "Progress"
             RightPanel.MODEL_SELECTOR -> "Model controls"
             RightPanel.SETTINGS_SHORTCUT -> "Settings shortcuts"
           }
@@ -88,12 +84,6 @@ fun RightSidebarPanels(
       )
 
       when (activePanel) {
-        RightPanel.PROGRESS_CENTER ->
-          ProgressPanel(
-            jobs = layout.progressJobs,
-            onRetry = { job -> onEvent(ShellUiEvent.QueueJob(job)) },
-            onDismiss = { job -> onEvent(ShellUiEvent.CompleteJob(job.jobId)) },
-          )
         RightPanel.MODEL_SELECTOR ->
           if (layout.activeMode == ModeId.CHAT && state.chatState != null) {
             ChatModelSelectorPanel(
@@ -146,7 +136,6 @@ private fun RightSidebarHeader(
     Text(
       text =
         when (activePanel) {
-          RightPanel.PROGRESS_CENTER -> "Progress center"
           RightPanel.MODEL_SELECTOR -> "Model controls"
           RightPanel.SETTINGS_SHORTCUT -> "Settings shortcuts"
         },
@@ -192,25 +181,10 @@ private fun RightPanelSwitcher(
   }
 }
 
-@Composable
-private fun ProgressPanel(
-  jobs: List<ProgressJob>,
-  onRetry: (ProgressJob) -> Unit,
-  onDismiss: (ProgressJob) -> Unit,
-) {
-  ProgressCenterPanel(
-    jobs = jobs,
-    onRetry = onRetry,
-    onDismissJob = onDismiss,
-    modifier = Modifier.fillMaxWidth().testTag("progress_center_panel"),
-  )
-}
-
 private fun panelLabel(
   panel: RightPanel
 ): Pair<String, androidx.compose.ui.graphics.vector.ImageVector> =
   when (panel) {
-    RightPanel.PROGRESS_CENTER -> "Progress" to Icons.Rounded.Download
     RightPanel.MODEL_SELECTOR -> "Models" to Icons.Rounded.Tune
     RightPanel.SETTINGS_SHORTCUT -> "Settings" to Icons.Outlined.Settings
   }

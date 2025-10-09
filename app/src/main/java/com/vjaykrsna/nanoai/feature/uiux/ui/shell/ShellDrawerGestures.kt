@@ -158,7 +158,7 @@ private fun ShellLayoutState.closeRightDrawerIfNeeded(onEvent: (ShellUiEvent) ->
 }
 
 private fun ShellLayoutState.activePanelOrDefault(): RightPanel =
-  activeRightPanel ?: RightPanel.PROGRESS_CENTER
+  activeRightPanel ?: RightPanel.MODEL_SELECTOR
 
 private fun handleOpenLeft(
   totalDrag: Float,

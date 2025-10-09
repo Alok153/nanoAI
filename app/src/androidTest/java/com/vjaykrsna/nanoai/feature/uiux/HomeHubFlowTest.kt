@@ -113,7 +113,7 @@ class HomeHubFlowTest {
         windowSizeClass = windowSizeClass,
         isLeftDrawerOpen = false,
         isRightDrawerOpen = false,
-        activeRightPanel = RightPanel.PROGRESS_CENTER,
+        activeRightPanel = RightPanel.MODEL_SELECTOR,
         activeMode = ModeId.HOME,
         showCommandPalette = false,
         connectivity = ConnectivityStatus.ONLINE,

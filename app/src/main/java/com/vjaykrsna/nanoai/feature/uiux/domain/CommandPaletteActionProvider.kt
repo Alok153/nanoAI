@@ -8,7 +8,6 @@ import com.vjaykrsna.nanoai.feature.uiux.state.JobType
 import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
 import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
 import com.vjaykrsna.nanoai.feature.uiux.state.RecentActivityItem
-import com.vjaykrsna.nanoai.feature.uiux.state.RightPanel
 import com.vjaykrsna.nanoai.feature.uiux.state.toRoute
 import com.vjaykrsna.nanoai.ui.navigation.Screen
 import javax.inject.Inject
@@ -165,10 +164,10 @@ class CommandPaletteActionProvider @Inject constructor() {
       add(
         CommandAction(
           id = "jobs_view_all",
-          title = "View Progress Center",
+          title = "Open Model Library",
           subtitle = "${progressJobs.size} active job${if (progressJobs.size != 1) "s" else ""}",
           category = CommandCategory.JOBS,
-          destination = CommandDestination.OpenRightPanel(RightPanel.PROGRESS_CENTER),
+          destination = CommandDestination.Navigate(ModeId.LIBRARY.toRoute()),
         )
       )
     }
@@ -182,7 +181,7 @@ class CommandPaletteActionProvider @Inject constructor() {
           subtitle = "${(job.progress * PERCENT_MULTIPLIER).toInt()}% • $jobStatusDisplay",
           enabled = job.canRetry,
           category = CommandCategory.JOBS,
-          destination = CommandDestination.OpenRightPanel(RightPanel.PROGRESS_CENTER),
+          destination = CommandDestination.Navigate(ModeId.LIBRARY.toRoute()),
         )
       )
     }

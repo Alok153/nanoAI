@@ -189,7 +189,7 @@ class OfflineProgressTest {
         windowSizeClass = windowSizeClass,
         isLeftDrawerOpen = false,
         isRightDrawerOpen = false,
-        activeRightPanel = RightPanel.PROGRESS_CENTER,
+        activeRightPanel = RightPanel.MODEL_SELECTOR,
         activeMode = ModeId.HOME,
         showCommandPalette = false,
         connectivity = connectivity,
@@ -206,7 +206,7 @@ class OfflineProgressTest {
             id = "view-queue",
             title = "View queue (${jobs.size})",
             category = CommandCategory.JOBS,
-            destination = CommandDestination.OpenRightPanel(RightPanel.PROGRESS_CENTER),
+            destination = CommandDestination.OpenRightPanel(RightPanel.MODEL_SELECTOR),
           ),
       )
     val palette =

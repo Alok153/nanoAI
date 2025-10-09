@@ -125,7 +125,7 @@ constructor(
           status = status,
           lastDismissedAt = prefs.connectivityBannerLastDismissed?.toJavaInstant(),
           queuedActionCount = jobs.count { !it.isTerminal },
-          cta = progressCenterCta(status),
+          cta = modelLibraryCta(status),
         )
       }
       .stateIn(
@@ -329,20 +329,20 @@ constructor(
       isSidebarCollapsed = false,
     )
 
-  private fun progressCenterCta(status: ConnectivityStatus): CommandAction? =
+  private fun modelLibraryCta(status: ConnectivityStatus): CommandAction? =
     when (status) {
       ConnectivityStatus.OFFLINE,
-      ConnectivityStatus.LIMITED -> PROGRESS_CENTER_CTA
+      ConnectivityStatus.LIMITED -> MODEL_LIBRARY_CTA
       ConnectivityStatus.ONLINE -> null
     }
 
   private companion object {
-    private val PROGRESS_CENTER_CTA =
+    private val MODEL_LIBRARY_CTA =
       CommandAction(
-        id = "open-progress-center",
-        title = "View queue",
+        id = "open-model-library",
+        title = "Manage downloads",
         category = CommandCategory.JOBS,
-        destination = CommandDestination.OpenRightPanel(RightPanel.PROGRESS_CENTER),
+        destination = CommandDestination.Navigate(ModeId.LIBRARY.toRoute()),
       )
   }
 }

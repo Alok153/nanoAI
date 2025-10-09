@@ -94,17 +94,17 @@ class ShellViewModelTest {
           dispatcher,
         )
 
-      viewModel.toggleRightDrawer(RightPanel.PROGRESS_CENTER)
+      viewModel.toggleRightDrawer(RightPanel.MODEL_SELECTOR)
       advanceUntilIdle()
 
       val uiState =
         viewModel.uiState.first { state ->
-          repository.rightDrawerToggles.contains(RightPanel.PROGRESS_CENTER) &&
-            state.layout.activeRightPanel == RightPanel.PROGRESS_CENTER
+          repository.rightDrawerToggles.contains(RightPanel.MODEL_SELECTOR) &&
+            state.layout.activeRightPanel == RightPanel.MODEL_SELECTOR
         }
       assertThat(uiState.layout.isRightDrawerOpen).isTrue()
-      assertThat(uiState.layout.activeRightPanel).isEqualTo(RightPanel.PROGRESS_CENTER)
-      assertThat(repository.rightDrawerToggles).containsExactly(RightPanel.PROGRESS_CENTER)
+      assertThat(uiState.layout.activeRightPanel).isEqualTo(RightPanel.MODEL_SELECTOR)
+      assertThat(repository.rightDrawerToggles).containsExactly(RightPanel.MODEL_SELECTOR)
     }
 
   @Test
@@ -326,7 +326,7 @@ class ShellViewModelTest {
             id = "open-progress",
             title = "View queue",
             category = CommandCategory.JOBS,
-            destination = CommandDestination.OpenRightPanel(RightPanel.PROGRESS_CENTER),
+            destination = CommandDestination.OpenRightPanel(RightPanel.MODEL_SELECTOR),
           ),
       )
     private val initialPreferences = UiPreferenceSnapshot()

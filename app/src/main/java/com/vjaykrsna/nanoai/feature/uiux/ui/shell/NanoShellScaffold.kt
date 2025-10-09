@@ -114,7 +114,7 @@ fun NanoShellScaffold(
 
   fun closeRightDrawerIfOpen() {
     if (layout.isRightDrawerOpen) {
-      val panel = layout.activeRightPanel ?: RightPanel.PROGRESS_CENTER
+      val panel = layout.activeRightPanel ?: RightPanel.MODEL_SELECTOR
       currentOnEvent(ShellUiEvent.ToggleRightDrawer(panel))
     }
   }

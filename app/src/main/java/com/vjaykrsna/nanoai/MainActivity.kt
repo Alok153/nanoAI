@@ -57,7 +57,7 @@ class MainActivity : ComponentActivity() {
           val layout = shellViewModel.uiState.value.layout
           when {
             layout.isRightDrawerOpen -> {
-              val panel = layout.activeRightPanel ?: RightPanel.PROGRESS_CENTER
+              val panel = layout.activeRightPanel ?: RightPanel.MODEL_SELECTOR
               shellViewModel.toggleRightDrawer(panel)
             }
             layout.isLeftDrawerOpen -> shellViewModel.toggleLeftDrawer()

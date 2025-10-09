@@ -29,11 +29,11 @@ import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoSpacing
 @Composable
 fun NanoCard(
   title: String,
+  modifier: Modifier = Modifier,
   subtitle: String? = null,
   supportingText: String? = null,
   icon: ImageVector? = null,
   badge: String? = null,
-  modifier: Modifier = Modifier,
   enabled: Boolean = true,
   onClick: (() -> Unit)? = null,
   trailingContent: (@Composable () -> Unit)? = null,
@@ -54,9 +54,7 @@ fun NanoCard(
         role = Role.Button
       }
 
-      val description =
-        semanticsDescription?.takeIf { it.isNotBlank() }
-          ?: defaultDescription
+      val description = semanticsDescription?.takeIf { it.isNotBlank() } ?: defaultDescription
 
       if (description.isNotBlank()) {
         contentDescription = description
@@ -66,7 +64,8 @@ fun NanoCard(
   val shape = RoundedCornerShape(NanoRadii.large)
   val content: @Composable () -> Unit = {
     Column(
-      modifier = Modifier.fillMaxWidth().padding(horizontal = NanoSpacing.lg, vertical = NanoSpacing.md),
+      modifier =
+        Modifier.fillMaxWidth().padding(horizontal = NanoSpacing.lg, vertical = NanoSpacing.md),
       verticalArrangement = Arrangement.spacedBy(NanoSpacing.sm),
     ) {
       Row(
@@ -108,9 +107,7 @@ fun NanoCard(
           horizontalArrangement = Arrangement.spacedBy(NanoSpacing.sm),
           verticalAlignment = Alignment.CenterVertically,
         ) {
-          badge?.let { badgeText ->
-            Badge { Text(badgeText) }
-          }
+          badge?.let { badgeText -> Badge { Text(badgeText) } }
           trailingContent?.invoke()
         }
       }
@@ -136,12 +133,16 @@ fun NanoCard(
       enabled = enabled,
       shape = shape,
       tonalElevation = NanoElevation.level2,
-    ) { content() }
+    ) {
+      content()
+    }
   } else {
     Surface(
       modifier = semanticsModifier,
       shape = shape,
       tonalElevation = NanoElevation.level1,
-    ) { content() }
+    ) {
+      content()
+    }
   }
 }

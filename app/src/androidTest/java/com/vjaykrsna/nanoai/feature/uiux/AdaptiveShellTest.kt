@@ -71,7 +71,7 @@ class AdaptiveShellTest {
         isLeftDrawerOpen = width == WindowWidthSizeClass.Compact,
         isRightDrawerOpen = false,
         activeRightPanel =
-          if (width >= WindowWidthSizeClass.Medium) RightPanel.PROGRESS_CENTER else null,
+          if (width >= WindowWidthSizeClass.Medium) RightPanel.MODEL_SELECTOR else null,
         activeMode = ModeId.HOME,
         showCommandPalette = false,
         connectivity = ConnectivityStatus.ONLINE,
@@ -89,7 +89,7 @@ class AdaptiveShellTest {
             "view-queue",
             "View queue",
             category = CommandCategory.JOBS,
-            destination = CommandDestination.OpenRightPanel(RightPanel.PROGRESS_CENTER)
+            destination = CommandDestination.OpenRightPanel(RightPanel.MODEL_SELECTOR)
           ),
       )
 

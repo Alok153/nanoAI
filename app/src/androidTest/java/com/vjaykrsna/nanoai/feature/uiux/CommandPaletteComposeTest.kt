@@ -327,7 +327,7 @@ private fun sampleState(
   pendingUndo: UndoPayload? = null,
   progressJobs: List<ProgressJob> = emptyList(),
   connectivity: ConnectivityStatus = ConnectivityStatus.ONLINE,
-  rightPanel: RightPanel? = RightPanel.PROGRESS_CENTER,
+  rightPanel: RightPanel? = RightPanel.MODEL_SELECTOR,
 ): ShellUiState {
   val windowSizeClass = WindowSizeClass.calculateFromSize(DpSize(600.dp, 800.dp))
   val layout =

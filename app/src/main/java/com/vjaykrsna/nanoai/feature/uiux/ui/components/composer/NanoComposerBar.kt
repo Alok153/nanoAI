@@ -35,8 +35,8 @@ import com.vjaykrsna.nanoai.feature.uiux.ui.components.primitives.NanoInputField
 fun NanoComposerBar(
   value: String,
   onValueChange: (String) -> Unit,
-  modifier: Modifier = Modifier,
   placeholder: String,
+  modifier: Modifier = Modifier,
   enabled: Boolean = true,
   minLines: Int = 1,
   maxLines: Int = 6,
