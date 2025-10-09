@@ -8,6 +8,8 @@ import com.vjaykrsna.nanoai.model.catalog.network.dto.ManifestVerificationReques
 import com.vjaykrsna.nanoai.model.catalog.network.dto.ManifestVerificationResponseStatusDto
 import com.vjaykrsna.nanoai.model.catalog.network.dto.ManifestVerificationStatusDto
 import com.vjaykrsna.nanoai.model.catalog.network.dto.ModelManifestDto
+import com.vjaykrsna.nanoai.model.huggingface.HuggingFaceManifestFetcher
+import com.vjaykrsna.nanoai.model.huggingface.HuggingFaceManifestRequest
 import com.vjaykrsna.nanoai.telemetry.TelemetryReporter
 import java.net.HttpURLConnection
 import java.util.UUID
@@ -51,27 +53,35 @@ constructor(
   private val json: Json,
   private val deviceIdentityProvider: DeviceIdentityProvider,
   private val telemetryReporter: TelemetryReporter,
+  private val huggingFaceManifestFetcher: HuggingFaceManifestFetcher,
   private val clock: Clock = Clock.System,
 ) : ModelManifestRepository {
   override suspend fun refreshManifest(
     modelId: String,
     version: String,
   ): NanoAIResult<DownloadManifest> {
-    return runCatching { service.getModelManifest(modelId, version) }
-      .mapCatching { dto -> validateManifest(dto) }
-      .mapCatching { dto -> dto.toDomain(clock.now()) }
-      .fold(
-        onSuccess = { manifest ->
-          localDataSource.cacheManifest(manifest.toEntity())
-          localDataSource.updateIntegrityMetadata(
-            modelId = manifest.modelId,
-            checksum = manifest.checksumSha256,
-            signature = manifest.signature,
+    val modelRecord = localDataSource.getModel(modelId)?.model
+    val locator = modelRecord?.let { ModelManifestLocator.parse(it.manifestUrl) }
+
+    return when (locator) {
+      is ModelManifestLocator.HuggingFace -> resolveHuggingFaceManifest(modelId, version, locator)
+      else ->
+        runCatching { service.getModelManifest(modelId, version) }
+          .mapCatching { dto -> validateManifest(dto) }
+          .mapCatching { dto -> dto.toDomain(clock.now()) }
+          .fold(
+            onSuccess = { manifest ->
+              localDataSource.cacheManifest(manifest.toEntity())
+              localDataSource.updateIntegrityMetadata(
+                modelId = manifest.modelId,
+                checksum = manifest.checksumSha256,
+                signature = manifest.signature,
+              )
+              NanoAIResult.success(manifest)
+            },
+            onFailure = { error -> failure("Failed to fetch manifest", modelId, error) },
           )
-          NanoAIResult.success(manifest)
-        },
-        onFailure = { error -> failure("Failed to fetch manifest", modelId, error) },
-      )
+    }
   }
 
   override suspend fun reportVerification(
@@ -81,6 +91,11 @@ constructor(
     status: VerificationOutcome,
     failureReason: String?,
   ): NanoAIResult<Unit> {
+    val locator =
+      localDataSource.getModel(modelId)?.model?.let { ModelManifestLocator.parse(it.manifestUrl) }
+    if (locator is ModelManifestLocator.HuggingFace) {
+      return NanoAIResult.success(Unit)
+    }
     val request =
       ManifestVerificationRequestDto(
         version = version,
@@ -228,5 +243,41 @@ constructor(
     private const val SUPPORT_CONTACT = "support@nanoai.app"
     private const val DEFAULT_RETRY_AFTER_SECONDS = 60L
     private const val MAX_CLIENT_ERROR_STATUS = 499
+  }
+
+  private suspend fun resolveHuggingFaceManifest(
+    modelId: String,
+    version: String,
+    locator: ModelManifestLocator.HuggingFace,
+  ): NanoAIResult<DownloadManifest> {
+    val revision = locator.revision?.takeIf { it.isNotBlank() } ?: version
+    val request =
+      HuggingFaceManifestRequest(
+        modelId = modelId,
+        repository = locator.repository,
+        revision = revision,
+        artifactPath = locator.artifactPath,
+        version = version,
+      )
+
+    return runCatching { huggingFaceManifestFetcher.fetchManifest(request) }
+      .fold(
+        onSuccess = { manifest ->
+          localDataSource.cacheManifest(manifest.toEntity())
+          localDataSource.updateIntegrityMetadata(
+            modelId = manifest.modelId,
+            checksum = manifest.checksumSha256,
+            signature = manifest.signature,
+          )
+          NanoAIResult.success(manifest)
+        },
+        onFailure = {
+          failure(
+            message = "Failed to fetch Hugging Face manifest",
+            modelId = modelId,
+            error = it,
+          )
+        },
+      )
   }
 }
