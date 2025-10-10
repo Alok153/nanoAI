@@ -2,6 +2,7 @@ package com.vjaykrsna.nanoai.core.di
 
 import android.content.Context
 import androidx.work.WorkManager
+import com.vjaykrsna.nanoai.core.network.huggingface.HuggingFaceAuthInterceptor
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -26,10 +27,13 @@ object WorkerModule {
 
   @Provides
   @Singleton
-  fun provideOkHttpClient(): OkHttpClient =
+  fun provideOkHttpClient(
+    authInterceptor: com.vjaykrsna.nanoai.core.network.huggingface.HuggingFaceAuthInterceptor,
+  ): OkHttpClient =
     OkHttpClient.Builder()
       .connectTimeout(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
       .readTimeout(READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
       .writeTimeout(WRITE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+      .addInterceptor(authInterceptor)
       .build()
 }

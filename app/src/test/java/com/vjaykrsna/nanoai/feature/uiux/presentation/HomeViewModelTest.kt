@@ -132,8 +132,7 @@ class HomeViewModelTest {
           method.name.lowercase().contains("state")
       } ?: fail("HomeViewModel must expose a StateFlow state accessor")
     val result = method.invoke(viewModel)
-    return result as? StateFlow<HomeUiState>
-      ?: fail("HomeViewModel state accessor did not return StateFlow<HomeUiState>")
+    @Suppress("UNCHECKED_CAST") return result as StateFlow<HomeUiState>
   }
 
   private fun invokeToggleTools(viewModel: Any) {

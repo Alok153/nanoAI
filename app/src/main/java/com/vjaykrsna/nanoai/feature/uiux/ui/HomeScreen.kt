@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -24,10 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
@@ -40,7 +36,6 @@ import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoSpacing
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.layout.NanoScreen
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.layout.NanoSection
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.primitives.NanoCard
-import com.vjaykrsna.nanoai.feature.uiux.ui.components.primitives.NanoInputField
 
 private const val MAX_INLINE_QUICK_ACTIONS = 3
 private const val MODE_COLUMNS_COMPACT = 2

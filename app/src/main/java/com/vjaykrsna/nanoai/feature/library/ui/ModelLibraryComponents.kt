@@ -27,7 +27,6 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
@@ -39,7 +38,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -56,73 +54,11 @@ import com.vjaykrsna.nanoai.feature.library.model.InstallState
 import com.vjaykrsna.nanoai.feature.library.model.ProviderType
 import com.vjaykrsna.nanoai.feature.library.presentation.LibraryFilterState
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibrarySections
-import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibrarySummary
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelSort
-import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryComponentsConstants.BYTES_PER_GIB
-import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryComponentsConstants.BYTES_PER_KIB
-import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryComponentsConstants.BYTES_PER_MIB
-import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryComponentsConstants.MAX_CAPABILITY_CHIPS
-import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryComponentsConstants.PERCENTAGE_MULTIPLIER
+import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.MAX_CAPABILITY_CHIPS
+import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.PERCENTAGE_MULTIPLIER
 import java.util.Locale
 import java.util.UUID
-import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
-
-@Immutable
-internal object ModelLibraryComponentsConstants {
-  const val PERCENTAGE_MULTIPLIER = 100
-  const val MAX_CAPABILITY_CHIPS = 4
-  const val BYTES_PER_KIB = 1024.0
-  const val BYTES_PER_MIB = BYTES_PER_KIB * 1024.0
-  const val BYTES_PER_GIB = BYTES_PER_MIB * 1024.0
-}
-
-@Composable
-internal fun LibraryHeader(summary: ModelLibrarySummary) {
-  LibrarySummaryRow(summary = summary)
-}
-
-@Composable
-internal fun LibrarySummaryRow(summary: ModelLibrarySummary) {
-  Row(
-    modifier = Modifier.fillMaxWidth(),
-    horizontalArrangement = Arrangement.spacedBy(12.dp),
-  ) {
-    SummaryCard(
-      title = "Installed",
-      value = summary.installed.toString(),
-      modifier = Modifier.weight(1f)
-    )
-    SummaryCard(
-      title = "Storage",
-      value = formatSize(summary.installedBytes),
-      modifier = Modifier.weight(1f)
-    )
-  }
-}
-
-@Composable
-private fun SummaryCard(
-  title: String,
-  value: String,
-  modifier: Modifier = Modifier,
-) {
-  ElevatedCard(modifier = modifier) {
-    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-      Text(
-        text = title,
-        style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
-      )
-      Text(
-        text = value,
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.SemiBold
-      )
-    }
-  }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -238,7 +174,10 @@ internal fun ModelLibraryContent(
   onDelete: (ModelPackage) -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  val listHasContent = sections.attention.isNotEmpty() || sections.installed.isNotEmpty()
+  val listHasContent =
+    sections.attention.isNotEmpty() ||
+      sections.installed.isNotEmpty() ||
+      sections.available.isNotEmpty()
 
   LazyColumn(
     modifier = modifier.fillMaxWidth(),
@@ -285,6 +224,25 @@ internal fun ModelLibraryContent(
       }
     }
 
+    if (sections.available.isNotEmpty()) {
+      item(key = "available_header") {
+        SectionHeader(title = "Available", subtitle = "Models ready for download")
+      }
+      items(
+        items = sections.available,
+        key = { "available_${it.modelId}_${it.providerType}_${it.version}" }
+      ) { model ->
+        ModelManagementCard(
+          model = model,
+          primaryActionLabel = "Download",
+          onPrimaryAction = { onDownload(model) },
+          secondaryActionLabel = null,
+          onSecondaryAction = {},
+          primaryActionIcon = Icons.Filled.Download,
+        )
+      }
+    }
+
     if (!listHasContent) {
       item(key = "empty_state") { EmptyState() }
     }
@@ -307,34 +265,6 @@ private fun SectionHeader(
       style = MaterialTheme.typography.bodySmall,
       color = MaterialTheme.colorScheme.onSurfaceVariant
     )
-  }
-}
-
-@Composable
-private fun ActiveDownloadSection(
-  downloads: List<DownloadTask>,
-  onPause: (UUID) -> Unit,
-  onResume: (UUID) -> Unit,
-  onCancel: (UUID) -> Unit,
-  onRetry: (UUID) -> Unit,
-) {
-  Card(
-    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-  ) {
-    Column(
-      modifier = Modifier.fillMaxWidth().padding(16.dp),
-      verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-      downloads.forEach { download ->
-        DownloadTaskItem(
-          download = download,
-          onPause = onPause,
-          onResume = onResume,
-          onCancel = onCancel,
-          onRetry = onRetry,
-        )
-      }
-    }
   }
 }
 
@@ -409,7 +339,7 @@ private fun LinearDownloadIndicator(progress: Float) {
     modifier =
       Modifier.fillMaxWidth().semantics {
         val percent = (progress * PERCENTAGE_MULTIPLIER).toInt()
-        contentDescription = "Download progress ${'$'}percent percent"
+        contentDescription = "Download progress ${percent} percent"
       },
     trackColor = MaterialTheme.colorScheme.surface,
   )
@@ -462,7 +392,7 @@ private fun ModelManagementCard(
         verticalArrangement = Arrangement.spacedBy(4.dp)
       ) {
         Text(
-          text = "Version ${'$'}{model.version}",
+          text = "Version ${model.version}",
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -472,7 +402,7 @@ private fun ModelManagementCard(
           color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
-          text = "Updated ${'$'}{formatUpdated(model.updatedAt)}",
+          text = "Updated ${formatUpdated(model.updatedAt)}",
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -527,7 +457,7 @@ private fun CapabilityRow(capabilities: Set<String>) {
     }
     val remaining = capabilities.size - MAX_CAPABILITY_CHIPS
     if (remaining > 0) {
-      AssistChip(onClick = {}, enabled = false, label = { Text("+${'$'}remaining") })
+      AssistChip(onClick = {}, enabled = false, label = { Text("+${remaining}") })
     }
   }
 }
@@ -565,50 +495,4 @@ private fun EmptyState() {
       textAlign = TextAlign.Center,
     )
   }
-}
-
-private fun downloadStatusLabel(task: DownloadTask): String {
-  val progressPercent = (task.progress * PERCENTAGE_MULTIPLIER).toInt()
-  return when (task.status) {
-    DownloadStatus.QUEUED -> "Queued"
-    DownloadStatus.DOWNLOADING -> "Downloading ${'$'}progressPercent%"
-    DownloadStatus.PAUSED -> "Paused at ${'$'}progressPercent%"
-    DownloadStatus.COMPLETED -> "Completed"
-    DownloadStatus.FAILED -> "Failed: ${task.errorMessage ?: "Unknown error"}"
-    DownloadStatus.CANCELLED -> "Cancelled"
-  }
-}
-
-private fun ModelLibrarySections.hasModels(): Boolean =
-  attention.isNotEmpty() || installed.isNotEmpty()
-
-private fun ProviderType.displayName(): String =
-  name.lowercase(Locale.US).replace('_', ' ').replaceFirstChar {
-    if (it.isLowerCase()) it.titlecase(Locale.US) else it.toString()
-  }
-
-private fun ModelSort.label(): String =
-  when (this) {
-    ModelSort.RECOMMENDED -> "Recommended"
-    ModelSort.NAME -> "Name"
-    ModelSort.SIZE_DESC -> "Size"
-    ModelSort.UPDATED -> "Updated"
-  }
-
-private fun formatSize(bytes: Long): String {
-  if (bytes <= 0) return "0 B"
-  val kib = bytes / BYTES_PER_KIB
-  val mib = bytes / BYTES_PER_MIB
-  val gib = bytes / BYTES_PER_GIB
-  return when {
-    gib >= 1 -> String.format(Locale.US, "%.2f GB", gib)
-    mib >= 1 -> String.format(Locale.US, "%.1f MB", mib)
-    kib >= 1 -> String.format(Locale.US, "%.1f KB", kib)
-    else -> "${'$'}bytes B"
-  }
-}
-
-private fun formatUpdated(updatedAt: Instant): String {
-  val date = updatedAt.toLocalDateTime(TimeZone.currentSystemDefault()).date
-  return date.toString()
 }

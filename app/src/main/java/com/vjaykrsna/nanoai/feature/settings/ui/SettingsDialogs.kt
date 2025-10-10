@@ -26,6 +26,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
+import com.vjaykrsna.nanoai.feature.settings.domain.huggingface.HuggingFaceDeviceAuthState
 
 @Composable
 internal fun SettingsDialogs(
@@ -36,6 +37,13 @@ internal fun SettingsDialogs(
   onProviderSave: (name: String, baseUrl: String, apiKey: String?) -> Unit,
   onExportDismiss: () -> Unit,
   onExportConfirm: (dontShowAgain: Boolean) -> Unit,
+  showHuggingFaceLoginDialog: Boolean = false,
+  showHuggingFaceApiKeyDialog: Boolean = false,
+  huggingFaceDeviceAuthState: HuggingFaceDeviceAuthState? = null,
+  onHuggingFaceLoginDismiss: () -> Unit = {},
+  onHuggingFaceLoginConfirm: () -> Unit = {},
+  onHuggingFaceApiKeyDismiss: () -> Unit = {},
+  onHuggingFaceApiKeySave: (apiKey: String) -> Unit = {},
 ) {
   val isProviderDialogVisible = showAddProviderDialog || editingProvider != null
 
@@ -50,6 +58,19 @@ internal fun SettingsDialogs(
     isVisible = showExportDialog,
     onDismiss = onExportDismiss,
     onConfirm = onExportConfirm,
+  )
+
+  HuggingFaceLoginDialogHost(
+    isVisible = showHuggingFaceLoginDialog,
+    onDismiss = onHuggingFaceLoginDismiss,
+    onConfirm = onHuggingFaceLoginConfirm,
+    deviceAuthState = huggingFaceDeviceAuthState,
+  )
+
+  HuggingFaceApiKeyDialogHost(
+    isVisible = showHuggingFaceApiKeyDialog,
+    onDismiss = onHuggingFaceApiKeyDismiss,
+    onSave = onHuggingFaceApiKeySave,
   )
 }
 

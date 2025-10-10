@@ -20,24 +20,14 @@ sealed class ModelManifestLocator {
     private const val HUGGING_FACE_SCHEME = "hf"
 
     fun parse(raw: String): ModelManifestLocator {
-      val uri = runCatching { URI(raw) }.getOrNull() ?: return Remote(raw)
-      val scheme = uri.scheme?.lowercase()
-      if (scheme != HUGGING_FACE_SCHEME) {
-        return Remote(raw)
-      }
-
-      val repository =
-        buildList {
-            uri.host?.takeIf { it.isNotBlank() }?.let { add(it) }
-            uri.path?.trim('/')?.takeIf { it.isNotBlank() }?.let { add(it) }
-          }
-          .joinToString(separator = "/")
+      val uri = toUriOrNull(raw)
+      if (uri == null || !uri.isHuggingFaceScheme()) return Remote(raw)
 
       val queryParams = uri.rawQuery?.let(::parseQueryParams).orEmpty()
-      val artifactPath =
-        queryParams["artifact"] ?: queryParams["file"] ?: queryParams["path"] ?: uri.fragment
+      val repository = extractRepository(uri)
+      val artifactPath = extractArtifactPath(queryParams, uri)
 
-      return if (repository.isNotBlank() && !artifactPath.isNullOrBlank()) {
+      return if (repository.isNotBlank() && artifactPath != null) {
         HuggingFace(
           repository = repository,
           artifactPath = artifactPath,
@@ -63,5 +53,25 @@ sealed class ModelManifestLocator {
 
     private fun decode(value: String): String =
       URLDecoder.decode(value, StandardCharsets.UTF_8.name())
+
+    private fun toUriOrNull(raw: String): URI? = runCatching { URI(raw) }.getOrNull()
+
+    private fun URI.isHuggingFaceScheme(): Boolean =
+      scheme?.equals(HUGGING_FACE_SCHEME, ignoreCase = true) == true
+
+    private fun extractRepository(uri: URI): String {
+      return buildList {
+          uri.host?.takeIf { it.isNotBlank() }?.let(::add)
+          uri.path?.trim('/')?.takeIf { it.isNotBlank() }?.let(::add)
+        }
+        .joinToString(separator = "/")
+    }
+
+    private fun extractArtifactPath(
+      queryParams: Map<String, String>,
+      uri: URI,
+    ): String? {
+      return queryParams["artifact"] ?: queryParams["file"] ?: queryParams["path"] ?: uri.fragment
+    }
   }
 }

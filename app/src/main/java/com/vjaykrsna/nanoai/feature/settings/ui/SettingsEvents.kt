@@ -51,6 +51,7 @@ private fun SettingsError.toUserMessage(): String =
     is SettingsError.ImportFailed -> "Import failed: ${message}"
     is SettingsError.PreferenceUpdateFailed -> "Failed to update preference: ${message}"
     is SettingsError.UnexpectedError -> "Unexpected error: ${message}"
+    is SettingsError.HuggingFaceAuthFailed -> "Hugging Face authentication failed: ${message}"
   }
 
 private fun exportSuccessMessage(path: String): String =

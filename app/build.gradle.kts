@@ -22,6 +22,24 @@ android {
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
     vectorDrawables { useSupportLibrary = true }
+
+    val hfClientId = (project.findProperty("nanoai.hf.oauth.clientId") as? String)?.trim().orEmpty()
+    val hfScope = (project.findProperty("nanoai.hf.oauth.scope") as? String)?.trim().orEmpty()
+    val hfRedirectUri =
+      (project.findProperty("nanoai.hf.oauth.redirectUri") as? String)?.trim().orEmpty()
+    val quote: (String) -> String = { value -> "\"${value.replace("\"", "\\\"")}\"" }
+
+    buildConfigField("String", "HF_OAUTH_CLIENT_ID", quote(hfClientId))
+    buildConfigField(
+      "String",
+      "HF_OAUTH_SCOPE",
+      quote(hfScope.ifBlank { "all offline_access" }),
+    )
+    buildConfigField(
+      "String",
+      "HF_OAUTH_REDIRECT_URI",
+      quote(hfRedirectUri.ifBlank { "nanoai://auth/huggingface" }),
+    )
   }
 
   buildTypes {

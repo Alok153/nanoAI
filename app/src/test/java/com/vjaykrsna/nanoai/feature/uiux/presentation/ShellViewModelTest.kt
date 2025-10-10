@@ -28,8 +28,6 @@ import com.vjaykrsna.nanoai.feature.uiux.state.RightPanel
 import com.vjaykrsna.nanoai.feature.uiux.state.ShellLayoutState
 import com.vjaykrsna.nanoai.feature.uiux.state.UiPreferenceSnapshot
 import com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload
-import com.vjaykrsna.nanoai.telemetry.ShellTelemetry
-import io.mockk.mockk
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
@@ -51,7 +49,6 @@ import org.robolectric.annotation.Config
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalMaterial3WindowSizeClassApi::class)
 class ShellViewModelTest {
   private val dispatcher = StandardTestDispatcher()
-  private val telemetry = mockk<ShellTelemetry>(relaxed = true)
 
   @Test
   fun openMode_closesDrawersAndHidesPalette() =

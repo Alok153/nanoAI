@@ -1,6 +1,7 @@
 package com.vjaykrsna.nanoai.security
 
 import com.vjaykrsna.nanoai.security.model.CredentialScope
+import com.vjaykrsna.nanoai.security.model.SecretCredential
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.datetime.Instant
@@ -18,20 +19,23 @@ constructor(
   private val secretStore: EncryptedSecretStore,
 ) : HuggingFaceTokenProvider {
 
-  override fun accessToken(): String? =
-    secretStore.getCredential(PROVIDER_ID)?.encryptedValue?.takeIf { it.isNotBlank() }
+  override fun accessToken(): String? = credential()?.encryptedValue?.takeIf { it.isNotBlank() }
+
+  fun credential(): SecretCredential? = secretStore.getCredential(PROVIDER_ID)
 
   fun saveAccessToken(
     token: String,
     rotatesAfter: Instant? = null,
     metadata: Map<String, String> = emptyMap(),
   ) {
+    val mergedMetadata = DEFAULT_METADATA + metadata
+
     secretStore.saveCredential(
       providerId = PROVIDER_ID,
       encryptedValue = token,
       scope = CredentialScope.TEXT_INFERENCE,
       rotatesAfter = rotatesAfter,
-      metadata = metadata.ifEmpty { DEFAULT_METADATA },
+      metadata = mergedMetadata,
     )
   }
 

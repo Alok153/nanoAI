@@ -186,7 +186,7 @@ constructor(
         val palette = values[PALETTE_INDEX] as CommandPaletteState
         val banner = values[BANNER_INDEX] as ConnectivityBannerState
         val prefs = values[PREFS_INDEX] as UiPreferenceSnapshot
-        val jobs = values[JOBS_INDEX] as List<ProgressJob>
+        @Suppress("UNCHECKED_CAST") val jobs = values[JOBS_INDEX] as List<ProgressJob>
         val chatState = values[CHAT_STATE_INDEX] as ChatState?
         val mergedJobs = mergeProgressJobs(layout.progressJobs, jobs)
         ShellUiState(

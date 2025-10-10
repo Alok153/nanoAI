@@ -23,6 +23,9 @@ internal data class SettingsScreenActions(
   val onDismissMigrationSuccess: () -> Unit,
   val onThemePreferenceChange: (ThemePreference) -> Unit,
   val onVisualDensityChange: (VisualDensity) -> Unit,
+  val onHuggingFaceLoginClick: () -> Unit,
+  val onHuggingFaceApiKeyClick: () -> Unit,
+  val onHuggingFaceDisconnectClick: () -> Unit,
 )
 
 internal data class SettingsActionDependencies(
@@ -62,12 +65,14 @@ internal fun createActions(
   return createSettingsActions(
     dependencies = dependencies,
     dialogCallbacks = callbacks,
+    dialogState = dialogState,
   )
 }
 
 internal fun createSettingsActions(
   dependencies: SettingsActionDependencies,
   dialogCallbacks: ProviderDialogCallbacks,
+  dialogState: MutableSettingsDialogState,
 ): SettingsScreenActions {
   val (viewModel, privacyPreferences, importBackupLauncher) = dependencies
 
@@ -98,6 +103,9 @@ internal fun createSettingsActions(
         VisualDensity.EXPANDED -> viewModel.setCompactMode(false)
       }
     },
+    onHuggingFaceLoginClick = { dialogState.showHuggingFaceLoginDialog.value = true },
+    onHuggingFaceApiKeyClick = { dialogState.showHuggingFaceApiKeyDialog.value = true },
+    onHuggingFaceDisconnectClick = viewModel::disconnectHuggingFaceAccount,
   )
 }
 

@@ -2,8 +2,9 @@ package com.vjaykrsna.nanoai.core.di
 
 import com.vjaykrsna.nanoai.core.network.AndroidConnectivityStatusProvider
 import com.vjaykrsna.nanoai.core.network.ConnectivityStatusProvider
-import com.vjaykrsna.nanoai.core.network.huggingface.HuggingFaceAuthInterceptor
 import com.vjaykrsna.nanoai.model.catalog.network.ModelCatalogService
+import com.vjaykrsna.nanoai.model.huggingface.network.HuggingFaceAccountService
+import com.vjaykrsna.nanoai.model.huggingface.network.HuggingFaceOAuthService
 import com.vjaykrsna.nanoai.model.huggingface.network.HuggingFaceService
 import dagger.Binds
 import dagger.Module
@@ -66,11 +67,10 @@ abstract class NetworkModule {
     fun provideHuggingFaceRetrofit(
       json: Json,
       okHttpClient: OkHttpClient,
-      authInterceptor: HuggingFaceAuthInterceptor,
     ): Retrofit =
       Retrofit.Builder()
         .baseUrl(HUGGING_FACE_BASE_URL)
-        .client(okHttpClient.newBuilder().addInterceptor(authInterceptor).build())
+        .client(okHttpClient)
         .addConverterFactory(json.asConverterFactory(jsonMediaType))
         .build()
 
@@ -79,5 +79,17 @@ abstract class NetworkModule {
     fun provideHuggingFaceService(
       @Named("HuggingFace") retrofit: Retrofit,
     ): HuggingFaceService = retrofit.create(HuggingFaceService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideHuggingFaceAccountService(
+      @Named("HuggingFace") retrofit: Retrofit,
+    ): HuggingFaceAccountService = retrofit.create(HuggingFaceAccountService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideHuggingFaceOAuthService(
+      @Named("HuggingFace") retrofit: Retrofit,
+    ): HuggingFaceOAuthService = retrofit.create(HuggingFaceOAuthService::class.java)
   }
 }

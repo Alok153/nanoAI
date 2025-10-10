@@ -2,11 +2,10 @@ package com.vjaykrsna.nanoai.model.huggingface
 
 import com.vjaykrsna.nanoai.model.catalog.DownloadManifest
 import com.vjaykrsna.nanoai.model.huggingface.network.HuggingFaceService
-import com.vjaykrsna.nanoai.model.huggingface.network.dto.HuggingFaceLfsDto
 import com.vjaykrsna.nanoai.model.huggingface.network.dto.HuggingFaceModelDto
 import com.vjaykrsna.nanoai.model.huggingface.network.dto.HuggingFacePathInfoDto
 import com.vjaykrsna.nanoai.model.huggingface.network.dto.HuggingFaceSiblingDto
-import java.util.Locale
+import com.vjaykrsna.nanoai.model.huggingface.network.dto.HuggingFaceTreeEntryDto
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.datetime.Clock
@@ -33,54 +32,7 @@ constructor(
 
   suspend fun fetchManifest(request: HuggingFaceManifestRequest): DownloadManifest {
     val normalizedPath = request.artifactPath.removePrefix("/")
-
-    val primary =
-      runCatching { service.getPathsInfo(request.repository, request.revision, normalizedPath) }
-        .getOrNull()
-
-    val fromPathsInfo = primary?.firstOrNull()
-    val checksumFromPaths = fromPathsInfo?.bestSha256()
-    val sizeFromPaths = fromPathsInfo?.bestSize()
-
-    val modelSummary: HuggingFaceModelDto? =
-      if (checksumFromPaths != null && sizeFromPaths != null) null
-      else runCatching { service.getModelSummary(request.repository) }.getOrNull()
-
-    val sibling =
-      modelSummary?.siblings?.firstOrNull { sibling ->
-        val candidates =
-          setOf(
-            sibling.relativeFilename,
-            sibling.relativeFilename.removePrefix("/"),
-          )
-        candidates.contains(normalizedPath)
-      }
-
-    val checksum =
-      checksumFromPaths
-        ?: sibling?.bestSha256()
-        ?: modelSummary?.revisionSha?.takeIf { it.isSha256() }
-        ?: fromPathsInfo?.gitOid?.takeIf { it.isSha256() }
-    val size = sizeFromPaths ?: sibling?.bestSize()
-
-    require(!checksum.isNullOrBlank()) {
-      "Unable to resolve SHA-256 checksum for ${request.repository}/${request.artifactPath}"
-    }
-    require(size != null && size > 0) {
-      "Unable to resolve size for ${request.repository}/${request.artifactPath}"
-    }
-
-    val downloadUrl = buildString {
-      append(BASE_DOWNLOAD_URL)
-      append('/')
-      append(request.repository)
-      append("/resolve/")
-      append(request.revision)
-      append('/')
-      append(normalizedPath)
-      append("?download=1")
-    }
-
+    val (checksum, size, downloadUrl) = resolveManifestData(request, normalizedPath)
     return DownloadManifest(
       modelId = request.modelId,
       version = request.version,
@@ -93,30 +45,141 @@ constructor(
       fetchedAt = clock.now(),
     )
   }
-}
 
-private fun HuggingFacePathInfoDto.bestSha256(): String? {
-  return sha256 ?: lfs?.bestSha256() ?: gitOid?.takeIf { it.isSha256() }
-}
+  private suspend fun resolveManifestData(
+    request: HuggingFaceManifestRequest,
+    normalizedPath: String,
+  ): Triple<String, Long, String> {
+    val pathsInfo = fetchPathsInfo(request, normalizedPath)
+    val checksumFromPaths = pathsInfo?.bestSha256()
+    val sizeFromPaths = pathsInfo?.bestSize()
 
-private fun HuggingFacePathInfoDto.bestSize(): Long? = lfs?.sizeBytes ?: sizeBytes
+    val summary = fetchModelSummaryIfNeeded(request.repository, checksumFromPaths, sizeFromPaths)
+    val sibling = findSibling(normalizedPath, summary)
+    val siblingChecksum = sibling?.bestSha256()
+    val siblingSize = sibling?.bestSize()
+    val summaryChecksum = summary?.revisionSha?.takeIf { it.isSha256() }
+    val gitOidChecksum = pathsInfo?.gitOid?.takeIf { it.isSha256() }
 
-private fun HuggingFaceSiblingDto.bestSha256(): String? {
-  return sha256 ?: lfs?.bestSha256() ?: gitOid?.takeIf { it.isSha256() }
-}
+    val hasChecksumWithoutTree =
+      sequenceOf(checksumFromPaths, siblingChecksum, summaryChecksum, gitOidChecksum)
+        .filterNotNull()
+        .firstOrNull() != null
+    val hasSizeWithoutTree =
+      sequenceOf(sizeFromPaths, siblingSize).filterNotNull().firstOrNull() != null
 
-private fun HuggingFaceSiblingDto.bestSize(): Long? = lfs?.sizeBytes ?: sizeBytes
+    val treeEntry =
+      resolveTreeEntryIfNeeded(
+        request = request,
+        normalizedPath = normalizedPath,
+        hasChecksum = hasChecksumWithoutTree,
+        hasSize = hasSizeWithoutTree,
+      )
 
-private fun HuggingFaceLfsDto.bestSha256(): String? {
-  return when {
-    !sha256.isNullOrBlank() -> sha256
-    oid.startsWith("sha256:", ignoreCase = true) -> oid.substringAfter(':').lowercase(Locale.US)
-    oid.isSha256() -> oid
-    else -> null
+    val checksum =
+      sequenceOf(
+          checksumFromPaths,
+          siblingChecksum,
+          treeEntry?.bestSha256(),
+          summaryChecksum,
+          gitOidChecksum,
+        )
+        .filterNotNull()
+        .firstOrNull()
+
+    val size =
+      sequenceOf(
+          sizeFromPaths,
+          siblingSize,
+          treeEntry?.bestSize(),
+        )
+        .filterNotNull()
+        .firstOrNull()
+
+    require(!checksum.isNullOrBlank()) {
+      "Unable to resolve SHA-256 checksum for ${request.repository}/${request.artifactPath}"
+    }
+    require(size != null && size > 0) {
+      "Unable to resolve size for ${request.repository}/${request.artifactPath}"
+    }
+
+    val downloadUrl = buildDownloadUrl(request, normalizedPath)
+
+    return Triple(checksum, size, downloadUrl)
+  }
+
+  private suspend fun fetchPathsInfo(
+    request: HuggingFaceManifestRequest,
+    normalizedPath: String,
+  ): HuggingFacePathInfoDto? {
+    return runCatching {
+        service.getPathsInfo(request.repository, request.revision, normalizedPath)
+      }
+      .getOrNull()
+      ?.firstOrNull()
+  }
+
+  private suspend fun fetchModelSummaryIfNeeded(
+    repository: String,
+    checksumFromPaths: String?,
+    sizeFromPaths: Long?,
+  ): HuggingFaceModelDto? {
+    if (checksumFromPaths != null && sizeFromPaths != null) return null
+    return runCatching { service.getModelSummary(repository) }.getOrNull()
+  }
+
+  private fun findSibling(
+    normalizedPath: String,
+    summary: HuggingFaceModelDto?,
+  ): HuggingFaceSiblingDto? {
+    val siblings = summary?.siblings ?: return null
+    return siblings.firstOrNull { sibling ->
+      val candidates =
+        setOf(
+          sibling.relativeFilename,
+          sibling.relativeFilename.removePrefix("/"),
+        )
+      normalizedPath in candidates
+    }
+  }
+
+  private suspend fun resolveTreeEntryIfNeeded(
+    request: HuggingFaceManifestRequest,
+    normalizedPath: String,
+    hasChecksum: Boolean,
+    hasSize: Boolean,
+  ): HuggingFaceTreeEntryDto? {
+    if (hasChecksum && hasSize) return null
+    val revisions =
+      sequenceOf(request.revision, DEFAULT_REVISION)
+        .filterNotNull()
+        .map { it.takeIf(String::isNotBlank) }
+        .filterNotNull()
+        .distinct()
+    return revisions.firstNotNullOfOrNull { revision ->
+      runCatching { service.getTree(request.repository, revision, normalizedPath, false) }
+        .getOrNull()
+        ?.firstOrNull { it.path == normalizedPath }
+    }
+  }
+
+  private fun buildDownloadUrl(
+    request: HuggingFaceManifestRequest,
+    normalizedPath: String,
+  ): String {
+    return buildString {
+      append(BASE_DOWNLOAD_URL)
+      append('/')
+      append(request.repository)
+      append("/resolve/")
+      append(request.revision)
+      append('/')
+      append(normalizedPath)
+      append("?download=1")
+    }
+  }
+
+  companion object {
+    private const val DEFAULT_REVISION = "main"
   }
 }
-
-private fun String.isSha256(): Boolean = length == 64 && all { it.isHexDigit() }
-
-private fun Char.isHexDigit(): Boolean =
-  (this in '0'..'9') || (this in 'a'..'f') || (this in 'A'..'F')

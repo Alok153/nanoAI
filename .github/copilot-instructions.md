@@ -44,9 +44,7 @@ nanoAI/
 ## Commands
 ```
 ./gradlew assembleDebug          # Build debug APK
-./gradlew assembleRelease        # Build release APK
 ./gradlew test                   # Run unit tests
-./gradlew clean                  # Clean build outputs
 ./gradlew spotlessApply          # Check code formatting with ktlint
 ./gradlew detekt                 # Run static analysis with Detekt
 ```

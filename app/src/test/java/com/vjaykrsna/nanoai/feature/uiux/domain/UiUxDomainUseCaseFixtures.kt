@@ -377,7 +377,20 @@ internal class UserProfileRepositorySpy {
         name.contains("onboarding", ignoreCase = true) -> {
           invocations += name
           val dismissed =
-            args?.firstOrNull { it is Map<*, *> } as? Map<String, Boolean> ?: emptyMap()
+            args
+              ?.firstOrNull { it is Map<*, *> }
+              ?.let { map ->
+                if (
+                  map is Map<*, *> &&
+                    map.keys.all { it is String } &&
+                    map.values.all { it is Boolean }
+                ) {
+                  @Suppress("UNCHECKED_CAST")
+                  map as Map<String, Boolean>
+                } else {
+                  emptyMap()
+                }
+              } ?: emptyMap()
           val completed = args?.firstOrNull { it is Boolean } as? Boolean ?: false
           lastOnboardingRecord = dismissed to completed
           preferencesFlow.value =

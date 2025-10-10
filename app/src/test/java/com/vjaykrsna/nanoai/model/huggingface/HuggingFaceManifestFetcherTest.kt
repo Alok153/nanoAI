@@ -20,6 +20,8 @@ import retrofit2.converter.kotlinx.serialization.asConverterFactory
 
 private val jsonMediaType = "application/json".toMediaType()
 
+private val json = Json { ignoreUnknownKeys = true }
+
 class HuggingFaceManifestFetcherTest {
   private lateinit var server: MockWebServer
   private lateinit var service: HuggingFaceService
@@ -34,7 +36,7 @@ class HuggingFaceManifestFetcherTest {
       Retrofit.Builder()
         .baseUrl(server.url("/").toString())
         .client(OkHttpClient())
-        .addConverterFactory(Json { ignoreUnknownKeys = true }.asConverterFactory(jsonMediaType))
+        .addConverterFactory(json.asConverterFactory(jsonMediaType))
         .build()
 
     service = retrofit.create(HuggingFaceService::class.java)

@@ -423,6 +423,20 @@ private fun DrawerSheetContent(
           onCloseDrawer?.invoke()
         },
       )
+
+      modeCards
+        .filter { card -> card.id != ModeId.HOME && card.id != ModeId.SETTINGS }
+        .forEach { card ->
+          DrawerNavigationItem(
+            icon = card.icon,
+            title = card.title,
+            selected = activeMode == card.id,
+            onClick = {
+              onModeSelect(card.id)
+              onCloseDrawer?.invoke()
+            },
+          )
+        }
     }
   }
 }

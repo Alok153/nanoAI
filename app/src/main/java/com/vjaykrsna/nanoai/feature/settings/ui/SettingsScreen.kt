@@ -34,6 +34,13 @@ fun SettingsScreen(modifier: Modifier = Modifier, viewModel: SettingsViewModel =
     onProviderSave = coordinator.dialogHandlers.onProviderSave,
     onExportDismiss = coordinator.dialogHandlers.onExportDismiss,
     onExportConfirm = coordinator.dialogHandlers.onExportConfirm,
+    showHuggingFaceLoginDialog = coordinator.dialogState.showHuggingFaceLoginDialog,
+    showHuggingFaceApiKeyDialog = coordinator.dialogState.showHuggingFaceApiKeyDialog,
+    huggingFaceDeviceAuthState = coordinator.huggingFaceDeviceAuthState,
+    onHuggingFaceLoginDismiss = coordinator.dialogHandlers.onHuggingFaceLoginDismiss,
+    onHuggingFaceLoginConfirm = coordinator.dialogHandlers.onHuggingFaceLoginConfirm,
+    onHuggingFaceApiKeyDismiss = coordinator.dialogHandlers.onHuggingFaceApiKeyDismiss,
+    onHuggingFaceApiKeySave = coordinator.dialogHandlers.onHuggingFaceApiKeySave,
   )
 }
 
@@ -42,6 +49,8 @@ internal fun rememberSettingsScreenState(viewModel: SettingsViewModel): Settings
   val apiProviders by viewModel.apiProviders.collectAsState()
   val privacyPreferences by viewModel.privacyPreferences.collectAsState()
   val uiUxState by viewModel.uiUxState.collectAsState()
+  val huggingFaceAuthState by viewModel.huggingFaceAuthState.collectAsState()
+  val huggingFaceDeviceAuthState by viewModel.huggingFaceDeviceAuthState.collectAsState()
 
   val snackbarHostState = remember { SnackbarHostState() }
   val dialogState = rememberMutableSettingsDialogState()
@@ -60,6 +69,7 @@ internal fun rememberSettingsScreenState(viewModel: SettingsViewModel): Settings
       apiProviders = apiProviders,
       privacyPreferences = privacyPreferences,
       uiUxState = uiUxState,
+      huggingFaceState = huggingFaceAuthState,
     )
 
   return SettingsScreenCoordinator(
@@ -68,6 +78,7 @@ internal fun rememberSettingsScreenState(viewModel: SettingsViewModel): Settings
     actions = actions,
     dialogState = dialogState.snapshot(),
     dialogHandlers = dialogHandlers,
+    huggingFaceDeviceAuthState = huggingFaceDeviceAuthState,
   )
 }
 

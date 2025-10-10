@@ -39,3 +39,20 @@ data class HuggingFacePathInfoDto(
   @SerialName("sha256") val sha256: String? = null,
   @SerialName("lfs") val lfs: HuggingFaceLfsDto? = null,
 )
+
+/** Entry returned by the repository tree endpoint. */
+@Serializable
+data class HuggingFaceTreeEntryDto(
+  @SerialName("type") val type: String,
+  @SerialName("path") val path: String,
+  @SerialName("oid") val gitOid: String? = null,
+  @SerialName("size") val sizeBytes: Long? = null,
+  @SerialName("lfs") val lfs: HuggingFaceTreeLfsDto? = null,
+)
+
+/** LFS metadata nested under tree entries. */
+@Serializable
+data class HuggingFaceTreeLfsDto(
+  @SerialName("oid") val oid: String,
+  @SerialName("size") val sizeBytes: Long? = null,
+)

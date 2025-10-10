@@ -10,7 +10,6 @@ import androidx.compose.ui.input.pointer.consumePositionChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
-import com.vjaykrsna.nanoai.feature.uiux.state.RightPanel
 import com.vjaykrsna.nanoai.feature.uiux.state.ShellLayoutState
 
 private enum class DrawerSwipeAction {
@@ -20,6 +19,15 @@ private enum class DrawerSwipeAction {
   CloseRight,
   CloseRightOpenLeft,
 }
+
+private data class DrawerGestureContext(
+  val snapshot: ShellLayoutState,
+  val allowLeftGestures: Boolean,
+  val allowRightGestures: Boolean,
+  val thresholds: DrawerGestureThresholds,
+  val startX: Float,
+  val containerWidth: Float,
+)
 
 internal fun Modifier.shellDrawerGestures(
   layout: ShellLayoutState,
@@ -77,12 +85,14 @@ private suspend fun PointerInputScope.handleShellDrawerGestures(
       val snapshot = layoutProvider()
       gesture =
         determineGesture(
-          snapshot = snapshot,
-          allowLeftGestures = allowLeftGestures,
-          allowRightGestures = allowRightGestures,
-          thresholds = thresholds,
-          startX = offset.x,
-          containerWidth = size.width.toFloat(),
+          DrawerGestureContext(
+            snapshot = snapshot,
+            allowLeftGestures = allowLeftGestures,
+            allowRightGestures = allowRightGestures,
+            thresholds = thresholds,
+            startX = offset.x,
+            containerWidth = size.width.toFloat(),
+          )
         )
       totalDrag = 0f
     },
@@ -106,33 +116,113 @@ private suspend fun PointerInputScope.handleShellDrawerGestures(
   )
 }
 
-private fun determineGesture(
-  snapshot: ShellLayoutState,
-  allowLeftGestures: Boolean,
-  allowRightGestures: Boolean,
-  thresholds: DrawerGestureThresholds,
-  startX: Float,
-  containerWidth: Float,
-): DrawerSwipeAction? {
-  val leftEdge = startX <= thresholds.edge
-  val rightEdge = startX >= containerWidth - thresholds.edge
-  val touchesRightPanel = startX >= containerWidth - thresholds.panelWidth
-  val touchesLeftPanel = startX <= thresholds.panelWidth
+private fun determineGesture(context: DrawerGestureContext): DrawerSwipeAction? {
+  val metrics =
+    DrawerGestureMetrics(
+      leftEdge = context.startX <= context.thresholds.edge,
+      rightEdge = context.startX >= context.containerWidth - context.thresholds.edge,
+      touchesRightPanel = context.startX >= context.containerWidth - context.thresholds.panelWidth,
+      touchesLeftPanel = context.startX <= context.thresholds.panelWidth,
+    )
 
-  if (allowRightGestures && snapshot.isRightDrawerOpen) {
-    if (leftEdge) return DrawerSwipeAction.CloseRightOpenLeft
-    if (rightEdge || touchesRightPanel) return DrawerSwipeAction.CloseRight
+  return context.detectRightDrawerGesture(metrics) ?: context.detectLeftDrawerGesture(metrics)
+}
+
+private data class DrawerGestureMetrics(
+  val leftEdge: Boolean,
+  val rightEdge: Boolean,
+  val touchesRightPanel: Boolean,
+  val touchesLeftPanel: Boolean,
+)
+
+private fun DrawerGestureContext.detectRightDrawerGesture(
+  metrics: DrawerGestureMetrics,
+): DrawerSwipeAction? {
+  if (!allowRightGestures) return null
+
+  val closesFromLeft = snapshot.isRightDrawerOpen && metrics.leftEdge
+  val closesFromRightEdge =
+    snapshot.isRightDrawerOpen && (metrics.rightEdge || metrics.touchesRightPanel)
+  val opensRight = !snapshot.isRightDrawerOpen && metrics.rightEdge
+
+  return sequenceOf(
+      closesFromLeft to DrawerSwipeAction.CloseRightOpenLeft,
+      closesFromRightEdge to DrawerSwipeAction.CloseRight,
+      opensRight to DrawerSwipeAction.OpenRight,
+    )
+    .firstOrNull { it.first }
+    ?.second
+}
+
+private fun DrawerGestureContext.detectLeftDrawerGesture(
+  metrics: DrawerGestureMetrics,
+): DrawerSwipeAction? {
+  if (!allowLeftGestures) return null
+
+  return when {
+    snapshot.isLeftDrawerOpen && (metrics.leftEdge || metrics.touchesLeftPanel) ->
+      DrawerSwipeAction.CloseLeft
+    !snapshot.isLeftDrawerOpen && metrics.leftEdge -> DrawerSwipeAction.OpenLeft
+    else -> null
   }
-  if (allowRightGestures && !snapshot.isRightDrawerOpen && rightEdge) {
-    return DrawerSwipeAction.OpenRight
+}
+
+private fun handleLeftAction(
+  action: DrawerSwipeAction,
+  totalDrag: Float,
+  snapshot: ShellLayoutState,
+  thresholds: DrawerGestureThresholds,
+  onEvent: (ShellUiEvent) -> Unit,
+) {
+  val shouldOpenLeft = totalDrag > thresholds.open && !snapshot.isLeftDrawerOpen
+  val shouldCloseLeft = totalDrag < -thresholds.close && snapshot.isLeftDrawerOpen
+
+  if (action == DrawerSwipeAction.CloseRightOpenLeft) {
+    snapshot.closeRightDrawerIfNeeded(onEvent)
+    if (shouldOpenLeft) {
+      onEvent(ShellUiEvent.ToggleLeftDrawer)
+    }
+    return
   }
-  if (allowLeftGestures && snapshot.isLeftDrawerOpen && (leftEdge || touchesLeftPanel)) {
-    return DrawerSwipeAction.CloseLeft
+
+  if (action == DrawerSwipeAction.OpenLeft) {
+    if (shouldOpenLeft) {
+      snapshot.closeRightDrawerIfNeeded(onEvent)
+      onEvent(ShellUiEvent.ToggleLeftDrawer)
+    }
+    return
   }
-  if (allowLeftGestures && !snapshot.isLeftDrawerOpen && leftEdge) {
-    return DrawerSwipeAction.OpenLeft
+
+  if (action == DrawerSwipeAction.CloseLeft && shouldCloseLeft) {
+    onEvent(ShellUiEvent.ToggleLeftDrawer)
   }
-  return null
+}
+
+private fun handleRightAction(
+  action: DrawerSwipeAction,
+  totalDrag: Float,
+  snapshot: ShellLayoutState,
+  thresholds: DrawerGestureThresholds,
+  onEvent: (ShellUiEvent) -> Unit,
+) {
+  when (action) {
+    DrawerSwipeAction.OpenRight -> {
+      if (totalDrag < -thresholds.open) {
+        if (snapshot.isLeftDrawerOpen) {
+          onEvent(ShellUiEvent.ToggleLeftDrawer)
+        }
+        if (!snapshot.isRightDrawerOpen) {
+          onEvent(ShellUiEvent.ToggleRightDrawer(snapshot.activePanelOrDefault()))
+        }
+      }
+    }
+    DrawerSwipeAction.CloseRight -> {
+      if (totalDrag > thresholds.close && snapshot.isRightDrawerOpen) {
+        onEvent(ShellUiEvent.ToggleRightDrawer(snapshot.activePanelOrDefault()))
+      }
+    }
+    else -> Unit
+  }
 }
 
 private fun DrawerSwipeAction.handleDragEnd(
@@ -142,83 +232,13 @@ private fun DrawerSwipeAction.handleDragEnd(
   onEvent: (ShellUiEvent) -> Unit,
 ) {
   when (this) {
-    DrawerSwipeAction.OpenLeft -> handleOpenLeft(totalDrag, snapshot, thresholds, onEvent)
-    DrawerSwipeAction.CloseLeft -> handleCloseLeft(totalDrag, snapshot, thresholds, onEvent)
-    DrawerSwipeAction.OpenRight -> handleOpenRight(totalDrag, snapshot, thresholds, onEvent)
-    DrawerSwipeAction.CloseRight -> handleCloseRight(totalDrag, snapshot, thresholds, onEvent)
+    DrawerSwipeAction.OpenLeft,
+    DrawerSwipeAction.CloseLeft,
     DrawerSwipeAction.CloseRightOpenLeft ->
-      handleCloseRightOpenLeft(totalDrag, snapshot, thresholds, onEvent)
-  }
-}
-
-private fun ShellLayoutState.closeRightDrawerIfNeeded(onEvent: (ShellUiEvent) -> Unit) {
-  if (isRightDrawerOpen) {
-    onEvent(ShellUiEvent.ToggleRightDrawer(activePanelOrDefault()))
-  }
-}
-
-private fun ShellLayoutState.activePanelOrDefault(): RightPanel =
-  activeRightPanel ?: RightPanel.MODEL_SELECTOR
-
-private fun handleOpenLeft(
-  totalDrag: Float,
-  snapshot: ShellLayoutState,
-  thresholds: DrawerGestureThresholds,
-  onEvent: (ShellUiEvent) -> Unit,
-) {
-  if (totalDrag > thresholds.open && !snapshot.isLeftDrawerOpen) {
-    snapshot.closeRightDrawerIfNeeded(onEvent)
-    onEvent(ShellUiEvent.ToggleLeftDrawer)
-  }
-}
-
-private fun handleCloseLeft(
-  totalDrag: Float,
-  snapshot: ShellLayoutState,
-  thresholds: DrawerGestureThresholds,
-  onEvent: (ShellUiEvent) -> Unit,
-) {
-  if (totalDrag < -thresholds.close && snapshot.isLeftDrawerOpen) {
-    onEvent(ShellUiEvent.ToggleLeftDrawer)
-  }
-}
-
-private fun handleOpenRight(
-  totalDrag: Float,
-  snapshot: ShellLayoutState,
-  thresholds: DrawerGestureThresholds,
-  onEvent: (ShellUiEvent) -> Unit,
-) {
-  if (totalDrag < -thresholds.open) {
-    if (snapshot.isLeftDrawerOpen) {
-      onEvent(ShellUiEvent.ToggleLeftDrawer)
-    }
-    if (!snapshot.isRightDrawerOpen) {
-      onEvent(ShellUiEvent.ToggleRightDrawer(snapshot.activePanelOrDefault()))
-    }
-  }
-}
-
-private fun handleCloseRight(
-  totalDrag: Float,
-  snapshot: ShellLayoutState,
-  thresholds: DrawerGestureThresholds,
-  onEvent: (ShellUiEvent) -> Unit,
-) {
-  if (totalDrag > thresholds.close && snapshot.isRightDrawerOpen) {
-    onEvent(ShellUiEvent.ToggleRightDrawer(snapshot.activePanelOrDefault()))
-  }
-}
-
-private fun handleCloseRightOpenLeft(
-  totalDrag: Float,
-  snapshot: ShellLayoutState,
-  thresholds: DrawerGestureThresholds,
-  onEvent: (ShellUiEvent) -> Unit,
-) {
-  snapshot.closeRightDrawerIfNeeded(onEvent)
-  if (totalDrag > thresholds.open && !snapshot.isLeftDrawerOpen) {
-    onEvent(ShellUiEvent.ToggleLeftDrawer)
+      handleLeftAction(this, totalDrag, snapshot, thresholds, onEvent)
+    DrawerSwipeAction.OpenRight,
+    DrawerSwipeAction.CloseRight ->
+      handleRightAction(this, totalDrag, snapshot, thresholds, onEvent)
   }
 }
 

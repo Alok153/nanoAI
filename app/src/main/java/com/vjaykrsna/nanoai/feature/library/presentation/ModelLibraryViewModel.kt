@@ -7,12 +7,15 @@ import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
 import com.vjaykrsna.nanoai.feature.library.domain.ModelDownloadsAndExportUseCase
 import com.vjaykrsna.nanoai.feature.library.domain.RefreshModelCatalogUseCase
+import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
 import com.vjaykrsna.nanoai.feature.library.model.ProviderType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.Locale
 import java.util.UUID
 import javax.inject.Inject
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -35,6 +38,7 @@ constructor(
   private val modelCatalogRepository: ModelCatalogRepository,
   private val refreshModelCatalogUseCase: RefreshModelCatalogUseCase,
 ) : ViewModel() {
+  private val downloadObservers = mutableMapOf<UUID, Job>()
   private val _isLoading = MutableStateFlow(false)
   val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
@@ -81,6 +85,7 @@ constructor(
         ModelLibrarySections(
           attention = filtered.filter { it.installState == InstallState.ERROR },
           installed = filtered.filter { it.installState == InstallState.INSTALLED },
+          available = filtered.filter { it.installState == InstallState.NOT_INSTALLED },
         )
       }
       .stateIn(
@@ -92,10 +97,12 @@ constructor(
   val summary: StateFlow<ModelLibrarySummary> =
     combine(allModels, installedModels) { all, installed ->
         val attentionCount = all.count { it.installState == InstallState.ERROR }
+        val availableCount = all.count { it.installState == InstallState.NOT_INSTALLED }
         ModelLibrarySummary(
           total = all.size,
           installed = installed.size,
           attention = attentionCount,
+          available = availableCount,
           installedBytes = installed.sumOf(ModelPackage::sizeBytes),
         )
       }
@@ -172,11 +179,13 @@ constructor(
       _isLoading.value = true
       runCatching { modelDownloadsAndExportUseCase.downloadModel(modelId) }
         .onSuccess { result ->
-          result.onFailure { error ->
-            _errorEvents.emit(
-              LibraryError.DownloadFailed(modelId, error.message ?: "Unknown error"),
-            )
-          }
+          result
+            .onSuccess { taskId -> monitorDownloadTask(taskId, modelId) }
+            .onFailure { error ->
+              _errorEvents.emit(
+                LibraryError.DownloadFailed(modelId, error.message ?: "Unknown error"),
+              )
+            }
         }
         .onFailure { error ->
           _errorEvents.emit(LibraryError.UnexpectedError(error.message ?: "Unexpected error"))
@@ -251,6 +260,29 @@ constructor(
     modelDownloadsAndExportUseCase
       .getDownloadProgress(taskId)
       .stateIn(viewModelScope, SharingStarted.WhileSubscribed(FLOW_STOP_TIMEOUT_MS), 0f)
+
+  private fun monitorDownloadTask(taskId: UUID, modelId: String) {
+    downloadObservers[taskId]?.cancel()
+    val job =
+      viewModelScope.launch launch@{
+        val taskFlow = modelDownloadsAndExportUseCase.observeDownloadTask(taskId)
+        taskFlow.collect { task ->
+          when (task?.status) {
+            DownloadStatus.FAILED -> {
+              _errorEvents.emit(
+                LibraryError.DownloadFailed(modelId, task.errorMessage ?: "Unknown error"),
+              )
+              cancel()
+            }
+            DownloadStatus.COMPLETED,
+            DownloadStatus.CANCELLED -> cancel()
+            else -> Unit
+          }
+        }
+      }
+    downloadObservers[taskId] = job
+    job.invokeOnCompletion { downloadObservers.remove(taskId) }
+  }
 
   private fun List<ModelPackage>.filterBy(filters: LibraryFilterState): List<ModelPackage> {
     var current = this
@@ -350,12 +382,14 @@ data class LibraryFilterState(
 data class ModelLibrarySections(
   val attention: List<ModelPackage> = emptyList(),
   val installed: List<ModelPackage> = emptyList(),
+  val available: List<ModelPackage> = emptyList(),
 )
 
 data class ModelLibrarySummary(
   val total: Int = 0,
   val installed: Int = 0,
   val attention: Int = 0,
+  val available: Int = 0,
   val installedBytes: Long = 0,
 )
 

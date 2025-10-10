@@ -4,7 +4,6 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -36,7 +35,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoSpacing
-import com.vjaykrsna.nanoai.feature.uiux.ui.components.layout.NanoSection
 import kotlinx.coroutines.launch
 
 private enum class SettingsCategory(val title: String) {
@@ -46,7 +44,6 @@ private enum class SettingsCategory(val title: String) {
   OFFLINE_AND_MODELS(title = "Offline & Models"),
   MODES(title = "Modes"),
   NOTIFICATIONS(title = "Notifications"),
-  ACCESSIBILITY(title = "Accessibility"),
   BACKUP_RESTORE(title = "Backup & Restore"),
   ADVANCED(title = "Advanced"),
   ABOUT_HELP(title = "About & Help"),
@@ -88,9 +85,7 @@ internal fun SettingsScreenContent(
     },
   ) { innerPadding ->
     Column(
-      modifier =
-        Modifier.fillMaxSize()
-          .padding(horizontal = NanoSpacing.lg),
+      modifier = Modifier.fillMaxSize().padding(horizontal = NanoSpacing.lg),
     ) {
       SettingsCategoryTabs(
         categories = categories,
@@ -116,20 +111,6 @@ internal fun SettingsScreenContent(
         }
       }
     }
-  }
-}
-
-@Composable
-internal fun SettingsSection(
-  title: String,
-  modifier: Modifier = Modifier,
-  content: @Composable ColumnScope.() -> Unit,
-) {
-  NanoSection(
-    title = title,
-    modifier = modifier.fillMaxWidth(),
-  ) {
-    content()
   }
 }
 
@@ -262,6 +243,17 @@ private fun SettingsCategoryContent(
           )
         }
 
+        item { HuggingFaceAuthSectionHeader() }
+
+        item {
+          HuggingFaceAuthCard(
+            state = state.huggingFaceState,
+            onLoginClick = actions.onHuggingFaceLoginClick,
+            onApiKeyClick = actions.onHuggingFaceApiKeyClick,
+            onDisconnectClick = actions.onHuggingFaceDisconnectClick,
+          )
+        }
+
         item { OnDeviceModelsSection(statusMessage = state.uiUxState.statusMessage) }
       }
       SettingsCategory.MODES -> {
@@ -295,22 +287,6 @@ private fun SettingsCategoryContent(
             title = "Downloads",
             description = "Decide how nanoAI informs you when assets finish exporting.",
             supportingText = "Notification routing is planned via WorkManager workers.",
-          )
-        }
-      }
-      SettingsCategory.ACCESSIBILITY -> {
-        item {
-          SettingsPlaceholderSection(
-            title = "Reading Preferences",
-            description = "Adjust text size, line height, and accessible color contrasts.",
-            supportingText = "Composable typography will reuse the adaptive text scaling work.",
-          )
-        }
-        item {
-          SettingsPlaceholderSection(
-            title = "Voice Navigation",
-            description = "Enable voice prompts and screen reader optimizations.",
-            supportingText = "Voice control hooks align with the Live Voice mode backlog.",
           )
         }
       }
@@ -425,7 +401,8 @@ private fun OnDeviceModelsSection(
 
       Text(
         text =
-          "If the catalog changes, the library keeps your install status and local downloads intact.",
+          "If the catalog changes, the library keeps your install status " +
+            "and local downloads intact.",
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
@@ -434,7 +411,10 @@ private fun OnDeviceModelsSection(
 }
 
 @Composable
-internal fun MigrationSuccessCard(onDismiss: () -> Unit, modifier: Modifier = Modifier) {
+internal fun MigrationSuccessCard(
+  onDismiss: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
   Card(
     modifier = modifier.fillMaxWidth(),
     colors =
