@@ -31,7 +31,7 @@
 
 ## Coverage Reporting & Stakeholder Visibility
 - **Decision**: Publish HTML reports under `app/build/reports/jacoco/` and upload XML summary as CI artifact; add summary parser generating markdown snippet for PRs and changelog.
-- **Rationale**: Balances human-readable dashboards with automation hooks; aligns with requirement to monitor trend data.
+- **Rationale**: Balances human-readable dashboards with automation hooks; aligns with requirement to monitor trend data and new CI/CD principles for automated publishing and rollback capabilities.
 - **Alternatives Considered**:
   - **SonarQube integration**: Feature-rich but overkill and adds infra complexity.
   - **Badge-only reporting**: Lacks layer granularity demanded by stakeholders.

@@ -27,7 +27,11 @@ Follow this checklist to validate the coverage initiative end-to-end.
 ## 5. Review Risk Register
 - Open `docs/coverage/risk-register.md` (will be generated) and confirm all High/Critical items have assigned owners & mitigation builds.
 
-## 6. Update Stakeholders
+## 6. Ensure New Principles Compliance
+- Verify all new test code includes KDoc comments and has undergone peer review.
+- Confirm coverage reports are published in CI artifacts with release notes documenting changes.
+
+## 7. Update Stakeholders
 - Publish coverage deltas in team channel with markdown snippet produced by the tooling (`/build/coverage/summary.md`).
 - Record improvements + outstanding gaps in `docs/todo-next.md`.
 

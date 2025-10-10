@@ -1,3 +1,9 @@
+import org.gradle.api.tasks.Exec
+import org.gradle.api.tasks.testing.Test
+import org.gradle.testing.jacoco.plugins.JacocoTaskExtension
+import org.gradle.testing.jacoco.tasks.JacocoCoverageVerification
+import org.gradle.testing.jacoco.tasks.JacocoReport
+
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.android)
@@ -6,6 +12,7 @@ plugins {
   alias(libs.plugins.ksp)
   alias(libs.plugins.hilt)
   alias(libs.plugins.androidx.room)
+  jacoco
 }
 
 android {
@@ -50,6 +57,10 @@ android {
         getDefaultProguardFile("proguard-android-optimize.txt"),
         "proguard-rules.pro",
       )
+    }
+    debug {
+      enableAndroidTestCoverage = true
+      enableUnitTestCoverage = true
     }
     create("baselineProfile") {
       initWith(buildTypes.getByName("release"))
@@ -112,6 +123,113 @@ android {
 }
 
 room { schemaDirectory("$projectDir/schemas") }
+
+jacoco {
+  toolVersion = "0.8.12"
+  reportsDirectory.set(layout.buildDirectory.dir("reports/jacoco"))
+}
+
+tasks.withType<Test>().configureEach {
+  extensions.configure(JacocoTaskExtension::class.java) {
+    isIncludeNoLocationClasses = true
+    excludes = listOf("jdk.internal.*")
+  }
+}
+
+// Collect common coverage inputs for JVM + instrumentation runs.
+val coverageExecutionData = files(
+  layout.buildDirectory.file("jacoco/testDebugUnitTest.exec"),
+  layout.buildDirectory.file("outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec"),
+  fileTree(layout.buildDirectory.dir("outputs/code_coverage").get().asFile) {
+    include("**/*.ec")
+  },
+)
+
+val coverageClassDirectories = files(
+  fileTree(layout.buildDirectory.dir("tmp/kotlin-classes/debug").get()) {
+    exclude("**/R.class", "**/R$*.class", "**/BuildConfig.*", "**/Manifest*.*", "**/*Test*.*")
+  },
+  fileTree(layout.buildDirectory.dir("intermediates/javac/debug/classes").get()) {
+    exclude("**/R.class", "**/R$*.class", "**/BuildConfig.*", "**/Manifest*.*", "**/*Test*.*")
+  },
+)
+
+val coverageSourceDirectories = files("src/main/java", "src/main/kotlin")
+
+tasks.register<JacocoReport>("jacocoFullReport") {
+  group = "verification"
+  description = "Generates a merged coverage report for unit and instrumentation tests."
+
+  dependsOn("testDebugUnitTest")
+  dependsOn("connectedDebugAndroidTest")
+
+  classDirectories.setFrom(coverageClassDirectories)
+  additionalClassDirs.setFrom(coverageClassDirectories)
+  sourceDirectories.setFrom(coverageSourceDirectories)
+  executionData.setFrom(coverageExecutionData)
+
+  reports {
+    xml.required.set(true)
+    xml.outputLocation.set(layout.buildDirectory.file("reports/jacoco/full/jacocoFullReport.xml"))
+    html.required.set(true)
+    html.outputLocation.set(layout.buildDirectory.dir("reports/jacoco/full/html"))
+    csv.required.set(false)
+  }
+}
+
+tasks.register<JacocoCoverageVerification>("verifyCoverageThresholds") {
+  group = "verification"
+  description = "Verifies merged coverage meets minimum layer thresholds."
+
+  dependsOn("jacocoFullReport")
+
+  classDirectories.setFrom(coverageClassDirectories)
+  additionalClassDirs.setFrom(coverageClassDirectories)
+  sourceDirectories.setFrom(coverageSourceDirectories)
+  executionData.setFrom(coverageExecutionData)
+
+  violationRules {
+    rule {
+      element = "BUNDLE"
+      limit {
+        counter = "LINE"
+        value = "COVEREDRATIO"
+        minimum = "0.65".toBigDecimal()
+      }
+    }
+  }
+}
+
+tasks.named("check") { dependsOn("verifyCoverageThresholds") }
+
+tasks.register<Exec>("coverageMergeArtifacts") {
+  group = "verification"
+  description = "Runs helper script to trigger merged coverage generation."
+
+  commandLine("bash", "${rootDir}/scripts/coverage/merge-coverage.sh", layout.buildDirectory.dir("reports/jacoco/full").get().asFile.absolutePath)
+}
+
+tasks.register<Exec>("coverageMarkdownSummary") {
+  group = "verification"
+  description = "Generates markdown coverage summary from merged JaCoCo XML report."
+
+  dependsOn("jacocoFullReport")
+
+  val xmlReport = layout.buildDirectory.file("reports/jacoco/full/jacocoFullReport.xml")
+  val markdownOutput = layout.buildDirectory.file("reports/jacoco/full/summary.md")
+
+  inputs.file(xmlReport)
+  outputs.file(markdownOutput)
+
+  doFirst { markdownOutput.get().asFile.parentFile.mkdirs() }
+
+  commandLine(
+    "python3",
+    "${rootDir}/scripts/coverage/generate-summary.py",
+    xmlReport.get().asFile.absolutePath,
+    markdownOutput.get().asFile.absolutePath,
+  )
+}
 
 androidComponents {
   beforeVariants(selector().all()) { variant ->

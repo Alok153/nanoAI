@@ -61,6 +61,26 @@
   - `status` (Enum: `BELOW_TARGET`, `ON_TARGET`, `EXCEEDS_TARGET`)
 - **Validation Rules**: Status derived from coverage vs threshold.
 
+### HuggingFaceAuthCoordinator
+- **Purpose**: Manages OAuth authentication flow with Hugging Face, handling state transitions and token storage.
+- **Attributes**:
+  - `authState` (HuggingFaceAuthState): Current authentication status.
+  - `oauthService` (HuggingFaceOAuthService): Handles OAuth requests.
+- **Relationships**: Interacts with `HuggingFaceCredentialRepository` for secure storage.
+
+### RefreshModelCatalogUseCase
+- **Purpose**: Refreshes the local model catalog from remote sources, ensuring up-to-date model availability.
+- **Attributes**:
+  - `repository` (ModelCatalogRepository): Data access for catalog operations.
+- **Relationships**: Triggers updates in `ModelCatalogLocalDataSource`.
+
+### ModelCatalogRepository
+- **Purpose**: Repository for model catalog data, providing access to local and remote model information.
+- **Attributes**:
+  - `localDataSource` (ModelCatalogLocalDataSource): Local storage.
+  - `remoteDataSource` (ModelCatalogRemoteDataSource): Remote fetching.
+- **Relationships**: Supplies data to `ModelLibraryViewModel`.
+
 ## Data Lifecycle
 - Coverage summaries generated post-CI, persisted as artifacts for 90 days, optionally stored in analytics bucket.
 - Risk register reviewed weekly; resolved items archived after 30 days of stability.

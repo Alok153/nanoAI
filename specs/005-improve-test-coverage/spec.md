@@ -1,7 +1,7 @@
 # Feature Specification: Improve Test Coverage for nanoAI
 
 **Feature Branch**: `005-improve-test-coverage`  
-**Created**: 2025-10-05  
+**Created**: 2025-10-10  
 **Status**: Draft  
 **Input**: User description: "Improve test coverage focusing on areas listed in docs/todo-next.md"
 
@@ -85,6 +85,9 @@ As the release steward for nanoAI, I need trustworthy, automated insight into ho
 - [x] UX stories note Material compliance and accessibility expectations.
 - [x] Performance budgets and offline behavior are described or explicitly deferred.
 - [x] Data handling, permissions, and consent obligations are documented.
+- [ ] Documentation & Knowledge Sharing: All public APIs in new test code include KDoc; knowledge sharing sessions held for major test additions.
+- [ ] Code Review & Collaboration: All test changes undergo peer review with constitution checks; blockers escalated promptly.
+- [ ] Continuous Integration & Deployment: Coverage reports published in CI with rollback capabilities; release notes include coverage deltas.
 
 ---
 
@@ -100,6 +103,6 @@ As the release steward for nanoAI, I need trustworthy, automated insight into ho
 - [ ] Review checklist passed
 
 ---
-*Align with Constitution v1.3.0 (see `.specify/memory/constitution.md` for principles)*
+*Align with Constitution v1.4.0 (see `.specify/memory/constitution.md` for principles)*
 
 ---
