@@ -8,15 +8,25 @@ The `ApiProviderConfig` entity stores cloud API endpoint configurations for fall
 
 ```kotlin
 data class ApiProviderConfig(
-    val id: UUID,
-    val name: String,              // Display name (e.g., "OpenAI GPT-4")
-    val baseUrl: String,           // API endpoint (e.g., "https://api.openai.com/v1")
-    val apiKey: String?,           // Optional API key (TODO: encrypt with Jetpack Security)
-    val isDefault: Boolean,        // Whether this is the default provider
-    val status: ProviderStatus,    // Current status (OK, UNAUTHORIZED, RATE_LIMITED, ERROR, UNKNOWN)
-    val quotaResetAt: Instant?,    // When rate limit resets
-    val createdAt: Instant         // Creation timestamp
+  val providerId: String,
+  val providerName: String,
+  val baseUrl: String,
+  val apiKey: String,
+  val apiType: APIType,
+  val isEnabled: Boolean = true,
+  val quotaResetAt: Instant? = null,
+  val lastStatus: ProviderStatus = ProviderStatus.UNKNOWN,
 )
+```
+
+### Enums
+
+```kotlin
+enum class APIType {
+    OPENAI,
+    GEMINI,
+    CUSTOM
+}
 
 enum class ProviderStatus {
     OK,              // Provider is operational
@@ -33,14 +43,14 @@ enum class ProviderStatus {
 
 ```json
 {
-  "id": "550e8400-e29b-41d4-a716-446655440000",
-  "name": "OpenAI GPT-4",
+  "providerId": "550e8400-e29b-41d4-a716-446655440000",
+  "providerName": "OpenAI GPT-4",
   "baseUrl": "https://api.openai.com/v1",
   "apiKey": "sk-proj-...",
-  "isDefault": true,
-  "status": "OK",
-  "quotaResetAt": null,
-  "createdAt": "2025-10-01T10:00:00Z"
+  "apiType": "OPENAI",
+  "isEnabled": true,
+  "lastStatus": "OK",
+  "quotaResetAt": null
 }
 ```
 
@@ -48,14 +58,14 @@ enum class ProviderStatus {
 
 ```json
 {
-  "id": "550e8400-e29b-41d4-a716-446655440001",
-  "name": "Google Gemini Pro",
+  "providerId": "550e8400-e29b-41d4-a716-446655440001",
+  "providerName": "Google Gemini Pro",
   "baseUrl": "https://generativelanguage.googleapis.com/v1",
   "apiKey": "AIza...",
-  "isDefault": false,
-  "status": "OK",
-  "quotaResetAt": null,
-  "createdAt": "2025-10-01T10:05:00Z"
+  "apiType": "GEMINI",
+  "isEnabled": false,
+  "lastStatus": "OK",
+  "quotaResetAt": null
 }
 ```
 
@@ -63,14 +73,14 @@ enum class ProviderStatus {
 
 ```json
 {
-  "id": "550e8400-e29b-41d4-a716-446655440002",
-  "name": "Self-Hosted LLM",
+  "providerId": "550e8400-e29b-41d4-a716-446655440002",
+  "providerName": "Self-Hosted LLM",
   "baseUrl": "http://localhost:8000/v1",
   "apiKey": null,
-  "isDefault": false,
-  "status": "UNKNOWN",
-  "quotaResetAt": null,
-  "createdAt": "2025-10-01T10:10:00Z"
+  "apiType": "CUSTOM",
+  "isEnabled": false,
+  "lastStatus": "UNKNOWN",
+  "quotaResetAt": null
 }
 ```
 
@@ -145,7 +155,7 @@ Response 200
   "themePreference": "SYSTEM",
   "visualDensity": "DEFAULT",
   "pinnedTools": ["summarize", "translator"],
-  "dismissedTips": {"welcome_tooltip": true},
+  "dismissedTips": {"home_tools_tip": true},
   "savedLayouts": [
     {
       "id": "layout-01",
@@ -176,20 +186,27 @@ The `ModelPackage` entity describes downloadable AI models for local inference.
 
 ```kotlin
 data class ModelPackage(
-    val id: UUID,
-    val name: String,                      // Display name (e.g., "Gemini Nano 2B")
-    val version: String,                   // Version string (e.g., "1.0.0")
-    val description: String?,              // User-facing description
-    val provider: ProviderType,            // Inference provider
-    val capabilities: Set<ModelCapability>, // Supported features
-    val sizeBytes: Long,                   // Download size
-    val checksumSha256: String?,           // File integrity checksum
-    val localPath: String?,                // Path after download
-    val isInstalled: Boolean,              // Whether model is ready
-    val downloadUrl: String?,              // Source URL
-    val metadata: String                   // JSON metadata
+  val modelId: String,
+  val displayName: String,
+  val version: String,
+  val providerType: ProviderType,
+  val deliveryType: DeliveryType,
+  val minAppVersion: Int,
+  val sizeBytes: Long,
+  val capabilities: Set<String>,
+  val installState: InstallState,
+  val downloadTaskId: UUID? = null,
+  val manifestUrl: String,
+  val checksumSha256: String? = null,
+  val signature: String? = null,
+  val createdAt: Instant,
+  val updatedAt: Instant,
 )
+```
 
+### Enums
+
+```kotlin
 enum class ProviderType {
     MEDIA_PIPE,      // Google MediaPipe (LiteRT)
     TFLITE,          // TensorFlow Lite
@@ -198,12 +215,17 @@ enum class ProviderType {
     CLOUD_API        // Cloud API reference
 }
 
-enum class ModelCapability {
-    TEXT_GENERATION,  // Text-to-text
-    IMAGE_GENERATION, // Text-to-image
-    AUDIO_INPUT,      // Speech-to-text
-    AUDIO_OUTPUT,     // Text-to-speech
-    MULTIMODAL        // Combined capabilities
+enum class DeliveryType {
+    DOWNLOAD,        // Download from URL
+    BUNDLED,         // Included in APK
+    DYNAMIC_MODULE   // Play Feature Delivery
+}
+
+enum class InstallState {
+    NOT_INSTALLED,   // Not downloaded
+    DOWNLOADING,     // In progress
+    INSTALLED,       // Ready to use
+    FAILED           // Download failed
 }
 ```
 
@@ -427,14 +449,14 @@ interface Model {
   ],
   "apiProviders": [
     {
-      "id": "550e8400-e29b-41d4-a716-446655440000",
-      "name": "OpenAI GPT-4",
+      "providerId": "550e8400-e29b-41d4-a716-446655440000",
+      "providerName": "OpenAI GPT-4",
       "baseUrl": "https://api.openai.com/v1",
       "apiKey": "REDACTED",
-      "isDefault": true,
-      "status": "OK",
-      "quotaResetAt": null,
-      "createdAt": "2025-09-20T12:00:00Z"
+      "apiType": "OPENAI",
+      "isEnabled": true,
+      "lastStatus": "OK",
+      "quotaResetAt": null
     }
   ],
   "privacy": {
@@ -534,18 +556,20 @@ Download tasks track model download progress.
 
 ```kotlin
 data class DownloadTask(
-    val id: UUID,
-    val modelPackageId: UUID,
-    val status: DownloadStatus,
-    val progressPercent: Int,           // 0-100
-    val downloadedBytes: Long,
-    val totalBytes: Long,
-    val workRequestId: String?,         // WorkManager UUID
-    val errorMessage: String?,
-    val createdAt: Instant,
-    val updatedAt: Instant
+  val taskId: UUID,
+  val modelId: String,
+  val progress: Float = 0f,
+  val status: DownloadStatus,
+  val bytesDownloaded: Long = 0L,
+  val startedAt: Instant? = null,
+  val finishedAt: Instant? = null,
+  val errorMessage: String? = null,
 )
+```
 
+### Enums
+
+```kotlin
 enum class DownloadStatus {
     PENDING,        // Queued, not started
     IN_PROGRESS,    // Actively downloading
@@ -570,16 +594,14 @@ PENDING → IN_PROGRESS → COMPLETED
 
 ```json
 {
-  "id": "550e8400-e29b-41d4-a716-446655440200",
-  "modelPackageId": "gemini-nano-2b",
+  "taskId": "550e8400-e29b-41d4-a716-446655440200",
+  "modelId": "gemini-nano-2b",
+  "progress": 0.45,
   "status": "IN_PROGRESS",
-  "progressPercent": 45,
-  "downloadedBytes": 966367641,
-  "totalBytes": 2147483648,
-  "workRequestId": "550e8400-e29b-41d4-a716-446655440300",
-  "errorMessage": null,
-  "createdAt": "2025-10-01T15:00:00Z",
-  "updatedAt": "2025-10-01T15:05:00Z"
+  "bytesDownloaded": 966367641,
+  "startedAt": "2025-10-01T15:00:00Z",
+  "finishedAt": null,
+  "errorMessage": null
 }
 ```
 

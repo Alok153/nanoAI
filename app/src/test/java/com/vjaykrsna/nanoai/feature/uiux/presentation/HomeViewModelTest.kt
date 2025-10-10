@@ -1,7 +1,8 @@
-@file:Suppress("CyclomaticComplexMethod") // Complex test setup with reflection
+@file:Suppress("CyclomaticComplexMethod")
 
 package com.vjaykrsna.nanoai.feature.uiux.presentation
 
+import android.os.Build
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.feature.uiux.domain.UiUxDomainReflection
 import com.vjaykrsna.nanoai.feature.uiux.domain.UserProfileRepositorySpy
@@ -14,7 +15,12 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
 class HomeViewModelTest {
   @Test
   fun stateReflectsRecentActionsOfflineStatus_andTooltipDismissal() = runTest {
@@ -125,7 +131,8 @@ class HomeViewModelTest {
           StateFlow::class.java.isAssignableFrom(method.returnType) &&
           method.name.lowercase().contains("state")
       } ?: fail("HomeViewModel must expose a StateFlow state accessor")
-    @Suppress("UNCHECKED_CAST") return method.invoke(viewModel) as StateFlow<HomeUiState>
+    val result = method.invoke(viewModel)
+    @Suppress("UNCHECKED_CAST") return result as StateFlow<HomeUiState>
   }
 
   private fun invokeToggleTools(viewModel: Any) {

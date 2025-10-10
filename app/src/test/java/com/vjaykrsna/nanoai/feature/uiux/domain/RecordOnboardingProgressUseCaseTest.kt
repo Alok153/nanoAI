@@ -1,7 +1,8 @@
-@file:Suppress("CyclomaticComplexMethod") // Complex test setup with reflection
+@file:Suppress("CyclomaticComplexMethod")
 
 package com.vjaykrsna.nanoai.feature.uiux.domain
 
+import android.os.Build
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.Test
 import kotlin.test.fail
@@ -10,7 +11,12 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
 class RecordOnboardingProgressUseCaseTest {
   @Test
   fun `records dismissed tips and completion flags`() = runTest {
@@ -29,25 +35,28 @@ class RecordOnboardingProgressUseCaseTest {
         dispatcher = dispatcher,
       )
 
-    invokeOnboarding(useCase, tipId = "welcome", dismissed = true, completed = false)
+    // Use a generic tip id for onboarding persistence; onboarding feature removed but persistence
+    // should still work
+    invokeOnboarding(useCase, tipId = "onboarding_tip", dismissed = true, completed = false)
 
     advanceUntilIdle()
 
     val intermediateRecord =
       spy.lastOnboardingRecord ?: fail("Expected onboarding record for dismissal")
-    assertThat(intermediateRecord.first).containsExactlyEntriesIn(mapOf("welcome" to true))
+    assertThat(intermediateRecord.first).containsExactlyEntriesIn(mapOf("onboarding_tip" to true))
     assertThat(intermediateRecord.second).isFalse()
 
     val updatedPrefs =
       spy.preferencesFlow.value ?: fail("Expected preferences emission after dismissal")
 
-    @Suppress("UNCHECKED_CAST")
-    val dismissedTips =
-      UiUxDomainReflection.getProperty(updatedPrefs, "dismissedTips") as Map<String, Boolean>
-    assertThat(dismissedTips).containsExactlyEntriesIn(mapOf("welcome" to true))
-    val onboardingComplete =
-      UiUxDomainReflection.getProperty(updatedPrefs, "onboardingCompleted") as Boolean
-    assertThat(onboardingComplete).isFalse()
+    val dismissedTipsAny =
+      UiUxDomainReflection.getProperty(updatedPrefs, "dismissedTips") as? Map<*, *>
+        ?: fail("Missing dismissedTips on updatedPrefs")
+    assertThat(dismissedTipsAny).containsExactlyEntriesIn(mapOf("onboarding_tip" to true))
+    val onboardingCompleteAny =
+      UiUxDomainReflection.getProperty(updatedPrefs, "onboardingCompleted") as? Boolean
+        ?: fail("Missing onboardingCompleted on updatedPrefs")
+    assertThat(onboardingCompleteAny).isFalse()
 
     invokeOnboarding(useCase, tipId = null, dismissed = false, completed = true)
 
@@ -56,12 +65,13 @@ class RecordOnboardingProgressUseCaseTest {
     val finalPrefs =
       spy.preferencesFlow.value ?: fail("Expected preferences emission after completion")
     val finalCompleted =
-      UiUxDomainReflection.getProperty(finalPrefs, "onboardingCompleted") as Boolean
+      UiUxDomainReflection.getProperty(finalPrefs, "onboardingCompleted") as? Boolean
+        ?: fail("Missing onboardingCompleted on finalPrefs")
     assertThat(finalCompleted).isTrue()
-    @Suppress("UNCHECKED_CAST")
     val finalTips =
-      UiUxDomainReflection.getProperty(finalPrefs, "dismissedTips") as Map<String, Boolean>
-    assertThat(finalTips).containsKey("welcome")
+      UiUxDomainReflection.getProperty(finalPrefs, "dismissedTips") as? Map<*, *>
+        ?: fail("Missing dismissedTips on finalPrefs")
+    assertThat(finalTips).containsKey("onboarding_tip")
 
     assertThat(spy.invocations.any { it.contains("onboarding", ignoreCase = true) }).isTrue()
   }

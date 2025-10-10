@@ -33,7 +33,6 @@ enum class VisualDensity {
 }
 
 enum class ScreenType {
-  WELCOME,
   HOME,
   SETTINGS,
   SIDEBAR,

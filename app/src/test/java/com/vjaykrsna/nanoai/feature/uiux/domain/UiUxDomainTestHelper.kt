@@ -17,9 +17,12 @@ internal object UiUxDomainTestHelper {
       )
     }
 
-  @Suppress("UNCHECKED_CAST")
   fun loadEnumConstant(className: String, constant: String): Any {
-    val enumClass = loadClass(className) as Class<out Enum<*>>
+    val clazz = loadClass(className)
+    if (!clazz.isEnum) {
+      fail("Expected $className to be an enum type")
+    }
+    @Suppress("UNCHECKED_CAST") val enumClass = clazz as Class<out Enum<*>>
     return try {
       java.lang.Enum.valueOf(enumClass, constant)
     } catch (error: IllegalArgumentException) {

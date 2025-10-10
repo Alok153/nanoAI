@@ -14,12 +14,15 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.UIStateSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferencesSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UserProfile
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
+import java.time.Instant as JavaInstant
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.datetime.Instant
+import kotlinx.datetime.toKotlinInstant
 
 /**
  * Local data source for user profile operations.
@@ -29,7 +32,6 @@ import kotlinx.coroutines.flow.map
  * merging.
  */
 @Singleton
-@Suppress("TooManyFunctions") // Local data source handles multiple entities
 class UserProfileLocalDataSource
 @Inject
 constructor(
@@ -249,6 +251,30 @@ constructor(
     uiStateSnapshotDao.updateSidebarCollapsed(userId, collapsed)
   }
 
+  /** Persist the left drawer state, creating a snapshot if needed. */
+  suspend fun setLeftDrawerOpen(userId: String, open: Boolean) {
+    ensureUiStateSnapshot(userId)
+    uiStateSnapshotDao.updateLeftDrawerOpen(userId, open)
+  }
+
+  /** Persist the right drawer state and active panel. */
+  suspend fun setRightDrawerState(userId: String, open: Boolean, panel: String?) {
+    ensureUiStateSnapshot(userId)
+    uiStateSnapshotDao.updateRightDrawerState(userId, open, panel)
+  }
+
+  /** Persist the active mode route for restoration. */
+  suspend fun setActiveModeRoute(userId: String, route: String) {
+    ensureUiStateSnapshot(userId)
+    uiStateSnapshotDao.updateActiveModeRoute(userId, route)
+  }
+
+  /** Persist the command palette visibility flag. */
+  suspend fun setCommandPaletteVisible(userId: String, visible: Boolean) {
+    ensureUiStateSnapshot(userId)
+    uiStateSnapshotDao.updateCommandPaletteVisible(userId, visible)
+  }
+
   /**
    * Add a recent action to the UI state.
    *
@@ -271,4 +297,34 @@ constructor(
   /** Observe UiPreferences as domain snapshots for repository consumers. */
   fun observePreferences(): Flow<UiPreferencesSnapshot> =
     uiPreferencesStore.uiPreferences.map { it.toDomainSnapshot() }
+
+  /** Record command palette usage for recents tracking. */
+  suspend fun recordCommandPaletteRecent(commandId: String) {
+    uiPreferencesStore.recordCommandPaletteRecent(commandId)
+  }
+
+  /** Replace command palette recent entries. */
+  suspend fun setCommandPaletteRecents(commandIds: List<String>) {
+    uiPreferencesStore.setCommandPaletteRecents(commandIds)
+  }
+
+  /** Persist connectivity banner dismissal timestamp. */
+  suspend fun setConnectivityBannerDismissed(dismissedAt: JavaInstant?) {
+    val kotlinInstant: Instant? = dismissedAt?.toKotlinInstant()
+    uiPreferencesStore.setConnectivityBannerDismissed(kotlinInstant)
+  }
+
+  private suspend fun ensureUiStateSnapshot(userId: String): UIStateSnapshot {
+    val existing = uiStateSnapshotDao.getByUserId(userId)?.toDomain()
+    if (existing != null) return existing
+    val snapshot =
+      UIStateSnapshot(
+        userId = userId,
+        expandedPanels = emptyList(),
+        recentActions = emptyList(),
+        isSidebarCollapsed = false,
+      )
+    uiStateSnapshotDao.insert(snapshot.toEntity())
+    return snapshot
+  }
 }

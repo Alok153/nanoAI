@@ -8,7 +8,8 @@ import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.feature.library.data.daos.DownloadTaskDao
-import com.vjaykrsna.nanoai.feature.library.data.daos.ModelPackageDao
+import com.vjaykrsna.nanoai.feature.library.data.daos.ModelPackageReadDao
+import com.vjaykrsna.nanoai.feature.library.data.daos.ModelPackageWriteDao
 import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
 import com.vjaykrsna.nanoai.model.catalog.DownloadManifest
@@ -20,6 +21,7 @@ import dagger.assisted.AssistedInject
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.io.InputStream
 import java.net.URL
 import java.security.GeneralSecurityException
 import java.security.KeyFactory
@@ -57,19 +59,14 @@ class ModelDownloadDependencies
 @Inject
 constructor(
   val downloadTaskDao: DownloadTaskDao,
-  val modelPackageDao: ModelPackageDao,
+  val modelPackageReadDao: ModelPackageReadDao,
+  val modelPackageWriteDao: ModelPackageWriteDao,
   val okHttpClient: OkHttpClient,
   val modelManifestRepository: ModelManifestRepository,
   val telemetryReporter: TelemetryReporter,
 )
 
 @HiltWorker
-@Suppress(
-  "TooManyFunctions",
-  "LargeClass",
-  "NestedBlockDepth",
-  "ReturnCount",
-) // Complex download/verification logic
 class ModelDownloadWorker
 @AssistedInject
 constructor(
@@ -79,7 +76,8 @@ constructor(
 ) : CoroutineWorker(appContext, workerParams) {
 
   private val downloadTaskDao: DownloadTaskDao = dependencies.downloadTaskDao
-  private val modelPackageDao: ModelPackageDao = dependencies.modelPackageDao
+  private val modelPackageReadDao: ModelPackageReadDao = dependencies.modelPackageReadDao
+  private val modelPackageWriteDao: ModelPackageWriteDao = dependencies.modelPackageWriteDao
   private val okHttpClient: OkHttpClient = dependencies.okHttpClient
   private val modelManifestRepository: ModelManifestRepository =
     dependencies.modelManifestRepository
@@ -88,20 +86,31 @@ constructor(
   override suspend fun doWork(): WorkResult = withContext(Dispatchers.IO) { executeWork() }
 
   private suspend fun executeWork(): WorkResult {
-    val taskId = inputData.getString(KEY_TASK_ID) ?: return fatalFailureResult("Missing task id")
-    val modelId = inputData.getString(KEY_MODEL_ID) ?: return fatalFailureResult("Missing model id")
-    val modelPackage =
-      modelPackageDao.getById(modelId) ?: return fatalFailureResult("Model not found: $modelId")
+    val taskId = inputData.getString(KEY_TASK_ID)
+    val modelId = inputData.getString(KEY_MODEL_ID)
+    val modelPackage = modelId?.let { modelPackageReadDao.getById(it) }
 
-    markTaskStarting(downloadTaskDao, taskId)
-    modelPackageDao.updateInstallState(modelId, InstallState.DOWNLOADING, Clock.System.now())
+    return when {
+      taskId == null -> fatalFailureResult("Missing task id")
+      modelId == null -> fatalFailureResult("Missing model id")
+      modelPackage == null -> fatalFailureResult("Model not found: $modelId")
+      else -> {
+        markTaskStarting(downloadTaskDao, taskId)
+        modelPackageWriteDao.updateInstallState(
+          modelId,
+          InstallState.DOWNLOADING,
+          Clock.System.now(),
+        )
 
-    return when (
-      val manifestResult = modelManifestRepository.refreshManifest(modelId, modelPackage.version)
-    ) {
-      is NanoAIResult.Success -> processManifest(taskId, modelId, manifestResult.value)
-      is NanoAIResult.RecoverableError -> handleRecoverable(taskId, modelId, manifestResult)
-      is NanoAIResult.FatalError -> handleFatal(taskId, modelId, manifestResult)
+        when (
+          val manifestResult =
+            modelManifestRepository.refreshManifest(modelId, modelPackage.version)
+        ) {
+          is NanoAIResult.Success -> processManifest(taskId, modelId, manifestResult.value)
+          is NanoAIResult.RecoverableError -> handleRecoverable(taskId, modelId, manifestResult)
+          is NanoAIResult.FatalError -> handleFatal(taskId, modelId, manifestResult)
+        }
+      }
     }
   }
 
@@ -129,7 +138,7 @@ constructor(
               VerificationOutcome.CORRUPTED,
               integrityResult.message,
             )
-            return handleRecoverable(taskId, modelId, integrityResult)
+            handleRecoverable(taskId, modelId, integrityResult)
           }
           is NanoAIResult.FatalError -> {
             reportVerification(
@@ -138,15 +147,13 @@ constructor(
               VerificationOutcome.CORRUPTED,
               integrityResult.message,
             )
-            return handleFatal(taskId, modelId, integrityResult)
+            handleFatal(taskId, modelId, integrityResult)
           }
         }
       }
-      is NanoAIResult.RecoverableError -> return handleRecoverable(taskId, modelId, downloadOutcome)
-      is NanoAIResult.FatalError -> return handleFatal(taskId, modelId, downloadOutcome)
+      is NanoAIResult.RecoverableError -> handleRecoverable(taskId, modelId, downloadOutcome)
+      is NanoAIResult.FatalError -> handleFatal(taskId, modelId, downloadOutcome)
     }
-    // Shouldn't reach here but return failure to satisfy compiler
-    return WorkResult.failure(fatalResultData(NanoAIResult.FatalError("Unknown error", null)))
   }
 
   private suspend fun downloadModel(
@@ -225,33 +232,51 @@ constructor(
     manifest: DownloadManifest,
     onProgress: suspend (Float, Long, Long) -> Unit,
   ): NanoAIResult.RecoverableError? {
+    var status: NanoAIResult.RecoverableError? = null
     byteStream().use { input ->
       FileOutputStream(outputFile).use { output ->
-        val buffer = ByteArray(DOWNLOAD_BUFFER_SIZE)
-        var downloaded = 0L
-        val totalBytes = manifest.sizeBytes
-
-        while (true) {
-          val read = input.read(buffer)
-          if (read == -1) break
-
-          if (isStopped) {
-            return NanoAIResult.recoverable(
-              message = "Download cancelled",
-              retryAfterSeconds = null,
-              context = mapOf("modelId" to manifest.modelId),
-            )
-          }
-
-          output.write(buffer, 0, read)
-          downloaded += read
-
-          val progress = if (totalBytes > 0) downloaded.toFloat() / totalBytes.toFloat() else 0f
-          onProgress(progress, downloaded, totalBytes)
-        }
+        status = processDownloadStream(input, output, manifest, onProgress)
       }
     }
-    return null
+    return status
+  }
+
+  private suspend fun processDownloadStream(
+    input: InputStream,
+    output: FileOutputStream,
+    manifest: DownloadManifest,
+    onProgress: suspend (Float, Long, Long) -> Unit,
+  ): NanoAIResult.RecoverableError? {
+    val buffer = ByteArray(DOWNLOAD_BUFFER_SIZE)
+    var downloaded = 0L
+    val totalBytes = manifest.sizeBytes
+    var status: NanoAIResult.RecoverableError? = null
+    var read = input.read(buffer)
+    while (status == null && read != -1) {
+      if (isStopped) {
+        status =
+          NanoAIResult.recoverable(
+            message = "Download cancelled",
+            retryAfterSeconds = null,
+            context = mapOf("modelId" to manifest.modelId),
+          )
+      } else {
+        output.write(buffer, 0, read)
+        downloaded += read
+        onProgress(
+          progressFor(downloaded, totalBytes),
+          downloaded,
+          totalBytes,
+        )
+        read = input.read(buffer)
+      }
+    }
+    return status
+  }
+
+  private fun progressFor(downloaded: Long, totalBytes: Long): Float {
+    if (totalBytes <= 0) return 0f
+    return downloaded.toFloat() / totalBytes.toFloat()
   }
 
   private suspend fun validateIntegrity(
@@ -259,46 +284,53 @@ constructor(
     manifest: DownloadManifest,
   ): NanoAIResult<String> {
     val fileSize = file.length()
-    if (fileSize != manifest.sizeBytes) {
-      file.delete()
-      return NanoAIResult.recoverable(
-        message = "Size mismatch detected",
-        retryAfterSeconds = 30L,
-        context =
-          mapOf(
-            "expectedSize" to manifest.sizeBytes.toString(),
-            "actualSize" to fileSize.toString(),
-          ),
-      )
-    }
-
-    val checksum = calculateSha256(file)
-    if (!checksum.equals(manifest.checksumSha256, ignoreCase = true)) {
-      file.delete()
-      return NanoAIResult.recoverable(
-        message = "Checksum mismatch detected",
-        retryAfterSeconds = 30L,
-        context =
-          mapOf(
-            "expectedChecksum" to manifest.checksumSha256,
-            "actualChecksum" to checksum,
-          ),
-      )
-    }
-
-    if (manifest.signature != null && manifest.publicKeyUrl != null) {
-      val signatureVerified = verifySignature(file, manifest.signature, manifest.publicKeyUrl)
-      if (!signatureVerified) {
+    val sizeValidation =
+      if (fileSize == manifest.sizeBytes) null
+      else {
         file.delete()
-        return NanoAIResult.recoverable(
-          message = "Signature verification failed",
+        NanoAIResult.recoverable(
+          message = "Size mismatch detected",
           retryAfterSeconds = 30L,
-          context = mapOf("modelId" to manifest.modelId),
+          context =
+            mapOf(
+              "expectedSize" to manifest.sizeBytes.toString(),
+              "actualSize" to fileSize.toString(),
+            ),
         )
       }
-    }
 
-    return NanoAIResult.success(checksum)
+    val result =
+      sizeValidation
+        ?: run {
+          val checksum = calculateSha256(file)
+          when {
+            !checksum.equals(manifest.checksumSha256, ignoreCase = true) -> {
+              file.delete()
+              NanoAIResult.recoverable(
+                message = "Checksum mismatch detected",
+                retryAfterSeconds = 30L,
+                context =
+                  mapOf(
+                    "expectedChecksum" to manifest.checksumSha256,
+                    "actualChecksum" to checksum,
+                  ),
+              )
+            }
+            manifest.signature != null &&
+              manifest.publicKeyUrl != null &&
+              !verifySignature(file, manifest.signature, manifest.publicKeyUrl) -> {
+              file.delete()
+              NanoAIResult.recoverable(
+                message = "Signature verification failed",
+                retryAfterSeconds = 30L,
+                context = mapOf("modelId" to manifest.modelId),
+              )
+            }
+            else -> NanoAIResult.success(checksum)
+          }
+        }
+
+    return result
   }
 
   private suspend fun verifySignature(
@@ -356,7 +388,7 @@ constructor(
     error: NanoAIResult.RecoverableError,
   ): WorkResult {
     downloadTaskDao.updateStatusWithError(taskId, DownloadStatus.FAILED, error.message)
-    modelPackageDao.updateInstallState(modelId, InstallState.ERROR, Clock.System.now())
+    modelPackageWriteDao.updateInstallState(modelId, InstallState.ERROR, Clock.System.now())
     markTaskFinished(downloadTaskDao, taskId)
     val willRetry = runAttemptCount < MAX_RETRY_ATTEMPTS - 1
     telemetryReporter.report(
@@ -383,7 +415,7 @@ constructor(
     error: NanoAIResult.FatalError,
   ): WorkResult {
     downloadTaskDao.updateStatusWithError(taskId, DownloadStatus.FAILED, error.message)
-    modelPackageDao.updateInstallState(modelId, InstallState.ERROR, Clock.System.now())
+    modelPackageWriteDao.updateInstallState(modelId, InstallState.ERROR, Clock.System.now())
     markTaskFinished(downloadTaskDao, taskId)
     telemetryReporter.report(
       source = "ModelDownloadWorker",
@@ -408,7 +440,7 @@ constructor(
     downloadTaskDao.updateStatus(taskId, DownloadStatus.COMPLETED)
     downloadTaskDao.updateProgress(taskId, 1f, manifest.sizeBytes)
     markTaskFinished(downloadTaskDao, taskId)
-    modelPackageDao.updateInstallState(modelId, InstallState.INSTALLED, Clock.System.now())
+    modelPackageWriteDao.updateInstallState(modelId, InstallState.INSTALLED, Clock.System.now())
 
     return WorkResult.success(
       workDataOf(

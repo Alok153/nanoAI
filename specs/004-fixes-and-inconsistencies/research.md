@@ -25,7 +25,7 @@
 - **References**: Kotlin language guidance on sealed hierarchies; internal architecture spec 001-foundation.
 
 ### Compose Decomposition & Accessibility
-- **Decision**: Split oversized composables (`NavigationScaffold`, `HomeScreen`, `WelcomeScreen`, `SidebarContent`, `ThemeToggle`) into focused composables with state hoisting, slot APIs, and preview coverage. Apply `semantics {}` with TalkBack labels and maintain Material 3 structure.
+- **Decision**: Split oversized composables (`NavigationScaffold`, `HomeScreen`, `SidebarContent`, `ThemeToggle`) into focused composables with state hoisting, slot APIs, and preview coverage. The legacy welcome screen was retired entirely; future first-run affordances should live within Home.
 - **Rationale**: Reduces complexity to satisfy Detekt rules, improves testability, and maintains UX polish/performance budgets.
 - **Alternatives Considered**: Suppressing Detekt (violates spec), rewriting screens in XML (breaks Compose consistency).
 - **References**: Jetpack Compose Material 3 guidance (https://developer.android.com/develop/ui/compose/material3) and Accessibility docs.

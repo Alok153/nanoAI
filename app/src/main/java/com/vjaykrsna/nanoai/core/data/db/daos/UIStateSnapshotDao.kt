@@ -7,6 +7,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import com.vjaykrsna.nanoai.core.data.db.entities.UIStateSnapshotEntity
+import com.vjaykrsna.nanoai.core.domain.model.uiux.UIStateSnapshot
 import kotlinx.coroutines.flow.Flow
 
 private const val MAX_RECENT_ACTIONS = 5
@@ -18,7 +19,7 @@ private const val MAX_RECENT_ACTIONS = 5
  * recent actions tracking.
  */
 @Dao
-@Suppress("TooManyFunctions") // DAOs naturally have many CRUD operations
+@Suppress("TooManyFunctions")
 interface UIStateSnapshotDao {
   /**
    * Observe the UI state snapshot for a user.
@@ -72,6 +73,54 @@ interface UIStateSnapshotDao {
    */
   @Query("UPDATE ui_state_snapshots SET sidebar_collapsed = :collapsed WHERE user_id = :userId")
   suspend fun updateSidebarCollapsed(userId: String, collapsed: Boolean): Int
+
+  /**
+   * Update the left drawer open state.
+   *
+   * @param userId The unique user identifier
+   * @param open True if the left drawer should be marked as open
+   * @return Number of rows updated (should be 1 if successful)
+   */
+  @Query("UPDATE ui_state_snapshots SET left_drawer_open = :open WHERE user_id = :userId")
+  suspend fun updateLeftDrawerOpen(userId: String, open: Boolean): Int
+
+  /**
+   * Update the right drawer open state and active panel.
+   *
+   * @param userId The unique user identifier
+   * @param open True if the right drawer should be marked as open
+   * @param panel Identifier for the active panel when open
+   * @return Number of rows updated (should be 1 if successful)
+   */
+  @Query(
+    """
+      UPDATE ui_state_snapshots
+      SET right_drawer_open = :open,
+          active_right_panel = :panel
+      WHERE user_id = :userId
+    """,
+  )
+  suspend fun updateRightDrawerState(userId: String, open: Boolean, panel: String?): Int
+
+  /**
+   * Update the active mode route used for session restoration.
+   *
+   * @param userId The unique user identifier
+   * @param route Navigation route string representing the active mode
+   * @return Number of rows updated (should be 1 if successful)
+   */
+  @Query("UPDATE ui_state_snapshots SET active_mode = :route WHERE user_id = :userId")
+  suspend fun updateActiveModeRoute(userId: String, route: String): Int
+
+  /**
+   * Update the command palette visibility flag.
+   *
+   * @param userId The unique user identifier
+   * @param visible True if the palette should be shown on restoration
+   * @return Number of rows updated (should be 1 if successful)
+   */
+  @Query("UPDATE ui_state_snapshots SET palette_visible = :visible WHERE user_id = :userId")
+  suspend fun updateCommandPaletteVisible(userId: String, visible: Boolean): Int
 
   /**
    * Update the expanded panels list.
@@ -163,6 +212,11 @@ interface UIStateSnapshotDao {
           expandedPanels = emptyList(),
           recentActions = listOf(actionId),
           sidebarCollapsed = false,
+          leftDrawerOpen = false,
+          rightDrawerOpen = false,
+          activeMode = UIStateSnapshot.DEFAULT_MODE_ROUTE,
+          activeRightPanel = null,
+          paletteVisible = false,
         ),
       )
     }
@@ -200,6 +254,11 @@ interface UIStateSnapshotDao {
           expandedPanels = emptyList(),
           recentActions = emptyList(),
           sidebarCollapsed = false,
+          leftDrawerOpen = false,
+          rightDrawerOpen = false,
+          activeMode = UIStateSnapshot.DEFAULT_MODE_ROUTE,
+          activeRightPanel = null,
+          paletteVisible = false,
         ),
       )
     }

@@ -1,6 +1,7 @@
 package com.vjaykrsna.nanoai.core.data.preferences
 
 import javax.inject.Singleton
+import kotlinx.datetime.Instant
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
@@ -31,4 +32,9 @@ class UiPreferencesConverters(
     payload
       ?.takeIf { it.isNotBlank() }
       ?.let { json.decodeFromString(stringBooleanMapSerializer, it) } ?: emptyMap()
+
+  fun encodeInstant(instant: Instant?): String? = instant?.toString()
+
+  fun decodeInstant(payload: String?): Instant? =
+    payload?.takeIf { it.isNotBlank() }?.let { Instant.parse(it) }
 }

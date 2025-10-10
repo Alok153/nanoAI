@@ -19,9 +19,7 @@ constructor(
   private val scope = CoroutineScope(SupervisorJob() + dispatcher)
 
   fun toggle(enabled: Boolean, userId: String = UIUX_DEFAULT_USER_ID) {
-    scope.launch {
-      repository.updateCompactMode(userId, enabled)
-    }
+    scope.launch { repository.updateCompactMode(userId, enabled) }
   }
 
   fun toggle(enabled: Boolean) {

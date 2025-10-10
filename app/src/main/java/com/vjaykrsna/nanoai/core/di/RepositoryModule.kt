@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai.core.di
 
+import com.vjaykrsna.nanoai.core.common.IoDispatcher
 import com.vjaykrsna.nanoai.core.data.repository.ApiProviderConfigRepository
 import com.vjaykrsna.nanoai.core.data.repository.ConversationRepository
 import com.vjaykrsna.nanoai.core.data.repository.InferencePreferenceRepository
@@ -20,13 +21,17 @@ import com.vjaykrsna.nanoai.feature.library.data.impl.ModelCatalogRepositoryImpl
 import com.vjaykrsna.nanoai.feature.library.domain.ExportService
 import com.vjaykrsna.nanoai.feature.settings.data.backup.ImportServiceImpl
 import com.vjaykrsna.nanoai.feature.settings.domain.ImportService
+import com.vjaykrsna.nanoai.feature.uiux.data.ShellStateRepository
+import com.vjaykrsna.nanoai.feature.uiux.domain.ProgressCenterCoordinator
 import com.vjaykrsna.nanoai.model.catalog.ModelManifestRepository
 import com.vjaykrsna.nanoai.model.catalog.ModelManifestRepositoryImpl
 import dagger.Binds
 import dagger.Module
+import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
 
 /**
  * Hilt module providing repository implementations.
@@ -35,7 +40,7 @@ import javax.inject.Singleton
  */
 @Module
 @InstallIn(SingletonComponent::class)
-@Suppress("TooManyFunctions") // DI module binds many repository interfaces
+@Suppress("TooManyFunctions")
 abstract class RepositoryModule {
   @Binds
   @Singleton
@@ -102,4 +107,20 @@ abstract class RepositoryModule {
   abstract fun bindUserProfileRepository(
     impl: UserProfileRepositoryImpl,
   ): UserProfileRepository
+
+  companion object {
+    @Provides
+    @Singleton
+    fun provideShellStateRepository(
+      userProfileRepository: UserProfileRepository,
+      @IoDispatcher ioDispatcher: CoroutineDispatcher,
+    ): ShellStateRepository = ShellStateRepository(userProfileRepository, ioDispatcher)
+
+    @Provides
+    @Singleton
+    fun provideProgressCenterCoordinator(
+      downloadManager: DownloadManager,
+      @IoDispatcher ioDispatcher: CoroutineDispatcher,
+    ): ProgressCenterCoordinator = ProgressCenterCoordinator(downloadManager, ioDispatcher)
+  }
 }

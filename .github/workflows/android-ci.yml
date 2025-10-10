@@ -8,7 +8,7 @@ on:
 
 jobs:
   lint:
-    name: Code Quality (ktlint & Detekt)
+    name: Code Quality (Spotless & Detekt)
     runs-on: ubuntu-latest
     
     steps:
@@ -25,8 +25,8 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
         
-      - name: Run Detekt & ktlint
-        run: ./gradlew detekt ktlintCheck
+      - name: Run Detekt & Spotless
+        run: ./gradlew detekt spotlessCheck
 
       - name: Enforce blocking Detekt rules
         shell: bash
@@ -57,7 +57,7 @@ jobs:
         with:
           name: lint-reports
           path: |
-            **/build/reports/ktlint/
+            **/build/reports/spotless/
             **/build/reports/detekt/
 
   android-lint:
@@ -204,8 +204,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     if: |
-      github.ref == 'refs/heads/003-UI-UX' ||
-      github.base_ref == '003-UI-UX' ||
+      github.ref == 'refs/heads/main' ||
+      github.base_ref == 'main' ||
       (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'benchmark'))
     
     steps:

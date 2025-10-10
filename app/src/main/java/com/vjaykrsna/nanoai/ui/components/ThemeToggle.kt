@@ -111,19 +111,19 @@ private fun ThemeModeChips(
       ThemeToggleOption(
         preference = ThemePreference.SYSTEM,
         label = "System",
-        icon = Icons.Filled.AutoMode,
+        icon = Icons.Default.AutoMode,
         description = "System theme",
       ),
       ThemeToggleOption(
         preference = ThemePreference.LIGHT,
         label = "Light",
-        icon = Icons.Filled.LightMode,
+        icon = Icons.Default.LightMode,
         description = "Light theme",
       ),
       ThemeToggleOption(
         preference = ThemePreference.DARK,
         label = "Dark",
-        icon = Icons.Filled.DarkMode,
+        icon = Icons.Default.DarkMode,
         description = "Dark theme",
       ),
     )

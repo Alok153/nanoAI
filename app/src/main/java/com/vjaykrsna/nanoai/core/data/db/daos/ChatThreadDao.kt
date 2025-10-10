@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.Flow
  * functions for use with Kotlin coroutines.
  */
 @Dao
-@Suppress("TooManyFunctions") // DAOs naturally have many CRUD operations
+@Suppress("TooManyFunctions")
 interface ChatThreadDao {
   /** Insert a new chat thread. Replaces if thread with same ID exists. */
   @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insert(thread: ChatThreadEntity)

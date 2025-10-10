@@ -1,0 +1,208 @@
+package com.vjaykrsna.nanoai.feature.settings.domain.huggingface
+
+import com.google.common.truth.Truth.assertThat
+import com.vjaykrsna.nanoai.model.huggingface.network.HuggingFaceAccountService
+import com.vjaykrsna.nanoai.model.huggingface.network.HuggingFaceOAuthService
+import com.vjaykrsna.nanoai.model.huggingface.network.dto.HuggingFaceDeviceCodeResponse
+import com.vjaykrsna.nanoai.model.huggingface.network.dto.HuggingFaceTokenResponse
+import com.vjaykrsna.nanoai.model.huggingface.network.dto.HuggingFaceUserDto
+import com.vjaykrsna.nanoai.security.HuggingFaceCredentialRepository
+import com.vjaykrsna.nanoai.security.model.CredentialScope
+import com.vjaykrsna.nanoai.security.model.SecretCredential
+import io.mockk.every
+import io.mockk.mockk
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestCoroutineScheduler
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import kotlinx.serialization.json.Json
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.ResponseBody.Companion.toResponseBody
+import org.junit.Test
+import retrofit2.HttpException
+import retrofit2.Response
+
+class HuggingFaceAuthCoordinatorTest {
+
+  @Test
+  fun `savePersonalAccessToken persists credentials and updates state`() = runTest {
+    val harness = createHarness()
+    harness.accountService.response = Result.success(testUser())
+
+    val state = harness.coordinator.savePersonalAccessToken("hf_test").getOrThrow()
+
+    assertThat(state.isAuthenticated).isTrue()
+    assertThat(state.username).isEqualTo("tester")
+    assertThat(harness.coordinator.state.value.isAuthenticated).isTrue()
+    assertThat(harness.credentialRepository.hasAccessToken()).isTrue()
+  }
+
+  @Test
+  fun `savePersonalAccessToken clears invalid credentials`() = runTest {
+    val harness = createHarness()
+    harness.accountService.response = Result.failure(unauthorizedException())
+
+    val result = harness.coordinator.savePersonalAccessToken("hf_invalid")
+
+    assertThat(result.getOrThrow().isAuthenticated).isFalse()
+    assertThat(harness.coordinator.state.value.lastError).contains("no longer valid")
+    assertThat(harness.credentialRepository.hasAccessToken()).isFalse()
+  }
+
+  @Test
+  fun `device authorization stores token and advances auth state`() = runTest {
+    val harness = createHarness()
+    harness.accountService.response = Result.success(testUser())
+    harness.oauthService.deviceResponse =
+      HuggingFaceDeviceCodeResponse(
+        deviceCode = "device-code",
+        userCode = "USER-CODE",
+        verificationUri = "https://huggingface.co/login/device",
+        verificationUriComplete = "https://huggingface.co/login/device?user-code=USER-CODE",
+        expiresIn = 300,
+        interval = 1,
+      )
+    harness.oauthService.tokenResponses +=
+      Result.success(HuggingFaceTokenResponse(accessToken = "oauth-token"))
+
+    val deviceState = harness.coordinator.beginDeviceAuthorization("client", "all").getOrThrow()
+
+    assertThat(deviceState.userCode).isEqualTo("USER-CODE")
+    assertThat(harness.coordinator.deviceAuthState.value?.isPolling).isTrue()
+
+    advanceTimeBy(1_000)
+    advanceUntilIdle()
+
+    assertThat(harness.credentialRepository.hasAccessToken()).isTrue()
+    assertThat(harness.coordinator.state.value.isAuthenticated).isTrue()
+    assertThat(harness.coordinator.deviceAuthState.value).isNull()
+  }
+
+  private fun testUser() =
+    HuggingFaceUserDto(
+      name = "tester",
+      displayName = "Test User",
+      email = null,
+      accountType = "user"
+    )
+
+  private fun unauthorizedException(): HttpException {
+    val body = "{\"error\":\"invalid_token\"}".toResponseBody("application/json".toMediaType())
+    val response = Response.error<HuggingFaceUserDto>(401, body)
+    return HttpException(response)
+  }
+
+  private fun TestScope.createHarness(): CoordinatorHarness {
+    val json = Json {
+      ignoreUnknownKeys = true
+      encodeDefaults = true
+      explicitNulls = false
+    }
+    val clock = TestClock(testScheduler)
+    var storedCredential: SecretCredential? = null
+    val credentialRepository = mockk<HuggingFaceCredentialRepository>()
+    every { credentialRepository.credential() } answers { storedCredential }
+    every { credentialRepository.accessToken() } answers { storedCredential?.encryptedValue }
+    every { credentialRepository.hasAccessToken() } answers
+      {
+        storedCredential?.encryptedValue?.isNotBlank() == true
+      }
+    every {
+      credentialRepository.saveAccessToken(token = any(), rotatesAfter = any(), metadata = any())
+    } answers
+      {
+        val token = firstArg<String>()
+        val rotatesAfter = secondArg<Instant?>()
+        val metadata = thirdArg<Map<String, String>>()
+        storedCredential =
+          SecretCredential(
+            providerId = HuggingFaceCredentialRepository.PROVIDER_ID,
+            encryptedValue = token,
+            keyAlias = "test",
+            storedAt = clock.now(),
+            rotatesAfter = rotatesAfter,
+            scope = CredentialScope.TEXT_INFERENCE,
+            metadata = metadata,
+          )
+        Unit
+      }
+    every { credentialRepository.clearAccessToken() } answers
+      {
+        storedCredential = null
+        Unit
+      }
+    val accountService = FakeAccountService()
+    val oauthService = FakeOAuthService()
+    val dispatcher = StandardTestDispatcher(testScheduler)
+    val coordinator =
+      HuggingFaceAuthCoordinator(
+        credentialRepository = credentialRepository,
+        accountService = accountService,
+        oauthService = oauthService,
+        clock = clock,
+        json = json,
+        ioDispatcher = dispatcher,
+      )
+    return CoordinatorHarness(coordinator, accountService, oauthService, credentialRepository)
+  }
+
+  private data class CoordinatorHarness(
+    val coordinator: HuggingFaceAuthCoordinator,
+    val accountService: FakeAccountService,
+    val oauthService: FakeOAuthService,
+    val credentialRepository: HuggingFaceCredentialRepository,
+  )
+
+  private class FakeAccountService : HuggingFaceAccountService {
+    var response: Result<HuggingFaceUserDto> =
+      Result.success(
+        HuggingFaceUserDto(name = "fallback", displayName = null, email = null, accountType = null)
+      )
+
+    override suspend fun getCurrentUser(): HuggingFaceUserDto = response.getOrThrow()
+  }
+
+  private class FakeOAuthService : HuggingFaceOAuthService {
+    var deviceResponse: HuggingFaceDeviceCodeResponse =
+      HuggingFaceDeviceCodeResponse(
+        deviceCode = "device",
+        userCode = "code",
+        verificationUri = "https://example.com",
+        verificationUriComplete = null,
+        expiresIn = 300,
+        interval = 1,
+      )
+
+    val tokenResponses: MutableList<Result<HuggingFaceTokenResponse>> = mutableListOf()
+
+    override suspend fun requestDeviceCode(
+      clientId: String,
+      scope: String
+    ): HuggingFaceDeviceCodeResponse = deviceResponse
+
+    override suspend fun exchangeDeviceCode(
+      clientId: String,
+      deviceCode: String,
+      grantType: String,
+    ): HuggingFaceTokenResponse {
+      if (tokenResponses.isEmpty()) {
+        throw HttpException(
+          Response.error<HuggingFaceTokenResponse>(
+            428,
+            "{\"error\":\"authorization_pending\"}"
+              .toResponseBody("application/json".toMediaType()),
+          )
+        )
+      }
+      return tokenResponses.removeAt(0).getOrThrow()
+    }
+  }
+
+  private class TestClock(private val scheduler: TestCoroutineScheduler) : Clock {
+    override fun now(): Instant = Instant.fromEpochMilliseconds(scheduler.currentTime)
+  }
+}

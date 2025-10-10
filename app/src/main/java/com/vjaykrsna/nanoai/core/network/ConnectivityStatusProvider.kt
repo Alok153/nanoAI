@@ -1,6 +1,5 @@
 package com.vjaykrsna.nanoai.core.network
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
@@ -36,7 +35,6 @@ constructor(
           !requiresValidatedCapability())
     }
 
-  @SuppressLint("ObsoleteSdkInt")
   private fun requiresValidatedCapability(): Boolean =
     Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
 }

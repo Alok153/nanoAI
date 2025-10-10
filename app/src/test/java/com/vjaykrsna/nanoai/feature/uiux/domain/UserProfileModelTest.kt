@@ -98,7 +98,7 @@ class UserProfileModelTest {
       themePreference,
       visualDensity,
       false,
-      mapOf("welcome_tip" to true),
+      mapOf("onboarding_tip" to true),
       screenType,
       false,
       listOf("tool-1", "tool-2"),

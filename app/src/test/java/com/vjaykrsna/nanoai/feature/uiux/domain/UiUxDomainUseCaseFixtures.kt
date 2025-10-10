@@ -1,4 +1,4 @@
-@file:Suppress("LongParameterList", "LongMethod", "CyclomaticComplexMethod") // Test fixtures
+@file:Suppress("TooManyFunctions", "LongMethod", "CyclomaticComplexMethod", "LongParameterList")
 
 package com.vjaykrsna.nanoai.feature.uiux.domain
 
@@ -14,6 +14,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.TestScope
+import kotlinx.datetime.Instant
 
 internal object UiUxDomainReflection {
   private const val USER_PROFILE = "com.vjaykrsna.nanoai.core.domain.model.uiux.UserProfile"
@@ -49,10 +50,25 @@ internal object UiUxDomainReflection {
     userId: String = "user-123",
     expandedPanels: List<String> = emptyList(),
     recentActions: List<String> = emptyList(),
-    sidebarCollapsed: Boolean = false
+    sidebarCollapsed: Boolean = false,
+    leftDrawerOpen: Boolean = false,
+    rightDrawerOpen: Boolean = false,
+    activeModeRoute: String = "home",
+    activeRightPanel: String? = null,
+    paletteVisible: Boolean = false,
   ): Any {
     val ctor = primaryConstructor(loadClass(UI_STATE_SNAPSHOT))
-    return ctor.newInstance(userId, expandedPanels, recentActions, sidebarCollapsed)
+    return ctor.newInstance(
+      userId,
+      expandedPanels,
+      recentActions,
+      sidebarCollapsed,
+      leftDrawerOpen,
+      rightDrawerOpen,
+      activeModeRoute,
+      activeRightPanel,
+      paletteVisible,
+    )
   }
 
   fun newUiPreferences(
@@ -61,27 +77,44 @@ internal object UiUxDomainReflection {
     onboardingCompleted: Boolean = false,
     dismissedTips: Map<String, Boolean> = emptyMap(),
     pinnedTools: List<String> = emptyList(),
+    commandPaletteRecents: List<String> = emptyList(),
+    connectivityBannerLastDismissed: Instant? = null,
   ): Any {
     val clazz = loadClass(UI_PREFERENCES)
     val ctor = preferredConstructor(clazz)
-    return if (ctor.parameterCount == 0) {
-      val instance = ctor.newInstance()
-      invokeCopy(
-        instance,
-        themePreference,
-        visualDensity,
-        onboardingCompleted,
-        dismissedTips,
-        pinnedTools,
-      )
-    } else {
-      ctor.newInstance(
-        themePreference,
-        visualDensity,
-        onboardingCompleted,
-        dismissedTips,
-        pinnedTools,
-      )
+    return when (ctor.parameterCount) {
+      0 -> {
+        val instance = ctor.newInstance()
+        invokeCopy(
+          instance,
+          themePreference,
+          visualDensity,
+          onboardingCompleted,
+          dismissedTips,
+          pinnedTools,
+          commandPaletteRecents,
+          connectivityBannerLastDismissed,
+        )
+      }
+      5 ->
+        ctor.newInstance(
+          themePreference,
+          visualDensity,
+          onboardingCompleted,
+          dismissedTips,
+          pinnedTools,
+        )
+      7 ->
+        ctor.newInstance(
+          themePreference,
+          visualDensity,
+          onboardingCompleted,
+          dismissedTips,
+          pinnedTools,
+          commandPaletteRecents,
+          connectivityBannerLastDismissed,
+        )
+      else -> error("Unsupported UiPreferencesSnapshot constructor arity ${ctor.parameterCount}")
     }
   }
 
@@ -118,7 +151,9 @@ internal object UiUxDomainReflection {
     visualDensity: Any? = null,
     onboardingCompleted: Boolean? = null,
     dismissedTips: Map<String, Boolean>? = null,
-    pinnedTools: List<String>? = null
+    pinnedTools: List<String>? = null,
+    commandPaletteRecents: List<String>? = null,
+    connectivityBannerLastDismissed: Instant? = null,
   ): Any {
     val baseline = original ?: newUiPreferences()
     val clazz = baseline.javaClass
@@ -132,43 +167,83 @@ internal object UiUxDomainReflection {
       (visualDensity ?: getProperty(baseline, "visualDensity"))
         ?: error("visualDensity must not be null")
     val resolvedOnboarding =
-      onboardingCompleted ?: (getProperty(baseline, "onboardingCompleted") as Boolean)
+      onboardingCompleted ?: (getProperty(baseline, "onboardingCompleted") as? Boolean ?: false)
 
-    @Suppress("UNCHECKED_CAST")
-    val resolvedDismissed =
-      dismissedTips ?: (getProperty(baseline, "dismissedTips") as Map<String, Boolean>)
+    val resolvedDismissed: Map<String, Boolean> =
+      dismissedTips
+        ?: run {
+          val raw = getProperty(baseline, "dismissedTips") as? Map<*, *>
+          raw
+            ?.mapNotNull { (k, v) ->
+              val key = k?.toString()
+              val value = v as? Boolean
+              if (key != null && value != null) key to value else null
+            }
+            ?.toMap() ?: emptyMap()
+        }
 
-    @Suppress("UNCHECKED_CAST")
-    val resolvedPinned = pinnedTools ?: (getProperty(baseline, "pinnedTools") as List<String>)
+    val resolvedPinned: List<String> =
+      pinnedTools
+        ?: run {
+          val raw = getProperty(baseline, "pinnedTools") as? List<*>
+          raw?.mapNotNull { it?.toString() } ?: emptyList()
+        }
 
-    return if (ctor.parameterCount == 0) {
-      invokeCopy(
-        baseline,
-        resolvedTheme,
-        resolvedDensity,
-        resolvedOnboarding,
-        resolvedDismissed,
-        resolvedPinned,
-      )
-    } else {
-      ctor.newInstance(
-        resolvedTheme,
-        resolvedDensity,
-        resolvedOnboarding,
-        resolvedDismissed,
-        resolvedPinned,
-      )
+    val resolvedCommandRecents: List<String> =
+      commandPaletteRecents
+        ?: run {
+          val raw =
+            runCatching { getProperty(baseline, "commandPaletteRecents") as? List<*> }.getOrNull()
+          raw?.mapNotNull { it?.toString() } ?: emptyList()
+        }
+    val resolvedConnectivityDismissed =
+      connectivityBannerLastDismissed
+        ?: runCatching { getProperty(baseline, "connectivityBannerLastDismissed") as Instant? }
+          .getOrNull()
+
+    return when (ctor.parameterCount) {
+      0 ->
+        invokeCopy(
+          baseline,
+          resolvedTheme,
+          resolvedDensity,
+          resolvedOnboarding,
+          resolvedDismissed,
+          resolvedPinned,
+          resolvedCommandRecents,
+          resolvedConnectivityDismissed,
+        )
+      5 ->
+        ctor.newInstance(
+          resolvedTheme,
+          resolvedDensity,
+          resolvedOnboarding,
+          resolvedDismissed,
+          resolvedPinned,
+        )
+      7 ->
+        ctor.newInstance(
+          resolvedTheme,
+          resolvedDensity,
+          resolvedOnboarding,
+          resolvedDismissed,
+          resolvedPinned,
+          resolvedCommandRecents,
+          resolvedConnectivityDismissed,
+        )
+      else -> error("Unsupported UiPreferencesSnapshot constructor arity ${ctor.parameterCount}")
     }
   }
 
   fun updateLayoutCompact(layout: Any, isCompact: Boolean): Any {
     val clazz = layout.javaClass
     val ctor = primaryConstructor(clazz)
-    val id = getProperty(layout, "id") as String
-    val name = getProperty(layout, "name") as String
-    val lastOpened = getProperty(layout, "lastOpenedScreen") as String
+    val id = getProperty(layout, "id") as? String ?: ""
+    val name = getProperty(layout, "name") as? String ?: ""
+    val lastOpened = getProperty(layout, "lastOpenedScreen") as? String ?: ""
 
-    @Suppress("UNCHECKED_CAST") val pinned = getProperty(layout, "pinnedTools") as List<String>
+    val pinned =
+      (getProperty(layout, "pinnedTools") as? List<*>)?.mapNotNull { it?.toString() } ?: emptyList()
     return ctor.newInstance(id, name, lastOpened, pinned, isCompact)
   }
 
@@ -212,20 +287,37 @@ internal object UiUxDomainReflection {
     visualDensity: Any,
     onboardingCompleted: Boolean,
     dismissedTips: Map<String, Boolean>,
-    pinnedTools: List<String>
+    pinnedTools: List<String>,
+    commandPaletteRecents: List<String>,
+    connectivityBannerLastDismissed: Instant?,
   ): Any {
     val method =
       baseline.javaClass.methods.firstOrNull { method ->
         method.name == "copy" && method.parameterCount >= 5
       } ?: error("UiPreferencesSnapshot copy method not found")
-    return method.invoke(
-      baseline,
-      themePreference,
-      visualDensity,
-      onboardingCompleted,
-      dismissedTips,
-      pinnedTools,
-    )
+    return when (method.parameterCount) {
+      5 ->
+        method.invoke(
+          baseline,
+          themePreference,
+          visualDensity,
+          onboardingCompleted,
+          dismissedTips,
+          pinnedTools,
+        )
+      7 ->
+        method.invoke(
+          baseline,
+          themePreference,
+          visualDensity,
+          onboardingCompleted,
+          dismissedTips,
+          pinnedTools,
+          commandPaletteRecents,
+          connectivityBannerLastDismissed,
+        )
+      else -> error("Unsupported UiPreferencesSnapshot#copy arity ${method.parameterCount}")
+    }
   }
 }
 
@@ -285,7 +377,20 @@ internal class UserProfileRepositorySpy {
         name.contains("onboarding", ignoreCase = true) -> {
           invocations += name
           val dismissed =
-            args?.firstOrNull { it is Map<*, *> } as? Map<String, Boolean> ?: emptyMap()
+            args
+              ?.firstOrNull { it is Map<*, *> }
+              ?.let { map ->
+                if (
+                  map is Map<*, *> &&
+                    map.keys.all { it is String } &&
+                    map.values.all { it is Boolean }
+                ) {
+                  @Suppress("UNCHECKED_CAST")
+                  map as Map<String, Boolean>
+                } else {
+                  emptyMap()
+                }
+              } ?: emptyMap()
           val completed = args?.firstOrNull { it is Boolean } as? Boolean ?: false
           lastOnboardingRecord = dismissed to completed
           preferencesFlow.value =

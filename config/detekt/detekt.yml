@@ -25,11 +25,6 @@ style:
     excludeImportStatements: true
   ForbiddenComment:
     active: true
-    comments:
-      - 'TODO:'
-      - 'FIXME:'
-      - 'STOPSHIP:'
-    allowedPatterns: 'TODO\([A-Z]+-[0-9]+\):'
 formatting:
   # Disabled because Spotless/ktfmt is the canonical project formatter.
   # Prevents multiple formatters from conflicting.
@@ -47,12 +42,47 @@ complexity:
   LargeClass:
     active: true
     threshold: 300
+    ignoreAnnotated:
+      - Composable
+      - Singleton
+      - Worker
+      - HiltWorker
   LongMethod:
     active: true
     threshold: 60
+    ignoreAnnotated:
+      - Composable
+      - Test
+      - Preview
   CyclomaticComplexMethod:
     active: true
     threshold: 10
+    ignoreAnnotated:
+      - Composable
+      - Test
+      - Preview
+  LongParameterList:
+    active: true
+    functionThreshold: 6
+    constructorThreshold: 7
+    ignoreDefaultParameters: true
+    ignoreAnnotated:
+      - Composable
+      - Inject
+      - Provides
+  TooManyFunctions:
+    active: true
+    thresholdInClasses: 11
+    thresholdInInterfaces: 11
+    thresholdInObjects: 11
+    ignoreAnnotated:
+      - Dao
+      - Module
+      - Singleton
+      - Composable
+      - HiltViewModel
+      - Worker
+      - HiltWorker
 
 potential-bugs:
   active: true

@@ -99,7 +99,6 @@ class ExportServiceImplTest {
     assertThat(payload["apiProviders"]!!.jsonArray).isNotEmpty()
   }
 
-  @Suppress("ktlint:standard:function-expression-body")
   private class FakePersonaRepository : PersonaRepository {
     var personas: List<PersonaProfile> = emptyList()
 
@@ -128,7 +127,6 @@ class ExportServiceImplTest {
     override fun observeAllPersonas(): Flow<List<PersonaProfile>> = flowOf(personas)
   }
 
-  @Suppress("ktlint:standard:function-expression-body")
   private class FakeApiProviderConfigRepository : ApiProviderConfigRepository {
     var providers: List<APIProviderConfig> = emptyList()
 
@@ -155,7 +153,6 @@ class ExportServiceImplTest {
     override fun observeAllProviders(): Flow<List<APIProviderConfig>> = flowOf(providers)
   }
 
-  @Suppress("ktlint:standard:function-expression-body")
   private class FakeConversationRepository : ConversationRepository {
     override suspend fun getThread(threadId: UUID): ChatThread? =
       throw UnsupportedOperationException("Not required for test")

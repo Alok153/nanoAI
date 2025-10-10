@@ -3,6 +3,7 @@ package com.vjaykrsna.nanoai.feature.settings.presentation
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.vjaykrsna.nanoai.BuildConfig
 import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreference
 import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreferenceStore
 import com.vjaykrsna.nanoai.core.data.preferences.RetentionPolicy
@@ -12,6 +13,9 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.feature.library.domain.ModelDownloadsAndExportUseCase
 import com.vjaykrsna.nanoai.feature.settings.domain.ImportService
 import com.vjaykrsna.nanoai.feature.settings.domain.ImportSummary
+import com.vjaykrsna.nanoai.feature.settings.domain.huggingface.HuggingFaceAuthCoordinator
+import com.vjaykrsna.nanoai.feature.settings.domain.huggingface.HuggingFaceAuthState
+import com.vjaykrsna.nanoai.feature.settings.domain.huggingface.HuggingFaceDeviceAuthState
 import com.vjaykrsna.nanoai.feature.uiux.domain.ObserveUserProfileUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.ToggleCompactModeUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.UpdateThemePreferenceUseCase
@@ -34,7 +38,6 @@ import kotlinx.datetime.Clock
 private const val FLOW_STOP_TIMEOUT_MS = 5_000L
 
 @HiltViewModel
-@Suppress("TooManyFunctions", "LongParameterList") // Complex settings management
 class SettingsViewModel
 @Inject
 constructor(
@@ -45,6 +48,7 @@ constructor(
   private val observeUserProfileUseCase: ObserveUserProfileUseCase,
   private val updateThemePreferenceUseCase: UpdateThemePreferenceUseCase,
   private val toggleCompactModeUseCase: ToggleCompactModeUseCase,
+  private val huggingFaceAuthCoordinator: HuggingFaceAuthCoordinator,
 ) : ViewModel() {
   private val _isLoading = MutableStateFlow(false)
   val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -61,6 +65,11 @@ constructor(
   private val _uiUxState = MutableStateFlow(SettingsUiUxState())
   val uiUxState: StateFlow<SettingsUiUxState> = _uiUxState.asStateFlow()
   private var previousUiUxState: SettingsUiUxState? = null
+
+  val huggingFaceAuthState: StateFlow<HuggingFaceAuthState> = huggingFaceAuthCoordinator.state
+
+  val huggingFaceDeviceAuthState: StateFlow<HuggingFaceDeviceAuthState?> =
+    huggingFaceAuthCoordinator.deviceAuthState
 
   val apiProviders: StateFlow<List<APIProviderConfig>> =
     apiProviderConfigRepository
@@ -282,6 +291,76 @@ constructor(
   fun dismissMigrationSuccessNotification() {
     _uiUxState.update { it.copy(showMigrationSuccessNotification = false) }
   }
+
+  fun saveHuggingFaceApiKey(apiKey: String) {
+    viewModelScope.launch {
+      huggingFaceAuthCoordinator
+        .savePersonalAccessToken(apiKey)
+        .onSuccess { authState ->
+          if (authState.isAuthenticated) {
+            _uiUxState.update {
+              it.copy(statusMessage = "Hugging Face connected", undoAvailable = false)
+            }
+          } else if (authState.lastError != null) {
+            _errorEvents.emit(SettingsError.HuggingFaceAuthFailed(authState.lastError))
+          }
+        }
+        .onFailure { throwable ->
+          _errorEvents.emit(
+            SettingsError.HuggingFaceAuthFailed(
+              throwable.message ?: "Failed to save Hugging Face API key",
+            ),
+          )
+        }
+    }
+  }
+
+  fun refreshHuggingFaceAccount() {
+    viewModelScope.launch { huggingFaceAuthCoordinator.refreshAccount() }
+  }
+
+  fun startHuggingFaceOAuthLogin() {
+    viewModelScope.launch {
+      val clientId = BuildConfig.HF_OAUTH_CLIENT_ID.trim()
+      val scope = BuildConfig.HF_OAUTH_SCOPE.ifBlank { DEFAULT_OAUTH_SCOPE }
+
+      if (clientId.isBlank()) {
+        _errorEvents.emit(
+          SettingsError.HuggingFaceAuthFailed(
+            "Hugging Face OAuth client ID is not configured",
+          ),
+        )
+        return@launch
+      }
+
+      huggingFaceAuthCoordinator
+        .beginDeviceAuthorization(clientId = clientId, scope = scope)
+        .onFailure { throwable ->
+          _errorEvents.emit(
+            SettingsError.HuggingFaceAuthFailed(
+              throwable.message ?: "Unable to start Hugging Face sign-in",
+            ),
+          )
+        }
+    }
+  }
+
+  fun cancelHuggingFaceOAuthLogin() {
+    viewModelScope.launch { huggingFaceAuthCoordinator.cancelDeviceAuthorization() }
+  }
+
+  private companion object {
+    private const val DEFAULT_OAUTH_SCOPE = "all offline_access"
+  }
+
+  fun disconnectHuggingFaceAccount() {
+    viewModelScope.launch {
+      huggingFaceAuthCoordinator.clearCredentials()
+      _uiUxState.update {
+        it.copy(statusMessage = "Hugging Face disconnected", undoAvailable = false)
+      }
+    }
+  }
 }
 
 sealed class SettingsError {
@@ -310,6 +389,10 @@ sealed class SettingsError {
   ) : SettingsError()
 
   data class UnexpectedError(
+    val message: String,
+  ) : SettingsError()
+
+  data class HuggingFaceAuthFailed(
     val message: String,
   ) : SettingsError()
 }

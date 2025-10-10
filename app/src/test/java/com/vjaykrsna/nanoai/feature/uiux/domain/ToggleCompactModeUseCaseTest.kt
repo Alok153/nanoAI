@@ -2,6 +2,7 @@
 
 package com.vjaykrsna.nanoai.feature.uiux.domain
 
+import android.os.Build
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.Test
 import kotlin.test.fail
@@ -10,7 +11,12 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
 class ToggleCompactModeUseCaseTest {
   @Test
   fun `persists compact mode preference and updates layout snapshots`() = runTest {
@@ -42,7 +48,7 @@ class ToggleCompactModeUseCaseTest {
     assertThat(density.toString()).isEqualTo("COMPACT")
     assertThat(
         spy.layoutSnapshotsFlow.value.all {
-          UiUxDomainReflection.getProperty(it, "compact") as Boolean
+          UiUxDomainReflection.getProperty(it, "compact") as? Boolean ?: false
         }
       )
       .isTrue()
@@ -58,7 +64,7 @@ class ToggleCompactModeUseCaseTest {
     assertThat(densityDefault.toString()).isEqualTo("DEFAULT")
     assertThat(
         spy.layoutSnapshotsFlow.value.any {
-          UiUxDomainReflection.getProperty(it, "compact") as Boolean
+          UiUxDomainReflection.getProperty(it, "compact") as? Boolean ?: false
         }
       )
       .isFalse()

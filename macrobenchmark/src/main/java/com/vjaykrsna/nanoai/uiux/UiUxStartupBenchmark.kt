@@ -48,9 +48,9 @@ class UiUxStartupBenchmark {
 
         device.wait(Until.hasObject(By.pkg(PACKAGE_NAME).depth(0)), 5_000)
 
-        // Verify welcome hero appears quickly (acts as proxy for FMP)
-        val hero = device.findObject(By.res(PACKAGE_NAME, "welcome_hero_title"))
-        checkNotNull(hero) { "T029: Welcome hero not found during cold start benchmark." }
+        // Verify home feed appears quickly (acts as proxy for first meaningful paint)
+        val homeFeed = device.findObject(By.res(PACKAGE_NAME, "home_single_column_feed"))
+        checkNotNull(homeFeed) { "T029: Home feed not found during cold start benchmark." }
         durations += SystemClock.elapsedRealtime() - start
       }
 

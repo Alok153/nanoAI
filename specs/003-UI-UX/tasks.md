@@ -1,141 +1,119 @@
 # Tasks: UI/UX — Polished Product-Grade Experience
 
 **Input**: Design documents from `/specs/003-UI-UX/`
-**Prerequisites**: `plan.md`, `research.md`, `data-model.md`, `contracts/`, `quickstart.md`
+**Prerequisites**: plan.md (required), research.md, data-model.md, contracts/, quickstart.md
 
-## Execution Flow (main)
-```
-1. Load plan.md for architecture, tech stack, and performance budgets.
-2. Parse research.md for Compose, theming, accessibility, and offline decisions.
-3. Extract entities from data-model.md (UserProfile, LayoutSnapshot, UIStateSnapshot).
-4. Map contracts/ (openapi.yaml, ui_contracts.md) into test stubs and implementation targets.
-5. Capture quickstart.md scenarios as instrumentation plans.
-6. Emit dependency-ordered tasks (Setup → Tests → Core → Integration → Polish) with [P] for parallel-safe items.
-```
+## Phase 3.1: Setup
+- [X] T001 Update Compose/navigation dependencies and enable Compose metrics exports in `app/build.gradle.kts` to support the unified shell instrumentation.  
+  _Depends on_: —
+- [X] T002 Create placeholder shell entry points (`ShellStateRepository`, `ShellViewModel`, `NanoShellScaffold`) under `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/` with `TODO()` bodies so contract tests can compile.  
+  _Depends on_: T001
 
-## Format: `[ID] [P?] Description`
-- **[P]**: Can run in parallel (independent files, no shared dependency blockers)
-- Include fully-qualified paths in every task description
+## Phase 3.2: Tests First (TDD)
+- [X] T003 [P] Author failing unit tests in `app/src/test/java/com/vjaykrsna/nanoai/feature/uiux/presentation/ShellViewModelTest.kt` covering all intents from `contracts/shell-interactions.md`.  
+  _Depends on_: T002
+- [X] T004 [P] Add failing Compose instrumentation tests in `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/CommandPaletteComposeTest.kt` per `contracts/command-palette-ui-tests.md`.  
+  _Depends on_: T002
+- [X] T005 [P] Add failing offline/progress instrumentation tests in `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/OfflineProgressTest.kt` per `contracts/offline-progress.md`.  
+  _Depends on_: T002
+- [X] T006 [P] Write Home Hub flow Compose test in `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/HomeHubFlowTest.kt` validating acceptance scenarios from spec (grid launch within two taps, recent activity).  
+  _Depends on_: T002
+- [X] T007 [P] Write adaptive layout Compose test in `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/AdaptiveShellTest.kt` asserting `WindowSizeClass` driven drawer behavior and accessibility focus.  
+  _Depends on_: T002
+- [X] T008 Update macrobenchmark scenario in `macrobenchmark/src/main/java/com/vjaykrsna/nanoai/macrobenchmark/NavigationBenchmarks.kt` to capture Home Hub launch + mode switch latency budgets (<100 ms interactions).  
+  _Depends on_: T003–T007
 
-## Path Conventions
-- Source: `app/src/main/java/com/vjaykrsna/nanoai/`
-- Unit tests: `app/src/test/java/com/vjaykrsna/nanoai/`
-- Instrumentation: `app/src/androidTest/java/com/vjaykrsna/nanoai/`
-- Macrobenchmark: `macrobenchmark/src/main/java/com/vjaykrsna/nanoai/`
+## Phase 3.3: Core Implementation (only after tests fail)
+- [X] T009 [P] Implement `ShellLayoutState` data class and helpers in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/state/ShellLayoutState.kt` matching data-model.md.  
+  _Depends on_: T003
+- [X] T010 [P] Implement `ModeCard` model in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/state/ModeCard.kt` with localized labels and primary actions per research.  
+  _Depends on_: T006
+- [X] T011 [P] Implement `CommandPaletteState` in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/state/CommandPaletteState.kt` including selection handling and recent commands.  
+  _Depends on_: T004
+- [X] T012 [P] Implement `ProgressJob` domain model in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/state/ProgressJob.kt` representing WorkManager/inference jobs.  
+  _Depends on_: T005
+- [X] T013 [P] Implement `ConnectivityBannerState` in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/state/ConnectivityBannerState.kt` with CTA metadata.  
+  _Depends on_: T005
+- [X] T014 [P] Implement `UiPreferenceSnapshot` extensions in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/state/UiPreferenceSnapshot.kt` capturing theme, density, font scale, onboarding, dismissed tooltips.  
+  _Depends on_: T005
+- [X] T015 [P] Implement `RecentActivityItem` model in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/state/RecentActivityItem.kt` for history cards.  
+  _Depends on_: T006
+- [X] T016 Extend `UIStateSnapshotEntity`, `UIStateSnapshot` domain model, and add migration in `app/src/main/java/com/vjaykrsna/nanoai/core/data/db/entities/UIStateSnapshotEntity.kt` & `.../NanoAIDatabaseMigrations.kt` for drawer/palette persistence.  
+  _Depends on_: T009, T015
+- [X] T017 Expand `UiPreferencesStore` in `app/src/main/java/com/vjaykrsna/nanoai/core/data/preferences/UiPreferencesStore.kt` with keys for command palette recents, connectivity banner dismissal, and density defaults.  
+  _Depends on_: T014
+- [X] T018 Build `ShellStateRepository` in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/data/ShellStateRepository.kt` combining preferences, progress, connectivity, and activity flows into `ShellLayoutState`.  
+  _Depends on_: T009–T017
+- [X] T019 Implement `CommandPaletteActionProvider` in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/domain/CommandPaletteActionProvider.kt` aggregating navigation + quick actions.  
+  _Depends on_: T011, T015, T018
+- [X] T020 Implement `ProgressCenterCoordinator` in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/domain/ProgressCenterCoordinator.kt` syncing WorkManager progress with `ProgressJob`.  
+  _Depends on_: T012, T018
+- [X] T021 Implement `ShellViewModel` in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/presentation/ShellViewModel.kt` to satisfy all contract intents with proper state reducers.  
+  _Depends on_: T003–T020
+- [X] T022 Build `NanoShellScaffold` composable in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/shell/NanoShellScaffold.kt` hosting drawers, command palette overlay, and offline banner surfaces.  
+  _Depends on_: T004, T021
+- [X] T023 Implement `CommandPaletteSheet` UI in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/commandpalette/CommandPaletteSheet.kt` with keyboard navigation + semantics.  
+  _Depends on_: T004, T019, T022
+- [X] T024 Implement `ProgressCenterPanel` UI in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/progress/ProgressCenterPanel.kt` rendering job queue + retry logic.  
+  _Depends on_: T005, T012, T020
+- [X] T025 Implement `ConnectivityBanner` composable in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/components/ConnectivityBanner.kt` wired to dismissal cooldown.  
+  _Depends on_: T013, T017, T022
+- [X] T026 Rebuild `HomeScreen` in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/HomeScreen.kt` as responsive grid with quick actions and recent activity list.  
+  _Depends on_: T006, T010, T015, T022
+- [X] T027 Implement right-sidebar contextual panels (model selector, settings shortcuts, progress) in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/sidebar/RightSidebarPanels.kt`.  
+  _Depends on_: T012, T024, T026
+- [X] T028 Refactor `feature/sidebar` components in `app/src/main/java/com/vjaykrsna/nanoai/ui/sidebar/` to consume new navigation data and highlight active routes.  
+  _Depends on_: T022, T026, T027
+- [X] T029 Update `MainActivity.kt` and `app/src/main/java/com/vjaykrsna/nanoai/ui/navigation/NavigationScaffold.kt` to mount `NanoShellScaffold`, supply `WindowSizeClass`, and remove legacy per-screen scaffolds.  
+  _Depends on_: T022, T026–T028
+- [X] T030 Refactor Chat UI (`app/src/main/java/com/vjaykrsna/nanoai/feature/chat/ui/ChatScreen.kt`) to use shell slots (header/composer) instead of its own `Scaffold`.  
+  _Depends on_: T029
+- [X] T031 Refactor Model Library/History UI (`app/src/main/java/com/vjaykrsna/nanoai/feature/library/ui/ModelLibraryScreen.kt` and related) to rely on shell scaffolding and right drawer hooks.  
+  _Depends on_: T029
+- [X] T032 Refactor Settings UI (`app/src/main/java/com/vjaykrsna/nanoai/feature/settings/ui/SettingsScreen.kt`) to match tabbed sections and shell layout, including persistent Save/Undo controls.  
+  _Depends on_: T029
 
-# Phase 3.1 Setup
-- [X] T001 Align `gradle/libs.versions.toml` with Material3 dynamic color, navigation-compose, lifecycle-runtime-compose, DataStore, Room (runtime + ksp), Coil, WindowSizeClass, Compose testing, macrobenchmark, and serialization versions required by the UI/UX plan.
-- [X] T002 Update `app/build.gradle.kts` to apply Compose compiler metrics, register BaselineProfile variants, enable Room schema export, wire DataStore/Room/Coil dependencies, and expose macrobenchmark instrumentation targets.
-- [X] T003 Harden `.github/workflows/android-ci.yml` so CI runs ktlint, Detekt, unit tests, Compose instrumentation (contracts + quickstart scenarios), and the UI/UX macrobenchmark smoke job.
-- [X] T004 Extend `config/detekt/detekt.yml` to enable Compose-specific rules, accessibility checks, and include `feature/uiux`, `ui/components`, and new DAO packages in analysis.
+# Phase 3.4: Integration
+- [X] T033 Wire new repositories/providers in Hilt (`app/src/main/java/com/vjaykrsna/nanoai/core/di/PreferencesModule.kt`, `.../RepositoryModule.kt`) for `ShellStateRepository`, `CommandPaletteActionProvider`, and `ProgressCenterCoordinator`.  
+  _Depends on_: T018–T021
+- [X] T034 Update navigation routing + deep links in `app/src/main/java/com/vjaykrsna/nanoai/ui/navigation/Screen.kt` and command palette registry so actions invoke the correct destinations.  
+  _Depends on_: T019, T029–T032
+- [X] T035 Connect analytics/telemetry events for command palette usage, drawer toggles, and queued jobs in `app/src/main/java/com/vjaykrsna/nanoai/telemetry/` respecting consent flags.  
+  _Depends on_: T017, T021, T024, T032
+- [X] T036 Refresh macrobenchmark assertions in `macrobenchmark/src/main/java/com/vjaykrsna/nanoai/macrobenchmark/NavigationBenchmarks.kt` and add new scenario for command palette open latency.  
+  _Depends on_: T022–T035
 
-## Phase 3.2 Tests First (TDD) ⚠️ Complete before any implementation
-- [X] T005 [P] Author failing `/user/profile` contract test at `app/src/test/java/com/vjaykrsna/nanoai/feature/uiux/contracts/UserProfileContractTest.kt` validating `contracts/openapi.yaml` schema with MockWebServer + Kotlin Serialization.
-- [X] T006 [P] Add Compose contract test `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/contracts/WelcomeScreenContractTest.kt` covering hero copy, CTA semantics, and skip control per `ui_contracts.md`.
-- [X] T007 [P] Add Compose contract test `.../feature/uiux/contracts/HomeScreenContractTest.kt` asserting single-column layout, recent-actions ordering, and collapsed tools behavior.
-- [X] T008 [P] Add Compose contract test `.../feature/uiux/contracts/SidebarContractTest.kt` verifying DrawerState accessibility, keyboard navigation, and deep-link slotting.
-- [X] T009 [P] Add Compose contract test `.../feature/uiux/contracts/SettingsScreenContractTest.kt` validating grouped settings cards, inline help, and undo affordances.
-- [X] T010 [P] Add Compose contract test `.../feature/uiux/contracts/ThemeToggleContractTest.kt` ensuring instant theme switch, semantics, and persistence intents.
-- [X] T011 [P] Add Compose contract test `.../feature/uiux/contracts/OfflineBannerContractTest.kt` covering offline messaging, disabled actions, and retry hook.
-- [X] T012 [P] Add Compose contract test `.../feature/uiux/contracts/OnboardingTooltipContractTest.kt` verifying dismiss + "Don't show again" semantics and HELP re-entry.
-- [X] T013 [P] Create unit test `app/src/test/java/com/vjaykrsna/nanoai/feature/uiux/domain/UserProfileModelTest.kt` enforcing validation rules (displayName length, pinnedTools ≤10, savedLayouts ≤5, dismissed tips map).
-- [X] T014 [P] Create unit test `.../LayoutSnapshotModelTest.kt` checking layout name length, pinned tools cap, and compact flag consistency.
-- [X] T015 [P] Create unit test `.../UIStateSnapshotModelTest.kt` verifying sidebar toggle persistence, recentActions rotation (max 5), and expanded panel dedupe.
-- [X] T016 [P] Create unit test `app/src/test/java/com/vjaykrsna/nanoai/feature/uiux/domain/ObserveUserProfileUseCaseTest.kt` faking DAO + DataStore flows to assert merged state fidelity and offline cache hydration.
-- [X] T017 [P] Create unit test `.../UpdateThemePreferenceUseCaseTest.kt` ensuring DataStore writes, repository sync, and notification to observers.
-- [X] T018 [P] Create unit test `.../RecordOnboardingProgressUseCaseTest.kt` validating dismissed tip storage and onboarding completion flag.
-- [X] T019 [P] Create unit test `.../ToggleCompactModeUseCaseTest.kt` verifying compact mode persistence and layout snapshot updates.
-- [X] T020 [P] Create unit test `app/src/test/java/com/vjaykrsna/nanoai/feature/uiux/presentation/WelcomeViewModelTest.kt` asserting onboarding branching, CTA analytics events, and skip gating.
-- [X] T021 [P] Create unit test `.../HomeViewModelTest.kt` covering recommended action ranking, offline banner state, and tooltip surfacing.
-- [X] T022 [P] Extend `app/src/test/java/com/vjaykrsna/nanoai/feature/settings/presentation/SettingsViewModelUiUxTest.kt` to fail on missing theme toggle persistence, density toggles, and undo interactions.
-- [X] T023 [P] Instrument Quickstart Scenario 1 in `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/scenario/FirstTimeWelcomeScenarioTest.kt` following welcome journey expectations.
-- [X] T024 [P] Instrument Scenario 2 in `.../HomeNavigationScenarioTest.kt` validating expand-tools flow, latency <100 ms, and action execution.
-- [X] T025 [P] Instrument Scenario 3 in `.../SidebarSettingsScenarioTest.kt` verifying sidebar navigation, grouped settings, and inline help copy.
-- [X] T026 [P] Instrument Scenario 4 in `.../ThemeToggleScenarioTest.kt` ensuring theme persistence across process death and no layout jump.
-- [X] T027 [P] Instrument Scenario 5 in `.../OfflineModeScenarioTest.kt` enforcing offline banner display, disabled CTAs, and queued retries.
-- [X] T028 [P] Instrument Scenario 6 in `.../AccessibilityScenarioTest.kt` validating TalkBack ordering, dynamic type support, and focus traps.
-- [X] T029 [P] Add macrobenchmark `macrobenchmark/src/main/java/com/vjaykrsna/nanoai/uiux/UiUxStartupBenchmark.kt` asserting cold start <1.5 s, FMP ≤300 ms, interaction latency ≤100 ms.
-
-## Phase 3.3 Core Implementation (only after tests fail)
-- [X] T030 [P] Implement `core/domain/model/uiux/UserProfile.kt` with validation, conversion helpers, and Flow mappers to Room/DataStore.
-- [X] T031 [P] Implement `core/domain/model/uiux/LayoutSnapshot.kt` encapsulating saved layout metadata and mapping helpers.
-- [X] T032 [P] Implement `core/domain/model/uiux/UIStateSnapshot.kt` modeling expanded panels, recent actions rotation, and mapping helpers.
-- [X] T033 Create `core/data/db/entities/UserProfileEntity.kt` plus `toDomain`/`fromDomain` conversions with type converters for enums and maps.
-- [X] T034 Create `core/data/db/entities/LayoutSnapshotEntity.kt` modeling saved layouts with indices for quick lookup.
-- [X] T035 Create `core/data/db/entities/UIStateSnapshotEntity.kt` persisting session state with foreign keys to `UserProfileEntity`.
-- [X] T036 Create `core/data/db/daos/UserProfileDao.kt` exposing Flow CRUD, pinned tools updates, and compact mode toggles.
-- [X] T037 Create `core/data/db/daos/LayoutSnapshotDao.kt` for CRUD, ordering, and pinned tool synchronization.
-- [X] T038 Create `core/data/db/daos/UIStateSnapshotDao.kt` for session restoration and sidebar collapse persistence.
-- [X] T039 Update `core/data/db/NanoAIDatabase.kt` to register new entities/DAOs, add migrations, and export updated schema JSON.
-- [X] T040 Implement `core/data/preferences/UiPreferencesStore.kt` storing theme preference, visual density, onboarding completion, dismissed tips, and pinned tool ordering via Preferences DataStore.
-- [X] T041 Add `core/data/preferences/UiPreferences.kt` data class + mapper bridging DataStore snapshots to domain `UserProfile` overlays.
-- [X] T042 Create `core/network/dto/UserProfileDto.kt` with serialization annotations and mapping to domain models.
-- [X] T043 Define Retrofit `core/network/UserProfileService.kt` exposing `GET /user/profile` with suspend function.
-- [X] T044 Implement `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/data/UserProfileRemoteDataSource.kt` handling API fetch, error wrapping, and DTO conversion.
-- [X] T045 Implement `.../feature/uiux/data/UserProfileLocalDataSource.kt` coordinating DAO + DataStore updates and cache hydration.
-- [X] T046 Define `core/data/repository/UserProfileRepository.kt` interface covering observe/update theme, onboarding, pinned tools, and layout snapshots.
-- [X] T047 Implement `core/data/repository/impl/UserProfileRepositoryImpl.kt` merging remote/local sources, ensuring offline-first behavior, and exposing Flow APIs.
-- [X] T048 [P] Implement `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/domain/ObserveUserProfileUseCase.kt` wiring repository Flow into UI state mediator with error handling.
-- [X] T049 [P] Implement `.../UpdateThemePreferenceUseCase.kt` orchestrating DataStore writes and repository refresh triggers.
-- [X] T050 [P] Implement `.../RecordOnboardingProgressUseCase.kt` persisting dismissed tooltips and onboarding completion flag.
-- [X] T051 [P] Implement `.../ToggleCompactModeUseCase.kt` flipping density preference and syncing with layout snapshots.
-- [X] T052 [P] Implement `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/presentation/WelcomeViewModel.kt` coordinating onboarding, CTA navigation events, and analytics hooks.
-- [X] T053 [P] Implement `.../presentation/HomeViewModel.kt` combining recommended actions, offline banner state, and tooltip surfacing from repository + connectivity provider.
-- [X] T054 Extend `app/src/main/java/com/vjaykrsna/nanoai/feature/settings/presentation/SettingsViewModel.kt` to use UI preference use cases, expose theme/density toggles, and provide undo operations.
-- [X] T055 Extend `app/src/main/java/com/vjaykrsna/nanoai/feature/sidebar/presentation/SidebarViewModel.kt` with DrawerState, pinned tool ordering, and navigation intents for new sidebar contracts.
-- [X] T056 [P] Build `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/WelcomeScreen.kt` Compose screen implementing hero layout, CTA buttons, skip inline link, and tooltip entry points.
-- [X] T057 [P] Build `.../feature/uiux/ui/HomeScreen.kt` Compose screen with single-column feed, recommended action cards, skeleton loaders, and collapsible tools rail.
-- [X] T058 [P] Build `app/src/main/java/com/vjaykrsna/nanoai/feature/sidebar/ui/SidebarDrawer.kt` Compose drawer handling breakpoint-specific behavior and accessibility semantics.
-- [X] T059 Update `app/src/main/java/com/vjaykrsna/nanoai/ui/navigation/Screen.kt` and `NavigationScaffold.kt` to register welcome/home routes, manage DrawerState, and inject ViewModels via Hilt.
-- [X] T060 [P] Create `app/src/main/java/com/vjaykrsna/nanoai/ui/components/ThemeToggle.kt` implementing manual/system toggle, animations, and semantics per contract.
-- [X] T061 [P] Create `.../ui/components/OfflineBanner.kt` exposing status messaging, retry callback, and queue indicator.
-- [X] T062 [P] Create `.../ui/components/OnboardingTooltip.kt` providing dismiss + "don't show again" behavior with Compose semantics.
-- [X] T063 [P] Create `.../ui/components/PrimaryActionCard.kt` for recommended actions with iconography, semantics, and haptic feedback hooks.
-- [X] T064 Update `app/src/main/java/com/vjaykrsna/nanoai/ui/theme/Color.kt`, `Theme.kt`, and `Type.kt` to define Material 3 tokens, spacing, elevation, and dynamic color fallbacks aligned with research.md budgets.
-- [X] T065 Update `app/src/main/java/com/vjaykrsna/nanoai/MainActivity.kt` to observe theme preference flows, gate welcome vs home navigation, and surface skeleton state while caches hydrate.
-
-## Phase 3.4 Integration
-- [X] T066 Update `app/src/main/java/com/vjaykrsna/nanoai/core/di/DatabaseModule.kt` to provide new DAOs and migrate schema version for UserProfile/UI state tables.
-- [X] T067 Update `app/src/main/java/com/vjaykrsna/nanoai/core/di/RepositoryModule.kt` binding `UserProfileRepositoryImpl`, local, and remote data sources.
-- [X] T068 Update `app/src/main/java/com/vjaykrsna/nanoai/core/di/NetworkModule.kt` to supply `UserProfileService` Retrofit client with JSON serialization config.
-- [X] T069 Add or extend `app/src/main/java/com/vjaykrsna/nanoai/core/di/PreferencesModule.kt` providing singleton `UiPreferencesStore` and converters.
-- [X] T070 Implement `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/data/SyncUiStateWorker.kt` to queue layout snapshot sync and tooltip dismissal uploads via WorkManager.
-- [X] T071 Update `app/src/main/java/com/vjaykrsna/nanoai/core/di/WorkerModule.kt` to bind `SyncUiStateWorker` with Hilt and schedule periodic sync respecting offline constraints.
-
-## Phase 3.5 Polish
-- [X] T072 [P] Add Compose visual regression `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/visual/ThemeToggleVisualTest.kt` capturing light/dark snapshots for accessibility review.
-- [X] T073 Address accessibility findings: update `feature/uiux/ui/*` and `ui/components/*` with TalkBack labels, contentDescription, focus order, and large-text support per WCAG AA.
-- [X] T074 Tune performance budgets by updating `macrobenchmark/src/main/java/com/vjaykrsna/nanoai/uiux/UiUxStartupBenchmark.kt` thresholds and generating Baseline Profiles for welcome/home flows.
-- [X] T075 Refresh `specs/003-UI-UX/quickstart.md` with new instrumentation commands, offline validation notes, and expected screenshots.
-- [X] T076 Document UI/UX data flow and `/user/profile` endpoint in `docs/ARCHITECTURE.md` and `docs/API.md`, including caching and privacy notes.
-- [X] T077 Record validation outcomes in `specs/003-UI-UX/validation/uiux-validation.md`, referencing quickstart scenarios and benchmark results.
-- [X] T078 [P] Log manual QA results (accessibility, performance, theme checks) in `specs/003-UI-UX/logs/uiux-qa.md` with timestamps and device details.
-
-## Dependencies
-- T001–T004 must complete before any test task (T005–T029).
-- Contract, model, use case, ViewModel, and scenario tests (T005–T029) must fail green before implementing corresponding code (T030+).
-- Domain models (T030–T032) unblock Room entities/DAOs (T033–T039), which unblock repository/data layer tasks (T040–T047).
-- Use cases (T048–T051) depend on repository completion (T046–T047) and gate ViewModel layer (T052–T055).
-- ViewModels feed UI component tasks (T056–T065); navigation updates (T059) depend on ViewModels and components.
-- DI + Worker wiring (T066–T071) depends on data layer and ViewModel availability.
-- Polish tasks (T072–T078) run only after integration tasks succeed and instrumentation benchmarks exist.
+## Phase 3.5: Polish
+- [X] T037 [P] Extend unit/UI tests for error + undo states (`ShellViewModelTest`, `CommandPaletteComposeTest`) to cover retries, disabled actions, and snackbar flows.  
+  _Depends on_: T021–T025, T030–T032
+- [X] T038 [P] Perform accessibility pass (semantics, contrast) across new composables in `feature/uiux/ui/` and `ui/sidebar/`.  
+  _Depends on_: T022–T032
+- [X] T039 [P] Profile performance (JankStats, Compose metrics) and tune animations/transitions, updating Baseline Profile data and documenting outcomes.  
+  _Depends on_: T036, T037–T038
+- [X] T040 Update documentation (`specs/003-UI-UX/quickstart.md`, `docs/ARCHITECTURE.md`, in-app help strings) to describe new shell, command palette, and offline flows.  
+  _Depends on_: T022–T039
+- [X] T041 Execute manual QA checklist from quickstart on Pixel 7 + large-screen emulator, logging findings in `specs/003-UI-UX/logs/uiux-qa.md`.  
+  _Depends on_: T040
 
 ## Parallel Execution Examples
-```
-# Run contract Compose tests together once setup is ready
-task start T006
-task start T007
-task start T008
-task wait T006 T007 T008
+- After completing T008, run data model implementations in parallel:
+  - `task run T009`
+  - `task run T010`
+  - `task run T011`
+  - `task run T012`
+  - `task run T013`
+  - `task run T014`
+  - `task run T015`
+- After finishing T029, refactor feature surfaces in parallel:
+  - `task run T030`
+  - `task run T031`
+  - `task run T032`
+- During polish, accessibility and performance work can proceed together:
+  - `task run T038`
+  - `task run T039`
 
-# Parallelize domain model creation after tests are red
-task start T030
-task start T031
-task start T032
-task wait T030 T031 T032
+```diff
+Legend:
+- [P] Tasks that can run in parallel.
+- All other tasks must respect listed dependencies.
 ```
-
-## Notes
-- Keep [P] tasks limited to independent files to avoid merge conflicts; drop marker if scope changes.
-- Ensure each test added in Phase 3.2 fails before implementing code that satisfies it (TDD discipline).
-- Reference constitution performance, accessibility, and privacy gates while executing implementation and polish phases.

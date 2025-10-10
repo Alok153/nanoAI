@@ -12,7 +12,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Baseline profile generation focused on the polished UI/UX flows (welcome → home → settings).
+ * Baseline profile generation focused on the polished UI/UX flows (home → settings).
  *
  * Run via: ./gradlew :macrobenchmark:generateBenchmarkReleaseBaselineProfile
  */
@@ -26,15 +26,8 @@ class UiUxBaselineProfile {
       pressHome()
       startActivityAndWait()
 
-      // Warm up welcome screen interactions
-      device.wait(Until.hasObject(By.text("Get started")), 3_000)
-      device.findObject(By.text("Explore features"))?.click()
-      device.waitForIdle()
-      device.pressBack()
-      device.waitForIdle()
-
-      // Proceed to home screen
-      device.findObject(By.text("Get started"))?.click()
+      // Wait for home screen to load from cold start
+      device.wait(Until.hasObject(By.res(PACKAGE_NAME, "home_single_column_feed")), 3_000)
       device.wait(Until.hasObject(By.text("Recent actions")), 2_000)
 
       // Expand tools rail and scroll actions

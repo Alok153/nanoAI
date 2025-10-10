@@ -123,6 +123,10 @@ constructor(
   /** Observe download progress as a Flow. */
   fun getDownloadProgress(taskId: UUID): Flow<Float> = downloadManager.observeProgress(taskId)
 
+  /** Observe a specific download task for status or error updates. */
+  suspend fun observeDownloadTask(taskId: UUID): Flow<DownloadTask?> =
+    downloadManager.getTaskById(taskId)
+
   /** Observe queued download tasks. */
   fun getQueuedDownloads(): Flow<List<DownloadTask>> = downloadManager.getQueuedDownloads()
 

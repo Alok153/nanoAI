@@ -10,9 +10,7 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferencesSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UserProfile
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -20,7 +18,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 
 /** Observes the composed user interface profile merging Room, DataStore, and UI state flows. */
 class ObserveUserProfileUseCase
@@ -29,8 +26,6 @@ constructor(
   private val repository: UserProfileRepository,
   @IoDispatcher private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
-  private val scope = CoroutineScope(SupervisorJob() + dispatcher)
-
   data class Result(
     val userProfile: UserProfile?,
     val layoutSnapshots: List<LayoutSnapshot>,

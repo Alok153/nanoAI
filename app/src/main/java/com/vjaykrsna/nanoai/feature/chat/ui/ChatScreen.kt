@@ -1,13 +1,9 @@
-@file:Suppress("CyclomaticComplexMethod") // Complex chat UI logic
-
 package com.vjaykrsna.nanoai.feature.chat.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,24 +14,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -50,14 +35,16 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.vjaykrsna.nanoai.core.domain.model.Message
-import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
 import com.vjaykrsna.nanoai.feature.chat.presentation.ChatError
 import com.vjaykrsna.nanoai.feature.chat.presentation.ChatViewModel
-import java.util.UUID
+import com.vjaykrsna.nanoai.feature.uiux.state.NanoError
+import com.vjaykrsna.nanoai.feature.uiux.ui.components.composer.NanoComposerBar
+import com.vjaykrsna.nanoai.feature.uiux.ui.components.feedback.NanoErrorHandler
+import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoRadii
+import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoSpacing
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -65,125 +52,90 @@ import kotlinx.datetime.toLocalDateTime
 private const val MESSAGE_BUBBLE_WIDTH_FRACTION = 0.85f
 
 @Composable
-fun ChatScreen(modifier: Modifier = Modifier, viewModel: ChatViewModel = hiltViewModel()) {
+fun ChatScreen(
+  modifier: Modifier = Modifier,
+  viewModel: ChatViewModel = hiltViewModel(),
+  onUpdateChatState: ((com.vjaykrsna.nanoai.feature.uiux.presentation.ChatState?) -> Unit)? = null,
+) {
   val messages by viewModel.messages.collectAsState()
   val currentThread by viewModel.currentThread.collectAsState()
   val availablePersonas by viewModel.availablePersonas.collectAsState()
   val isLoading by viewModel.isLoading.collectAsState()
 
   val snackbarHostState = remember { SnackbarHostState() }
+  var composerText by rememberSaveable { mutableStateOf("") }
+  var activeError by remember { mutableStateOf<NanoError?>(null) }
 
-  LaunchedEffect(Unit) {
-    viewModel.errorEvents.collectLatest { error ->
-      val message =
-        when (error) {
-          is ChatError.InferenceFailed -> "Inference failed: ${error.message}"
-          is ChatError.PersonaSwitchFailed -> "Persona switch failed: ${error.message}"
-          is ChatError.ThreadCreationFailed -> "Thread creation failed: ${error.message}"
-          is ChatError.ThreadArchiveFailed -> "Archive failed: ${error.message}"
-          is ChatError.ThreadDeletionFailed -> "Delete failed: ${error.message}"
-          is ChatError.UnexpectedError -> "Error: ${error.message}"
-        }
-      snackbarHostState.showSnackbar(message)
-    }
-  }
-
-  Scaffold(
-    snackbarHost = { SnackbarHost(snackbarHostState) },
-    modifier =
-      modifier.semantics { contentDescription = "Chat screen with message history and input" },
-  ) { innerPadding ->
-    Column(
-      modifier = Modifier.fillMaxSize().padding(innerPadding),
-    ) {
-      // Top bar with thread info and persona selector
-      ChatTopBar(
-        threadTitle = currentThread?.title ?: "New Chat",
+  LaunchedEffect(availablePersonas, currentThread) {
+    onUpdateChatState?.invoke(
+      com.vjaykrsna.nanoai.feature.uiux.presentation.ChatState(
         availablePersonas = availablePersonas,
         currentPersonaId = currentThread?.personaId,
-        onPersonaSelect = { persona, action -> viewModel.switchPersona(persona.personaId, action) },
-        modifier = Modifier.fillMaxWidth(),
       )
+    )
+  }
 
-      // Messages list
+  LaunchedEffect(Unit) {
+    viewModel.errorEvents.collectLatest { error -> activeError = error.toNanoError() }
+  }
+
+  Box(
+    modifier =
+      modifier.fillMaxSize().semantics {
+        contentDescription = "Chat screen with message history and input"
+      },
+  ) {
+    Column(
+      modifier =
+        Modifier.fillMaxSize().padding(horizontal = NanoSpacing.lg, vertical = NanoSpacing.md),
+      verticalArrangement = Arrangement.spacedBy(NanoSpacing.md),
+    ) {
       MessagesList(
         messages = messages,
         isLoading = isLoading,
         modifier = Modifier.weight(1f).fillMaxWidth(),
       )
 
-      // Input area
-      MessageInputArea(
-        onSendMessage = { text ->
-          currentThread?.personaId?.let { personaId -> viewModel.sendMessage(text, personaId) }
-        },
-        enabled = !isLoading && currentThread != null,
+      NanoErrorHandler(
+        error = activeError,
+        snackbarHostState = snackbarHostState,
         modifier = Modifier.fillMaxWidth(),
+        onDismiss = { activeError = null },
+      )
+
+      NanoComposerBar(
+        value = composerText,
+        onValueChange = { composerText = it },
+        modifier = Modifier.fillMaxWidth(),
+        placeholder = "Type a message…",
+        enabled = !isLoading && currentThread != null,
+        onSend = {
+          val trimmed = composerText.trim()
+          if (trimmed.isNotEmpty()) {
+            val personaId = currentThread?.personaId
+            if (personaId != null) {
+              viewModel.sendMessage(trimmed, personaId)
+              composerText = ""
+              activeError = null
+            } else {
+              activeError =
+                NanoError.Inline(
+                  title = "No persona selected",
+                  description = "Choose a persona before sending messages.",
+                )
+            }
+          }
+        },
+        sendEnabled = composerText.isNotBlank() && currentThread != null && !isLoading,
+        isSending = isLoading,
       )
     }
-  }
-}
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ChatTopBar(
-  threadTitle: String,
-  availablePersonas: List<PersonaProfile>,
-  currentPersonaId: UUID?,
-  onPersonaSelect: (PersonaProfile, com.vjaykrsna.nanoai.core.model.PersonaSwitchAction) -> Unit,
-  modifier: Modifier = Modifier,
-) {
-  Column(
-    modifier = modifier.background(MaterialTheme.colorScheme.surface).padding(16.dp),
-  ) {
-    Text(
-      text = threadTitle,
-      style = MaterialTheme.typography.titleLarge,
-      fontWeight = FontWeight.Bold,
+    SnackbarHost(
+      hostState = snackbarHostState,
+      modifier =
+        Modifier.align(Alignment.BottomCenter).padding(horizontal = 16.dp, vertical = 24.dp),
     )
-
-    Spacer(modifier = Modifier.height(8.dp))
-
-    Row(
-      horizontalArrangement = Arrangement.spacedBy(8.dp),
-      verticalAlignment = Alignment.CenterVertically,
-    ) {
-      // Persona selector
-      var expanded by remember { mutableStateOf(false) }
-
-      ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = !expanded },
-      ) {
-        val currentPersona = availablePersonas.find { it.personaId == currentPersonaId }
-        OutlinedTextField(
-          value = currentPersona?.name ?: "Select Persona",
-          onValueChange = {},
-          readOnly = true,
-          label = { Text("Persona") },
-          trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-          modifier = Modifier.semantics { contentDescription = "Persona selector dropdown" },
-        )
-
-        ExposedDropdownMenu(
-          expanded = expanded,
-          onDismissRequest = { expanded = false },
-        ) {
-          availablePersonas.forEach { persona ->
-            DropdownMenuItem(
-              text = { Text(persona.name) },
-              onClick = {
-                onPersonaSelect(
-                  persona,
-                  com.vjaykrsna.nanoai.core.model.PersonaSwitchAction.CONTINUE_THREAD
-                )
-                expanded = false
-              },
-            )
-          }
-        }
-      }
-    }
   }
 }
 
@@ -203,8 +155,8 @@ private fun MessagesList(
 
   LazyColumn(
     state = listState,
-    contentPadding = PaddingValues(16.dp),
-    verticalArrangement = Arrangement.spacedBy(12.dp),
+    contentPadding = PaddingValues(NanoSpacing.md),
+    verticalArrangement = Arrangement.spacedBy(NanoSpacing.md),
     reverseLayout = false,
     modifier =
       modifier.semantics {
@@ -253,7 +205,7 @@ private fun MessageBubble(message: Message, modifier: Modifier = Modifier) {
   ) {
     Card(
       colors = CardDefaults.cardColors(containerColor = backgroundColor),
-      shape = RoundedCornerShape(12.dp),
+      shape = RoundedCornerShape(NanoRadii.medium),
       modifier =
         Modifier.fillMaxWidth(MESSAGE_BUBBLE_WIDTH_FRACTION).semantics {
           val roleDescription = if (isUser) "Your" else "Assistant's"
@@ -261,7 +213,7 @@ private fun MessageBubble(message: Message, modifier: Modifier = Modifier) {
         },
     ) {
       Column(
-        modifier = Modifier.padding(12.dp),
+        modifier = Modifier.padding(NanoSpacing.md),
       ) {
         message.text?.let { text ->
           Text(
@@ -270,7 +222,7 @@ private fun MessageBubble(message: Message, modifier: Modifier = Modifier) {
           )
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(NanoSpacing.xs))
 
         val timestamp =
           message.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()).let {
@@ -287,42 +239,37 @@ private fun MessageBubble(message: Message, modifier: Modifier = Modifier) {
   }
 }
 
-@Suppress("DEPRECATION")
-@Composable
-private fun MessageInputArea(
-  onSendMessage: (String) -> Unit,
-  enabled: Boolean,
-  modifier: Modifier = Modifier
-) {
-  var messageText by rememberSaveable { mutableStateOf("") }
-
-  Row(
-    modifier = modifier.background(MaterialTheme.colorScheme.surface).padding(16.dp),
-    verticalAlignment = Alignment.CenterVertically,
-    horizontalArrangement = Arrangement.spacedBy(8.dp),
-  ) {
-    TextField(
-      value = messageText,
-      onValueChange = { messageText = it },
-      placeholder = { Text("Type a message...") },
-      enabled = enabled,
-      modifier = Modifier.weight(1f).semantics { contentDescription = "Message input field" },
-    )
-
-    IconButton(
-      onClick = {
-        if (messageText.isNotBlank()) {
-          onSendMessage(messageText)
-          messageText = ""
-        }
-      },
-      enabled = enabled && messageText.isNotBlank(),
-      modifier = Modifier.semantics { contentDescription = "Send message button" },
-    ) {
-      Icon(
-        imageVector = Icons.Filled.Send,
-        contentDescription = "Send",
+private fun ChatError.toNanoError(): NanoError {
+  return when (this) {
+    is ChatError.InferenceFailed ->
+      NanoError.Inline(
+        title = "Couldn't complete inference",
+        description = message,
       )
-    }
+    is ChatError.PersonaSwitchFailed ->
+      NanoError.Inline(
+        title = "Persona switch failed",
+        description = message,
+      )
+    is ChatError.ThreadCreationFailed ->
+      NanoError.Inline(
+        title = "Couldn't start conversation",
+        description = message,
+      )
+    is ChatError.ThreadArchiveFailed ->
+      NanoError.Inline(
+        title = "Couldn't archive conversation",
+        description = message,
+      )
+    is ChatError.ThreadDeletionFailed ->
+      NanoError.Inline(
+        title = "Couldn't delete conversation",
+        description = message,
+      )
+    is ChatError.UnexpectedError ->
+      NanoError.Inline(
+        title = "Something went wrong",
+        description = message,
+      )
   }
 }

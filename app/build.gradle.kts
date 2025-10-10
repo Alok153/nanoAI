@@ -22,6 +22,24 @@ android {
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
     vectorDrawables { useSupportLibrary = true }
+
+    val hfClientId = (project.findProperty("nanoai.hf.oauth.clientId") as? String)?.trim().orEmpty()
+    val hfScope = (project.findProperty("nanoai.hf.oauth.scope") as? String)?.trim().orEmpty()
+    val hfRedirectUri =
+      (project.findProperty("nanoai.hf.oauth.redirectUri") as? String)?.trim().orEmpty()
+    val quote: (String) -> String = { value -> "\"${value.replace("\"", "\\\"")}\"" }
+
+    buildConfigField("String", "HF_OAUTH_CLIENT_ID", quote(hfClientId))
+    buildConfigField(
+      "String",
+      "HF_OAUTH_SCOPE",
+      quote(hfScope.ifBlank { "all offline_access" }),
+    )
+    buildConfigField(
+      "String",
+      "HF_OAUTH_REDIRECT_URI",
+      quote(hfRedirectUri.ifBlank { "nanoai://auth/huggingface" }),
+    )
   }
 
   buildTypes {
@@ -54,11 +72,17 @@ android {
 
   kotlinOptions {
     jvmTarget = "11"
+    val composeMetricsDir = project.layout.buildDirectory.dir("compose/metrics")
+    val composeReportsDir = project.layout.buildDirectory.dir("compose/reports")
     freeCompilerArgs +=
       listOf(
         "-opt-in=kotlin.RequiresOptIn",
         "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
         "-opt-in=kotlinx.coroutines.FlowPreview",
+        "-P",
+        "plugin:androidx.compose.compiler.plugins.kotlin:metricsDestination=${composeMetricsDir.get().asFile.absolutePath}",
+        "-P",
+        "plugin:androidx.compose.compiler.plugins.kotlin:reportsDestination=${composeReportsDir.get().asFile.absolutePath}",
       )
   }
 
@@ -89,11 +113,6 @@ android {
 
 room { schemaDirectory("$projectDir/schemas") }
 
-composeCompiler {
-  reportsDestination.set(layout.buildDirectory.dir("compose/reports"))
-  metricsDestination.set(layout.buildDirectory.dir("compose/metrics"))
-}
-
 androidComponents {
   beforeVariants(selector().all()) { variant ->
     if (variant.buildType in listOf("benchmark", "baselineProfile")) {
@@ -114,8 +133,10 @@ dependencies {
   implementation(libs.androidx.compose.ui.graphics)
   implementation(libs.androidx.compose.ui.tooling.preview)
   implementation(libs.androidx.compose.material3)
+  implementation(libs.androidx.compose.material)
   implementation(libs.androidx.compose.material.iconsExtended)
   implementation(libs.androidx.compose.material3.windowSizeClass)
+  implementation(libs.androidx.compose.runtime.tracing)
   implementation(libs.androidx.activity.compose)
   implementation(libs.androidx.navigation.compose)
   implementation(libs.androidx.lifecycle.runtime.compose)
@@ -172,6 +193,7 @@ dependencies {
 
   // ProfileInstaller for baseline profiles
   implementation(libs.androidx.profileinstaller)
+  implementation(libs.androidx.metrics.performance)
 
   // Unit Testing
   testImplementation(kotlin("test"))
@@ -187,6 +209,7 @@ dependencies {
   testImplementation(libs.androidx.work.testing)
   testImplementation(libs.androidx.junit)
   testImplementation(libs.androidx.test.core)
+  testImplementation(libs.androidx.navigation.testing)
 
   // Instrumentation Testing
   androidTestImplementation(libs.androidx.junit)
@@ -201,4 +224,5 @@ dependencies {
   androidTestImplementation(libs.androidx.room.testing)
   androidTestImplementation(libs.androidx.work.testing)
   androidTestImplementation(libs.mockwebserver)
+  androidTestImplementation(libs.androidx.navigation.testing)
 }

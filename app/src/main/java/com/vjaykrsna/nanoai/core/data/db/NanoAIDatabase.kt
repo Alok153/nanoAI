@@ -24,10 +24,13 @@ import com.vjaykrsna.nanoai.core.maintenance.db.CodeQualityMetricEntity
 import com.vjaykrsna.nanoai.core.maintenance.db.RepoMaintenanceTaskDao
 import com.vjaykrsna.nanoai.core.maintenance.db.RepoMaintenanceTaskEntity
 import com.vjaykrsna.nanoai.feature.library.data.daos.DownloadTaskDao
-import com.vjaykrsna.nanoai.feature.library.data.daos.ModelPackageDao
 import com.vjaykrsna.nanoai.feature.library.data.entities.DownloadTaskEntity
+import com.vjaykrsna.nanoai.model.catalog.DownloadManifestDao
 import com.vjaykrsna.nanoai.model.catalog.DownloadManifestEntity
 import com.vjaykrsna.nanoai.model.catalog.ModelPackageEntity
+import com.vjaykrsna.nanoai.model.catalog.ModelPackageReadDao
+import com.vjaykrsna.nanoai.model.catalog.ModelPackageRelationsDao
+import com.vjaykrsna.nanoai.model.catalog.ModelPackageWriteDao
 
 /**
  * Room database for nanoAI application.
@@ -37,7 +40,8 @@ import com.vjaykrsna.nanoai.model.catalog.ModelPackageEntity
  *
  * Version 1: Initial schema with core entities. Version 2: Added UserProfile, LayoutSnapshot, and
  * UIStateSnapshot entities for UI/UX feature. Version 3: Added maintenance tracking tables and
- * download manifests. Version 4: Added public key metadata to download manifests.
+ * download manifests. Version 4: Added public key metadata to download manifests. Version 5:
+ * Extended ui_state_snapshots persistence for unified shell drawers and palette state.
  *
  * Foreign keys are enabled to ensure referential integrity and cascade deletes. TypeConverters
  * handle UUID, Instant, Set<String>, List<String>, Map<String, Boolean>, and enum conversions.
@@ -59,11 +63,17 @@ import com.vjaykrsna.nanoai.model.catalog.ModelPackageEntity
       CodeQualityMetricEntity::class,
       DownloadManifestEntity::class,
     ],
-  version = 4,
+  version = 5,
   exportSchema = true,
 )
-@TypeConverters(com.vjaykrsna.nanoai.core.data.db.TypeConverters::class)
-@Suppress("TooManyFunctions") // Database provides many DAO accessors
+@TypeConverters(
+  TemporalTypeConverters::class,
+  CollectionTypeConverters::class,
+  UiPreferenceTypeConverters::class,
+  MaintenanceTypeConverters::class,
+  DeliveryTypeConverters::class,
+)
+@Suppress("TooManyFunctions")
 abstract class NanoAIDatabase : RoomDatabase() {
   // Core DAOs
   abstract fun chatThreadDao(): ChatThreadDao
@@ -81,7 +91,13 @@ abstract class NanoAIDatabase : RoomDatabase() {
   abstract fun codeQualityMetricDao(): CodeQualityMetricDao
 
   // Library feature DAOs
-  abstract fun modelPackageDao(): ModelPackageDao
+  abstract fun modelPackageReadDao(): ModelPackageReadDao
+
+  abstract fun modelPackageWriteDao(): ModelPackageWriteDao
+
+  abstract fun modelPackageRelationsDao(): ModelPackageRelationsDao
+
+  abstract fun downloadManifestDao(): DownloadManifestDao
 
   abstract fun downloadTaskDao(): DownloadTaskDao
 

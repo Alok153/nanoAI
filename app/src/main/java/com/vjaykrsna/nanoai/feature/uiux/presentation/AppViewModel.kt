@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 
 /**
  * Top-level application view model responsible for exposing global UI state such as theme
- * preferences, onboarding completion, and hydration status.
+ * preferences and hydration status.
  */
 @HiltViewModel
 class AppViewModel
@@ -30,13 +30,11 @@ constructor(
       observeUserProfileUseCase.flow.collect { result ->
         val profile = result.userProfile
         val themePreference = profile?.themePreference ?: ThemePreference.SYSTEM
-        val onboardingCompleted = profile?.onboardingCompleted ?: false
         val hydrating = profile == null && result.hydratedFromCache
 
         _uiState.update {
           it.copy(
             themePreference = themePreference,
-            onboardingCompleted = onboardingCompleted,
             isHydrating = hydrating,
             offline = result.offline,
           )
@@ -49,10 +47,6 @@ constructor(
 /** Global application UI state exposed from [AppViewModel]. */
 data class AppUiState(
   val themePreference: ThemePreference = ThemePreference.SYSTEM,
-  val onboardingCompleted: Boolean = false,
   val isHydrating: Boolean = true,
   val offline: Boolean = false,
-) {
-  val shouldShowWelcome: Boolean
-    get() = !onboardingCompleted
-}
+)

@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.Flow
  * Integrates WorkManager for background downloads with database tracking. Enforces max 2 concurrent
  * downloads.
  */
-@Suppress("TooManyFunctions") // Download manager provides comprehensive API
+@Suppress("TooManyFunctions")
 interface DownloadManager {
   /** Start downloading a model. Queues if max concurrent downloads reached. */
   suspend fun startDownload(modelId: String): UUID

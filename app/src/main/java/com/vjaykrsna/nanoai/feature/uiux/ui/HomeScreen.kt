@@ -1,232 +1,272 @@
 package com.vjaykrsna.nanoai.feature.uiux.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
-import com.vjaykrsna.nanoai.feature.uiux.presentation.HomeUiState
-import com.vjaykrsna.nanoai.ui.components.OfflineBanner
-import com.vjaykrsna.nanoai.ui.components.OnboardingTooltip
-import com.vjaykrsna.nanoai.ui.components.PrimaryActionCard
-import kotlin.text.titlecase
+import com.vjaykrsna.nanoai.feature.uiux.state.CommandAction
+import com.vjaykrsna.nanoai.feature.uiux.state.ModeCard
+import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
+import com.vjaykrsna.nanoai.feature.uiux.state.RecentActivityItem
+import com.vjaykrsna.nanoai.feature.uiux.state.ShellLayoutState
+import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoSpacing
+import com.vjaykrsna.nanoai.feature.uiux.ui.components.layout.NanoScreen
+import com.vjaykrsna.nanoai.feature.uiux.ui.components.layout.NanoSection
+import com.vjaykrsna.nanoai.feature.uiux.ui.components.primitives.NanoCard
 
-private const val SKELETON_CARD_COUNT = 3
-private const val SKELETON_ALPHA = 0.5f
+private const val MAX_INLINE_QUICK_ACTIONS = 3
+private const val MODE_COLUMNS_COMPACT = 2
+private const val MODE_COLUMNS_MEDIUM = 3
+private const val MODE_COLUMNS_EXPANDED = 4
 
-data class HomeTooltipCallbacks(
-  val onDismiss: () -> Unit,
-  val onHelp: () -> Unit,
-  val onDontShowAgain: () -> Unit,
-)
-
-data class HomeScreenCallbacks(
-  val onToggleTools: () -> Unit,
-  val onActionClick: (String) -> Unit,
-  val onRetryOffline: () -> Unit,
-  val tooltip: HomeTooltipCallbacks,
-)
-
+/** Home hub surface rendered inside the unified shell when [ModeId.HOME] is active. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun HomeScreen(
-  state: HomeUiState,
-  callbacks: HomeScreenCallbacks,
+  layout: ShellLayoutState,
+  modeCards: List<ModeCard>,
+  quickActions: List<CommandAction>,
+  recentActivity: List<RecentActivityItem>,
+  onModeSelect: (ModeId) -> Unit,
+  onQuickActionSelect: (CommandAction) -> Unit,
+  onRecentActivitySelect: (RecentActivityItem) -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  Surface(modifier = modifier.fillMaxSize()) {
-    LazyColumn(
-      modifier = Modifier.fillMaxSize().testTag("home_single_column_feed"),
-      contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
-      verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-      if (state.offlineBannerVisible) {
-        item("offline_banner") {
-          HomeOfflineBanner(
-            isOffline = state.offlineBannerVisible,
-            queuedActionsCount = state.queuedActions,
-            onRetryOffline = callbacks.onRetryOffline,
-          )
-        }
-      }
+  val columnCount = remember(layout.windowSizeClass.widthSizeClass) { columnsForLayout(layout) }
+  val modeById = remember(modeCards) { modeCards.associateBy { it.id } }
 
-      item("recent_actions_header") {
-        HomeRecentActionsHeader(
-          toolsExpanded = state.toolsExpanded,
-          onToggleTools = callbacks.onToggleTools,
-        )
-      }
-
-      item("tools_panel_state") { HomeToolsPanelState(toolsExpanded = state.toolsExpanded) }
-
-      if (state.isHydrating) {
-        item("home_skeleton") { HomeSkeleton(modifier = Modifier.testTag("home_skeleton_loader")) }
-      } else {
-        itemsIndexed(state.recentActions) { index, action ->
-          HomeRecentActionCard(
-            index = index,
-            action = action,
-            onActionClick = callbacks.onActionClick,
-          )
-        }
-      }
-
-      if (state.latencyIndicatorVisible) {
-        item("latency_indicator") { HomeLatencyIndicator() }
-      }
-
-      if (state.tooltipEntryVisible) {
-        item("tooltip_entry") { HomeTooltipEntry(callbacks.tooltip) }
-      }
-    }
-  }
-}
-
-@Composable
-private fun HomeOfflineBanner(
-  isOffline: Boolean,
-  queuedActionsCount: Int,
-  onRetryOffline: () -> Unit,
-) {
-  OfflineBanner(
-    isOffline = isOffline,
-    queuedActions = queuedActionsCount,
-    onRetry = onRetryOffline,
-    modifier = Modifier.fillMaxWidth().testTag("offline_banner_container_wrapper"),
-  )
-}
-
-@Composable
-private fun HomeRecentActionsHeader(
-  toolsExpanded: Boolean,
-  onToggleTools: () -> Unit,
-) {
-  Row(
-    modifier = Modifier.fillMaxWidth(),
-    horizontalArrangement = Arrangement.SpaceBetween,
-    verticalAlignment = Alignment.CenterVertically,
+  NanoScreen(
+    modifier = modifier.testTag("home_hub"),
   ) {
-    Text(
-      text = "Recent actions",
-      style = MaterialTheme.typography.titleLarge,
-      fontWeight = FontWeight.Bold,
-      modifier = Modifier.testTag("home_recent_actions_header").semantics { heading() },
-    )
-    IconButton(
-      onClick = onToggleTools,
-      modifier =
-        Modifier.testTag("home_tools_toggle").semantics {
-          contentDescription = if (toolsExpanded) "Collapse tools panel" else "Expand tools panel"
-        },
+    if (quickActions.isNotEmpty()) {
+      QuickActionsSection(
+        actions = quickActions,
+        onQuickActionSelect = onQuickActionSelect,
+      )
+    }
+
+    NanoSection(title = "Modes") {
+      ModeGrid(
+        columns = columnCount,
+        modeCards = modeCards,
+        onModeSelect = onModeSelect,
+      )
+    }
+
+    NanoSection(
+      title = "Recent activity",
+      action = {
+        if (recentActivity.isNotEmpty()) {
+          TextButton(onClick = { /* placeholder until history navigation is wired */}) {
+            Text("View history")
+          }
+        }
+      },
     ) {
-      Icon(
-        imageVector =
-          if (toolsExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-        contentDescription = null,
+      RecentActivityContent(
+        recentActivity = recentActivity,
+        modeById = modeById,
+        onRecentActivitySelect = onRecentActivitySelect,
       )
     }
   }
 }
 
 @Composable
-private fun HomeToolsPanelState(toolsExpanded: Boolean) {
-  if (toolsExpanded) {
-    Text(
-      text = "Tools",
-      style = MaterialTheme.typography.titleMedium,
-      modifier = Modifier.testTag("home_tools_panel_expanded").semantics { heading() },
-    )
-  } else {
-    Text(
-      text = "Advanced tools hidden",
-      style = MaterialTheme.typography.bodySmall,
-      modifier =
-        Modifier.testTag("home_tools_panel_collapsed").semantics {
-          contentDescription =
-            "Advanced tools are currently hidden. Activate the toggle to reveal tools."
-        },
-    )
-  }
-}
-
-@Composable
-private fun HomeRecentActionCard(
-  index: Int,
-  action: String,
-  onActionClick: (String) -> Unit,
+private fun QuickActionsSection(
+  actions: List<CommandAction>,
+  onQuickActionSelect: (CommandAction) -> Unit,
+  modifier: Modifier = Modifier,
 ) {
-  PrimaryActionCard(
-    title = action.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() },
-    description = "Quick action",
-    tag = "home_recent_action_$index",
-    onClick = { onActionClick(action) },
-  )
-}
-
-@Composable
-private fun HomeLatencyIndicator() {
-  Text(
-    text = "Response in under 100ms",
-    style = MaterialTheme.typography.labelMedium,
-    modifier = Modifier.testTag("home_latency_meter"),
-  )
-}
-
-@Composable
-private fun HomeTooltipEntry(
-  callbacks: HomeTooltipCallbacks,
-) {
-  Column(
-    modifier =
-      Modifier.fillMaxWidth().testTag("onboarding_tooltip_entry").semantics {
-        contentDescription = "Onboarding tips"
-      },
+  NanoSection(
+    title = "Quick actions",
+    subtitle = if (actions.size > MAX_INLINE_QUICK_ACTIONS) "${actions.size} available" else null,
+    modifier = modifier,
   ) {
-    OnboardingTooltip(
-      message = "Tip: Pin your favorite tools for quick access.",
-      onDismiss = callbacks.onDismiss,
-      onDontShowAgain = callbacks.onDontShowAgain,
-      onHelp = callbacks.onHelp,
-    )
-  }
-}
-
-@Composable
-private fun HomeSkeleton(modifier: Modifier = Modifier) {
-  Column(
-    modifier = modifier.fillMaxWidth(),
-    verticalArrangement = Arrangement.spacedBy(12.dp),
-  ) {
-    repeat(SKELETON_CARD_COUNT) {
-      Card(
-        modifier = Modifier.fillMaxWidth().alpha(SKELETON_ALPHA),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-      ) {
-        Spacer(modifier = Modifier.height(56.dp))
+    LazyRow(
+      horizontalArrangement = Arrangement.spacedBy(NanoSpacing.sm),
+      modifier = Modifier.testTag("quick_actions_row"),
+    ) {
+      items(actions, key = { it.id }) { action ->
+        AssistChip(
+          onClick = { if (action.enabled) onQuickActionSelect(action) },
+          enabled = action.enabled,
+          label = { Text(action.title) },
+          modifier =
+            Modifier.semantics {
+              contentDescription = action.title
+              stateDescription = if (action.enabled) "Enabled" else "Disabled"
+            },
+        )
       }
     }
   }
 }
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ModeGrid(
+  columns: Int,
+  modeCards: List<ModeCard>,
+  onModeSelect: (ModeId) -> Unit,
+) {
+  FlowRow(
+    modifier = Modifier.fillMaxWidth(),
+    horizontalArrangement = Arrangement.spacedBy(NanoSpacing.md),
+    verticalArrangement = Arrangement.spacedBy(NanoSpacing.md),
+    maxItemsInEachRow = columns,
+  ) {
+    modeCards.forEach { card ->
+      ModeCardItem(
+        card = card,
+        onClick = { onModeSelect(card.id) },
+      )
+    }
+  }
+}
+
+@Composable
+private fun ModeCardItem(
+  card: ModeCard,
+  onClick: () -> Unit,
+) {
+  NanoCard(
+    title = card.title,
+    subtitle = card.subtitle,
+    icon = card.icon,
+    badge = card.badge?.let { badgeText(it) },
+    enabled = card.enabled,
+    onClick = onClick,
+    modifier =
+      Modifier.widthIn(min = 220.dp).testTag("mode_card").semantics {
+        stateDescription = if (card.enabled) "Available" else "Unavailable"
+      },
+    trailingContent = {
+      if (!card.enabled) {
+        Text(
+          text = "Offline",
+          style = MaterialTheme.typography.labelSmall,
+          color = MaterialTheme.colorScheme.error,
+        )
+      }
+    },
+    semanticsDescription = card.contentDescription,
+  )
+}
+
+@Composable
+private fun RecentActivityContent(
+  recentActivity: List<RecentActivityItem>,
+  modeById: Map<ModeId, ModeCard>,
+  onRecentActivitySelect: (RecentActivityItem) -> Unit,
+) {
+  if (recentActivity.isEmpty()) {
+    Surface(shape = MaterialTheme.shapes.large, tonalElevation = 1.dp) {
+      Box(
+        modifier = Modifier.fillMaxWidth().padding(NanoSpacing.lg),
+        contentAlignment = Alignment.Center,
+      ) {
+        Text(
+          text = "No recent activity yet.",
+          style = MaterialTheme.typography.bodyMedium,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
+    }
+  } else {
+    Column(
+      modifier = Modifier.testTag("recent_activity_list"),
+      verticalArrangement = Arrangement.spacedBy(NanoSpacing.sm),
+    ) {
+      recentActivity.forEach { item ->
+        RecentActivityItemCard(
+          item = item,
+          modeCard = modeById[item.modeId],
+          onClick = { onRecentActivitySelect(item) },
+        )
+      }
+    }
+  }
+}
+
+@Composable
+private fun RecentActivityItemCard(
+  item: RecentActivityItem,
+  modeCard: ModeCard?,
+  onClick: () -> Unit,
+) {
+  NanoCard(
+    title = item.title,
+    subtitle = modeCard?.title ?: item.modeId.displayName(),
+    supportingContent = {
+      HorizontalDivider()
+      Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
+        Text(
+          text = item.statusLabel,
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Column(
+          horizontalAlignment = Alignment.End,
+          verticalArrangement = Arrangement.spacedBy(NanoSpacing.xs),
+        ) {
+          Text(
+            text = formatRelativeTime(item.timestamp),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+          )
+          Text(
+            text = formatAbsoluteTime(item.timestamp),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+          )
+        }
+      }
+    },
+    modifier = Modifier.fillMaxWidth().testTag("recent_activity_item"),
+    onClick = onClick,
+    semanticsDescription =
+      buildString {
+        append(item.title)
+        append(", status ")
+        append(item.statusLabel)
+        append(", updated ")
+        append(formatRelativeTime(item.timestamp))
+      },
+  )
+}
+
+private fun columnsForLayout(layout: ShellLayoutState): Int =
+  when (layout.windowSizeClass.widthSizeClass) {
+    WindowWidthSizeClass.Compact -> MODE_COLUMNS_COMPACT
+    WindowWidthSizeClass.Medium -> MODE_COLUMNS_MEDIUM
+    WindowWidthSizeClass.Expanded -> MODE_COLUMNS_EXPANDED
+    else -> MODE_COLUMNS_COMPACT
+  }

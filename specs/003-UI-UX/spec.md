@@ -3,17 +3,27 @@
 **Feature Branch**: `003-UI-UX`  
 **Created**: 2025-10-02  
 **Status**: Draft  
-**Input**: User description: "UI/UX As a user i want good UI/UX current ui looks very mediocre and unfinished despite the app having high ambitions. The app is in early stage so most of the things are currently not finished, In this phase I want to plan all the small details where i want what how things will be in the ui how the welcome screen the homecreen sidebar settinsg and everything align within the app. I hope to build a million dollar app which is simple to use don't look cluttered everything is organised despite being feature packed"
+**Input**: User description: "As a user, I want a polished, intuitive interface for my multi-modal AI app that makes it easy to switch between chat, image generation, audio processing, code assistance, and translation modes without clutter or confusion. The app should feel professional and organized, with a clean home hub, consistent navigation, smooth performance, and accessibility features that build trust and make the experience enjoyable despite the app being feature-packed."
 
-## Clarifications
-
-### Session 2025-10-02
-- Q: Primary navigation layout — which pattern should the app use? → A: B (Left-side persistent sidebar; collapsible on mobile)
-- Q: Accessibility target — which accessibility level should the UI aim to meet for launch? → A: A (WCAG 2.1 AA)
-- Q: Branding & tone — which branding direction should the visual language follow? → A: A (Minimalist, neutral palette)
-- Q: Theme support details — which theme behavior should the app provide at launch? → A: A (Light + Dark with manual toggle and system sync)
-- Q: Onboarding scope — which onboarding scope should be included at launch? → A: A (Minimal: single-screen highlight + CTA)
-- Q: Performance target for core navigation — which performance target should we use as the measurable goal? → A: A (First meaningful paint <= 300ms on mid-range devices)
+## Execution Flow (main)
+```
+1. Parse user description from Input
+   → If empty: ERROR "No feature description provided"
+2. Extract key concepts from description
+   → Identify: actors, actions, data, constraints
+3. For each unclear aspect:
+   → Mark with [NEEDS CLARIFICATION: specific question]
+4. Fill User Scenarios & Testing section
+   → If no clear user flow: ERROR "Cannot determine user scenarios"
+5. Generate Functional Requirements
+   → Each requirement must be testable
+   → Mark ambiguous requirements
+6. Identify Key Entities (if data involved)
+7. Run Review Checklist
+   → If any [NEEDS CLARIFICATION]: WARN "Spec has uncertainties"
+   → If implementation details found: ERROR "Remove tech details"
+8. Return: SUCCESS (spec ready for planning)
+```
 
 ---
 
@@ -21,7 +31,7 @@
 - ✅ Focus on WHAT users need and WHY
 - ❌ Avoid HOW to implement (no tech stack, APIs, code structure)
 - 👥 Written for business stakeholders, not developers
-- 🎯 Capture Material UX, performance, offline, and privacy expectations aligned with the constitution.
+- 🎯 Capture Material UX, performance, offline, privacy, AI integrity, and up-to-date documentation expectations aligned with the constitution.
 
 ### Section Requirements
 - **Mandatory sections**: Must be completed for every feature
@@ -35,7 +45,7 @@ When creating this spec from a user prompt:
 3. **Think like a tester**: Every vague requirement should fail the "testable and unambiguous" checklist item
 4. **Common underspecified areas**:
    - User types and permissions
-   - Data retention/deletion policies
+   - Data retention/deletion policies  
    - Performance targets and scale
    - Error handling behaviors
    - Integration requirements
@@ -43,53 +53,50 @@ When creating this spec from a user prompt:
 
 ---
 
+## Clarifications
+
+### Session 2025-10-06
+- No critical ambiguities detected; proceeding without additional clarifications.
+
+---
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### Primary User Story
-As a new or returning user, I want a clean, friendly, and clearly organized app interface so I can discover features quickly, accomplish core tasks with minimal friction, and feel confident the product is polished and trustworthy.
-
-Key goals: first-time clarity, discoverability of powerful features without clutter, consistent visual language, and strong accessibility support.
+As a user of a multi-modal AI app, I want a polished, intuitive interface that makes it easy to switch between chat, image generation, audio processing, code assistance, and translation modes without clutter or confusion, so that I can accomplish tasks efficiently and enjoy a professional, organized experience that builds trust despite the app being feature-packed.
 
 ### Acceptance Scenarios
-1. **Given** a first-time user opens the app, **When** they land on the Welcome screen, **Then** they see a short, skimmable hero message, 2–3 clear CTAs (Get started, Explore features), and an unobtrusive progress/skip control.
-2. **Given** a returning user opens the app, **When** they arrive at the Home screen, **Then** the UI surfaces the most-recently used actions and a clear, single-column content area with an affordance for advanced tools in a discoverable but collapsed panel.
-3. **Given** a user navigates to Settings or Sidebar, **When** they open a section, **Then** options are grouped logically with concise labels, inline help text for non-obvious toggles, and a persistent Save/Undo affordance where changes are destructive.
-4. **Given** the device is offline, **When** the user performs a supported action (e.g., view cached content, trigger a lightweight generation), **Then** the app shows graceful offline banners, disabled but explanatory controls for unavailable features, and queues sync operations for later.
-5. **Given** a first-time user performs an action or lands on a new screen, **When** contextual tips are available, **Then** show lightweight, inline tooltips tied to the control; tooltips must be dismissible, have a 'Don't show again' option, and be re-openable from a Help menu.
+1. **Given** a first-time user opens the app, **When** they arrive at the home hub, **Then** they see a clean grid of mode cards (Chat, Image, Audio, Code, Translate) with clear labels and icons, allowing quick access to any mode within two interactions.
+2. **Given** a user navigates between different AI modes, **When** they use the left sidebar or global command palette, **Then** the interface maintains consistent navigation patterns, smooth transitions, and no layout jumps, ensuring a seamless experience.
+3. **Given** the app has many features, **When** users interact with controls, **Then** the UI prioritizes essential actions, uses collapsible panels for advanced options, and provides contextual help to avoid overwhelming the user.
+4. **Given** a user performs actions requiring performance, **When** they generate content or switch modes, **Then** all interactions respond within 100ms perceived latency, with progressive loading for network-dependent features.
 
 ### Edge Cases
-- Very small screens: essential controls must fit and primary actions remain reachable.
-- Extremely long or complex content: UI must allow collapsing, copying, and exporting without breaking layout.
-- High-latency networks: provide progressive skeleton UIs and cancelable operations.
-- Feature-rich screens with many tools: support a 'compact' mode where power user tools are exposed but not shown by default.
-
----
+- Very small screens (phones): Essential controls remain accessible, mode cards adapt to single-column layout, and navigation collapses to drawer.
+- High-latency networks: Show skeleton loaders within 150ms, allow canceling operations, and queue actions for sync when connectivity improves.
+- Offline usage: Display cached content where available, disable unavailable modes with explanatory banners, and gracefully handle sync on reconnection.
+- Feature-rich screens with many tools: Use compact mode by default, expose advanced tools only when needed, and support search/filter for quick discovery.
+- Long content or complex outputs: Provide collapsible sections, copy/export options, and readable previews without breaking layout.
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
-- **FR-001**: App MUST present a clear Welcome experience for first-time users that explains 2–3 primary uses and provides CTAs: Get started, Explore features.
-- **FR-002**: Home screen MUST prioritize recent and recommended actions in a single-column primary content area; secondary tools (advanced features) are discoverable in a collapsible panel or overflow menu.
-- **FR-003**: The visual system MUST follow a single, documented design language (colors, spacing, typography, iconography) and include a small set of reusable components: PrimaryButton, SecondaryButton, Card, Modal, BottomSheet, Sidebar, ListItem.
-- **FR-004**: Visual density and layout MUST adapt to screen size classes: compact (phone), regular (large phone / small tablet), expanded (tablet/desktop), with explicit rules for spacing and column count.
-- **FR-005**: Provide a low-clutter default that shows only essential controls; advanced mode toggles may expose additional features.
-- **FR-006**: Offline UX: App MUST show cached content where available, disable unavailable features with informative messaging, and queue user actions for sync when online.
-- **FR-007**: Performance — measurable targets and acceptance criteria:
-  - First Meaningful Paint (FMP): target <= 300ms on mid-range devices (p75 across synthetic runs).
-  - Perceived interaction latency: UI transitions and primary navigation responses should target <= 100ms for perceived instant response.
-  - Progressive loading: skeletons/placeholders must appear within 150ms for network-driven content and be cancelable on navigation.
-  - Measurement & acceptance: include an automated performance smoke test (lab run) validating FMP and key interactions against targets; instrument RUM metrics in staging to monitor p75 FMP and alert when p75 > 500ms.
-  - Note: Document resource budgets in implementation plan; tradeoffs allowed for heavyweight screens with explicit rationale.
-- **FR-008**: Settings/Preferences: Options MUST be grouped, have short descriptions, and include inline help or links to contextual docs where appropriate.
-- **FR-009**: Error & consent messaging: All permission requests or any destructive operation MUST show clear messaging of impact and allow users to undo where feasible.
-- **FR-010**: Branding & tone — Minimalist, neutral palette: Visual language uses neutral base colors, generous whitespace, restrained iconography, and subtle motion to communicate polish without noise. CTA treatment uses a single accent color for primary CTAs (sparingly); secondary CTAs are neutral outlines or muted tones. Acceptance: provide high-fidelity mockups for Welcome, Home, and Settings in light and dark variants showing color tokens and spacing scale.
-- **FR-011**: Theme support — Light and Dark themes with manual toggle and optional system sync: Provide fully specified color tokens for light and dark palettes (backgrounds, surfaces, text, dividers, primary/secondary/accent tokens) and spacing/typography scales for both themes. Manual toggle allows users to choose Light or Dark in Settings; choice persists across sessions. System sync follows system theme by default; manual toggle overrides. Acceptance: theme switch is instantaneous with no layout jumps, components render correct tokens in both themes, and contrast rules hold in both variants.
-- **FR-012**: Primary navigation MUST be a left-side persistent sidebar, collapsible into a drawer on mobile; the sidebar must be keyboard and screen-reader accessible and support deep linking to primary sections.
-- **FR-013**: Onboarding & help system — Minimal onboarding at launch: Single-screen welcome highlight explaining 2–3 primary use cases with a clear CTA (Get started). Include unobtrusive 'Skip' control and persistent Help entry to re-open onboarding. Contextual help provides lightweight, non-modal tooltips and inline hints for discoverable features; each tip is dismissible with 'Don't show again' option. Persistence: onboarding completion and per-tip choices saved in user profile. Acceptance: manual walkthrough and automated smoke test verifying onboarding appears once for new users, Skip bypasses it, and Help re-opens it.
+- **FR-001**: App MUST present a home hub as the central entry point, featuring a grid of mode cards (Chat, Image Generation, Audio Processing, Code Assistance, Translation) with clear icons and labels for quick access to any mode within two interactions.
+- **FR-002**: Primary navigation MUST use a left-side persistent sidebar (collapsible on mobile) with sections for Home, History, Library, Tools, and Settings, ensuring consistent and discoverable navigation across all modes.
+- **FR-003**: Interface MUST maintain visual consistency with a documented design system including reusable components (Button, Card, ListItem, etc.), neutral color palette, generous whitespace, and subtle motion to convey polish without clutter.
+- **FR-004**: App MUST support light and dark themes with manual toggle and system sync, providing fully specified color tokens for backgrounds, surfaces, text, and accents, with instantaneous theme switches and contrast compliance.
+- **FR-005**: Performance MUST meet targets: First Meaningful Paint <= 300ms on mid-range devices, perceived interaction latency <= 100ms, progressive loading skeletons within 150ms for network content, and automated performance smoke tests validating these metrics.
+- **FR-006**: Offline UX MUST show cached content where available, disable unavailable features with informative messaging, queue user actions for sync, and provide graceful banners for connectivity status.
+- **FR-007**: Settings MUST be organized into logical sections (General, Appearance, Privacy, etc.) with concise labels, inline help text, and persistent Save/Undo for destructive changes.
+- **FR-008**: Error handling MUST display clear, actionable messaging for failures (e.g., connectivity issues), with inline remedies and optional undo for safe operations.
+- **FR-009**: Onboarding MUST include a minimal single-screen highlight of primary modes with a clear CTA, unobtrusive skip control, and persistent Help to re-open onboarding.
+- **FR-010**: Contextual help MUST provide lightweight, dismissible tooltips for discoverable features, with 'Don't show again' options and re-openable from Help menu.
+- **FR-011**: Layout MUST adapt to screen size classes (compact/phone, regular/tablet, expanded/desktop) with explicit spacing and column rules to ensure usability across devices.
 
 ### Key Entities *(include if feature involves data)*
-- **User Profile (UI metadata)**: Display name, preferences for visual density, theme selection, onboarding completion state, saved views/layouts.
-- **UI State Snapshot**: Last-opened screen, expanded/compact mode, pinned tools — used to restore the user's preferred layout across sessions.
+- **UI State Snapshot**: Current mode, expanded/collapsed panels, last-opened screen, pinned tools — persisted across sessions to restore user layout.
+- **User Preferences**: Theme selection (light/dark/auto), visual density (compact/comfortable), accessibility settings (high-contrast, font scale), onboarding completion flags.
+- **Mode Configurations**: Default settings per mode (e.g., chat model, image style presets) stored locally and synced.
 
 ---
 
@@ -104,7 +111,7 @@ Key goals: first-time clarity, discoverability of powerful features without clut
 
 ### Requirement Completeness
 - [x] No [NEEDS CLARIFICATION] markers remain
-- [x] Requirements are testable and unambiguous
+- [x] Requirements are testable and unambiguous  
 - [x] Success criteria are measurable
 - [x] Scope is clearly bounded
 - [x] Dependencies and assumptions identified
@@ -128,6 +135,6 @@ Key goals: first-time clarity, discoverability of powerful features without clut
 - [x] Review checklist passed
 
 ---
-*Align with Constitution v1.0.0 (see `.specify/memory/constitution.md` for principles)*
+*Align with Constitution v1.3.0 (see `.specify/memory/constitution.md` for principles)*
 
 ---

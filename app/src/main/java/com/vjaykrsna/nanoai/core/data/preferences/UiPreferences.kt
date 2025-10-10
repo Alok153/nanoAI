@@ -3,6 +3,7 @@ package com.vjaykrsna.nanoai.core.data.preferences
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferencesSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
+import kotlinx.datetime.Instant
 
 /**
  * Data class representing UI/UX preferences.
@@ -22,6 +23,8 @@ data class UiPreferences(
   val onboardingCompleted: Boolean,
   val dismissedTips: Map<String, Boolean>,
   val pinnedToolIds: List<String>,
+  val commandPaletteRecents: List<String>,
+  val connectivityBannerLastDismissed: Instant?,
 ) {
   constructor() :
     this(
@@ -30,6 +33,8 @@ data class UiPreferences(
       onboardingCompleted = false,
       dismissedTips = emptyMap(),
       pinnedToolIds = emptyList(),
+      commandPaletteRecents = emptyList(),
+      connectivityBannerLastDismissed = null,
     )
 }
 
@@ -46,6 +51,8 @@ fun UiPreferences.toDomainSnapshot(): UiPreferencesSnapshot =
     onboardingCompleted = onboardingCompleted,
     dismissedTips = dismissedTips,
     pinnedTools = pinnedToolIds,
+    commandPaletteRecents = commandPaletteRecents,
+    connectivityBannerLastDismissed = connectivityBannerLastDismissed,
   )
 
 /**
@@ -60,4 +67,6 @@ fun UiPreferencesSnapshot.toDataStorePreferences(): UiPreferences =
     onboardingCompleted = onboardingCompleted,
     dismissedTips = dismissedTips,
     pinnedToolIds = pinnedTools,
+    commandPaletteRecents = commandPaletteRecents,
+    connectivityBannerLastDismissed = connectivityBannerLastDismissed,
   )

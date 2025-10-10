@@ -3,6 +3,9 @@ package com.vjaykrsna.nanoai.core.di
 import com.vjaykrsna.nanoai.core.network.AndroidConnectivityStatusProvider
 import com.vjaykrsna.nanoai.core.network.ConnectivityStatusProvider
 import com.vjaykrsna.nanoai.model.catalog.network.ModelCatalogService
+import com.vjaykrsna.nanoai.model.huggingface.network.HuggingFaceAccountService
+import com.vjaykrsna.nanoai.model.huggingface.network.HuggingFaceOAuthService
+import com.vjaykrsna.nanoai.model.huggingface.network.HuggingFaceService
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -28,6 +31,7 @@ abstract class NetworkModule {
 
   companion object {
     private const val MODEL_CATALOG_BASE_URL = "https://api.nanoai.app/"
+    private const val HUGGING_FACE_BASE_URL = "https://huggingface.co/"
     private val jsonMediaType = "application/json".toMediaType()
 
     @Provides
@@ -56,5 +60,36 @@ abstract class NetworkModule {
     fun provideModelCatalogService(
       @Named("ModelCatalog") retrofit: Retrofit,
     ): ModelCatalogService = retrofit.create(ModelCatalogService::class.java)
+
+    @Provides
+    @Singleton
+    @Named("HuggingFace")
+    fun provideHuggingFaceRetrofit(
+      json: Json,
+      okHttpClient: OkHttpClient,
+    ): Retrofit =
+      Retrofit.Builder()
+        .baseUrl(HUGGING_FACE_BASE_URL)
+        .client(okHttpClient)
+        .addConverterFactory(json.asConverterFactory(jsonMediaType))
+        .build()
+
+    @Provides
+    @Singleton
+    fun provideHuggingFaceService(
+      @Named("HuggingFace") retrofit: Retrofit,
+    ): HuggingFaceService = retrofit.create(HuggingFaceService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideHuggingFaceAccountService(
+      @Named("HuggingFace") retrofit: Retrofit,
+    ): HuggingFaceAccountService = retrofit.create(HuggingFaceAccountService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideHuggingFaceOAuthService(
+      @Named("HuggingFace") retrofit: Retrofit,
+    ): HuggingFaceOAuthService = retrofit.create(HuggingFaceOAuthService::class.java)
   }
 }

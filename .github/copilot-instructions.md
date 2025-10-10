@@ -44,10 +44,7 @@ nanoAI/
 ## Commands
 ```
 ./gradlew assembleDebug          # Build debug APK
-./gradlew assembleRelease        # Build release APK
-./gradlew connectedAndroidTest   # Run instrumented tests on connected device
 ./gradlew test                   # Run unit tests
-./gradlew clean                  # Clean build outputs
 ./gradlew spotlessApply          # Check code formatting with ktlint
 ./gradlew detekt                 # Run static analysis with Detekt
 ```
@@ -59,10 +56,8 @@ nanoAI/
 
 <!-- MANUAL ADDITIONS START -->
 
-## Context7 MCP Tool Usage
+- When implementing new features or working with unfamiliar technologies (e.g., libraries or AI runtimes), use the Context7 MCP tool to retrieve up-to-date documentation and code examples from official sources.
 
-Always use the Context7 MCP server to fetch up-to-date documentation and code examples for any library or technology when implementing features or working with unfamiliar technologies.
-
-This aligns with the constitution's principle of Up-to-Date Documentation and Best Practices, ensuring modern, secure implementations.
+- avoid using old/deprecated stuff (Icons/libraries)
 
 <!-- MANUAL ADDITIONS END -->

@@ -26,7 +26,6 @@ import kotlinx.serialization.json.buildJsonObject
 
 /** Default implementation that aggregates local data and emits a zip bundle. */
 @Singleton
-@Suppress("TooManyFunctions") // Export service handles multiple entity types
 class ExportServiceImpl
 @Inject
 constructor(

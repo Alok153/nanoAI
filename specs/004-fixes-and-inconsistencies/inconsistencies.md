@@ -2,8 +2,8 @@
 
 This document catalogs inconsistencies identified across the codebase, including static analysis issues from Detekt, code style violations, architectural mismatches, potential bugs, unimplemented features (from TODOs), and gaps relative to specs. Issues are categorized for prioritization. Fixes should address high-priority items first to improve maintainability, reliability, and completeness.
 
-## Recent Resolutions (2025-10-04)
-- **UI Complexity Refactors**: `HomeScreen`, `WelcomeScreen`, `SidebarContent`, and `ThemeToggle` have been decomposed into focused composables with shared parameter bundles, bringing them under Detekt `LongMethod`/`LongParameterList` thresholds and improving TalkBack semantics.
+## Recent Resolutions (2025-10-07)
+- **UI Complexity Refactors**: `HomeScreen`, `SidebarContent`, and `ThemeToggle` have been decomposed into focused composables with shared parameter bundles. The legacy welcome flow was removed entirely, so onboarding no longer blocks the Home experience.
 - **Telemetry Cohesion**: `TelemetryReporter` now centralizes event emission and is wired into `ModelDownloadWorker` and `ModelManifestRepository`, closing the gap for consistent `RecoverableError` reporting noted under Error Handling.
 - **Maintenance Migrations**: Room migrations for maintenance entities include automated coverage via `MaintenanceMigrationsTest`, preventing future regressions called out in Testing Gaps.
 - **Quickstart Guidance**: Documentation refreshed to align Scenarios 3 and 7 with the new telemetry expectations and migration validation commands.
@@ -27,28 +27,24 @@ Detekt reported 1062 weighted issues. Key categories and examples:
   - `ThemeToggle` (137 lines): Composable too complex; extract sub-composables (e.g., `ToggleSwitch`, `LabelRow`).
   - `SidebarContent` (96 lines): Sidebar logic overgrown; break into `SearchBar`, `ThreadList`, `InferenceToggle`.
   - `NavigationScaffold` (228 lines): Main scaffold violates cohesion; extract `TopBar`, `BottomNav`, `DrawerContent`.
-  - `WelcomeScreen` (79 lines): Onboarding screen; split into `HeroSection`, `CtaSection`, `TooltipSection`.
   - `HomeScreen` (116 lines): Home feed; decompose into `RecentActionsList`, `OfflineBanner`, `LatencyIndicator`.
   - `SidebarDrawer` (61 lines): Minor overrun; extract `NavItems`, `PinnedToolsList`.
 
 - **CyclomaticComplexMethod** (Threshold: 15):
   - `NavigationScaffold` (complexity: 16): Nested conditionals for navigation; simplify with state machine or composable routing.
-  - `instantiateViewModel` in `WelcomeViewModelTest.kt` (complexity: 25): Test setup overly branched; use parameterized tests or fixtures.
 
 - **LongParameterList** (Threshold: 6/7):
   - `SidebarContent` (15 parameters): Excessive; use data class `SidebarUiState` for grouping.
-  - `WelcomeScreen` (8 parameters): Bundle callbacks into `WelcomeActions`.
   - `HomeScreen` (8 parameters): Similar; use `HomeActions` data class.
   - `SettingsViewModel` constructor (7 parameters): At threshold; consider facade or sub-modules.
-  - `WelcomeViewModel` constructor (7 parameters): Group use cases into `UiUxUseCases`.
 
 ### Naming & Conventions
-- **FunctionNaming**: CamelCase violations in composables (e.g., `ThemeToggle`, `OnboardingTooltip`, `PrimaryActionCard`, `OfflineBanner` should be lowercase start).
-- **ParameterNaming**: Lambda params use past tense (e.g., `onTooltipDismissed` → `onTooltipDismiss` in `WelcomeScreen`).
+- **FunctionNaming**: CamelCase violations in composables (e.g., `ThemeToggle`, `PrimaryActionCard`, `OfflineBanner` should be lowercase start).
+- **ParameterNaming**: Lambda params use past tense (e.g., `onTooltipDismissed` → `onTooltipDismiss` in tooltip-related composables).
 
 ### Style & Formatting
 - **Indentation**: Widespread issues in UI/UX domain files (e.g., `RecordOnboardingProgressUseCase.kt`, `ToggleCompactModeUseCase.kt`, `ObserveUserProfileUseCase.kt`); inconsistent spacing breaks readability.
-- **MaximumLineLength** (120 chars): Exceeded in tests (e.g., `WelcomeViewModelTest.kt` lines 38,48,72, etc.) and impl files (e.g., `UserProfileLocalDataSource.kt` lines 261,310).
+- **MaximumLineLength** (120 chars): Exceeded in tests (e.g., `ShellViewModelTest.kt` lines 54-78) and impl files (e.g., `UserProfileLocalDataSource.kt` lines 261,310).
 - **ParameterListWrapping/ArgumentListWrapping**: Long arg lists in tests (e.g., `ExportServiceImplTest.kt` line 160) need line breaks.
 
 ### Compose-Specific
@@ -56,7 +52,7 @@ Detekt reported 1062 weighted issues. Key categories and examples:
 - **ComposableParamOrder**: `NavigationScaffold` (line 84) params out of order; reorder: modifier first, then non-defaults, defaults last.
 
 ### Unused/Dead Code
-- `savedStateHandle` in `WelcomeViewModel.kt` (line 36): Unused private property; remove or use for state restoration.
+- Legacy onboarding sources removed; monitor for new dead-code regressions as features evolve.
 
 ## 2. Architectural Inconsistencies
 - **Layering Violations**: UI models (e.g., `UserProfile`) mix domain logic (validation in init blocks) with data; move sanitization to use cases or repositories.
@@ -105,4 +101,4 @@ These TODOs highlight MVP placeholders; full implementation needed for productio
 - **Medium**: Refactor long methods/params; enhance error handling consistency.
 - **Low**: Style fixes; full accessibility audit.
 
-Last Updated: 2025-10-03
+Last Updated: 2025-10-07
