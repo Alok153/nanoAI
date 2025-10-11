@@ -63,8 +63,9 @@ constructor(
           incoming.copy(
             installState = persisted.installState,
             downloadTaskId = persisted.downloadTaskId,
-            checksumSha256 = incoming.checksumSha256 ?: persisted.checksumSha256,
-            signature = incoming.signature ?: persisted.signature,
+            checksumSha256 =
+              incoming.checksumSha256?.takeUnless { it.isBlank() } ?: persisted.checksumSha256,
+            signature = incoming.signature?.takeUnless { it.isBlank() } ?: persisted.signature,
             createdAt = persisted.createdAt,
             updatedAt = maxOf(incoming.updatedAt, persisted.updatedAt),
           )
@@ -94,15 +95,20 @@ constructor(
 
   override suspend fun deleteModelFiles(modelId: String) {
     val modelsDir = File(context.filesDir, "models")
-    listOf(
+    val cleanupTargets =
+      listOf(
         File(modelsDir, "$modelId.bin"),
         File(modelsDir, "$modelId.tmp"),
         File(modelsDir, "$modelId.metadata"),
+        File(modelsDir, modelId),
       )
-      .forEach { file ->
-        if (file.exists()) {
-          file.delete()
-        }
+    cleanupTargets.forEach { file ->
+      if (!file.exists()) return@forEach
+      if (file.isDirectory) {
+        file.deleteRecursively()
+      } else {
+        file.delete()
       }
+    }
   }
 }

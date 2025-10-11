@@ -1,52 +1,71 @@
 # Tasks: Improve Test Coverage for nanoAI
 
-**Input**: Design documents from `/specs/005-improve-test-coverage/`
-**Prerequisites**: plan.md (required), research.md, data-model.md, contracts/
+**Input**: Design documents from `specs/005-improve-test-coverage/`
+**Prerequisites**: plan.md, research.md, data-model.md, contracts/, quickstart.md
 
-## Task List
-- [X] T001 Configure JaCoCo merge & threshold tasks in `app/build.gradle.kts` (plugins, report variants, CI-friendly properties).
-- [X] T002 Create coverage tooling scripts under `scripts/coverage/` (merge helper, markdown summary) and register them in Gradle.
-- [X] T003 Update `.github/workflows/android-ci.yml` to run coverage suite, publish HTML/XML artifacts, and fail on threshold breaches.
-- T004 [P] Add contract test `app/src/test/java/com/vjaykrsna/nanoai/coverage/CoverageReportContractTest.kt` validating `contracts/coverage-report.schema.json` against sample payloads.
-- T005 [P] Add unit tests `app/src/test/java/com/vjaykrsna/nanoai/coverage/CoverageSummaryTest.kt` covering layer aggregation, threshold comparison, and trend deltas.
-- T006 [P] Add unit tests `app/src/test/java/com/vjaykrsna/nanoai/coverage/RiskRegisterCoordinatorTest.kt` asserting catalog-risk relationships and severity rules.
-- T007 [P] Add unit tests `app/src/test/java/com/vjaykrsna/nanoai/auth/HuggingFaceAuthCoordinatorTest.kt` validating OAuth state transitions and repository interactions.
-- T008 [P] Add Compose instrumentation suite `app/src/androidTest/java/com/vjaykrsna/nanoai/coverage/ui/CoverageDashboardTest.kt` exercising quickstart scenarios and accessibility semantics.
-- T009 [P] Add Gradle functional tests `app/src/test/java/com/vjaykrsna/nanoai/coverage/VerifyCoverageThresholdsTaskTest.kt` ensuring `verifyCoverageThresholds` fails below targets.
-- T010 [P] Implement `CoverageSummary` model in `app/src/main/java/com/vjaykrsna/nanoai/coverage/model/CoverageSummary.kt` with derived trend calculations.
-- T011 [P] Implement `CoverageTrendPoint` model in `app/src/main/java/com/vjaykrsna/nanoai/coverage/model/CoverageTrendPoint.kt` enforcing monotonic timestamps.
-- T012 [P] Implement `TestSuiteCatalogEntry` model in `app/src/main/java/com/vjaykrsna/nanoai/coverage/model/TestSuiteCatalogEntry.kt` capturing ownership and risk tags.
-- T013 [P] Implement `RiskRegisterItem` model in `app/src/main/java/com/vjaykrsna/nanoai/coverage/model/RiskRegisterItem.kt` with validation for severity and targets.
-- T014 [P] Implement `TestLayer` enum in `app/src/main/java/com/vjaykrsna/nanoai/coverage/model/TestLayer.kt` shared across coverage artifacts.
-- T015 [P] Implement `CoverageMetric` value object in `app/src/main/java/com/vjaykrsna/nanoai/coverage/model/CoverageMetric.kt` deriving status from coverage vs threshold.
-- T016 [P] Implement `HuggingFaceAuthCoordinator` state machine in `app/src/main/java/com/vjaykrsna/nanoai/auth/HuggingFaceAuthCoordinator.kt` with repository hooks.
-- T017 [P] Implement `RefreshModelCatalogUseCase` orchestration in `app/src/main/java/com/vjaykrsna/nanoai/modelcatalog/domain/RefreshModelCatalogUseCase.kt` using fake-friendly collaborators.
-- T018 [P] Implement `ModelCatalogRepository` in `app/src/main/java/com/vjaykrsna/nanoai/modelcatalog/data/ModelCatalogRepository.kt` bridging local/remote sources.
-- T019 Build coverage report generator `app/src/main/java/com/vjaykrsna/nanoai/coverage/domain/CoverageReportGenerator.kt` producing schema-compliant summaries.
-- T020 Implement Compose UI `app/src/main/java/com/vjaykrsna/nanoai/coverage/ui/CoverageDashboardScreen.kt` rendering layer metrics, trends, and risk register chips.
-- T021 Extend Gradle wiring in `app/build.gradle.kts` to expose `verifyCoverageThresholds` with markdown summary outputs consumed by scripts.
-- T022 Wire DI bindings in `app/src/main/java/com/vjaykrsna/nanoai/coverage/di/CoverageModule.kt` for models, repository, and generator.
-- T023 Integrate coverage publishing pipeline by updating `scripts/coverage/publish-summary.sh` and `docs/coverage/risk-register.md` generation flow.
-- T024 [P] Update documentation (`specs/005-improve-test-coverage/quickstart.md`, `docs/coverage/risk-register.md`, `docs/coverage/summary.md`) with new commands and reporting expectations.
-- T025 [P] Expand negative-path tests (`app/src/test/java/com/vjaykrsna/nanoai/coverage/CoverageFailureScenariosTest.kt`, `app/src/androidTest/java/com/vjaykrsna/nanoai/coverage/ui/CoverageDashboardAccessibilityTest.kt`).
-- T026 [P] Execute end-to-end validation from quickstart (Gradle tasks + emulator run) and capture artefact checklist in `specs/005-improve-test-coverage/todo-next.md`.
-- T027 [P] Add unit tests for critical ViewModel state transitions (e.g., HomeScreenViewModel, ChatViewModel) covering happy path, error, and loading states as referenced in docs/todo-next.md.
-- T028 [P] Add Compose instrumentation tests for critical UI flows (conversation list, chat detail, message composition) validating user behavior, accessibility, and Material design compliance.
-- T029 [P] Add unit and instrumentation tests for data access paths (Room DAOs, repositories, caching rules) confirming read/write integrity, error propagation, and offline resilience.
+## Phase 3.1: Setup
+- [X] T001 Update `gradle/libs.versions.toml` to add `org.junit.jupiter` (api, params, engine) and `org.junit.platform` launcher aliases, align MockK/Truth dependencies, and drop the legacy `junit` alias so JVM tests compile against JUnit5 only.
+- [X] T002 Configure `app/build.gradle.kts` to enable JUnit Platform (`tasks.withType<Test> { useJUnitPlatform() }`), wire `testImplementation` to the new Jupiter aliases, move Mockito/MockK exclusions, and register `jacocoFullReport` + `verifyCoverageThresholds` under `check` for CI usage.
+- [X] T003 Replace `app/src/test/java/com/vjaykrsna/nanoai/testing/MainDispatcherRule.kt` with a JUnit5 `MainDispatcherExtension`, update affected tests in `app/src/test/java/**` to use `@ExtendWith` / `@RegisterExtension`, and delete remaining `@Rule` references.
 
-## Dependencies & Sequencing
-- T001 → T002 → T003 establish tooling before tests.
-- Tests (T004–T009) must run and fail before any implementations (T010–T023).
-- Model tasks (T010–T018) feed into generator (T019) and UI (T020); keep [P] status but respect logical dependencies when assigning.
-- Gradle wiring (T021) depends on tests from T009 and setup from T001.
-- DI & publishing (T022–T023) depend on generator/UI completion (T019–T021).
-- Polish tasks (T024–T026) run after functional integration.
+## Phase 3.2: Tests First (TDD)
+- [X] T004 [P] Refactor `app/src/test/java/com/vjaykrsna/nanoai/coverage/CoverageReportContractTest.kt` to JUnit5 and add a failing test that asserts risk register entries are sorted by severity order (CRITICAL → HIGH → MEDIUM → LOW) and reject mismatched catalog risk tags.
+- [X] T005 [P] Create `app/src/test/java/com/vjaykrsna/nanoai/coverage/model/CoverageMetricTest.kt` with JUnit5 cases covering `EXCEEDS_TARGET` status and positive `deltaFromThreshold()` when coverage > threshold.
+- [X] T006 [P] Convert `app/src/test/java/com/vjaykrsna/nanoai/coverage/CoverageSummaryTest.kt` to JUnit5 and add a failing test for a new `statusBreakdown()` helper returning counts per `CoverageMetric.Status`.
+- [X] T007 [P] Add `app/src/test/java/com/vjaykrsna/nanoai/coverage/model/CoverageTrendPointTest.kt` verifying a new `deltaFromThreshold()` helper and that non-monotonic `recordedAt` values throw.
+- [X] T008 [P] Add `app/src/test/java/com/vjaykrsna/nanoai/coverage/model/RiskRegisterItemTest.kt` with assertions for `isActionable(now)` semantics and CRITICAL risks without `targetBuild` throwing.
+- [X] T009 [P] Add `app/src/test/java/com/vjaykrsna/nanoai/coverage/model/TestSuiteCatalogEntryTest.kt` covering `mitigatesRisk(riskId)` and rejecting blank owners under JUnit5.
+- [X] T010 [P] Add `app/src/test/java/com/vjaykrsna/nanoai/coverage/model/TestLayerTest.kt` asserting `machineName` camelCase and a new kebab-case `analyticsKey`.
+- [X] T011 [P] Migrate `app/src/test/java/com/vjaykrsna/nanoai/coverage/RiskRegisterCoordinatorTest.kt` to JUnit5 and add a failing case where `requiresAttention(now)` only escalates overdue High/Critical risks with unmitigated tags.
+- [X] T012 [P] Migrate `app/src/test/java/com/vjaykrsna/nanoai/feature/settings/domain/huggingface/HuggingFaceAuthCoordinatorTest.kt` to JUnit5 and add a failing `slow_down` poll-backoff scenario asserting accessible error copy.
+- [X] T013 [P] Create `app/src/test/java/com/vjaykrsna/nanoai/feature/library/domain/RefreshModelCatalogUseCaseTest.kt` covering success and failure Result semantics under JUnit5.
+- [X] T014 [P] Create `app/src/test/java/com/vjaykrsna/nanoai/feature/library/data/impl/ModelCatalogRepositoryImplTest.kt` validating `replaceCatalog` metadata preservation and `deleteModelFiles` cleanup.
+- [X] T015 [P] Expand `app/src/androidTest/java/com/vjaykrsna/nanoai/coverage/ui/CoverageDashboardTest.kt` with Espresso/JUnit5 extension assertions for offline fallback (error banner, TalkBack description) using MockWebServer.
+- [X] T016 [P] Add `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/library/data/ModelCatalogOfflineTest.kt` exercising Room in-memory DB + MockWebServer to cover the quickstart offline device farm scenario.
 
-## Parallel Execution Examples
-- Run together: `specify task run T004`, `specify task run T005`, `specify task run T006` (different test files, shared setup complete).
-- After tests pass, parallelize: `specify task run T010`, `specify task run T012`, `specify task run T015` (independent model files).
+## Phase 3.3: Core Implementation (after tests fail)
+- [X] T017 Update `app/src/main/java/com/vjaykrsna/nanoai/coverage/model/CoverageMetric.kt` to introduce `EXCEEDS_TARGET` branching, companion constants for bounds, and an `isExceedingTarget()` helper.
+- [X] T018 Update `app/src/main/java/com/vjaykrsna/nanoai/coverage/model/CoverageSummary.kt` to expose `statusBreakdown()`, ensure `trendDeltaFor` defaults to `0.0`, and reuse the new metric helpers.
+- [X] T019 Update `app/src/main/java/com/vjaykrsna/nanoai/coverage/model/CoverageTrendPoint.kt` to cache `deltaFromThreshold()` and validate non-decreasing `recordedAt` sequences.
+- [X] T020 Update `app/src/main/java/com/vjaykrsna/nanoai/coverage/model/RiskRegisterItem.kt` with an `isActionable(now: Instant)` helper and stricter CRITICAL target validation.
+- [X] T021 Update `app/src/main/java/com/vjaykrsna/nanoai/coverage/model/TestSuiteCatalogEntry.kt` to add `mitigatesRisk(riskId: String)` and guard blank tag sets.
+- [X] T022 Update `app/src/main/java/com/vjaykrsna/nanoai/coverage/model/TestLayer.kt` to expose a new `analyticsKey` property derived from enum names.
+- [X] T023 Update `app/src/main/java/com/vjaykrsna/nanoai/coverage/domain/RiskRegisterCoordinator.kt` to honour `targetBuild` deadlines, reuse `isActionable`, and remove the constant return from `shouldEscalate`.
+- [X] T024 Update `app/src/main/java/com/vjaykrsna/nanoai/coverage/domain/CoverageReportGenerator.kt` to sort risk register output by severity and assert suite catalog tags cover referenced risks.
+- [X] T025 Update `app/src/main/java/com/vjaykrsna/nanoai/feature/settings/domain/huggingface/HuggingFaceAuthCoordinator.kt` to expand `slow_down` handling, expose surfaced error copy, and ensure polling interval caps respect accessibility guidelines.
+- [X] T026 Update `app/src/main/java/com/vjaykrsna/nanoai/feature/library/domain/RefreshModelCatalogUseCase.kt` to propagate failure causes, emit structured logs, and return `Result.failure` when repository writes fail.
+- [X] T027 Update `app/src/main/java/com/vjaykrsna/nanoai/feature/library/data/impl/ModelCatalogRepositoryImpl.kt` to preserve integrity metadata during `replaceCatalog` and harden file cleanup for offline deletions.
 
-```sh
-# Sample parallel kick-off
-specify task run T004 & specify task run T005 & specify task run T006
+## Phase 3.4: Integration
+- [X] T028 Implement `app/src/main/java/com/vjaykrsna/nanoai/coverage/tasks/VerifyCoverageThresholdsTask.kt` (plus Gradle wiring) to invoke `CoverageThresholdVerifier`, emit summary markdown, and fail the build when tests detect regressions.
+- [X] T029 Extend `scripts/coverage/merge-coverage.sh` to merge unit + instrumentation Jacoco exec files, honour the new thresholds, and copy artifacts to `app/build/reports/jacoco/full/`.
+- [ ] T030 Enhance `scripts/coverage/generate-summary.py` to ingest the merged XML, compute the status breakdown, and refresh `app/build/coverage/summary.md` for stakeholder broadcasts.
+- [ ] T031 Add or update `app/src/main/java/com/vjaykrsna/nanoai/telemetry/CoverageTelemetryReporter.kt` so coverage deltas and risk escalations are logged without PII and wired into existing telemetry dispatchers.
+
+## Phase 3.5: Polish
+- [ ] T032 [P] Refresh `specs/005-improve-test-coverage/quickstart.md` with JUnit5 commands, emulator prerequisites, and troubleshooting for the new offline tests.
+- [ ] T033 [P] Generate `docs/coverage/risk-register.md` summarising escalated risks, mitigation owners, and links to the new tests.
+- [ ] T034 [P] Add `macrobenchmark/src/main/java/com/vjaykrsna/nanoai/coverage/CoverageDashboardStartupBenchmark.kt` validating dashboard load <100ms and capture results in CI artifacts.
+- [ ] T035 [P] Update `README.md` testing section with JUnit5 migration notes, coverage thresholds, and commands for `jacocoFullReport` + `verifyCoverageThresholds`.
+
+## Dependencies
+- Setup tasks T001 → T003 must finish before any test conversions (T004–T016).
+- Each test task T004–T016 precedes its matching implementation task (T017–T027) to preserve TDD.
+- Integration tasks T028–T031 depend on core implementation updates through T027.
+- Polish tasks T032–T035 require prior sections so documentation reflects final behaviour.
+
+## Parallel Example
 ```
+# Run independent JUnit5 test migrations together once setup is complete
+task-agent run T005
+task-agent run T006
+task-agent run T007
+
+# Batch instrumentation scenarios after Gradle + unit migrations
+task-agent run T015
+task-agent run T016
+```
+
+## Notes
+- Honour constitution gates: Material accessibility checks (T015), offline resilience (T016, T027), automation gates (T028–T030), AI integrity via Hugging Face auth (T012, T025), and documentation freshness (T032–T035).
+- Coordinate with CI owners before enabling the new `verifyCoverageThresholds` gate to avoid blocking existing pipelines.

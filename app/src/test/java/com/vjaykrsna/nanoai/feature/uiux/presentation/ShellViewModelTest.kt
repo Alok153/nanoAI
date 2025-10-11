@@ -1,6 +1,5 @@
 package com.vjaykrsna.nanoai.feature.uiux.presentation
 
-import android.os.Build
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.ui.unit.DpSize
@@ -28,10 +27,10 @@ import com.vjaykrsna.nanoai.feature.uiux.state.RightPanel
 import com.vjaykrsna.nanoai.feature.uiux.state.ShellLayoutState
 import com.vjaykrsna.nanoai.feature.uiux.state.UiPreferenceSnapshot
 import com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload
+import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
-import kotlin.test.Test
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,15 +39,14 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
-@RunWith(RobolectricTestRunner::class)
-@Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalMaterial3WindowSizeClassApi::class)
 class ShellViewModelTest {
   private val dispatcher = StandardTestDispatcher()
+
+  @JvmField @RegisterExtension val mainDispatcherExtension = MainDispatcherExtension(dispatcher)
 
   @Test
   fun openMode_closesDrawersAndHidesPalette() =

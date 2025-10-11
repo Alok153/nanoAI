@@ -1,0 +1,143 @@
+package com.vjaykrsna.nanoai.coverage
+
+import com.google.common.truth.Truth.assertThat
+import com.vjaykrsna.nanoai.coverage.domain.RiskRegisterCoordinator
+import com.vjaykrsna.nanoai.coverage.model.RiskRegisterItem
+import com.vjaykrsna.nanoai.coverage.model.TestLayer
+import com.vjaykrsna.nanoai.coverage.model.TestSuiteCatalogEntry
+import java.time.Instant
+import org.junit.jupiter.api.Test
+
+class RiskRegisterCoordinatorTest {
+
+  @Test
+  fun `maps suites to risks using risk tags`() {
+    val risks =
+      listOf(
+        RiskRegisterItem(
+          riskId = "risk-high-ui",
+          layer = TestLayer.UI,
+          description = "TalkBack labels missing for composer",
+          severity = RiskRegisterItem.Severity.HIGH,
+          targetBuild = "build-110",
+          status = RiskRegisterItem.Status.IN_PROGRESS,
+          mitigation = "Add Compose semantics assertions",
+        ),
+      )
+
+    val catalog =
+      listOf(
+        TestSuiteCatalogEntry(
+          suiteId = "suite-ui-accessibility",
+          owner = "quality-engineering",
+          layer = TestLayer.UI,
+          journey = "Chat composer semantics",
+          coverageContribution = 2.5,
+          riskTags = setOf("accessibility", "risk-high-ui"),
+        ),
+      )
+
+    val coordinator = RiskRegisterCoordinator(risks, catalog)
+
+    assertThat(coordinator.mitigationsFor("risk-high-ui").map { it.suiteId })
+      .containsExactly("suite-ui-accessibility")
+  }
+
+  @Test
+  fun `critical risks missing mitigation are flagged`() {
+    val risks =
+      listOf(
+        RiskRegisterItem(
+          riskId = "risk-critical-data",
+          layer = TestLayer.DATA,
+          description = "Offline writes are not validated",
+          severity = RiskRegisterItem.Severity.CRITICAL,
+          targetBuild = "build-2025-10-20",
+          status = RiskRegisterItem.Status.OPEN,
+          mitigation = "Add Room DAO coverage",
+        ),
+        RiskRegisterItem(
+          riskId = "risk-critical-ui",
+          layer = TestLayer.UI,
+          description = "Compose chart not focusable",
+          severity = RiskRegisterItem.Severity.CRITICAL,
+          targetBuild = "build-2025-10-20",
+          status = RiskRegisterItem.Status.RESOLVED,
+          mitigation = "Suite suite-ui-accessibility",
+        ),
+      )
+
+    val catalog =
+      listOf(
+        TestSuiteCatalogEntry(
+          suiteId = "suite-ui-accessibility",
+          owner = "quality-engineering",
+          layer = TestLayer.UI,
+          journey = "Coverage dashboard accessibility",
+          coverageContribution = 3.1,
+          riskTags = setOf("risk-critical-ui"),
+        ),
+      )
+
+    val coordinator = RiskRegisterCoordinator(risks, catalog)
+
+    val unmitigatedCritical = coordinator.unmitigatedCriticalRisks()
+
+    assertThat(unmitigatedCritical.map { it.riskId }).containsExactly("risk-critical-data")
+  }
+
+  @Test
+  fun `resolved risks are excluded from attention summary`() {
+    val risks =
+      listOf(
+        RiskRegisterItem(
+          riskId = "risk-medium-history",
+          layer = TestLayer.DATA,
+          description = "History fetch does not cover pagination",
+          severity = RiskRegisterItem.Severity.MEDIUM,
+          targetBuild = "build-118",
+          status = RiskRegisterItem.Status.RESOLVED,
+          mitigation = "Suite history-pagination",
+        ),
+      )
+    val catalog = emptyList<TestSuiteCatalogEntry>()
+
+    val coordinator = RiskRegisterCoordinator(risks, catalog)
+
+    assertThat(coordinator.requiresAttention(Instant.parse("2025-10-12T00:00:00Z"))).isFalse()
+  }
+
+  @Test
+  fun `requiresAttention ignores mitigated high severity risks`() {
+    val risks =
+      listOf(
+        RiskRegisterItem(
+          riskId = "risk-high-ui",
+          layer = TestLayer.UI,
+          description = "TalkBack labels missing for composer",
+          severity = RiskRegisterItem.Severity.HIGH,
+          targetBuild = "build-2025-10-10",
+          status = RiskRegisterItem.Status.OPEN,
+          mitigation = null,
+        ),
+      )
+
+    val catalog =
+      listOf(
+        TestSuiteCatalogEntry(
+          suiteId = "suite-ui-accessibility",
+          owner = "quality-engineering",
+          layer = TestLayer.UI,
+          journey = "Chat composer semantics",
+          coverageContribution = 2.5,
+          riskTags = setOf("risk-high-ui"),
+        ),
+      )
+
+    val coordinator = RiskRegisterCoordinator(risks, catalog)
+
+    val now = Instant.parse("2025-10-15T00:00:00Z")
+
+    assertThat(coordinator.requiresAttention(now)).isFalse()
+  }
+}

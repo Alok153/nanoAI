@@ -39,7 +39,7 @@ data class HuggingFaceDeviceAuthState(
   val verificationUri: String,
   val verificationUriComplete: String?,
   val expiresAt: Instant,
-  val pollIntervalSeconds: Int,
-  val isPolling: Boolean = false,
-  val lastError: String? = null,
+  var pollIntervalSeconds: Int,
+  var isPolling: Boolean = false,
+  var lastError: String? = null,
 )

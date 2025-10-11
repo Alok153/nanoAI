@@ -16,13 +16,14 @@ import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import retrofit2.HttpException
 import retrofit2.Response
 
@@ -82,6 +83,66 @@ class HuggingFaceAuthCoordinatorTest {
     assertThat(harness.coordinator.deviceAuthState.value).isNull()
   }
 
+  @Test
+  fun `begin device authorization fails when client id missing`() = runTest {
+    val harness = createHarness()
+
+    val result = harness.coordinator.beginDeviceAuthorization("", "all")
+
+    assertThat(result.isFailure).isTrue()
+    assertThat(result.exceptionOrNull()).isInstanceOf(IllegalStateException::class.java)
+  }
+
+  @Test
+  fun `cancel device authorization clears device state`() = runTest {
+    val harness = createHarness()
+    harness.oauthService.tokenResponses +=
+      Result.failure(IllegalStateException("authorization_pending"))
+
+    harness.coordinator.beginDeviceAuthorization("client", "all").getOrThrow()
+    assertThat(harness.coordinator.deviceAuthState.value).isNotNull()
+
+    harness.coordinator.cancelDeviceAuthorization()
+
+    assertThat(harness.coordinator.deviceAuthState.value).isNull()
+    assertThat(harness.coordinator.state.value.isAuthenticated).isFalse()
+  }
+
+  @Test
+  fun `device polling surfaces accessible message when slow down requested`() = runTest {
+    val harness = createHarness()
+    harness.accountService.response = Result.success(testUser())
+    harness.oauthService.deviceResponse = harness.oauthService.deviceResponse.copy(interval = 1)
+    harness.oauthService.tokenResponses += Result.failure(slowDownException())
+    harness.oauthService.tokenResponses +=
+      Result.success(HuggingFaceTokenResponse(accessToken = "oauth-token"))
+
+    harness.coordinator.beginDeviceAuthorization("client", "all").getOrThrow()
+
+    advanceTimeBy(1_000)
+    runCurrent()
+
+    val deviceState = harness.coordinator.deviceAuthState.value
+    assertThat(deviceState?.isPolling).isTrue()
+    assertThat(deviceState?.lastError).contains("Hugging Face asked us to slow down")
+
+    advanceTimeBy(6_000)
+    advanceUntilIdle()
+
+    assertThat(harness.coordinator.state.value.isAuthenticated).isTrue()
+  }
+
+  @Test
+  fun `refreshAccount without stored credential returns unauthenticated`() = runTest {
+    val harness = createHarness()
+
+    val state = harness.coordinator.refreshAccount()
+
+    assertThat(state.isAuthenticated).isFalse()
+    assertThat(state.username).isNull()
+    assertThat(harness.coordinator.state.value.isAuthenticated).isFalse()
+  }
+
   private fun testUser() =
     HuggingFaceUserDto(
       name = "tester",
@@ -93,6 +154,14 @@ class HuggingFaceAuthCoordinatorTest {
   private fun unauthorizedException(): HttpException {
     val body = "{\"error\":\"invalid_token\"}".toResponseBody("application/json".toMediaType())
     val response = Response.error<HuggingFaceUserDto>(401, body)
+    return HttpException(response)
+  }
+
+  private fun slowDownException(): HttpException {
+    val body =
+      "{\"error\":\"slow_down\",\"error_description\":\"Back off and retry later\"}"
+        .toResponseBody("application/json".toMediaType())
+    val response = Response.error<HuggingFaceTokenResponse>(429, body)
     return HttpException(response)
   }
 

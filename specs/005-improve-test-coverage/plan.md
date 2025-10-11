@@ -41,7 +41,8 @@ Elevate confidence in nanoAI releases by closing automated test gaps across View
 **Target Platform**: Android 8.0+ (minSdk per project) with instrumentation across Pixel reference devices  
 **Project Type**: Mobile (Android app + supporting scripts)  
 **Performance Goals**: Maintain UX responsiveness (<100ms feedback, <500ms content update) while executing tests within CI budget (<20 min total), coverage thresholds ≥ ViewModel 75% / UI 65% / Data 70%  
-**Constraints**: Offline-friendly assertions must remain valid; CI must remain green with JaCoCo overhead <10% runtime; adhere to Detekt/spotless gates  
+**Constraints**: Offline-friendly assertions must remain valid; CI must remain green with JaCoCo overhead <10% runtime; adhere to Detekt/spotless gates
+**Migration Context**: Include JUnit4 to JUnit5 migration (drop legacy junit alias, adopt Jupiter extensions, update test annotations) to modernize test framework while ensuring deterministic coroutines and accessibility assertions.
 **Scale/Scope**: Focus on high-impact flows (Conversation, Message composition, History) spanning ~8 ViewModels, core Repository layer, and Compose surfaces used daily
 
 ## Constitution Check

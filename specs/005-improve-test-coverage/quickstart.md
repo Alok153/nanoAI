@@ -6,6 +6,7 @@ Follow this checklist to validate the coverage initiative end-to-end.
 - Checkout branch `005-improve-test-coverage`.
 - Sync dependencies: `./gradlew spotlessApply` (optional) then `./gradlew help` to warm Gradle.
 - Ensure Android emulator or device available for instrumentation tests.
+- Note: This branch includes JUnit4 to JUnit5 migration; all JVM tests now use JUnit5 annotations, extensions, and platform exclusively (no backward compatibility with JUnit4).
 
 ## 2. Run Automated Suites
 - **ViewModel + Repository**: `./gradlew testDebugUnitTest`

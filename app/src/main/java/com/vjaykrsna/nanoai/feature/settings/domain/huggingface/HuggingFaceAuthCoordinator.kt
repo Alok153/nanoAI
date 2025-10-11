@@ -42,6 +42,8 @@ private const val ERROR_AUTHORIZATION_PENDING = "authorization_pending"
 private const val ERROR_SLOW_DOWN = "slow_down"
 private const val ERROR_EXPIRED = "expired_token"
 private const val ERROR_ACCESS_DENIED = "access_denied"
+private const val SLOW_DOWN_USER_MESSAGE =
+  "Hugging Face asked us to slow down. We'll retry in a moment."
 private const val DEVICE_CODE_EXPIRED_MESSAGE =
   "Device code expired before confirmation. Start a new Hugging Face sign-in."
 private const val DEVICE_CODE_DENIED_MESSAGE =
@@ -224,10 +226,18 @@ constructor(
           when (decision) {
             is PollingDecision.Continue -> {
               currentInterval = decision.nextIntervalSeconds
-              _deviceAuthState.update { it?.copy(isPolling = true, lastError = null) }
+              _deviceAuthState.update { state ->
+                state?.copy(
+                  pollIntervalSeconds = currentInterval,
+                  isPolling = true,
+                  lastError = decision.message ?: state.lastError,
+                )
+              }
             }
             is PollingDecision.Stop -> {
-              _deviceAuthState.update { it?.copy(isPolling = false, lastError = decision.message) }
+              _deviceAuthState.update { state ->
+                state?.copy(isPolling = false, lastError = decision.message)
+              }
               deviceSession = null
               deviceAuthJob = null
               return@launch
@@ -290,7 +300,9 @@ constructor(
       ERROR_AUTHORIZATION_PENDING -> PollingDecision.Continue(currentInterval)
       ERROR_SLOW_DOWN ->
         PollingDecision.Continue(
-          min(MAX_DEVICE_POLL_SECONDS, currentInterval + SLOW_DOWN_BACKOFF_SECONDS)
+          nextIntervalSeconds =
+            min(MAX_DEVICE_POLL_SECONDS, currentInterval + SLOW_DOWN_BACKOFF_SECONDS),
+          message = SLOW_DOWN_USER_MESSAGE,
         )
       ERROR_EXPIRED -> PollingDecision.Stop(DEVICE_CODE_EXPIRED_MESSAGE)
       ERROR_ACCESS_DENIED -> PollingDecision.Stop(DEVICE_CODE_DENIED_MESSAGE)
@@ -344,7 +356,7 @@ private data class DeviceFlowSession(
 )
 
 private sealed interface PollingDecision {
-  data class Continue(val nextIntervalSeconds: Int) : PollingDecision
+  data class Continue(val nextIntervalSeconds: Int, val message: String? = null) : PollingDecision
 
   data class Stop(val message: String) : PollingDecision
 }
