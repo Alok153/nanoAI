@@ -7,13 +7,16 @@ import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSiz
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.waitUntilDoesNotExist
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -45,7 +48,11 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-@OptIn(ExperimentalCoroutinesApi::class, ExperimentalMaterial3WindowSizeClassApi::class)
+@OptIn(
+  ExperimentalCoroutinesApi::class,
+  ExperimentalMaterial3WindowSizeClassApi::class,
+  ExperimentalTestApi::class
+)
 @RunWith(AndroidJUnit4::class)
 class OfflineProgressTest {
   @get:Rule val composeRule = createAndroidComposeRule<ComponentActivity>()
@@ -75,8 +82,8 @@ class OfflineProgressTest {
     }
 
     handleIntent(state, ShellUiEvent.ConnectivityChanged(ConnectivityStatus.ONLINE))
-
-  composeRule.onAllNodesWithTag("connectivity_banner").assertCountEquals(0)
+    composeRule.waitUntilDoesNotExist(hasTestTag("connectivity_banner"))
+    composeRule.onAllNodesWithTag("connectivity_banner").assertCountEquals(0)
     assertThat(state.value.layout.connectivity).isEqualTo(ConnectivityStatus.ONLINE)
   }
 

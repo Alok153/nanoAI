@@ -442,9 +442,10 @@ private fun ModelManagementCard(
       Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         FilledTonalButton(
           onClick = onPrimaryAction,
-          modifier = Modifier.semantics {
-            contentDescription = "${primaryActionLabel} ${model.displayName}".trim()
-          },
+          modifier =
+            Modifier.semantics {
+              contentDescription = "${primaryActionLabel} ${model.displayName}".trim()
+            },
         ) {
           Icon(primaryActionIcon, contentDescription = null)
           Spacer(modifier = Modifier.size(8.dp))
@@ -455,9 +456,10 @@ private fun ModelManagementCard(
           if (emphasizeSecondary) {
             OutlinedButton(
               onClick = onSecondaryAction,
-              modifier = Modifier.semantics {
-                contentDescription = "${secondaryActionLabel} ${model.displayName}".trim()
-              },
+              modifier =
+                Modifier.semantics {
+                  contentDescription = "${secondaryActionLabel} ${model.displayName}".trim()
+                },
             ) {
               Icon(secondaryActionIcon, contentDescription = null)
               Spacer(modifier = Modifier.size(8.dp))
@@ -466,9 +468,10 @@ private fun ModelManagementCard(
           } else {
             TextButton(
               onClick = onSecondaryAction,
-              modifier = Modifier.semantics {
-                contentDescription = "${secondaryActionLabel} ${model.displayName}".trim()
-              },
+              modifier =
+                Modifier.semantics {
+                  contentDescription = "${secondaryActionLabel} ${model.displayName}".trim()
+                },
             ) {
               Icon(secondaryActionIcon, contentDescription = null)
               Spacer(modifier = Modifier.size(8.dp))

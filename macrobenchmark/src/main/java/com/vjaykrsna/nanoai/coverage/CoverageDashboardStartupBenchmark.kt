@@ -6,15 +6,16 @@ import android.os.SystemClock
 import androidx.benchmark.Outputs
 import androidx.benchmark.macro.CompilationMode
 import androidx.benchmark.macro.FrameTimingMetric
-import androidx.benchmark.macro.MacrobenchmarkRule
 import androidx.benchmark.macro.MacrobenchmarkScope
 import androidx.benchmark.macro.StartupMode
 import androidx.benchmark.macro.StartupTimingMetric
+import androidx.benchmark.macro.junit4.MacrobenchmarkRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.Until
+import com.google.common.truth.Truth.assertWithMessage
+import java.io.File
 import kotlin.math.max
-import kotlin.test.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -38,9 +39,7 @@ class CoverageDashboardStartupBenchmark {
       iterations = 8,
       startupMode = StartupMode.WARM,
       compilationMode = CompilationMode.Partial(),
-      setupBlock = {
-        pressHome()
-      },
+      setupBlock = { pressHome() },
     ) {
       startActivityAndWait()
       waitForHomeSurface()
@@ -51,17 +50,16 @@ class CoverageDashboardStartupBenchmark {
     }
 
     val serialized = iterations.joinToString(separator = ",") { "%.2f".format(it) }
-    Outputs.writeFile(
-      fileName = "coverage_dashboard_startup_ms.txt",
-      reportKey = "coverageDashboardStartupMs",
-      data = serialized.toByteArray(),
-    )
+    Outputs.writeFile("coverage_dashboard_startup_ms.txt") { file: File ->
+      file.writeBytes(serialized.toByteArray())
+    }
 
     val worstMs = iterations.maxOrNull() ?: TARGET_MAX_LOAD_MS
-    assertTrue(
-      worstMs < TARGET_MAX_LOAD_MS,
-      "Coverage dashboard warm start exceeded ${TARGET_MAX_LOAD_MS} ms (worst=${"%.2f".format(worstMs)} ms)",
-    )
+    assertWithMessage(
+        "Coverage dashboard warm start exceeded ${TARGET_MAX_LOAD_MS} ms (worst=${"%.2f".format(worstMs)} ms)"
+      )
+      .that(worstMs)
+      .isLessThan(TARGET_MAX_LOAD_MS)
   }
 
   private fun MacrobenchmarkScope.waitForHomeSurface() {
@@ -72,7 +70,8 @@ class CoverageDashboardStartupBenchmark {
   private fun MacrobenchmarkScope.navigateToCoverageDashboard(): Double {
     val startNs = SystemClock.elapsedRealtimeNanos()
     val entry =
-      device.findObject(By.descContains("Coverage")) ?: device.findObject(By.textContains("Coverage"))
+      device.findObject(By.descContains("Coverage"))
+        ?: device.findObject(By.textContains("Coverage"))
     requireNotNull(entry) { "Unable to locate coverage dashboard navigation affordance" }
     entry.click()
     device.waitForIdle()
@@ -85,8 +84,13 @@ class CoverageDashboardStartupBenchmark {
 
     if (!dashboardVisible) {
       val fallbackVisible =
-        device.wait(Until.hasObject(By.textContains("Coverage Dashboard")), DASHBOARD_WAIT_TIMEOUT_MS)
-      require(dashboardVisible || fallbackVisible) { "Coverage dashboard never rendered within timeout" }
+        device.wait(
+          Until.hasObject(By.textContains("Coverage Dashboard")),
+          DASHBOARD_WAIT_TIMEOUT_MS
+        )
+      require(dashboardVisible || fallbackVisible) {
+        "Coverage dashboard never rendered within timeout"
+      }
     }
 
     val durationMs = (SystemClock.elapsedRealtimeNanos() - startNs) / 1_000_000.0

@@ -86,7 +86,8 @@ class ModelCatalogOfflineTest {
 
       val result = useCase()
 
-      assertWithMessage("offline refresh should resolve with cached data").that(result.isSuccess)
+      assertWithMessage("offline refresh should resolve with cached data")
+        .that(result.isSuccess)
         .isTrue()
       assertThat(result.exceptionOrNull()).isNull()
       assertThat(repository.getAllModels()).containsExactly(cached)

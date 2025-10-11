@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -18,7 +17,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -74,7 +73,10 @@ fun CoverageDashboardScreen(
   onShareRequested: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  Column(modifier = modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+  Column(
+    modifier = modifier.fillMaxSize().padding(16.dp),
+    verticalArrangement = Arrangement.spacedBy(16.dp)
+  ) {
     HeaderSection(state = state, onRefresh = onRefresh, onShareRequested = onShareRequested)
 
     if (state.errorMessage != null) {
@@ -109,7 +111,11 @@ private fun HeaderSection(
       overflow = TextOverflow.Ellipsis,
     )
 
-    RowActions(isRefreshing = state.isRefreshing, onRefresh = onRefresh, onShareRequested = onShareRequested)
+    RowActions(
+      isRefreshing = state.isRefreshing,
+      onRefresh = onRefresh,
+      onShareRequested = onShareRequested
+    )
   }
 }
 
@@ -122,7 +128,7 @@ private fun RowActions(
   androidx.compose.foundation.layout.Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
     Button(onClick = onRefresh, enabled = !isRefreshing) {
       if (isRefreshing) {
-  CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
         Spacer(modifier = Modifier.width(8.dp))
       }
       Text(text = if (isRefreshing) "Refreshing" else "Refresh")
@@ -153,8 +159,15 @@ private fun ErrorBanner(message: String) {
 @OptIn(ExperimentalLayoutApi::class)
 private fun RiskSection(risks: List<RiskChipState>, onRiskSelected: (RiskChipState) -> Unit) {
   Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-    Text(text = "Risks", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Text(
+      text = "Risks",
+      style = MaterialTheme.typography.titleMedium,
+      fontWeight = FontWeight.SemiBold
+    )
+    FlowRow(
+      horizontalArrangement = Arrangement.spacedBy(8.dp),
+      verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
       risks.forEach { risk ->
         AssistChip(
           onClick = { onRiskSelected(risk) },
@@ -178,7 +191,7 @@ private fun LayerList(layers: List<LayerCoverageState>, trendDelta: Map<TestLaye
   ) {
     items(layers, key = { layer -> layer.layer.name }) { layerState ->
       LayerCard(state = layerState, delta = trendDelta[layerState.layer])
-      Divider()
+      HorizontalDivider()
     }
   }
 }
@@ -192,8 +205,15 @@ private fun LayerCard(state: LayerCoverageState, delta: Double?) {
     modifier = Modifier.fillMaxWidth(),
     elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
   ) {
-    Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-      Text(text = layer.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+    Column(
+      modifier = Modifier.fillMaxWidth().padding(16.dp),
+      verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+      Text(
+        text = layer.displayName,
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.SemiBold
+      )
       Text(
         text = "${formatPercent(metric.coverage)} • Target ${formatPercent(metric.threshold)}",
         modifier = Modifier.testTag(tag),

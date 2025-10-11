@@ -6,6 +6,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.platform.testTag
@@ -49,25 +51,32 @@ class ThemeToggleVisualTest {
 
   @Test
   fun captureThemeToggleLightAndDark() {
-    captureSnapshot(ThemePreference.LIGHT, "light")
-    captureSnapshot(ThemePreference.DARK, "dark")
-  }
-
-  private fun captureSnapshot(theme: ThemePreference, suffix: String) {
-    val file = File(outputDir, "theme-toggle-$suffix-${timestamp()}.png")
+    val themeState = mutableStateOf(ThemePreference.LIGHT)
 
     composeRule.setContent {
-      NanoAITheme(themePreference = theme, dynamicColor = false) {
+      NanoAITheme(themePreference = themeState.value, dynamicColor = false) {
         Box(
           modifier =
             Modifier.padding(24.dp).testTag(ROOT_TAG).background(MaterialTheme.colorScheme.surface),
         ) {
-          ThemeToggle(currentTheme = theme, onThemeChange = {})
+          ThemeToggle(currentTheme = themeState.value, onThemeChange = { themeState.value = it })
         }
       }
     }
 
+    captureSnapshot("light")
+    setTheme(themeState, ThemePreference.DARK)
+    captureSnapshot("dark")
+  }
+
+  private fun setTheme(themeState: MutableState<ThemePreference>, theme: ThemePreference) {
+    composeRule.runOnIdle { themeState.value = theme }
     composeRule.waitForIdle()
+  }
+
+  private fun captureSnapshot(suffix: String) {
+    composeRule.waitForIdle()
+    val file = snapshotFile(suffix)
 
     val node = composeRule.onNodeWithTag(ROOT_TAG)
     node.assertIsDisplayed()
@@ -79,6 +88,9 @@ class ThemeToggleVisualTest {
     assertThat(file.length()).isGreaterThan(0L)
     Log.i(TAG, "Saved ThemeToggle snapshot to ${file.absolutePath}")
   }
+
+  private fun snapshotFile(suffix: String): File =
+    File(outputDir, "theme-toggle-$suffix-${timestamp()}.png")
 
   private fun saveBitmap(bitmap: Bitmap, file: File) {
     FileOutputStream(file).use { out -> bitmap.compress(Bitmap.CompressFormat.PNG, 100, out) }

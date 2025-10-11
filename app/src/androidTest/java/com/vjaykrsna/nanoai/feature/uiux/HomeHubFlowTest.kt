@@ -87,9 +87,9 @@ class HomeHubFlowTest {
     val windowSizeClass = WindowSizeClass.calculateFromSize(DpSize(720.dp, 1024.dp))
     val modeCards =
       listOf(
-  modeCard(ModeId.CHAT, "Chat", Icons.AutoMirrored.Filled.Chat),
-  modeCard(ModeId.IMAGE, "Image", Icons.Filled.Image),
-  modeCard(ModeId.AUDIO, "Audio", Icons.Filled.Mic),
+        modeCard(ModeId.CHAT, "Chat", Icons.AutoMirrored.Filled.Chat),
+        modeCard(ModeId.IMAGE, "Image", Icons.Filled.Image),
+        modeCard(ModeId.AUDIO, "Audio", Icons.Filled.Mic),
       )
     val recent =
       listOf(

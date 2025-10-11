@@ -1,6 +1,7 @@
 package com.vjaykrsna.nanoai.feature.library.ui
 
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -39,11 +40,14 @@ class ModelLibraryAccessibilityTest {
         updatedAt = Instant.fromEpochMilliseconds(0),
       )
 
+    val modelState = mutableStateOf(model)
+    val installedState = mutableStateOf(false)
+
     composeRule.setContent {
       NanoAITheme {
         ModelCard(
-          model = model,
-          isInstalled = false,
+          model = modelState.value,
+          isInstalled = installedState.value,
           onDownload = {},
           onDelete = {},
         )
@@ -52,16 +56,11 @@ class ModelLibraryAccessibilityTest {
 
     composeRule.onNodeWithContentDescription("Download Demo Model").assertIsDisplayed()
 
-    composeRule.setContent {
-      NanoAITheme {
-        ModelCard(
-          model = model.copy(installState = InstallState.INSTALLED),
-          isInstalled = true,
-          onDownload = {},
-          onDelete = {},
-        )
-      }
+    composeRule.runOnIdle {
+      modelState.value = model.copy(installState = InstallState.INSTALLED)
+      installedState.value = true
     }
+    composeRule.waitForIdle()
 
     composeRule.onNodeWithContentDescription("Delete Demo Model").assertIsDisplayed()
   }

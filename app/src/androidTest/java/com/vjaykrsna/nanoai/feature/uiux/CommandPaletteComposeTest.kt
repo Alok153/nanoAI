@@ -14,8 +14,8 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsSelectable
-import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -25,7 +25,6 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.pressKey
-import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -82,7 +81,9 @@ class CommandPaletteComposeTest {
       )
     }
 
-  composeTestRule.onNode(isRoot()).performKeyInput {
+    composeTestRule.waitForIdle()
+
+    composeTestRule.onNode(isRoot()).performKeyInput {
       pressKey(Key.CtrlLeft)
       pressKey(Key.K)
     }
@@ -107,8 +108,10 @@ class CommandPaletteComposeTest {
       NanoShellScaffold(state = state.value, onEvent = { intent -> handleIntent(state, intent) })
     }
 
+    composeTestRule.waitForIdle()
+
     composeTestRule.onNodeWithTag("command_palette_search").performTextInput("ima")
-  composeTestRule.onAllNodesWithTag("command_palette_item")[0].assertIsDisplayed()
+    composeTestRule.onAllNodesWithTag("command_palette_item")[0].assertIsDisplayed()
   }
 
   @Test
@@ -125,13 +128,15 @@ class CommandPaletteComposeTest {
       NanoShellScaffold(state = state.value, onEvent = { intent -> handleIntent(state, intent) })
     }
 
+    composeTestRule.waitForIdle()
+
     composeTestRule.onNodeWithTag("command_palette_list").performKeyInput {
       pressKey(Key.DirectionDown)
       pressKey(Key.DirectionDown)
       pressKey(Key.DirectionDown)
     }
 
-  composeTestRule.onAllNodesWithTag("command_palette_item")[0].assertIsSelectable()
+    composeTestRule.onAllNodesWithTag("command_palette_item")[0].assertIsSelectable()
   }
 
   @Test
@@ -155,8 +160,10 @@ class CommandPaletteComposeTest {
       )
     }
 
-  composeTestRule.onAllNodesWithTag("command_palette_item")[0].performClick()
-  composeTestRule.onAllNodesWithTag("command_palette").assertCountEquals(0)
+    composeTestRule.waitForIdle()
+
+    composeTestRule.onAllNodesWithTag("command_palette_item")[0].performClick()
+    composeTestRule.onAllNodesWithTag("command_palette").assertCountEquals(0)
     assertThat(recorder.events.filterIsInstance<ShellUiEvent.ModeSelected>()).isNotEmpty()
   }
 
@@ -174,6 +181,8 @@ class CommandPaletteComposeTest {
     composeTestRule.setContent {
       NanoShellScaffold(state = state.value, onEvent = { intent -> handleIntent(state, intent) })
     }
+
+    composeTestRule.waitForIdle()
 
     composeTestRule.onNodeWithTag("command_palette_item").assertIsNotEnabled()
     composeTestRule.onNodeWithContentDescription("Unavailable offline").assertIsDisplayed()
@@ -200,6 +209,14 @@ class CommandPaletteComposeTest {
           handleIntent(state, intent)
         }
       )
+    }
+
+    composeTestRule.waitUntil {
+      runCatching {
+          composeTestRule.onAllNodesWithTag("progress_retry_button").assertCountEquals(2)
+          true
+        }
+        .getOrDefault(false)
     }
 
     val retryButtons = composeTestRule.onAllNodesWithTag("progress_retry_button")
@@ -232,6 +249,8 @@ class CommandPaletteComposeTest {
         }
       )
     }
+
+    composeTestRule.waitForIdle()
 
     composeTestRule.waitUntilExactlyOneExists(
       hasText("Image generation queued for reconnect"),

@@ -15,7 +15,6 @@ console-reports:
 output-reports:
   active: true
 
-# ---------- STYLE ----------
 style:
   active: true
   ForbiddenComment:
@@ -23,8 +22,6 @@ style:
   MaxLineLength:
     active: false
   WildcardImport:
-    active: false
-  StringLiteralDuplication:
     active: false
   MagicNumber:
     active: true
@@ -38,18 +35,12 @@ style:
     active: false
   SpacingBetweenPackageAndImports:
     active: false
-  KDocMissingDocumentation:
-    active: false
 
-# Disable Detekt's built-in formatter (Spotless is canonical)
 formatting:
   active: false
 
-# ---------- COMPLEXITY ----------
 complexity:
   active: true
-  ComplexCondition:
-    active: false
   NestedBlockDepth:
     active: true
     threshold: 4
@@ -78,34 +69,25 @@ complexity:
     thresholdInObjects: 12
     ignoreAnnotated: ['Dao', 'Module', 'Singleton', 'Composable', 'HiltViewModel', 'Worker', 'HiltWorker']
 
-# ---------- BUGS ----------
 potential-bugs:
   active: true
   LateinitUsage:
     active: false
-  TooGenericExceptionCaught:
-    active: false
-  UnsafeCallOnNullableType:
-    active: true
-  UnsafeCast:
-    active: true
 
-# ---------- PERFORMANCE ----------
 performance:
   active: true
 
-# ---------- NAMING ----------
+exceptions:
+  active: true
+  TooGenericExceptionCaught:
+    active: false
+
 naming:
   active: true
   FunctionNaming:
     active: true
     functionPattern: '([a-z][a-zA-Z0-9]*)|([A-Z][a-zA-Z0-9]*)'
-  MatchingDeclarationName:
-    active: false
-  ParameterNaming:
-    active: false
 
-# ---------- COMPOSE ----------
 Compose:
   active: true
   ComposableParamOrder:

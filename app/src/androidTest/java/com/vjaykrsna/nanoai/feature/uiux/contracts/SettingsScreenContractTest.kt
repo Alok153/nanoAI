@@ -1,8 +1,10 @@
 package com.vjaykrsna.nanoai.feature.uiux.contracts
 
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -12,8 +14,8 @@ import androidx.test.filters.LargeTest
 import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreference
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
 import com.vjaykrsna.nanoai.core.model.APIType
-import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsUiUxState
 import com.vjaykrsna.nanoai.feature.settings.domain.huggingface.HuggingFaceAuthState
+import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsUiUxState
 import com.vjaykrsna.nanoai.feature.settings.ui.SettingsContentState
 import com.vjaykrsna.nanoai.feature.settings.ui.SettingsScreenActions
 import com.vjaykrsna.nanoai.feature.settings.ui.SettingsScreenContent
@@ -30,6 +32,7 @@ import org.junit.runner.RunWith
  */
 @LargeTest
 @RunWith(AndroidJUnit4::class)
+@OptIn(ExperimentalTestApi::class)
 class SettingsScreenContractTest {
   @get:Rule val composeRule = createComposeRule()
 
@@ -90,6 +93,9 @@ class SettingsScreenContractTest {
     appearanceTab.assertIsDisplayed()
     appearanceTab.assertHasClickAction()
     appearanceTab.performClick()
+    composeRule.waitUntilExactlyOneExists(
+      hasText("Switch between light, dark, or follow the system theme.")
+    )
     composeRule
       .onNodeWithText("Switch between light, dark, or follow the system theme.")
       .assertIsDisplayed()
@@ -111,6 +117,7 @@ class SettingsScreenContractTest {
     offlineTab.assertIsDisplayed()
     offlineTab.assertHasClickAction()
     offlineTab.performClick()
+    composeRule.waitUntilExactlyOneExists(hasText("Test Provider"))
 
     composeRule.onNodeWithText("Test Provider").assertIsDisplayed()
     composeRule
@@ -135,6 +142,7 @@ class SettingsScreenContractTest {
     backupTab.assertIsDisplayed()
     backupTab.assertHasClickAction()
     backupTab.performClick()
+    composeRule.waitUntilExactlyOneExists(hasText("Import Backup"))
 
     composeRule.onNodeWithText("Import Backup").assertIsDisplayed().assertHasClickAction()
     composeRule.onNodeWithText("Export Backup").assertIsDisplayed().assertHasClickAction()

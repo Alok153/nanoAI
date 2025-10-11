@@ -312,17 +312,20 @@ tasks.register<Exec>("coverageMarkdownSummary") {
 
   doLast {
     legacyCoverageMarkdown.get().asFile.parentFile.mkdirs()
-    coverageSummaryMarkdown.get().asFile.copyTo(
-      target = legacyCoverageMarkdown.get().asFile,
-      overwrite = true,
-    )
+    coverageSummaryMarkdown
+      .get()
+      .asFile
+      .copyTo(
+        target = legacyCoverageMarkdown.get().asFile,
+        overwrite = true,
+      )
   }
 }
 
 androidComponents {
   beforeVariants(selector().all()) { variant ->
     if (variant.buildType in listOf("benchmark", "baselineProfile")) {
-      variant.enable = true
+      variant.enable = false
     }
   }
 }
