@@ -4,9 +4,9 @@ package com.vjaykrsna.nanoai.feature.uiux
 
 import androidx.activity.ComponentActivity
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.autoMirrored.filled.Chat
-import androidx.compose.material.icons.autoMirrored.filled.Image
-import androidx.compose.material.icons.autoMirrored.filled.Mic
+import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.runtime.mutableStateOf
@@ -40,9 +40,9 @@ import com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload
 import com.vjaykrsna.nanoai.feature.uiux.ui.shell.NanoShellScaffold
 import com.vjaykrsna.nanoai.feature.uiux.ui.shell.ShellUiEvent
 import java.time.Instant
-import kotlin.test.Test
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Rule
+import org.junit.Test
 import org.junit.runner.RunWith
 
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalMaterial3WindowSizeClassApi::class)
@@ -87,9 +87,9 @@ class HomeHubFlowTest {
     val windowSizeClass = WindowSizeClass.calculateFromSize(DpSize(720.dp, 1024.dp))
     val modeCards =
       listOf(
-        modeCard(ModeId.CHAT, "Chat", Icons.AutoMirrored.Filled.Chat),
-        modeCard(ModeId.IMAGE, "Image", Icons.AutoMirrored.Filled.Image),
-        modeCard(ModeId.AUDIO, "Audio", Icons.AutoMirrored.Filled.Mic),
+  modeCard(ModeId.CHAT, "Chat", Icons.AutoMirrored.Filled.Chat),
+  modeCard(ModeId.IMAGE, "Image", Icons.Filled.Image),
+  modeCard(ModeId.AUDIO, "Audio", Icons.Filled.Mic),
       )
     val recent =
       listOf(

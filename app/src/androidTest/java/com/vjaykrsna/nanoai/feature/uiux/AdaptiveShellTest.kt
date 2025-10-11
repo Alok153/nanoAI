@@ -9,6 +9,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellUiState
 import com.vjaykrsna.nanoai.feature.uiux.state.CommandAction
@@ -23,9 +25,9 @@ import com.vjaykrsna.nanoai.feature.uiux.state.ShellLayoutState
 import com.vjaykrsna.nanoai.feature.uiux.state.UiPreferenceSnapshot
 import com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload
 import com.vjaykrsna.nanoai.feature.uiux.ui.shell.NanoShellScaffold
-import kotlin.test.Test
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Rule
+import org.junit.Test
 import org.junit.runner.RunWith
 
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalMaterial3WindowSizeClassApi::class)
@@ -64,7 +66,7 @@ class AdaptiveShellTest {
     width: WindowWidthSizeClass,
     height: WindowHeightSizeClass,
   ): ShellUiState {
-    val windowSizeClass = WindowSizeClass(width, height)
+    val windowSizeClass = fakeWindowSizeClass(width, height)
     val layout =
       ShellLayoutState(
         windowSizeClass = windowSizeClass,
@@ -100,4 +102,26 @@ class AdaptiveShellTest {
       preferences = UiPreferenceSnapshot(),
     )
   }
+}
+
+@OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
+private fun fakeWindowSizeClass(
+  width: WindowWidthSizeClass,
+  height: WindowHeightSizeClass,
+): WindowSizeClass {
+  val widthDp =
+    when (width) {
+      WindowWidthSizeClass.Compact -> 480.dp
+      WindowWidthSizeClass.Medium -> 720.dp
+      WindowWidthSizeClass.Expanded -> 960.dp
+      else -> 720.dp
+    }
+  val heightDp =
+    when (height) {
+      WindowHeightSizeClass.Compact -> 400.dp
+      WindowHeightSizeClass.Medium -> 720.dp
+      WindowHeightSizeClass.Expanded -> 960.dp
+      else -> 720.dp
+    }
+  return WindowSizeClass.calculateFromSize(DpSize(widthDp, heightDp))
 }

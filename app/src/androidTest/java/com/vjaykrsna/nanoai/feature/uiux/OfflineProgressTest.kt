@@ -8,7 +8,6 @@ import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertCountEquals
-import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -41,9 +40,9 @@ import com.vjaykrsna.nanoai.feature.uiux.ui.shell.ShellUiEvent
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
-import kotlin.test.Test
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Rule
+import org.junit.Test
 import org.junit.runner.RunWith
 
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalMaterial3WindowSizeClassApi::class)
@@ -77,7 +76,7 @@ class OfflineProgressTest {
 
     handleIntent(state, ShellUiEvent.ConnectivityChanged(ConnectivityStatus.ONLINE))
 
-    composeRule.onNodeWithTag("connectivity_banner").assertDoesNotExist()
+  composeRule.onAllNodesWithTag("connectivity_banner").assertCountEquals(0)
     assertThat(state.value.layout.connectivity).isEqualTo(ConnectivityStatus.ONLINE)
   }
 
@@ -140,7 +139,7 @@ class OfflineProgressTest {
           )
       is ShellUiEvent.ModeSelected ->
         state.value = current.copy(layout = current.layout.copy(activeMode = intent.modeId))
-      ShellUiEvent.ToggleLeftDrawer ->
+      is ShellUiEvent.ToggleLeftDrawer ->
         state.value =
           current.copy(
             layout = current.layout.copy(isLeftDrawerOpen = !current.layout.isLeftDrawerOpen)
@@ -156,7 +155,7 @@ class OfflineProgressTest {
           )
       is ShellUiEvent.ShowCommandPalette ->
         state.value = current.copy(layout = current.layout.copy(showCommandPalette = true))
-      ShellUiEvent.HideCommandPalette ->
+      is ShellUiEvent.HideCommandPalette ->
         state.value = current.copy(layout = current.layout.copy(showCommandPalette = false))
       is ShellUiEvent.Undo ->
         state.value = current.copy(layout = current.layout.copy(pendingUndoAction = null))
@@ -164,6 +163,9 @@ class OfflineProgressTest {
         state.value = current.copy(preferences = current.preferences.copy(theme = intent.theme))
       is ShellUiEvent.UpdateDensity ->
         state.value = current.copy(preferences = current.preferences.copy(density = intent.density))
+      is ShellUiEvent.SetLeftDrawer ->
+        state.value = current.copy(layout = current.layout.copy(isLeftDrawerOpen = intent.open))
+      else -> Unit
     }
   }
 

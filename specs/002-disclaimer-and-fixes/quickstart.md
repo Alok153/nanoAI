@@ -21,8 +21,8 @@ Verification Steps
 6. Sidebar toggle:
    - Open sidebar and toggle Local/Cloud inference mode. Confirm visual state and that `InferenceOrchestrator` uses the selected mode on next request.
 7. Run lint and unit tests locally to confirm fixes:
-   - `./gradlew ktlintFormat detekt` (project-configured tasks)
-   - `./gradlew testDebugUnitTest` (expect compile success)
+    - `./gradlew spotlessApply detekt` (project-configured tasks)
+    - `./gradlew testDebugUnitTest` (expect compile success)
 
 Notes
 - If tests fail due to missing runtime model binaries, stub the model catalog or run with `INCLUDE_LOCAL_MODELS=false` in the test environment.

@@ -39,7 +39,7 @@ T003 [X] - Lint cleanup: fix SuspiciousIndentation & run formatters
 - Description: Fix lint errors found by `./gradlew lintDebug` (suspicious indentation in `ConversationRepositoryImpl.kt`) and run formatters.
 - Actions:
   1. Edit `app/src/main/java/com/vjaykrsna/nanoai/core/data/repository/impl/ConversationRepositoryImpl.kt` to fix indentation and any lint-reported issues.
-  2. Run `./gradlew ktlintFormat detekt` and ensure no new blocking lint errors appear.
+  2. Run `./gradlew spotlessApply detekt` and ensure no new blocking lint errors appear.
 - Files/paths: `app/src/main/java/com/vjaykrsna/nanoai/core/data/repository/impl/ConversationRepositoryImpl.kt`
 - Dependencies: T001
 - Parallel: no
@@ -162,7 +162,7 @@ Try it (local):
 - Run the setup task first to capture failures:
 
 ```bash
-./gradlew ktlintFormat detekt lintDebug testDebugUnitTest
+./gradlew spotlessApply detekt lintDebug testDebugUnitTest
 ```
 
 Deliverables produced:

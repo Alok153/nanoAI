@@ -9,7 +9,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.assertDoesNotExist
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -17,7 +17,6 @@ import androidx.compose.ui.test.assertIsSelectable
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onAllNodes
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -26,6 +25,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.pressKey
+import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -44,6 +44,7 @@ import com.vjaykrsna.nanoai.feature.uiux.state.PaletteSource
 import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
 import com.vjaykrsna.nanoai.feature.uiux.state.RecentActivityItem
 import com.vjaykrsna.nanoai.feature.uiux.state.RecentStatus
+import com.vjaykrsna.nanoai.feature.uiux.state.RightPanel
 import com.vjaykrsna.nanoai.feature.uiux.state.ShellLayoutState
 import com.vjaykrsna.nanoai.feature.uiux.state.UiPreferenceSnapshot
 import com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload
@@ -52,9 +53,9 @@ import com.vjaykrsna.nanoai.feature.uiux.ui.shell.ShellUiEvent
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
-import kotlin.test.Test
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Rule
+import org.junit.Test
 import org.junit.runner.RunWith
 
 @OptIn(
@@ -81,7 +82,7 @@ class CommandPaletteComposeTest {
       )
     }
 
-    composeTestRule.onRoot().performKeyInput {
+  composeTestRule.onNode(isRoot()).performKeyInput {
       pressKey(Key.CtrlLeft)
       pressKey(Key.K)
     }
@@ -107,7 +108,7 @@ class CommandPaletteComposeTest {
     }
 
     composeTestRule.onNodeWithTag("command_palette_search").performTextInput("ima")
-    composeTestRule.onAllNodes(hasTestTag("command_palette_item"))[0].assertIsDisplayed()
+  composeTestRule.onAllNodesWithTag("command_palette_item")[0].assertIsDisplayed()
   }
 
   @Test
@@ -130,7 +131,7 @@ class CommandPaletteComposeTest {
       pressKey(Key.DirectionDown)
     }
 
-    composeTestRule.onAllNodes(hasTestTag("command_palette_item"))[0].assertIsSelectable()
+  composeTestRule.onAllNodesWithTag("command_palette_item")[0].assertIsSelectable()
   }
 
   @Test
@@ -154,8 +155,8 @@ class CommandPaletteComposeTest {
       )
     }
 
-    composeTestRule.onAllNodes(hasTestTag("command_palette_item"))[0].performClick()
-    composeTestRule.onNodeWithTag("command_palette").assertDoesNotExist()
+  composeTestRule.onAllNodesWithTag("command_palette_item")[0].performClick()
+  composeTestRule.onAllNodesWithTag("command_palette").assertCountEquals(0)
     assertThat(recorder.events.filterIsInstance<ShellUiEvent.ModeSelected>()).isNotEmpty()
   }
 
@@ -254,7 +255,7 @@ private fun handleIntent(state: MutableState<ShellUiState>, intent: ShellUiEvent
         current.copy(
           layout = current.layout.copy(showCommandPalette = true, isLeftDrawerOpen = false),
         )
-    ShellUiEvent.HideCommandPalette ->
+    is ShellUiEvent.HideCommandPalette ->
       state.value = current.copy(layout = current.layout.copy(showCommandPalette = false))
     is ShellUiEvent.ModeSelected ->
       state.value =
@@ -275,7 +276,7 @@ private fun handleIntent(state: MutableState<ShellUiState>, intent: ShellUiEvent
               activeRightPanel = intent.panel,
             ),
         )
-    ShellUiEvent.ToggleLeftDrawer ->
+    is ShellUiEvent.ToggleLeftDrawer ->
       state.value =
         current.copy(
           layout =
@@ -310,6 +311,9 @@ private fun handleIntent(state: MutableState<ShellUiState>, intent: ShellUiEvent
       state.value = current.copy(preferences = current.preferences.copy(theme = intent.theme))
     is ShellUiEvent.UpdateDensity ->
       state.value = current.copy(preferences = current.preferences.copy(density = intent.density))
+    is ShellUiEvent.SetLeftDrawer ->
+      state.value = current.copy(layout = current.layout.copy(isLeftDrawerOpen = intent.open))
+    else -> Unit
   }
 }
 
@@ -321,6 +325,7 @@ private class EventRecorder {
   }
 }
 
+@OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 private fun sampleState(
   showPalette: Boolean,
   commandPalette: CommandPaletteState = samplePaletteState(),

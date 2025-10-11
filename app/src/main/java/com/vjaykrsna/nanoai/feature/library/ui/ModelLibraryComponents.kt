@@ -60,6 +60,36 @@ import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.PERCENTAG
 import java.util.Locale
 import java.util.UUID
 
+@Composable
+internal fun ModelCard(
+  model: ModelPackage,
+  isInstalled: Boolean,
+  onDownload: () -> Unit,
+  onDelete: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  if (isInstalled) {
+    ModelManagementCard(
+      model = model,
+      primaryActionLabel = "Delete",
+      onPrimaryAction = onDelete,
+      secondaryActionLabel = "Download",
+      onSecondaryAction = onDownload,
+      emphasizeSecondary = false,
+      primaryActionIcon = Icons.Filled.Delete,
+      secondaryActionIcon = Icons.Filled.Download,
+      modifier = modifier,
+    )
+  } else {
+    ModelManagementCard(
+      model = model,
+      primaryActionLabel = "Download",
+      onPrimaryAction = onDownload,
+      modifier = modifier,
+    )
+  }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ModelLibraryToolbar(
@@ -339,7 +369,7 @@ private fun LinearDownloadIndicator(progress: Float) {
     modifier =
       Modifier.fillMaxWidth().semantics {
         val percent = (progress * PERCENTAGE_MULTIPLIER).toInt()
-        contentDescription = "Download progress ${percent} percent"
+        contentDescription = "Download progress ${percent}%"
       },
     trackColor = MaterialTheme.colorScheme.surface,
   )
@@ -355,9 +385,10 @@ private fun ModelManagementCard(
   emphasizeSecondary: Boolean = true,
   primaryActionIcon: ImageVector = Icons.Filled.Download,
   secondaryActionIcon: ImageVector = Icons.Filled.Delete,
+  modifier: Modifier = Modifier,
 ) {
   Card(
-    modifier = Modifier.fillMaxWidth(),
+    modifier = modifier.fillMaxWidth(),
     elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
   ) {
     Column(
@@ -409,7 +440,12 @@ private fun ModelManagementCard(
       }
 
       Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        FilledTonalButton(onClick = onPrimaryAction) {
+        FilledTonalButton(
+          onClick = onPrimaryAction,
+          modifier = Modifier.semantics {
+            contentDescription = "${primaryActionLabel} ${model.displayName}".trim()
+          },
+        ) {
           Icon(primaryActionIcon, contentDescription = null)
           Spacer(modifier = Modifier.size(8.dp))
           Text(primaryActionLabel)
@@ -417,13 +453,23 @@ private fun ModelManagementCard(
 
         if (secondaryActionLabel != null && onSecondaryAction != null) {
           if (emphasizeSecondary) {
-            OutlinedButton(onClick = onSecondaryAction) {
+            OutlinedButton(
+              onClick = onSecondaryAction,
+              modifier = Modifier.semantics {
+                contentDescription = "${secondaryActionLabel} ${model.displayName}".trim()
+              },
+            ) {
               Icon(secondaryActionIcon, contentDescription = null)
               Spacer(modifier = Modifier.size(8.dp))
               Text(secondaryActionLabel)
             }
           } else {
-            TextButton(onClick = onSecondaryAction) {
+            TextButton(
+              onClick = onSecondaryAction,
+              modifier = Modifier.semantics {
+                contentDescription = "${secondaryActionLabel} ${model.displayName}".trim()
+              },
+            ) {
               Icon(secondaryActionIcon, contentDescription = null)
               Spacer(modifier = Modifier.size(8.dp))
               Text(secondaryActionLabel)

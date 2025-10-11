@@ -13,7 +13,7 @@ EXEC_SOURCES=(
 )
 
 printf '[merge-coverage] Working directory: %s\n' "${ROOT_DIR}"
-./gradlew -p "${ROOT_DIR}" \
+"${ROOT_DIR}/gradlew" -p "${ROOT_DIR}" \
   testDebugUnitTest \
   connectedDebugAndroidTest \
   jacocoFullReport \

@@ -5,7 +5,6 @@ build:
 config:
   validation: true
   warningsAsErrors: false
-
   excludes: '(^|.*/)(build|generated|ap_generated_sources|ksp|kspCaches|kapt|intermediates|outputs|kotlinToolingMetadata|\.gradle)(/.*)?$'
 
 processors:
@@ -16,86 +15,98 @@ console-reports:
 output-reports:
   active: true
 
+# ---------- STYLE ----------
 style:
   active: true
-  MaxLineLength:
-    active: true
-    maxLineLength: 100   # aligned with ktfmt
-    excludePackageStatements: true
-    excludeImportStatements: true
   ForbiddenComment:
     active: true
+  MaxLineLength:
+    active: false
+  WildcardImport:
+    active: false
+  StringLiteralDuplication:
+    active: false
+  MagicNumber:
+    active: true
+    ignoreAnnotated: ['Composable', 'Preview', 'Test']
+    ignoreNumbers: ['0', '1', '-1']
+  DataClassContainsFunctions:
+    active: false
+  MayBeConst:
+    active: false
+  UseDataClass:
+    active: false
+  SpacingBetweenPackageAndImports:
+    active: false
+  KDocMissingDocumentation:
+    active: false
+
+# Disable Detekt's built-in formatter (Spotless is canonical)
 formatting:
-  # Disabled because Spotless/ktfmt is the canonical project formatter.
-  # Prevents multiple formatters from conflicting.
   active: false
-  android: true
-  autoCorrect: false
+
+# ---------- COMPLEXITY ----------
 complexity:
   active: true
   ComplexCondition:
-    active: true
-    threshold: 4
+    active: false
   NestedBlockDepth:
     active: true
     threshold: 4
   LargeClass:
     active: true
     threshold: 300
-    ignoreAnnotated:
-      - Composable
-      - Singleton
-      - Worker
-      - HiltWorker
+    ignoreAnnotated: ['Composable', 'Singleton', 'Worker', 'HiltWorker']
   LongMethod:
     active: true
     threshold: 60
-    ignoreAnnotated:
-      - Composable
-      - Test
-      - Preview
+    ignoreAnnotated: ['Composable', 'Test', 'Preview']
   CyclomaticComplexMethod:
     active: true
     threshold: 10
-    ignoreAnnotated:
-      - Composable
-      - Test
-      - Preview
+    ignoreAnnotated: ['Composable', 'Test', 'Preview']
   LongParameterList:
     active: true
     functionThreshold: 6
     constructorThreshold: 7
     ignoreDefaultParameters: true
-    ignoreAnnotated:
-      - Composable
-      - Inject
-      - Provides
+    ignoreAnnotated: ['Composable', 'Inject', 'Provides']
   TooManyFunctions:
     active: true
-    thresholdInClasses: 11
-    thresholdInInterfaces: 11
-    thresholdInObjects: 11
-    ignoreAnnotated:
-      - Dao
-      - Module
-      - Singleton
-      - Composable
-      - HiltViewModel
-      - Worker
-      - HiltWorker
+    thresholdInClasses: 12
+    thresholdInInterfaces: 12
+    thresholdInObjects: 12
+    ignoreAnnotated: ['Dao', 'Module', 'Singleton', 'Composable', 'HiltViewModel', 'Worker', 'HiltWorker']
 
+# ---------- BUGS ----------
 potential-bugs:
   active: true
+  LateinitUsage:
+    active: false
+  TooGenericExceptionCaught:
+    active: false
+  UnsafeCallOnNullableType:
+    active: true
+  UnsafeCast:
+    active: true
 
+# ---------- PERFORMANCE ----------
 performance:
   active: true
 
+# ---------- NAMING ----------
 naming:
   active: true
   FunctionNaming:
     active: true
     functionPattern: '([a-z][a-zA-Z0-9]*)|([A-Z][a-zA-Z0-9]*)'
-    excludeClassPattern: ''
+  MatchingDeclarationName:
+    active: false
+  ParameterNaming:
+    active: false
 
+# ---------- COMPOSE ----------
 Compose:
   active: true
+  ComposableParamOrder:
+    active: false

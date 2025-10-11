@@ -38,11 +38,11 @@ Launch the app, accept the safety disclaimer, download a model from the library,
 
 - [Testing & Coverage](docs/testing.md) – How we keep quality high.
 - [Architecture](docs/ARCHITECTURE.md) – System design, data flow, and modules.
-- [Specifications](specs/) – Feature plans, research, and contracts for incoming work.
+- [API Reference](docs/API.md) – Public surfaces, request shapes, and integration notes.
 
 ## 🤝 Contributing
 
-Pull requests and issue reports are welcome. Please open a feature branch, add tests for new behaviour, and run the quality gates (`./gradlew test connectedAndroidTest ktlint detekt`) before submitting a PR.
+Pull requests and issue reports are welcome. Please open a feature branch, add tests for new behaviour, and run the quality gates (`./gradlew test connectedAndroidTest spotlessCheck detekt`) before submitting a PR.
 
 ## 📄 License
 

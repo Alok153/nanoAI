@@ -6,7 +6,7 @@
 ## Task List
 
 - [X] **T001** Configure Jetpack Security and integrity dependencies in `app/build.gradle.kts` (add `androidx.security:security-crypto`, ensure WorkManager/MockWebServer test deps) so encryption and manifest tests can compile.
-- [X] **T002** Update `.github/workflows/ci.yml` to run `./gradlew detekt ktlintCheck` on PRs with failure gates for `TooManyFunctions`, `LongMethod`, `CyclomaticComplexMethod`, `LongParameterList` (blocks merges when counts > 0).
+- [X] **T002** Update `.github/workflows/ci.yml` to run `./gradlew detekt spotlessCheck` on PRs with failure gates for `TooManyFunctions`, `LongMethod`, `CyclomaticComplexMethod`, `LongParameterList` (blocks merges when counts > 0).
 - [X] **T003** Tighten `config/detekt/detekt.yml` thresholds to zero for blocking rules and drop matching entries from `config/detekt/baseline.xml`.
 - [X] **T004 [P]** Promote placeholder `ModelManifestContractTest` into a failing contract test at `app/src/test/contract/com/vjaykrsna/nanoai/contracts/ModelManifestContractTest.kt` asserting manifest signature, SHA-256 length, and HTTPS URL.
 - [X] **T005 [P]** Author failing contract test `ModelVerificationContractTest` in `app/src/test/contract/com/vjaykrsna/nanoai/contracts/ModelVerificationContractTest.kt` validating RETRY responses include `nextRetryAfterSeconds` and `ErrorEnvelope` mapping.
@@ -35,7 +35,7 @@
 - [X] **T028** Add Room migration scripts and unit test in `app/src/test/java/com/vjaykrsna/nanoai/core/maintenance/db/MaintenanceMigrationsTest.kt` covering new entities and ensuring backward compatibility (prereq T014–T016).
 - [X] **T029** Wire telemetry/error logging via sealed results in `app/src/main/java/com/vjaykrsna/nanoai/telemetry/TelemetryReporter.kt`, ensuring `RecoverableError` publishes retry hints (prereq T017, T020).
 - [X] **T030 [P]** Update `docs/inconsistencies.md`, `docs/todo-next.md`, and `specs/004-fixes-and-inconsistencies/quickstart.md` to reflect resolved blockers, new migrations, and testing instructions (prereq T014–T029).
-- [ ] **T031** Execute quickstart scenarios end-to-end, capture detekt/ktlint reports, instrumentation results, and attach artifacts to PR notes (prereq T030).
+- [ ] **T031** Execute quickstart scenarios end-to-end, capture detekt/Spotless reports, instrumentation results, and attach artifacts to PR notes (prereq T030).
 
 ## Dependencies
 

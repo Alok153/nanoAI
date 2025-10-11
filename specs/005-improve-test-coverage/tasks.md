@@ -39,14 +39,14 @@
 ## Phase 3.4: Integration
 - [X] T028 Implement `app/src/main/java/com/vjaykrsna/nanoai/coverage/tasks/VerifyCoverageThresholdsTask.kt` (plus Gradle wiring) to invoke `CoverageThresholdVerifier`, emit summary markdown, and fail the build when tests detect regressions.
 - [X] T029 Extend `scripts/coverage/merge-coverage.sh` to merge unit + instrumentation Jacoco exec files, honour the new thresholds, and copy artifacts to `app/build/reports/jacoco/full/`.
-- [ ] T030 Enhance `scripts/coverage/generate-summary.py` to ingest the merged XML, compute the status breakdown, and refresh `app/build/coverage/summary.md` for stakeholder broadcasts.
-- [ ] T031 Add or update `app/src/main/java/com/vjaykrsna/nanoai/telemetry/CoverageTelemetryReporter.kt` so coverage deltas and risk escalations are logged without PII and wired into existing telemetry dispatchers.
+- [X] T030 Enhance `scripts/coverage/generate-summary.py` to ingest the merged XML, compute the status breakdown, and refresh `app/build/coverage/summary.md` for stakeholder broadcasts.
+- [X] T031 Add or update `app/src/main/java/com/vjaykrsna/nanoai/telemetry/CoverageTelemetryReporter.kt` so coverage deltas and risk escalations are logged without PII and wired into existing telemetry dispatchers.
 
 ## Phase 3.5: Polish
-- [ ] T032 [P] Refresh `specs/005-improve-test-coverage/quickstart.md` with JUnit5 commands, emulator prerequisites, and troubleshooting for the new offline tests.
-- [ ] T033 [P] Generate `docs/coverage/risk-register.md` summarising escalated risks, mitigation owners, and links to the new tests.
-- [ ] T034 [P] Add `macrobenchmark/src/main/java/com/vjaykrsna/nanoai/coverage/CoverageDashboardStartupBenchmark.kt` validating dashboard load <100ms and capture results in CI artifacts.
-- [ ] T035 [P] Update `README.md` testing section with JUnit5 migration notes, coverage thresholds, and commands for `jacocoFullReport` + `verifyCoverageThresholds`.
+- [X] T032 [P] Refresh `specs/005-improve-test-coverage/quickstart.md` with JUnit5 commands, emulator prerequisites, and troubleshooting for the new offline tests.
+- [X] T033 [P] Generate `docs/coverage/risk-register.md` summarising escalated risks, mitigation owners, and links to the new tests.
+- [X] T034 [P] Add `macrobenchmark/src/main/java/com/vjaykrsna/nanoai/coverage/CoverageDashboardStartupBenchmark.kt` validating dashboard load <100ms and capture results in CI artifacts.
+- [X] T035 [P] Update `README.md` testing section with JUnit5 migration notes, coverage thresholds, and commands for `jacocoFullReport` + `verifyCoverageThresholds`.
 
 ## Dependencies
 - Setup tasks T001 → T003 must finish before any test conversions (T004–T016).

@@ -5,6 +5,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
+import com.google.common.truth.Truth.assertWithMessage
 import com.vjaykrsna.nanoai.core.data.db.NanoAIDatabase
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.feature.library.data.catalog.ModelCatalogConfig
@@ -85,7 +86,8 @@ class ModelCatalogOfflineTest {
 
       val result = useCase()
 
-      assertThat(result.isSuccess).named("offline refresh should resolve with cached data").isTrue()
+      assertWithMessage("offline refresh should resolve with cached data").that(result.isSuccess)
+        .isTrue()
       assertThat(result.exceptionOrNull()).isNull()
       assertThat(repository.getAllModels()).containsExactly(cached)
       val recorded = mockWebServer.takeRequest(1, TimeUnit.SECONDS)

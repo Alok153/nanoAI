@@ -278,6 +278,10 @@ tasks.register<Exec>("coverageMergeArtifacts") {
   )
 }
 
+val coverageSummaryMarkdown = layout.buildDirectory.file("coverage/summary.md")
+val coverageSummaryJson = layout.buildDirectory.file("coverage/summary.json")
+val legacyCoverageMarkdown = layout.buildDirectory.file("reports/jacoco/full/summary.md")
+
 tasks.register<Exec>("coverageMarkdownSummary") {
   group = "verification"
   description = "Generates markdown coverage summary from merged JaCoCo XML report."
@@ -285,19 +289,34 @@ tasks.register<Exec>("coverageMarkdownSummary") {
   dependsOn("jacocoFullReport")
 
   val xmlReport = layout.buildDirectory.file("reports/jacoco/full/jacocoFullReport.xml")
-  val markdownOutput = layout.buildDirectory.file("reports/jacoco/full/summary.md")
+  val layerMap = rootProject.layout.projectDirectory.file("config/coverage/layer-map.json")
 
   inputs.file(xmlReport)
-  outputs.file(markdownOutput)
+  inputs.file(layerMap)
+  outputs.file(coverageSummaryMarkdown)
+  outputs.file(coverageSummaryJson)
+  outputs.file(legacyCoverageMarkdown)
 
-  doFirst { markdownOutput.get().asFile.parentFile.mkdirs() }
+  doFirst { coverageSummaryMarkdown.get().asFile.parentFile.mkdirs() }
 
   commandLine(
     "python3",
     "${rootDir}/scripts/coverage/generate-summary.py",
     xmlReport.get().asFile.absolutePath,
-    markdownOutput.get().asFile.absolutePath,
+    coverageSummaryMarkdown.get().asFile.absolutePath,
+    "--json-output",
+    coverageSummaryJson.get().asFile.absolutePath,
+    "--layer-map",
+    layerMap.asFile.absolutePath,
   )
+
+  doLast {
+    legacyCoverageMarkdown.get().asFile.parentFile.mkdirs()
+    coverageSummaryMarkdown.get().asFile.copyTo(
+      target = legacyCoverageMarkdown.get().asFile,
+      overwrite = true,
+    )
+  }
 }
 
 androidComponents {

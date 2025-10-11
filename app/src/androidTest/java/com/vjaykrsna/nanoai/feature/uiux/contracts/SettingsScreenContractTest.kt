@@ -3,10 +3,7 @@ package com.vjaykrsna.nanoai.feature.uiux.contracts
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.hasClickAction
-import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNode
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -16,6 +13,7 @@ import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreference
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
 import com.vjaykrsna.nanoai.core.model.APIType
 import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsUiUxState
+import com.vjaykrsna.nanoai.feature.settings.domain.huggingface.HuggingFaceAuthState
 import com.vjaykrsna.nanoai.feature.settings.ui.SettingsContentState
 import com.vjaykrsna.nanoai.feature.settings.ui.SettingsScreenActions
 import com.vjaykrsna.nanoai.feature.settings.ui.SettingsScreenContent
@@ -50,6 +48,7 @@ class SettingsScreenContractTest {
       apiProviders = listOf(sampleProvider),
       privacyPreferences = PrivacyPreference(),
       uiUxState = SettingsUiUxState(showMigrationSuccessNotification = true),
+      huggingFaceState = HuggingFaceAuthState.unauthenticated(),
     )
 
   private val noopActions =
@@ -64,6 +63,9 @@ class SettingsScreenContractTest {
       onDismissMigrationSuccess = {},
       onThemePreferenceChange = {},
       onVisualDensityChange = {},
+      onHuggingFaceLoginClick = {},
+      onHuggingFaceApiKeyClick = {},
+      onHuggingFaceDisconnectClick = {},
     )
 
   @Test
@@ -79,14 +81,15 @@ class SettingsScreenContractTest {
     }
 
     composeRule.onNodeWithText("Settings").assertIsDisplayed()
-    composeRule.onNode(hasText("General") and hasClickAction()).assertIsDisplayed()
+    composeRule.onNodeWithText("General").assertIsDisplayed()
+    composeRule.onNodeWithText("General").assertHasClickAction()
     composeRule
       .onNodeWithText("Choose the interface language, locale, and measurement units.")
       .assertIsDisplayed()
-    composeRule
-      .onNode(hasText("Appearance") and hasClickAction())
-      .assertIsDisplayed()
-      .performClick()
+    val appearanceTab = composeRule.onNodeWithText("Appearance")
+    appearanceTab.assertIsDisplayed()
+    appearanceTab.assertHasClickAction()
+    appearanceTab.performClick()
     composeRule
       .onNodeWithText("Switch between light, dark, or follow the system theme.")
       .assertIsDisplayed()
@@ -104,10 +107,10 @@ class SettingsScreenContractTest {
       }
     }
 
-    composeRule
-      .onNode(hasText("Offline & Models") and hasClickAction())
-      .assertIsDisplayed()
-      .performClick()
+    val offlineTab = composeRule.onNodeWithText("Offline & Models")
+    offlineTab.assertIsDisplayed()
+    offlineTab.assertHasClickAction()
+    offlineTab.performClick()
 
     composeRule.onNodeWithText("Test Provider").assertIsDisplayed()
     composeRule
@@ -128,10 +131,10 @@ class SettingsScreenContractTest {
       }
     }
 
-    composeRule
-      .onNode(hasText("Backup & Restore") and hasClickAction())
-      .assertIsDisplayed()
-      .performClick()
+    val backupTab = composeRule.onNodeWithText("Backup & Restore")
+    backupTab.assertIsDisplayed()
+    backupTab.assertHasClickAction()
+    backupTab.performClick()
 
     composeRule.onNodeWithText("Import Backup").assertIsDisplayed().assertHasClickAction()
     composeRule.onNodeWithText("Export Backup").assertIsDisplayed().assertHasClickAction()

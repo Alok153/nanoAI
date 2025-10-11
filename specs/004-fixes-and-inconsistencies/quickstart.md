@@ -13,11 +13,11 @@ Follow this guide to validate that the stabilization work meets constitutional r
 - Test credentials for cloud fallback stored as environment variables (will be migrated to encrypted storage during Scenario 2).
 
 ## Scenario 1: Static Analysis Gates
-a. Run ktlint + Detekt gates.
-   1. `./gradlew ktlintCheck`
-   2. `./gradlew detekt`
-   3. Verify no blocking rules remain (TooManyFunctions, LongMethod, CyclomaticComplexMethod, LongParameterList).
-   4. Capture HTML reports under `build/reports/{ktlint,detekt}`.
+a. Run Spotless + Detekt gates.
+    1. `./gradlew spotlessCheck`
+    2. `./gradlew detekt`
+    3. Verify no blocking rules remain (TooManyFunctions, LongMethod, CyclomaticComplexMethod, LongParameterList).
+    4. Capture HTML reports under `build/reports/{spotless,detekt}`.
 
 **Expected**: Both commands exit 0. Reports show 0 occurrences for blocking Detekt rules.
 
@@ -87,7 +87,7 @@ a. Run ktlint + Detekt gates.
 - Documentation (`docs/inconsistencies.md`, `docs/todo-next.md`) updated to mark resolved items.
 
 ## Artifacts to Capture
-- Detekt & ktlint reports (attach to PR).
+- Detekt & Spotless reports (attach to PR).
 - Screenshot/video of disclaimer dialog and offline banner after refactor.
 - Logs demonstrating corrupted download rejection.
 - Test reports for unit, instrumentation, and macrobenchmark runs.

@@ -15,7 +15,7 @@ This guide explains how the nanoAI test suites are organised, how they embody th
 | JVM unit tests | `app/src/test/java` | ViewModels, repositories, coordinators, contract tests | JUnit 5, Truth, MockK, kotlinx.coroutines.test, Robolectric (when Android deps needed) |
 | Instrumentation UI | `app/src/androidTest/java` | Compose UI flows, accessibility, offline fallbacks | AndroidX Test Runner, Espresso, Compose UI Test, MockWebServer |
 | Contracts & schemas | `app/src/test/contract` resources + `config/schemas` | Schema conformance (e.g. coverage JSON) | networknt JSON Schema validator, Jackson |
-| Macrobenchmarks | `macrobenchmark/src/main/java` | App startup and dashboard performance | AndroidX Macrobenchmark |
+| Macrobenchmarks | `macrobenchmark/src/main/java` | App startup and coverage dashboard warm-load performance | AndroidX Macrobenchmark |
 | Coverage tooling | `scripts/coverage` | Report merge & markdown summary | Python 3, Bash, JaCoCo |
 
 ### Common Patterns
@@ -31,11 +31,13 @@ This guide explains how the nanoAI test suites are organised, how they embody th
    ./gradlew testDebugUnitTest
    ```
    Generates `app/build/reports/tests/testDebugUnitTest/index.html` and `*.exec` coverage data.
+- Tip: Use the Jupiter selector to narrow execution, e.g. `./gradlew testDebugUnitTest --tests "com.vjaykrsna.nanoai.coverage.*"` when validating coverage helpers.
 2. **Instrumentation & Compose UI tests** (requires emulator or device)
    ```bash
    ./gradlew connectedDebugAndroidTest
    ```
    Produces reports under `app/build/reports/androidTests/connected/` and `.ec` coverage files.
+- When triaging flakes, append `-Pandroid.testInstrumentationRunnerArguments.notAnnotation=flaky` and explicitly toggle radios (`adb shell svc wifi disable|enable`, `adb shell svc data disable|enable`) to rehearse offline fallbacks.
 3. **Macrobenchmarks** (optional, CI-only by default)
    ```bash
    ./gradlew :macrobenchmark:connectedCheck
@@ -50,33 +52,36 @@ This guide explains how the nanoAI test suites are organised, how they embody th
    ```bash
    ./gradlew jacocoFullReport
    ```
-   Outputs XML + HTML under `app/build/reports/jacoco/full/` and depends on both unit & instrumentation tests.
+   Produces the merged XML + HTML report under `app/build/reports/jacoco/full/`. The task automatically runs both unit and instrumentation suites, so ensure an emulator or device is available first.
 2. **Verify thresholds**
    ```bash
    ./gradlew verifyCoverageThresholds
    ```
-   Fails if any layer drops below mandated ratios. This task already runs as part of `check`.
-3. **Publish markdown summary**
+   Executes `CoverageThresholdVerifier` via `VerifyCoverageThresholdsTask`, writing a human-readable gate summary to `app/build/coverage/thresholds.md`. The task fails if any layer falls below the 75/65/70 targets and is wired into `check`.
+3. **Publish coverage summaries**
    ```bash
    ./gradlew coverageMarkdownSummary
    ```
-   Calls `scripts/coverage/generate-summary.py` to emit `app/build/reports/jacoco/full/summary.md` for PR or Slack updates.
-4. **CI merge helper**
+   Runs `scripts/coverage/generate-summary.py` to emit `app/build/coverage/summary.md` and `app/build/coverage/summary.json`. A legacy copy of the markdown is kept at `app/build/reports/jacoco/full/summary.md` for existing CI uploads.
+4. **Bundle CI artefacts**
    ```bash
    ./gradlew coverageMergeArtifacts
    ```
-   Invokes `scripts/coverage/merge-coverage.sh` to collect `.exec`/`.ec` files in CI environments before the report runs.
+   Wraps `scripts/coverage/merge-coverage.sh`, re-running the full suite, copying HTML/XML outputs, summarised markdown/JSON, and all `.exec`/`.ec` inputs into `app/build/reports/jacoco/full/`. Use this before publishing artefacts in CI.
 
 ### Coverage Artefacts
-- **Contract schema**: `specs/005-improve-test-coverage/contracts/coverage-report.schema.json` documents the JSON report shape expected by stakeholders.
+- **Contract schema**: `specs/005-improve-test-coverage/contracts/coverage-report.schema.json` documents the JSON payload consumed by dashboards.
+- **Layer classification**: `config/coverage/layer-map.json` maps class name patterns to `TestLayer`s for threshold enforcement. Update this map when new modules land.
 - **Report generator**: `app/src/main/java/com/vjaykrsna/nanoai/coverage/domain/CoverageReportGenerator.kt` enforces severity ordering and ensures every risk is mitigated by a catalog entry.
 - **Risk register alignment**: Tests in `app/src/test/java/com/vjaykrsna/nanoai/coverage/` validate sorting, tag enforcement, and risk escalation logic.
+- **Telemetry**: `app/src/main/java/com/vjaykrsna/nanoai/telemetry/CoverageTelemetryReporter.kt` forwards layer deltas and actionable risks to the shared `TelemetryReporter` without PII.
 
 ## Integration with Design Principles
 - **Automated quality gates**: `verifyCoverageThresholds` plugs into CI to block regressions automatically.
 - **AI integrity**: Hugging Face auth flows (`app/src/test/java/com/vjaykrsna/nanoai/feature/settings/domain/huggingface`) are covered to guarantee slower polling and accessible failure copy—see `HuggingFaceAuthCoordinatorTest`.
 - **Offline readiness**: Repository tests under `app/src/test/java/com/vjaykrsna/nanoai/feature/library/data` pair MockWebServer with Room to mimic flaky networks.
 - **Material UX**: `app/src/androidTest/java/com/vjaykrsna/nanoai/coverage/ui/CoverageDashboardTest.kt` asserts TalkBack output and fallback banners.
+- **Performance guardrails**: `macrobenchmark/src/main/java/com/vjaykrsna/nanoai/coverage/CoverageDashboardStartupBenchmark.kt` enforces the <100ms warm-load target and publishes results for CI artefacts.
 
 ## Adding or Updating Tests
 1. **Start with a failing test** aligned to the task plan (see `specs/005-improve-test-coverage/tasks.md`).
@@ -91,7 +96,9 @@ This guide explains how the nanoAI test suites are organised, how they embody th
 
 ## Troubleshooting
 - **Missing emulator**: `connectedDebugAndroidTest` will fail quickly—set `ANDROID_SERIAL` or launch an emulator via Android Studio / `emulator` CLI.
-- **Coverage gaps reported**: Inspect `summary.md` for the failing layer, then open the HTML report to locate uncovered classes.
+- **Offline instrumentation flakes**: After simulating offline states, clear the app cache with `adb shell pm clear com.vjaykrsna.nanoai` so MockWebServer fixtures rehydrate cleanly before reruns.
+- **Coverage gaps reported**: Inspect `app/build/coverage/summary.md` for the failing layer, then open the HTML report to locate uncovered classes.
+- **Risk register digest**: `docs/coverage/risk-register.md` summarises escalated items, mitigation owners, and linked JUnit5 suites.
 - **Flaky tests**: Temporarily annotate with `@Tag("flaky")`, open an incident in the risk register, and prioritise stabilisation before release.
 
 For quick onboarding, pair this guide with `specs/005-improve-test-coverage/quickstart.md` to rehearse the full workflow end to end.
