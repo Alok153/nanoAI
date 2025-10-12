@@ -7,9 +7,16 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.coverage.model.CoverageMetric
 import com.vjaykrsna.nanoai.coverage.model.TestLayer
+import com.vjaykrsna.nanoai.coverage.ui.CoverageDashboardBanner.OFFLINE_ANNOUNCEMENT
+import com.vjaykrsna.nanoai.coverage.ui.CoverageDashboardBanner.offline
 import com.vjaykrsna.nanoai.ui.theme.NanoAITheme
+import java.io.IOException
+import java.util.concurrent.TimeUnit
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
@@ -125,9 +132,27 @@ class CoverageDashboardTest {
   @Test
   fun offlineFallback_showsErrorBannerWithAccessibleAnnouncement() {
     mockWebServer.enqueue(MockResponse().setResponseCode(503).setBody("Device farm offline"))
-    val offlineMessage = "Device farm offline — showing cached coverage while tests reroute."
-    val offlineAnnouncement =
-      "Offline coverage fallback active. Showing cached metrics until device farm recovers."
+
+    val client = OkHttpClient()
+    val request =
+      Request.Builder()
+        .url(mockWebServer.url("/coverage"))
+        .header("Accept", "application/json")
+        .build()
+
+    val failure =
+      runCatching {
+          client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) {
+              throw IOException("Mock coverage service HTTP ${'$'}{response.code}")
+            }
+          }
+        }
+        .exceptionOrNull()
+
+    requireNotNull(failure) { "Expected coverage request to fail but it succeeded" }
+
+    val offlineBanner = offline(failure)
 
     val state =
       CoverageDashboardUiState(
@@ -147,7 +172,7 @@ class CoverageDashboardTest {
           ),
         risks = emptyList(),
         trendDelta = emptyMap(),
-        errorMessage = offlineMessage,
+        errorMessage = offlineBanner.message,
       )
 
     composeRule.setContent {
@@ -167,10 +192,15 @@ class CoverageDashboardTest {
       .onNodeWithTag("coverage-dashboard-error-banner")
       .assertExists()
       .assertTextContains("Device farm offline")
+      .assertTextContains("HTTP")
 
     composeRule
-      .onNodeWithContentDescription(offlineAnnouncement)
+      .onNodeWithContentDescription(OFFLINE_ANNOUNCEMENT)
       .assertExists()
-      .assertContentDescriptionEquals(offlineAnnouncement)
+      .assertContentDescriptionEquals(OFFLINE_ANNOUNCEMENT)
+
+    val recorded = mockWebServer.takeRequest(1, TimeUnit.SECONDS)
+    assertThat(recorded).isNotNull()
+    assertThat(recorded?.path).isEqualTo("/coverage")
   }
 }

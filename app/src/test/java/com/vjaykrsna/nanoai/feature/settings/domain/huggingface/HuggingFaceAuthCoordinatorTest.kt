@@ -125,6 +125,8 @@ class HuggingFaceAuthCoordinatorTest {
     val deviceState = harness.coordinator.deviceAuthState.value
     assertThat(deviceState?.isPolling).isTrue()
     assertThat(deviceState?.lastError).contains("Hugging Face asked us to slow down")
+    assertThat(deviceState?.lastErrorAnnouncement).contains("Hugging Face asked us to slow down")
+    assertThat(deviceState?.pollIntervalSeconds).isEqualTo(6)
 
     advanceTimeBy(6_000)
     advanceUntilIdle()

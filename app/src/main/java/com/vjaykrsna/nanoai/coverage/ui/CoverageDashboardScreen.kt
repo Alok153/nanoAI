@@ -37,9 +37,6 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.util.Locale
 
-private const val OFFLINE_FALLBACK_ANNOUNCEMENT =
-  "Offline coverage fallback active. Showing cached metrics until device farm recovers."
-
 /** Immutable state consumed by [CoverageDashboardScreen]. */
 data class CoverageDashboardUiState(
   val buildId: String,
@@ -142,7 +139,7 @@ private fun ErrorBanner(message: String) {
   Surface(
     modifier =
       Modifier.fillMaxWidth().testTag("coverage-dashboard-error-banner").semantics {
-        contentDescription = OFFLINE_FALLBACK_ANNOUNCEMENT
+        contentDescription = CoverageDashboardBanner.OFFLINE_ANNOUNCEMENT
       },
     color = MaterialTheme.colorScheme.errorContainer,
   ) {

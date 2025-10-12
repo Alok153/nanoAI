@@ -1,3 +1,4 @@
+import com.android.build.api.dsl.ManagedVirtualDevice
 import org.gradle.api.tasks.Exec
 import org.gradle.api.tasks.JavaExec
 import org.gradle.api.tasks.testing.Test
@@ -14,6 +15,16 @@ plugins {
   alias(libs.plugins.androidx.room)
   jacoco
 }
+
+val isCiEnvironment = System.getenv("CI")?.equals("true", ignoreCase = true) == true
+val useManagedDeviceProperty =
+  (project.findProperty("nanoai.useManagedDevice") as? String)?.toBoolean() ?: false
+val skipInstrumentation =
+  (project.findProperty("nanoai.skipInstrumentation") as? String)?.toBoolean() ?: false
+val useManagedDeviceForInstrumentation =
+  !skipInstrumentation && (isCiEnvironment || useManagedDeviceProperty)
+val managedDeviceName = "pixel6Api34"
+val managedDeviceTaskName = "${managedDeviceName}DebugAndroidTest"
 
 android {
   namespace = "com.vjaykrsna.nanoai"
@@ -117,6 +128,14 @@ android {
       isIncludeAndroidResources = true
       isReturnDefaultValues = true
     }
+    managedDevices {
+      val pixel6 = allDevices.create(managedDeviceName, ManagedVirtualDevice::class.java)
+      pixel6.device = "Pixel 6"
+      pixel6.apiLevel = 34
+      pixel6.systemImageSource = "aosp-atd"
+
+      groups.create("ci") { targetDevices.add(pixel6) }
+    }
   }
 
   sourceSets { getByName("test") { java.srcDir("src/test/contract") } }
@@ -153,6 +172,9 @@ val coverageExecutionData =
     fileTree(layout.buildDirectory.dir("outputs/code_coverage").get().asFile) {
       include("**/*.ec")
     },
+    fileTree(layout.buildDirectory.dir("outputs/managed_device_code_coverage").get().asFile) {
+      include("**/*.ec")
+    },
   )
 
 val coverageClassDirectories =
@@ -172,7 +194,9 @@ tasks.register<JacocoReport>("jacocoFullReport") {
   description = "Generates a merged coverage report for unit and instrumentation tests."
 
   dependsOn("testDebugUnitTest")
-  dependsOn("connectedDebugAndroidTest")
+  if (!skipInstrumentation) {
+    dependsOn("connectedDebugAndroidTest")
+  }
 
   classDirectories.setFrom(coverageClassDirectories)
   additionalClassDirs.setFrom(coverageClassDirectories)
@@ -186,6 +210,25 @@ tasks.register<JacocoReport>("jacocoFullReport") {
     html.outputLocation.set(layout.buildDirectory.dir("reports/jacoco/full/html"))
     csv.required.set(false)
   }
+}
+
+tasks.register("ciManagedDeviceDebugAndroidTest") {
+  group = "verification"
+  description = "Runs instrumentation tests on the CI managed Pixel 6 API 34 virtual device."
+
+  dependsOn(tasks.named(managedDeviceTaskName))
+  onlyIf { !skipInstrumentation }
+}
+
+if (useManagedDeviceForInstrumentation) {
+  tasks
+    .matching { it.name == "connectedDebugAndroidTest" }
+    .configureEach {
+      dependsOn(managedDeviceTaskName)
+      // Skip the device-provider task when using the managed virtual device to avoid requiring
+      // a physical emulator in headless environments.
+      onlyIf { false }
+    }
 }
 
 val coverageClassDirectoriesUnit =

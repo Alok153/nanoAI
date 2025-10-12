@@ -11,12 +11,15 @@ Follow this checklist to validate the coverage initiative end-to-end.
 ## 2. Run Automated Suites (JUnit5)
 - **ViewModel + Repository**: `./gradlew testDebugUnitTest`
   - Target specific Jupiter classes with `./gradlew testDebugUnitTest --tests "com.vjaykrsna.nanoai.coverage.*"`.
-- **Compose UI (instrumented)**: `./gradlew connectedDebugAndroidTest`
+- **Compose UI (instrumented)**: `./gradlew ciManagedDeviceDebugAndroidTest`
+  - Spins up the managed Pixel 6 API 34 virtual device (AOSP ATD) headlessly—the same configuration CI uses.
+  - For local fallbacks with a running emulator or physical hardware, run `./gradlew connectedDebugAndroidTest`; if you previously enabled the managed-device property, pass `-Pnanoai.useManagedDevice=false` to force the direct device-provider task.
   - Add `-Pandroid.testInstrumentationRunnerArguments.notAnnotation=flaky` when triaging flaky-tagged cases.
   - Confirms Material accessibility semantics and offline flows via MockWebServer.
 
 ## 3. Generate Coverage Reports
-- Execute `./gradlew jacocoFullReport` (custom task) to merge unit + instrumentation coverage.
+- Execute `./gradlew jacocoFullReport` (custom task) to merge unit + instrumentation coverage. On CI—or when passing `-Pnanoai.useManagedDevice=true`—the task bootstraps the managed Pixel 6 API 34 device automatically before running instrumentation tests.
+  - When hardware virtualization is unavailable locally, append `-Pnanoai.skipInstrumentation=true` to skip the managed-device run and merge unit-test coverage only (CI must continue to run full instrumentation).
 - Locate outputs:
   - HTML: `app/build/reports/jacoco/full/index.html`
   - XML: `app/build/reports/jacoco/full/jacocoFullReport.xml`

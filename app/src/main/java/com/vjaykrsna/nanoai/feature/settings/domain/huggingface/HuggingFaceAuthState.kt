@@ -42,4 +42,5 @@ data class HuggingFaceDeviceAuthState(
   var pollIntervalSeconds: Int,
   var isPolling: Boolean = false,
   var lastError: String? = null,
+  var lastErrorAnnouncement: String? = null,
 )

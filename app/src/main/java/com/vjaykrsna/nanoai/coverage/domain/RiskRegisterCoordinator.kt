@@ -14,11 +14,12 @@ class RiskRegisterCoordinator(
 ) {
   private val mitigationsByRiskId: Map<String, List<TestSuiteCatalogEntry>> =
     catalog
-      .flatMap { entry -> entry.riskTags.map { tag -> tag to entry } }
+      .flatMap { entry -> entry.riskTags.map { tag -> normalizeRiskKey(tag) to entry } }
       .groupBy({ it.first }, { it.second })
+      .mapValues { (_, entries) -> entries.distinctBy { it.suiteId } }
 
   fun mitigationsFor(riskId: String): List<TestSuiteCatalogEntry> =
-    mitigationsByRiskId[riskId].orEmpty()
+    mitigationsByRiskId[normalizeRiskKey(riskId)].orEmpty()
 
   fun unmitigatedCriticalRisks(): List<RiskRegisterItem> =
     risks.filter { risk ->
@@ -36,4 +37,6 @@ class RiskRegisterCoordinator(
     val deadline = risk.targetBuildDeadline()
     return deadline?.let { !it.isAfter(now) } ?: true
   }
+
+  private fun normalizeRiskKey(value: String): String = value.trim().lowercase()
 }

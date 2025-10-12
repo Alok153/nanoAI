@@ -1,17 +1,29 @@
 package com.vjaykrsna.nanoai.feature.uiux.domain
 
 import com.vjaykrsna.nanoai.core.common.IoDispatcher
+import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.feature.library.data.DownloadManager
 import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
+import com.vjaykrsna.nanoai.feature.uiux.state.JobStatus
+import com.vjaykrsna.nanoai.feature.uiux.state.JobType
 import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
+import java.time.Instant
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.toJavaInstant
 
 /**
  * Coordinates WorkManager job progress with the Progress Center UI state.
@@ -27,7 +39,25 @@ constructor(
   @IoDispatcher private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
   /** Flow of all active progress jobs, combining downloads and other WorkManager tasks. */
-  val progressJobs: Flow<List<ProgressJob>> = observeOtherJobs()
+  val progressJobs: Flow<List<ProgressJob>> =
+    combine(observeDownloadJobs(), observeOtherJobs()) { downloads, otherJobs ->
+        (downloads + otherJobs).sortedBy { it.jobId.toString() }
+      }
+      .distinctUntilChanged()
+
+  /**
+   * Observes download jobs exposed by [DownloadManager] and maps them into progress center
+   * compatible records.
+   */
+  private fun observeDownloadJobs(): Flow<List<ProgressJob>> =
+    combine(
+        flow { emitAll(downloadManager.getActiveDownloads()) }.onStart { emit(emptyList()) },
+        downloadManager.getQueuedDownloads().onStart { emit(emptyList()) },
+      ) { active, queued ->
+        mergeDownloadTasks(active, queued)
+      }
+      .catch { emit(emptyList()) }
+      .flowOn(ioDispatcher)
 
   /**
    * Observes other WorkManager jobs (future expansion for inference, generation, etc.). Currently
@@ -35,6 +65,41 @@ constructor(
    * job observations.
    */
   private fun observeOtherJobs(): Flow<List<ProgressJob>> = flowOf(emptyList())
+
+  private fun mergeDownloadTasks(
+    active: List<DownloadTask>,
+    queued: List<DownloadTask>
+  ): List<ProgressJob> {
+    if (active.isEmpty() && queued.isEmpty()) return emptyList()
+
+    val combined =
+      buildMap<UUID, DownloadTask> {
+        active.forEach { put(it.taskId, it) }
+        queued.forEach { putIfAbsent(it.taskId, it) }
+      }
+
+    return combined.values.map { it.toProgressJob() }.sortedBy { it.jobId.toString() }
+  }
+
+  private fun DownloadTask.toProgressJob(): ProgressJob =
+    ProgressJob(
+      jobId = taskId,
+      type = JobType.MODEL_DOWNLOAD,
+      status = status.toJobStatus(),
+      progress = progress,
+      canRetry = status == DownloadStatus.FAILED,
+      queuedAt = startedAt?.toJavaInstant() ?: Instant.EPOCH,
+    )
+
+  private fun DownloadStatus.toJobStatus(): JobStatus =
+    when (this) {
+      DownloadStatus.QUEUED -> JobStatus.PENDING
+      DownloadStatus.DOWNLOADING -> JobStatus.RUNNING
+      DownloadStatus.PAUSED -> JobStatus.PAUSED
+      DownloadStatus.FAILED -> JobStatus.FAILED
+      DownloadStatus.COMPLETED -> JobStatus.COMPLETED
+      DownloadStatus.CANCELLED -> JobStatus.FAILED
+    }
 
   /** Retries a failed job by its ID. */
   suspend fun retryJob(jobId: UUID) {

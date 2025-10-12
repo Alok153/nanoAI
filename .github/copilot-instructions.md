@@ -53,11 +53,14 @@ nanoAI/
 - Unit tests: Located in `app/src/test/`, run with `./gradlew test`.
 - Instrumented tests: Located in `app/src/androidTest/`, run with `./gradlew connectedAndroidTest`.
 - Macrobenchmarks: Located in `macrobenchmark/`, for performance testing.
+- We are switching from Junit4 to *Junit5* focusing on cleaner codebase.
 
 <!-- MANUAL ADDITIONS START -->
 
 - When implementing new features or working with unfamiliar technologies (e.g., libraries or AI runtimes), use the Context7 MCP tool to retrieve up-to-date documentation and code examples from official sources.
 
 - avoid using old/deprecated stuff (Icons/libraries)
+
+- Avoid keeping deprecated files/code in the codebase don't maintain legacy support encourage migration and clean what's not required (write comments where necessary).
 
 <!-- MANUAL ADDITIONS END -->

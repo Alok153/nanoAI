@@ -16,19 +16,19 @@
 - [X] T103 Refresh `UserProfileLocalDataSource` and `UserProfileRepositoryImpl` to remove handling of the preference fields, persist onboarding completions (if any remain), and reflect compact-mode side effects; add focused unit tests verifying cache hydration and overlay logic without the removed fields.
 
 ## Phase 2: Backfill Domain & Service Coverage
-- [ ] T104 Create `CommandPaletteActionProviderTest` (JUnit5 + coroutine test utilities) to cover mode availability toggles, recent-activity formatting, and query filtering edge cases.
-- [ ] T105 Add `ProgressCenterCoordinatorTest` using a fake `DownloadManager` to exercise retry/pause/resume branches and ensure new job observers surface coverage signals.
-- [ ] T106 Introduce `UserProfileRepositoryImplTest` with an in-memory Room database + fake `UiPreferencesStore` to validate overlay precedence, compact-mode propagation, and command palette recents.
+- [X] T104 Create `CommandPaletteActionProviderTest` (JUnit5 + coroutine test utilities) to cover mode availability toggles, recent-activity formatting, and query filtering edge cases.
+- [X] T105 Add `ProgressCenterCoordinatorTest` using a fake `DownloadManager` to exercise retry/pause/resume branches and ensure new job observers surface coverage signals.
+- [X] T106 Introduce `UserProfileRepositoryImplTest` with an in-memory Room database + fake `UiPreferencesStore` to validate overlay precedence, compact-mode propagation, and command palette recents.
 
 ## Phase 3: Restore Coverage Automation
-- [ ] T107 Configure a Gradle Managed Virtual Device (API 34 minimal footprint) so `connectedDebugAndroidTest` and `jacocoFullReport` run headlessly in CI; document local emulator fallbacks.
-- [ ] T108 Regenerate merged coverage via `jacocoFullReport`, execute `coverageMarkdownSummary`, and publish refreshed artefacts under `app/build/coverage/` and `app/build/reports/jacoco/full/`.
-- [ ] T109 Update `docs/coverage/risk-register.md` and `docs/testing.md` with the new coverage snapshot, thresholds, and emulator guidance.
+- [X] T107 Configure a Gradle Managed Virtual Device (API 34 minimal footprint) so `connectedDebugAndroidTest` and `jacocoFullReport` run headlessly in CI; document local emulator fallbacks.
+- [X] T108 Regenerate merged coverage via `jacocoFullReport`, execute `coverageMarkdownSummary`, and publish refreshed artefacts under `app/build/coverage/` and `app/build/reports/jacoco/full/`.
+- [X] T109 Update `docs/coverage/risk-register.md` and `docs/testing.md` with the new coverage snapshot, thresholds, and emulator guidance.
 
 ## Phase 4: Close Open Coverage Risks
-- [ ] T110 Expand `CoverageDashboardTest` to assert the offline banner + TalkBack copy (resolving RR-CRIT-041) using MockWebServer failure scenarios.
-- [ ] T111 Extend `RiskRegisterCoordinatorTest` to verify mitigation-tag handling and overdue escalation logic (resolving RR-HIGH-027).
-- [ ] T112 Harden `HuggingFaceAuthCoordinatorTest` around `slow_down` back-off copy and accessible error surfacing (resolving RR-HIGH-033).
+- [X] T110 Expand `CoverageDashboardTest` to assert the offline banner + TalkBack copy (resolving RR-CRIT-041) using MockWebServer failure scenarios.
+- [X] T111 Extend `RiskRegisterCoordinatorTest` to verify mitigation-tag handling and overdue escalation logic (resolving RR-HIGH-027).
+- [X] T112 Harden `HuggingFaceAuthCoordinatorTest` around `slow_down` back-off copy and accessible error surfacing (resolving RR-HIGH-033).
 
 ## Dependencies
 - Complete Phase 1 before adding new coverage in Phases 2–4 so the current failing unit suites stabilise.
