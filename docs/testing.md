@@ -100,6 +100,7 @@ This guide explains how the nanoAI test suites are organised, how they embody th
 - **Missing emulator**: `connectedDebugAndroidTest` will fail quickly—set `ANDROID_SERIAL` or launch an emulator via Android Studio / `emulator` CLI.
 - **Instrumentation test filtering**: Use `-Pandroid.testInstrumentationRunnerArguments.class="*TestClass*"` since `--tests` is not supported for `connectedAndroidTest` tasks (they are `DeviceProviderInstrumentTestTask`, not standard `Test` tasks).
 - **Offline instrumentation flakes**: After simulating offline states, clear the app cache with `adb shell pm clear com.vjaykrsna.nanoai` so MockWebServer fixtures rehydrate cleanly before reruns.
+- **Physical device screen timeout**: For physical devices, enable stay-on mode with `adb shell svc power stayon true` before running tests to prevent the screen from turning off. Disable with `adb shell svc power stayon false` afterward.
 - **Coverage gaps reported**: Inspect `app/build/coverage/summary.md` for the failing layer, then open the HTML report to locate uncovered classes.
 - **Risk register digest**: `docs/coverage/risk-register.md` summarises escalated items, mitigation owners, and linked JUnit5 suites.
 - **Flaky tests**: Temporarily annotate with `@Tag("flaky")`, open an incident in the risk register, and prioritise stabilisation before release.

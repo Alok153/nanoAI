@@ -30,7 +30,6 @@ class ObserveUserProfileUseCaseTest {
       UiUxDomainReflection.newUserProfile(
         displayName = "Cached User",
         themePreference = UiUxDomainReflection.themePreference("LIGHT"),
-        onboardingCompleted = false,
         pinnedTools = listOf("tool-cache"),
         savedLayouts = listOf(cachedLayout),
       )
@@ -42,8 +41,6 @@ class ObserveUserProfileUseCaseTest {
     val cachedPreferences =
       UiUxDomainReflection.newUiPreferences(
         themePreference = UiUxDomainReflection.themePreference("DARK"),
-        onboardingCompleted = true,
-        dismissedTips = mapOf("onboarding_tip" to true),
         pinnedTools = listOf("tool-cache"),
       )
 
@@ -82,7 +79,6 @@ class ObserveUserProfileUseCaseTest {
       UiUxDomainReflection.newUserProfile(
         displayName = "Synced User",
         themePreference = UiUxDomainReflection.themePreference("LIGHT"),
-        onboardingCompleted = true,
         pinnedTools = listOf("tool-remote"),
         savedLayouts = listOf(remoteLayout),
       )
@@ -99,7 +95,6 @@ class ObserveUserProfileUseCaseTest {
         spy.preferencesFlow.value,
         themePreference = UiUxDomainReflection.themePreference("LIGHT"),
         pinnedTools = listOf("tool-remote"),
-        dismissedTips = mapOf("onboarding_tip" to true, "home" to true),
       )
     spy.offlineStatusFlow.value = false
 
@@ -120,15 +115,6 @@ class ObserveUserProfileUseCaseTest {
 
     val theme = UiUxDomainReflection.getProperty(profile, "themePreference")
     assertThat(theme.toString()).isEqualTo("DARK")
-
-    val onboardingCompleted =
-      UiUxDomainReflection.getProperty(profile, "onboardingCompleted") as Boolean
-    assertThat(onboardingCompleted).isTrue()
-
-    val dismissedTipsAny =
-      UiUxDomainReflection.getProperty(profile, "dismissedTips") as? Map<*, *>
-        ?: fail("Missing dismissedTips map on profile")
-    assertThat(dismissedTipsAny).containsExactlyEntriesIn(mapOf("onboarding_tip" to true))
 
     val layoutSnapshots = getReference(result, "layoutSnapshots", "layouts") as? List<*>
     val firstLayout = layoutSnapshots?.firstOrNull() ?: fail("Missing cached layout snapshot")

@@ -2,12 +2,6 @@ package com.vjaykrsna.nanoai.core.domain.model.uiux
 
 import com.vjaykrsna.nanoai.core.data.preferences.UiPreferencesStore
 
-internal fun sanitizeDismissedTips(tips: Map<String, Boolean>): Map<String, Boolean> {
-  val sanitized = tips.filterKeys { it.isNotBlank() }
-  require(sanitized.size == tips.size) { "Dismissed tip identifiers must be non-blank." }
-  return sanitized
-}
-
 internal fun sanitizePinnedTools(tools: List<String>): List<String> {
   val sanitized = tools.filter { it.isNotBlank() }
   require(sanitized.size == tools.size) { "Pinned tool identifiers must be non-blank." }
@@ -27,9 +21,6 @@ internal fun sanitizeCommandPaletteRecents(commands: List<String>): List<String>
 
 internal fun sanitizeSavedLayouts(layouts: List<LayoutSnapshot>): List<LayoutSnapshot> =
   try {
-    require(layouts.size <= UserProfile.MAX_SAVED_LAYOUTS) {
-      "Saved layouts cannot exceed ${UserProfile.MAX_SAVED_LAYOUTS}."
-    }
     val distinct = layouts.distinctBy(LayoutSnapshot::id)
     require(distinct.size == layouts.size) { "Saved layouts must have unique identifiers." }
     distinct
