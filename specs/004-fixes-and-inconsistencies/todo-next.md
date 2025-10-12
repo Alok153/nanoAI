@@ -21,6 +21,8 @@ Based on codebase analysis and specs (001-foundation, 002-disclaimer-and-fixes, 
 - [ ] Add end-to-end tests: Espresso/Compose UI tests for full flows (onboarding → chat → export); include offline scenarios.
 - [ ] Performance optimization: Integrate Baseline Profiles; target <2s local response, <300ms FMP. Add RUM metrics for prod monitoring.
 - [ ] Security audit: Encrypt exports optionally; validate imports against schema; add credential masking in logs/UI.
+- [ ] Create Room/DataStore migration plan for removed onboarding/dismissed tip fields (ensure schema alignment and legacy data cleanup).
+- [ ] Run `./gradlew check` post-ViewModel consolidation; backfill targeted tests for `ShellViewModel` retry flows (replacing deleted Home/Sidebar specs).
 
 ## Phase 7: Scalability & Integrations (Low Priority)
 - [ ] Multi-device sync: Add optional Firebase/own server for cross-device history (with E2E encryption).
@@ -34,4 +36,4 @@ Based on codebase analysis and specs (001-foundation, 002-disclaimer-and-fixes, 
 
 Estimated Effort: 8-12 weeks total. Track via tasks.md updates.
 
-Last Updated: 2025-10-03
+Last Updated: 2025-10-12

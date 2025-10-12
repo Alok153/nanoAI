@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 5,
-    "identityHash": "a3e9c8fc702f21f46d8e51b938c28e0a",
+    "identityHash": "a580acc1b158c0bf55a45dee7eddbef3",
     "entities": [
       {
         "tableName": "chat_threads",
@@ -607,7 +607,7 @@
       },
       {
         "tableName": "user_profiles",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`user_id` TEXT NOT NULL, `display_name` TEXT, `theme_preference` TEXT NOT NULL, `visual_density` TEXT NOT NULL, `onboarding_completed` INTEGER NOT NULL, `dismissed_tips` TEXT NOT NULL, `last_opened_screen` TEXT NOT NULL, `compact_mode` INTEGER NOT NULL, `pinned_tools` TEXT NOT NULL, PRIMARY KEY(`user_id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`user_id` TEXT NOT NULL, `display_name` TEXT, `theme_preference` TEXT NOT NULL, `visual_density` TEXT NOT NULL, `last_opened_screen` TEXT NOT NULL, `compact_mode` INTEGER NOT NULL, `pinned_tools` TEXT NOT NULL, PRIMARY KEY(`user_id`))",
         "fields": [
           {
             "fieldPath": "userId",
@@ -630,18 +630,6 @@
           {
             "fieldPath": "visualDensity",
             "columnName": "visual_density",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "onboardingCompleted",
-            "columnName": "onboarding_completed",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "dismissedTips",
-            "columnName": "dismissed_tips",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -1182,7 +1170,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a3e9c8fc702f21f46d8e51b938c28e0a')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a580acc1b158c0bf55a45dee7eddbef3')"
     ]
   }
 }

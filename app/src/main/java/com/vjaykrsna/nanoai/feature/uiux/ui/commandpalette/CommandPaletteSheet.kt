@@ -310,6 +310,10 @@ private fun CommandPaletteItem(
   }
 }
 
+private const val PRIORITY_PREFIX_MATCH = 0
+private const val PRIORITY_TITLE_CONTAINS = 1
+private const val PRIORITY_SUBTITLE_CONTAINS = 2
+
 private fun filterCommands(actions: List<CommandAction>, query: String): List<CommandAction> {
   if (query.isBlank()) return actions
   val needle = query.lowercase()
@@ -319,9 +323,9 @@ private fun filterCommands(actions: List<CommandAction>, query: String): List<Co
       val subtitle = action.subtitle?.lowercase()
       val priority =
         when {
-          title.startsWith(needle) -> 0
-          title.contains(needle) -> 1
-          subtitle?.contains(needle) == true -> 2
+          title.startsWith(needle) -> PRIORITY_PREFIX_MATCH
+          title.contains(needle) -> PRIORITY_TITLE_CONTAINS
+          subtitle?.contains(needle) == true -> PRIORITY_SUBTITLE_CONTAINS
           else -> null
         }
       priority?.let { it to action }

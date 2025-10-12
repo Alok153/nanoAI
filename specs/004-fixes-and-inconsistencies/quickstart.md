@@ -54,11 +54,11 @@ a. Run Spotless + Detekt gates.
 **Expected**: Dialog text matches spec, cannot proceed without acknowledgement, semantics describe purpose.
 
 ## Scenario 6: Cloud Fallback Error Handling
-1. Run `./gradlew app:testDebugUnitTest --tests "com.vjaykrsna.nanoai.inference.CloudFallbackViewModelTest"`.
-2. Scenario covers sealed `NanoAIResult` handling when local runtime declines due to low memory.
-3. Ensure `RecoverableError` path logs telemetry ID and surfaces actionable retry instructions.
+1. Run `./gradlew app:testDebugUnitTest --tests "com.vjaykrsna.nanoai.feature.chat.domain.SendPromptAndPersonaUseCaseTest.sendPrompt_recordsErrorWhenInferenceFails"`.
+2. Scenario covers fallback logic when the orchestrator escalates to cloud inference and receives an error response.
+3. Ensure telemetry/error metadata is persisted via `ConversationRepository` for UI consumption.
 
-**Expected**: Tests pass, error envelope displayed in UI snapshot test, and telemetry stream includes `cloud_fallback.recoverable` entries.
+**Expected**: Test passes, error envelope captured on the assistant message, and telemetry stream includes retry context via `InferenceResult.Error`.
 
 ## Scenario 7: Maintenance Schema Migrations
 1. Run `./gradlew app:testDebugUnitTest --tests "com.vjaykrsna.nanoai.core.maintenance.db.MaintenanceMigrationsTest"`.

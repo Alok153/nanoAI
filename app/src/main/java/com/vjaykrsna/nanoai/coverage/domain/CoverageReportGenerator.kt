@@ -131,10 +131,10 @@ class CoverageReportGenerator(
 
   private val severityPriority: Map<RiskRegisterItem.Severity, Int> =
     mapOf(
-      RiskRegisterItem.Severity.CRITICAL to 0,
-      RiskRegisterItem.Severity.HIGH to 1,
-      RiskRegisterItem.Severity.MEDIUM to 2,
-      RiskRegisterItem.Severity.LOW to 3,
+      RiskRegisterItem.Severity.CRITICAL to PRIORITY_CRITICAL,
+      RiskRegisterItem.Severity.HIGH to PRIORITY_HIGH,
+      RiskRegisterItem.Severity.MEDIUM to PRIORITY_MEDIUM,
+      RiskRegisterItem.Severity.LOW to PRIORITY_LOW,
     )
 
   private fun ensureSummaryThresholdConsistency(
@@ -148,3 +148,8 @@ class CoverageReportGenerator(
     }
   }
 }
+
+private const val PRIORITY_CRITICAL = 0
+private const val PRIORITY_HIGH = 1
+private const val PRIORITY_MEDIUM = 2
+private const val PRIORITY_LOW = 3

@@ -209,7 +209,7 @@ constructor(
     runCatching { APIType.valueOf(value.uppercase()) }.getOrDefault(APIType.OPENAI_COMPATIBLE)
 
   private fun decodePayload(bytes: ByteArray): String {
-    if (bytes.size >= 2 && bytes[0] == 'P'.code.toByte() && bytes[1] == 'K'.code.toByte()) {
+    if (bytes.hasZipSignature()) {
       return decodeZipPayload(bytes)
     }
     val trimmed = bytes.decodeToString().trim()
@@ -245,6 +245,13 @@ constructor(
       throw ImportException.InvalidFormat("Backup payload is neither JSON nor Base64", error)
     }
 
+  private fun ByteArray.hasZipSignature(): Boolean {
+    if (size < ZIP_SIGNATURE_LENGTH) {
+      return false
+    }
+    return this[0].toInt() == ZIP_MAGIC_FIRST && this[1].toInt() == ZIP_MAGIC_SECOND
+  }
+
   private sealed class ImportException(
     message: String,
     cause: Throwable? = null,
@@ -263,5 +270,8 @@ constructor(
     private const val TAG = "ImportService"
     private const val DEFAULT_TEMPERATURE = 1.0f
     private const val DEFAULT_TOP_P = 1.0f
+    private const val ZIP_SIGNATURE_LENGTH = 2
+    private const val ZIP_MAGIC_FIRST = 'P'.code
+    private const val ZIP_MAGIC_SECOND = 'K'.code
   }
 }

@@ -40,13 +40,6 @@ interface UserProfileRepository {
   /** Update visual density preference immediately. */
   suspend fun updateVisualDensity(userId: String, visualDensityName: String)
 
-  /** Record onboarding completion (dismissed tips persisted). */
-  suspend fun recordOnboardingProgress(
-    userId: String,
-    dismissedTips: Map<String, Boolean>,
-    completed: Boolean
-  )
-
   /** Update compact mode preference (and persisted visual density) for the user. */
   suspend fun updateCompactMode(userId: String, enabled: Boolean)
 

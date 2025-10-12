@@ -29,8 +29,9 @@ data class RiskRegisterItem(
   }
 
   fun isActionable(now: Instant): Boolean {
-    if (!status.isActive()) return false
-    if (!severity.isHighPriority()) return false
+    if (!status.isActive() || !severity.isHighPriority()) {
+      return false
+    }
     val deadline = targetBuildDeadline()
     return deadline?.let { !it.isAfter(now) } ?: true
   }

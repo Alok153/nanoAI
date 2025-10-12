@@ -24,7 +24,7 @@ class CoverageReportContractTest {
   private val schema =
     schemaFactory.getSchema(
       mapper.readTree(
-        javaClass.classLoader.getResourceAsStream("schemas/coverage-report.schema.json")
+        javaClass.classLoader?.getResourceAsStream("schemas/coverage-report.schema.json")
           ?: error("Test schema resource missing: schemas/coverage-report.schema.json"),
       ),
     )

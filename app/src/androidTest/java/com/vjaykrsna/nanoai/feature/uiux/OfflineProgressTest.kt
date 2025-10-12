@@ -117,64 +117,99 @@ class OfflineProgressTest {
     }
 
     composeRule.onNodeWithTag("progress_retry_button").assertIsEnabled().performClick()
-    assertThat(events.filterIsInstance<ShellUiEvent.QueueJob>()).isNotEmpty()
+    assertThat(events.filterIsInstance<ShellUiEvent.RetryJob>()).isNotEmpty()
   }
 
   private fun handleIntent(state: MutableState<ShellUiState>, intent: ShellUiEvent) {
     val current = state.value
-    when (intent) {
-      is ShellUiEvent.ConnectivityChanged ->
-        state.value =
-          current.copy(
-            layout = current.layout.copy(connectivity = intent.status),
-            connectivityBanner =
-              current.connectivityBanner.copy(status = intent.status, queuedActionCount = 0),
-          )
-      is ShellUiEvent.QueueJob ->
-        state.value =
-          current.copy(
-            layout = current.layout.copy(progressJobs = current.layout.progressJobs + intent.job),
-          )
-      is ShellUiEvent.CompleteJob ->
-        state.value =
-          current.copy(
-            layout =
-              current.layout.copy(
-                progressJobs =
-                  current.layout.progressJobs.filterNot { job -> job.jobId == intent.jobId },
-              ),
-          )
-      is ShellUiEvent.ModeSelected ->
-        state.value = current.copy(layout = current.layout.copy(activeMode = intent.modeId))
-      is ShellUiEvent.ToggleLeftDrawer ->
-        state.value =
-          current.copy(
-            layout = current.layout.copy(isLeftDrawerOpen = !current.layout.isLeftDrawerOpen)
-          )
-      is ShellUiEvent.ToggleRightDrawer ->
-        state.value =
-          current.copy(
-            layout =
-              current.layout.copy(
-                isRightDrawerOpen = !current.layout.isRightDrawerOpen,
-                activeRightPanel = intent.panel,
-              ),
-          )
-      is ShellUiEvent.ShowCommandPalette ->
-        state.value = current.copy(layout = current.layout.copy(showCommandPalette = true))
-      is ShellUiEvent.HideCommandPalette ->
-        state.value = current.copy(layout = current.layout.copy(showCommandPalette = false))
-      is ShellUiEvent.Undo ->
-        state.value = current.copy(layout = current.layout.copy(pendingUndoAction = null))
-      is ShellUiEvent.UpdateTheme ->
-        state.value = current.copy(preferences = current.preferences.copy(theme = intent.theme))
-      is ShellUiEvent.UpdateDensity ->
-        state.value = current.copy(preferences = current.preferences.copy(density = intent.density))
-      is ShellUiEvent.SetLeftDrawer ->
-        state.value = current.copy(layout = current.layout.copy(isLeftDrawerOpen = intent.open))
-      else -> Unit
-    }
+    state.value =
+      when (intent) {
+        is ShellUiEvent.ConnectivityChanged -> handleConnectivityChanged(current, intent)
+        is ShellUiEvent.QueueJob -> handleQueueJob(current, intent)
+        is ShellUiEvent.RetryJob -> handleRetryJob(current, intent)
+        is ShellUiEvent.CompleteJob -> handleCompleteJob(current, intent)
+        is ShellUiEvent.ModeSelected -> handleModeSelected(current, intent)
+        is ShellUiEvent.ToggleLeftDrawer -> handleToggleLeftDrawer(current)
+        is ShellUiEvent.ToggleRightDrawer -> handleToggleRightDrawer(current, intent)
+        is ShellUiEvent.ShowCommandPalette -> handleShowCommandPalette(current)
+        is ShellUiEvent.HideCommandPalette -> handleHideCommandPalette(current)
+        is ShellUiEvent.Undo -> handleUndo(current)
+        is ShellUiEvent.UpdateTheme -> handleUpdateTheme(current, intent)
+        is ShellUiEvent.UpdateDensity -> handleUpdateDensity(current, intent)
+        is ShellUiEvent.SetLeftDrawer -> handleSetLeftDrawer(current, intent)
+        else -> current
+      }
   }
+
+  private fun handleConnectivityChanged(
+    current: ShellUiState,
+    intent: ShellUiEvent.ConnectivityChanged
+  ) =
+    current.copy(
+      layout = current.layout.copy(connectivity = intent.status),
+      connectivityBanner =
+        current.connectivityBanner.copy(status = intent.status, queuedActionCount = 0),
+    )
+
+  private fun handleQueueJob(current: ShellUiState, intent: ShellUiEvent.QueueJob) =
+    current.copy(
+      layout = current.layout.copy(progressJobs = current.layout.progressJobs + intent.job)
+    )
+
+  private fun handleRetryJob(current: ShellUiState, intent: ShellUiEvent.RetryJob) =
+    current.copy(
+      layout =
+        current.layout.copy(
+          progressJobs =
+            current.layout.progressJobs.map { job ->
+              if (job.jobId == intent.job.jobId) job.copy(status = JobStatus.PENDING) else job
+            }
+        )
+    )
+
+  private fun handleCompleteJob(current: ShellUiState, intent: ShellUiEvent.CompleteJob) =
+    current.copy(
+      layout =
+        current.layout.copy(
+          progressJobs = current.layout.progressJobs.filterNot { job -> job.jobId == intent.jobId }
+        )
+    )
+
+  private fun handleModeSelected(current: ShellUiState, intent: ShellUiEvent.ModeSelected) =
+    current.copy(layout = current.layout.copy(activeMode = intent.modeId))
+
+  private fun handleToggleLeftDrawer(current: ShellUiState) =
+    current.copy(layout = current.layout.copy(isLeftDrawerOpen = !current.layout.isLeftDrawerOpen))
+
+  private fun handleToggleRightDrawer(
+    current: ShellUiState,
+    intent: ShellUiEvent.ToggleRightDrawer
+  ) =
+    current.copy(
+      layout =
+        current.layout.copy(
+          isRightDrawerOpen = !current.layout.isRightDrawerOpen,
+          activeRightPanel = intent.panel,
+        )
+    )
+
+  private fun handleShowCommandPalette(current: ShellUiState) =
+    current.copy(layout = current.layout.copy(showCommandPalette = true))
+
+  private fun handleHideCommandPalette(current: ShellUiState) =
+    current.copy(layout = current.layout.copy(showCommandPalette = false))
+
+  private fun handleUndo(current: ShellUiState) =
+    current.copy(layout = current.layout.copy(pendingUndoAction = null))
+
+  private fun handleUpdateTheme(current: ShellUiState, intent: ShellUiEvent.UpdateTheme) =
+    current.copy(preferences = current.preferences.copy(theme = intent.theme))
+
+  private fun handleUpdateDensity(current: ShellUiState, intent: ShellUiEvent.UpdateDensity) =
+    current.copy(preferences = current.preferences.copy(density = intent.density))
+
+  private fun handleSetLeftDrawer(current: ShellUiState, intent: ShellUiEvent.SetLeftDrawer) =
+    current.copy(layout = current.layout.copy(isLeftDrawerOpen = intent.open))
 
   private fun sampleState(
     connectivity: ConnectivityStatus,

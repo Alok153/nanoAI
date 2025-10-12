@@ -75,17 +75,6 @@ constructor(
     withContext(ioDispatcher) { local.updateCompactMode(userId, enabled) }
   }
 
-  override suspend fun recordOnboardingProgress(
-    userId: String,
-    dismissedTips: Map<String, Boolean>,
-    completed: Boolean,
-  ) {
-    withContext(ioDispatcher) {
-      local.updateOnboardingCompleted(userId, completed)
-      local.setDismissedTips(userId, dismissedTips)
-    }
-  }
-
   override suspend fun updatePinnedTools(userId: String, pinnedTools: List<String>) {
     withContext(ioDispatcher) { local.updatePinnedTools(userId, pinnedTools) }
   }

@@ -90,26 +90,6 @@ interface UserProfileDao {
   suspend fun updateVisualDensity(userId: String, visualDensity: VisualDensity): Int
 
   /**
-   * Update the onboarding completed flag for a user.
-   *
-   * @param userId The unique user identifier
-   * @param completed True if onboarding is completed
-   * @return Number of rows updated (should be 1 if successful)
-   */
-  @Query("UPDATE user_profiles SET onboarding_completed = :completed WHERE user_id = :userId")
-  suspend fun updateOnboardingCompleted(userId: String, completed: Boolean): Int
-
-  /**
-   * Update the dismissed tips map for a user.
-   *
-   * @param userId The unique user identifier
-   * @param dismissedTips Map of tip IDs to dismissed status
-   * @return Number of rows updated (should be 1 if successful)
-   */
-  @Query("UPDATE user_profiles SET dismissed_tips = :dismissedTips WHERE user_id = :userId")
-  suspend fun updateDismissedTips(userId: String, dismissedTips: Map<String, Boolean>): Int
-
-  /**
    * Update the last opened screen for a user.
    *
    * @param userId The unique user identifier

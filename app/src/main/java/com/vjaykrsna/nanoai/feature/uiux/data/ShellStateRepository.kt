@@ -303,7 +303,7 @@ constructor(
       theme = themePreference,
       density = visualDensity,
       fontScale = 1f,
-      dismissedTooltips = dismissedTips.filterValues { it }.keys,
+      dismissedTooltips = emptySet(),
     )
 
   private fun String?.toRightPanel(): RightPanel? {
