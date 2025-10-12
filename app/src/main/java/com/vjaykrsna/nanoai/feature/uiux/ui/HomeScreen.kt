@@ -30,12 +30,14 @@ import androidx.compose.ui.unit.dp
 import com.vjaykrsna.nanoai.feature.uiux.state.CommandAction
 import com.vjaykrsna.nanoai.feature.uiux.state.ModeCard
 import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
+import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
 import com.vjaykrsna.nanoai.feature.uiux.state.RecentActivityItem
 import com.vjaykrsna.nanoai.feature.uiux.state.ShellLayoutState
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoSpacing
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.layout.NanoScreen
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.layout.NanoSection
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.primitives.NanoCard
+import com.vjaykrsna.nanoai.feature.uiux.ui.progress.ProgressCenterPanel
 
 private const val MAX_INLINE_QUICK_ACTIONS = 3
 private const val MODE_COLUMNS_COMPACT = 2
@@ -50,9 +52,12 @@ fun HomeScreen(
   modeCards: List<ModeCard>,
   quickActions: List<CommandAction>,
   recentActivity: List<RecentActivityItem>,
+  progressJobs: List<ProgressJob>,
   onModeSelect: (ModeId) -> Unit,
   onQuickActionSelect: (CommandAction) -> Unit,
   onRecentActivitySelect: (RecentActivityItem) -> Unit,
+  onProgressRetry: (ProgressJob) -> Unit,
+  onProgressDismiss: (ProgressJob) -> Unit,
   modifier: Modifier = Modifier,
 ) {
   val columnCount = remember(layout.windowSizeClass.widthSizeClass) { columnsForLayout(layout) }
@@ -74,6 +79,17 @@ fun HomeScreen(
         modeCards = modeCards,
         onModeSelect = onModeSelect,
       )
+    }
+
+    if (progressJobs.isNotEmpty()) {
+      NanoSection(title = "Queued jobs") {
+        ProgressCenterPanel(
+          jobs = progressJobs,
+          onRetry = onProgressRetry,
+          onDismissJob = onProgressDismiss,
+          modifier = Modifier.fillMaxWidth(),
+        )
+      }
     }
 
     NanoSection(

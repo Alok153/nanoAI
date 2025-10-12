@@ -101,6 +101,7 @@ private fun rememberShellEventHandler(
         is ShellUiEvent.CommandInvoked ->
           shellViewModel.onCommandInvoked(event.action, event.source)
         is ShellUiEvent.QueueJob -> shellViewModel.queueGeneration(event.job)
+        is ShellUiEvent.RetryJob -> shellViewModel.retryJob(event.job)
         is ShellUiEvent.CompleteJob -> shellViewModel.completeJob(event.jobId)
         is ShellUiEvent.Undo -> shellViewModel.undoAction(event.payload)
         is ShellUiEvent.ConnectivityChanged -> shellViewModel.updateConnectivity(event.status)
@@ -119,7 +120,9 @@ private fun ShellModeContent(
   onUpdateChatState: (com.vjaykrsna.nanoai.feature.uiux.presentation.ChatState?) -> Unit,
 ) {
   when (modeId) {
-    ModeId.HOME -> Unit
+    // HOME is handled directly by NanoShellScaffold - never called here
+    ModeId.HOME -> error("HOME mode should be handled by NanoShellScaffold, not NavigationScaffold")
+
     ModeId.CHAT -> ChatScreen(modifier = modifier, onUpdateChatState = onUpdateChatState)
     ModeId.LIBRARY -> ModelLibraryScreen(modifier = modifier)
     ModeId.SETTINGS -> SettingsScreen(modifier = modifier)

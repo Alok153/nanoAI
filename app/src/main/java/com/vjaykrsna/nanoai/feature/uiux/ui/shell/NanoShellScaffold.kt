@@ -300,6 +300,8 @@ sealed interface ShellUiEvent {
 
   data class QueueJob(val job: ProgressJob) : ShellUiEvent
 
+  data class RetryJob(val job: ProgressJob) : ShellUiEvent
+
   data class CompleteJob(val jobId: UUID) : ShellUiEvent
 
   data class Undo(val payload: UndoPayload) : ShellUiEvent
@@ -602,6 +604,7 @@ private fun ShellMainSurface(
             modeCards = state.modeCards,
             quickActions = state.quickActions,
             recentActivity = layout.recentActivity,
+            progressJobs = layout.progressJobs,
             onModeSelect = { modeId -> onEvent(ShellUiEvent.ModeSelected(modeId)) },
             onQuickActionSelect = { action ->
               handleCommandAction(
@@ -611,6 +614,8 @@ private fun ShellMainSurface(
               )
             },
             onRecentActivitySelect = { item -> onEvent(ShellUiEvent.ModeSelected(item.modeId)) },
+            onProgressRetry = { job -> onEvent(ShellUiEvent.RetryJob(job)) },
+            onProgressDismiss = { job -> onEvent(ShellUiEvent.CompleteJob(job.jobId)) },
             modifier = Modifier.fillMaxSize(),
           )
         else -> modeContent(layout.activeMode)

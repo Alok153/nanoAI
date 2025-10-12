@@ -166,7 +166,7 @@
 1. App launch
    └─► `NavigationScaffold`
        ├─► `AppViewModel` (global theme/offline state)
-       └─► `ShellViewModel` → `HomeViewModel`
+       └─► `ShellViewModel` (builds home hub state)
            └─► `ObserveUserProfileUseCase`
                ├─► `UserProfileRepository.observe()`
                │   ├─► `UserProfileLocalDataSource`

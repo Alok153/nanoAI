@@ -328,6 +328,11 @@ constructor(
     }
   }
 
+  /** Attempts to retry a failed job via the progress coordinator. */
+  fun retryJob(job: ProgressJob) {
+    viewModelScope.launch(dispatcher) { progressCoordinator.retryJob(job.jobId) }
+  }
+
   /** Executes an undo action based on the provided payload. */
   fun undoAction(payload: UndoPayload) {
     viewModelScope.launch(dispatcher) {

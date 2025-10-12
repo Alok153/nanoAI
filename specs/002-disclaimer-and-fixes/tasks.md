@@ -97,14 +97,14 @@ T007 [X] - Export: use existing export flow and show warnings
 T008 [X] - Sidebar local/cloud toggle wiring
 - Description: Add the Local/Cloud toggle to the sidebar and wire it to `InferenceOrchestrator` so user choice affects inference preference.
 - Actions:
-  1. Add toggle UI to `ui/navigation/NavigationScaffold.kt` or `feature/sidebar/presentation/SidebarViewModel.kt` and persist choice in DataStore.
+  1. Add toggle UI to `ui/navigation/NavigationScaffold.kt` (wired through `ShellViewModel`) and persist choice in DataStore.
   2. Update `InferenceOrchestrator` to read the user preference when `generateResponse` is invoked.
   3. Add unit tests for toggling behavior.
-- Files/paths: `app/src/main/java/com/vjaykrsna/nanoai/ui/navigation/NavigationScaffold.kt`, `.../SidebarViewModel.kt`, `InferenceOrchestrator.kt`.
+- Files/paths: `app/src/main/java/com/vjaykrsna/nanoai/ui/navigation/NavigationScaffold.kt`, `.../feature/uiux/presentation/ShellViewModel.kt`, `InferenceOrchestrator.kt`.
 - Dependencies: T004, T003
 - Parallel: no
 - Why: Implements FR-003.
- - Status Notes (2025-10-02): Added `InferencePreferenceRepository` backed by DataStore, exposed toggle state via `SidebarViewModel`, surfaced a switch in `NavigationScaffold`, and taught `InferenceOrchestrator`/`SendPromptAndPersonaUseCase` to respect the persisted mode with updated unit coverage.
+- Status Notes (2025-10-02, rev. 2025-10-12): Added `InferencePreferenceRepository` backed by DataStore, surfaced a switch in `NavigationScaffold`, and (later) merged the toggle state into `ShellViewModel` while keeping `InferenceOrchestrator`/`SendPromptAndPersonaUseCase` aligned with the persisted mode and unit coverage.
 
 T009 [X] - Contract tests for import/export/disclaimer
 - Description: Create failing contract tests based on `contracts/import-export-openapi.yaml` to codify expected behavior.

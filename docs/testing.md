@@ -37,6 +37,7 @@ This guide explains how the nanoAI test suites are organised, how they embody th
    ./gradlew connectedDebugAndroidTest
    ```
    Produces reports under `app/build/reports/androidTests/connected/` and `.ec` coverage files.
+- To run specific tests, use `-Pandroid.testInstrumentationRunnerArguments.class="*TestClass*"` (e.g., `-Pandroid.testInstrumentationRunnerArguments.class="*OfflineProgressTest*"`), as `--tests` is not supported for instrumentation tasks.
 - When triaging flakes, append `-Pandroid.testInstrumentationRunnerArguments.notAnnotation=flaky` and explicitly toggle radios (`adb shell svc wifi disable|enable`, `adb shell svc data disable|enable`) to rehearse offline fallbacks.
 3. **Macrobenchmarks** (optional, CI-only by default)
    ```bash
@@ -45,6 +46,7 @@ This guide explains how the nanoAI test suites are organised, how they embody th
 
 ### Recommended Development Loop
 - Run targeted JVM tests via `--tests` (e.g. `--tests "com.vjaykrsna.nanoai.coverage.*"`).
+- For instrumentation tests, use Android runner arguments like `-Pandroid.testInstrumentationRunnerArguments.class="*TestClass*"` to filter execution.
 - Before submitting changes run `./gradlew check` to execute formatting, lint, tests, merged coverage, and threshold verification.
 
 ## Coverage Workflow
@@ -96,6 +98,7 @@ This guide explains how the nanoAI test suites are organised, how they embody th
 
 ## Troubleshooting
 - **Missing emulator**: `connectedDebugAndroidTest` will fail quickly—set `ANDROID_SERIAL` or launch an emulator via Android Studio / `emulator` CLI.
+- **Instrumentation test filtering**: Use `-Pandroid.testInstrumentationRunnerArguments.class="*TestClass*"` since `--tests` is not supported for `connectedAndroidTest` tasks (they are `DeviceProviderInstrumentTestTask`, not standard `Test` tasks).
 - **Offline instrumentation flakes**: After simulating offline states, clear the app cache with `adb shell pm clear com.vjaykrsna.nanoai` so MockWebServer fixtures rehydrate cleanly before reruns.
 - **Coverage gaps reported**: Inspect `app/build/coverage/summary.md` for the failing layer, then open the HTML report to locate uncovered classes.
 - **Risk register digest**: `docs/coverage/risk-register.md` summarises escalated items, mitigation owners, and linked JUnit5 suites.

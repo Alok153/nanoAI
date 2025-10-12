@@ -34,69 +34,40 @@ import org.w3c.dom.Element
 object VerifyCoverageThresholdsTask {
 
   private const val DEFAULT_LAYER_MAP = "config/coverage/layer-map.json"
+  private const val EXIT_HELP = 0
+  private const val EXIT_USAGE_ERROR = 64
+  private const val EXIT_DATA_ERROR = 66
+  private const val EXIT_THRESHOLD_FAILURE = 1
+  private const val MAX_UNMAPPED_SAMPLE = 10
+  private const val DEFAULT_VIEW_MODEL_THRESHOLD = 75.0
+  private const val DEFAULT_UI_THRESHOLD = 65.0
+  private const val DEFAULT_DATA_THRESHOLD = 70.0
+  private const val PERCENT_SCALE = 100.0
+  private const val ZERO_DELTA_LABEL = "0.00pp"
+  private const val POSITIVE_DELTA_PATTERN = "+%.2fpp"
+  private const val NEGATIVE_DELTA_PATTERN = "-%.2fpp"
   private val json = Json { ignoreUnknownKeys = true }
   private val DEFAULT_THRESHOLDS =
     mapOf(
-      TestLayer.VIEW_MODEL to 75.0,
-      TestLayer.UI to 65.0,
-      TestLayer.DATA to 70.0,
+      TestLayer.VIEW_MODEL to DEFAULT_VIEW_MODEL_THRESHOLD,
+      TestLayer.UI to DEFAULT_UI_THRESHOLD,
+      TestLayer.DATA to DEFAULT_DATA_THRESHOLD,
     )
 
   @JvmStatic
   fun main(rawArgs: Array<String>) {
-    val parsedArgs =
-      runCatching { Arguments.parse(rawArgs) }
-        .getOrElse { error ->
-          System.err.println("verifyCoverage: ${error.message}")
-          Arguments.printUsage(System.err)
-          exitProcess(64)
-        }
-
-    val reportXml = parsedArgs.reportXml
+    val parsedArgs = parseArgumentsOrExit(rawArgs)
     val layerMapPath = parsedArgs.layerMap ?: Path.of(DEFAULT_LAYER_MAP)
-    val markdownOutput = parsedArgs.markdownOutput
-    val buildIdOverride = parsedArgs.buildId
 
-    if (!reportXml.exists() || !reportXml.isRegularFile()) {
-      System.err.println("verifyCoverage: coverage report not found at $reportXml")
-      exitProcess(66)
-    }
-    if (!layerMapPath.exists() || !layerMapPath.isRegularFile()) {
-      System.err.println("verifyCoverage: layer map not found at $layerMapPath")
-      exitProcess(66)
-    }
+    validateInputPaths(parsedArgs.reportXml, layerMapPath)
 
-    val classifier = LayerClassifier.fromConfig(layerMapPath, json)
-    val parser = CoverageReportParser(classifier)
+    val outcome = evaluateReport(parsedArgs, layerMapPath)
 
-    val parseResult = parser.parse(reportXml, buildIdOverride)
-    val summary = parseResult.summary
-    val violation =
-      runCatching { CoverageThresholdVerifier().verify(summary) }.exceptionOrNull()
-        as? CoverageThresholdVerifier.ThresholdViolation
+    writeMarkdown(outcome.markdown, parsedArgs.markdownOutput)
+    logUnmappedClasses(outcome.unmappedClasses)
+    handleViolation(outcome.violation)
 
-    val markdown = MarkdownRenderer.render(summary, violation, parseResult.unmappedClasses)
-    markdownOutput?.let { path ->
-      path.parent?.let { Files.createDirectories(it) }
-      path.outputStream().use { output -> output.write(markdown.toByteArray(Charsets.UTF_8)) }
-    }
-
-    if (parseResult.unmappedClasses.isNotEmpty()) {
-      System.out.println(
-        "verifyCoverage: ${parseResult.unmappedClasses.size} classes were not mapped to a TestLayer; " +
-          "first missing=${parseResult.unmappedClasses.first()}"
-      )
-    }
-
-    if (violation != null) {
-      System.err.println(
-        "verifyCoverage: coverage below threshold for " +
-          violation.layers.joinToString { it.displayName },
-      )
-      exitProcess(1)
-    }
-
-    System.out.println("verifyCoverage: thresholds satisfied for build ${summary.buildId}")
+    System.out.println("verifyCoverage: thresholds satisfied for build ${outcome.summary.buildId}")
   }
 
   private data class Arguments(
@@ -130,7 +101,7 @@ object VerifyCoverageThresholdsTask {
             "--help",
             "-h" -> {
               printUsage(System.out)
-              exitProcess(0)
+              exitProcess(EXIT_HELP)
             }
             else -> throw IllegalArgumentException("unknown argument $arg")
           }
@@ -153,18 +124,101 @@ object VerifyCoverageThresholdsTask {
 
       fun printUsage(stream: PrintStream) {
         stream.println(
-          """
-            Usage: VerifyCoverageThresholdsTask --report-xml <path> [options]
-              --report-xml <path>   Absolute path to the merged JaCoCo XML report.
-              --layer-map <path>    Optional path to regex-based TestLayer mappings (default: $DEFAULT_LAYER_MAP).
-              --markdown <path>     Optional path to write markdown summary for CI artifacts.
-              --build-id <value>    Optional override for the coverage summary build identifier.
-          """
-            .trimIndent(),
+          buildString {
+              appendLine("Usage: VerifyCoverageThresholdsTask --report-xml <path> [options]")
+              appendLine("  --report-xml <path>   Absolute path to the merged JaCoCo XML report.")
+              appendLine(
+                "  --layer-map <path>    Optional path to regex-based TestLayer mappings (default: $DEFAULT_LAYER_MAP)."
+              )
+              appendLine(
+                "  --markdown <path>     Optional path to write markdown summary for CI artifacts."
+              )
+              appendLine(
+                "  --build-id <value>    Optional override for the coverage summary build identifier."
+              )
+            }
+            .trimEnd()
         )
       }
     }
   }
+
+  private fun parseArgumentsOrExit(rawArgs: Array<String>): Arguments {
+    return runCatching { Arguments.parse(rawArgs) }
+      .getOrElse { error ->
+        System.err.println("verifyCoverage: ${error.message}")
+        Arguments.printUsage(System.err)
+        exitProcess(EXIT_USAGE_ERROR)
+      }
+  }
+
+  private fun validateInputPaths(reportXml: Path, layerMapPath: Path) {
+    if (!reportXml.exists() || !reportXml.isRegularFile()) {
+      System.err.println("verifyCoverage: coverage report not found at $reportXml")
+      exitProcess(EXIT_DATA_ERROR)
+    }
+    if (!layerMapPath.exists() || !layerMapPath.isRegularFile()) {
+      System.err.println("verifyCoverage: layer map not found at $layerMapPath")
+      exitProcess(EXIT_DATA_ERROR)
+    }
+  }
+
+  private fun evaluateReport(parsedArgs: Arguments, layerMapPath: Path): TaskOutcome {
+    val classifier = LayerClassifier.fromConfig(layerMapPath, json)
+    val parser = CoverageReportParser(classifier)
+    val parseResult = parser.parse(parsedArgs.reportXml, parsedArgs.buildId)
+    val violation = verifyThresholds(parseResult.summary)
+    val markdown =
+      MarkdownRenderer.render(parseResult.summary, violation, parseResult.unmappedClasses)
+    return TaskOutcome(
+      summary = parseResult.summary,
+      unmappedClasses = parseResult.unmappedClasses,
+      violation = violation,
+      markdown = markdown,
+    )
+  }
+
+  private fun verifyThresholds(
+    summary: CoverageSummary
+  ): CoverageThresholdVerifier.ThresholdViolation? {
+    return runCatching { CoverageThresholdVerifier().verify(summary) }.exceptionOrNull()
+      as? CoverageThresholdVerifier.ThresholdViolation
+  }
+
+  private fun writeMarkdown(markdown: String, markdownOutput: Path?) {
+    markdownOutput?.let { path ->
+      path.parent?.let { Files.createDirectories(it) }
+      path.outputStream().use { output -> output.write(markdown.toByteArray(Charsets.UTF_8)) }
+    }
+  }
+
+  private fun logUnmappedClasses(unmappedClasses: List<String>) {
+    if (unmappedClasses.isEmpty()) {
+      return
+    }
+    System.out.println(
+      "verifyCoverage: ${unmappedClasses.size} classes were not mapped to a TestLayer; " +
+        "first missing=${unmappedClasses.first()}"
+    )
+  }
+
+  private fun handleViolation(violation: CoverageThresholdVerifier.ThresholdViolation?) {
+    if (violation == null) {
+      return
+    }
+    System.err.println(
+      "verifyCoverage: coverage below threshold for " +
+        violation.layers.joinToString { it.displayName },
+    )
+    exitProcess(EXIT_THRESHOLD_FAILURE)
+  }
+
+  private data class TaskOutcome(
+    val summary: CoverageSummary,
+    val unmappedClasses: List<String>,
+    val violation: CoverageThresholdVerifier.ThresholdViolation?,
+    val markdown: String,
+  )
 
   private class LayerClassifier(
     private val orderedPatterns: List<PatternEntry>,
@@ -204,50 +258,13 @@ object VerifyCoverageThresholdsTask {
     private val thresholds: Map<TestLayer, Double> = DEFAULT_THRESHOLDS,
   ) {
     fun parse(reportXml: Path, buildIdOverride: String?): ParseResult {
-      val factory = DocumentBuilderFactory.newInstance()
-      factory.isNamespaceAware = false
-      val document = factory.newDocumentBuilder().parse(reportXml.toFile())
-      val totals = TestLayer.entries.associateWith { LayerCoverageTotals() }.toMutableMap()
+      val document = parseDocument(reportXml)
+      val totals = initialiseTotals()
       val unmapped = mutableListOf<String>()
 
-      val classNodes = document.getElementsByTagName("class")
-      for (index in 0 until classNodes.length) {
-        val node = classNodes.item(index)
-        if (node !is Element) {
-          continue
-        }
-        val className = node.getAttribute("name")
-        if (className.isBlank()) {
-          continue
-        }
-        val layer = classifier.classify(className)
-        if (layer == null) {
-          unmapped += className
-          continue
-        }
-        val lineCounter = findLineCounter(node)
-        if (lineCounter == null) {
-          continue
-        }
-        val missed = lineCounter.getAttribute("missed").toLong()
-        val covered = lineCounter.getAttribute("covered").toLong()
-        val total = missed + covered
-        if (total == 0L) {
-          continue
-        }
-        val layerTotals = totals.getValue(layer)
-        layerTotals.covered += covered
-        layerTotals.total += total
-      }
+      processClassNodes(document, totals, unmapped)
 
-      val metrics = linkedMapOf<TestLayer, CoverageMetric>()
-      TestLayer.entries.forEach { layer ->
-        val totalsForLayer = totals.getValue(layer)
-        val coverage =
-          if (totalsForLayer.total == 0L) 0.0
-          else totalsForLayer.covered.toDouble() / totalsForLayer.total.toDouble() * 100.0
-        metrics[layer] = CoverageMetric(coverage = coverage, threshold = thresholds.getValue(layer))
-      }
+      val metrics = buildMetrics(totals)
 
       val trendDelta = metrics.mapValues { (_, metric) -> metric.deltaFromThreshold }
       val timestamp = Instant.ofEpochMilli(Files.getLastModifiedTime(reportXml).toMillis())
@@ -265,6 +282,79 @@ object VerifyCoverageThresholdsTask {
           ),
         unmappedClasses = unmapped,
       )
+    }
+
+    private fun parseDocument(reportXml: Path) =
+      DocumentBuilderFactory.newInstance()
+        .apply { isNamespaceAware = false }
+        .newDocumentBuilder()
+        .parse(reportXml.toFile())
+
+    private fun initialiseTotals(): MutableMap<TestLayer, LayerCoverageTotals> {
+      return TestLayer.entries.associateWith { LayerCoverageTotals() }.toMutableMap()
+    }
+
+    private fun processClassNodes(
+      document: org.w3c.dom.Document,
+      totals: MutableMap<TestLayer, LayerCoverageTotals>,
+      unmapped: MutableList<String>,
+    ) {
+      val classNodes = document.getElementsByTagName("class")
+      for (index in 0 until classNodes.length) {
+        val node = classNodes.item(index)
+        if (node is Element) {
+          updateTotalsForClass(node, totals, unmapped)
+        }
+      }
+    }
+
+    private fun updateTotalsForClass(
+      node: Element,
+      totals: MutableMap<TestLayer, LayerCoverageTotals>,
+      unmapped: MutableList<String>,
+    ) {
+      val className = node.getAttribute("name")
+      if (className.isBlank()) {
+        return
+      }
+      val layer = classifier.classify(className)
+      if (layer == null) {
+        unmapped += className
+        return
+      }
+      val lineCounter = findLineCounter(node)
+      if (lineCounter != null) {
+        val missed = lineCounter.getAttribute("missed").toLong()
+        val covered = lineCounter.getAttribute("covered").toLong()
+        val total = missed + covered
+        if (total != 0L) {
+          val layerTotals = totals.getValue(layer)
+          layerTotals.covered += covered
+          layerTotals.total += total
+        }
+      }
+    }
+
+    private fun buildMetrics(
+      totals: Map<TestLayer, LayerCoverageTotals>
+    ): LinkedHashMap<TestLayer, CoverageMetric> {
+      val metrics = linkedMapOf<TestLayer, CoverageMetric>()
+      TestLayer.entries.forEach { layer ->
+        val totalsForLayer = totals.getValue(layer)
+        metrics[layer] =
+          CoverageMetric(
+            coverage = computeCoverage(totalsForLayer),
+            threshold = thresholds.getValue(layer),
+          )
+      }
+      return metrics
+    }
+
+    private fun computeCoverage(totals: LayerCoverageTotals): Double {
+      if (totals.total == 0L) {
+        return 0.0
+      }
+      return totals.covered.toDouble() / totals.total.toDouble() * PERCENT_SCALE
     }
   }
 
@@ -324,8 +414,8 @@ object VerifyCoverageThresholdsTask {
       if (unmappedClasses.isNotEmpty()) {
         builder.appendLine()
         builder.appendLine("_Unmapped classes (${unmappedClasses.size}):_")
-        unmappedClasses.take(10).forEach { builder.appendLine("- $it") }
-        if (unmappedClasses.size > 10) {
+        unmappedClasses.take(MAX_UNMAPPED_SAMPLE).forEach { builder.appendLine("- $it") }
+        if (unmappedClasses.size > MAX_UNMAPPED_SAMPLE) {
           builder.appendLine("- …")
         }
       }
@@ -336,9 +426,9 @@ object VerifyCoverageThresholdsTask {
 
     private fun formatDelta(delta: Double): String {
       return when {
-        delta > 0.0 -> String.format(Locale.US, "+%.2fpp", delta)
-        delta < 0.0 -> String.format(Locale.US, "-%.2fpp", delta.absoluteValue)
-        else -> "0.00pp"
+        delta > 0.0 -> String.format(Locale.US, POSITIVE_DELTA_PATTERN, delta)
+        delta < 0.0 -> String.format(Locale.US, NEGATIVE_DELTA_PATTERN, delta.absoluteValue)
+        else -> ZERO_DELTA_LABEL
       }
     }
   }

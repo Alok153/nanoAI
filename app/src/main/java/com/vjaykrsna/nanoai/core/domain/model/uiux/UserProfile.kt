@@ -8,8 +8,6 @@ data class UserProfile(
   val displayName: String?,
   val themePreference: ThemePreference,
   val visualDensity: VisualDensity,
-  val onboardingCompleted: Boolean,
-  var dismissedTips: Map<String, Boolean>,
   val lastOpenedScreen: ScreenType,
   val compactMode: Boolean,
   var pinnedTools: List<String>,
@@ -23,7 +21,6 @@ data class UserProfile(
       }
     }
 
-    dismissedTips = sanitizeDismissedTips(dismissedTips)
     pinnedTools = sanitizePinnedTools(pinnedTools)
     savedLayouts = sanitizeSavedLayouts(savedLayouts)
 
@@ -42,18 +39,12 @@ data class UserProfile(
   fun withPinnedTools(tools: List<String>): UserProfile =
     copy(pinnedTools = sanitizePinnedTools(tools))
 
-  /** Updates dismissed tips, ensuring non-blank identifiers. */
-  fun withDismissedTips(tips: Map<String, Boolean>): UserProfile =
-    copy(dismissedTips = sanitizeDismissedTips(tips))
-
   /** Applies the supplied UI preferences snapshot to this profile. */
   fun withPreferences(preferences: UiPreferencesSnapshot): UserProfile {
     val normalized = preferences.normalized()
     return copy(
       themePreference = normalized.themePreference,
       visualDensity = normalized.visualDensity,
-      onboardingCompleted = normalized.onboardingCompleted,
-      dismissedTips = normalized.dismissedTips,
       pinnedTools = normalized.pinnedTools,
       compactMode = normalized.visualDensity == VisualDensity.COMPACT,
     )
@@ -78,8 +69,6 @@ data class UserProfile(
         displayName = displayName,
         themePreference = normalized.themePreference,
         visualDensity = normalized.visualDensity,
-        onboardingCompleted = normalized.onboardingCompleted,
-        dismissedTips = normalized.dismissedTips,
         lastOpenedScreen = lastOpenedScreen,
         compactMode = normalized.visualDensity == VisualDensity.COMPACT,
         pinnedTools = normalized.pinnedTools,
@@ -95,8 +84,6 @@ data class UserProfileRecord(
   val displayName: String?,
   val themePreference: ThemePreference,
   val visualDensity: VisualDensity,
-  val onboardingCompleted: Boolean,
-  val dismissedTips: Map<String, Boolean>,
   val lastOpenedScreen: ScreenType,
   val compactMode: Boolean,
   val pinnedTools: List<String>,
@@ -109,8 +96,6 @@ fun UserProfileRecord.toDomain(): UserProfile =
     displayName = displayName,
     themePreference = themePreference,
     visualDensity = visualDensity,
-    onboardingCompleted = onboardingCompleted,
-    dismissedTips = dismissedTips,
     lastOpenedScreen = lastOpenedScreen,
     compactMode = compactMode,
     pinnedTools = pinnedTools,
@@ -123,8 +108,6 @@ fun UserProfile.toRecord(): UserProfileRecord =
     displayName = displayName,
     themePreference = themePreference,
     visualDensity = visualDensity,
-    onboardingCompleted = onboardingCompleted,
-    dismissedTips = dismissedTips,
     lastOpenedScreen = lastOpenedScreen,
     compactMode = compactMode,
     pinnedTools = pinnedTools,
@@ -135,14 +118,11 @@ fun UserProfile.toRecord(): UserProfileRecord =
 data class UiPreferencesSnapshot(
   val themePreference: ThemePreference = ThemePreference.SYSTEM,
   val visualDensity: VisualDensity = VisualDensity.DEFAULT,
-  val onboardingCompleted: Boolean = false,
-  var dismissedTips: Map<String, Boolean> = emptyMap(),
   var pinnedTools: List<String> = emptyList(),
   var commandPaletteRecents: List<String> = emptyList(),
   val connectivityBannerLastDismissed: Instant? = null,
 ) {
   init {
-    dismissedTips = sanitizeDismissedTips(dismissedTips)
     pinnedTools = sanitizePinnedTools(pinnedTools)
     commandPaletteRecents = sanitizeCommandPaletteRecents(commandPaletteRecents)
   }
@@ -154,8 +134,6 @@ fun UserProfile.toPreferencesSnapshot(): UiPreferencesSnapshot =
   UiPreferencesSnapshot(
     themePreference = themePreference,
     visualDensity = visualDensity,
-    onboardingCompleted = onboardingCompleted,
-    dismissedTips = dismissedTips,
     pinnedTools = pinnedTools,
     commandPaletteRecents = emptyList(),
     connectivityBannerLastDismissed = null,

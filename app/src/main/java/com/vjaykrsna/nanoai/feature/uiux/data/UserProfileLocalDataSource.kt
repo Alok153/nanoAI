@@ -122,39 +122,6 @@ constructor(
   }
 
   /**
-   * Update onboarding completed flag in both DataStore and database.
-   *
-   * @param userId The unique user identifier
-   * @param completed True if onboarding is completed
-   */
-  suspend fun updateOnboardingCompleted(userId: String, completed: Boolean) {
-    // Update DataStore for immediate UI effect
-    uiPreferencesStore.setOnboardingCompleted(completed)
-
-    // Update database for persistence
-    userProfileDao.updateOnboardingCompleted(userId, completed)
-  }
-
-  /**
-   * Dismiss a tip in both DataStore and database.
-   *
-   * @param userId The unique user identifier
-   * @param tipId The tip ID to dismiss
-   */
-  suspend fun dismissTip(userId: String, tipId: String) {
-    // Update DataStore for immediate UI effect
-    uiPreferencesStore.dismissTip(tipId)
-
-    // Update database for persistence
-    val profile = userProfileDao.getById(userId)
-    if (profile != null) {
-      val updated = profile.dismissedTips.toMutableMap()
-      updated[tipId] = true
-      userProfileDao.updateDismissedTips(userId, updated)
-    }
-  }
-
-  /**
    * Update pinned tools in both DataStore and database.
    *
    * @param userId The unique user identifier
@@ -166,12 +133,6 @@ constructor(
 
     // Update database for persistence
     userProfileDao.updatePinnedTools(userId, pinnedTools)
-  }
-
-  /** Replace dismissed tips with provided snapshot across DataStore and Room. */
-  suspend fun setDismissedTips(userId: String, dismissedTips: Map<String, Boolean>) {
-    uiPreferencesStore.setDismissedTips(dismissedTips)
-    userProfileDao.updateDismissedTips(userId, dismissedTips)
   }
 
   /**

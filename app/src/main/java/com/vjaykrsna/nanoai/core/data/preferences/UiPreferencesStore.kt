@@ -3,7 +3,6 @@ package com.vjaykrsna.nanoai.core.data.preferences
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -18,8 +17,8 @@ import kotlinx.datetime.Instant
 /**
  * DataStore-based storage for UI/UX preferences.
  *
- * Provides reactive Flow-based access to theme, density, onboarding, and other UI settings. Uses
- * Preferences DataStore for simple key-value storage with JSON serialization for complex types.
+ * Provides reactive Flow-based access to theme, density, and other UI settings. Uses Preferences
+ * DataStore for simple key-value storage with JSON serialization for complex types.
  */
 @Singleton
 class UiPreferencesStore(
@@ -34,8 +33,6 @@ class UiPreferencesStore(
 
     private val KEY_THEME_PREFERENCE = stringPreferencesKey("theme_preference")
     private val KEY_VISUAL_DENSITY = stringPreferencesKey("visual_density")
-    private val KEY_ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
-    private val KEY_DISMISSED_TIPS = stringPreferencesKey("dismissed_tips")
     private val KEY_PINNED_TOOL_IDS = stringPreferencesKey("pinned_tool_ids")
     private val KEY_COMMAND_PALETTE_RECENTS = stringPreferencesKey("command_palette_recents")
     private val KEY_CONNECTIVITY_BANNER_DISMISSED =
@@ -55,11 +52,6 @@ class UiPreferencesStore(
           preferences[KEY_VISUAL_DENSITY]?.let { name ->
             VisualDensity.values().firstOrNull { it.name.equals(name, ignoreCase = true) }
           } ?: VisualDensity.DEFAULT,
-        onboardingCompleted = preferences[KEY_ONBOARDING_COMPLETED] ?: false,
-        dismissedTips =
-          converters.decodeBooleanMap(
-            preferences[KEY_DISMISSED_TIPS],
-          ),
         pinnedToolIds =
           converters.decodeStringList(
             preferences[KEY_PINNED_TOOL_IDS],
@@ -93,45 +85,6 @@ class UiPreferencesStore(
    */
   suspend fun setVisualDensity(visualDensity: VisualDensity) {
     context.dataStore.edit { preferences -> preferences[KEY_VISUAL_DENSITY] = visualDensity.name }
-  }
-
-  /**
-   * Update onboarding completed flag.
-   *
-   * @param completed True if onboarding is completed
-   */
-  suspend fun setOnboardingCompleted(completed: Boolean) {
-    context.dataStore.edit { preferences -> preferences[KEY_ONBOARDING_COMPLETED] = completed }
-  }
-
-  /**
-   * Update dismissed tips map.
-   *
-   * @param dismissedTips Map of tip IDs to dismissed status
-   */
-  suspend fun setDismissedTips(dismissedTips: Map<String, Boolean>) {
-    context.dataStore.edit { preferences ->
-      preferences[KEY_DISMISSED_TIPS] = converters.encodeBooleanMap(dismissedTips)
-    }
-  }
-
-  /**
-   * Dismiss a specific tip by ID.
-   *
-   * @param tipId The tip ID to dismiss
-   */
-  suspend fun dismissTip(tipId: String) {
-    context.dataStore.edit { preferences ->
-      val current =
-        converters.decodeBooleanMap(
-          preferences[KEY_DISMISSED_TIPS],
-        )
-
-      val updated = current.toMutableMap()
-      updated[tipId] = true
-
-      preferences[KEY_DISMISSED_TIPS] = converters.encodeBooleanMap(updated)
-    }
   }
 
   /**

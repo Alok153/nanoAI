@@ -92,7 +92,7 @@ A privacy-conscious user launches nanoAI for the first time, sees a clear discla
 ## Implementation Traceability *(reference)*
 - FR-001 → `app/src/main/java/com/vjaykrsna/nanoai/ui/navigation/NavigationScaffold.kt`, `app/src/main/java/com/vjaykrsna/nanoai/feature/settings/presentation/FirstLaunchDisclaimerViewModel.kt`, `app/src/main/java/com/vjaykrsna/nanoai/core/data/preferences/PrivacyPreferenceStore.kt`
 - FR-002 → `app/src/main/java/com/vjaykrsna/nanoai/feature/settings/data/ImportServiceImpl.kt`, `app/src/main/java/com/vjaykrsna/nanoai/feature/settings/data/ExportServiceImpl.kt`, `app/src/test/contract/ImportExportContractTest.kt`
-- FR-003 → `app/src/main/java/com/vjaykrsna/nanoai/ui/navigation/NavigationScaffold.kt`, `app/src/main/java/com/vjaykrsna/nanoai/feature/sidebar/presentation/SidebarViewModel.kt`, `app/src/main/java/com/vjaykrsna/nanoai/core/data/preferences/InferencePreferenceRepository.kt`, `app/src/main/java/com/vjaykrsna/nanoai/core/domain/InferenceOrchestrator.kt`
+- FR-003 → `app/src/main/java/com/vjaykrsna/nanoai/ui/navigation/NavigationScaffold.kt`, `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/presentation/ShellViewModel.kt`, `app/src/main/java/com/vjaykrsna/nanoai/core/data/preferences/InferencePreferenceRepository.kt`, `app/src/main/java/com/vjaykrsna/nanoai/core/domain/InferenceOrchestrator.kt`
 - FR-004 → `.github/workflows/android-ci.yml`, `specs/002-disclaimer-and-fixes/tasks.md`
 - FR-005 → `app/src/main/java/com/vjaykrsna/nanoai/feature/settings/ui/FirstLaunchDisclaimer.kt`, UI tests under `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/settings/ui/FirstLaunchDisclaimerDialogTest.kt`
 

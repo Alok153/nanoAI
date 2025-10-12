@@ -14,13 +14,20 @@ data class CoverageTrendPoint(
 
   init {
     require(buildId.isNotBlank()) { "buildId must not be blank" }
-    require(coverage in 0.0..100.0) { "Coverage must be between 0 and 100" }
-    require(threshold in 0.0..100.0) { "Threshold must be between 0 and 100" }
+    require(coverage in MIN_COVERAGE_PERCENT..MAX_COVERAGE_PERCENT) {
+      "Coverage must be between 0 and 100"
+    }
+    require(threshold in MIN_COVERAGE_PERCENT..MAX_COVERAGE_PERCENT) {
+      "Threshold must be between 0 and 100"
+    }
   }
 
   fun deltaFromThreshold(): Double = cachedDelta
 
   companion object {
+    private const val MIN_COVERAGE_PERCENT = 0.0
+    private const val MAX_COVERAGE_PERCENT = 100.0
+
     fun validateSequence(points: List<CoverageTrendPoint>) {
       points.zipWithNext { previous, current ->
         require(!current.recordedAt.isBefore(previous.recordedAt)) {

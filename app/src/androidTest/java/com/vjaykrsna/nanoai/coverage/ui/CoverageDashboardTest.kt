@@ -1,9 +1,8 @@
 package com.vjaykrsna.nanoai.coverage.ui
 
-import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertTextContains
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -22,7 +21,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class CoverageDashboardTest {
 
-  @get:Rule val composeRule = createAndroidComposeRule<ComponentActivity>()
+  @get:Rule val composeRule = createComposeRule()
 
   private val mockWebServer = MockWebServer()
 
@@ -64,11 +63,13 @@ class CoverageDashboardTest {
         CoverageDashboardScreen(
           state = state,
           onRefresh = {},
-          onRiskSelected = {},
-          onShareRequested = {},
+          onRiskSelect = {},
+          onShareRequest = {},
         )
       }
     }
+
+    composeRule.waitForIdle()
 
     composeRule.onNodeWithText("View Model").assertExists()
     composeRule.onNodeWithTag("coverage-layer-ViewModel").assertExists().assertTextContains("81.0%")
@@ -107,11 +108,13 @@ class CoverageDashboardTest {
         CoverageDashboardScreen(
           state = state,
           onRefresh = {},
-          onRiskSelected = {},
-          onShareRequested = {},
+          onRiskSelect = {},
+          onShareRequest = {},
         )
       }
     }
+
+    composeRule.waitForIdle()
 
     composeRule
       .onNodeWithContentDescription("Risk risk-critical-data, severity CRITICAL, status OPEN")
@@ -152,11 +155,13 @@ class CoverageDashboardTest {
         CoverageDashboardScreen(
           state = state,
           onRefresh = {},
-          onRiskSelected = {},
-          onShareRequested = {},
+          onRiskSelect = {},
+          onShareRequest = {},
         )
       }
     }
+
+    composeRule.waitForIdle()
 
     composeRule
       .onNodeWithTag("coverage-dashboard-error-banner")

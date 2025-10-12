@@ -13,15 +13,11 @@ import kotlinx.datetime.Instant
  *
  * @property themePreference User's theme preference (light/dark/system)
  * @property visualDensity Visual density preference for UI spacing
- * @property onboardingCompleted Whether user has completed onboarding flow
- * @property dismissedTips Map of tip IDs to dismissed status
  * @property pinnedToolIds Ordered list of pinned tool IDs (max 10)
  */
 data class UiPreferences(
   val themePreference: ThemePreference,
   val visualDensity: VisualDensity,
-  val onboardingCompleted: Boolean,
-  val dismissedTips: Map<String, Boolean>,
   val pinnedToolIds: List<String>,
   val commandPaletteRecents: List<String>,
   val connectivityBannerLastDismissed: Instant?,
@@ -30,8 +26,6 @@ data class UiPreferences(
     this(
       themePreference = ThemePreference.SYSTEM,
       visualDensity = VisualDensity.DEFAULT,
-      onboardingCompleted = false,
-      dismissedTips = emptyMap(),
       pinnedToolIds = emptyList(),
       commandPaletteRecents = emptyList(),
       connectivityBannerLastDismissed = null,
@@ -48,8 +42,6 @@ fun UiPreferences.toDomainSnapshot(): UiPreferencesSnapshot =
   UiPreferencesSnapshot(
     themePreference = themePreference,
     visualDensity = visualDensity,
-    onboardingCompleted = onboardingCompleted,
-    dismissedTips = dismissedTips,
     pinnedTools = pinnedToolIds,
     commandPaletteRecents = commandPaletteRecents,
     connectivityBannerLastDismissed = connectivityBannerLastDismissed,
@@ -64,8 +56,6 @@ fun UiPreferencesSnapshot.toDataStorePreferences(): UiPreferences =
   UiPreferences(
     themePreference = themePreference,
     visualDensity = visualDensity,
-    onboardingCompleted = onboardingCompleted,
-    dismissedTips = dismissedTips,
     pinnedToolIds = pinnedTools,
     commandPaletteRecents = commandPaletteRecents,
     connectivityBannerLastDismissed = connectivityBannerLastDismissed,

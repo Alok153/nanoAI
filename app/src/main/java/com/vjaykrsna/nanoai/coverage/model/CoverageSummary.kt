@@ -21,7 +21,7 @@ data class CoverageSummary(
     require(layerMetrics.keys == thresholds.keys) {
       "thresholds must provide values for the same layers as layerMetrics"
     }
-    require(layerMetrics.values.all { it.coverage in 0.0..100.0 }) {
+    require(layerMetrics.values.all { it.coverage in MIN_PERCENT..MAX_PERCENT }) {
       "Coverage metrics must be between 0 and 100"
     }
   }
@@ -34,18 +34,25 @@ data class CoverageSummary(
   fun thresholdFor(layer: TestLayer): Double =
     thresholds[layer] ?: error("No threshold recorded for $layer")
 
-  fun trendDeltaFor(layer: TestLayer): Double = trendDelta[layer] ?: 0.0
+  fun trendDeltaFor(layer: TestLayer): Double = trendDelta[layer] ?: DEFAULT_DELTA
 
   fun layersBelowTarget(): Set<TestLayer> =
     layerMetrics.filterValues { it.status == CoverageMetric.Status.BELOW_TARGET }.keys
 
   fun statusBreakdown(): Map<CoverageMetric.Status, Int> {
     val counts = EnumMap<CoverageMetric.Status, Int>(CoverageMetric.Status::class.java)
-    CoverageMetric.Status.entries.forEach { status -> counts[status] = 0 }
+    CoverageMetric.Status.entries.forEach { status -> counts[status] = INITIAL_STATUS_COUNT }
     layerMetrics.values.forEach { metric ->
       val status = metric.status
       counts[status] = counts.getValue(status) + 1
     }
     return counts
+  }
+
+  companion object {
+    private const val MIN_PERCENT = 0.0
+    private const val MAX_PERCENT = 100.0
+    private const val DEFAULT_DELTA = 0.0
+    private const val INITIAL_STATUS_COUNT = 0
   }
 }

@@ -69,22 +69,22 @@ data class RiskChipState(
 fun CoverageDashboardScreen(
   state: CoverageDashboardUiState,
   onRefresh: () -> Unit,
-  onRiskSelected: (RiskChipState) -> Unit = { _ -> },
-  onShareRequested: () -> Unit,
+  onRiskSelect: (RiskChipState) -> Unit = { _ -> },
+  onShareRequest: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
   Column(
     modifier = modifier.fillMaxSize().padding(16.dp),
     verticalArrangement = Arrangement.spacedBy(16.dp)
   ) {
-    HeaderSection(state = state, onRefresh = onRefresh, onShareRequested = onShareRequested)
+    HeaderSection(state = state, onRefresh = onRefresh, onShareRequest = onShareRequest)
 
     if (state.errorMessage != null) {
       ErrorBanner(message = state.errorMessage)
     }
 
     if (state.risks.isNotEmpty()) {
-      RiskSection(risks = state.risks, onRiskSelected = onRiskSelected)
+      RiskSection(risks = state.risks, onRiskSelect = onRiskSelect)
     }
 
     LayerList(layers = state.layers, trendDelta = state.trendDelta)
@@ -95,7 +95,7 @@ fun CoverageDashboardScreen(
 private fun HeaderSection(
   state: CoverageDashboardUiState,
   onRefresh: () -> Unit,
-  onShareRequested: () -> Unit,
+  onShareRequest: () -> Unit,
 ) {
   Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
     Text(
@@ -114,7 +114,7 @@ private fun HeaderSection(
     RowActions(
       isRefreshing = state.isRefreshing,
       onRefresh = onRefresh,
-      onShareRequested = onShareRequested
+      onShareRequest = onShareRequest
     )
   }
 }
@@ -123,7 +123,7 @@ private fun HeaderSection(
 private fun RowActions(
   isRefreshing: Boolean,
   onRefresh: () -> Unit,
-  onShareRequested: () -> Unit,
+  onShareRequest: () -> Unit,
 ) {
   androidx.compose.foundation.layout.Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
     Button(onClick = onRefresh, enabled = !isRefreshing) {
@@ -133,7 +133,7 @@ private fun RowActions(
       }
       Text(text = if (isRefreshing) "Refreshing" else "Refresh")
     }
-    TextButton(onClick = onShareRequested) { Text("Share report") }
+    TextButton(onClick = onShareRequest) { Text("Share report") }
   }
 }
 
@@ -157,7 +157,7 @@ private fun ErrorBanner(message: String) {
 
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
-private fun RiskSection(risks: List<RiskChipState>, onRiskSelected: (RiskChipState) -> Unit) {
+private fun RiskSection(risks: List<RiskChipState>, onRiskSelect: (RiskChipState) -> Unit) {
   Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
     Text(
       text = "Risks",
@@ -170,7 +170,7 @@ private fun RiskSection(risks: List<RiskChipState>, onRiskSelected: (RiskChipSta
     ) {
       risks.forEach { risk ->
         AssistChip(
-          onClick = { onRiskSelected(risk) },
+          onClick = { onRiskSelect(risk) },
           label = { Text(risk.title) },
           modifier =
             Modifier.semantics {
