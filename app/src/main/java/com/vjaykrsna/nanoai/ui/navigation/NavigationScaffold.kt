@@ -122,7 +122,6 @@ private fun ShellModeContent(
   when (modeId) {
     // HOME is handled directly by NanoShellScaffold - never called here
     ModeId.HOME -> error("HOME mode should be handled by NanoShellScaffold, not NavigationScaffold")
-
     ModeId.CHAT -> ChatScreen(modifier = modifier, onUpdateChatState = onUpdateChatState)
     ModeId.LIBRARY -> ModelLibraryScreen(modifier = modifier)
     ModeId.SETTINGS -> SettingsScreen(modifier = modifier)

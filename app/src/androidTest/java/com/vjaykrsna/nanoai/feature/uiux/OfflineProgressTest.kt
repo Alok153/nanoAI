@@ -122,47 +122,57 @@ class OfflineProgressTest {
 
   private fun handleIntent(state: MutableState<ShellUiState>, intent: ShellUiEvent) {
     val current = state.value
-    state.value = when (intent) {
-      is ShellUiEvent.ConnectivityChanged -> handleConnectivityChanged(current, intent)
-      is ShellUiEvent.QueueJob -> handleQueueJob(current, intent)
-      is ShellUiEvent.RetryJob -> handleRetryJob(current, intent)
-      is ShellUiEvent.CompleteJob -> handleCompleteJob(current, intent)
-      is ShellUiEvent.ModeSelected -> handleModeSelected(current, intent)
-      is ShellUiEvent.ToggleLeftDrawer -> handleToggleLeftDrawer(current)
-      is ShellUiEvent.ToggleRightDrawer -> handleToggleRightDrawer(current, intent)
-      is ShellUiEvent.ShowCommandPalette -> handleShowCommandPalette(current)
-      is ShellUiEvent.HideCommandPalette -> handleHideCommandPalette(current)
-      is ShellUiEvent.Undo -> handleUndo(current)
-      is ShellUiEvent.UpdateTheme -> handleUpdateTheme(current, intent)
-      is ShellUiEvent.UpdateDensity -> handleUpdateDensity(current, intent)
-      is ShellUiEvent.SetLeftDrawer -> handleSetLeftDrawer(current, intent)
-      else -> current
-    }
+    state.value =
+      when (intent) {
+        is ShellUiEvent.ConnectivityChanged -> handleConnectivityChanged(current, intent)
+        is ShellUiEvent.QueueJob -> handleQueueJob(current, intent)
+        is ShellUiEvent.RetryJob -> handleRetryJob(current, intent)
+        is ShellUiEvent.CompleteJob -> handleCompleteJob(current, intent)
+        is ShellUiEvent.ModeSelected -> handleModeSelected(current, intent)
+        is ShellUiEvent.ToggleLeftDrawer -> handleToggleLeftDrawer(current)
+        is ShellUiEvent.ToggleRightDrawer -> handleToggleRightDrawer(current, intent)
+        is ShellUiEvent.ShowCommandPalette -> handleShowCommandPalette(current)
+        is ShellUiEvent.HideCommandPalette -> handleHideCommandPalette(current)
+        is ShellUiEvent.Undo -> handleUndo(current)
+        is ShellUiEvent.UpdateTheme -> handleUpdateTheme(current, intent)
+        is ShellUiEvent.UpdateDensity -> handleUpdateDensity(current, intent)
+        is ShellUiEvent.SetLeftDrawer -> handleSetLeftDrawer(current, intent)
+        else -> current
+      }
   }
 
-  private fun handleConnectivityChanged(current: ShellUiState, intent: ShellUiEvent.ConnectivityChanged) =
+  private fun handleConnectivityChanged(
+    current: ShellUiState,
+    intent: ShellUiEvent.ConnectivityChanged
+  ) =
     current.copy(
       layout = current.layout.copy(connectivity = intent.status),
-      connectivityBanner = current.connectivityBanner.copy(status = intent.status, queuedActionCount = 0),
+      connectivityBanner =
+        current.connectivityBanner.copy(status = intent.status, queuedActionCount = 0),
     )
 
   private fun handleQueueJob(current: ShellUiState, intent: ShellUiEvent.QueueJob) =
-    current.copy(layout = current.layout.copy(progressJobs = current.layout.progressJobs + intent.job))
+    current.copy(
+      layout = current.layout.copy(progressJobs = current.layout.progressJobs + intent.job)
+    )
 
   private fun handleRetryJob(current: ShellUiState, intent: ShellUiEvent.RetryJob) =
     current.copy(
-      layout = current.layout.copy(
-        progressJobs = current.layout.progressJobs.map { job ->
-          if (job.jobId == intent.job.jobId) job.copy(status = JobStatus.PENDING) else job
-        }
-      )
+      layout =
+        current.layout.copy(
+          progressJobs =
+            current.layout.progressJobs.map { job ->
+              if (job.jobId == intent.job.jobId) job.copy(status = JobStatus.PENDING) else job
+            }
+        )
     )
 
   private fun handleCompleteJob(current: ShellUiState, intent: ShellUiEvent.CompleteJob) =
     current.copy(
-      layout = current.layout.copy(
-        progressJobs = current.layout.progressJobs.filterNot { job -> job.jobId == intent.jobId }
-      )
+      layout =
+        current.layout.copy(
+          progressJobs = current.layout.progressJobs.filterNot { job -> job.jobId == intent.jobId }
+        )
     )
 
   private fun handleModeSelected(current: ShellUiState, intent: ShellUiEvent.ModeSelected) =
@@ -171,12 +181,16 @@ class OfflineProgressTest {
   private fun handleToggleLeftDrawer(current: ShellUiState) =
     current.copy(layout = current.layout.copy(isLeftDrawerOpen = !current.layout.isLeftDrawerOpen))
 
-  private fun handleToggleRightDrawer(current: ShellUiState, intent: ShellUiEvent.ToggleRightDrawer) =
+  private fun handleToggleRightDrawer(
+    current: ShellUiState,
+    intent: ShellUiEvent.ToggleRightDrawer
+  ) =
     current.copy(
-      layout = current.layout.copy(
-        isRightDrawerOpen = !current.layout.isRightDrawerOpen,
-        activeRightPanel = intent.panel,
-      )
+      layout =
+        current.layout.copy(
+          isRightDrawerOpen = !current.layout.isRightDrawerOpen,
+          activeRightPanel = intent.panel,
+        )
     )
 
   private fun handleShowCommandPalette(current: ShellUiState) =
