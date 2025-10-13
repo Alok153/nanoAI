@@ -73,16 +73,27 @@ class HomeHubFlowTest {
     composeRule.setContent { NanoShellScaffold(state = state.value, onEvent = {}) }
 
     composeRule.onNodeWithTag("recent_activity_list").assertIsDisplayed()
-    composeRule.onAllNodesWithTag("recent_activity_item").assertCountEquals(2)
+    val items = composeRule.onAllNodesWithTag("recent_activity_item")
+    items.assertCountEquals(2)
+    items[0].assertIsDisplayed()
   }
 
   @Test
   fun quickActions_sectionVisible() {
+    val events = mutableListOf<ShellUiEvent>()
     val state = mutableStateOf(sampleState())
-    composeRule.setContent { NanoShellScaffold(state = state.value, onEvent = {}) }
+    composeRule.setContent { NanoShellScaffold(state = state.value, onEvent = { events += it }) }
 
     composeRule.onNodeWithTag("quick_actions_row").assertIsDisplayed()
-    composeRule.onNodeWithContentDescription("New Chat").assertIsDisplayed()
+    composeRule.onNodeWithContentDescription("New Chat").assertIsDisplayed().performClick()
+
+    composeRule.waitUntil {
+      events.any { it is ShellUiEvent.CommandInvoked } &&
+        events.any { it is ShellUiEvent.ModeSelected && it.modeId == ModeId.CHAT }
+    }
+
+    assertThat(events.filterIsInstance<ShellUiEvent.CommandInvoked>().first().action.title)
+      .isEqualTo("New Chat")
   }
 
   private fun sampleState(): ShellUiState {

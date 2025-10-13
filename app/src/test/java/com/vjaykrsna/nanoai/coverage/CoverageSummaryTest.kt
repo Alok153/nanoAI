@@ -3,6 +3,7 @@ package com.vjaykrsna.nanoai.coverage
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.coverage.model.CoverageMetric
 import com.vjaykrsna.nanoai.coverage.model.CoverageSummary
+import com.vjaykrsna.nanoai.coverage.model.RiskRegisterItemRef
 import com.vjaykrsna.nanoai.coverage.model.TestLayer
 import java.time.Instant
 import org.junit.jupiter.api.Test
@@ -62,7 +63,7 @@ class CoverageSummaryTest {
             TestLayer.UI to -0.5,
             TestLayer.DATA to 2.0,
           ),
-        riskItems = listOf("risk-critical-data"),
+        riskItems = listOf(RiskRegisterItemRef("risk-critical-data")),
       )
 
     assertThat(summary.layersBelowTarget()).containsExactly(TestLayer.VIEW_MODEL, TestLayer.UI)

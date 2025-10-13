@@ -10,7 +10,7 @@ data class CoverageTrendPoint(
   val threshold: Double,
   val recordedAt: Instant,
 ) {
-  private val cachedDelta: Double = coverage - threshold
+  private val roundedDelta: Double = (coverage - threshold).roundToSingleDecimal()
 
   init {
     require(buildId.isNotBlank()) { "buildId must not be blank" }
@@ -22,7 +22,7 @@ data class CoverageTrendPoint(
     }
   }
 
-  fun deltaFromThreshold(): Double = cachedDelta
+  fun deltaFromThreshold(): Double = roundedDelta
 
   companion object {
     private const val MIN_COVERAGE_PERCENT = 0.0
@@ -32,6 +32,18 @@ data class CoverageTrendPoint(
       points.zipWithNext { previous, current ->
         require(!current.recordedAt.isBefore(previous.recordedAt)) {
           "Coverage trend points must be ordered by non-decreasing recordedAt"
+        }
+        if (current.layer == previous.layer) {
+          require(
+            current.threshold.roundToSingleDecimal() == previous.threshold.roundToSingleDecimal()
+          ) {
+            "Threshold for ${current.layer} changed between ${previous.buildId} and ${current.buildId}"
+          }
+          val previousCoverage = previous.coverage.roundToSingleDecimal()
+          val currentCoverage = current.coverage.roundToSingleDecimal()
+          require(currentCoverage >= previousCoverage) {
+            "Coverage regressed for ${current.layer} between ${previous.buildId} and ${current.buildId}"
+          }
         }
       }
     }

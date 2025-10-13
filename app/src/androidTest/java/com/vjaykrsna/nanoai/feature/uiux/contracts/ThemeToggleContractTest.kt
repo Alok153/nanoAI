@@ -2,6 +2,7 @@ package com.vjaykrsna.nanoai.feature.uiux.contracts
 
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -30,10 +31,32 @@ class ThemeToggleContractTest {
       .assertIsDisplayed()
       .assertHasClickAction()
       .performClick()
+
+    composeRule.waitForIdle()
+    composeRule
+      .onNodeWithTag("theme_toggle_persistence_status")
+      .assertIsDisplayed()
+      .assertTextContains("Current:", substring = true)
   }
 
   @Test
   fun themeToggle_persistsSelection_acrossRecomposition() {
-    composeRule.onNodeWithTag("theme_toggle_persistence_status").assertIsDisplayed()
+    composeRule.onNodeWithTag("theme_toggle_switch").performClick()
+    composeRule.waitForIdle()
+    composeRule.mainClock.advanceTimeBy(500)
+    composeRule.waitForIdle()
+
+    composeRule
+      .onNodeWithTag("theme_toggle_persistence_status")
+      .assertIsDisplayed()
+      .assertTextContains("Dark", substring = true)
+
+    composeRule.activityRule.scenario.recreate()
+    composeRule.waitForIdle()
+
+    composeRule
+      .onNodeWithTag("theme_toggle_persistence_status")
+      .assertIsDisplayed()
+      .assertTextContains("Dark", substring = true)
   }
 }

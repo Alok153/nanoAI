@@ -94,6 +94,8 @@ class ModelCatalogOfflineTest {
       val recorded = mockWebServer.takeRequest(1, TimeUnit.SECONDS)
       assertThat(recorded).isNotNull()
       assertThat(recorded?.path).isEqualTo("/catalog")
+      assertThat(recorded?.getHeader("Accept")).isEqualTo("application/json")
+      assertThat(mockWebServer.requestCount).isEqualTo(1)
     }
 
   private fun sampleModel(id: String): ModelPackage =

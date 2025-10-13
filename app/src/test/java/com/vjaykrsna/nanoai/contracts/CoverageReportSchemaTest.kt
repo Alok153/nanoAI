@@ -11,6 +11,7 @@ import com.vjaykrsna.nanoai.coverage.model.CoverageMetric
 import com.vjaykrsna.nanoai.coverage.model.CoverageSummary
 import com.vjaykrsna.nanoai.coverage.model.CoverageTrendPoint
 import com.vjaykrsna.nanoai.coverage.model.RiskRegisterItem
+import com.vjaykrsna.nanoai.coverage.model.RiskRegisterItemRef
 import com.vjaykrsna.nanoai.coverage.model.TestLayer
 import com.vjaykrsna.nanoai.coverage.model.TestSuiteCatalogEntry
 import java.nio.file.Files
@@ -30,15 +31,7 @@ class CoverageReportSchemaTest {
 
   @BeforeEach
   fun setUp() {
-    schemaPath =
-      Path.of(
-        System.getProperty("user.dir"),
-        "specs",
-        "005-improve-test-coverage",
-        "contracts",
-        "coverage-report.schema.json",
-      )
-    check(Files.exists(schemaPath)) { "Expected coverage schema at ${schemaPath.toAbsolutePath()}" }
+    schemaPath = resolveSchemaPath()
     schemaFactory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7)
   }
 
@@ -95,6 +88,19 @@ class CoverageReportSchemaTest {
   private fun JsonObject.requireArray(key: String) =
     get(key)?.let { element -> element.jsonArray } ?: error("Expected array '$key' in payload")
 
+  private fun resolveSchemaPath(): Path {
+    val workingDir = Path.of("").toAbsolutePath()
+    return generateSequence(workingDir) { current -> current.parent }
+      .map { candidate -> candidate.resolve(SCHEMA_RELATIVE_PATH) }
+      .firstOrNull { Files.exists(it) }
+      ?: error("Expected coverage schema at ${workingDir.resolve(SCHEMA_RELATIVE_PATH)}")
+  }
+
+  companion object {
+    private val SCHEMA_RELATIVE_PATH =
+      Path.of("specs", "005-improve-test-coverage", "contracts", "coverage-report.schema.json")
+  }
+
   private fun sampleSummary(): CoverageSummary =
     CoverageSummary(
       buildId = "build-123",
@@ -117,7 +123,7 @@ class CoverageReportSchemaTest {
           TestLayer.UI to 0.0,
           TestLayer.DATA to 2.1,
         ),
-      riskItems = listOf("risk-offline-catalog"),
+      riskItems = listOf(RiskRegisterItemRef("risk-offline-catalog")),
     )
 
   private fun sampleTrend(): List<CoverageTrendPoint> =

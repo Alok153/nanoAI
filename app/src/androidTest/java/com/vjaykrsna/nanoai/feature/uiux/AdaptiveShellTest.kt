@@ -6,9 +6,14 @@ import androidx.compose.material3.windowsizeclass.WindowHeightSizeClass
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -53,6 +58,7 @@ class AdaptiveShellTest {
     composeRule.setContent { NanoShellScaffold(state = state.value, onEvent = {}) }
 
     composeRule.onNodeWithTag("left_drawer_permanent").assertIsDisplayed()
+    composeRule.onAllNodesWithTag("left_drawer_modal").assertCountEquals(0)
   }
 
   @Test
@@ -61,7 +67,10 @@ class AdaptiveShellTest {
       mutableStateOf(sampleState(WindowWidthSizeClass.Medium, WindowHeightSizeClass.Medium))
     composeRule.setContent { NanoShellScaffold(state = state.value, onEvent = {}) }
 
-    composeRule.onNodeWithTag("shell_content").assertIsDisplayed()
+    val content = composeRule.onNodeWithTag("shell_content")
+    content.assertIsDisplayed()
+    content.performSemanticsAction(SemanticsActions.RequestFocus)
+    content.assertIsFocused()
   }
 
   private fun sampleState(

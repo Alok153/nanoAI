@@ -57,5 +57,16 @@ class OfflinePersonaFlowTest {
       .onNodeWithTag("offline_persona_queue_status")
       .assertIsDisplayed()
       .assertTextContains("replayed", substring = true, ignoreCase = true)
+
+    composeRule
+      .onNodeWithTag("persona_debug_toggle_online")
+      .assertIsDisplayed()
+      .assertHasClickAction()
+      .performClick()
+
+    composeRule
+      .onNodeWithTag("offline_persona_queue_count")
+      .assertIsDisplayed()
+      .assertTextContains("0", substring = false)
   }
 }

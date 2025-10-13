@@ -10,8 +10,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsSelectable
 import androidx.compose.ui.test.hasText
@@ -91,7 +93,7 @@ class CommandPaletteComposeTest {
     }
 
     composeTestRule.onNodeWithTag("command_palette").assertIsDisplayed()
-    composeTestRule.onNodeWithTag("command_palette_search").assertIsDisplayed()
+    composeTestRule.onNodeWithTag("command_palette_search").assertIsDisplayed().assertIsFocused()
     assertThat(recorder.events)
       .contains(ShellUiEvent.ShowCommandPalette(PaletteSource.KEYBOARD_SHORTCUT))
   }
@@ -260,7 +262,7 @@ class CommandPaletteComposeTest {
     )
 
     composeTestRule.onNodeWithText("Image generation queued for reconnect").assertIsDisplayed()
-    composeTestRule.onNodeWithText("Undo").performClick()
+    composeTestRule.onNodeWithText("Undo").assertIsDisplayed().assertHasClickAction().performClick()
 
     composeTestRule.waitUntil {
       recorder.events.any { it is ShellUiEvent.Undo && it.payload == payload }

@@ -1,7 +1,10 @@
 package com.vjaykrsna.nanoai.disclaimer
 
+import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -32,13 +35,23 @@ class DisclaimerDialogTest {
 
   @Test
   fun disclaimerDialog_requiresAcknowledgement_and_readsWithTalkBack() {
-    composeRule.onNodeWithTag("disclaimer_dialog_container").assertIsDisplayed()
+    composeRule
+      .onNodeWithTag("disclaimer_dialog_container")
+      .assertIsDisplayed()
+      .assertContentDescriptionEquals("nanoAI privacy disclaimer dialog")
+
+    composeRule
+      .onNodeWithTag("disclaimer_accept_button")
+      .assertIsDisplayed()
+      .assertIsNotEnabled()
+      .assertContentDescriptionEquals("Accept privacy terms")
 
     composeRule.onNodeWithTag("disclaimer_scrollable_content").assertIsDisplayed().performScrollTo()
 
     composeRule
       .onNodeWithTag("disclaimer_accept_button")
       .assertIsDisplayed()
+      .assertIsEnabled()
       .assertHasClickAction()
       .assertTextContains("Agree", substring = true)
       .performClick()
@@ -47,6 +60,7 @@ class DisclaimerDialogTest {
       .onNodeWithTag("disclaimer_decline_button")
       .assertIsDisplayed()
       .assertHasClickAction()
+      .assertContentDescriptionEquals("Decline and review later")
       .assertTextContains("Decline", substring = true)
   }
 }

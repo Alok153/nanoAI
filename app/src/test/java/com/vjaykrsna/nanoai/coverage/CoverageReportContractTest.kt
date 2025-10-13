@@ -9,6 +9,7 @@ import com.vjaykrsna.nanoai.coverage.model.CoverageMetric
 import com.vjaykrsna.nanoai.coverage.model.CoverageSummary
 import com.vjaykrsna.nanoai.coverage.model.CoverageTrendPoint
 import com.vjaykrsna.nanoai.coverage.model.RiskRegisterItem
+import com.vjaykrsna.nanoai.coverage.model.RiskRegisterItemRef
 import com.vjaykrsna.nanoai.coverage.model.TestLayer
 import com.vjaykrsna.nanoai.coverage.model.TestSuiteCatalogEntry
 import java.time.Clock
@@ -254,7 +255,7 @@ class CoverageReportContractTest {
       layerMetrics = defaultLayerMetrics(),
       thresholds = defaultThresholds(),
       trendDelta = trendDelta,
-      riskItems = riskIds,
+      riskItems = riskIds.map(::RiskRegisterItemRef),
     )
 
   private fun defaultLayerMetrics(): Map<TestLayer, CoverageMetric> =

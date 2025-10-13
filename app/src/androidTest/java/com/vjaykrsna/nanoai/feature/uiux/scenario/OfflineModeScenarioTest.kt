@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai.feature.uiux.scenario
 
+import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
@@ -43,7 +44,10 @@ class OfflineModeScenarioTest {
       .assertIsDisplayed()
       .assertTextContains("offline", substring = true, ignoreCase = true)
 
-    composeRule.onNodeWithTag("offline_disabled_actions_summary").assertIsDisplayed()
+    composeRule
+      .onNodeWithTag("offline_banner_disabled_actions")
+      .assertIsDisplayed()
+      .assertContentDescriptionEquals("Offline actions disabled until reconnect")
 
     composeRule
       .onNodeWithTag("offline_banner_retry")
@@ -52,7 +56,7 @@ class OfflineModeScenarioTest {
       .performClick()
 
     composeRule
-      .onNodeWithTag("offline_retry_queue_status")
+      .onNodeWithTag("offline_banner_queue_status")
       .assertIsDisplayed()
       .assertTextContains("queued", substring = true, ignoreCase = true)
   }

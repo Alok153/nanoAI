@@ -86,6 +86,9 @@ class SettingsScreenContractTest {
     }
 
     composeRule.onNodeWithText("Settings").assertIsDisplayed()
+    composeRule
+      .onNodeWithContentDescription("Settings screen organized by tabs with contextual sections")
+      .assertIsDisplayed()
     composeRule.onNodeWithText("General").assertIsDisplayed()
     composeRule.onNodeWithText("General").assertHasClickAction()
     composeRule
@@ -125,7 +128,12 @@ class SettingsScreenContractTest {
     composeRule
       .onNodeWithText("Connect remote APIs or local runtimes to power nanoAI's modes.")
       .assertIsDisplayed()
-    composeRule.onNodeWithContentDescription("Add API provider").assertIsDisplayed()
+    composeRule
+      .onNodeWithContentDescription("Add API provider")
+      .assertIsDisplayed()
+      .assertHasClickAction()
+    composeRule.onNodeWithContentDescription("Edit Test Provider").assertIsDisplayed()
+    composeRule.onNodeWithContentDescription("Delete Test Provider").assertIsDisplayed()
   }
 
   @Test

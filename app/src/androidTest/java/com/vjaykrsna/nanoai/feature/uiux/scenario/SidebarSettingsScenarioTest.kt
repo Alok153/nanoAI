@@ -4,7 +4,9 @@ import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
@@ -26,8 +28,9 @@ class SidebarSettingsScenarioTest {
 
   @Test
   fun sidebarNavigation_reachesSettings_withUndoAffordance() {
+    composeRule.onNodeWithTag("topbar_nav_icon").assertIsDisplayed().assertHasClickAction()
     composeRule
-      .onNodeWithTag("sidebar_toggle")
+      .onNodeWithContentDescription("Toggle navigation drawer")
       .assertIsDisplayed()
       .assertHasClickAction()
       .performClick()
@@ -40,9 +43,10 @@ class SidebarSettingsScenarioTest {
       .assertHasClickAction()
       .performClick()
 
-    composeRule.onNodeWithTag("settings_grouped_options").assertIsDisplayed()
-
-    composeRule.onNodeWithTag("settings_inline_help").assertIsDisplayed()
+    composeRule.onNodeWithText("Settings").assertIsDisplayed()
+    composeRule
+      .onNodeWithContentDescription("Settings screen organized by tabs with contextual sections")
+      .assertIsDisplayed()
 
     composeRule.onNodeWithTag("settings_undo_action").assertIsDisplayed().assertIsEnabled()
   }

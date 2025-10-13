@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai.model
 
+import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
@@ -52,11 +53,16 @@ class ModelDownloadScenarioTest {
       .onNodeWithTag("model_integrity_error_message")
       .assertIsDisplayed()
       .assertTextContains("integrity", substring = true, ignoreCase = true)
+      .assertContentDescriptionEquals("Model download integrity failure")
 
     composeRule
       .onNodeWithTag("model_integrity_retry_button")
       .assertIsDisplayed()
       .assertHasClickAction()
       .performClick()
+    composeRule
+      .onNodeWithTag("model_integrity_retry_confirmation")
+      .assertIsDisplayed()
+      .assertTextContains("retry queued", substring = true, ignoreCase = true)
   }
 }

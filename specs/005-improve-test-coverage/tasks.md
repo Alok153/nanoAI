@@ -17,24 +17,24 @@
 - [X] T009 [P] Expand `app/src/test/java/com/vjaykrsna/nanoai/coverage/model/TestLayerTest.kt` with expectations for `machineName` camel casing (`ViewModel`, `UI`, `Data`) and analytics key normalization.
 - [X] T010 [P] Add Jupiter tests in `app/src/test/java/com/vjaykrsna/nanoai/feature/settings/domain/huggingface/HuggingFaceAuthCoordinatorTest.kt` that fail until `slow_down` backoff and offline retry suppression are implemented.
 - [X] T011 [P] Add a cached-fallback expectation to `app/src/test/java/com/vjaykrsna/nanoai/feature/library/domain/RefreshModelCatalogUseCaseTest.kt`, asserting a successful result when the remote source throws.
-- [ ] T012 [P] Harden `app/src/androidTest/java/com/vjaykrsna/nanoai/coverage/ui/CoverageDashboardTest.kt` with assertions for formatted percent strings, `coverage-layer-*` tags, and offline announcement semantics.
-- [ ] T013 [P] Enhance `app/src/androidTest/java/com/vjaykrsna/nanoai/disclaimer/DisclaimerDialogTest.kt` to verify TalkBack descriptions and to fail when the accept button enables before scrolling.
-- [ ] T014 [P] Extend `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/library/data/ModelCatalogOfflineTest.kt` to assert successful results and audit MockWebServer calls during HTTP 503 fallbacks.
-- [ ] T015 [P] Strengthen `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/CommandPaletteComposeTest.kt` with focus assertions, retry button state checks, and snackbar undo expectations to surface current regressions.
-- [ ] T016 [P] Expand `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/HomeHubFlowTest.kt` with node visibility checks for quick actions, recent activity tags, and command palette events.
-- [ ] T017 [P] Update `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/AdaptiveShellTest.kt` to fail when permanent drawers stay hidden on expanded layouts or when accessibility focus cannot reach `shell_content`.
-- [ ] T018 [P] Add queue population and semantics coverage to `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/OfflineProgressTest.kt`, including retry intent verification.
-- [ ] T019 [P] Lock in `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/contracts/HomeScreenContractTest.kt` expectations for column counts, mode cards, and recent feed accessibility.
-- [ ] T020 [P] Strengthen `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/contracts/OfflineBannerContractTest.kt` with assertions for retry action semantics and disabled affordances.
-- [ ] T021 [P] Expand `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/contracts/SettingsScreenContractTest.kt` to validate offline provider listings, FAB visibility, and TalkBack copy.
-- [ ] T022 [P] Tighten `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/contracts/SidebarContractTest.kt` around drawer toggles, navigation destinations, and deep link slots.
-- [ ] T023 [P] Enhance `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/contracts/ThemeToggleContractTest.kt` with persistence and recomposition checks.
-- [ ] T024 [P] Enrich `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/scenario/HomeNavigationScenarioTest.kt` with assertions covering tools panel expansion and recent action execution.
-- [ ] T025 [P] Update `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/scenario/OfflineModeScenarioTest.kt` to fail when offline banners or retry queues are missing.
-- [ ] T026 [P] Add navigation + undo verification to `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/scenario/SidebarSettingsScenarioTest.kt`.
-- [ ] T027 [P] Extend `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/scenario/ThemeToggleScenarioTest.kt` with process-death persistence assertions.
-- [ ] T028 [P] Strengthen `app/src/androidTest/java/com/vjaykrsna/nanoai/model/ModelDownloadScenarioTest.kt` to expect actionable error banners and retry affordances.
-- [ ] T029 [P] Enhance `app/src/androidTest/java/com/vjaykrsna/nanoai/persona/OfflinePersonaFlowTest.kt` to verify persona queue replay after network restoration.
+- [X] T012 [P] Harden `app/src/androidTest/java/com/vjaykrsna/nanoai/coverage/ui/CoverageDashboardTest.kt` with assertions for formatted percent strings, `coverage-layer-*` tags, and offline announcement semantics.
+- [X] T013 [P] Enhance `app/src/androidTest/java/com/vjaykrsna/nanoai/disclaimer/DisclaimerDialogTest.kt` to verify TalkBack descriptions and to fail when the accept button enables before scrolling.
+- [X] T014 [P] Extend `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/library/data/ModelCatalogOfflineTest.kt` to assert successful results and audit MockWebServer calls during HTTP 503 fallbacks.
+- [X] T015 [P] Strengthen `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/CommandPaletteComposeTest.kt` with focus assertions, retry button state checks, and snackbar undo expectations to surface current regressions.
+- [X] T016 [P] Expand `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/HomeHubFlowTest.kt` with node visibility checks for quick actions, recent activity tags, and command palette events.
+- [X] T017 [P] Update `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/AdaptiveShellTest.kt` to fail when permanent drawers stay hidden on expanded layouts or when accessibility focus cannot reach `shell_content`.
+- [X] T018 [P] Add queue population and semantics coverage to `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/OfflineProgressTest.kt`, including retry intent verification.
+- [X] T019 [P] Lock in `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/contracts/HomeScreenContractTest.kt` expectations for column counts, mode cards, and recent feed accessibility.
+- [X] T020 [P] Strengthen `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/contracts/OfflineBannerContractTest.kt` with assertions for retry action semantics and disabled affordances.
+- [X] T021 [P] Expand `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/contracts/SettingsScreenContractTest.kt` to validate offline provider listings, FAB visibility, and TalkBack copy.
+- [X] T022 [P] Tighten `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/contracts/SidebarContractTest.kt` around drawer toggles, navigation destinations, and deep link slots.
+- [X] T023 [P] Enhance `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/contracts/ThemeToggleContractTest.kt` with persistence and recomposition checks.
+- [X] T024 [P] Enrich `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/scenario/HomeNavigationScenarioTest.kt` with assertions covering tools panel expansion and recent action execution.
+- [X] T025 [P] Update `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/scenario/OfflineModeScenarioTest.kt` to fail when offline banners or retry queues are missing.
+- [X] T026 [P] Add navigation + undo verification to `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/scenario/SidebarSettingsScenarioTest.kt`.
+- [X] T027 [P] Extend `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/scenario/ThemeToggleScenarioTest.kt` with process-death persistence assertions.
+- [X] T028 [P] Strengthen `app/src/androidTest/java/com/vjaykrsna/nanoai/model/ModelDownloadScenarioTest.kt` to expect actionable error banners and retry affordances.
+- [X] T029 [P] Enhance `app/src/androidTest/java/com/vjaykrsna/nanoai/persona/OfflinePersonaFlowTest.kt` to verify persona queue replay after network restoration.
 
 ## Phase 3.3: Core Implementation
 - [ ] T030 [P] Replace `riskItems: List<String>` with typed references in `app/src/main/java/com/vjaykrsna/nanoai/coverage/model/CoverageSummary.kt` and introduce `RiskRegisterItemRef` to satisfy the new tests.

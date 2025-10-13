@@ -1,8 +1,15 @@
 package com.vjaykrsna.nanoai.feature.uiux.contracts
 
+import androidx.compose.ui.semantics.CollectionInfo
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertContentDescriptionContains
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
@@ -23,12 +30,16 @@ class HomeScreenContractTest {
   @get:Rule(order = 1) val composeRule = createAndroidComposeRule<MainActivity>()
 
   @Test
-  fun homeScreen_rendersSingleColumnFeed_withRecentActions() {
-    composeRule.onNodeWithTag("home_single_column_feed").assertIsDisplayed()
+  fun homeScreen_modeGrid_exposesColumnMetadata() {
+    composeRule.onNodeWithTag("home_hub").assertIsDisplayed()
 
-    composeRule.onNodeWithTag("home_recent_actions_header").assertIsDisplayed()
+    val expectedCollection = CollectionInfo(rowCount = 1, columnCount = 3)
+    composeRule
+      .onNodeWithTag("home_mode_grid")
+      .assertIsDisplayed()
+      .assert(SemanticsMatcher.expectValue(SemanticsProperties.CollectionInfo, expectedCollection))
 
-    composeRule.onNodeWithTag("home_recent_action_0").assertIsDisplayed().assertHasClickAction()
+    composeRule.onAllNodesWithTag("mode_card").assertCountEquals(3)
   }
 
   @Test
@@ -36,5 +47,14 @@ class HomeScreenContractTest {
     composeRule.onNodeWithTag("home_tools_toggle").assertIsDisplayed().assertHasClickAction()
 
     composeRule.onNodeWithTag("home_tools_panel_collapsed").assertIsDisplayed()
+  }
+
+  @Test
+  fun homeScreen_recentFeed_announcesAccessibilitySemantics() {
+    composeRule.onNodeWithTag("recent_activity_list").assertIsDisplayed()
+    composeRule
+      .onAllNodesWithTag("recent_activity_item")[0]
+      .assertIsDisplayed()
+      .assertContentDescriptionContains("status", substring = true)
   }
 }

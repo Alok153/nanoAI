@@ -2,6 +2,7 @@ package com.vjaykrsna.nanoai.coverage.ui
 
 import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -81,8 +82,16 @@ class CoverageDashboardTest {
     composeRule.waitForIdle()
 
     composeRule.onNodeWithText("View Model").assertExists()
-    composeRule.onNodeWithTag("coverage-layer-ViewModel").assertExists().assertTextContains("81.0%")
-    composeRule.onNodeWithTag("coverage-layer-Ui").assertExists().assertTextContains("66.0%")
+    composeRule
+      .onNodeWithTag("coverage-layer-ViewModel")
+      .assertExists()
+      .assertTextEquals("81.0% • Target 75.0%")
+      .assertTextContains("Target 75.0%")
+    composeRule
+      .onNodeWithTag("coverage-layer-Ui")
+      .assertExists()
+      .assertTextEquals("66.0% • Target 65.0%")
+      .assertTextContains("Target 65.0%")
   }
 
   @Test
@@ -195,6 +204,7 @@ class CoverageDashboardTest {
       .assertExists()
       .assertTextContains("Device farm offline")
       .assertTextContains("HTTP")
+      .assertContentDescriptionEquals(OFFLINE_ANNOUNCEMENT)
 
     composeRule
       .onNodeWithContentDescription(OFFLINE_ANNOUNCEMENT)
