@@ -45,7 +45,7 @@ data class CoverageDashboardUiState(
   val layers: List<LayerCoverageState>,
   val risks: List<RiskChipState>,
   val trendDelta: Map<TestLayer, Double>,
-  val errorMessage: String?,
+  val errorBanner: CoverageBanner? = null,
 )
 
 /** Simple value object describing coverage metrics per layer. */
@@ -76,9 +76,7 @@ fun CoverageDashboardScreen(
   ) {
     HeaderSection(state = state, onRefresh = onRefresh, onShareRequest = onShareRequest)
 
-    if (state.errorMessage != null) {
-      ErrorBanner(message = state.errorMessage)
-    }
+    state.errorBanner?.let { banner -> ErrorBanner(banner = banner) }
 
     if (state.risks.isNotEmpty()) {
       RiskSection(risks = state.risks, onRiskSelect = onRiskSelect)
@@ -135,16 +133,16 @@ private fun RowActions(
 }
 
 @Composable
-private fun ErrorBanner(message: String) {
+private fun ErrorBanner(banner: CoverageBanner) {
   Surface(
     modifier =
       Modifier.fillMaxWidth().testTag("coverage-dashboard-error-banner").semantics {
-        contentDescription = CoverageDashboardBanner.OFFLINE_ANNOUNCEMENT
+        contentDescription = banner.announcement
       },
     color = MaterialTheme.colorScheme.errorContainer,
   ) {
     Text(
-      text = message,
+      text = banner.message,
       modifier = Modifier.padding(16.dp),
       style = MaterialTheme.typography.bodyMedium,
       color = MaterialTheme.colorScheme.onErrorContainer,
@@ -197,7 +195,7 @@ private fun LayerList(layers: List<LayerCoverageState>, trendDelta: Map<TestLaye
 private fun LayerCard(state: LayerCoverageState, delta: Double?) {
   val layer = state.layer
   val metric = state.metric
-  val tag = "coverage-layer-${layer.machineName.replaceFirstChar { it.titlecase(Locale.US) }}"
+  val tag = "coverage-layer-${layer.machineName}"
   Card(
     modifier = Modifier.fillMaxWidth(),
     elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
@@ -212,7 +210,8 @@ private fun LayerCard(state: LayerCoverageState, delta: Double?) {
         fontWeight = FontWeight.SemiBold
       )
       Text(
-        text = "${formatPercent(metric.coverage)} • Target ${formatPercent(metric.threshold)}",
+        text =
+          "${formatPercent(metric.roundedCoverage)} • Target ${formatPercent(metric.roundedThreshold)}",
         modifier = Modifier.testTag(tag),
         style = MaterialTheme.typography.bodyMedium,
       )

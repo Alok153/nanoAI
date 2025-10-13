@@ -4,6 +4,7 @@ import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 
 /**
  * Repository for model catalog management.
@@ -57,4 +58,18 @@ interface ModelCatalogRepository {
 
   /** Delete downloaded artifacts for the provided model. */
   suspend fun deleteModelFiles(modelId: String)
+
+  /**
+   * Observe refresh status updates, including last successful sync and offline fallbacks.
+   *
+   * Default implementation exposes an empty flow for repository fakes that do not track refresh
+   * metadata.
+   */
+  fun observeRefreshStatus(): Flow<ModelCatalogRefreshStatus> = flowOf(ModelCatalogRefreshStatus())
+
+  /** Record a successful refresh with its source descriptor and model count. */
+  suspend fun recordRefreshSuccess(source: String, modelCount: Int)
+
+  /** Record an offline fallback scenario with the cached catalog size and failure reason. */
+  suspend fun recordOfflineFallback(reason: String, cachedCount: Int, message: String? = null)
 }

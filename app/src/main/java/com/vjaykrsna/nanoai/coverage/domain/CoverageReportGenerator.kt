@@ -62,13 +62,13 @@ class CoverageReportGenerator(
           )
           .also { ensureSummaryThresholdConsistency(summary, layer, metric) }
       }
-      .mapKeys { (layer, _) -> layer.machineName }
+      .mapKeys { (layer, _) -> layer.schemaKey }
 
   private fun buildThresholdEntries(
     summary: CoverageSummary
   ): Map<String, kotlinx.serialization.json.JsonElement> =
     summary.thresholds
-      .mapKeys { (layer, _) -> layer.machineName }
+      .mapKeys { (layer, _) -> layer.schemaKey }
       .mapValues { (_, value) -> JsonPrimitive(value) }
 
   private fun buildTrendEntries(
@@ -168,6 +168,14 @@ class CoverageReportGenerator(
     }
   }
 }
+
+private val TestLayer.schemaKey: String
+  get() =
+    when (this) {
+      TestLayer.VIEW_MODEL -> "viewModel"
+      TestLayer.UI -> "ui"
+      TestLayer.DATA -> "data"
+    }
 
 private const val PRIORITY_CRITICAL = 0
 private const val PRIORITY_HIGH = 1

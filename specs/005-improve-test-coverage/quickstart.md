@@ -5,8 +5,10 @@ Follow this checklist to validate the coverage initiative end-to-end.
 ## 1. Workspace Prep
 - Checkout branch `005-improve-test-coverage`.
 - Sync dependencies: `./gradlew spotlessApply` (optional) then `./gradlew help` to warm Gradle.
+- **Emulator ABI Requirement**: The managed Pixel 6 API 34 configuration uses `x86_64` ABI (stabilized in T001). Ensure hardware virtualization is enabled (`egrep -c '(vmx|svm)' /proc/cpuinfo` > 0 on Linux) or use a physical device for instrumentation tests.
 - Provision an Android emulator (API 31+, Play Services image) or physical device and verify you can toggle radios for offline checks (`adb shell svc wifi disable`, `adb shell svc data disable`).
 - This branch completes the JUnit4 → JUnit5 migration; all JVM tests now run on the Jupiter platform with no fallback to vintage runners.
+- **Test Environment Isolation**: All instrumentation tests use `TestEnvironmentRule` to reset DataStore/Room state and network toggles before each test, ensuring first-launch disclaimers and offline flows start from a clean slate.
 
 ## 2. Run Automated Suites (JUnit5)
 - **ViewModel + Repository**: `./gradlew testDebugUnitTest`
@@ -30,7 +32,8 @@ Follow this checklist to validate the coverage initiative end-to-end.
   - Inspect console summary highlighting offending modules.
 
 ## 5. Review Risk Register
-- Open `docs/coverage/risk-register.md` (will be generated) and confirm all High/Critical items have assigned owners & mitigation builds.
+- Open `docs/coverage/risk-register.md` and confirm all High/Critical items have assigned owners & mitigation builds.
+- Track the latest coverage snapshot and ensure any new risks discovered during testing are documented with severity, mitigation plans, and target builds.
 
 ## 6. Ensure New Principles Compliance
 - Verify all new test code includes KDoc comments and has undergone peer review.

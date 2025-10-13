@@ -28,6 +28,35 @@ data class CoverageTrendPoint(
     private const val MIN_COVERAGE_PERCENT = 0.0
     private const val MAX_COVERAGE_PERCENT = 100.0
 
+    fun fromMetric(
+      buildId: String,
+      layer: TestLayer,
+      metric: CoverageMetric,
+      recordedAt: Instant,
+    ): CoverageTrendPoint =
+      CoverageTrendPoint(
+        buildId = buildId,
+        layer = layer,
+        coverage = metric.coverage,
+        threshold = metric.threshold,
+        recordedAt = recordedAt,
+      )
+
+    fun fromSummary(
+      buildId: String,
+      layer: TestLayer,
+      coverage: Double,
+      summary: CoverageSummary,
+      recordedAt: Instant,
+    ): CoverageTrendPoint =
+      CoverageTrendPoint(
+        buildId = buildId,
+        layer = layer,
+        coverage = coverage,
+        threshold = summary.thresholdFor(layer),
+        recordedAt = recordedAt,
+      )
+
     fun validateSequence(points: List<CoverageTrendPoint>) {
       points.zipWithNext { previous, current ->
         require(!current.recordedAt.isBefore(previous.recordedAt)) {

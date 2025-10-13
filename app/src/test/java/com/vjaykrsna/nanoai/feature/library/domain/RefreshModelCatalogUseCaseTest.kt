@@ -31,6 +31,7 @@ class RefreshModelCatalogUseCaseTest {
 
     assertThat(result.isSuccess).isTrue()
     coVerify(exactly = 1) { repository.replaceCatalog(models) }
+    coVerify(exactly = 1) { repository.recordRefreshSuccess(any(), models.size) }
   }
 
   @Test
@@ -47,6 +48,7 @@ class RefreshModelCatalogUseCaseTest {
     assertThat(failure).isNotNull()
     assertThat(failure).hasMessageThat().contains("Failed to replace model catalog")
     assertThat(failure?.cause).isEqualTo(underlying)
+    coVerify(exactly = 0) { repository.recordRefreshSuccess(any(), any()) }
   }
 
   @Test
@@ -56,6 +58,7 @@ class RefreshModelCatalogUseCaseTest {
     val result = useCase()
 
     assertThat(result.isSuccess).isTrue()
+    coVerify(exactly = 1) { repository.recordOfflineFallback("IOException", 0, any()) }
   }
 
   private fun sampleModel(id: String): ModelPackage =

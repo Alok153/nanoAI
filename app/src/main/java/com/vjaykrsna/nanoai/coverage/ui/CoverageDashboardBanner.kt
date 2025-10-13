@@ -35,4 +35,4 @@ internal object CoverageDashboardBanner {
   }
 }
 
-internal data class CoverageBanner(val message: String, val announcement: String)
+data class CoverageBanner(val message: String, val announcement: String)

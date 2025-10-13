@@ -20,6 +20,7 @@ This guide explains how the nanoAI test suites are organised, how they embody th
 
 ### Common Patterns
 - **Coroutine helpers**: Use `MainDispatcherExtension` with `@ExtendWith` or instantiate per-test to override `Dispatchers.Main`.
+- **Test environment isolation**: Apply `TestEnvironmentRule` (located at `app/src/androidTest/java/com/vjaykrsna/nanoai/testing/TestEnvironmentRule.kt`) to instrumentation tests to reset DataStore/Room state and network toggles before each test. This ensures first-launch disclaimers and offline flows start from a clean slate, preventing cross-test contamination.
 - **Fixture builders**: Domain- and data-layer packages expose factory helpers under `app/src/test/java/com/vjaykrsna/nanoai/**/fixtures` (search for `Fixture.kt`) to keep test setup terse.
 - **Compose assertions**: Prefer semantics matchers (`onNodeWithContentDescription`, `assertHasClickAction`) over screenshot testing for determinism.
 - **Room DAO checks**: Run against in-memory databases; leverage `androidx.room:room-testing` and `runTest` to cover suspend DAO calls.
@@ -58,9 +59,9 @@ This guide explains how the nanoAI test suites are organised, how they embody th
    Produces the merged XML + HTML report under `app/build/reports/jacoco/full/`. On CI (or whenever `-Pnanoai.useManagedDevice=true` is supplied) the task bootstraps the managed Pixel 6 API 34 virtual device before running instrumentation tests; otherwise it falls back to any connected hardware. When local virtualization is unavailable, you can append `-Pnanoai.skipInstrumentation=true` to merge unit-test coverage only (CI must keep instrumentation enabled).
 2. **Verify thresholds**
    ```bash
-   ./gradlew verifyCoverageThresholds
+   ./gradlew verifyCoverageThresholds --report-xml app/build/reports/jacoco/full/jacocoFullReport.xml --json app/build/coverage/report.json
    ```
-   Executes `CoverageThresholdVerifier` via `VerifyCoverageThresholdsTask`, writing a human-readable gate summary to `app/build/coverage/thresholds.md`. The task fails if any layer falls below the 75/65/70 targets and is wired into `check`.
+   Executes `CoverageThresholdVerifier` via `VerifyCoverageThresholdsTask`, writing a human-readable gate summary to `app/build/coverage/thresholds.md` and optional JSON report matching `coverage-report.schema.json`. The task fails if any layer falls below the 75/65/70 targets and is wired into `check`.
 3. **Publish coverage summaries**
    ```bash
    ./gradlew coverageMarkdownSummary

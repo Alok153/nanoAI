@@ -201,22 +201,44 @@ private fun ProgressJobItem(
           style = MaterialTheme.typography.labelSmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+
+        val showRetry = job.status == JobStatus.FAILED
+        val showClear = job.status == JobStatus.COMPLETED || job.status == JobStatus.FAILED
+
         Row(
           horizontalArrangement = Arrangement.spacedBy(PROGRESS_ACTION_SPACING),
-          verticalAlignment = Alignment.CenterVertically
+          verticalAlignment = Alignment.CenterVertically,
         ) {
-          Button(
-            onClick = { onRetry(job) },
-            enabled = job.canRetryNow,
-            modifier =
-              Modifier.testTag("progress_retry_button").semantics {
-                stateDescription = if (job.canRetryNow) "Retry available" else "Retry unavailable"
-              },
-          ) {
-            Text("Retry")
+          if (showRetry) {
+            Button(
+              onClick = { onRetry(job) },
+              enabled = job.canRetryNow,
+              modifier =
+                Modifier.testTag("progress_retry_button").semantics {
+                  contentDescription = "Retry ${job.type.label.lowercase()} job"
+                  stateDescription = if (job.canRetryNow) "Retry available" else "Retry unavailable"
+                },
+            ) {
+              Text("Retry")
+            }
           }
-          if (job.status == JobStatus.COMPLETED) {
-            TextButton(onClick = { onDismiss(job) }) { Text("Clear") }
+
+          if (showClear) {
+            TextButton(
+              onClick = { onDismiss(job) },
+              modifier =
+                Modifier.testTag("progress_clear_button").semantics {
+                  contentDescription = "Clear ${job.type.label.lowercase()} job"
+                  stateDescription =
+                    if (job.status == JobStatus.COMPLETED) {
+                      "Job completed; clear from queue"
+                    } else {
+                      "Job failed; clear from queue"
+                    }
+                },
+            ) {
+              Text("Clear")
+            }
           }
         }
       }

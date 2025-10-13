@@ -14,7 +14,13 @@ data class CoverageMetric(
     }
   }
 
-  private val roundedDelta: Double = (coverage - threshold).roundToSingleDecimal()
+  private val normalizedCoverage: Double = coverage.coerceIn(MIN_PERCENTAGE, MAX_PERCENTAGE)
+  private val normalizedThreshold: Double = threshold.coerceIn(MIN_PERCENTAGE, MAX_PERCENTAGE)
+
+  val roundedCoverage: Double = normalizedCoverage.roundToSingleDecimal()
+  val roundedThreshold: Double = normalizedThreshold.roundToSingleDecimal()
+
+  private val roundedDelta: Double = (roundedCoverage - roundedThreshold).roundToSingleDecimal()
 
   val status: Status =
     when {
@@ -30,10 +36,23 @@ data class CoverageMetric(
 
   fun isExceedingTarget(): Boolean = roundedDelta > 0.0
 
+  val statusColor: StatusColor =
+    when (status) {
+      Status.BELOW_TARGET -> StatusColor.NEGATIVE
+      Status.ON_TARGET -> StatusColor.NEUTRAL
+      Status.EXCEEDS_TARGET -> StatusColor.POSITIVE
+    }
+
   enum class Status {
     BELOW_TARGET,
     ON_TARGET,
     EXCEEDS_TARGET,
+  }
+
+  enum class StatusColor {
+    NEGATIVE,
+    NEUTRAL,
+    POSITIVE,
   }
 
   companion object {

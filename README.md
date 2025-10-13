@@ -36,13 +36,47 @@ Launch the app, accept the safety disclaimer, download a model from the library,
 
 ## 📚 Documentation
 
-- [Testing & Coverage](docs/testing.md) – How we keep quality high.
+- [Testing & Coverage](docs/testing.md) – How we keep quality high with automated coverage gates.
 - [Architecture](docs/ARCHITECTURE.md) – System design, data flow, and modules.
 - [API Reference](docs/API.md) – Public surfaces, request shapes, and integration notes.
+- [Coverage Risk Register](docs/coverage/risk-register.md) – Open coverage gaps and mitigation tracking.
+- [Development Roadmap](docs/todo-next.md) – Next phase priorities and coverage goals.
+
+### 📊 Quality & Coverage
+
+nanoAI enforces automated quality gates with test coverage thresholds:
+- **ViewModel**: 75% target (current: 39.58%)
+- **UI**: 65% target (current: 1.90%)
+- **Data**: 70% target (current: 18.91%)
+
+Run the full test suite and coverage report:
+```bash
+# Run all tests (unit + instrumentation)
+./gradlew testDebugUnitTest ciManagedDeviceDebugAndroidTest
+
+# Generate merged coverage report
+./gradlew jacocoFullReport
+
+# Verify coverage thresholds
+./gradlew verifyCoverageThresholds
+```
+
+Coverage reports are available at `app/build/reports/jacoco/full/index.html` after running the merge task. See [Testing & Coverage Guide](docs/testing.md) for detailed instructions on running tests, managing test environments, and interpreting coverage reports.
 
 ## 🤝 Contributing
 
-Pull requests and issue reports are welcome. Please open a feature branch, add tests for new behaviour, and run the quality gates (`./gradlew test connectedAndroidTest spotlessCheck detekt`) before submitting a PR.
+Pull requests and issue reports are welcome. Please:
+
+1. Open a feature branch from the latest `main`
+2. **Add tests first** (TDD approach) for new behaviour before implementation
+3. Run the complete quality gate suite before submitting:
+   ```bash
+   ./gradlew check  # Runs tests, coverage, spotless, detekt
+   ```
+4. Ensure coverage thresholds are maintained or improved
+5. Update documentation if you modify public APIs or workflows
+
+See [Testing & Coverage Guide](docs/testing.md) for detailed testing requirements and [Architecture](docs/ARCHITECTURE.md) for design principles.
 
 ## 📄 License
 

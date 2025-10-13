@@ -65,7 +65,7 @@ class CoverageDashboardTest {
           ),
         risks = emptyList(),
         trendDelta = mapOf(TestLayer.VIEW_MODEL to 2.4, TestLayer.UI to -0.5),
-        errorMessage = null,
+        errorBanner = null,
       )
 
     composeRule.setContent {
@@ -88,7 +88,7 @@ class CoverageDashboardTest {
       .assertTextEquals("81.0% • Target 75.0%")
       .assertTextContains("Target 75.0%")
     composeRule
-      .onNodeWithTag("coverage-layer-Ui")
+      .onNodeWithTag("coverage-layer-UI")
       .assertExists()
       .assertTextEquals("66.0% • Target 65.0%")
       .assertTextContains("Target 65.0%")
@@ -118,7 +118,7 @@ class CoverageDashboardTest {
             ),
           ),
         trendDelta = emptyMap(),
-        errorMessage = null,
+        errorBanner = null,
       )
 
     composeRule.setContent {
@@ -183,7 +183,7 @@ class CoverageDashboardTest {
           ),
         risks = emptyList(),
         trendDelta = emptyMap(),
-        errorMessage = offlineBanner.message,
+        errorBanner = offlineBanner,
       )
 
     composeRule.setContent {

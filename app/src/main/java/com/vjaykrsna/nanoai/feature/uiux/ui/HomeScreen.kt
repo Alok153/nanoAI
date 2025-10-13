@@ -19,10 +19,16 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.CollectionInfo
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
@@ -39,7 +45,6 @@ import com.vjaykrsna.nanoai.feature.uiux.ui.components.layout.NanoSection
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.primitives.NanoCard
 import com.vjaykrsna.nanoai.feature.uiux.ui.progress.ProgressCenterPanel
 
-private const val MAX_INLINE_QUICK_ACTIONS = 3
 private const val MODE_COLUMNS_COMPACT = 2
 private const val MODE_COLUMNS_MEDIUM = 3
 private const val MODE_COLUMNS_EXPANDED = 4
@@ -66,12 +71,22 @@ fun HomeScreen(
   NanoScreen(
     modifier = modifier.testTag("home_hub"),
   ) {
-    if (quickActions.isNotEmpty()) {
-      QuickActionsSection(
-        actions = quickActions,
-        onQuickActionSelect = onQuickActionSelect,
-      )
-    }
+    var toolsExpanded by rememberSaveable { mutableStateOf(false) }
+    var recentConfirmation by rememberSaveable { mutableStateOf<String?>(null) }
+
+    QuickActionsPanel(
+      actions = quickActions,
+      expanded = toolsExpanded,
+      onToggle = {
+        if (quickActions.isNotEmpty()) {
+          toolsExpanded = !toolsExpanded
+        }
+      },
+      onQuickActionSelect = { action ->
+        onQuickActionSelect(action)
+        recentConfirmation = null
+      },
+    )
 
     NanoSection(title = "Modes") {
       ModeGrid(
@@ -105,39 +120,119 @@ fun HomeScreen(
       RecentActivityContent(
         recentActivity = recentActivity,
         modeById = modeById,
-        onRecentActivitySelect = onRecentActivitySelect,
+        onRecentActivitySelect = { item ->
+          recentConfirmation = item.title
+          onRecentActivitySelect(item)
+        },
       )
+    }
+
+    recentConfirmation?.let { title ->
+      Surface(
+        modifier = Modifier.fillMaxWidth().testTag("home_recent_action_confirmation"),
+        tonalElevation = 1.dp,
+        shape = MaterialTheme.shapes.large,
+      ) {
+        Text(
+          text = "$title ready to resume",
+          modifier = Modifier.padding(NanoSpacing.md),
+          style = MaterialTheme.typography.bodyMedium,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
     }
   }
 }
 
 @Composable
-private fun QuickActionsSection(
+private fun QuickActionsPanel(
+  actions: List<CommandAction>,
+  expanded: Boolean,
+  onToggle: () -> Unit,
+  onQuickActionSelect: (CommandAction) -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  Surface(
+    modifier = modifier.fillMaxWidth(),
+    shape = MaterialTheme.shapes.large,
+    tonalElevation = 1.dp,
+  ) {
+    Column(
+      modifier = Modifier.padding(NanoSpacing.md),
+      verticalArrangement = Arrangement.spacedBy(NanoSpacing.sm),
+    ) {
+      Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
+        Column(verticalArrangement = Arrangement.spacedBy(NanoSpacing.xs)) {
+          Text(text = "Quick actions", style = MaterialTheme.typography.titleMedium)
+          Text(
+            text = if (actions.isEmpty()) "No shortcuts available" else "${actions.size} shortcuts",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+          )
+        }
+        TextButton(
+          onClick = onToggle,
+          modifier =
+            Modifier.testTag("home_tools_toggle").semantics {
+              contentDescription = "Toggle tools panel"
+              stateDescription = if (expanded) "Expanded" else "Collapsed"
+            },
+          enabled = actions.isNotEmpty(),
+        ) {
+          Text(if (expanded) "Hide" else "Show")
+        }
+      }
+
+      if (expanded && actions.isNotEmpty()) {
+        QuickActionsRow(
+          actions = actions,
+          onQuickActionSelect = onQuickActionSelect,
+          modifier = Modifier.testTag("home_tools_panel_expanded"),
+        )
+      } else {
+        Surface(
+          modifier = Modifier.fillMaxWidth().testTag("home_tools_panel_collapsed"),
+          tonalElevation = 0.dp,
+          color = MaterialTheme.colorScheme.surfaceVariant,
+          shape = MaterialTheme.shapes.medium,
+        ) {
+          Text(
+            text = if (actions.isEmpty()) "No tools to show" else "Tools panel collapsed",
+            modifier = Modifier.padding(vertical = NanoSpacing.sm, horizontal = NanoSpacing.md),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+          )
+        }
+      }
+    }
+  }
+}
+
+@Composable
+private fun QuickActionsRow(
   actions: List<CommandAction>,
   onQuickActionSelect: (CommandAction) -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  NanoSection(
-    title = "Quick actions",
-    subtitle = if (actions.size > MAX_INLINE_QUICK_ACTIONS) "${actions.size} available" else null,
-    modifier = modifier,
+  LazyRow(
+    horizontalArrangement = Arrangement.spacedBy(NanoSpacing.sm),
+    modifier = modifier.testTag("quick_actions_row"),
   ) {
-    LazyRow(
-      horizontalArrangement = Arrangement.spacedBy(NanoSpacing.sm),
-      modifier = Modifier.testTag("quick_actions_row"),
-    ) {
-      items(actions, key = { it.id }) { action ->
-        AssistChip(
-          onClick = { if (action.enabled) onQuickActionSelect(action) },
-          enabled = action.enabled,
-          label = { Text(action.title) },
-          modifier =
-            Modifier.semantics {
-              contentDescription = action.title
-              stateDescription = if (action.enabled) "Enabled" else "Disabled"
-            },
-        )
-      }
+    items(actions, key = { it.id }) { action ->
+      AssistChip(
+        onClick = { if (action.enabled) onQuickActionSelect(action) },
+        enabled = action.enabled,
+        label = { Text(action.title) },
+        modifier =
+          Modifier.testTag("home_quick_action_${action.id}").semantics {
+            contentDescription = action.title
+            stateDescription = if (action.enabled) "Enabled" else "Disabled"
+          },
+      )
     }
   }
 }
@@ -149,17 +244,26 @@ private fun ModeGrid(
   modeCards: List<ModeCard>,
   onModeSelect: (ModeId) -> Unit,
 ) {
-  FlowRow(
-    modifier = Modifier.fillMaxWidth(),
-    horizontalArrangement = Arrangement.spacedBy(NanoSpacing.md),
-    verticalArrangement = Arrangement.spacedBy(NanoSpacing.md),
-    maxItemsInEachRow = columns,
+  Box(
+    modifier =
+      Modifier.fillMaxWidth().testTag("home_mode_grid").semantics {
+        val rowCount = ((modeCards.size + columns - 1) / columns).coerceAtLeast(1)
+        this[SemanticsProperties.CollectionInfo] =
+          CollectionInfo(rowCount = rowCount, columnCount = columns)
+      },
   ) {
-    modeCards.forEach { card ->
-      ModeCardItem(
-        card = card,
-        onClick = { onModeSelect(card.id) },
-      )
+    FlowRow(
+      modifier = Modifier.fillMaxWidth(),
+      horizontalArrangement = Arrangement.spacedBy(NanoSpacing.md),
+      verticalArrangement = Arrangement.spacedBy(NanoSpacing.md),
+      maxItemsInEachRow = columns,
+    ) {
+      modeCards.forEach { card ->
+        ModeCardItem(
+          card = card,
+          onClick = { onModeSelect(card.id) },
+        )
+      }
     }
   }
 }
@@ -200,7 +304,11 @@ private fun RecentActivityContent(
   onRecentActivitySelect: (RecentActivityItem) -> Unit,
 ) {
   if (recentActivity.isEmpty()) {
-    Surface(shape = MaterialTheme.shapes.large, tonalElevation = 1.dp) {
+    Surface(
+      shape = MaterialTheme.shapes.large,
+      tonalElevation = 1.dp,
+      modifier = Modifier.testTag("recent_activity_list")
+    ) {
       Box(
         modifier = Modifier.fillMaxWidth().padding(NanoSpacing.lg),
         contentAlignment = Alignment.Center,

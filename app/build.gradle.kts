@@ -283,6 +283,7 @@ tasks.register<JacocoReport>("jacocoUnitReport") {
 val coverageReportXml = layout.buildDirectory.file("reports/jacoco/full/jacocoFullReport.xml")
 val layerMapFile = rootProject.layout.projectDirectory.file("config/coverage/layer-map.json")
 val coverageGateMarkdown = layout.buildDirectory.file("coverage/thresholds.md")
+val coverageGateJson = layout.buildDirectory.file("coverage/thresholds.json")
 
 tasks.register<JavaExec>("verifyCoverageThresholds") {
   group = "verification"
@@ -294,6 +295,7 @@ tasks.register<JavaExec>("verifyCoverageThresholds") {
   inputs.file(coverageReportXml)
   inputs.file(layerMapFile)
   outputs.file(coverageGateMarkdown)
+  outputs.file(coverageGateJson)
 
   mainClass.set("com.vjaykrsna.nanoai.coverage.tasks.VerifyCoverageThresholdsTask")
 
@@ -306,7 +308,10 @@ tasks.register<JavaExec>("verifyCoverageThresholds") {
     android.bootClasspath,
   )
 
-  doFirst { coverageGateMarkdown.get().asFile.parentFile.mkdirs() }
+  doFirst {
+    coverageGateMarkdown.get().asFile.parentFile.mkdirs()
+    coverageGateJson.get().asFile.parentFile.mkdirs()
+  }
 
   args(
     "--report-xml",
@@ -317,6 +322,8 @@ tasks.register<JavaExec>("verifyCoverageThresholds") {
     coverageGateMarkdown.get().asFile.absolutePath,
     "--build-id",
     "jacocoFullReport",
+    "--json",
+    coverageGateJson.get().asFile.absolutePath,
   )
 }
 

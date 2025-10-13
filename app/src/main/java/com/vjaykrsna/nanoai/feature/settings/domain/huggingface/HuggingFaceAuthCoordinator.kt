@@ -7,6 +7,7 @@ import com.vjaykrsna.nanoai.model.huggingface.network.dto.HuggingFaceOAuthErrorR
 import com.vjaykrsna.nanoai.model.huggingface.network.dto.HuggingFaceTokenResponse
 import com.vjaykrsna.nanoai.security.HuggingFaceCredentialRepository
 import com.vjaykrsna.nanoai.security.model.SecretCredential
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.min
@@ -50,6 +51,8 @@ private const val DEVICE_CODE_DENIED_MESSAGE =
   "Authorization was denied on Hugging Face. Try again if this was unintentional."
 private const val DEVICE_CODE_GENERIC_ERROR =
   "Failed to complete Hugging Face sign-in. Check your connection and try again."
+private const val OFFLINE_DEVICE_MESSAGE =
+  "Device appears offline. Check your connection and try again before retrying the sign-in."
 
 /**
  * Central coordinator for Hugging Face authentication. Manages credential persistence,
@@ -304,12 +307,17 @@ constructor(
     return when (errorCode) {
       ERROR_AUTHORIZATION_PENDING -> PollingDecision.Continue(nextIntervalSeconds = currentInterval)
       ERROR_SLOW_DOWN ->
-        PollingDecision.Continue(
-          nextIntervalSeconds =
-            min(MAX_DEVICE_POLL_SECONDS, currentInterval + SLOW_DOWN_BACKOFF_SECONDS),
-          message = SLOW_DOWN_USER_MESSAGE,
-          announcement = SLOW_DOWN_USER_MESSAGE,
-        )
+        run {
+          val nextIntervalSeconds =
+            min(MAX_DEVICE_POLL_SECONDS, currentInterval + SLOW_DOWN_BACKOFF_SECONDS)
+          val countdownMessage = "Retrying in $nextIntervalSeconds seconds."
+          val message = "$SLOW_DOWN_USER_MESSAGE $countdownMessage"
+          PollingDecision.Continue(
+            nextIntervalSeconds = nextIntervalSeconds,
+            message = message,
+            announcement = message,
+          )
+        }
       ERROR_EXPIRED ->
         PollingDecision.Stop(
           message = DEVICE_CODE_EXPIRED_MESSAGE,
@@ -321,6 +329,12 @@ constructor(
           announcement = DEVICE_CODE_DENIED_MESSAGE,
         )
       else -> {
+        if (throwable is IOException) {
+          return PollingDecision.Stop(
+            message = OFFLINE_DEVICE_MESSAGE,
+            announcement = OFFLINE_DEVICE_MESSAGE,
+          )
+        }
         val description = oauthError?.errorDescription?.takeIf { it.isNotBlank() }
         val message = description ?: throwable.message ?: DEVICE_CODE_GENERIC_ERROR
         PollingDecision.Stop(message = message, announcement = message)

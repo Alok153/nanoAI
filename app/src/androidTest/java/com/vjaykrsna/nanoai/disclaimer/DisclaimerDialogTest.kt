@@ -46,7 +46,14 @@ class DisclaimerDialogTest {
       .assertIsNotEnabled()
       .assertContentDescriptionEquals("Accept privacy terms")
 
-    composeRule.onNodeWithTag("disclaimer_scrollable_content").assertIsDisplayed().performScrollTo()
+    composeRule
+      .onNodeWithTag("disclaimer_decline_button")
+      .assertIsDisplayed()
+      .assertHasClickAction()
+      .assertContentDescriptionEquals("Decline and review later")
+      .assertTextContains("Decline", substring = true)
+
+    composeRule.onNodeWithTag("disclaimer_last_text").performScrollTo()
 
     composeRule
       .onNodeWithTag("disclaimer_accept_button")
@@ -55,12 +62,5 @@ class DisclaimerDialogTest {
       .assertHasClickAction()
       .assertTextContains("Agree", substring = true)
       .performClick()
-
-    composeRule
-      .onNodeWithTag("disclaimer_decline_button")
-      .assertIsDisplayed()
-      .assertHasClickAction()
-      .assertContentDescriptionEquals("Decline and review later")
-      .assertTextContains("Decline", substring = true)
   }
 }

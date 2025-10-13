@@ -41,7 +41,8 @@ import com.vjaykrsna.nanoai.model.catalog.ModelPackageWriteDao
  * Version 1: Initial schema with core entities. Version 2: Added UserProfile, LayoutSnapshot, and
  * UIStateSnapshot entities for UI/UX feature. Version 3: Added maintenance tracking tables and
  * download manifests. Version 4: Added public key metadata to download manifests. Version 5:
- * Extended ui_state_snapshots persistence for unified shell drawers and palette state.
+ * Extended ui_state_snapshots persistence for unified shell drawers and palette state. Version 6:
+ * Schema update for test coverage improvements.
  *
  * Foreign keys are enabled to ensure referential integrity and cascade deletes. TypeConverters
  * handle UUID, Instant, Set<String>, List<String>, Map<String, Boolean>, and enum conversions.
@@ -63,7 +64,7 @@ import com.vjaykrsna.nanoai.model.catalog.ModelPackageWriteDao
       CodeQualityMetricEntity::class,
       DownloadManifestEntity::class,
     ],
-  version = 5,
+  version = 6,
   exportSchema = true,
 )
 @TypeConverters(

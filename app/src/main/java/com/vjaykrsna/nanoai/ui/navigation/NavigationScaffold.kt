@@ -11,7 +11,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
@@ -32,6 +35,7 @@ import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityStatus
 import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
 import com.vjaykrsna.nanoai.feature.uiux.ui.shell.NanoShellScaffold
 import com.vjaykrsna.nanoai.feature.uiux.ui.shell.ShellUiEvent
+import com.vjaykrsna.nanoai.ui.components.DisclaimerDialog
 
 /** Entry point that connects app-wide state to the unified Compose shell. */
 @Composable
@@ -41,6 +45,9 @@ fun NavigationScaffold(
   modifier: Modifier = Modifier,
   shellViewModel: ShellViewModel = hiltViewModel(),
   chatViewModel: ChatViewModel = hiltViewModel(),
+  onDisclaimerShown: () -> Unit = {},
+  onDisclaimerAccepted: () -> Unit = {},
+  onDisclaimerDeclined: () -> Unit = {},
 ) {
   val shellUiState by shellViewModel.uiState.collectAsStateWithLifecycle()
 
@@ -70,6 +77,15 @@ fun NavigationScaffold(
 
   val shellEventHandler = rememberShellEventHandler(shellViewModel, chatViewModel)
 
+  var disclaimerDismissedForSession by rememberSaveable { mutableStateOf(false) }
+  val shouldShowDisclaimer = appState.disclaimer.shouldShow && !disclaimerDismissedForSession
+
+  LaunchedEffect(appState.disclaimer.shouldShow) {
+    if (!appState.disclaimer.shouldShow) {
+      disclaimerDismissedForSession = false
+    }
+  }
+
   Box(modifier = modifier.fillMaxSize()) {
     NanoShellScaffold(
       state = shellUiState,
@@ -81,6 +97,24 @@ fun NavigationScaffold(
     )
 
     // Onboarding / welcome removed — main shell is shown directly.
+
+    if (shouldShowDisclaimer) {
+      DisclaimerDialog(
+        onAccept = {
+          onDisclaimerAccepted()
+          disclaimerDismissedForSession = true
+        },
+        onDecline = {
+          disclaimerDismissedForSession = true
+          onDisclaimerDeclined()
+        },
+        onDismissRequest = {
+          disclaimerDismissedForSession = true
+          onDisclaimerDeclined()
+        },
+        onDialogShown = onDisclaimerShown,
+      )
+    }
   }
 }
 

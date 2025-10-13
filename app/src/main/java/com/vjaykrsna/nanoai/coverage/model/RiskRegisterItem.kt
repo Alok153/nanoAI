@@ -17,7 +17,11 @@ data class RiskRegisterItem(
   val mitigation: String?,
 ) {
   val formattedMitigation: String?
-    get() = mitigation?.trim()?.replaceFirstChar { it.uppercase() }
+    get() =
+      mitigation
+        ?.trim()
+        ?.takeIf { it.isNotEmpty() }
+        ?.replaceFirstChar { char -> if (char.isLowerCase()) char.titlecase() else char.toString() }
 
   init {
     require(riskId.isNotBlank()) { "riskId must not be blank" }
