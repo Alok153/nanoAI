@@ -39,6 +39,7 @@ import com.vjaykrsna.nanoai.feature.uiux.state.UiPreferenceSnapshot
 import com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload
 import com.vjaykrsna.nanoai.feature.uiux.ui.shell.NanoShellScaffold
 import com.vjaykrsna.nanoai.feature.uiux.ui.shell.ShellUiEvent
+import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
 import java.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Rule
@@ -48,7 +49,8 @@ import org.junit.runner.RunWith
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalMaterial3WindowSizeClassApi::class)
 @RunWith(AndroidJUnit4::class)
 class HomeHubFlowTest {
-  @get:Rule val composeRule = createAndroidComposeRule<ComponentActivity>()
+  @get:Rule(order = 0) val environmentRule = TestEnvironmentRule()
+  @get:Rule(order = 1) val composeRule = createAndroidComposeRule<ComponentActivity>()
 
   @Test
   fun modeCards_renderAndTriggerModeSelection() {

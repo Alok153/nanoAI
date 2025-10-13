@@ -49,4 +49,33 @@ class TestSuiteCatalogEntryTest {
       )
     }
   }
+
+  @Test
+  fun `mitigatesRisk matches tags case insensitively`() {
+    val entry =
+      TestSuiteCatalogEntry(
+        suiteId = "suite-coverage",
+        owner = "quality-engineering",
+        layer = TestLayer.DATA,
+        journey = "Offline cache",
+        coverageContribution = 4.0,
+        riskTags = setOf("RISK-OFFLINE"),
+      )
+
+    assertThat(entry.mitigatesRisk("risk-offline")).isTrue()
+  }
+
+  @Test
+  fun `negative coverage contribution throws`() {
+    assertThrows<IllegalArgumentException> {
+      TestSuiteCatalogEntry(
+        suiteId = "suite-negative",
+        owner = "quality-engineering",
+        layer = TestLayer.DATA,
+        journey = "Offline cache",
+        coverageContribution = -1.0,
+        riskTags = setOf("risk-offline"),
+      )
+    }
+  }
 }

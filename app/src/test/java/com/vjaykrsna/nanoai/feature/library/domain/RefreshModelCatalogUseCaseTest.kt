@@ -10,6 +10,7 @@ import com.vjaykrsna.nanoai.model.catalog.DeliveryType
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import java.io.IOException
 import java.util.UUID
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Instant
@@ -48,6 +49,15 @@ class RefreshModelCatalogUseCaseTest {
     assertThat(failure?.cause).isEqualTo(underlying)
   }
 
+  @Test
+  fun `returns cached success when remote fetch fails`() = runTest {
+    fakeSource.error = IOException("remote unavailable")
+
+    val result = useCase()
+
+    assertThat(result.isSuccess).isTrue()
+  }
+
   private fun sampleModel(id: String): ModelPackage =
     ModelPackage(
       modelId = id,
@@ -69,7 +79,8 @@ class RefreshModelCatalogUseCaseTest {
 
   private class FakeModelCatalogSource : ModelCatalogSource {
     var catalog: List<ModelPackage> = emptyList()
+    var error: Throwable? = null
 
-    override suspend fun fetchCatalog(): List<ModelPackage> = catalog
+    override suspend fun fetchCatalog(): List<ModelPackage> = error?.let { throw it } ?: catalog
   }
 }

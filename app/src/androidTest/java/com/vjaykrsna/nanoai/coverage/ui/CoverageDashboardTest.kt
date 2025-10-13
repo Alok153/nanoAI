@@ -12,6 +12,7 @@ import com.vjaykrsna.nanoai.coverage.model.CoverageMetric
 import com.vjaykrsna.nanoai.coverage.model.TestLayer
 import com.vjaykrsna.nanoai.coverage.ui.CoverageDashboardBanner.OFFLINE_ANNOUNCEMENT
 import com.vjaykrsna.nanoai.coverage.ui.CoverageDashboardBanner.offline
+import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
 import com.vjaykrsna.nanoai.ui.theme.NanoAITheme
 import java.io.IOException
 import java.util.concurrent.TimeUnit
@@ -28,7 +29,8 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class CoverageDashboardTest {
 
-  @get:Rule val composeRule = createComposeRule()
+  @get:Rule(order = 0) val environmentRule = TestEnvironmentRule()
+  @get:Rule(order = 1) val composeRule = createComposeRule()
 
   private val mockWebServer = MockWebServer()
 

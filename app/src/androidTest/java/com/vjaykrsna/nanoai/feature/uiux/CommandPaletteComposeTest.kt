@@ -49,6 +49,7 @@ import com.vjaykrsna.nanoai.feature.uiux.state.UiPreferenceSnapshot
 import com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload
 import com.vjaykrsna.nanoai.feature.uiux.ui.shell.NanoShellScaffold
 import com.vjaykrsna.nanoai.feature.uiux.ui.shell.ShellUiEvent
+import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
@@ -64,7 +65,8 @@ import org.junit.runner.RunWith
 )
 @RunWith(AndroidJUnit4::class)
 class CommandPaletteComposeTest {
-  @get:Rule val composeTestRule = createAndroidComposeRule<ComponentActivity>()
+  @get:Rule(order = 0) val environmentRule = TestEnvironmentRule()
+  @get:Rule(order = 1) val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
   @Test
   fun palette_opensWithShortcut_focusesSearchField() {

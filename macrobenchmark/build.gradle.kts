@@ -10,7 +10,6 @@ android {
   defaultConfig {
     minSdk = 31
     targetSdk = 36
-
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 
@@ -30,7 +29,12 @@ android {
     targetCompatibility = JavaVersion.VERSION_11
   }
 
-  kotlinOptions { jvmTarget = "11" }
+  kotlin {
+    compilerOptions {
+      jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11
+      freeCompilerArgs.add("-Xannotation-default-target=param-property")
+    }
+  }
 }
 
 dependencies {

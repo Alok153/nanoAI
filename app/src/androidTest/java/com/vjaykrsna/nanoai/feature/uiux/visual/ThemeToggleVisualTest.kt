@@ -21,6 +21,7 @@ import androidx.test.filters.LargeTest
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
+import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
 import com.vjaykrsna.nanoai.ui.components.ThemeToggle
 import com.vjaykrsna.nanoai.ui.theme.NanoAITheme
 import java.io.File
@@ -42,7 +43,8 @@ import org.junit.runner.RunWith
 @LargeTest
 @RunWith(AndroidJUnit4::class)
 class ThemeToggleVisualTest {
-  @get:Rule val composeRule = createComposeRule()
+  @get:Rule(order = 0) val environmentRule = TestEnvironmentRule()
+  @get:Rule(order = 1) val composeRule = createComposeRule()
 
   private val targetContext = InstrumentationRegistry.getInstrumentation().targetContext
   private val outputDir: File by lazy {

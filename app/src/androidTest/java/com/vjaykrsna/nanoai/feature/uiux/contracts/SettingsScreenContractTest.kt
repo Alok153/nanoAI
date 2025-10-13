@@ -19,6 +19,7 @@ import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsUiUxState
 import com.vjaykrsna.nanoai.feature.settings.ui.SettingsContentState
 import com.vjaykrsna.nanoai.feature.settings.ui.SettingsScreenActions
 import com.vjaykrsna.nanoai.feature.settings.ui.SettingsScreenContent
+import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
 import com.vjaykrsna.nanoai.ui.theme.NanoAITheme
 import org.junit.Rule
 import org.junit.Test
@@ -34,7 +35,8 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 @OptIn(ExperimentalTestApi::class)
 class SettingsScreenContractTest {
-  @get:Rule val composeRule = createComposeRule()
+  @get:Rule(order = 0) val environmentRule = TestEnvironmentRule()
+  @get:Rule(order = 1) val composeRule = createComposeRule()
 
   private val sampleProvider =
     APIProviderConfig(

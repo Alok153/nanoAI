@@ -16,6 +16,9 @@ data class RiskRegisterItem(
   val status: Status,
   val mitigation: String?,
 ) {
+  val formattedMitigation: String?
+    get() = mitigation?.trim()?.replaceFirstChar { it.uppercase() }
+
   init {
     require(riskId.isNotBlank()) { "riskId must not be blank" }
     require(description.isNotBlank()) { "description must not be blank" }
@@ -36,7 +39,7 @@ data class RiskRegisterItem(
     return deadline?.let { !it.isAfter(now) } ?: true
   }
 
-  internal fun targetBuildDeadline(): Instant? =
+  fun targetBuildDeadline(): Instant? =
     targetBuild?.takeIf { it.isNotBlank() }?.let(::parseTargetBuildInstant)
 
   private fun Status.isActive(): Boolean = this != Status.RESOLVED && this != Status.DEFERRED

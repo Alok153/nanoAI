@@ -5,13 +5,15 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import com.vjaykrsna.nanoai.core.model.InferenceMode
+import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
 import com.vjaykrsna.nanoai.ui.sidebar.InferencePreferenceToggleRow
 import com.vjaykrsna.nanoai.ui.theme.NanoAITheme
 import org.junit.Rule
 import org.junit.Test
 
 class InferenceToggleAccessibilityTest {
-  @get:Rule val composeRule = createAndroidComposeRule<ComponentActivity>()
+  @get:Rule(order = 0) val environmentRule = TestEnvironmentRule()
+  @get:Rule(order = 1) val composeRule = createAndroidComposeRule<ComponentActivity>()
 
   @Test
   fun inferenceToggle_exposesContentDescription() {

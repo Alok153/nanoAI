@@ -23,6 +23,9 @@ val skipInstrumentation =
   (project.findProperty("nanoai.skipInstrumentation") as? String)?.toBoolean() ?: false
 val useManagedDeviceForInstrumentation =
   !skipInstrumentation && (isCiEnvironment || useManagedDeviceProperty)
+// Pixel 6 API 34 managed virtual device ships an x86_64-only system image starting in
+// Android 14. Lock the ABI so CI and local runs share the same emulator bits.
+val managedDeviceAbi = "x86_64"
 val managedDeviceName = "pixel6Api34"
 val managedDeviceTaskName = "${managedDeviceName}DebugAndroidTest"
 
@@ -92,20 +95,24 @@ android {
     targetCompatibility = JavaVersion.VERSION_11
   }
 
-  kotlinOptions {
-    jvmTarget = "11"
-    val composeMetricsDir = project.layout.buildDirectory.dir("compose/metrics")
-    val composeReportsDir = project.layout.buildDirectory.dir("compose/reports")
-    freeCompilerArgs +=
-      listOf(
-        "-opt-in=kotlin.RequiresOptIn",
-        "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
-        "-opt-in=kotlinx.coroutines.FlowPreview",
-        "-P",
-        "plugin:androidx.compose.compiler.plugins.kotlin:metricsDestination=${composeMetricsDir.get().asFile.absolutePath}",
-        "-P",
-        "plugin:androidx.compose.compiler.plugins.kotlin:reportsDestination=${composeReportsDir.get().asFile.absolutePath}",
+  kotlin {
+    compilerOptions {
+      jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+      val composeMetricsDir = project.layout.buildDirectory.dir("compose/metrics")
+      val composeReportsDir = project.layout.buildDirectory.dir("compose/reports")
+      freeCompilerArgs.addAll(
+        listOf(
+          "-opt-in=kotlin.RequiresOptIn",
+          "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
+          "-opt-in=kotlinx.coroutines.FlowPreview",
+          "-Xannotation-default-target=param-property",
+          "-P",
+          "plugin:androidx.compose.compiler.plugins.kotlin:metricsDestination=${composeMetricsDir.get().asFile.absolutePath}",
+          "-P",
+          "plugin:androidx.compose.compiler.plugins.kotlin:reportsDestination=${composeReportsDir.get().asFile.absolutePath}",
+        )
       )
+    }
   }
 
   buildFeatures {
@@ -133,6 +140,7 @@ android {
       pixel6.device = "Pixel 6"
       pixel6.apiLevel = 34
       pixel6.systemImageSource = "aosp-atd"
+      pixel6.testedAbi = managedDeviceAbi
 
       groups.create("ci") { targetDevices.add(pixel6) }
     }
@@ -214,10 +222,17 @@ tasks.register<JacocoReport>("jacocoFullReport") {
 
 tasks.register("ciManagedDeviceDebugAndroidTest") {
   group = "verification"
-  description = "Runs instrumentation tests on the CI managed Pixel 6 API 34 virtual device."
+  description =
+    "Runs instrumentation tests on the CI managed Pixel 6 API 34 (${managedDeviceAbi}) virtual device."
 
   dependsOn(tasks.named(managedDeviceTaskName))
   onlyIf { !skipInstrumentation }
+  inputs.property("managedDeviceAbi", managedDeviceAbi)
+  doFirst {
+    logger.lifecycle(
+      "Executing managed-device instrumentation on $managedDeviceName ($managedDeviceAbi ABI)",
+    )
+  }
 }
 
 if (useManagedDeviceForInstrumentation) {
@@ -449,6 +464,7 @@ dependencies {
 
   // Unit Testing
   testImplementation(kotlin("test-junit5"))
+  testImplementation(kotlin("reflect"))
   testImplementation(libs.junit.jupiter.api)
   testImplementation(libs.junit.jupiter.params)
   testImplementation(libs.mockk)
@@ -470,6 +486,7 @@ dependencies {
   androidTestImplementation(libs.androidx.junit)
   androidTestImplementation(libs.androidx.espresso.core)
   androidTestImplementation(libs.androidx.test.runner)
+  androidTestImplementation(libs.androidx.uiautomator)
   androidTestImplementation(platform(libs.androidx.compose.bom))
   androidTestImplementation(libs.androidx.compose.ui.test.junit4)
   androidTestImplementation(libs.androidx.compose.ui.test)
