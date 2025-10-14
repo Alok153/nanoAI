@@ -4,32 +4,6 @@
 **Branch**: `005-improve-test-coverage` | **Date**: 2025-10-10 | **Spec**: [/specs/005-improve-test-coverage/spec.md](spec.md)
 **Input**: Feature specification from `/specs/005-improve-test-coverage/spec.md`
 
-## Execution Flow (/plan command scope)
-```
-1. Load feature spec from Input path
-   → If not found: ERROR "No feature spec at {path}"
-2. Fill Technical Context (scan for NEEDS CLARIFICATION)
-   → Detect Project Type from file system structure or context (web=frontend+backend, mobile=app+api)
-   → Set Structure Decision based on project type
-3. Fill the Constitution Check section based on the content of the constitution document.
-4. Evaluate Constitution Check section below
-   → If violations exist: Document in Complexity Tracking
-   → If no justification possible: ERROR "Simplify approach first"
-   → Update Progress Tracking: Initial Constitution Check
-5. Execute Phase 0 → research.md
-   → If NEEDS CLARIFICATION remain: ERROR "Resolve unknowns"
-6. Execute Phase 1 → contracts, data-model.md, quickstart.md, agent-specific template file (e.g., `.github/copilot-instructions.md` for GitHub Copilot).
-7. Re-evaluate Constitution Check section
-   → If new violations: Refactor design, return to Phase 1
-   → Update Progress Tracking: Post-Design Constitution Check
-8. Plan Phase 2 → Describe task generation approach (DO NOT create tasks.md)
-9. STOP - Ready for /tasks command
-```
-
-**IMPORTANT**: The /plan command STOPS at step 7. Phases 2-4 are executed by other commands:
-- Phase 2: /tasks command creates tasks.md
-- Phase 3-4: Implementation execution (manual or via tools)
-
 ## Summary
 Elevate confidence in nanoAI releases by closing automated test gaps across ViewModel, Compose UI, and data layers, delivering reliable coverage dashboards that highlight progress toward the newly ratified thresholds (ViewModel 75%, UI 65%, Data 70%) and ensuring stakeholders can approve releases with clear evidence of quality safeguards.
 
@@ -62,12 +36,12 @@ Elevate confidence in nanoAI releases by closing automated test gaps across View
 ### Documentation (this feature)
 ```
 specs/005-improve-test-coverage/
-├── plan.md              # This file (/plan command output)
-├── research.md          # Phase 0 output (/plan command)
-├── data-model.md        # Phase 1 output (/plan command)
-├── quickstart.md        # Phase 1 output (/plan command)
-├── contracts/           # Phase 1 output (/plan command)
-└── tasks.md             # Phase 2 output (/tasks command - NOT created by /plan)
+├── plan.md      
+├── research.md  
+├── data-model.md
+├── quickstart.md
+├── contracts/   
+└── tasks.md     
 ```
 
 ### Source Code (repository root)
@@ -179,8 +153,8 @@ scripts/
 **Phase Status**:
 - [x] Phase 0: Research complete (/plan command)
 - [x] Phase 1: Design complete (/plan command)
-- [ ] Phase 2: Task planning complete (/plan command - describe approach only)
-- [ ] Phase 3: Tasks generated (/tasks command)
+- [x] Phase 2: Task planning complete (/plan command - describe approach only)
+- [x] Phase 3: Tasks generated (/tasks command)
 - [ ] Phase 4: Implementation complete
 - [ ] Phase 5: Validation passed
 

@@ -19,4 +19,29 @@ class CoverageMetricTest {
     assertThat(metric.deltaFromThreshold).isGreaterThan(0.0)
     assertThat(metric.deltaFromThreshold).isWithin(0.0001).of(8.0)
   }
+
+  @Test
+  fun `deltaFromThreshold rounds to single decimal place`() {
+    val metric = CoverageMetric(coverage = 70.08, threshold = 65.0)
+
+    assertThat(metric.deltaFromThreshold).isEqualTo(5.1)
+  }
+
+  @Test
+  fun `meetsThreshold treats small deficits as passing`() {
+    val metric = CoverageMetric(coverage = 64.96, threshold = 65.0)
+
+    assertThat(metric.meetsThreshold()).isTrue()
+  }
+
+  @Test
+  fun `status transitions respect rounded coverage`() {
+    val below = CoverageMetric(coverage = 64.94, threshold = 65.0)
+    val onTarget = CoverageMetric(coverage = 64.96, threshold = 65.0)
+    val exceeds = CoverageMetric(coverage = 65.12, threshold = 65.0)
+
+    assertThat(below.status).isEqualTo(CoverageMetric.Status.BELOW_TARGET)
+    assertThat(onTarget.status).isEqualTo(CoverageMetric.Status.ON_TARGET)
+    assertThat(exceeds.status).isEqualTo(CoverageMetric.Status.EXCEEDS_TARGET)
+  }
 }

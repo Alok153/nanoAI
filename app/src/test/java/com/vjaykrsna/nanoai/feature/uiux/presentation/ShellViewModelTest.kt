@@ -450,12 +450,6 @@ private class NoopUserProfileRepository : UserProfileRepository {
 
   override suspend fun updateVisualDensity(userId: String, visualDensityName: String) = Unit
 
-  override suspend fun recordOnboardingProgress(
-    userId: String,
-    dismissedTips: Map<String, Boolean>,
-    completed: Boolean,
-  ) = Unit
-
   override suspend fun updateCompactMode(userId: String, enabled: Boolean) = Unit
 
   override suspend fun updatePinnedTools(userId: String, pinnedTools: List<String>) = Unit

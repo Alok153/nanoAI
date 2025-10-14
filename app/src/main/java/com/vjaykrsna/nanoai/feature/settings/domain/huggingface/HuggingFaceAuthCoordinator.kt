@@ -7,6 +7,7 @@ import com.vjaykrsna.nanoai.model.huggingface.network.dto.HuggingFaceOAuthErrorR
 import com.vjaykrsna.nanoai.model.huggingface.network.dto.HuggingFaceTokenResponse
 import com.vjaykrsna.nanoai.security.HuggingFaceCredentialRepository
 import com.vjaykrsna.nanoai.security.model.SecretCredential
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.min
@@ -50,6 +51,8 @@ private const val DEVICE_CODE_DENIED_MESSAGE =
   "Authorization was denied on Hugging Face. Try again if this was unintentional."
 private const val DEVICE_CODE_GENERIC_ERROR =
   "Failed to complete Hugging Face sign-in. Check your connection and try again."
+private const val OFFLINE_DEVICE_MESSAGE =
+  "Device appears offline. Check your connection and try again before retrying the sign-in."
 
 /**
  * Central coordinator for Hugging Face authentication. Manages credential persistence,
@@ -231,12 +234,17 @@ constructor(
                   pollIntervalSeconds = currentInterval,
                   isPolling = true,
                   lastError = decision.message ?: state.lastError,
+                  lastErrorAnnouncement = decision.announcement ?: state.lastErrorAnnouncement,
                 )
               }
             }
             is PollingDecision.Stop -> {
               _deviceAuthState.update { state ->
-                state?.copy(isPolling = false, lastError = decision.message)
+                state?.copy(
+                  isPolling = false,
+                  lastError = decision.message,
+                  lastErrorAnnouncement = decision.announcement ?: decision.message,
+                )
               }
               deviceSession = null
               deviceAuthJob = null
@@ -297,19 +305,39 @@ constructor(
     val errorCode = oauthError?.error
 
     return when (errorCode) {
-      ERROR_AUTHORIZATION_PENDING -> PollingDecision.Continue(currentInterval)
+      ERROR_AUTHORIZATION_PENDING -> PollingDecision.Continue(nextIntervalSeconds = currentInterval)
       ERROR_SLOW_DOWN ->
-        PollingDecision.Continue(
-          nextIntervalSeconds =
-            min(MAX_DEVICE_POLL_SECONDS, currentInterval + SLOW_DOWN_BACKOFF_SECONDS),
-          message = SLOW_DOWN_USER_MESSAGE,
+        run {
+          val nextIntervalSeconds =
+            min(MAX_DEVICE_POLL_SECONDS, currentInterval + SLOW_DOWN_BACKOFF_SECONDS)
+          val countdownMessage = "Retrying in $nextIntervalSeconds seconds."
+          val message = "$SLOW_DOWN_USER_MESSAGE $countdownMessage"
+          PollingDecision.Continue(
+            nextIntervalSeconds = nextIntervalSeconds,
+            message = message,
+            announcement = message,
+          )
+        }
+      ERROR_EXPIRED ->
+        PollingDecision.Stop(
+          message = DEVICE_CODE_EXPIRED_MESSAGE,
+          announcement = DEVICE_CODE_EXPIRED_MESSAGE,
         )
-      ERROR_EXPIRED -> PollingDecision.Stop(DEVICE_CODE_EXPIRED_MESSAGE)
-      ERROR_ACCESS_DENIED -> PollingDecision.Stop(DEVICE_CODE_DENIED_MESSAGE)
+      ERROR_ACCESS_DENIED ->
+        PollingDecision.Stop(
+          message = DEVICE_CODE_DENIED_MESSAGE,
+          announcement = DEVICE_CODE_DENIED_MESSAGE,
+        )
       else -> {
+        if (throwable is IOException) {
+          return PollingDecision.Stop(
+            message = OFFLINE_DEVICE_MESSAGE,
+            announcement = OFFLINE_DEVICE_MESSAGE,
+          )
+        }
         val description = oauthError?.errorDescription?.takeIf { it.isNotBlank() }
         val message = description ?: throwable.message ?: DEVICE_CODE_GENERIC_ERROR
-        PollingDecision.Stop(message)
+        PollingDecision.Stop(message = message, announcement = message)
       }
     }
   }
@@ -329,6 +357,7 @@ constructor(
   private fun DeviceFlowSession.toUiState(
     isPolling: Boolean,
     lastError: String? = null,
+    lastErrorAnnouncement: String? = null,
   ): HuggingFaceDeviceAuthState =
     HuggingFaceDeviceAuthState(
       userCode = userCode,
@@ -338,6 +367,7 @@ constructor(
       pollIntervalSeconds = pollIntervalSeconds,
       isPolling = isPolling,
       lastError = lastError,
+      lastErrorAnnouncement = lastErrorAnnouncement,
     )
 
   companion object {
@@ -356,7 +386,11 @@ private data class DeviceFlowSession(
 )
 
 private sealed interface PollingDecision {
-  data class Continue(val nextIntervalSeconds: Int, val message: String? = null) : PollingDecision
+  data class Continue(
+    val nextIntervalSeconds: Int,
+    val message: String? = null,
+    val announcement: String? = null,
+  ) : PollingDecision
 
-  data class Stop(val message: String) : PollingDecision
+  data class Stop(val message: String, val announcement: String? = null) : PollingDecision
 }

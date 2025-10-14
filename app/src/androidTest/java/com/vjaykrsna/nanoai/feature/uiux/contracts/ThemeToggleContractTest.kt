@@ -2,12 +2,14 @@ package com.vjaykrsna.nanoai.feature.uiux.contracts
 
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import com.vjaykrsna.nanoai.MainActivity
+import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -19,7 +21,8 @@ import org.junit.runner.RunWith
 @LargeTest
 @RunWith(AndroidJUnit4::class)
 class ThemeToggleContractTest {
-  @get:Rule val composeRule = createAndroidComposeRule<MainActivity>()
+  @get:Rule(order = 0) val environmentRule = TestEnvironmentRule()
+  @get:Rule(order = 1) val composeRule = createAndroidComposeRule<MainActivity>()
 
   @Test
   fun themeToggle_switchPresent_andInteractive() {
@@ -28,10 +31,32 @@ class ThemeToggleContractTest {
       .assertIsDisplayed()
       .assertHasClickAction()
       .performClick()
+
+    composeRule.waitForIdle()
+    composeRule
+      .onNodeWithTag("theme_toggle_persistence_status")
+      .assertIsDisplayed()
+      .assertTextContains("Current:", substring = true)
   }
 
   @Test
   fun themeToggle_persistsSelection_acrossRecomposition() {
-    composeRule.onNodeWithTag("theme_toggle_persistence_status").assertIsDisplayed()
+    composeRule.onNodeWithTag("theme_toggle_switch").performClick()
+    composeRule.waitForIdle()
+    composeRule.mainClock.advanceTimeBy(500)
+    composeRule.waitForIdle()
+
+    composeRule
+      .onNodeWithTag("theme_toggle_persistence_status")
+      .assertIsDisplayed()
+      .assertTextContains("Dark", substring = true)
+
+    composeRule.activityRule.scenario.recreate()
+    composeRule.waitForIdle()
+
+    composeRule
+      .onNodeWithTag("theme_toggle_persistence_status")
+      .assertIsDisplayed()
+      .assertTextContains("Dark", substring = true)
   }
 }

@@ -53,7 +53,6 @@ data class UserProfile(
   companion object {
     const val MAX_DISPLAY_NAME = 50
     const val MAX_PINNED_TOOLS = 10
-    const val MAX_SAVED_LAYOUTS = 5
 
     /** Builds a domain profile directly from preference state when Room has not hydrated yet. */
     fun fromPreferences(

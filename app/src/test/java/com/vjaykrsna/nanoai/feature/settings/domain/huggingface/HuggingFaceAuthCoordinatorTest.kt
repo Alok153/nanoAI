@@ -11,6 +11,7 @@ import com.vjaykrsna.nanoai.security.model.CredentialScope
 import com.vjaykrsna.nanoai.security.model.SecretCredential
 import io.mockk.every
 import io.mockk.mockk
+import java.io.IOException
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.TestScope
@@ -125,6 +126,8 @@ class HuggingFaceAuthCoordinatorTest {
     val deviceState = harness.coordinator.deviceAuthState.value
     assertThat(deviceState?.isPolling).isTrue()
     assertThat(deviceState?.lastError).contains("Hugging Face asked us to slow down")
+    assertThat(deviceState?.lastErrorAnnouncement).contains("Hugging Face asked us to slow down")
+    assertThat(deviceState?.pollIntervalSeconds).isEqualTo(6)
 
     advanceTimeBy(6_000)
     advanceUntilIdle()
@@ -141,6 +144,41 @@ class HuggingFaceAuthCoordinatorTest {
     assertThat(state.isAuthenticated).isFalse()
     assertThat(state.username).isNull()
     assertThat(harness.coordinator.state.value.isAuthenticated).isFalse()
+  }
+
+  @Test
+  fun `device polling slow down surfaces countdown message`() = runTest {
+    val harness = createHarness()
+    harness.accountService.response = Result.success(testUser())
+    harness.oauthService.deviceResponse = harness.oauthService.deviceResponse.copy(interval = 2)
+    harness.oauthService.tokenResponses += Result.failure(slowDownException())
+
+    harness.coordinator.beginDeviceAuthorization("client", "all").getOrThrow()
+
+    advanceTimeBy(2_000)
+    runCurrent()
+
+    val deviceState = harness.coordinator.deviceAuthState.value
+    assertThat(deviceState?.pollIntervalSeconds).isEqualTo(7)
+    assertThat(deviceState?.lastError).contains("Retrying in 7 seconds")
+    assertThat(deviceState?.lastErrorAnnouncement).contains("Retrying in 7 seconds")
+  }
+
+  @Test
+  fun `offline polling failures stop retries with offline guidance`() = runTest {
+    val harness = createHarness()
+    harness.accountService.response = Result.success(testUser())
+    harness.oauthService.tokenResponses += Result.failure(IOException("failed to connect"))
+
+    harness.coordinator.beginDeviceAuthorization("client", "all").getOrThrow()
+
+    advanceTimeBy(1_000)
+    advanceUntilIdle()
+
+    val deviceState = harness.coordinator.deviceAuthState.value
+    assertThat(deviceState?.isPolling).isFalse()
+    assertThat(deviceState?.lastError).contains("offline")
+    assertThat(deviceState?.lastErrorAnnouncement).contains("offline")
   }
 
   private fun testUser() =

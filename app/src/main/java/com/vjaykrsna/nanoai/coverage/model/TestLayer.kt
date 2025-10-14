@@ -7,15 +7,16 @@ enum class TestLayer(val displayName: String) {
   DATA("Data");
 
   /** Machine-friendly identifier used when serialising layer names. */
-  val machineName: String =
-    name
-      .lowercase()
-      .split("_")
-      .mapIndexed { index, part ->
-        if (index == 0) part else part.replaceFirstChar { it.titlecase() }
-      }
-      .joinToString(separator = "")
+  val machineName: String = displayName.replace(" ", "")
 
   /** Analytics-friendly identifier used for structured logging keys. */
   val analyticsKey: String = name.lowercase().replace('_', '-')
+
+  companion object {
+    fun fromAnalyticsKey(value: String): TestLayer? {
+      if (value.isBlank()) return null
+      val normalized = value.trim().lowercase().replace('_', '-').replace(' ', '-')
+      return entries.firstOrNull { layer -> layer.analyticsKey == normalized }
+    }
+  }
 }

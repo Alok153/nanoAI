@@ -10,8 +10,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsSelectable
 import androidx.compose.ui.test.hasText
@@ -49,6 +51,7 @@ import com.vjaykrsna.nanoai.feature.uiux.state.UiPreferenceSnapshot
 import com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload
 import com.vjaykrsna.nanoai.feature.uiux.ui.shell.NanoShellScaffold
 import com.vjaykrsna.nanoai.feature.uiux.ui.shell.ShellUiEvent
+import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
@@ -64,7 +67,8 @@ import org.junit.runner.RunWith
 )
 @RunWith(AndroidJUnit4::class)
 class CommandPaletteComposeTest {
-  @get:Rule val composeTestRule = createAndroidComposeRule<ComponentActivity>()
+  @get:Rule(order = 0) val environmentRule = TestEnvironmentRule()
+  @get:Rule(order = 1) val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
   @Test
   fun palette_opensWithShortcut_focusesSearchField() {
@@ -89,7 +93,7 @@ class CommandPaletteComposeTest {
     }
 
     composeTestRule.onNodeWithTag("command_palette").assertIsDisplayed()
-    composeTestRule.onNodeWithTag("command_palette_search").assertIsDisplayed()
+    composeTestRule.onNodeWithTag("command_palette_search").assertIsDisplayed().assertIsFocused()
     assertThat(recorder.events)
       .contains(ShellUiEvent.ShowCommandPalette(PaletteSource.KEYBOARD_SHORTCUT))
   }
@@ -258,7 +262,7 @@ class CommandPaletteComposeTest {
     )
 
     composeTestRule.onNodeWithText("Image generation queued for reconnect").assertIsDisplayed()
-    composeTestRule.onNodeWithText("Undo").performClick()
+    composeTestRule.onNodeWithText("Undo").assertIsDisplayed().assertHasClickAction().performClick()
 
     composeTestRule.waitUntil {
       recorder.events.any { it is ShellUiEvent.Undo && it.payload == payload }

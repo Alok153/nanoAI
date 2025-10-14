@@ -1,7 +1,10 @@
 package com.vjaykrsna.nanoai.disclaimer
 
+import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -10,6 +13,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import com.vjaykrsna.nanoai.MainActivity
+import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -26,25 +30,37 @@ import org.junit.runner.RunWith
 @LargeTest
 @RunWith(AndroidJUnit4::class)
 class DisclaimerDialogTest {
-  @get:Rule val composeRule = createAndroidComposeRule<MainActivity>()
+  @get:Rule(order = 0) val environmentRule = TestEnvironmentRule()
+  @get:Rule(order = 1) val composeRule = createAndroidComposeRule<MainActivity>()
 
   @Test
   fun disclaimerDialog_requiresAcknowledgement_and_readsWithTalkBack() {
-    composeRule.onNodeWithTag("disclaimer_dialog_container").assertIsDisplayed()
-
-    composeRule.onNodeWithTag("disclaimer_scrollable_content").assertIsDisplayed().performScrollTo()
+    composeRule
+      .onNodeWithTag("disclaimer_dialog_container")
+      .assertIsDisplayed()
+      .assertContentDescriptionEquals("nanoAI privacy disclaimer dialog")
 
     composeRule
       .onNodeWithTag("disclaimer_accept_button")
       .assertIsDisplayed()
-      .assertHasClickAction()
-      .assertTextContains("Agree", substring = true)
-      .performClick()
+      .assertIsNotEnabled()
+      .assertContentDescriptionEquals("Accept privacy terms")
 
     composeRule
       .onNodeWithTag("disclaimer_decline_button")
       .assertIsDisplayed()
       .assertHasClickAction()
+      .assertContentDescriptionEquals("Decline and review later")
       .assertTextContains("Decline", substring = true)
+
+    composeRule.onNodeWithTag("disclaimer_last_text").performScrollTo()
+
+    composeRule
+      .onNodeWithTag("disclaimer_accept_button")
+      .assertIsDisplayed()
+      .assertIsEnabled()
+      .assertHasClickAction()
+      .assertTextContains("Agree", substring = true)
+      .performClick()
   }
 }

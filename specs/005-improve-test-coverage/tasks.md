@@ -1,71 +1,83 @@
 # Tasks: Improve Test Coverage for nanoAI
 
-**Input**: Design documents from `specs/005-improve-test-coverage/`
+**Input**: Design documents from `/specs/005-improve-test-coverage/`
 **Prerequisites**: plan.md, research.md, data-model.md, contracts/, quickstart.md
 
 ## Phase 3.1: Setup
-- [X] T001 Update `gradle/libs.versions.toml` to add `org.junit.jupiter` (api, params, engine) and `org.junit.platform` launcher aliases, align MockK/Truth dependencies, and drop the legacy `junit` alias so JVM tests compile against JUnit5 only.
-- [X] T002 Configure `app/build.gradle.kts` to enable JUnit Platform (`tasks.withType<Test> { useJUnitPlatform() }`), wire `testImplementation` to the new Jupiter aliases, move Mockito/MockK exclusions, and register `jacocoFullReport` + `verifyCoverageThresholds` under `check` for CI usage.
-- [X] T003 Replace `app/src/test/java/com/vjaykrsna/nanoai/testing/MainDispatcherRule.kt` with a JUnit5 `MainDispatcherExtension`, update affected tests in `app/src/test/java/**` to use `@ExtendWith` / `@RegisterExtension`, and delete remaining `@Rule` references.
+- [X] T001 Stabilize the managed Pixel 6 config in `app/build.gradle.kts` by setting `testedAbi = "x86_64"` on `pixel6Api34`, documenting the API 34 emulator ABI change, and wiring the property into `ciManagedDeviceDebugAndroidTest`.
+- [X] T002 Add a deterministic instrumentation harness by introducing `app/src/androidTest/java/com/vjaykrsna/nanoai/testing/TestEnvironmentRule.kt` to reset DataStore/Room state and network toggles before each test and by applying the rule across Compose suites so first-launch disclaimers and offline flows start from a clean slate.
 
 ## Phase 3.2: Tests First (TDD)
-- [X] T004 [P] Refactor `app/src/test/java/com/vjaykrsna/nanoai/coverage/CoverageReportContractTest.kt` to JUnit5 and add a failing test that asserts risk register entries are sorted by severity order (CRITICAL → HIGH → MEDIUM → LOW) and reject mismatched catalog risk tags.
-- [X] T005 [P] Create `app/src/test/java/com/vjaykrsna/nanoai/coverage/model/CoverageMetricTest.kt` with JUnit5 cases covering `EXCEEDS_TARGET` status and positive `deltaFromThreshold()` when coverage > threshold.
-- [X] T006 [P] Convert `app/src/test/java/com/vjaykrsna/nanoai/coverage/CoverageSummaryTest.kt` to JUnit5 and add a failing test for a new `statusBreakdown()` helper returning counts per `CoverageMetric.Status`.
-- [X] T007 [P] Add `app/src/test/java/com/vjaykrsna/nanoai/coverage/model/CoverageTrendPointTest.kt` verifying a new `deltaFromThreshold()` helper and that non-monotonic `recordedAt` values throw.
-- [X] T008 [P] Add `app/src/test/java/com/vjaykrsna/nanoai/coverage/model/RiskRegisterItemTest.kt` with assertions for `isActionable(now)` semantics and CRITICAL risks without `targetBuild` throwing.
-- [X] T009 [P] Add `app/src/test/java/com/vjaykrsna/nanoai/coverage/model/TestSuiteCatalogEntryTest.kt` covering `mitigatesRisk(riskId)` and rejecting blank owners under JUnit5.
-- [X] T010 [P] Add `app/src/test/java/com/vjaykrsna/nanoai/coverage/model/TestLayerTest.kt` asserting `machineName` camelCase and a new kebab-case `analyticsKey`.
-- [X] T011 [P] Migrate `app/src/test/java/com/vjaykrsna/nanoai/coverage/RiskRegisterCoordinatorTest.kt` to JUnit5 and add a failing case where `requiresAttention(now)` only escalates overdue High/Critical risks with unmitigated tags.
-- [X] T012 [P] Migrate `app/src/test/java/com/vjaykrsna/nanoai/feature/settings/domain/huggingface/HuggingFaceAuthCoordinatorTest.kt` to JUnit5 and add a failing `slow_down` poll-backoff scenario asserting accessible error copy.
-- [X] T013 [P] Create `app/src/test/java/com/vjaykrsna/nanoai/feature/library/domain/RefreshModelCatalogUseCaseTest.kt` covering success and failure Result semantics under JUnit5.
-- [X] T014 [P] Create `app/src/test/java/com/vjaykrsna/nanoai/feature/library/data/impl/ModelCatalogRepositoryImplTest.kt` validating `replaceCatalog` metadata preservation and `deleteModelFiles` cleanup.
-- [X] T015 [P] Expand `app/src/androidTest/java/com/vjaykrsna/nanoai/coverage/ui/CoverageDashboardTest.kt` with Espresso/JUnit5 extension assertions for offline fallback (error banner, TalkBack description) using MockWebServer.
-- [X] T016 [P] Add `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/library/data/ModelCatalogOfflineTest.kt` exercising Room in-memory DB + MockWebServer to cover the quickstart offline device farm scenario.
+- [X] T003 [P] Create `app/src/test/java/com/vjaykrsna/nanoai/contracts/CoverageReportSchemaTest.kt` that exercises `specs/005-improve-test-coverage/contracts/coverage-report.schema.json` with representative JSON payloads and asserts thresholds, trend entries, and risk register objects.
+- [X] T004 [P] Extend `app/src/test/java/com/vjaykrsna/nanoai/coverage/CoverageSummaryTest.kt` to cover typed risk references, `statusBreakdown`, and trend delta rounding so new coverage summary invariants fail before implementation.
+- [X] T005 [P] Add monotonic ordering and threshold alignment cases to `app/src/test/java/com/vjaykrsna/nanoai/coverage/model/CoverageTrendPointTest.kt`, including a failing test for mismatched thresholds.
+- [X] T006 [P] Strengthen `app/src/test/java/com/vjaykrsna/nanoai/coverage/model/CoverageMetricTest.kt` with assertions for `deltaFromThreshold`, `meetsThreshold`, and enum transitions around boundary values.
+- [X] T007 [P] Update `app/src/test/java/com/vjaykrsna/nanoai/coverage/model/TestSuiteCatalogEntryTest.kt` to expect case-insensitive risk tag matching and to reject negative coverage contributions.
+- [X] T008 [P] Cover actionable deadlines, severity gates, and mitigation formatting in `app/src/test/java/com/vjaykrsna/nanoai/coverage/model/RiskRegisterItemTest.kt`.
+- [X] T009 [P] Expand `app/src/test/java/com/vjaykrsna/nanoai/coverage/model/TestLayerTest.kt` with expectations for `machineName` camel casing (`ViewModel`, `UI`, `Data`) and analytics key normalization.
+- [X] T010 [P] Add Jupiter tests in `app/src/test/java/com/vjaykrsna/nanoai/feature/settings/domain/huggingface/HuggingFaceAuthCoordinatorTest.kt` that fail until `slow_down` backoff and offline retry suppression are implemented.
+- [X] T011 [P] Add a cached-fallback expectation to `app/src/test/java/com/vjaykrsna/nanoai/feature/library/domain/RefreshModelCatalogUseCaseTest.kt`, asserting a successful result when the remote source throws.
+- [X] T012 [P] Harden `app/src/androidTest/java/com/vjaykrsna/nanoai/coverage/ui/CoverageDashboardTest.kt` with assertions for formatted percent strings, `coverage-layer-*` tags, and offline announcement semantics.
+- [X] T013 [P] Enhance `app/src/androidTest/java/com/vjaykrsna/nanoai/disclaimer/DisclaimerDialogTest.kt` to verify TalkBack descriptions and to fail when the accept button enables before scrolling.
+- [X] T014 [P] Extend `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/library/data/ModelCatalogOfflineTest.kt` to assert successful results and audit MockWebServer calls during HTTP 503 fallbacks.
+- [X] T015 [P] Strengthen `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/CommandPaletteComposeTest.kt` with focus assertions, retry button state checks, and snackbar undo expectations to surface current regressions.
+- [X] T016 [P] Expand `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/HomeHubFlowTest.kt` with node visibility checks for quick actions, recent activity tags, and command palette events.
+- [X] T017 [P] Update `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/AdaptiveShellTest.kt` to fail when permanent drawers stay hidden on expanded layouts or when accessibility focus cannot reach `shell_content`.
+- [X] T018 [P] Add queue population and semantics coverage to `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/OfflineProgressTest.kt`, including retry intent verification.
+- [X] T019 [P] Lock in `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/contracts/HomeScreenContractTest.kt` expectations for column counts, mode cards, and recent feed accessibility.
+- [X] T020 [P] Strengthen `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/contracts/OfflineBannerContractTest.kt` with assertions for retry action semantics and disabled affordances.
+- [X] T021 [P] Expand `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/contracts/SettingsScreenContractTest.kt` to validate offline provider listings, FAB visibility, and TalkBack copy.
+- [X] T022 [P] Tighten `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/contracts/SidebarContractTest.kt` around drawer toggles, navigation destinations, and deep link slots.
+- [X] T023 [P] Enhance `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/contracts/ThemeToggleContractTest.kt` with persistence and recomposition checks.
+- [X] T024 [P] Enrich `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/scenario/HomeNavigationScenarioTest.kt` with assertions covering tools panel expansion and recent action execution.
+- [X] T025 [P] Update `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/scenario/OfflineModeScenarioTest.kt` to fail when offline banners or retry queues are missing.
+- [X] T026 [P] Add navigation + undo verification to `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/scenario/SidebarSettingsScenarioTest.kt`.
+- [X] T027 [P] Extend `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/scenario/ThemeToggleScenarioTest.kt` with process-death persistence assertions.
+- [X] T028 [P] Strengthen `app/src/androidTest/java/com/vjaykrsna/nanoai/model/ModelDownloadScenarioTest.kt` to expect actionable error banners and retry affordances.
+- [X] T029 [P] Enhance `app/src/androidTest/java/com/vjaykrsna/nanoai/persona/OfflinePersonaFlowTest.kt` to verify persona queue replay after network restoration.
 
-## Phase 3.3: Core Implementation (after tests fail)
-- [X] T017 Update `app/src/main/java/com/vjaykrsna/nanoai/coverage/model/CoverageMetric.kt` to introduce `EXCEEDS_TARGET` branching, companion constants for bounds, and an `isExceedingTarget()` helper.
-- [X] T018 Update `app/src/main/java/com/vjaykrsna/nanoai/coverage/model/CoverageSummary.kt` to expose `statusBreakdown()`, ensure `trendDeltaFor` defaults to `0.0`, and reuse the new metric helpers.
-- [X] T019 Update `app/src/main/java/com/vjaykrsna/nanoai/coverage/model/CoverageTrendPoint.kt` to cache `deltaFromThreshold()` and validate non-decreasing `recordedAt` sequences.
-- [X] T020 Update `app/src/main/java/com/vjaykrsna/nanoai/coverage/model/RiskRegisterItem.kt` with an `isActionable(now: Instant)` helper and stricter CRITICAL target validation.
-- [X] T021 Update `app/src/main/java/com/vjaykrsna/nanoai/coverage/model/TestSuiteCatalogEntry.kt` to add `mitigatesRisk(riskId: String)` and guard blank tag sets.
-- [X] T022 Update `app/src/main/java/com/vjaykrsna/nanoai/coverage/model/TestLayer.kt` to expose a new `analyticsKey` property derived from enum names.
-- [X] T023 Update `app/src/main/java/com/vjaykrsna/nanoai/coverage/domain/RiskRegisterCoordinator.kt` to honour `targetBuild` deadlines, reuse `isActionable`, and remove the constant return from `shouldEscalate`.
-- [X] T024 Update `app/src/main/java/com/vjaykrsna/nanoai/coverage/domain/CoverageReportGenerator.kt` to sort risk register output by severity and assert suite catalog tags cover referenced risks.
-- [X] T025 Update `app/src/main/java/com/vjaykrsna/nanoai/feature/settings/domain/huggingface/HuggingFaceAuthCoordinator.kt` to expand `slow_down` handling, expose surfaced error copy, and ensure polling interval caps respect accessibility guidelines.
-- [X] T026 Update `app/src/main/java/com/vjaykrsna/nanoai/feature/library/domain/RefreshModelCatalogUseCase.kt` to propagate failure causes, emit structured logs, and return `Result.failure` when repository writes fail.
-- [X] T027 Update `app/src/main/java/com/vjaykrsna/nanoai/feature/library/data/impl/ModelCatalogRepositoryImpl.kt` to preserve integrity metadata during `replaceCatalog` and harden file cleanup for offline deletions.
+## Phase 3.3: Core Implementation
+- [X] T030 [P] Replace `riskItems: List<String>` with typed references in `app/src/main/java/com/vjaykrsna/nanoai/coverage/model/CoverageSummary.kt` and introduce `RiskRegisterItemRef` to satisfy the new tests.
+- [X] T031 [P] Enforce threshold alignment and provide factory helpers in `app/src/main/java/com/vjaykrsna/nanoai/coverage/model/CoverageTrendPoint.kt` so tests around monotonic sequences pass.
+- [X] T032 [P] Normalize risk tags and coverage contribution rounding in `app/src/main/java/com/vjaykrsna/nanoai/coverage/model/TestSuiteCatalogEntry.kt`.
+- [X] T033 [P] Implement actionable deadline calculations and mitigation formatting in `app/src/main/java/com/vjaykrsna/nanoai/coverage/model/RiskRegisterItem.kt`.
+- [X] T034 [P] Fix camel-case generation and analytics key helpers in `app/src/main/java/com/vjaykrsna/nanoai/coverage/model/TestLayer.kt`.
+- [X] T035 [P] Add derived helpers (e.g., `statusColor`) and boundary-safe rounding in `app/src/main/java/com/vjaykrsna/nanoai/coverage/model/CoverageMetric.kt`.
+- [X] T036 [P] Implement `slow_down` backoff handling, offline retry suppression, and accessibility surfaces in `app/src/main/java/com/vjaykrsna/nanoai/feature/settings/domain/huggingface/HuggingFaceAuthCoordinator.kt`.
+- [X] T037 [P] Teach `app/src/main/java/com/vjaykrsna/nanoai/feature/library/domain/RefreshModelCatalogUseCase.kt` to return cached success on network failures and to log structured context for coverage reports.
+- [X] T038 [P] Preserve cached catalog metadata and expose offline refresh hooks in `app/src/main/java/com/vjaykrsna/nanoai/feature/library/data/impl/ModelCatalogRepositoryImpl.kt`.
+- [X] T039 [P] Update `app/src/main/java/com/vjaykrsna/nanoai/coverage/domain/CoverageReportGenerator.kt` to include risk register references, trend slicing, and threshold metadata required by the contract tests.
+- [X] T040 [P] Align tags, percentage formatting, and offline banner semantics in `app/src/main/java/com/vjaykrsna/nanoai/coverage/ui/CoverageDashboardScreen.kt` and `CoverageDashboardBanner.kt`.
+- [X] T041 [P] Ensure permanent drawers open on expanded layouts, add TalkBack hints, and adjust command palette focus handling in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/shell/NanoShellScaffold.kt`.
+- [X] T042 [P] Refine quick action chips, mode cards, and recent activity semantics in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/HomeScreen.kt`.
+- [X] T043 [P] Harden retry/clear affordances and semantics in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/progress/ProgressCenterPanel.kt`.
+- [X] T044 [P] Improve focus management and disabled states in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/commandpalette/CommandPaletteSheet.kt`.
+- [X] T045 [P] Update `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/state/ShellLayoutState.kt` to expose permanent drawer visibility and offline helpers that the UI now consumes.
 
 ## Phase 3.4: Integration
-- [X] T028 Implement `app/src/main/java/com/vjaykrsna/nanoai/coverage/tasks/VerifyCoverageThresholdsTask.kt` (plus Gradle wiring) to invoke `CoverageThresholdVerifier`, emit summary markdown, and fail the build when tests detect regressions.
-- [X] T029 Extend `scripts/coverage/merge-coverage.sh` to merge unit + instrumentation Jacoco exec files, honour the new thresholds, and copy artifacts to `app/build/reports/jacoco/full/`.
-- [X] T030 Enhance `scripts/coverage/generate-summary.py` to ingest the merged XML, compute the status breakdown, and refresh `app/build/coverage/summary.md` for stakeholder broadcasts.
-- [X] T031 Add or update `app/src/main/java/com/vjaykrsna/nanoai/telemetry/CoverageTelemetryReporter.kt` so coverage deltas and risk escalations are logged without PII and wired into existing telemetry dispatchers.
+- [X] T046 [P] Expose disclaimer exposure state via `app/src/main/java/com/vjaykrsna/nanoai/core/data/preferences/PrivacyPreferenceStore.kt` (Flow + reset API) so UI can gate first run.
+- [X] T047 [P] Surface disclaimer UI state in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/presentation/AppViewModel.kt` and show the dialog in `app/src/main/java/com/vjaykrsna/nanoai/ui/navigation/NavigationScaffold.kt` with TalkBack-friendly tags.
+- [X] T048 [P] Wire the disclaimer dialog entry point and hydration fallback in `app/src/main/java/com/vjaykrsna/nanoai/MainActivity.kt`.
+- [X] T049 [P] Merge offline progress queues, undo flows, and palette visibility updates in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/presentation/ShellViewModel.kt` to satisfy scenario tests.
+- [X] T050 [P] Extend `app/src/main/java/com/vjaykrsna/nanoai/coverage/tasks/VerifyCoverageThresholdsTask.kt` (and its helpers) to emit risk summaries, trend arrays, and markdown matching the new schema/tests.  
+	Note: added JSON output, generated per-layer trend points, and included risk reference lines in the markdown summary.
 
 ## Phase 3.5: Polish
-- [X] T032 [P] Refresh `specs/005-improve-test-coverage/quickstart.md` with JUnit5 commands, emulator prerequisites, and troubleshooting for the new offline tests.
-- [X] T033 [P] Generate `docs/coverage/risk-register.md` summarising escalated risks, mitigation owners, and links to the new tests.
-- [X] T034 [P] Add `macrobenchmark/src/main/java/com/vjaykrsna/nanoai/coverage/CoverageDashboardStartupBenchmark.kt` validating dashboard load <100ms and capture results in CI artifacts.
-- [X] T035 [P] Update `README.md` testing section with JUnit5 migration notes, coverage thresholds, and commands for `jacocoFullReport` + `verifyCoverageThresholds`.
+- [X] T051 [P] Author `docs/todo-next.md` (or refresh it if recreated) with the new coverage backlog, referencing the failing flows resolved by this feature.
+- [X] T052 [P] Update `docs/testing.md` with instructions for `jacocoFullReport`, `verifyCoverageThresholds`, and managed-device requirements introduced in T001–T002.
+- [X] T053 [P] Refresh `specs/005-improve-test-coverage/quickstart.md` to document the new disclaimer rule, coverage commands, and emulator ABI requirement.
+- [X] T054 [P] Revise `docs/coverage/risk-register.md` with the updated coverage snapshot, mitigated risks, and any TODO items deferred (leave explicit TODO comments where further automation is still pending).
+- [X] T055 [P] Update `README.md` (project root) to highlight the new coverage workflows and links to the risk register.
 
-## Dependencies
-- Setup tasks T001 → T003 must finish before any test conversions (T004–T016).
-- Each test task T004–T016 precedes its matching implementation task (T017–T027) to preserve TDD.
-- Integration tasks T028–T031 depend on core implementation updates through T027.
-- Polish tasks T032–T035 require prior sections so documentation reflects final behaviour.
+## Dependency Notes
+- T003–T029 depend on test harness setup from T001–T002.
+- T030–T045 must only begin once the corresponding tests (T003–T029) are red to preserve TDD.
+- T046–T050 depend on the core model and UI work from T030–T045.
+- T051–T055 should run last after validation tasks confirm the suite is green.
 
-## Parallel Example
+## Parallel Execution Example
+```bash
+task start --id T003
+task start --id T012
+task start --id T015
 ```
-# Run independent JUnit5 test migrations together once setup is complete
-task-agent run T005
-task-agent run T006
-task-agent run T007
-
-# Batch instrumentation scenarios after Gradle + unit migrations
-task-agent run T015
-task-agent run T016
-```
-
-## Notes
-- Honour constitution gates: Material accessibility checks (T015), offline resilience (T016, T027), automation gates (T028–T030), AI integrity via Hugging Face auth (T012, T025), and documentation freshness (T032–T035).
-- Coordinate with CI owners before enabling the new `verifyCoverageThresholds` gate to avoid blocking existing pipelines.

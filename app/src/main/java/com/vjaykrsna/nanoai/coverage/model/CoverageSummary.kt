@@ -13,7 +13,7 @@ data class CoverageSummary(
   val layerMetrics: Map<TestLayer, CoverageMetric>,
   val thresholds: Map<TestLayer, Double>,
   val trendDelta: Map<TestLayer, Double>,
-  val riskItems: List<String>,
+  val riskItems: List<RiskRegisterItemRef>,
 ) {
   init {
     require(buildId.isNotBlank()) { "buildId must not be blank" }
@@ -23,6 +23,9 @@ data class CoverageSummary(
     }
     require(layerMetrics.values.all { it.coverage in MIN_PERCENT..MAX_PERCENT }) {
       "Coverage metrics must be between 0 and 100"
+    }
+    require(riskItems.distinctBy { it.riskId }.size == riskItems.size) {
+      "riskItems must not contain duplicate references"
     }
   }
 
@@ -34,7 +37,10 @@ data class CoverageSummary(
   fun thresholdFor(layer: TestLayer): Double =
     thresholds[layer] ?: error("No threshold recorded for $layer")
 
-  fun trendDeltaFor(layer: TestLayer): Double = trendDelta[layer] ?: DEFAULT_DELTA
+  private val roundedTrendDelta: Map<TestLayer, Double> =
+    trendDelta.mapValues { (_, value) -> value.roundToSingleDecimal() }
+
+  fun trendDeltaFor(layer: TestLayer): Double = roundedTrendDelta[layer] ?: DEFAULT_DELTA
 
   fun layersBelowTarget(): Set<TestLayer> =
     layerMetrics.filterValues { it.status == CoverageMetric.Status.BELOW_TARGET }.keys

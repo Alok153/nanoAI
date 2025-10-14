@@ -14,17 +14,51 @@ constructor(
   private val modelCatalogSource: ModelCatalogSource,
   private val modelCatalogRepository: ModelCatalogRepository,
 ) {
-  suspend operator fun invoke(): Result<Unit> = runCatching {
-    val models = modelCatalogSource.fetchCatalog()
-    val context = mapOf("modelCount" to models.size.toString())
+  suspend operator fun invoke(): Result<Unit> {
+    val context = mutableMapOf<String, String>()
+    val models =
+      try {
+        modelCatalogSource.fetchCatalog().also { fetched ->
+          context["modelCount"] = fetched.size.toString()
+          context["source"] = modelCatalogSource.javaClass.simpleName
+        }
+      } catch (error: Throwable) {
+        return handleFetchFailure(context, error)
+      }
+
     Log.i(TAG, "catalogRefresh success context=${context.toLog()}")
-    try {
+
+    return try {
       modelCatalogRepository.replaceCatalog(models)
+      modelCatalogRepository.recordRefreshSuccess(
+        source = context["source"] ?: modelCatalogSource.javaClass.simpleName,
+        modelCount = models.size,
+      )
+      Result.success(Unit)
     } catch (error: Throwable) {
       val wrapped = IllegalStateException("Failed to replace model catalog", error)
       Log.e(TAG, "catalogRefresh failure context=${context.toLog()}", wrapped)
-      throw wrapped
+      Result.failure(wrapped)
     }
+  }
+
+  private suspend fun handleFetchFailure(
+    context: MutableMap<String, String>,
+    error: Throwable,
+  ): Result<Unit> {
+    context["errorType"] = error.javaClass.simpleName
+    error.message?.takeIf { it.isNotBlank() }?.let { message -> context["errorMessage"] = message }
+    context["fallback"] = "cached"
+    val cachedModels =
+      runCatching { modelCatalogRepository.getAllModels() }.getOrDefault(emptyList())
+    context["cachedCount"] = cachedModels.size.toString()
+    Log.w(TAG, "catalogRefresh fallback context=${context.toLog()}", error)
+    modelCatalogRepository.recordOfflineFallback(
+      reason = error.javaClass.simpleName,
+      cachedCount = cachedModels.size,
+      message = error.message,
+    )
+    return Result.success(Unit)
   }
 
   private fun Map<String, String>.toLog(): String = buildString {

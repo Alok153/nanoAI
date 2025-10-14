@@ -74,8 +74,6 @@ internal object UiUxDomainReflection {
   fun newUiPreferences(
     themePreference: Any = themePreference("LIGHT"),
     visualDensity: Any = visualDensity("DEFAULT"),
-    onboardingCompleted: Boolean = false,
-    dismissedTips: Map<String, Boolean> = emptyMap(),
     pinnedTools: List<String> = emptyList(),
     commandPaletteRecents: List<String> = emptyList(),
     connectivityBannerLastDismissed: Instant? = null,
@@ -89,8 +87,6 @@ internal object UiUxDomainReflection {
           instance,
           themePreference,
           visualDensity,
-          onboardingCompleted,
-          dismissedTips,
           pinnedTools,
           commandPaletteRecents,
           connectivityBannerLastDismissed,
@@ -100,16 +96,6 @@ internal object UiUxDomainReflection {
         ctor.newInstance(
           themePreference,
           visualDensity,
-          onboardingCompleted,
-          dismissedTips,
-          pinnedTools,
-        )
-      7 ->
-        ctor.newInstance(
-          themePreference,
-          visualDensity,
-          onboardingCompleted,
-          dismissedTips,
           pinnedTools,
           commandPaletteRecents,
           connectivityBannerLastDismissed,
@@ -123,8 +109,6 @@ internal object UiUxDomainReflection {
     displayName: String? = "Taylor",
     themePreference: Any = themePreference("LIGHT"),
     visualDensity: Any = visualDensity("DEFAULT"),
-    onboardingCompleted: Boolean = false,
-    dismissedTips: Map<String, Boolean> = emptyMap(),
     lastOpenedScreen: Any = screenType("HOME"),
     compactMode: Boolean = false,
     pinnedTools: List<String> = emptyList(),
@@ -136,8 +120,6 @@ internal object UiUxDomainReflection {
       displayName,
       themePreference,
       visualDensity,
-      onboardingCompleted,
-      dismissedTips,
       lastOpenedScreen,
       compactMode,
       pinnedTools,
@@ -149,8 +131,6 @@ internal object UiUxDomainReflection {
     original: Any?,
     themePreference: Any? = null,
     visualDensity: Any? = null,
-    onboardingCompleted: Boolean? = null,
-    dismissedTips: Map<String, Boolean>? = null,
     pinnedTools: List<String>? = null,
     commandPaletteRecents: List<String>? = null,
     connectivityBannerLastDismissed: Instant? = null,
@@ -166,21 +146,6 @@ internal object UiUxDomainReflection {
     val resolvedDensity =
       (visualDensity ?: getProperty(baseline, "visualDensity"))
         ?: error("visualDensity must not be null")
-    val resolvedOnboarding =
-      onboardingCompleted ?: (getProperty(baseline, "onboardingCompleted") as? Boolean ?: false)
-
-    val resolvedDismissed: Map<String, Boolean> =
-      dismissedTips
-        ?: run {
-          val raw = getProperty(baseline, "dismissedTips") as? Map<*, *>
-          raw
-            ?.mapNotNull { (k, v) ->
-              val key = k?.toString()
-              val value = v as? Boolean
-              if (key != null && value != null) key to value else null
-            }
-            ?.toMap() ?: emptyMap()
-        }
 
     val resolvedPinned: List<String> =
       pinnedTools
@@ -207,8 +172,6 @@ internal object UiUxDomainReflection {
           baseline,
           resolvedTheme,
           resolvedDensity,
-          resolvedOnboarding,
-          resolvedDismissed,
           resolvedPinned,
           resolvedCommandRecents,
           resolvedConnectivityDismissed,
@@ -217,16 +180,6 @@ internal object UiUxDomainReflection {
         ctor.newInstance(
           resolvedTheme,
           resolvedDensity,
-          resolvedOnboarding,
-          resolvedDismissed,
-          resolvedPinned,
-        )
-      7 ->
-        ctor.newInstance(
-          resolvedTheme,
-          resolvedDensity,
-          resolvedOnboarding,
-          resolvedDismissed,
           resolvedPinned,
           resolvedCommandRecents,
           resolvedConnectivityDismissed,
@@ -285,8 +238,6 @@ internal object UiUxDomainReflection {
     baseline: Any,
     themePreference: Any,
     visualDensity: Any,
-    onboardingCompleted: Boolean,
-    dismissedTips: Map<String, Boolean>,
     pinnedTools: List<String>,
     commandPaletteRecents: List<String>,
     connectivityBannerLastDismissed: Instant?,
@@ -301,17 +252,6 @@ internal object UiUxDomainReflection {
           baseline,
           themePreference,
           visualDensity,
-          onboardingCompleted,
-          dismissedTips,
-          pinnedTools,
-        )
-      7 ->
-        method.invoke(
-          baseline,
-          themePreference,
-          visualDensity,
-          onboardingCompleted,
-          dismissedTips,
           pinnedTools,
           commandPaletteRecents,
           connectivityBannerLastDismissed,
@@ -329,7 +269,6 @@ internal class UserProfileRepositorySpy {
   val offlineStatusFlow = MutableStateFlow(false)
   val themeEvents = MutableSharedFlow<Any>(replay = 1)
   val invocations = CopyOnWriteArrayList<String>()
-  var lastOnboardingRecord: Pair<Map<String, Boolean>, Boolean>? = null
   var lastCompactToggle: Boolean? = null
 
   fun asProxy(): Any {
@@ -372,33 +311,6 @@ internal class UserProfileRepositorySpy {
         name.contains("notify", ignoreCase = true) -> {
           invocations += name
           args?.firstOrNull()?.let { themeEvents.tryEmit(it) }
-          Unit
-        }
-        name.contains("onboarding", ignoreCase = true) -> {
-          invocations += name
-          val dismissed =
-            args
-              ?.firstOrNull { it is Map<*, *> }
-              ?.let { map ->
-                if (
-                  map is Map<*, *> &&
-                    map.keys.all { it is String } &&
-                    map.values.all { it is Boolean }
-                ) {
-                  @Suppress("UNCHECKED_CAST")
-                  map as Map<String, Boolean>
-                } else {
-                  emptyMap()
-                }
-              } ?: emptyMap()
-          val completed = args?.firstOrNull { it is Boolean } as? Boolean ?: false
-          lastOnboardingRecord = dismissed to completed
-          preferencesFlow.value =
-            UiUxDomainReflection.copyUiPreferences(
-              preferencesFlow.value,
-              onboardingCompleted = completed,
-              dismissedTips = dismissed,
-            )
           Unit
         }
         name.contains("compact", ignoreCase = true) -> {

@@ -20,6 +20,7 @@ This guide explains how the nanoAI test suites are organised, how they embody th
 
 ### Common Patterns
 - **Coroutine helpers**: Use `MainDispatcherExtension` with `@ExtendWith` or instantiate per-test to override `Dispatchers.Main`.
+- **Test environment isolation**: Apply `TestEnvironmentRule` (located at `app/src/androidTest/java/com/vjaykrsna/nanoai/testing/TestEnvironmentRule.kt`) to instrumentation tests to reset DataStore/Room state and network toggles before each test. This ensures first-launch disclaimers and offline flows start from a clean slate, preventing cross-test contamination.
 - **Fixture builders**: Domain- and data-layer packages expose factory helpers under `app/src/test/java/com/vjaykrsna/nanoai/**/fixtures` (search for `Fixture.kt`) to keep test setup terse.
 - **Compose assertions**: Prefer semantics matchers (`onNodeWithContentDescription`, `assertHasClickAction`) over screenshot testing for determinism.
 - **Room DAO checks**: Run against in-memory databases; leverage `androidx.room:room-testing` and `runTest` to cover suspend DAO calls.
@@ -32,11 +33,12 @@ This guide explains how the nanoAI test suites are organised, how they embody th
    ```
    Generates `app/build/reports/tests/testDebugUnitTest/index.html` and `*.exec` coverage data.
 - Tip: Use the Jupiter selector to narrow execution, e.g. `./gradlew testDebugUnitTest --tests "com.vjaykrsna.nanoai.coverage.*"` when validating coverage helpers.
-2. **Instrumentation & Compose UI tests** (requires emulator or device)
+2. **Instrumentation & Compose UI tests** (requires virtualization or a device)
    ```bash
-   ./gradlew connectedDebugAndroidTest
+   ./gradlew ciManagedDeviceDebugAndroidTest
    ```
-   Produces reports under `app/build/reports/androidTests/connected/` and `.ec` coverage files.
+   Spins up the managed Pixel 6 API 34 (AOSP ATD) virtual device headlessly—matching the CI configuration—and produces reports under `app/build/reports/androidTests/connected/` with coverage files in `app/build/outputs/managed_device_code_coverage/`.
+- To reuse an existing emulator or physical hardware, run `./gradlew connectedDebugAndroidTest`; if you previously enabled managed devices (e.g., via `-Pnanoai.useManagedDevice=true`), override it with `-Pnanoai.useManagedDevice=false` to force the direct device-provider task.
 - To run specific tests, use `-Pandroid.testInstrumentationRunnerArguments.class="*TestClass*"` (e.g., `-Pandroid.testInstrumentationRunnerArguments.class="*OfflineProgressTest*"`), as `--tests` is not supported for instrumentation tasks.
 - When triaging flakes, append `-Pandroid.testInstrumentationRunnerArguments.notAnnotation=flaky` and explicitly toggle radios (`adb shell svc wifi disable|enable`, `adb shell svc data disable|enable`) to rehearse offline fallbacks.
 3. **Macrobenchmarks** (optional, CI-only by default)
@@ -54,12 +56,12 @@ This guide explains how the nanoAI test suites are organised, how they embody th
    ```bash
    ./gradlew jacocoFullReport
    ```
-   Produces the merged XML + HTML report under `app/build/reports/jacoco/full/`. The task automatically runs both unit and instrumentation suites, so ensure an emulator or device is available first.
+   Produces the merged XML + HTML report under `app/build/reports/jacoco/full/`. On CI (or whenever `-Pnanoai.useManagedDevice=true` is supplied) the task bootstraps the managed Pixel 6 API 34 virtual device before running instrumentation tests; otherwise it falls back to any connected hardware. When local virtualization is unavailable, you can append `-Pnanoai.skipInstrumentation=true` to merge unit-test coverage only (CI must keep instrumentation enabled).
 2. **Verify thresholds**
    ```bash
-   ./gradlew verifyCoverageThresholds
+   ./gradlew verifyCoverageThresholds --report-xml app/build/reports/jacoco/full/jacocoFullReport.xml --json app/build/coverage/report.json
    ```
-   Executes `CoverageThresholdVerifier` via `VerifyCoverageThresholdsTask`, writing a human-readable gate summary to `app/build/coverage/thresholds.md`. The task fails if any layer falls below the 75/65/70 targets and is wired into `check`.
+   Executes `CoverageThresholdVerifier` via `VerifyCoverageThresholdsTask`, writing a human-readable gate summary to `app/build/coverage/thresholds.md` and optional JSON report matching `coverage-report.schema.json`. The task fails if any layer falls below the 75/65/70 targets and is wired into `check`.
 3. **Publish coverage summaries**
    ```bash
    ./gradlew coverageMarkdownSummary
@@ -98,8 +100,10 @@ This guide explains how the nanoAI test suites are organised, how they embody th
 
 ## Troubleshooting
 - **Missing emulator**: `connectedDebugAndroidTest` will fail quickly—set `ANDROID_SERIAL` or launch an emulator via Android Studio / `emulator` CLI.
+- **Managed device prerequisites**: Ensure hardware virtualization is enabled locally (`egrep -c '(vmx|svm)' /proc/cpuinfo` > 0) before relying on the managed device task; otherwise fall back to a manually launched emulator and run `./gradlew connectedDebugAndroidTest`, or as a last resort skip instrumentation entirely with `-Pnanoai.skipInstrumentation=true` (unit coverage only).
 - **Instrumentation test filtering**: Use `-Pandroid.testInstrumentationRunnerArguments.class="*TestClass*"` since `--tests` is not supported for `connectedAndroidTest` tasks (they are `DeviceProviderInstrumentTestTask`, not standard `Test` tasks).
 - **Offline instrumentation flakes**: After simulating offline states, clear the app cache with `adb shell pm clear com.vjaykrsna.nanoai` so MockWebServer fixtures rehydrate cleanly before reruns.
+- **Physical device screen timeout**: For physical devices, enable stay-on mode with `adb shell svc power stayon true` before running tests to prevent the screen from turning off. Disable with `adb shell svc power stayon false` afterward.
 - **Coverage gaps reported**: Inspect `app/build/coverage/summary.md` for the failing layer, then open the HTML report to locate uncovered classes.
 - **Risk register digest**: `docs/coverage/risk-register.md` summarises escalated items, mitigation owners, and linked JUnit5 suites.
 - **Flaky tests**: Temporarily annotate with `@Tag("flaky")`, open an incident in the risk register, and prioritise stabilisation before release.

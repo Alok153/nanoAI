@@ -142,7 +142,32 @@ constructor(
    * @param compactMode True to enable compact mode
    */
   suspend fun updateCompactMode(userId: String, compactMode: Boolean) {
+    val targetDensity = if (compactMode) VisualDensity.COMPACT else VisualDensity.DEFAULT
+
+    // Update DataStore for immediate UI feedback
+    uiPreferencesStore.setVisualDensity(targetDensity)
+
+    // Keep persistent profile record aligned with preference snapshot
+    userProfileDao.updateVisualDensity(userId, targetDensity)
     userProfileDao.updateCompactMode(userId, compactMode)
+
+    // Reflect compact mode toggles across saved layouts to preserve invariants
+    val layoutEntities = layoutSnapshotDao.getAllByUserId(userId)
+    if (layoutEntities.isNotEmpty()) {
+      val updatedEntities =
+        layoutEntities.map { entity ->
+          val domain = entity.toDomain()
+          val trimmedPinnedTools =
+            if (compactMode && domain.pinnedTools.size > VisualDensity.COMPACT_PINNED_TOOL_CAP) {
+              domain.pinnedTools.take(VisualDensity.COMPACT_PINNED_TOOL_CAP)
+            } else {
+              domain.pinnedTools
+            }
+          val adjusted = domain.copy(pinnedTools = trimmedPinnedTools).withCompactMode(compactMode)
+          adjusted.toEntity(userId = entity.userId, position = entity.position)
+        }
+      layoutSnapshotDao.insertAll(updatedEntities)
+    }
   }
 
   /**

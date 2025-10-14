@@ -1,7 +1,9 @@
 package com.vjaykrsna.nanoai.coverage.tasks
 
+import com.vjaykrsna.nanoai.coverage.domain.CoverageReportGenerator
 import com.vjaykrsna.nanoai.coverage.model.CoverageMetric
 import com.vjaykrsna.nanoai.coverage.model.CoverageSummary
+import com.vjaykrsna.nanoai.coverage.model.CoverageTrendPoint
 import com.vjaykrsna.nanoai.coverage.model.TestLayer
 import com.vjaykrsna.nanoai.coverage.verification.CoverageThresholdVerifier
 import java.io.PrintStream
@@ -64,6 +66,7 @@ object VerifyCoverageThresholdsTask {
     val outcome = evaluateReport(parsedArgs, layerMapPath)
 
     writeMarkdown(outcome.markdown, parsedArgs.markdownOutput)
+    writeJsonReport(outcome, parsedArgs.jsonOutput)
     logUnmappedClasses(outcome.unmappedClasses)
     handleViolation(outcome.violation)
 
@@ -75,6 +78,7 @@ object VerifyCoverageThresholdsTask {
     val layerMap: Path?,
     val markdownOutput: Path?,
     val buildId: String?,
+    val jsonOutput: Path?,
   ) {
     companion object {
       fun parse(arguments: Array<String>): Arguments {
@@ -82,6 +86,7 @@ object VerifyCoverageThresholdsTask {
         var layerMap: Path? = null
         var markdown: Path? = null
         var buildId: String? = null
+        var jsonOutput: Path? = null
 
         var index = 0
         while (index < arguments.size) {
@@ -98,6 +103,9 @@ object VerifyCoverageThresholdsTask {
             "--build-id" -> {
               buildId = next(arguments, ++index, arg)
             }
+            "--json" -> {
+              jsonOutput = Path.of(next(arguments, ++index, arg))
+            }
             "--help",
             "-h" -> {
               printUsage(System.out)
@@ -113,7 +121,8 @@ object VerifyCoverageThresholdsTask {
           reportXml = xml,
           layerMap = layerMap,
           markdownOutput = markdown,
-          buildId = buildId
+          buildId = buildId,
+          jsonOutput = jsonOutput,
         )
       }
 
@@ -135,6 +144,9 @@ object VerifyCoverageThresholdsTask {
               )
               appendLine(
                 "  --build-id <value>    Optional override for the coverage summary build identifier."
+              )
+              appendLine(
+                "  --json <path>         Optional path to write a JSON payload matching coverage-report.schema.json."
               )
             }
             .trimEnd()
@@ -168,14 +180,36 @@ object VerifyCoverageThresholdsTask {
     val parser = CoverageReportParser(classifier)
     val parseResult = parser.parse(parsedArgs.reportXml, parsedArgs.buildId)
     val violation = verifyThresholds(parseResult.summary)
+    val trend = buildTrendPoints(parseResult.summary)
     val markdown =
-      MarkdownRenderer.render(parseResult.summary, violation, parseResult.unmappedClasses)
+      MarkdownRenderer.render(
+        parseResult.summary,
+        violation,
+        parseResult.unmappedClasses,
+        trend,
+      )
     return TaskOutcome(
       summary = parseResult.summary,
       unmappedClasses = parseResult.unmappedClasses,
       violation = violation,
       markdown = markdown,
+      trend = trend,
     )
+  }
+
+  private fun buildTrendPoints(summary: CoverageSummary): List<CoverageTrendPoint> {
+    val points =
+      TestLayer.entries.map { layer ->
+        val metric = summary.metricFor(layer)
+        CoverageTrendPoint.fromMetric(
+          buildId = summary.buildId,
+          layer = layer,
+          metric = metric,
+          recordedAt = summary.timestamp,
+        )
+      }
+    CoverageTrendPoint.validateSequence(points)
+    return points
   }
 
   private fun verifyThresholds(
@@ -189,6 +223,22 @@ object VerifyCoverageThresholdsTask {
     markdownOutput?.let { path ->
       path.parent?.let { Files.createDirectories(it) }
       path.outputStream().use { output -> output.write(markdown.toByteArray(Charsets.UTF_8)) }
+    }
+  }
+
+  private fun writeJsonReport(outcome: TaskOutcome, jsonOutput: Path?) {
+    jsonOutput?.let { path ->
+      path.parent?.let { Files.createDirectories(it) }
+      val payload =
+        CoverageReportGenerator()
+          .generate(
+            summary = outcome.summary,
+            trend = outcome.trend,
+            riskRegister = emptyList(),
+            catalog = emptyList(),
+            branch = resolveBranch(),
+          )
+      path.outputStream().use { output -> output.write(payload.toByteArray(Charsets.UTF_8)) }
     }
   }
 
@@ -218,6 +268,7 @@ object VerifyCoverageThresholdsTask {
     val unmappedClasses: List<String>,
     val violation: CoverageThresholdVerifier.ThresholdViolation?,
     val markdown: String,
+    val trend: List<CoverageTrendPoint>,
   )
 
   private class LayerClassifier(
@@ -369,6 +420,7 @@ object VerifyCoverageThresholdsTask {
       summary: CoverageSummary,
       violation: CoverageThresholdVerifier.ThresholdViolation?,
       unmappedClasses: List<String>,
+      trend: List<CoverageTrendPoint>,
     ): String {
       val builder = StringBuilder()
       builder.appendLine("# Coverage Thresholds")
@@ -411,6 +463,30 @@ object VerifyCoverageThresholdsTask {
           "> ❌ Coverage below threshold for: " + violation.layers.joinToString { it.displayName },
         )
       }
+      builder.appendLine()
+      builder.appendLine("## Trend Snapshot")
+      if (trend.isEmpty()) {
+        builder.appendLine("_No historical trend data captured yet._")
+      } else {
+        TestLayer.entries.forEach { layer ->
+          val latest = trend.lastOrNull { it.layer == layer }
+          if (latest == null) {
+            builder.appendLine("- ${layer.displayName}: no recorded history")
+          } else {
+            val delta = summary.trendDeltaFor(layer)
+            builder.appendLine(
+              "- ${layer.displayName}: ${formatPercentage(latest.coverage)} (${formatDelta(delta)})",
+            )
+          }
+        }
+      }
+      builder.appendLine()
+      builder.appendLine("## Risk Register")
+      if (summary.riskItems.isEmpty()) {
+        builder.appendLine("_No linked risk register items for this build._")
+      } else {
+        summary.riskItems.forEach { ref -> builder.appendLine("- `${ref.riskId}`") }
+      }
       if (unmappedClasses.isNotEmpty()) {
         builder.appendLine()
         builder.appendLine("_Unmapped classes (${unmappedClasses.size}):_")
@@ -432,6 +508,15 @@ object VerifyCoverageThresholdsTask {
       }
     }
   }
+}
+
+private fun resolveBranch(): String? {
+  val env = System.getenv()
+  return env["GITHUB_HEAD_REF"]
+    ?: env["GITHUB_REF_NAME"]
+    ?: env["BRANCH_NAME"]
+    ?: env["CI_BRANCH"]
+    ?: env["GIT_BRANCH"]
 }
 
 private fun String.asLayer(): TestLayer {

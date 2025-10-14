@@ -1,13 +1,17 @@
 package com.vjaykrsna.nanoai.feature.uiux.scenario
 
+import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import com.vjaykrsna.nanoai.MainActivity
+import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -18,27 +22,26 @@ import org.junit.runner.RunWith
  */
 @LargeTest
 @RunWith(AndroidJUnit4::class)
+@OptIn(ExperimentalTestApi::class)
 class HomeNavigationScenarioTest {
-  @get:Rule val composeRule = createAndroidComposeRule<MainActivity>()
+  @get:Rule(order = 0) val environmentRule = TestEnvironmentRule()
+  @get:Rule(order = 1) val composeRule = createAndroidComposeRule<MainActivity>()
 
   @Test
   fun homeScreen_expandTools_and_triggerRecentAction() {
-    composeRule.onNodeWithTag("home_single_column_feed").assertIsDisplayed()
+    composeRule.onNodeWithTag("home_hub").assertIsDisplayed()
 
-    composeRule
-      .onNodeWithTag("home_tools_toggle")
-      .assertIsDisplayed()
-      .assertHasClickAction()
-      .performClick()
+    composeRule.onNodeWithTag("home_tools_toggle").assertIsDisplayed().assertHasClickAction()
+    composeRule.onNodeWithTag("home_tools_panel_collapsed").assertIsDisplayed()
+
+    composeRule.onNodeWithTag("home_tools_toggle").performClick()
 
     composeRule.onNodeWithTag("home_tools_panel_expanded").assertIsDisplayed()
 
-    composeRule
-      .onNodeWithTag("home_recent_action_0")
-      .assertIsDisplayed()
-      .assertHasClickAction()
-      .performClick()
+    val recentItems = composeRule.onAllNodesWithTag("recent_activity_item")
+    recentItems[0].assertIsDisplayed().assertHasClickAction().performClick()
 
-    composeRule.onNodeWithTag("home_latency_meter").assertIsDisplayed()
+    composeRule.waitUntilExactlyOneExists(hasTestTag("home_recent_action_confirmation"))
+    composeRule.onNodeWithTag("home_recent_action_confirmation").assertIsDisplayed()
   }
 }

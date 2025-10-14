@@ -37,6 +37,14 @@ data class ShellLayoutState(
   val supportsRightRail: Boolean
     get() = isMediumOrWider && isTallLayout
 
+  /** True when the left drawer should be visible in the current configuration. */
+  val isLeftDrawerVisible: Boolean
+    get() = usesPermanentLeftDrawer || isLeftDrawerOpen
+
+  /** True when the nav icon should toggle the left drawer (permanent drawers stay open). */
+  val canToggleLeftDrawer: Boolean
+    get() = !usesPermanentLeftDrawer
+
   /** Derived visibility for the right drawer based on support + current toggle state. */
   val isRightRailVisible: Boolean
     get() = supportsRightRail && isRightDrawerOpen
@@ -64,6 +72,15 @@ data class ShellLayoutState(
   /** True when the shell is operating offline or in a degraded connectivity mode. */
   val isOffline: Boolean
     get() = connectivity != ConnectivityStatus.ONLINE
+
+  /** Accessibility status string describing the current connectivity state. */
+  val connectivityStatusDescription: String
+    get() =
+      when (connectivity) {
+        ConnectivityStatus.ONLINE -> "Online"
+        ConnectivityStatus.LIMITED -> "Limited connectivity"
+        ConnectivityStatus.OFFLINE -> "Offline"
+      }
 
   /** Convenience accessor for the active right drawer panel when the drawer is visible. */
   val visibleRightPanel: RightPanel?

@@ -4,6 +4,7 @@ import com.vjaykrsna.nanoai.coverage.model.CoverageMetric
 import com.vjaykrsna.nanoai.coverage.model.CoverageSummary
 import com.vjaykrsna.nanoai.coverage.model.CoverageTrendPoint
 import com.vjaykrsna.nanoai.coverage.model.RiskRegisterItem
+import com.vjaykrsna.nanoai.coverage.model.RiskRegisterItemRef
 import com.vjaykrsna.nanoai.coverage.model.TestLayer
 import com.vjaykrsna.nanoai.coverage.model.TestSuiteCatalogEntry
 import java.time.Clock
@@ -31,7 +32,7 @@ class CoverageReportGenerator(
     val trendArray = JsonArray(buildTrendEntries(trend, summary))
     val sortedRisks = sortRisksBySeverity(riskRegister)
     ensureCatalogCoverage(summary, sortedRisks, catalog)
-    val riskArray = JsonArray(buildRiskEntries(sortedRisks))
+    val riskArray = JsonArray(buildRiskEntries(sortedRisks, summary.riskItems))
 
     val payload = mutableMapOf<String, kotlinx.serialization.json.JsonElement>()
     payload["buildId"] = JsonPrimitive(summary.buildId)
@@ -61,13 +62,13 @@ class CoverageReportGenerator(
           )
           .also { ensureSummaryThresholdConsistency(summary, layer, metric) }
       }
-      .mapKeys { (layer, _) -> layer.machineName }
+      .mapKeys { (layer, _) -> layer.schemaKey }
 
   private fun buildThresholdEntries(
     summary: CoverageSummary
   ): Map<String, kotlinx.serialization.json.JsonElement> =
     summary.thresholds
-      .mapKeys { (layer, _) -> layer.machineName }
+      .mapKeys { (layer, _) -> layer.schemaKey }
       .mapValues { (_, value) -> JsonPrimitive(value) }
 
   private fun buildTrendEntries(
@@ -75,11 +76,13 @@ class CoverageReportGenerator(
     summary: CoverageSummary,
   ): List<kotlinx.serialization.json.JsonElement> =
     points.map { point ->
+      ensureTrendThresholdConsistency(summary, point)
       JsonObject(
         mapOf(
           "buildId" to JsonPrimitive(point.buildId),
           "layer" to JsonPrimitive(point.layer.name),
           "coverage" to JsonPrimitive(point.coverage),
+          "threshold" to JsonPrimitive(point.threshold),
           "delta" to JsonPrimitive(summary.trendDeltaFor(point.layer)),
         ),
       )
@@ -87,8 +90,10 @@ class CoverageReportGenerator(
 
   private fun buildRiskEntries(
     risks: List<RiskRegisterItem>,
-  ): List<kotlinx.serialization.json.JsonElement> =
-    risks.map { risk ->
+    references: List<RiskRegisterItemRef>,
+  ): List<kotlinx.serialization.json.JsonElement> {
+    val referencesByRiskId = references.groupBy { it.riskId }
+    return risks.map { risk ->
       JsonObject(
         buildMap {
           put("riskId", JsonPrimitive(risk.riskId))
@@ -97,9 +102,13 @@ class CoverageReportGenerator(
           put("status", JsonPrimitive(risk.status.name))
           risk.targetBuild?.let { put("targetBuild", JsonPrimitive(it)) }
           risk.mitigation?.let { put("mitigation", JsonPrimitive(it)) }
+          referencesByRiskId[risk.riskId]
+            ?.takeIf { it.isNotEmpty() }
+            ?.let { refs -> put("references", JsonArray(refs.map { JsonPrimitive(it.riskId) })) }
         },
       )
     }
+  }
 
   private fun ensureCatalogCoverage(
     summary: CoverageSummary,
@@ -114,7 +123,8 @@ class CoverageReportGenerator(
       }
     }
     if (summary.riskItems.isNotEmpty()) {
-      val uncovered = summary.riskItems.filterNot { catalogRiskTags.contains(it) }.toSet()
+      val uncovered =
+        summary.riskItems.map { it.riskId }.filterNot { catalogRiskTags.contains(it) }.toSet()
       require(uncovered.isEmpty()) {
         "Summary references risks without catalog coverage: $uncovered"
       }
@@ -147,7 +157,25 @@ class CoverageReportGenerator(
       "Threshold for $layer in summary does not match metric definition"
     }
   }
+
+  private fun ensureTrendThresholdConsistency(
+    summary: CoverageSummary,
+    point: CoverageTrendPoint,
+  ) {
+    val expected = summary.thresholdFor(point.layer)
+    require(expected == point.threshold) {
+      "Trend point ${point.buildId} threshold ${point.threshold} does not align with summary threshold $expected"
+    }
+  }
 }
+
+private val TestLayer.schemaKey: String
+  get() =
+    when (this) {
+      TestLayer.VIEW_MODEL -> "viewModel"
+      TestLayer.UI -> "ui"
+      TestLayer.DATA -> "data"
+    }
 
 private const val PRIORITY_CRITICAL = 0
 private const val PRIORITY_HIGH = 1

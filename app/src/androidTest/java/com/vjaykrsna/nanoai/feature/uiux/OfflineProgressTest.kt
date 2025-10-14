@@ -7,7 +7,11 @@ import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSiz
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertContentDescriptionContains
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
@@ -40,6 +44,7 @@ import com.vjaykrsna.nanoai.feature.uiux.state.UiPreferenceSnapshot
 import com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload
 import com.vjaykrsna.nanoai.feature.uiux.ui.shell.NanoShellScaffold
 import com.vjaykrsna.nanoai.feature.uiux.ui.shell.ShellUiEvent
+import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
@@ -55,7 +60,8 @@ import org.junit.runner.RunWith
 )
 @RunWith(AndroidJUnit4::class)
 class OfflineProgressTest {
-  @get:Rule val composeRule = createAndroidComposeRule<ComponentActivity>()
+  @get:Rule(order = 0) val environmentRule = TestEnvironmentRule()
+  @get:Rule(order = 1) val composeRule = createAndroidComposeRule<ComponentActivity>()
 
   @Test
   fun offlineBanner_showsQueuedCount() {
@@ -71,7 +77,9 @@ class OfflineProgressTest {
     val state = mutableStateOf(sampleState(ConnectivityStatus.OFFLINE, queuedJobs = 3))
     composeRule.setContent { NanoShellScaffold(state = state.value, onEvent = {}) }
 
-    composeRule.onAllNodesWithTag("progress_list_item").assertCountEquals(3)
+    val items = composeRule.onAllNodesWithTag("progress_list_item")
+    items.assertCountEquals(3)
+    items[0].assertContentDescriptionContains("Waiting")
   }
 
   @Test
@@ -85,6 +93,7 @@ class OfflineProgressTest {
     composeRule.waitUntilDoesNotExist(hasTestTag("connectivity_banner"))
     composeRule.onAllNodesWithTag("connectivity_banner").assertCountEquals(0)
     assertThat(state.value.layout.connectivity).isEqualTo(ConnectivityStatus.ONLINE)
+    assertThat(state.value.layout.progressJobs).isEmpty()
   }
 
   @Test
@@ -116,7 +125,12 @@ class OfflineProgressTest {
       )
     }
 
-    composeRule.onNodeWithTag("progress_retry_button").assertIsEnabled().performClick()
+    val retryButton = composeRule.onNodeWithTag("progress_retry_button")
+    retryButton.assertIsEnabled()
+    retryButton.assert(
+      SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "Retry available")
+    )
+    retryButton.performClick()
     assertThat(events.filterIsInstance<ShellUiEvent.RetryJob>()).isNotEmpty()
   }
 

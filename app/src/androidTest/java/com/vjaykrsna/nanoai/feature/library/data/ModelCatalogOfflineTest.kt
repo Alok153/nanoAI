@@ -19,6 +19,7 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -94,6 +95,11 @@ class ModelCatalogOfflineTest {
       val recorded = mockWebServer.takeRequest(1, TimeUnit.SECONDS)
       assertThat(recorded).isNotNull()
       assertThat(recorded?.path).isEqualTo("/catalog")
+      assertThat(recorded?.getHeader("Accept")).isEqualTo("application/json")
+      assertThat(mockWebServer.requestCount).isEqualTo(1)
+      val status = repository.observeRefreshStatus().first()
+      assertThat(status.lastFallbackReason).isEqualTo("IOException")
+      assertThat(status.lastFallbackCachedCount).isEqualTo(1)
     }
 
   private fun sampleModel(id: String): ModelPackage =

@@ -64,6 +64,9 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -107,6 +110,7 @@ fun NanoShellScaffold(
   val latestLeftDrawerOpen by rememberUpdatedState(layout.isLeftDrawerOpen)
 
   fun closeLeftDrawerIfOpen() {
+    if (!layout.canToggleLeftDrawer) return
     if (layout.isLeftDrawerOpen) {
       currentOnEvent(ShellUiEvent.ToggleLeftDrawer)
     }
@@ -120,6 +124,7 @@ fun NanoShellScaffold(
   }
 
   fun toggleLeftDrawerWithRules() {
+    if (!layout.canToggleLeftDrawer) return
     if (layout.isRightDrawerOpen) {
       closeRightDrawerIfOpen()
     }
@@ -188,6 +193,11 @@ fun NanoShellScaffold(
   }
 
   LaunchedEffect(Unit) { focusRequester.requestFocus() }
+  LaunchedEffect(layout.isPaletteVisible) {
+    if (!layout.isPaletteVisible) {
+      focusRequester.requestFocus()
+    }
+  }
 
   Box(
     modifier =
@@ -203,7 +213,7 @@ fun NanoShellScaffold(
         }
         .testTag("shell_root"),
   ) {
-    if (layout.usesPermanentLeftDrawer && layout.isLeftDrawerOpen) {
+    if (layout.usesPermanentLeftDrawer) {
       PermanentNavigationDrawer(
         drawerContent = {
           ShellDrawerContent(
@@ -226,14 +236,6 @@ fun NanoShellScaffold(
           originalOnEvent = onEvent,
         )
       }
-    } else if (layout.usesPermanentLeftDrawer && !layout.isLeftDrawerOpen) {
-      ShellRightRailHost(
-        state = state,
-        snackbarHostState = snackbarHostState,
-        onEvent = dispatchEvent,
-        modeContent = modeContent,
-        originalOnEvent = onEvent,
-      )
     } else {
       ModalNavigationDrawer(
         drawerContent = {
@@ -578,7 +580,11 @@ private fun ShellMainSurface(
     snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
   ) { innerPadding ->
     Column(
-      modifier = Modifier.fillMaxSize().padding(innerPadding).testTag("shell_content"),
+      modifier =
+        Modifier.fillMaxSize().padding(innerPadding).testTag("shell_content").semantics {
+          contentDescription = "Main content area"
+          stateDescription = layout.connectivityStatusDescription
+        },
       verticalArrangement = Arrangement.Top,
     ) {
       val bannerState = state.connectivityBanner

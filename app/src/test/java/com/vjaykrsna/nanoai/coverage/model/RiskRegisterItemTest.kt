@@ -57,4 +57,50 @@ class RiskRegisterItemTest {
       )
     }
   }
+
+  @Test
+  fun `medium severity risks remain non actionable even when overdue`() {
+    val risk =
+      RiskRegisterItem(
+        riskId = "risk-medium",
+        layer = TestLayer.DATA,
+        description = "Deferred cleanup",
+        severity = RiskRegisterItem.Severity.MEDIUM,
+        targetBuild = "build-2025-10-01",
+        status = RiskRegisterItem.Status.OPEN,
+        mitigation = "  refine docs  ",
+      )
+
+    val actionable = risk.isActionable(Instant.parse("2025-10-12T00:00:00Z"))
+
+    assertThat(actionable).isFalse()
+  }
+
+  @Test
+  fun `risk register items expose actionable deadline helper`() {
+    val methods = RiskRegisterItem::class.java.methods.map { it.name }
+
+    assertThat(methods).contains("targetBuildDeadline")
+  }
+
+  @Test
+  fun `mitigation formatting helper trims and capitalizes description`() {
+    val risk =
+      RiskRegisterItem(
+        riskId = "risk-format",
+        layer = TestLayer.UI,
+        description = "Compose semantics",
+        severity = RiskRegisterItem.Severity.HIGH,
+        targetBuild = "build-2025-10-15",
+        status = RiskRegisterItem.Status.OPEN,
+        mitigation = "  add talkback copy  ",
+      )
+
+    val method =
+      RiskRegisterItem::class.java.methods.firstOrNull { it.name == "getFormattedMitigation" }
+        ?: error("Expected formattedMitigation helper to exist for RiskRegisterItem")
+    val formatted = method.invoke(risk) as? String
+
+    assertThat(formatted).isEqualTo("Add talkback copy")
+  }
 }

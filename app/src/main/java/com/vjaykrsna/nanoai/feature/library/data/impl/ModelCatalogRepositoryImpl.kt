@@ -5,17 +5,22 @@ import com.vjaykrsna.nanoai.core.data.db.daos.ChatThreadDao
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.core.domain.model.toDomain
 import com.vjaykrsna.nanoai.core.domain.model.toEntity
+import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRefreshStatus
 import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
 import com.vjaykrsna.nanoai.feature.library.data.daos.ModelPackageReadDao
 import com.vjaykrsna.nanoai.feature.library.data.daos.ModelPackageWriteDao
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
+import com.vjaykrsna.nanoai.model.catalog.ModelPackageEntity
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import kotlinx.datetime.Clock
 
 /** Wraps ModelPackageDao, converting between entities and domain models. */
@@ -29,6 +34,7 @@ constructor(
   @ApplicationContext private val context: Context,
 ) : ModelCatalogRepository {
   private val clock = Clock.System
+  private val refreshStatus = MutableStateFlow(ModelCatalogRefreshStatus())
 
   override suspend fun getAllModels(): List<ModelPackage> =
     modelPackageReadDao.getAll().map { it.toDomain() }
@@ -54,7 +60,8 @@ constructor(
   }
 
   override suspend fun replaceCatalog(models: List<ModelPackage>) {
-    val existingById = modelPackageReadDao.getAll().associateBy { it.modelId }
+    val existing = modelPackageReadDao.getAll()
+    val existingById = existing.associateBy { it.modelId }
     val mergedEntities =
       models.map { model ->
         val incoming = model.toEntity()
@@ -73,7 +80,9 @@ constructor(
           incoming
         }
       }
-    modelPackageWriteDao.replaceCatalog(mergedEntities)
+    val incomingIds = mergedEntities.mapTo(mutableSetOf(), ModelPackageEntity::modelId)
+    val preserved = existing.filter { it.modelId !in incomingIds }
+    modelPackageWriteDao.replaceCatalog(mergedEntities + preserved)
   }
 
   override suspend fun updateDownloadTaskId(modelId: String, taskId: UUID?) {
@@ -109,6 +118,33 @@ constructor(
       } else {
         file.delete()
       }
+    }
+  }
+
+  override fun observeRefreshStatus(): Flow<ModelCatalogRefreshStatus> = refreshStatus.asStateFlow()
+
+  override suspend fun recordRefreshSuccess(source: String, modelCount: Int) {
+    val now = clock.now()
+    refreshStatus.update { status ->
+      status.copy(
+        lastSuccessAt = now,
+        lastSuccessSource = source.takeIf { it.isNotBlank() },
+        lastSuccessCount = modelCount,
+        lastFallbackMessage = null,
+        lastFallbackReason = null,
+      )
+    }
+  }
+
+  override suspend fun recordOfflineFallback(reason: String, cachedCount: Int, message: String?) {
+    val now = clock.now()
+    refreshStatus.update { status ->
+      status.copy(
+        lastFallbackAt = now,
+        lastFallbackReason = reason.takeIf { it.isNotBlank() },
+        lastFallbackCachedCount = cachedCount,
+        lastFallbackMessage = message?.takeIf { it.isNotBlank() },
+      )
     }
   }
 }

@@ -65,4 +65,57 @@ class PrivacyPreferenceStoreTest {
 
     assertThat(preference.disclaimerShownCount).isEqualTo(3)
   }
+
+  @Test
+  fun `disclaimerExposure defaults to requiring dialog`() = runTest {
+    store.reset()
+    advanceUntilIdle()
+
+    val exposure = store.disclaimerExposure.first()
+
+    assertThat(exposure.shouldShowDialog).isTrue()
+    assertThat(exposure.acknowledged).isFalse()
+    assertThat(exposure.acknowledgedAt).isNull()
+    assertThat(exposure.shownCount).isEqualTo(0)
+  }
+
+  @Test
+  fun `acknowledgeConsent updates disclaimerExposure`() = runTest {
+    store.reset()
+    advanceUntilIdle()
+
+    val timestamp = Instant.fromEpochMilliseconds(1_700_000_000_000)
+
+    store.incrementDisclaimerShown()
+    store.acknowledgeConsent(timestamp)
+    advanceUntilIdle()
+
+    val exposure = store.disclaimerExposure.first()
+
+    assertThat(exposure.shouldShowDialog).isFalse()
+    assertThat(exposure.acknowledged).isTrue()
+    assertThat(exposure.acknowledgedAt).isEqualTo(timestamp)
+    assertThat(exposure.shownCount).isEqualTo(1)
+  }
+
+  @Test
+  fun `resetDisclaimerExposure clears acknowledgement`() = runTest {
+    store.reset()
+    advanceUntilIdle()
+
+    val timestamp = Instant.fromEpochMilliseconds(1_700_100_000_000)
+    store.incrementDisclaimerShown()
+    store.acknowledgeConsent(timestamp)
+    advanceUntilIdle()
+
+    store.resetDisclaimerExposure()
+    advanceUntilIdle()
+
+    val exposure = store.disclaimerExposure.first()
+
+    assertThat(exposure.shouldShowDialog).isTrue()
+    assertThat(exposure.acknowledged).isFalse()
+    assertThat(exposure.acknowledgedAt).isNull()
+    assertThat(exposure.shownCount).isEqualTo(0)
+  }
 }

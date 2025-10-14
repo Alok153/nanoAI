@@ -77,11 +77,16 @@ fun CommandPaletteSheet(
   val filteredResults = remember(query, state.results) { filterCommands(state.results, query) }
 
   LaunchedEffect(filteredResults) {
+    val currentIndex = selectedIndex
+    val firstEnabled = filteredResults.firstEnabledIndex()
     selectedIndex =
       when {
         filteredResults.isEmpty() -> -1
-        selectedIndex in filteredResults.indices -> selectedIndex
-        else -> 0
+        currentIndex in filteredResults.indices && filteredResults[currentIndex].enabled ->
+          currentIndex
+        firstEnabled != -1 -> firstEnabled
+        currentIndex in filteredResults.indices -> currentIndex
+        else -> -1
       }
   }
 
@@ -94,18 +99,30 @@ fun CommandPaletteSheet(
         if (event.type != KeyEventType.KeyDown) return@remember false
         when (event.key) {
           Key.DirectionDown -> {
-            if (filteredResults.isNotEmpty()) {
-              val next = if (selectedIndex == -1) 0 else (selectedIndex + 1) % filteredResults.size
-              selectedIndex = next
+            val nextIndex =
+              when {
+                filteredResults.isEmpty() -> null
+                selectedIndex == -1 -> filteredResults.firstEnabledIndex()
+                else ->
+                  filteredResults.nextEnabledIndex(selectedIndex)
+                    ?: filteredResults.firstEnabledIndex()
+              }
+            if (nextIndex != null && nextIndex != -1) {
+              selectedIndex = nextIndex
             }
             true
           }
           Key.DirectionUp -> {
-            if (filteredResults.isNotEmpty()) {
-              val next =
-                if (selectedIndex == -1) filteredResults.lastIndex
-                else (selectedIndex - 1 + filteredResults.size) % filteredResults.size
-              selectedIndex = next
+            val previousIndex =
+              when {
+                filteredResults.isEmpty() -> null
+                selectedIndex == -1 -> filteredResults.lastEnabledIndex()
+                else ->
+                  filteredResults.previousEnabledIndex(selectedIndex)
+                    ?: filteredResults.lastEnabledIndex()
+              }
+            if (previousIndex != null && previousIndex != -1) {
+              selectedIndex = previousIndex
             }
             true
           }
@@ -313,6 +330,28 @@ private fun CommandPaletteItem(
 private const val PRIORITY_PREFIX_MATCH = 0
 private const val PRIORITY_TITLE_CONTAINS = 1
 private const val PRIORITY_SUBTITLE_CONTAINS = 2
+
+private fun List<CommandAction>.firstEnabledIndex(): Int =
+  indexOfFirst(CommandAction::enabled).takeIf { it >= 0 } ?: -1
+
+private fun List<CommandAction>.lastEnabledIndex(): Int =
+  indexOfLast(CommandAction::enabled).takeIf { it >= 0 } ?: -1
+
+private fun List<CommandAction>.nextEnabledIndex(current: Int): Int? {
+  if (isEmpty()) return null
+  for (index in (current + 1).coerceAtLeast(0) until size) {
+    if (this[index].enabled) return index
+  }
+  return null
+}
+
+private fun List<CommandAction>.previousEnabledIndex(current: Int): Int? {
+  if (isEmpty()) return null
+  for (index in current - 1 downTo 0) {
+    if (this[index].enabled) return index
+  }
+  return null
+}
 
 private fun filterCommands(actions: List<CommandAction>, query: String): List<CommandAction> {
   if (query.isBlank()) return actions

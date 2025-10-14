@@ -10,6 +10,7 @@ import com.vjaykrsna.nanoai.model.catalog.DeliveryType
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import java.io.IOException
 import java.util.UUID
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Instant
@@ -30,6 +31,7 @@ class RefreshModelCatalogUseCaseTest {
 
     assertThat(result.isSuccess).isTrue()
     coVerify(exactly = 1) { repository.replaceCatalog(models) }
+    coVerify(exactly = 1) { repository.recordRefreshSuccess(any(), models.size) }
   }
 
   @Test
@@ -46,6 +48,17 @@ class RefreshModelCatalogUseCaseTest {
     assertThat(failure).isNotNull()
     assertThat(failure).hasMessageThat().contains("Failed to replace model catalog")
     assertThat(failure?.cause).isEqualTo(underlying)
+    coVerify(exactly = 0) { repository.recordRefreshSuccess(any(), any()) }
+  }
+
+  @Test
+  fun `returns cached success when remote fetch fails`() = runTest {
+    fakeSource.error = IOException("remote unavailable")
+
+    val result = useCase()
+
+    assertThat(result.isSuccess).isTrue()
+    coVerify(exactly = 1) { repository.recordOfflineFallback("IOException", 0, any()) }
   }
 
   private fun sampleModel(id: String): ModelPackage =
@@ -69,7 +82,8 @@ class RefreshModelCatalogUseCaseTest {
 
   private class FakeModelCatalogSource : ModelCatalogSource {
     var catalog: List<ModelPackage> = emptyList()
+    var error: Throwable? = null
 
-    override suspend fun fetchCatalog(): List<ModelPackage> = catalog
+    override suspend fun fetchCatalog(): List<ModelPackage> = error?.let { throw it } ?: catalog
   }
 }

@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai.feature.uiux.contracts
 
+import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -8,6 +9,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import com.vjaykrsna.nanoai.MainActivity
+import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -19,18 +21,30 @@ import org.junit.runner.RunWith
 @LargeTest
 @RunWith(AndroidJUnit4::class)
 class SidebarContractTest {
-  @get:Rule val composeRule = createAndroidComposeRule<MainActivity>()
+  @get:Rule(order = 0) val environmentRule = TestEnvironmentRule()
+  @get:Rule(order = 1) val composeRule = createAndroidComposeRule<MainActivity>()
 
   @Test
   fun sidebar_drawerAccessibleViaToggle_andContainsNavigationTargets() {
+    composeRule.onNodeWithTag("topbar_nav_icon").assertIsDisplayed().assertHasClickAction()
     composeRule
-      .onNodeWithContentDescription("Open navigation drawer")
+      .onNodeWithContentDescription("Toggle navigation drawer")
       .assertIsDisplayed()
       .assertHasClickAction()
 
     composeRule.onNodeWithTag("sidebar_drawer").assertIsDisplayed()
+    composeRule.onNodeWithContentDescription("Sidebar navigation").assertIsDisplayed()
 
-    composeRule.onNodeWithTag("sidebar_nav_settings").assertIsDisplayed().assertHasClickAction()
+    composeRule
+      .onNodeWithTag("sidebar_nav_home")
+      .assertIsDisplayed()
+      .assertHasClickAction()
+      .assertContentDescriptionEquals("Navigate to Home")
+    composeRule
+      .onNodeWithTag("sidebar_item_settings")
+      .assertIsDisplayed()
+      .assertHasClickAction()
+      .assertContentDescriptionEquals("Navigate to Settings")
   }
 
   @Test

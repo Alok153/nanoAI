@@ -14,8 +14,7 @@ import kotlin.test.assertTrue
  * the model exists, it must enforce:
  * - displayName length ≤ 50 characters
  * - pinned tools count ≤ 10
- * - saved layouts count ≤ 5
- * - dismissed tip identifiers must be non-blank
+ * - saved layouts may exceed legacy limits while preserving unique identifiers
  */
 class UserProfileModelTest {
   @Test
@@ -34,7 +33,7 @@ class UserProfileModelTest {
   @Test
   fun userProfile_pinnedToolsOverLimit_throws() {
     val ctor = userProfileConstructor()
-    val args = defaultUserProfileArgs().apply { this[8] = List(11) { "tool-$it" } }
+    val args = defaultUserProfileArgs().apply { this[6] = List(11) { "tool-$it" } }
 
     val exception = assertFailsWith<InvocationTargetException> { ctor.newInstance(*args) }
 
@@ -45,28 +44,16 @@ class UserProfileModelTest {
   }
 
   @Test
-  fun userProfile_savedLayoutsOverLimit_throws() {
+  fun userProfile_allowsMoreThanFiveLayouts() {
     val ctor = userProfileConstructor()
-    val args = defaultUserProfileArgs().apply { this[9] = List(6) { "layout-$it" } }
+    val layouts = List(6) { index -> UiUxDomainReflection.newLayoutSnapshot(id = "layout-$index") }
+    val args = defaultUserProfileArgs().apply { this[7] = layouts }
 
-    val exception = assertFailsWith<InvocationTargetException> { ctor.newInstance(*args) }
-
+    val instance = ctor.newInstance(*args)
+    val savedLayouts = UiUxDomainReflection.getProperty(instance, "savedLayouts") as? List<*>
     assertTrue(
-      exception.cause is IllegalArgumentException,
-      "Expected IllegalArgumentException when saved layouts exceed 5",
-    )
-  }
-
-  @Test
-  fun userProfile_dismissedTipsRequireNonBlankKeys() {
-    val ctor = userProfileConstructor()
-    val args = defaultUserProfileArgs().apply { this[5] = mapOf("" to true) }
-
-    val exception = assertFailsWith<InvocationTargetException> { ctor.newInstance(*args) }
-
-    assertTrue(
-      exception.cause is IllegalArgumentException,
-      "Expected IllegalArgumentException when dismissed tips contain blank identifiers",
+      savedLayouts?.size == 6,
+      "Expected saved layouts to retain all six entries",
     )
   }
 
@@ -97,12 +84,10 @@ class UserProfileModelTest {
       "Taylor",
       themePreference,
       visualDensity,
-      false,
-      mapOf("onboarding_tip" to true),
       screenType,
       false,
       listOf("tool-1", "tool-2"),
-      emptyList<Any?>(),
+      listOf(UiUxDomainReflection.newLayoutSnapshot(id = "layout-default")),
     )
   }
 }

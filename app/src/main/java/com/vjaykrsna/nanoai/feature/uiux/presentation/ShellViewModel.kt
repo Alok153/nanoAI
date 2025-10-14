@@ -188,14 +188,27 @@ constructor(
         val prefs = values[PREFS_INDEX] as UiPreferenceSnapshot
         @Suppress("UNCHECKED_CAST") val jobs = values[JOBS_INDEX] as List<ProgressJob>
         val chatState = values[CHAT_STATE_INDEX] as ChatState?
+
         val mergedJobs = mergeProgressJobs(layout.progressJobs, jobs)
+        val sanitizedUndo = sanitizeUndoPayload(layout.pendingUndoAction, mergedJobs)
+        val normalizedLayout =
+          layout.copy(
+            progressJobs = mergedJobs,
+            pendingUndoAction = sanitizedUndo,
+          )
+        val normalizedBanner =
+          banner.copy(
+            status = normalizedLayout.connectivity,
+            queuedActionCount = mergedJobs.count { it.isPending || it.isActive },
+          )
+
         ShellUiState(
-          layout = layout.copy(progressJobs = mergedJobs),
+          layout = normalizedLayout,
           commandPalette = palette,
-          connectivityBanner = banner,
+          connectivityBanner = normalizedBanner,
           preferences = prefs,
-          modeCards = buildModeCards(layout.connectivity),
-          quickActions = buildQuickActions(layout.connectivity),
+          modeCards = buildModeCards(normalizedLayout.connectivity),
+          quickActions = buildQuickActions(normalizedLayout.connectivity),
           chatState = chatState,
         )
       }
@@ -393,7 +406,26 @@ constructor(
     val merged = linkedMapOf<UUID, ProgressJob>()
     repositoryJobs.forEach { job -> merged[job.jobId] = job }
     coordinatorJobs.forEach { job -> merged[job.jobId] = job }
-    return merged.values.toList()
+    return merged.values.sortedBy(ProgressJob::queuedAt)
+  }
+
+  private fun sanitizeUndoPayload(
+    payload: UndoPayload?,
+    jobs: List<ProgressJob>,
+  ): UndoPayload? {
+    payload ?: return null
+    val jobId = payload.extractJobId() ?: return payload
+    val activeJob = jobs.firstOrNull { it.jobId == jobId }
+    return if (activeJob == null || activeJob.isTerminal) null else payload
+  }
+
+  private fun UndoPayload.extractJobId(): UUID? {
+    val metadataId = metadata["jobId"] as? String
+    val fromMetadata = metadataId?.let { runCatching { UUID.fromString(it) }.getOrNull() }
+    if (fromMetadata != null) return fromMetadata
+    if (!actionId.startsWith("queue-")) return null
+    val rawId = actionId.removePrefix("queue-")
+    return runCatching { UUID.fromString(rawId) }.getOrNull()
   }
 
   /** Builds the list of mode cards for the home hub grid. */

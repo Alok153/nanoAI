@@ -18,6 +18,7 @@ import io.mockk.mockk
 import io.mockk.slot
 import java.io.File
 import java.util.UUID
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Instant
 import org.junit.jupiter.api.Test
@@ -80,6 +81,55 @@ class ModelCatalogRepositoryImplTest {
   }
 
   @Test
+  fun `replaceCatalog retains cached entries not present in incoming list`() = runTest {
+    val existingPrimary =
+      existingEntity(
+        "primary-model",
+        checksum = "checksum-a",
+        signature = null,
+        downloadTaskId = null,
+        installState = InstallState.INSTALLED
+      )
+    val existingSecondary =
+      existingEntity(
+        "secondary-model",
+        checksum = "checksum-b",
+        signature = null,
+        downloadTaskId = null,
+        installState = InstallState.NOT_INSTALLED
+      )
+    coEvery { readDao.getAll() } returns listOf(existingPrimary, existingSecondary)
+    val incomingModels =
+      listOf(
+        ModelPackage(
+          modelId = existingPrimary.modelId,
+          displayName = "Primary Model",
+          version = "3.0",
+          providerType = ProviderType.CLOUD_API,
+          deliveryType = DeliveryType.CLOUD_FALLBACK,
+          minAppVersion = 10,
+          sizeBytes = 1024,
+          capabilities = setOf("text"),
+          installState = InstallState.NOT_INSTALLED,
+          downloadTaskId = null,
+          manifestUrl = "https://example.com/primary",
+          checksumSha256 = existingPrimary.checksumSha256,
+          signature = existingPrimary.signature,
+          createdAt = Instant.parse("2025-10-09T00:00:00Z"),
+          updatedAt = Instant.parse("2025-10-11T00:00:00Z"),
+        ),
+      )
+    val captured = slot<List<ModelPackageEntity>>()
+    coJustRun { writeDao.replaceCatalog(capture(captured)) }
+
+    repository.replaceCatalog(incomingModels)
+
+    val saved = captured.captured
+    assertThat(saved.map(ModelPackageEntity::modelId))
+      .containsAtLeast("primary-model", "secondary-model")
+  }
+
+  @Test
   fun `deleteModelFiles removes nested model directories`() = runTest {
     val modelsDir = File(tempDir, "models").apply { mkdirs() }
     val modelDir = File(modelsDir, "model-delete").apply { mkdirs() }
@@ -90,6 +140,27 @@ class ModelCatalogRepositoryImplTest {
 
     assertThat(modelDir.exists()).isFalse()
     assertThat(modelsDir.list()?.toList()).doesNotContain("model-delete")
+  }
+
+  @Test
+  fun `recordRefreshSuccess updates status observers`() = runTest {
+    repository.recordRefreshSuccess(source = "RemoteSource", modelCount = 5)
+
+    val status = repository.observeRefreshStatus().first()
+    assertThat(status.lastSuccessSource).isEqualTo("RemoteSource")
+    assertThat(status.lastSuccessCount).isEqualTo(5)
+    assertThat(status.lastSuccessAt).isNotNull()
+  }
+
+  @Test
+  fun `recordOfflineFallback captures cached metadata`() = runTest {
+    repository.recordOfflineFallback(reason = "IOException", cachedCount = 2, message = "503")
+
+    val status = repository.observeRefreshStatus().first()
+    assertThat(status.lastFallbackReason).isEqualTo("IOException")
+    assertThat(status.lastFallbackCachedCount).isEqualTo(2)
+    assertThat(status.lastFallbackMessage).isEqualTo("503")
+    assertThat(status.lastFallbackAt).isNotNull()
   }
 
   private fun existingEntity(

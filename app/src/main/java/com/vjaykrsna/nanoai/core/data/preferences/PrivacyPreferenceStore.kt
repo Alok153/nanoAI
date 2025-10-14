@@ -56,6 +56,19 @@ constructor(
       )
     }
 
+  /** Flow exposing whether the privacy disclaimer should be shown. */
+  val disclaimerExposure: Flow<DisclaimerExposureState> =
+    privacyPreference.map { preference ->
+      val acknowledgedAt = preference.consentAcknowledgedAt
+      val acknowledged = acknowledgedAt != null
+      DisclaimerExposureState(
+        shouldShowDialog = !acknowledged,
+        acknowledged = acknowledged,
+        acknowledgedAt = acknowledgedAt,
+        shownCount = preference.disclaimerShownCount,
+      )
+    }
+
   /** Update export warnings dismissed flag. */
   suspend fun setExportWarningsDismissed(dismissed: Boolean) {
     context.dataStore.edit { preferences -> preferences[KEY_EXPORT_WARNINGS_DISMISSED] = dismissed }
@@ -84,6 +97,14 @@ constructor(
   /** Update data retention policy. */
   suspend fun setRetentionPolicy(policy: RetentionPolicy) {
     context.dataStore.edit { preferences -> preferences[KEY_RETENTION_POLICY] = policy.name }
+  }
+
+  /** Clears the disclaimer acknowledgement timestamp and shown counter. */
+  suspend fun resetDisclaimerExposure() {
+    context.dataStore.edit { preferences ->
+      preferences.remove(KEY_CONSENT_ACKNOWLEDGED_AT)
+      preferences.remove(KEY_DISCLAIMER_SHOWN_COUNT)
+    }
   }
 
   /** Reset all privacy preferences to defaults (for testing). */

@@ -1,3 +1,4 @@
+import com.android.build.api.dsl.ManagedVirtualDevice
 import org.gradle.api.tasks.Exec
 import org.gradle.api.tasks.JavaExec
 import org.gradle.api.tasks.testing.Test
@@ -14,6 +15,19 @@ plugins {
   alias(libs.plugins.androidx.room)
   jacoco
 }
+
+val isCiEnvironment = System.getenv("CI")?.equals("true", ignoreCase = true) == true
+val useManagedDeviceProperty =
+  (project.findProperty("nanoai.useManagedDevice") as? String)?.toBoolean() ?: false
+val skipInstrumentation =
+  (project.findProperty("nanoai.skipInstrumentation") as? String)?.toBoolean() ?: false
+val useManagedDeviceForInstrumentation =
+  !skipInstrumentation && (isCiEnvironment || useManagedDeviceProperty)
+// Pixel 6 API 34 managed virtual device ships an x86_64-only system image starting in
+// Android 14. Lock the ABI so CI and local runs share the same emulator bits.
+val managedDeviceAbi = "x86_64"
+val managedDeviceName = "pixel6Api34"
+val managedDeviceTaskName = "${managedDeviceName}DebugAndroidTest"
 
 android {
   namespace = "com.vjaykrsna.nanoai"
@@ -81,20 +95,24 @@ android {
     targetCompatibility = JavaVersion.VERSION_11
   }
 
-  kotlinOptions {
-    jvmTarget = "11"
-    val composeMetricsDir = project.layout.buildDirectory.dir("compose/metrics")
-    val composeReportsDir = project.layout.buildDirectory.dir("compose/reports")
-    freeCompilerArgs +=
-      listOf(
-        "-opt-in=kotlin.RequiresOptIn",
-        "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
-        "-opt-in=kotlinx.coroutines.FlowPreview",
-        "-P",
-        "plugin:androidx.compose.compiler.plugins.kotlin:metricsDestination=${composeMetricsDir.get().asFile.absolutePath}",
-        "-P",
-        "plugin:androidx.compose.compiler.plugins.kotlin:reportsDestination=${composeReportsDir.get().asFile.absolutePath}",
+  kotlin {
+    compilerOptions {
+      jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+      val composeMetricsDir = project.layout.buildDirectory.dir("compose/metrics")
+      val composeReportsDir = project.layout.buildDirectory.dir("compose/reports")
+      freeCompilerArgs.addAll(
+        listOf(
+          "-opt-in=kotlin.RequiresOptIn",
+          "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
+          "-opt-in=kotlinx.coroutines.FlowPreview",
+          "-Xannotation-default-target=param-property",
+          "-P",
+          "plugin:androidx.compose.compiler.plugins.kotlin:metricsDestination=${composeMetricsDir.get().asFile.absolutePath}",
+          "-P",
+          "plugin:androidx.compose.compiler.plugins.kotlin:reportsDestination=${composeReportsDir.get().asFile.absolutePath}",
+        )
       )
+    }
   }
 
   buildFeatures {
@@ -116,6 +134,15 @@ android {
     unitTests {
       isIncludeAndroidResources = true
       isReturnDefaultValues = true
+    }
+    managedDevices {
+      val pixel6 = allDevices.create(managedDeviceName, ManagedVirtualDevice::class.java)
+      pixel6.device = "Pixel 6"
+      pixel6.apiLevel = 34
+      pixel6.systemImageSource = "aosp-atd"
+      pixel6.testedAbi = managedDeviceAbi
+
+      groups.create("ci") { targetDevices.add(pixel6) }
     }
   }
 
@@ -153,6 +180,9 @@ val coverageExecutionData =
     fileTree(layout.buildDirectory.dir("outputs/code_coverage").get().asFile) {
       include("**/*.ec")
     },
+    fileTree(layout.buildDirectory.dir("outputs/managed_device_code_coverage").get().asFile) {
+      include("**/*.ec")
+    },
   )
 
 val coverageClassDirectories =
@@ -172,7 +202,9 @@ tasks.register<JacocoReport>("jacocoFullReport") {
   description = "Generates a merged coverage report for unit and instrumentation tests."
 
   dependsOn("testDebugUnitTest")
-  dependsOn("connectedDebugAndroidTest")
+  if (!skipInstrumentation) {
+    dependsOn("connectedDebugAndroidTest")
+  }
 
   classDirectories.setFrom(coverageClassDirectories)
   additionalClassDirs.setFrom(coverageClassDirectories)
@@ -186,6 +218,32 @@ tasks.register<JacocoReport>("jacocoFullReport") {
     html.outputLocation.set(layout.buildDirectory.dir("reports/jacoco/full/html"))
     csv.required.set(false)
   }
+}
+
+tasks.register("ciManagedDeviceDebugAndroidTest") {
+  group = "verification"
+  description =
+    "Runs instrumentation tests on the CI managed Pixel 6 API 34 (${managedDeviceAbi}) virtual device."
+
+  dependsOn(tasks.named(managedDeviceTaskName))
+  onlyIf { !skipInstrumentation }
+  inputs.property("managedDeviceAbi", managedDeviceAbi)
+  doFirst {
+    logger.lifecycle(
+      "Executing managed-device instrumentation on $managedDeviceName ($managedDeviceAbi ABI)",
+    )
+  }
+}
+
+if (useManagedDeviceForInstrumentation) {
+  tasks
+    .matching { it.name == "connectedDebugAndroidTest" }
+    .configureEach {
+      dependsOn(managedDeviceTaskName)
+      // Skip the device-provider task when using the managed virtual device to avoid requiring
+      // a physical emulator in headless environments.
+      onlyIf { false }
+    }
 }
 
 val coverageClassDirectoriesUnit =
@@ -225,6 +283,7 @@ tasks.register<JacocoReport>("jacocoUnitReport") {
 val coverageReportXml = layout.buildDirectory.file("reports/jacoco/full/jacocoFullReport.xml")
 val layerMapFile = rootProject.layout.projectDirectory.file("config/coverage/layer-map.json")
 val coverageGateMarkdown = layout.buildDirectory.file("coverage/thresholds.md")
+val coverageGateJson = layout.buildDirectory.file("coverage/thresholds.json")
 
 tasks.register<JavaExec>("verifyCoverageThresholds") {
   group = "verification"
@@ -236,6 +295,7 @@ tasks.register<JavaExec>("verifyCoverageThresholds") {
   inputs.file(coverageReportXml)
   inputs.file(layerMapFile)
   outputs.file(coverageGateMarkdown)
+  outputs.file(coverageGateJson)
 
   mainClass.set("com.vjaykrsna.nanoai.coverage.tasks.VerifyCoverageThresholdsTask")
 
@@ -248,7 +308,10 @@ tasks.register<JavaExec>("verifyCoverageThresholds") {
     android.bootClasspath,
   )
 
-  doFirst { coverageGateMarkdown.get().asFile.parentFile.mkdirs() }
+  doFirst {
+    coverageGateMarkdown.get().asFile.parentFile.mkdirs()
+    coverageGateJson.get().asFile.parentFile.mkdirs()
+  }
 
   args(
     "--report-xml",
@@ -259,6 +322,8 @@ tasks.register<JavaExec>("verifyCoverageThresholds") {
     coverageGateMarkdown.get().asFile.absolutePath,
     "--build-id",
     "jacocoFullReport",
+    "--json",
+    coverageGateJson.get().asFile.absolutePath,
   )
 }
 
@@ -406,6 +471,7 @@ dependencies {
 
   // Unit Testing
   testImplementation(kotlin("test-junit5"))
+  testImplementation(kotlin("reflect"))
   testImplementation(libs.junit.jupiter.api)
   testImplementation(libs.junit.jupiter.params)
   testImplementation(libs.mockk)
@@ -427,6 +493,7 @@ dependencies {
   androidTestImplementation(libs.androidx.junit)
   androidTestImplementation(libs.androidx.espresso.core)
   androidTestImplementation(libs.androidx.test.runner)
+  androidTestImplementation(libs.androidx.uiautomator)
   androidTestImplementation(platform(libs.androidx.compose.bom))
   androidTestImplementation(libs.androidx.compose.ui.test.junit4)
   androidTestImplementation(libs.androidx.compose.ui.test)

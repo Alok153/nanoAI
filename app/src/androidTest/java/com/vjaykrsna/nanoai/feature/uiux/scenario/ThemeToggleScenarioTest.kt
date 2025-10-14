@@ -4,11 +4,14 @@ import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import com.vjaykrsna.nanoai.MainActivity
+import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -25,20 +28,28 @@ import org.junit.runner.RunWith
 @LargeTest
 @RunWith(AndroidJUnit4::class)
 class ThemeToggleScenarioTest {
-  @get:Rule val composeRule = createAndroidComposeRule<MainActivity>()
+  @get:Rule(order = 0) val environmentRule = TestEnvironmentRule()
+  @get:Rule(order = 1) val composeRule = createAndroidComposeRule<MainActivity>()
 
   @Test
   fun themeToggle_persistsAcrossProcessDeath_withoutLayoutJump() {
     // Navigate to Settings via sidebar entry
+    composeRule.onNodeWithTag("topbar_nav_icon").assertIsDisplayed().assertHasClickAction()
     composeRule
-      .onNodeWithTag("sidebar_toggle")
+      .onNodeWithContentDescription("Toggle navigation drawer")
       .assertIsDisplayed()
       .assertHasClickAction()
       .performClick()
 
     composeRule.onNodeWithTag("sidebar_drawer").assertIsDisplayed()
 
-    composeRule.onNodeWithTag("sidebar_item_settings").assertIsDisplayed().performClick()
+    composeRule
+      .onNodeWithTag("sidebar_item_settings")
+      .assertIsDisplayed()
+      .assertHasClickAction()
+      .performClick()
+
+    composeRule.onNodeWithText("Settings").assertIsDisplayed()
 
     // Interact with theme toggle
     composeRule

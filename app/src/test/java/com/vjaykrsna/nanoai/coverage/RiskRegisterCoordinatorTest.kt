@@ -112,7 +112,7 @@ class RiskRegisterCoordinatorTest {
     val risks =
       listOf(
         RiskRegisterItem(
-          riskId = "risk-high-ui",
+          riskId = "RR-HIGH-027",
           layer = TestLayer.UI,
           description = "TalkBack labels missing for composer",
           severity = RiskRegisterItem.Severity.HIGH,
@@ -130,7 +130,7 @@ class RiskRegisterCoordinatorTest {
           layer = TestLayer.UI,
           journey = "Chat composer semantics",
           coverageContribution = 2.5,
-          riskTags = setOf("risk-high-ui"),
+          riskTags = setOf("rr-high-027", " accessibility "),
         ),
       )
 
@@ -139,5 +139,60 @@ class RiskRegisterCoordinatorTest {
     val now = Instant.parse("2025-10-15T00:00:00Z")
 
     assertThat(coordinator.requiresAttention(now)).isFalse()
+  }
+
+  @Test
+  fun `mitigationsFor matches tags regardless of case and whitespace`() {
+    val risks =
+      listOf(
+        RiskRegisterItem(
+          riskId = "RR-HIGH-041",
+          layer = TestLayer.DATA,
+          description = "Catalog not cached offline",
+          severity = RiskRegisterItem.Severity.HIGH,
+          targetBuild = null,
+          status = RiskRegisterItem.Status.OPEN,
+          mitigation = null,
+        ),
+      )
+
+    val catalog =
+      listOf(
+        TestSuiteCatalogEntry(
+          suiteId = "suite-catalog-offline",
+          owner = "quality-engineering",
+          layer = TestLayer.DATA,
+          journey = "Catalog offline fallback",
+          coverageContribution = 1.7,
+          riskTags = setOf(" rr-high-041  "),
+        ),
+      )
+
+    val coordinator = RiskRegisterCoordinator(risks, catalog)
+
+    assertThat(coordinator.mitigationsFor("rr-high-041").map { it.suiteId })
+      .containsExactly("suite-catalog-offline")
+  }
+
+  @Test
+  fun `requiresAttention escalates overdue high risks without mitigation`() {
+    val risks =
+      listOf(
+        RiskRegisterItem(
+          riskId = "risk-high-offline",
+          layer = TestLayer.DATA,
+          description = "Offline sync not validated",
+          severity = RiskRegisterItem.Severity.HIGH,
+          targetBuild = "build-2025-10-01",
+          status = RiskRegisterItem.Status.IN_PROGRESS,
+          mitigation = null,
+        ),
+      )
+
+    val coordinator = RiskRegisterCoordinator(risks, emptyList())
+
+    val now = Instant.parse("2025-10-12T00:00:00Z")
+
+    assertThat(coordinator.requiresAttention(now)).isTrue()
   }
 }
