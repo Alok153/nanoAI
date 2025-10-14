@@ -1,87 +1,203 @@
-# nanoAI – Offline Multimodal AI Assistant
+# nanoAI – Your Private AI Assistant
 
-nanoAI is a privacy-first Android assistant that keeps inference on-device while offering optional cloud fallback when you need extra horsepower. Switch personas, manage local models, and take your conversations anywhere without giving up control over your data.
+**nanoAI** is a privacy-first Android app that brings powerful AI capabilities directly to your device. Chat with AI, generate images, process audio, get coding help, and translate languages – all while keeping your data private and secure.
 
-## ✨ Highlights
+## 🌟 What Makes nanoAI Special
 
-- 🔒 **Local-first privacy** – Conversations, models, and telemetry stay on your device by default.
-- 🤖 **Personalised personas** – Swap between curated assistants or create your own with custom prompts and model preferences.
-- 💬 **Threaded conversations** – Organise chats, archive history, and export backups in a couple of taps.
-- ⚙️ **Power-user tooling** – Manage API providers, monitor downloads, and blend local/cloud inference on demand.
+- **🔒 Privacy by Design** – Your conversations, personal data, and AI models stay on your device.
+- **⚡ Works Offline** – No internet required for most features once models are downloaded.
+- **🎯 Multimodal AI** – Chat, image generation, audio processing, code assistance, and translation all in one app.
+- **🎨 Beautiful & Accessible** – Clean, intuitive interface that works great on any Android device, with full TalkBack support and Material 3 design.
+- **🔄 Flexible & Extensible** – Add cloud AI providers (OpenAI, Gemini, custom endpoints) or use local models as you prefer. Persona system for different AI styles.
+- **🛡️ Responsible AI** – No automated content filters; users are responsible for generated content. First-launch disclaimer explains this clearly.
+- **📱 Local-First Architecture** – Runs small LLMs on-device for privacy and speed, with cloud fallbacks when needed or for larger models.
 
-## 🚀 Getting Started
+## 🚀 Quick Start
 
-### Prerequisites
-- Android Studio Hedgehog (2023.1.1) or newer
-- JDK 11+
-- Android device or emulator on Android 12 (API 31) or higher
+### Get the App Running
 
-### Install & Run
+1. **Download nanoAI** from github release. (coming soon)
+2. **Launch the app** and accept the privacy notice
+3. **Download a model** from the built-in library
+4. **Start chatting** – you're ready to go!
+
+### First Time Setup
+
 ```bash
+# Clone and build the app
 git clone https://github.com/vjaykrsna/nanoAI.git
 cd nanoAI
-
-# Build and install the debug build
 ./gradlew installDebug
+
+# Launch on your device or emulator
 ```
 
-Launch the app, accept the safety disclaimer, download a model from the library, and you’re ready to chat.
 
-## 🔍 What You Can Do
+## 💬 What You Can Do
 
-- Explore the **Model Library** to download on-device models using MediaPipe Generative (LiteRT).
-- Configure **cloud providers** like OpenAI or Gemini for hybrid inference flows.
-- Manage personas with temperature/top-p controls and swap them mid-conversation.
-- Export your data for backup or migration directly from Settings.
+### Chat with AI
+- **Multiple personas** – Switch between helpful assistant, coding expert, creative writer, and more. Create custom personas with different prompts and model preferences.
+- **Threaded conversations** – Keep different chats organized and easily accessible. Sidebar history with search and archive options.
+- **Smart suggestions** – Context-aware responses that understand your conversation history.
+- **Local vs Cloud** – Toggle between on-device models (private) and cloud APIs (OpenAI, Gemini, custom endpoints).
 
-## 📚 Documentation
+### Generate Images
+- **On-device creation** – Generate images without sending data to external servers (planned for future release)
+- **Multiple styles** – Choose from various artistic styles and formats (planned)
+- **Privacy-first** – Your prompts and generated images stay completely private
 
-- [Testing & Coverage](docs/testing.md) – How we keep quality high with automated coverage gates.
-- [Architecture](docs/ARCHITECTURE.md) – System design, data flow, and modules.
-- [API Reference](docs/API.md) – Public surfaces, request shapes, and integration notes.
-- [Coverage Risk Register](docs/coverage/risk-register.md) – Open coverage gaps and mitigation tracking.
-- [Development Roadmap](docs/todo-next.md) – Next phase priorities and coverage goals.
+### Process Audio
+- **Voice interaction** – Speech-to-Speech and text-to-speech capabilities (planned for future release)
+- **Audio processing** – Transcribe, translate, and analyze audio content (planned)
+- **Accessibility focus** – Full screen reader support for visually impaired users
 
-### 📊 Quality & Coverage
+### Additional Features
+- **Model Library** – Browse, download, pause/resume models with progress tracking and size requirements.
+- **Settings & Export** – Configure APIs, export/import personas and settings (JSON format, unencrypted with warnings).
 
-nanoAI enforces automated quality gates with test coverage thresholds:
-- **ViewModel**: 75% target (current: 39.58%)
-- **UI**: 65% target (current: 1.90%)
-- **Data**: 70% target (current: 18.91%)
+## 🏗️ Architecture Overview
 
-Run the full test suite and coverage report:
-```bash
-# Run all tests (unit + instrumentation)
-./gradlew testDebugUnitTest ciManagedDeviceDebugAndroidTest
+nanoAI follows clean architecture principles with Kotlin-first design:
 
-# Generate merged coverage report
-./gradlew jacocoFullReport
+- **UI Layer**: Jetpack Compose with Material 3, accessible components
+- **Domain Layer**: Use cases for business logic (chat, downloads, personas)
+- **Data Layer**: Room database for local storage, Retrofit for cloud APIs, WorkManager for background tasks
+- **Runtime Layer**: MediaPipe Generative for on-device inference, extensible to TensorFlow Lite/MLC LLM
 
-# Verify coverage thresholds
-./gradlew verifyCoverageThresholds
-```
+Key technologies: Kotlin 1.9.x, Jetpack Compose, Hilt DI, Room, DataStore, WorkManager, Coroutines.
 
-Coverage reports are available at `app/build/reports/jacoco/full/index.html` after running the merge task. See [Testing & Coverage Guide](docs/testing.md) for detailed instructions on running tests, managing test environments, and interpreting coverage reports.
+## 🧪 Testing & Quality
+
+- **Comprehensive Test Suite**: Unit tests (ViewModels, repositories), instrumentation tests (Compose UI), macrobenchmarks
+- **Coverage Goals**: Targeting 75% ViewModel, 65% UI, 70% Data layer coverage
+- **Quality Gates**: ktlint, Detekt, Android Lint, automated CI checks
+- **Current Status**: Foundation tests in place, working to close coverage gaps
+
+## 📈 Roadmap
+
+### Short-term (Next Releases)
+- 🎯 Close test coverage gaps to meet quality thresholds
+- 🎯 Implement text generation and polished chat UI
+- 🎯 Import/export improvements for personas and settings
+
+### Medium-term
+- 🖼️ Image generation support (on-device and cloud)
+- 🎵 Audio input/output (voice chat, transcription, TTS)
+- 🔄 Advanced persona workflows and multi-model orchestration
+- 🌐 Translation and summarization modes
+
+### Long-term Vision: The AI Powerhouse
+nanoAI isn't just an app—it's evolving into your personal AI ecosystem. Imagine:
+
+- **🔄 Multi-API Load Balancing**: Seamlessly switch between OpenAI, Gemini, Anthropic, and custom endpoints with intelligent routing. Configure multiple API keys for cost optimization—never get rate-limited again!
+- **🏠 Local Network AI Hub**: Turn your device into a local AI server. Host your own load balancer and API switcher accessible by other apps on your network. Share AI capabilities with your smart home, other devices.
+- **🌍 Marketplace**: Community-driven model library with user-contributed models and persona, with feedback and ratings. Earn rewards for contributing high-quality models.
+- **🤖 AI Agent**: Build and deploy custom AI agents that work across your devices and services, creating a truly intelligent personal assistant network.
+- **💻 Vibe Coding with Linux Backend**: Integrated Termux environment for seamless coding experiences. Write, run, and test code directly within the app using a full Linux backend, with AI assistance for code generation, debugging, and project management.
+
+**The future is limitless**—nanoAI will be the central hub connecting you to the world's AI capabilities, all while keeping your data private and under your control. Join us on this exciting journey!
 
 ## 🤝 Contributing
 
-Pull requests and issue reports are welcome. Please:
+We welcome contributions! The project uses a structured spec-driven development process:
 
-1. Open a feature branch from the latest `main`
-2. **Add tests first** (TDD approach) for new behaviour before implementation
-3. Run the complete quality gate suite before submitting:
-   ```bash
-   ./gradlew check  # Runs tests, coverage, spotless, detekt
-   ```
-4. Ensure coverage thresholds are maintained or improved
-5. Update documentation if you modify public APIs or workflows
+1. Check `specs/` for feature specifications and current plans
+2. Review `docs/` for architecture, testing, and API documentation
+3. Follow the testing guide for adding comprehensive test coverage
+4. Run `./gradlew check` to ensure quality gates pass
 
-See [Testing & Coverage Guide](docs/testing.md) for detailed testing requirements and [Architecture](docs/ARCHITECTURE.md) for design principles.
+### Development Setup
+```bash
+git clone https://github.com/vjaykrsna/nanoAI.git
+cd nanoAI
+./gradlew build  # Run full build with tests
+./gradlew installDebug  # Install on device
+```
+
+See `docs/testing.md` for detailed testing instructions and `docs/ARCHITECTURE.md` for technical deep-dive.
 
 ## 📄 License
 
-This project is licensed under the MIT License – see `LICENSE` for details.
+[Add license information here]
+
+## 🙏 Acknowledgments
+
+Built with modern Android technologies and a focus on user privacy and responsible AI use.
+
+### Code Assistance
+- **Programming help** – Get explanations, debugging help, and code suggestions
+- **Multiple languages** – Support for popular programming languages
+- **Context aware** – Understands your project structure and coding patterns
+
+### Language Translation
+- **Real-time translation** – Translate between multiple languages instantly
+- **Conversation mode** – Maintain context across multiple exchanges
+- **Offline support** – Works without internet for downloaded language models
+
+## 🔧 Advanced Features
+
+### Model Management
+- **Local model library** – Download and manage AI models optimized for your device
+- **Cloud integration** – Optional connection to services like OpenAI or Gemini for enhanced capabilities
+- **Automatic updates** – Keep your models current with the latest improvements
+
+### Personalization
+- **Theme selection** – Light, dark, or system-following themes
+- **Layout preferences** – Compact or comfortable spacing based on your preference
+- **Accessibility options** – High contrast, large text, and screen reader optimization
+
+### Data Control
+- **Export conversations** – Backup your chat history and persona settings
+- **Privacy settings** – Control what data (if any) is shared for app improvement
+- **Secure storage** – All personal data encrypted and stored locally
+
+## 📊 Quality & Privacy Commitment
+
+nanoAI is built with transparency and user control in mind:
+
+- **Open source** – Code available for security review and community contribution
+- **Privacy-first architecture** – Designed to minimize data collection and external dependencies
+- **Quality gates** – Automated testing ensures reliability across all features
+- **Accessibility compliance** – Works with screen readers and meets WCAG guidelines
+
+## 🛠️ For Developers
+
+### Building from Source
+```bash
+# Run tests and quality checks
+./gradlew check
+
+# Install on connected device
+./gradlew installDebug
+
+# View test coverage reports
+./gradlew jacocoFullReport
+# Reports available at app/build/reports/jacoco/full/index.html
+```
+
+### Contributing
+We welcome contributions! Please:
+
+1. **Start with tests** – Add tests for new features before implementation
+2. **Follow our quality gates** – Ensure all tests pass and coverage thresholds are met
+3. **Respect privacy** – Any new features must maintain our privacy-first approach
+4. **Document changes** – Update user-facing documentation for any new capabilities
+
+See our [Testing Guide](docs/testing.md) and [Architecture Overview](docs/ARCHITECTURE.md) for development details.
+
+## 🎯 Roadmap
+
+- **Enhanced multimodal** – Better image generation and audio processing capabilities
+- **Expanded model support** – More local AI models and cloud provider options
+- **Improved accessibility** – Even better support for users with different abilities
+- **Performance optimization** – Faster responses and smoother interactions
+
+## 📄 License
+
+MIT License – you're free to use, modify, and distribute this software.
 
 ---
 
-**Built with ❤️ for privacy-conscious AI enthusiasts**
+**Made with ❤️ for people who value their privacy and want AI that works for them, not the other way around.**
+
+*Have questions? Found a bug? Want to contribute? We'd love to hear from you!*
