@@ -43,12 +43,12 @@ fun DisclaimerDialog(
   onDecline: () -> Unit,
   onDismissRequest: () -> Unit,
   modifier: Modifier = Modifier,
-  onDialogShown: (() -> Unit)? = null,
+  onDialogShow: (() -> Unit)? = null,
 ) {
   val scrollState = rememberScrollState()
   var acceptEnabled by rememberSaveable { mutableStateOf(false) }
 
-  LaunchedEffect(Unit) { onDialogShown?.invoke() }
+  LaunchedEffect(Unit) { onDialogShow?.invoke() }
 
   LaunchedEffect(scrollState) {
     snapshotFlow { !scrollState.canScrollForward }

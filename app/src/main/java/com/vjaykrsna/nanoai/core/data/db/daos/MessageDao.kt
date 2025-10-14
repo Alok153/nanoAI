@@ -80,8 +80,8 @@ interface MessageDao {
   suspend fun countByThread(threadId: String): Int
 
   /**
-   * Delete all messages for a specific thread. Note: CASCADE delete should handle this
-   * automatically when thread is deleted.
+   * Delete all messages for a specific thread. CASCADE delete should already cover this when the
+   * parent thread is removed, but the explicit query is kept for targeted cleanup paths.
    */
   @Query("DELETE FROM messages WHERE thread_id = :threadId")
   suspend fun deleteByThreadId(threadId: String)

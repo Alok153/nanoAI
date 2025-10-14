@@ -96,8 +96,8 @@ class MainActivity : ComponentActivity() {
               appState = appUiState,
               windowSizeClass = windowSizeClass,
               shellViewModel = shellViewModel,
-              onDisclaimerShown = appViewModel::onDisclaimerDisplayed,
-              onDisclaimerAccepted = appViewModel::onDisclaimerAccepted,
+              onDisclaimerShow = appViewModel::onDisclaimerDisplayed,
+              onDisclaimerAccept = appViewModel::onDisclaimerAccepted,
             )
           }
         }

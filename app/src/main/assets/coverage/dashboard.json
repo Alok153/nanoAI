@@ -1,0 +1,28 @@
+{
+  "buildId": "build-2025-10-10",
+  "generatedAt": "2025-10-10T12:30:00Z",
+  "layers": [
+    { "layer": "VIEW_MODEL", "coverage": 81.2, "threshold": 75.0 },
+    { "layer": "UI", "coverage": 66.0, "threshold": 65.0 },
+    { "layer": "DATA", "coverage": 72.5, "threshold": 70.0 }
+  ],
+  "trend": {
+    "VIEW_MODEL": 2.2,
+    "UI": -0.6,
+    "DATA": 1.4
+  },
+  "risks": [
+    {
+      "riskId": "RR-CRIT-041",
+      "title": "Offline coverage banner missing",
+      "severity": "CRITICAL",
+      "status": "OPEN"
+    },
+    {
+      "riskId": "RR-HIGH-033",
+      "title": "HuggingFace slow_down not surfaced",
+      "severity": "HIGH",
+      "status": "IN_PROGRESS"
+    }
+  ]
+}

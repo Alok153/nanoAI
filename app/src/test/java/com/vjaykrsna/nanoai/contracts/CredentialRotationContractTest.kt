@@ -6,8 +6,8 @@ import org.junit.Test
 /**
  * Contract tests for POST /credentials/providers/{providerId} payloads and responses.
  *
- * TDD note: These assertions fail until the credential rotation API enforces the documented
- * environments and response metadata defined in the stabilization spec.
+ * These assertions fail until the credential rotation API enforces the documented environments and
+ * response metadata defined in the stabilization spec.
  */
 class CredentialRotationContractTest {
   private val rotationRequest =

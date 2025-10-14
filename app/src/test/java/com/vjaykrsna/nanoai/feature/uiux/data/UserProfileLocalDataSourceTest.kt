@@ -202,45 +202,29 @@ private class InMemoryUserProfileDao : UserProfileDao {
   override suspend fun updateThemePreference(
     userId: String,
     themePreference: ThemePreference
+  ): Int = modifyProfile(userId) { profile -> profile.copy(themePreference = themePreference) }
+
+  override suspend fun updateVisualDensity(userId: String, visualDensity: VisualDensity): Int =
+    modifyProfile(userId) { profile -> profile.copy(visualDensity = visualDensity) }
+
+  override suspend fun updateLastOpenedScreen(userId: String, screenType: ScreenType): Int =
+    modifyProfile(userId) { profile -> profile.copy(lastOpenedScreen = screenType) }
+
+  override suspend fun updateCompactMode(userId: String, compactMode: Boolean): Int =
+    modifyProfile(userId) { profile -> profile.copy(compactMode = compactMode) }
+
+  override suspend fun updatePinnedTools(userId: String, pinnedTools: List<String>): Int =
+    modifyProfile(userId) { profile -> profile.copy(pinnedTools = pinnedTools) }
+
+  override suspend fun updateDisplayName(userId: String, displayName: String?): Int =
+    modifyProfile(userId) { profile -> profile.copy(displayName = displayName) }
+
+  private fun modifyProfile(
+    userId: String,
+    transform: (UserProfileEntity) -> UserProfileEntity,
   ): Int {
-    val current = state.value ?: return 0
-    if (current.userId != userId) return 0
-    state.value = current.copy(themePreference = themePreference)
-    return 1
-  }
-
-  override suspend fun updateVisualDensity(userId: String, visualDensity: VisualDensity): Int {
-    val current = state.value ?: return 0
-    if (current.userId != userId) return 0
-    state.value = current.copy(visualDensity = visualDensity)
-    return 1
-  }
-
-  override suspend fun updateLastOpenedScreen(userId: String, screenType: ScreenType): Int {
-    val current = state.value ?: return 0
-    if (current.userId != userId) return 0
-    state.value = current.copy(lastOpenedScreen = screenType)
-    return 1
-  }
-
-  override suspend fun updateCompactMode(userId: String, compactMode: Boolean): Int {
-    val current = state.value ?: return 0
-    if (current.userId != userId) return 0
-    state.value = current.copy(compactMode = compactMode)
-    return 1
-  }
-
-  override suspend fun updatePinnedTools(userId: String, pinnedTools: List<String>): Int {
-    val current = state.value ?: return 0
-    if (current.userId != userId) return 0
-    state.value = current.copy(pinnedTools = pinnedTools)
-    return 1
-  }
-
-  override suspend fun updateDisplayName(userId: String, displayName: String?): Int {
-    val current = state.value ?: return 0
-    if (current.userId != userId) return 0
-    state.value = current.copy(displayName = displayName)
+    val currentProfile = state.value?.takeIf { it.userId == userId } ?: return 0
+    state.value = transform(currentProfile)
     return 1
   }
 }
@@ -367,16 +351,19 @@ private class InMemoryUiStateSnapshotDao : UIStateSnapshotDao {
     throw UnsupportedOperationException("Not used in test")
 
   override suspend fun clearRecentActions(userId: String): Int {
-    val current = state.value ?: return 0
-    if (current.userId != userId) return 0
-    state.value = current.copy(recentActions = emptyList())
-    return 1
+    return mutateSnapshot(userId) { snapshot -> snapshot.copy(recentActions = emptyList()) }
   }
 
   override suspend fun clearExpandedPanels(userId: String): Int {
-    val current = state.value ?: return 0
-    if (current.userId != userId) return 0
-    state.value = current.copy(expandedPanels = emptyList())
+    return mutateSnapshot(userId) { snapshot -> snapshot.copy(expandedPanels = emptyList()) }
+  }
+
+  private fun mutateSnapshot(
+    userId: String,
+    transform: (UIStateSnapshotEntity) -> UIStateSnapshotEntity,
+  ): Int {
+    val current = state.value?.takeIf { it.userId == userId } ?: return 0
+    state.value = transform(current)
     return 1
   }
 }

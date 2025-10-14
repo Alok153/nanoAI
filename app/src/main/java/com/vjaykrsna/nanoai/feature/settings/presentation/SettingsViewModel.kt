@@ -1,9 +1,10 @@
+@file:Suppress("LargeClass")
+
 package com.vjaykrsna.nanoai.feature.settings.presentation
 
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.vjaykrsna.nanoai.BuildConfig
 import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreference
 import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreferenceStore
 import com.vjaykrsna.nanoai.core.data.preferences.RetentionPolicy
@@ -16,6 +17,7 @@ import com.vjaykrsna.nanoai.feature.settings.domain.ImportSummary
 import com.vjaykrsna.nanoai.feature.settings.domain.huggingface.HuggingFaceAuthCoordinator
 import com.vjaykrsna.nanoai.feature.settings.domain.huggingface.HuggingFaceAuthState
 import com.vjaykrsna.nanoai.feature.settings.domain.huggingface.HuggingFaceDeviceAuthState
+import com.vjaykrsna.nanoai.feature.settings.domain.huggingface.HuggingFaceOAuthConfig
 import com.vjaykrsna.nanoai.feature.uiux.domain.ObserveUserProfileUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.ToggleCompactModeUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.UpdateThemePreferenceUseCase
@@ -28,7 +30,9 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -49,6 +53,7 @@ constructor(
   private val updateThemePreferenceUseCase: UpdateThemePreferenceUseCase,
   private val toggleCompactModeUseCase: ToggleCompactModeUseCase,
   private val huggingFaceAuthCoordinator: HuggingFaceAuthCoordinator,
+  private val huggingFaceOAuthConfig: HuggingFaceOAuthConfig,
 ) : ViewModel() {
   private val _isLoading = MutableStateFlow(false)
   val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -99,6 +104,23 @@ constructor(
             compactModeEnabled = profile?.compactMode ?: false,
             undoAvailable = previousUiUxState != null,
           )
+        }
+      }
+      .launchIn(viewModelScope)
+
+    huggingFaceAuthCoordinator.deviceAuthState
+      .map { deviceState ->
+        val announcement = deviceState?.lastErrorAnnouncement
+        when {
+          !announcement.isNullOrBlank() -> announcement
+          !deviceState?.lastError.isNullOrBlank() -> deviceState?.lastError
+          else -> null
+        }
+      }
+      .distinctUntilChanged()
+      .onEach { announcement ->
+        if (announcement != null) {
+          _uiUxState.update { current -> current.copy(statusMessage = announcement) }
         }
       }
       .launchIn(viewModelScope)
@@ -321,8 +343,8 @@ constructor(
 
   fun startHuggingFaceOAuthLogin() {
     viewModelScope.launch {
-      val clientId = BuildConfig.HF_OAUTH_CLIENT_ID.trim()
-      val scope = BuildConfig.HF_OAUTH_SCOPE.ifBlank { DEFAULT_OAUTH_SCOPE }
+      val clientId = huggingFaceOAuthConfig.clientId.trim()
+      val scope = huggingFaceOAuthConfig.scope.ifBlank { DEFAULT_OAUTH_SCOPE }
 
       if (clientId.isBlank()) {
         _errorEvents.emit(
@@ -360,6 +382,10 @@ constructor(
         it.copy(statusMessage = "Hugging Face disconnected", undoAvailable = false)
       }
     }
+  }
+
+  fun clearStatusMessage() {
+    _uiUxState.update { it.copy(statusMessage = null) }
   }
 }
 

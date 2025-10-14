@@ -28,13 +28,23 @@ class ModelCatalogRepositoryImplTest {
 
   @TempDir lateinit var tempDir: File
 
-  private val readDao = mockk<ModelPackageReadDao>()
+  private val readDao =
+    mockk<ModelPackageReadDao>() {
+      every { observeAll() } returns kotlinx.coroutines.flow.flowOf(emptyList())
+      every { observeInstalled() } returns kotlinx.coroutines.flow.flowOf(emptyList())
+    }
   private val writeDao = mockk<ModelPackageWriteDao>(relaxed = true)
   private val chatThreadDao = mockk<ChatThreadDao>(relaxed = true)
   private val context = mockk<Context>()
   private val repository by lazy {
     every { context.filesDir } returns tempDir
-    ModelCatalogRepositoryImpl(readDao, writeDao, chatThreadDao, context)
+    ModelCatalogRepositoryImpl(
+      readDao,
+      writeDao,
+      chatThreadDao,
+      context,
+      kotlinx.datetime.Clock.System
+    )
   }
 
   @Test

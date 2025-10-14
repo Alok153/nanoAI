@@ -88,4 +88,8 @@ interface ChatThreadDao {
     personaId: String?,
     updatedAt: kotlinx.datetime.Instant
   )
+
+  /** Update only the last-modified timestamp for a thread. */
+  @Query("UPDATE chat_threads SET updated_at = :updatedAt WHERE thread_id = :threadId")
+  suspend fun touch(threadId: String, updatedAt: kotlinx.datetime.Instant)
 }

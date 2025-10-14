@@ -10,6 +10,6 @@ class PersonaOfflineFlowTest {
   @Ignore("Pending persona instrumentation once backend integrations land.")
   @Test
   fun personaFlowsPending() {
-    // TODO(003-UI-UX#T079): Flesh out persona + offline flows after backend contracts stabilize.
+    // TODO: Flesh out persona + offline flows after backend contracts stabilize.
   }
 }

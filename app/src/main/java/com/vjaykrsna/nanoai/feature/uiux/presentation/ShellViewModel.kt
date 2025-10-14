@@ -413,19 +413,27 @@ constructor(
     payload: UndoPayload?,
     jobs: List<ProgressJob>,
   ): UndoPayload? {
-    payload ?: return null
-    val jobId = payload.extractJobId() ?: return payload
-    val activeJob = jobs.firstOrNull { it.jobId == jobId }
-    return if (activeJob == null || activeJob.isTerminal) null else payload
+    val currentPayload = payload ?: return null
+    val jobId = currentPayload.extractJobId()
+    val activeJob = jobId?.let { id -> jobs.firstOrNull { it.jobId == id } }
+    return when {
+      jobId == null -> currentPayload
+      activeJob == null -> null
+      activeJob.isTerminal -> null
+      else -> currentPayload
+    }
   }
 
   private fun UndoPayload.extractJobId(): UUID? {
     val metadataId = metadata["jobId"] as? String
-    val fromMetadata = metadataId?.let { runCatching { UUID.fromString(it) }.getOrNull() }
-    if (fromMetadata != null) return fromMetadata
-    if (!actionId.startsWith("queue-")) return null
-    val rawId = actionId.removePrefix("queue-")
-    return runCatching { UUID.fromString(rawId) }.getOrNull()
+    val metadataUuid = metadataId?.let(::parseUuid)
+    val actionUuid =
+      if (actionId.startsWith(JOB_QUEUE_PREFIX)) {
+        parseUuid(actionId.removePrefix(JOB_QUEUE_PREFIX))
+      } else {
+        null
+      }
+    return metadataUuid ?: actionUuid
   }
 
   /** Builds the list of mode cards for the home hub grid. */
@@ -491,6 +499,12 @@ constructor(
   /** Updates the chat-specific state for contextual UI. */
   fun updateChatState(chatState: ChatState?) {
     _chatState.value = chatState
+  }
+
+  private fun parseUuid(raw: String): UUID? = runCatching { UUID.fromString(raw) }.getOrNull()
+
+  private companion object {
+    private const val JOB_QUEUE_PREFIX = "queue-"
   }
 }
 

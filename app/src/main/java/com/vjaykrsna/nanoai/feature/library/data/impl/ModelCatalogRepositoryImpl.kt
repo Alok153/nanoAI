@@ -19,6 +19,7 @@ import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.datetime.Clock
@@ -32,9 +33,25 @@ constructor(
   private val modelPackageWriteDao: ModelPackageWriteDao,
   private val chatThreadDao: ChatThreadDao,
   @ApplicationContext private val context: Context,
+  private val clock: Clock,
 ) : ModelCatalogRepository {
-  private val clock = Clock.System
+  private val modelsDirectoryProvider: () -> File = { File(context.filesDir, "models") }
   private val refreshStatus = MutableStateFlow(ModelCatalogRefreshStatus())
+  private val allModelsFlow: Flow<List<ModelPackage>> =
+    modelPackageReadDao
+      .observeAll()
+      .map { models -> models.map { it.toDomain() } }
+      .distinctUntilChanged()
+
+  private val installedModelsFlow: Flow<List<ModelPackage>> =
+    modelPackageReadDao
+      .observeInstalled()
+      .map { models -> models.map { it.toDomain() } }
+      .distinctUntilChanged()
+
+  override fun observeAllModels(): Flow<List<ModelPackage>> = allModelsFlow
+
+  override fun observeInstalledModels(): Flow<List<ModelPackage>> = installedModelsFlow
 
   override suspend fun getAllModels(): List<ModelPackage> =
     modelPackageReadDao.getAll().map { it.toDomain() }
@@ -42,8 +59,8 @@ constructor(
   override suspend fun getModel(modelId: String): ModelPackage? =
     modelPackageReadDao.getById(modelId)?.toDomain()
 
-  override suspend fun getModelById(modelId: String): Flow<ModelPackage?> =
-    modelPackageReadDao.observeById(modelId).map { it?.toDomain() }
+  override fun getModelById(modelId: String): Flow<ModelPackage?> =
+    modelPackageReadDao.observeById(modelId).map { it?.toDomain() }.distinctUntilChanged()
 
   override suspend fun getInstalledModels(): List<ModelPackage> =
     modelPackageReadDao.getByInstallState(InstallState.INSTALLED).map { it.toDomain() }
@@ -93,23 +110,17 @@ constructor(
     modelPackageWriteDao.updateIntegrityMetadata(modelId, checksum, null, clock.now())
   }
 
-  override fun observeAllModels(): Flow<List<ModelPackage>> =
-    modelPackageReadDao.observeAll().map { models -> models.map { it.toDomain() } }
-
-  override fun observeInstalledModels(): Flow<List<ModelPackage>> =
-    modelPackageReadDao.observeInstalled().map { models -> models.map { it.toDomain() } }
-
   override suspend fun isModelActiveInSession(modelId: String): Boolean =
     chatThreadDao.countActiveByModel(modelId) > 0
 
   override suspend fun deleteModelFiles(modelId: String) {
-    val modelsDir = File(context.filesDir, "models")
+    val modelsDirectory = resolveModelsDirectory()
     val cleanupTargets =
       listOf(
-        File(modelsDir, "$modelId.bin"),
-        File(modelsDir, "$modelId.tmp"),
-        File(modelsDir, "$modelId.metadata"),
-        File(modelsDir, modelId),
+        File(modelsDirectory, "$modelId.bin"),
+        File(modelsDirectory, "$modelId.tmp"),
+        File(modelsDirectory, "$modelId.metadata"),
+        File(modelsDirectory, modelId),
       )
     cleanupTargets.forEach { file ->
       if (!file.exists()) return@forEach
@@ -130,8 +141,10 @@ constructor(
         lastSuccessAt = now,
         lastSuccessSource = source.takeIf { it.isNotBlank() },
         lastSuccessCount = modelCount,
-        lastFallbackMessage = null,
+        lastFallbackAt = null,
         lastFallbackReason = null,
+        lastFallbackCachedCount = 0,
+        lastFallbackMessage = null,
       )
     }
   }
@@ -147,4 +160,6 @@ constructor(
       )
     }
   }
+
+  private fun resolveModelsDirectory(): File = modelsDirectoryProvider()
 }

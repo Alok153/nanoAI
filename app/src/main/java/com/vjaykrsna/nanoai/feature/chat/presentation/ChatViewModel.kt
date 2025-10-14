@@ -2,6 +2,7 @@ package com.vjaykrsna.nanoai.feature.chat.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
 import com.vjaykrsna.nanoai.core.data.repository.ConversationRepository
 import com.vjaykrsna.nanoai.core.data.repository.PersonaRepository
 import com.vjaykrsna.nanoai.core.domain.model.ChatThread
@@ -12,6 +13,7 @@ import com.vjaykrsna.nanoai.feature.chat.domain.SendPromptAndPersonaUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.UUID
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -19,6 +21,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -31,7 +35,10 @@ constructor(
   private val sendPromptAndPersonaUseCase: SendPromptAndPersonaUseCase,
   private val conversationRepository: ConversationRepository,
   private val personaRepository: PersonaRepository,
+  @MainImmediateDispatcher private val dispatcher: CoroutineDispatcher,
 ) : ViewModel() {
+  private val flowSharingStarted: SharingStarted =
+    SharingStarted.WhileSubscribed(FLOW_STOP_TIMEOUT_MS)
   private val _currentThreadId = MutableStateFlow<UUID?>(null)
   val currentThreadId: StateFlow<UUID?> = _currentThreadId.asStateFlow()
 
@@ -41,32 +48,40 @@ constructor(
   private val _errorEvents = MutableSharedFlow<ChatError>()
   val errorEvents = _errorEvents.asSharedFlow()
 
+  private val threads: StateFlow<List<ChatThread>> =
+    conversationRepository
+      .getAllThreadsFlow()
+      .stateIn(viewModelScope, flowSharingStarted, emptyList())
+
   val messages: StateFlow<List<Message>> =
     _currentThreadId
-      .combine(conversationRepository.getAllThreadsFlow()) { threadId, _ ->
-        threadId?.let { conversationRepository.getMessages(it) } ?: emptyList()
+      .flatMapLatest { threadId ->
+        threadId?.let { conversationRepository.getMessagesFlow(it) } ?: flowOf(emptyList())
       }
-      .stateIn(viewModelScope, SharingStarted.WhileSubscribed(FLOW_STOP_TIMEOUT_MS), emptyList())
+      .stateIn(viewModelScope, flowSharingStarted, emptyList())
 
   val currentThread: StateFlow<ChatThread?> =
-    _currentThreadId
-      .combine(conversationRepository.getAllThreadsFlow()) { threadId, _ ->
-        threadId?.let { conversationRepository.getThread(it) }
+    combine(_currentThreadId, threads) { threadId, threadsSnapshot ->
+        threadsSnapshot.firstOrNull { it.threadId == threadId }
       }
-      .stateIn(viewModelScope, SharingStarted.WhileSubscribed(FLOW_STOP_TIMEOUT_MS), null)
+      .stateIn(viewModelScope, flowSharingStarted, null)
 
   val availablePersonas: StateFlow<List<PersonaProfile>> =
-    personaRepository
-      .observeAllPersonas()
-      .stateIn(viewModelScope, SharingStarted.WhileSubscribed(FLOW_STOP_TIMEOUT_MS), emptyList())
+    personaRepository.observeAllPersonas().stateIn(viewModelScope, flowSharingStarted, emptyList())
 
   fun selectThread(threadId: UUID) {
     _currentThreadId.value = threadId
   }
 
   fun sendMessage(text: String, personaId: UUID) {
-    val threadId = _currentThreadId.value ?: return
-    viewModelScope.launch {
+    val threadId = _currentThreadId.value
+    if (threadId == null) {
+      viewModelScope.launch(dispatcher) {
+        _errorEvents.emit(ChatError.ThreadCreationFailed("No active thread available"))
+      }
+      return
+    }
+    viewModelScope.launch(dispatcher) {
       _isLoading.value = true
       runCatching {
           val userMessage =
@@ -96,7 +111,7 @@ constructor(
 
   fun switchPersona(newPersonaId: UUID, action: PersonaSwitchAction) {
     val threadId = _currentThreadId.value ?: return
-    viewModelScope.launch {
+    viewModelScope.launch(dispatcher) {
       runCatching { sendPromptAndPersonaUseCase.switchPersona(threadId, newPersonaId, action) }
         .onSuccess { newThreadId ->
           if (action == PersonaSwitchAction.START_NEW_THREAD) {
@@ -112,7 +127,7 @@ constructor(
   }
 
   fun createNewThread(personaId: UUID?, title: String? = null) {
-    viewModelScope.launch {
+    viewModelScope.launch(dispatcher) {
       runCatching {
           conversationRepository.createNewThread(
             personaId ?: personaRepository.getDefaultPersona()?.personaId ?: UUID.randomUUID(),
@@ -129,7 +144,7 @@ constructor(
   }
 
   fun archiveThread(threadId: UUID) {
-    viewModelScope.launch {
+    viewModelScope.launch(dispatcher) {
       runCatching { conversationRepository.archiveThread(threadId) }
         .onSuccess {
           if (_currentThreadId.value == threadId) {
@@ -145,7 +160,7 @@ constructor(
   }
 
   fun deleteThread(threadId: UUID) {
-    viewModelScope.launch {
+    viewModelScope.launch(dispatcher) {
       runCatching { conversationRepository.deleteThread(threadId) }
         .onSuccess {
           if (_currentThreadId.value == threadId) {

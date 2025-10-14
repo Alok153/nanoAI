@@ -20,7 +20,7 @@ interface ModelCatalogRepository {
   suspend fun getModel(modelId: String): ModelPackage?
 
   /** Observe a specific model by ID. */
-  suspend fun getModelById(modelId: String): kotlinx.coroutines.flow.Flow<ModelPackage?>
+  fun getModelById(modelId: String): kotlinx.coroutines.flow.Flow<ModelPackage?>
 
   /** Get all installed models. */
   suspend fun getInstalledModels(): List<ModelPackage>

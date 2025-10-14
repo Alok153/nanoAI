@@ -304,42 +304,59 @@ constructor(
     val oauthError = parseOAuthError(throwable)
     val errorCode = oauthError?.error
 
-    return when (errorCode) {
-      ERROR_AUTHORIZATION_PENDING -> PollingDecision.Continue(nextIntervalSeconds = currentInterval)
-      ERROR_SLOW_DOWN ->
-        run {
-          val nextIntervalSeconds =
-            min(MAX_DEVICE_POLL_SECONDS, currentInterval + SLOW_DOWN_BACKOFF_SECONDS)
-          val countdownMessage = "Retrying in $nextIntervalSeconds seconds."
-          val message = "$SLOW_DOWN_USER_MESSAGE $countdownMessage"
-          PollingDecision.Continue(
-            nextIntervalSeconds = nextIntervalSeconds,
-            message = message,
-            announcement = message,
-          )
-        }
-      ERROR_EXPIRED ->
-        PollingDecision.Stop(
-          message = DEVICE_CODE_EXPIRED_MESSAGE,
-          announcement = DEVICE_CODE_EXPIRED_MESSAGE,
-        )
-      ERROR_ACCESS_DENIED ->
-        PollingDecision.Stop(
-          message = DEVICE_CODE_DENIED_MESSAGE,
-          announcement = DEVICE_CODE_DENIED_MESSAGE,
-        )
-      else -> {
-        if (throwable is IOException) {
-          return PollingDecision.Stop(
-            message = OFFLINE_DEVICE_MESSAGE,
-            announcement = OFFLINE_DEVICE_MESSAGE,
-          )
-        }
-        val description = oauthError?.errorDescription?.takeIf { it.isNotBlank() }
-        val message = description ?: throwable.message ?: DEVICE_CODE_GENERIC_ERROR
-        PollingDecision.Stop(message = message, announcement = message)
-      }
+    if (throwable is IOException) {
+      return offlinePollingDecision()
     }
+
+    return when (errorCode) {
+      ERROR_AUTHORIZATION_PENDING -> retryPolling(currentInterval)
+      ERROR_SLOW_DOWN -> slowDownPolling(currentInterval)
+      ERROR_EXPIRED -> expiredPollingDecision()
+      ERROR_ACCESS_DENIED -> accessDeniedPollingDecision()
+      else -> genericPollingFailure(oauthError, throwable)
+    }
+  }
+
+  private fun retryPolling(currentInterval: Int): PollingDecision =
+    PollingDecision.Continue(nextIntervalSeconds = currentInterval)
+
+  private fun slowDownPolling(currentInterval: Int): PollingDecision {
+    val nextIntervalSeconds =
+      min(MAX_DEVICE_POLL_SECONDS, currentInterval + SLOW_DOWN_BACKOFF_SECONDS)
+    val countdownMessage = "Retrying in $nextIntervalSeconds seconds."
+    val message = "$SLOW_DOWN_USER_MESSAGE $countdownMessage"
+    return PollingDecision.Continue(
+      nextIntervalSeconds = nextIntervalSeconds,
+      message = message,
+      announcement = message,
+    )
+  }
+
+  private fun expiredPollingDecision(): PollingDecision =
+    PollingDecision.Stop(
+      message = DEVICE_CODE_EXPIRED_MESSAGE,
+      announcement = DEVICE_CODE_EXPIRED_MESSAGE,
+    )
+
+  private fun accessDeniedPollingDecision(): PollingDecision =
+    PollingDecision.Stop(
+      message = DEVICE_CODE_DENIED_MESSAGE,
+      announcement = DEVICE_CODE_DENIED_MESSAGE,
+    )
+
+  private fun offlinePollingDecision(): PollingDecision =
+    PollingDecision.Stop(
+      message = OFFLINE_DEVICE_MESSAGE,
+      announcement = OFFLINE_DEVICE_MESSAGE,
+    )
+
+  private fun genericPollingFailure(
+    oauthError: HuggingFaceOAuthErrorResponse?,
+    throwable: Throwable,
+  ): PollingDecision {
+    val description = oauthError?.errorDescription?.takeIf { it.isNotBlank() }
+    val message = description ?: throwable.message ?: DEVICE_CODE_GENERIC_ERROR
+    return PollingDecision.Stop(message = message, announcement = message)
   }
 
   private fun parseOAuthError(throwable: Throwable): HuggingFaceOAuthErrorResponse? {

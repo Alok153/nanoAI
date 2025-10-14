@@ -45,9 +45,9 @@ fun NavigationScaffold(
   modifier: Modifier = Modifier,
   shellViewModel: ShellViewModel = hiltViewModel(),
   chatViewModel: ChatViewModel = hiltViewModel(),
-  onDisclaimerShown: () -> Unit = {},
-  onDisclaimerAccepted: () -> Unit = {},
-  onDisclaimerDeclined: () -> Unit = {},
+  onDisclaimerShow: () -> Unit = {},
+  onDisclaimerAccept: () -> Unit = {},
+  onDisclaimerDecline: () -> Unit = {},
 ) {
   val shellUiState by shellViewModel.uiState.collectAsStateWithLifecycle()
 
@@ -101,18 +101,18 @@ fun NavigationScaffold(
     if (shouldShowDisclaimer) {
       DisclaimerDialog(
         onAccept = {
-          onDisclaimerAccepted()
+          onDisclaimerAccept()
           disclaimerDismissedForSession = true
         },
         onDecline = {
           disclaimerDismissedForSession = true
-          onDisclaimerDeclined()
+          onDisclaimerDecline()
         },
         onDismissRequest = {
           disclaimerDismissedForSession = true
-          onDisclaimerDeclined()
+          onDisclaimerDecline()
         },
-        onDialogShown = onDisclaimerShown,
+        onDialogShow = onDisclaimerShow,
       )
     }
   }

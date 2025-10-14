@@ -64,7 +64,8 @@ interface PersonaSwitchLogDao {
   suspend fun getAll(): List<PersonaSwitchLogEntity>
 
   /**
-   * Delete all logs for a specific thread. Note: CASCADE delete should handle this automatically.
+   * Delete all logs for a specific thread. CASCADE delete normally covers this, but the query is
+   * available for manual cleanup scenarios.
    */
   @Query("DELETE FROM persona_switch_logs WHERE thread_id = :threadId")
   suspend fun deleteByThreadId(threadId: String)

@@ -22,8 +22,6 @@ The current coverage snapshot (2025-10-12) shows significant gaps from target th
 ### Coverage-Related Improvements
 - [ ] Refine layer classification map (`config/coverage/layer-map.json`) as new modules are added.
 - [ ] Add telemetry for coverage trend monitoring (already scaffolded in `CoverageTelemetryReporter`).
-- [ ] Set up automated coverage badges/dashboards for PR review visibility.
-- [ ] Schedule weekly risk register reviews to keep mitigation plans current.
 
 ## Phase 2: Resolved Flows & Test Infrastructure
 

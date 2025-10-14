@@ -10,6 +10,6 @@ class ExportDialogAccessibilityTest {
   @Ignore("Pending export dialog instrumentation refresh once backend wiring is complete.")
   @Test
   fun exportDialogPending() {
-    // TODO(003-UI-UX#T079): Reinstate accessibility assert once dialog hooks actual data.
+    // TODO: Reinstate accessibility assert once dialog hooks actual data.
   }
 }

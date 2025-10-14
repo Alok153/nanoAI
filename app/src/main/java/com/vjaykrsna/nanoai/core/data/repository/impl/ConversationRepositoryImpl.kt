@@ -11,21 +11,19 @@ import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
 
-/**
- * Implementation of ConversationRepository.
- *
- * Wraps ChatThreadDao and MessageDao, converting between entities and domain models.
- */
 @Singleton
 class ConversationRepositoryImpl
 @Inject
 constructor(
   private val chatThreadDao: ChatThreadDao,
   private val messageDao: MessageDao,
+  private val clock: Clock = Clock.System,
 ) : ConversationRepository {
+
   companion object {
     private const val DEFAULT_MODEL_ID = "local-default"
   }
@@ -60,6 +58,7 @@ constructor(
 
   override suspend fun addMessage(message: Message) {
     messageDao.insert(message.toEntity())
+    chatThreadDao.touch(message.threadId.toString(), message.createdAt)
   }
 
   override suspend fun saveMessage(message: Message) {
@@ -70,12 +69,16 @@ constructor(
     messageDao.getByThreadId(threadId.toString()).map { it.toDomain() }
 
   override fun getMessagesFlow(threadId: UUID): Flow<List<Message>> =
-    messageDao.observeByThreadId(threadId.toString()).map { messages ->
-      messages.map { it.toDomain() }
-    }
+    messageDao
+      .observeByThreadId(threadId.toString())
+      .map { messages -> messages.map { it.toDomain() } }
+      .distinctUntilChanged()
 
   override fun getAllThreadsFlow(): Flow<List<ChatThread>> =
-    chatThreadDao.observeAllActive().map { threads -> threads.map { it.toDomain() } }
+    chatThreadDao
+      .observeAllActive()
+      .map { threads -> threads.map { it.toDomain() } }
+      .distinctUntilChanged()
 
   override suspend fun getCurrentPersonaForThread(threadId: UUID): UUID? {
     val entity = chatThreadDao.getById(threadId.toString()) ?: return null
@@ -83,7 +86,7 @@ constructor(
   }
 
   override suspend fun createNewThread(personaId: UUID, title: String?): UUID {
-    val now = Clock.System.now()
+    val now = clock.now()
     val threadId = UUID.randomUUID()
     val thread =
       ChatThread(
@@ -103,7 +106,7 @@ constructor(
     chatThreadDao.updatePersona(
       threadId = threadId.toString(),
       personaId = personaId?.toString(),
-      updatedAt = Clock.System.now(),
+      updatedAt = clock.now(),
     )
   }
 }

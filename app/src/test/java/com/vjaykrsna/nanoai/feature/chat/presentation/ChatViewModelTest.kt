@@ -1,0 +1,421 @@
+@file:Suppress("LargeClass")
+
+package com.vjaykrsna.nanoai.feature.chat.presentation
+
+import app.cash.turbine.test
+import com.google.common.truth.Truth.assertThat
+import com.vjaykrsna.nanoai.core.model.PersonaSwitchAction
+import com.vjaykrsna.nanoai.feature.chat.domain.SendPromptAndPersonaUseCase
+import com.vjaykrsna.nanoai.testing.DomainTestBuilders
+import com.vjaykrsna.nanoai.testing.FakeConversationRepository
+import com.vjaykrsna.nanoai.testing.FakePersonaRepository
+import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.mockk
+import java.util.UUID
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
+
+/**
+ * Unit tests for [ChatViewModel].
+ *
+ * Covers thread selection, message sending, persona switching, thread creation, archiving, and
+ * deletion flows.
+ */
+class ChatViewModelTest {
+
+  @JvmField @RegisterExtension val mainDispatcherExtension = MainDispatcherExtension()
+
+  private lateinit var conversationRepository: FakeConversationRepository
+  private lateinit var personaRepository: FakePersonaRepository
+  private lateinit var sendPromptUseCase: SendPromptAndPersonaUseCase
+  private lateinit var viewModel: ChatViewModel
+
+  @BeforeEach
+  fun setup() {
+    conversationRepository = FakeConversationRepository()
+    personaRepository = FakePersonaRepository()
+    sendPromptUseCase = mockk(relaxed = true)
+
+    // Setup default behaviors
+    coEvery { sendPromptUseCase.sendPrompt(any(), any(), any()) } returns Result.success(Unit)
+    coEvery { sendPromptUseCase.switchPersona(any(), any(), any()) } returns UUID.randomUUID()
+
+    viewModel =
+      ChatViewModel(
+        sendPromptUseCase,
+        conversationRepository,
+        personaRepository,
+        dispatcher = mainDispatcherExtension.dispatcher,
+      )
+  }
+
+  @Test
+  fun `selectThread updates currentThreadId`() = runTest {
+    val threadId = UUID.randomUUID()
+
+    viewModel.selectThread(threadId)
+    advanceUntilIdle()
+
+    assertThat(viewModel.currentThreadId.value).isEqualTo(threadId)
+  }
+
+  @Test
+  fun `selectThread loads messages for selected thread`() = runTest {
+    val threadId = UUID.randomUUID()
+    val personaId = UUID.randomUUID()
+    val thread = DomainTestBuilders.buildChatThread(threadId = threadId, personaId = personaId)
+    val message1 = DomainTestBuilders.buildUserMessage(threadId = threadId, text = "Hello")
+    val message2 = DomainTestBuilders.buildAssistantMessage(threadId = threadId, text = "Hi there")
+
+    conversationRepository.addThread(thread)
+    conversationRepository.addMessage(threadId, message1)
+    conversationRepository.addMessage(threadId, message2)
+
+    viewModel.selectThread(threadId)
+    advanceUntilIdle()
+
+    viewModel.messages.test {
+      val messages = awaitItem()
+      assertThat(messages).hasSize(2)
+      assertThat(messages.map { it.text }).containsExactly("Hello", "Hi there").inOrder()
+    }
+  }
+
+  @Test
+  fun `sendMessage with no active thread does not send`() = runTest {
+    val personaId = UUID.randomUUID()
+
+    viewModel.errorEvents.test {
+      viewModel.sendMessage("Test message", personaId)
+      advanceUntilIdle()
+
+      val error = awaitItem()
+      assertThat(error).isInstanceOf(ChatError.ThreadCreationFailed::class.java)
+      cancelAndIgnoreRemainingEvents()
+    }
+
+    coVerify(exactly = 0) { sendPromptUseCase.sendPrompt(any(), any(), any()) }
+    assertThat(viewModel.isLoading.value).isFalse()
+  }
+
+  @Test
+  fun `sendMessage saves user message and calls use case`() = runTest {
+    val threadId = UUID.randomUUID()
+    val personaId = UUID.randomUUID()
+    val thread = DomainTestBuilders.buildChatThread(threadId = threadId, personaId = personaId)
+    conversationRepository.addThread(thread)
+
+    viewModel.selectThread(threadId)
+    advanceUntilIdle()
+
+    viewModel.sendMessage("Test prompt", personaId)
+    advanceUntilIdle()
+
+    // Verify user message was saved
+    val messages = conversationRepository.getMessages(threadId)
+    assertThat(messages).hasSize(1)
+    assertThat(messages.first().text).isEqualTo("Test prompt")
+
+    // Verify use case was called
+    coVerify { sendPromptUseCase.sendPrompt(threadId, "Test prompt", personaId) }
+  }
+
+  @Test
+  fun `sendMessage shows loading state during operation`() = runTest {
+    val threadId = UUID.randomUUID()
+    val personaId = UUID.randomUUID()
+    val thread = DomainTestBuilders.buildChatThread(threadId = threadId, personaId = personaId)
+    conversationRepository.addThread(thread)
+
+    viewModel.selectThread(threadId)
+    advanceUntilIdle()
+
+    viewModel.isLoading.test {
+      assertThat(awaitItem()).isFalse()
+
+      viewModel.sendMessage("Test", personaId)
+      assertThat(awaitItem()).isTrue()
+
+      advanceUntilIdle()
+      assertThat(awaitItem()).isFalse()
+    }
+  }
+
+  @Test
+  fun `sendMessage emits error when use case fails`() = runTest {
+    val threadId = UUID.randomUUID()
+    val personaId = UUID.randomUUID()
+    val thread = DomainTestBuilders.buildChatThread(threadId = threadId, personaId = personaId)
+    conversationRepository.addThread(thread)
+    coEvery { sendPromptUseCase.sendPrompt(any(), any(), any()) } returns
+      Result.failure(Exception("Failed"))
+
+    viewModel.selectThread(threadId)
+    advanceUntilIdle()
+
+    viewModel.errorEvents.test {
+      viewModel.sendMessage("Test", personaId)
+      advanceUntilIdle()
+
+      val error = awaitItem()
+      assertThat(error).isInstanceOf(ChatError.InferenceFailed::class.java)
+    }
+  }
+
+  @Test
+  fun `sendMessage emits error when repository fails`() = runTest {
+    val threadId = UUID.randomUUID()
+    val personaId = UUID.randomUUID()
+    val thread = DomainTestBuilders.buildChatThread(threadId = threadId, personaId = personaId)
+    conversationRepository.addThread(thread)
+    conversationRepository.shouldFailOnSaveMessage = true
+
+    viewModel.selectThread(threadId)
+    advanceUntilIdle()
+
+    viewModel.errorEvents.test {
+      viewModel.sendMessage("Test", personaId)
+      advanceUntilIdle()
+
+      val error = awaitItem()
+      assertThat(error).isInstanceOf(ChatError.UnexpectedError::class.java)
+    }
+  }
+
+  @Test
+  fun `switchPersona with START_NEW_THREAD action updates current thread`() = runTest {
+    val threadId = UUID.randomUUID()
+    val oldPersonaId = UUID.randomUUID()
+    val newPersonaId = UUID.randomUUID()
+    val newThreadId = UUID.randomUUID()
+    val thread = DomainTestBuilders.buildChatThread(threadId = threadId, personaId = oldPersonaId)
+    conversationRepository.addThread(thread)
+
+    // Mock the use case to return a new thread ID
+    coEvery { sendPromptUseCase.switchPersona(any(), any(), any()) } returns newThreadId
+
+    viewModel.selectThread(threadId)
+    advanceUntilIdle()
+
+    viewModel.switchPersona(newPersonaId, PersonaSwitchAction.START_NEW_THREAD)
+    advanceUntilIdle()
+
+    coVerify {
+      sendPromptUseCase.switchPersona(any(), newPersonaId, PersonaSwitchAction.START_NEW_THREAD)
+    }
+  }
+
+  @Test
+  fun `switchPersona with CONTINUE_THREAD action does not change thread`() = runTest {
+    val threadId = UUID.randomUUID()
+    val oldPersonaId = UUID.randomUUID()
+    val newPersonaId = UUID.randomUUID()
+    val thread = DomainTestBuilders.buildChatThread(threadId = threadId, personaId = oldPersonaId)
+    conversationRepository.addThread(thread)
+
+    viewModel.selectThread(threadId)
+    advanceUntilIdle()
+
+    viewModel.switchPersona(newPersonaId, PersonaSwitchAction.CONTINUE_THREAD)
+    advanceUntilIdle()
+
+    assertThat(viewModel.currentThreadId.value).isEqualTo(threadId)
+    coVerify {
+      sendPromptUseCase.switchPersona(any(), newPersonaId, PersonaSwitchAction.CONTINUE_THREAD)
+    }
+  }
+
+  @Test
+  fun `switchPersona emits error on failure`() = runTest {
+    val threadId = UUID.randomUUID()
+    val personaId = UUID.randomUUID()
+    val newPersonaId = UUID.randomUUID()
+    val thread = DomainTestBuilders.buildChatThread(threadId = threadId, personaId = personaId)
+    conversationRepository.addThread(thread)
+    coEvery { sendPromptUseCase.switchPersona(any(), any(), any()) } throws
+      IllegalStateException("Switch failed")
+
+    viewModel.selectThread(threadId)
+    advanceUntilIdle()
+
+    viewModel.errorEvents.test {
+      viewModel.switchPersona(newPersonaId, PersonaSwitchAction.START_NEW_THREAD)
+      advanceUntilIdle()
+
+      val error = awaitItem()
+      assertThat(error).isInstanceOf(ChatError.PersonaSwitchFailed::class.java)
+    }
+  }
+
+  @Test
+  fun `createNewThread creates thread and sets as current`() = runTest {
+    val personaId = UUID.randomUUID()
+    val persona = DomainTestBuilders.buildPersona(personaId = personaId)
+    personaRepository.setPersonas(listOf(persona))
+
+    viewModel.createNewThread(personaId, "Test Thread")
+    advanceUntilIdle()
+
+    assertThat(viewModel.currentThreadId.value).isNotNull()
+    val threads = conversationRepository.getAllThreads()
+    assertThat(threads).hasSize(1)
+    assertThat(threads.first().title).isEqualTo("Test Thread")
+  }
+
+  @Test
+  fun `createNewThread uses default persona when none provided`() = runTest {
+    val defaultPersona = DomainTestBuilders.buildPersona(name = "Default")
+    personaRepository.setPersonas(listOf(defaultPersona))
+
+    viewModel.createNewThread(null)
+    advanceUntilIdle()
+
+    val threads = conversationRepository.getAllThreads()
+    assertThat(threads).hasSize(1)
+    assertThat(threads.first().personaId).isEqualTo(defaultPersona.personaId)
+  }
+
+  @Test
+  fun `createNewThread emits error on failure`() = runTest {
+    conversationRepository.shouldFailOnCreateThread = true
+
+    viewModel.errorEvents.test {
+      viewModel.createNewThread(UUID.randomUUID())
+      advanceUntilIdle()
+
+      val error = awaitItem()
+      assertThat(error).isInstanceOf(ChatError.ThreadCreationFailed::class.java)
+    }
+  }
+
+  @Test
+  fun `archiveThread archives the thread successfully`() = runTest {
+    val threadId = UUID.randomUUID()
+    val thread = DomainTestBuilders.buildChatThread(threadId = threadId, isArchived = false)
+    conversationRepository.addThread(thread)
+
+    viewModel.archiveThread(threadId)
+    advanceUntilIdle()
+
+    val archivedThreads = conversationRepository.getArchivedThreads()
+    assertThat(archivedThreads).hasSize(1)
+    assertThat(archivedThreads.first().threadId).isEqualTo(threadId)
+    assertThat(archivedThreads.first().isArchived).isTrue()
+  }
+
+  @Test
+  fun `archiveThread clears current thread if it matches archived thread`() = runTest {
+    val threadId = UUID.randomUUID()
+    val thread = DomainTestBuilders.buildChatThread(threadId = threadId)
+    conversationRepository.addThread(thread)
+
+    viewModel.selectThread(threadId)
+    advanceUntilIdle()
+
+    viewModel.archiveThread(threadId)
+    advanceUntilIdle()
+
+    assertThat(viewModel.currentThreadId.value).isNull()
+  }
+
+  // FIXME: Consider adding tests for edge cases where multiple threads are archived simultaneously
+  @Test
+  fun `archiveThread emits error on failure`() = runTest {
+    val threadId = UUID.randomUUID()
+    conversationRepository.shouldFailOnArchiveThread = true
+
+    viewModel.errorEvents.test {
+      viewModel.archiveThread(threadId)
+      advanceUntilIdle()
+
+      val error = awaitItem()
+      assertThat(error).isInstanceOf(ChatError.ThreadArchiveFailed::class.java)
+    }
+  }
+
+  @Test
+  fun `deleteThread removes the thread successfully`() = runTest {
+    val threadId = UUID.randomUUID()
+    val thread = DomainTestBuilders.buildChatThread(threadId = threadId)
+    conversationRepository.addThread(thread)
+
+    viewModel.deleteThread(threadId)
+    advanceUntilIdle()
+
+    val threads = conversationRepository.getAllThreads()
+    assertThat(threads).isEmpty()
+  }
+
+  @Test
+  fun `deleteThread clears current thread if it matches deleted thread`() = runTest {
+    val threadId = UUID.randomUUID()
+    val thread = DomainTestBuilders.buildChatThread(threadId = threadId)
+    conversationRepository.addThread(thread)
+
+    viewModel.selectThread(threadId)
+    advanceUntilIdle()
+
+    viewModel.deleteThread(threadId)
+    advanceUntilIdle()
+
+    assertThat(viewModel.currentThreadId.value).isNull()
+  }
+
+  // FIXME: Consider adding tests for edge cases where multiple threads are deleted simultaneously
+  @Test
+  fun `deleteThread emits error on failure`() = runTest {
+    val threadId = UUID.randomUUID()
+    conversationRepository.shouldFailOnDeleteThread = true
+
+    viewModel.errorEvents.test {
+      viewModel.deleteThread(threadId)
+      advanceUntilIdle()
+
+      val error = awaitItem()
+      assertThat(error).isInstanceOf(ChatError.ThreadDeletionFailed::class.java)
+    }
+  }
+
+  @Test
+  fun `availablePersonas exposes persona list from repository`() = runTest {
+    val persona1 = DomainTestBuilders.buildPersona(name = "Persona 1")
+    val persona2 = DomainTestBuilders.buildPersona(name = "Persona 2")
+    personaRepository.setPersonas(listOf(persona1, persona2))
+
+    advanceUntilIdle()
+
+    viewModel.availablePersonas.test {
+      val personas = awaitItem()
+      assertThat(personas).hasSize(2)
+      assertThat(personas.map { it.name }).containsExactly("Persona 1", "Persona 2")
+    }
+  }
+
+  @Test
+  fun `currentThread exposes selected thread details`() = runTest {
+    val threadId = UUID.randomUUID()
+    val personaId = UUID.randomUUID()
+    val thread =
+      DomainTestBuilders.buildChatThread(
+        threadId = threadId,
+        personaId = personaId,
+        title = "Test Thread"
+      )
+    conversationRepository.addThread(thread)
+
+    viewModel.selectThread(threadId)
+    advanceUntilIdle()
+
+    viewModel.currentThread.test {
+      val currentThread = awaitItem()
+      assertThat(currentThread).isNotNull()
+      assertThat(currentThread?.threadId).isEqualTo(threadId)
+      assertThat(currentThread?.title).isEqualTo("Test Thread")
+    }
+  }
+}

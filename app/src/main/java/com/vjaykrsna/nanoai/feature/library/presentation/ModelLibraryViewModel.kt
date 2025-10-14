@@ -1,3 +1,5 @@
+@file:Suppress("LargeClass")
+
 package com.vjaykrsna.nanoai.feature.library.presentation
 
 import androidx.lifecycle.ViewModel
@@ -5,7 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
-import com.vjaykrsna.nanoai.feature.library.domain.ModelDownloadsAndExportUseCase
+import com.vjaykrsna.nanoai.feature.library.domain.ModelDownloadsAndExportUseCaseInterface
 import com.vjaykrsna.nanoai.feature.library.domain.RefreshModelCatalogUseCase
 import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
@@ -13,7 +15,9 @@ import com.vjaykrsna.nanoai.feature.library.model.ProviderType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.Locale
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -34,11 +38,12 @@ private const val FLOW_STOP_TIMEOUT_MS = 5_000L
 class ModelLibraryViewModel
 @Inject
 constructor(
-  private val modelDownloadsAndExportUseCase: ModelDownloadsAndExportUseCase,
+  private val modelDownloadsAndExportUseCase: ModelDownloadsAndExportUseCaseInterface,
   private val modelCatalogRepository: ModelCatalogRepository,
   private val refreshModelCatalogUseCase: RefreshModelCatalogUseCase,
 ) : ViewModel() {
   private val downloadObservers = mutableMapOf<UUID, Job>()
+  private val activeLoadingOperations = AtomicInteger(0)
   private val _isLoading = MutableStateFlow(false)
   val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
@@ -127,23 +132,30 @@ constructor(
   }
 
   fun refreshCatalog() {
+    if (_isRefreshing.value) return
+
+    val shouldShowInitialLoading = allModels.value.isEmpty()
+    val startedLoading =
+      if (shouldShowInitialLoading) {
+        startLoadingOperation()
+        true
+      } else {
+        false
+      }
+
+    _isRefreshing.value = true
+
     viewModelScope.launch {
-      if (_isRefreshing.value) return@launch
-      val shouldToggleLoading = allModels.value.isEmpty() && !_isLoading.value
-      if (shouldToggleLoading) {
-        _isLoading.value = true
-      }
-      _isRefreshing.value = true
-      refreshModelCatalogUseCase().onFailure { error ->
-        _errorEvents.emit(
-          LibraryError.UnexpectedError(
-            error.message ?: "Failed to refresh model catalog",
-          ),
-        )
-      }
-      _isRefreshing.value = false
-      if (shouldToggleLoading) {
-        _isLoading.value = false
+      try {
+        val result =
+          runCatching { refreshModelCatalogUseCase() }.getOrElse { error -> Result.failure(error) }
+
+        result.onFailure { error -> handleRefreshFailure(error) }
+      } finally {
+        _isRefreshing.value = false
+        if (startedLoading) {
+          stopLoadingOperation()
+        }
       }
     }
   }
@@ -175,22 +187,27 @@ constructor(
   }
 
   fun downloadModel(modelId: String) {
+    startLoadingOperation()
+
     viewModelScope.launch {
-      _isLoading.value = true
-      runCatching { modelDownloadsAndExportUseCase.downloadModel(modelId) }
-        .onSuccess { result ->
-          result
-            .onSuccess { taskId -> monitorDownloadTask(taskId, modelId) }
-            .onFailure { error ->
-              _errorEvents.emit(
-                LibraryError.DownloadFailed(modelId, error.message ?: "Unknown error"),
-              )
-            }
-        }
-        .onFailure { error ->
-          _errorEvents.emit(LibraryError.UnexpectedError(error.message ?: "Unexpected error"))
-        }
-      _isLoading.value = false
+      try {
+        val result = modelDownloadsAndExportUseCase.downloadModel(modelId)
+        result
+          .onSuccess { taskId -> monitorDownloadTask(taskId, modelId) }
+          .onFailure { error ->
+            _errorEvents.emit(
+              LibraryError.DownloadFailed(modelId, error.message ?: "Unknown error"),
+            )
+          }
+      } catch (cancellation: CancellationException) {
+        throw cancellation
+      } catch (error: Throwable) {
+        _errorEvents.emit(
+          LibraryError.UnexpectedError(error.message ?: "Unexpected error"),
+        )
+      } finally {
+        stopLoadingOperation()
+      }
     }
   }
 
@@ -239,20 +256,25 @@ constructor(
   }
 
   fun deleteModel(modelId: String) {
+    startLoadingOperation()
+
     viewModelScope.launch {
-      _isLoading.value = true
-      runCatching { modelDownloadsAndExportUseCase.deleteModel(modelId) }
-        .onSuccess { result ->
-          result.onFailure { error ->
-            _errorEvents.emit(
-              LibraryError.DeleteFailed(modelId, error.message ?: "Unknown error"),
-            )
-          }
+      try {
+        val result = modelDownloadsAndExportUseCase.deleteModel(modelId)
+        result.onFailure { error ->
+          _errorEvents.emit(
+            LibraryError.DeleteFailed(modelId, error.message ?: "Unknown error"),
+          )
         }
-        .onFailure { error ->
-          _errorEvents.emit(LibraryError.UnexpectedError(error.message ?: "Unexpected error"))
-        }
-      _isLoading.value = false
+      } catch (cancellation: CancellationException) {
+        throw cancellation
+      } catch (error: Throwable) {
+        _errorEvents.emit(
+          LibraryError.UnexpectedError(error.message ?: "Unexpected error"),
+        )
+      } finally {
+        stopLoadingOperation()
+      }
     }
   }
 
@@ -282,6 +304,46 @@ constructor(
       }
     downloadObservers[taskId] = job
     job.invokeOnCompletion { downloadObservers.remove(taskId) }
+  }
+
+  override fun onCleared() {
+    super.onCleared()
+    downloadObservers.values.forEach { observer -> observer.cancel() }
+    downloadObservers.clear()
+  }
+
+  private suspend fun handleRefreshFailure(error: Throwable) {
+    if (error is CancellationException) throw error
+
+    val rawMessage = error.message?.takeIf { it.isNotBlank() }
+    val userMessage = buildString {
+      append("Failed to refresh model catalog")
+      rawMessage?.let { append(": ").append(it) }
+    }
+
+    _errorEvents.emit(LibraryError.UnexpectedError(userMessage))
+
+    val cachedCount = runCatching { modelCatalogRepository.getAllModels().size }.getOrDefault(0)
+    modelCatalogRepository.recordOfflineFallback(
+      reason = error::class.simpleName ?: "UnknownError",
+      cachedCount = cachedCount,
+      message = rawMessage,
+    )
+  }
+
+  private fun startLoadingOperation() {
+    val newCount = activeLoadingOperations.incrementAndGet()
+    if (newCount == 1) {
+      _isLoading.value = true
+    }
+  }
+
+  private fun stopLoadingOperation() {
+    val remaining =
+      activeLoadingOperations.updateAndGet { current -> (current - 1).coerceAtLeast(0) }
+    if (remaining == 0) {
+      _isLoading.value = false
+    }
   }
 
   private fun List<ModelPackage>.filterBy(filters: LibraryFilterState): List<ModelPackage> {

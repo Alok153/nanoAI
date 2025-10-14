@@ -6,8 +6,8 @@ import org.junit.Test
 /**
  * Contract test for GET /catalog/models/{modelId}/manifest response body.
  *
- * TDD note: this test intentionally fails until the manifest contract guarantees signed checksums,
- * HTTPS download URLs, and a populated signature field.
+ * This test intentionally fails until the manifest contract guarantees signed checksums, HTTPS
+ * download URLs, and a populated signature field.
  */
 class ModelManifestContractTest {
   private val sampleManifestResponse =

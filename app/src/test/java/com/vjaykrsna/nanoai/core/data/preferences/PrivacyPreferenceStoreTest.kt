@@ -118,4 +118,60 @@ class PrivacyPreferenceStoreTest {
     assertThat(exposure.acknowledgedAt).isNull()
     assertThat(exposure.shownCount).isEqualTo(0)
   }
+
+  @Test
+  fun `setTelemetryOptIn persists opt-in preference`() = runTest {
+    store.reset()
+    advanceUntilIdle()
+
+    store.setTelemetryOptIn(true)
+    advanceUntilIdle()
+
+    assertThat(store.privacyPreference.first().telemetryOptIn).isTrue()
+
+    store.setTelemetryOptIn(false)
+    advanceUntilIdle()
+
+    assertThat(store.privacyPreference.first().telemetryOptIn).isFalse()
+  }
+
+  @Test
+  fun `setRetentionPolicy saves and restores selection`() = runTest {
+    store.reset()
+    advanceUntilIdle()
+
+    store.setRetentionPolicy(RetentionPolicy.MANUAL_PURGE_ONLY)
+    advanceUntilIdle()
+
+    assertThat(store.privacyPreference.first().retentionPolicy)
+      .isEqualTo(RetentionPolicy.MANUAL_PURGE_ONLY)
+
+    store.setRetentionPolicy(RetentionPolicy.INDEFINITE)
+    advanceUntilIdle()
+
+    assertThat(store.privacyPreference.first().retentionPolicy)
+      .isEqualTo(RetentionPolicy.INDEFINITE)
+  }
+
+  @Test
+  fun `acknowledgeConsent updates flows with latest timestamp`() = runTest {
+    store.reset()
+    advanceUntilIdle()
+
+    val initial = Instant.fromEpochMilliseconds(1_700_500_000_000)
+    val latest = Instant.fromEpochMilliseconds(1_700_600_000_000)
+
+    store.acknowledgeConsent(initial)
+    advanceUntilIdle()
+    store.acknowledgeConsent(latest)
+    advanceUntilIdle()
+
+    val preference = store.privacyPreference.first()
+    val exposure = store.disclaimerExposure.first()
+
+    assertThat(preference.consentAcknowledgedAt).isEqualTo(latest)
+    assertThat(exposure.acknowledgedAt).isEqualTo(latest)
+    assertThat(exposure.shouldShowDialog).isFalse()
+    assertThat(exposure.acknowledged).isTrue()
+  }
 }

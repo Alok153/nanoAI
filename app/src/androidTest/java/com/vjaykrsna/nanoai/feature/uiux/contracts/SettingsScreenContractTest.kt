@@ -71,6 +71,7 @@ class SettingsScreenContractTest {
       onHuggingFaceLoginClick = {},
       onHuggingFaceApiKeyClick = {},
       onHuggingFaceDisconnectClick = {},
+      onStatusMessageShow = {},
     )
 
   @Test

@@ -6,8 +6,8 @@ import org.junit.Test
 /**
  * Contract tests for POST /catalog/models/{modelId}/verify responses.
  *
- * TDD note: these tests are written before the verification endpoint exists and intentionally fail
- * until the contract guarantees retry backoff metadata and integrity failure envelopes.
+ * These tests were written before the verification endpoint exists and intentionally fail until the
+ * contract guarantees retry backoff metadata and integrity failure envelopes.
  */
 class ModelVerificationContractTest {
   private val retryResponse =

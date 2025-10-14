@@ -142,6 +142,41 @@ class RiskRegisterCoordinatorTest {
   }
 
   @Test
+  fun `requiresAttention skips mitigated risks with release style target builds`() {
+    val risks =
+      listOf(
+        RiskRegisterItem(
+          riskId = "RR-HIGH-027",
+          layer = TestLayer.UI,
+          description = "Risk register coordinator escalates mitigated items",
+          severity = RiskRegisterItem.Severity.HIGH,
+          targetBuild = "r2025.43",
+          status = RiskRegisterItem.Status.IN_PROGRESS,
+          mitigation = "Suite coverage-dashboard",
+        ),
+      )
+
+    val catalog =
+      listOf(
+        TestSuiteCatalogEntry(
+          suiteId = "suite-risk-register",
+          owner = "quality-engineering",
+          layer = TestLayer.UI,
+          journey = "Risk register coverage",
+          coverageContribution = 1.2,
+          riskTags = setOf("RR_HIGH_027"),
+        ),
+      )
+
+    val coordinator = RiskRegisterCoordinator(risks, catalog)
+
+    val now = Instant.parse("2025-10-18T00:00:00Z")
+
+    assertThat(coordinator.mitigationsFor("RR-HIGH-027")).isNotEmpty()
+    assertThat(coordinator.requiresAttention(now)).isFalse()
+  }
+
+  @Test
   fun `mitigationsFor matches tags regardless of case and whitespace`() {
     val risks =
       listOf(

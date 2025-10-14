@@ -81,6 +81,7 @@ object VerifyCoverageThresholdsTask {
     val jsonOutput: Path?,
   ) {
     companion object {
+      @Suppress("CyclomaticComplexMethod")
       fun parse(arguments: Array<String>): Arguments {
         var reportXml: Path? = null
         var layerMap: Path? = null
@@ -311,28 +312,14 @@ object VerifyCoverageThresholdsTask {
     fun parse(reportXml: Path, buildIdOverride: String?): ParseResult {
       val document = parseDocument(reportXml)
       val totals = initialiseTotals()
-      val unmapped = mutableListOf<String>()
-
-      processClassNodes(document, totals, unmapped)
+      val unmapped = processClassNodes(document, totals)
 
       val metrics = buildMetrics(totals)
 
-      val trendDelta = metrics.mapValues { (_, metric) -> metric.deltaFromThreshold }
-      val timestamp = Instant.ofEpochMilli(Files.getLastModifiedTime(reportXml).toMillis())
-      val buildId = buildIdOverride ?: reportXml.nameWithoutExtension
+      val trendDelta = computeTrendDelta(metrics)
+      val summary = buildSummary(metrics, trendDelta, reportXml, buildIdOverride)
 
-      return ParseResult(
-        summary =
-          CoverageSummary(
-            buildId = buildId,
-            timestamp = timestamp,
-            layerMetrics = metrics,
-            thresholds = thresholds,
-            trendDelta = trendDelta,
-            riskItems = emptyList(),
-          ),
-        unmappedClasses = unmapped,
-      )
+      return ParseResult(summary = summary, unmappedClasses = unmapped)
     }
 
     private fun parseDocument(reportXml: Path) =
@@ -348,8 +335,8 @@ object VerifyCoverageThresholdsTask {
     private fun processClassNodes(
       document: org.w3c.dom.Document,
       totals: MutableMap<TestLayer, LayerCoverageTotals>,
-      unmapped: MutableList<String>,
-    ) {
+    ): List<String> {
+      val unmapped = mutableListOf<String>()
       val classNodes = document.getElementsByTagName("class")
       for (index in 0 until classNodes.length) {
         val node = classNodes.item(index)
@@ -357,6 +344,7 @@ object VerifyCoverageThresholdsTask {
           updateTotalsForClass(node, totals, unmapped)
         }
       }
+      return unmapped
     }
 
     private fun updateTotalsForClass(
@@ -407,6 +395,27 @@ object VerifyCoverageThresholdsTask {
       }
       return totals.covered.toDouble() / totals.total.toDouble() * PERCENT_SCALE
     }
+
+    private fun computeTrendDelta(metrics: Map<TestLayer, CoverageMetric>): Map<TestLayer, Double> =
+      metrics.mapValues { (_, metric) -> metric.deltaFromThreshold }
+
+    private fun buildSummary(
+      metrics: LinkedHashMap<TestLayer, CoverageMetric>,
+      trendDelta: Map<TestLayer, Double>,
+      reportXml: Path,
+      buildIdOverride: String?,
+    ): CoverageSummary {
+      val timestamp = Instant.ofEpochMilli(Files.getLastModifiedTime(reportXml).toMillis())
+      val buildId = buildIdOverride ?: reportXml.nameWithoutExtension
+      return CoverageSummary(
+        buildId = buildId,
+        timestamp = timestamp,
+        layerMetrics = metrics,
+        thresholds = thresholds,
+        trendDelta = trendDelta,
+        riskItems = emptyList(),
+      )
+    }
   }
 
   private data class LayerCoverageTotals(var covered: Long = 0, var total: Long = 0)
@@ -421,19 +430,44 @@ object VerifyCoverageThresholdsTask {
       violation: CoverageThresholdVerifier.ThresholdViolation?,
       unmappedClasses: List<String>,
       trend: List<CoverageTrendPoint>,
-    ): String {
-      val builder = StringBuilder()
-      builder.appendLine("# Coverage Thresholds")
-      builder.appendLine()
-      builder.appendLine("- Build: `${summary.buildId}`")
-      builder.appendLine("- Generated: `${timestampFormatter.format(summary.timestamp)}`")
-      builder.appendLine()
-      builder.appendLine("| Layer | Coverage | Threshold | Delta | Status |")
-      builder.appendLine("| --- | ---: | ---: | ---: | --- |")
+    ): String = buildString {
+      appendHeader(summary)
+      appendCoverageTable(summary)
+      appendLine()
+      appendStatusBreakdown(summary)
+      appendLine()
+      appendThresholdMessage(violation)
+      appendLine()
+      appendTrendSection(summary, trend)
+      appendLine()
+      appendRiskSection(summary)
+      appendUnmappedSection(unmappedClasses)
+    }
+
+    private fun formatPercentage(value: Double): String = String.format(Locale.US, "%.2f%%", value)
+
+    private fun formatDelta(delta: Double): String {
+      return when {
+        delta > 0.0 -> String.format(Locale.US, POSITIVE_DELTA_PATTERN, delta)
+        delta < 0.0 -> String.format(Locale.US, NEGATIVE_DELTA_PATTERN, delta.absoluteValue)
+        else -> ZERO_DELTA_LABEL
+      }
+    }
+
+    private fun StringBuilder.appendHeader(summary: CoverageSummary) {
+      appendLine("# Coverage Thresholds")
+      appendLine()
+      appendLine("- Build: `${summary.buildId}`")
+      appendLine("- Generated: `${timestampFormatter.format(summary.timestamp)}`")
+      appendLine()
+    }
+
+    private fun StringBuilder.appendCoverageTable(summary: CoverageSummary) {
+      appendLine("| Layer | Coverage | Threshold | Delta | Status |")
+      appendLine("| --- | ---: | ---: | ---: | --- |")
       TestLayer.entries.forEach { layer ->
         val metric = summary.metricFor(layer)
-        builder
-          .append("| ")
+        append("| ")
           .append(layer.displayName)
           .append(" | ")
           .append(formatPercentage(metric.coverage))
@@ -445,66 +479,68 @@ object VerifyCoverageThresholdsTask {
           .append(metric.status.name)
           .appendLine(" |")
       }
-      builder.appendLine()
+    }
+
+    private fun StringBuilder.appendStatusBreakdown(summary: CoverageSummary) {
       val breakdown = summary.statusBreakdown()
-      builder.appendLine(
+      appendLine(
         "Status breakdown: " +
-          CoverageMetric.Status.entries.joinToString(
-            separator = ", ",
-          ) { status ->
+          CoverageMetric.Status.entries.joinToString(separator = ", ") { status ->
             "${status.name}=${breakdown[status] ?: 0}"
           },
       )
-      builder.appendLine()
+    }
+
+    private fun StringBuilder.appendThresholdMessage(
+      violation: CoverageThresholdVerifier.ThresholdViolation?,
+    ) {
       if (violation == null) {
-        builder.appendLine("> ✅ Coverage thresholds satisfied.")
+        appendLine("> ✅ Coverage thresholds satisfied.")
       } else {
-        builder.appendLine(
+        appendLine(
           "> ❌ Coverage below threshold for: " + violation.layers.joinToString { it.displayName },
         )
       }
-      builder.appendLine()
-      builder.appendLine("## Trend Snapshot")
-      if (trend.isEmpty()) {
-        builder.appendLine("_No historical trend data captured yet._")
-      } else {
-        TestLayer.entries.forEach { layer ->
-          val latest = trend.lastOrNull { it.layer == layer }
-          if (latest == null) {
-            builder.appendLine("- ${layer.displayName}: no recorded history")
-          } else {
-            val delta = summary.trendDeltaFor(layer)
-            builder.appendLine(
-              "- ${layer.displayName}: ${formatPercentage(latest.coverage)} (${formatDelta(delta)})",
-            )
-          }
-        }
-      }
-      builder.appendLine()
-      builder.appendLine("## Risk Register")
-      if (summary.riskItems.isEmpty()) {
-        builder.appendLine("_No linked risk register items for this build._")
-      } else {
-        summary.riskItems.forEach { ref -> builder.appendLine("- `${ref.riskId}`") }
-      }
-      if (unmappedClasses.isNotEmpty()) {
-        builder.appendLine()
-        builder.appendLine("_Unmapped classes (${unmappedClasses.size}):_")
-        unmappedClasses.take(MAX_UNMAPPED_SAMPLE).forEach { builder.appendLine("- $it") }
-        if (unmappedClasses.size > MAX_UNMAPPED_SAMPLE) {
-          builder.appendLine("- …")
-        }
-      }
-      return builder.toString()
     }
 
-    private fun formatPercentage(value: Double): String = String.format(Locale.US, "%.2f%%", value)
+    private fun StringBuilder.appendTrendSection(
+      summary: CoverageSummary,
+      trend: List<CoverageTrendPoint>,
+    ) {
+      appendLine("## Trend Snapshot")
+      if (trend.isEmpty()) {
+        appendLine("_No historical trend data captured yet._")
+        return
+      }
+      TestLayer.entries.forEach { layer ->
+        val latest = trend.lastOrNull { it.layer == layer }
+        if (latest == null) {
+          appendLine("- ${layer.displayName}: no recorded history")
+        } else {
+          val delta = summary.trendDeltaFor(layer)
+          appendLine(
+            "- ${layer.displayName}: ${formatPercentage(latest.coverage)} (${formatDelta(delta)})",
+          )
+        }
+      }
+    }
 
-    private fun formatDelta(delta: Double): String {
-      return when {
-        delta > 0.0 -> String.format(Locale.US, POSITIVE_DELTA_PATTERN, delta)
-        delta < 0.0 -> String.format(Locale.US, NEGATIVE_DELTA_PATTERN, delta.absoluteValue)
-        else -> ZERO_DELTA_LABEL
+    private fun StringBuilder.appendRiskSection(summary: CoverageSummary) {
+      appendLine("## Risk Register")
+      if (summary.riskItems.isEmpty()) {
+        appendLine("_No linked risk register items for this build._")
+      } else {
+        summary.riskItems.forEach { ref -> appendLine("- `${ref.riskId}`") }
+      }
+    }
+
+    private fun StringBuilder.appendUnmappedSection(unmappedClasses: List<String>) {
+      if (unmappedClasses.isEmpty()) return
+      appendLine()
+      appendLine("_Unmapped classes (${unmappedClasses.size}):_")
+      unmappedClasses.take(MAX_UNMAPPED_SAMPLE).forEach { appendLine("- $it") }
+      if (unmappedClasses.size > MAX_UNMAPPED_SAMPLE) {
+        appendLine("- …")
       }
     }
   }

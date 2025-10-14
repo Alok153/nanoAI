@@ -81,7 +81,7 @@ class ModelDownloadsAndExportUseCaseTest {
   fun `verifyDownloadChecksum succeeds when checksums match`() = runTest {
     val modelId = "gemini-2.0-flash-lite"
     val checksum = "abc123"
-    coEvery { modelCatalogRepository.getModelById(modelId) } returns
+    every { modelCatalogRepository.getModelById(modelId) } returns
       flowOf(sampleModel(modelId, checksum))
     coEvery { downloadManager.getDownloadedChecksum(modelId) } returns checksum
 
@@ -95,7 +95,7 @@ class ModelDownloadsAndExportUseCaseTest {
   @Test
   fun `verifyDownloadChecksum marks error on mismatch`() = runTest {
     val modelId = "gemini-2.0-flash-lite"
-    coEvery { modelCatalogRepository.getModelById(modelId) } returns
+    every { modelCatalogRepository.getModelById(modelId) } returns
       flowOf(sampleModel(modelId, "expected"))
     coEvery { downloadManager.getDownloadedChecksum(modelId) } returns "different"
 

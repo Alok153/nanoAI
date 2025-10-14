@@ -22,9 +22,9 @@ constructor(
   private val modelCatalogRepository: ModelCatalogRepository,
   private val downloadManager: DownloadManager,
   private val exportService: ExportService,
-) {
+) : ModelDownloadsAndExportUseCaseInterface {
   /** Queue or start a download based on concurrency limits. */
-  suspend fun downloadModel(modelId: String): Result<UUID> = runCatching {
+  override suspend fun downloadModel(modelId: String): Result<UUID> = runCatching {
     val activeDownloads = downloadManager.getActiveDownloads().first()
     val activeCount = activeDownloads.count { it.status == DownloadStatus.DOWNLOADING }
     val maxConcurrent = downloadManager.getMaxConcurrentDownloads()
@@ -42,7 +42,7 @@ constructor(
   }
 
   /** Validate downloaded checksum and update install state accordingly. */
-  suspend fun verifyDownloadChecksum(modelId: String): Result<Boolean> = runCatching {
+  override suspend fun verifyDownloadChecksum(modelId: String): Result<Boolean> = runCatching {
     val model: ModelPackage =
       modelCatalogRepository.getModelById(modelId).first() ?: error("Model $modelId not found")
     val expectedChecksum =
@@ -70,13 +70,13 @@ constructor(
   }
 
   /** Pause a download task and persist status. */
-  suspend fun pauseDownload(taskId: UUID) {
+  override suspend fun pauseDownload(taskId: UUID) {
     downloadManager.pauseDownload(taskId)
     downloadManager.updateTaskStatus(taskId, DownloadStatus.PAUSED)
   }
 
   /** Resume a paused download. */
-  suspend fun resumeDownload(taskId: UUID) {
+  override suspend fun resumeDownload(taskId: UUID) {
     val task = downloadManager.getTaskById(taskId).first() ?: return
     if (task.status != DownloadStatus.PAUSED) return
 
@@ -85,7 +85,7 @@ constructor(
   }
 
   /** Cancel a download and cleanup associated files. */
-  suspend fun cancelDownload(taskId: UUID) {
+  override suspend fun cancelDownload(taskId: UUID) {
     val modelId = downloadManager.getModelIdForTask(taskId)
     downloadManager.cancelDownload(taskId)
     modelId?.let {
@@ -96,7 +96,7 @@ constructor(
   }
 
   /** Delete a model if not active in any chat session. */
-  suspend fun deleteModel(modelId: String): Result<Unit> = runCatching {
+  override suspend fun deleteModel(modelId: String): Result<Unit> = runCatching {
     val inUse = modelCatalogRepository.isModelActiveInSession(modelId)
     if (inUse) throw ModelInUseException(modelId)
 
@@ -106,9 +106,9 @@ constructor(
   }
 
   /** Export personas, provider configs, and optional chat history as bundle. */
-  suspend fun exportBackup(
+  override suspend fun exportBackup(
     destinationPath: String,
-    includeChatHistory: Boolean = false
+    includeChatHistory: Boolean
   ): Result<String> = runCatching {
     val personas = exportService.gatherPersonas()
     val providers = exportService.gatherAPIProviderConfigs()
@@ -121,17 +121,18 @@ constructor(
   }
 
   /** Observe download progress as a Flow. */
-  fun getDownloadProgress(taskId: UUID): Flow<Float> = downloadManager.observeProgress(taskId)
+  override fun getDownloadProgress(taskId: UUID): Flow<Float> =
+    downloadManager.observeProgress(taskId)
 
   /** Observe a specific download task for status or error updates. */
-  suspend fun observeDownloadTask(taskId: UUID): Flow<DownloadTask?> =
+  override suspend fun observeDownloadTask(taskId: UUID): Flow<DownloadTask?> =
     downloadManager.getTaskById(taskId)
 
   /** Observe queued download tasks. */
-  fun getQueuedDownloads(): Flow<List<DownloadTask>> = downloadManager.getQueuedDownloads()
+  override fun getQueuedDownloads(): Flow<List<DownloadTask>> = downloadManager.getQueuedDownloads()
 
   /** Retry a failed download task. */
-  suspend fun retryFailedDownload(taskId: UUID) {
+  override suspend fun retryFailedDownload(taskId: UUID) {
     val task = downloadManager.getTaskById(taskId).first() ?: return
     if (task.status != DownloadStatus.FAILED) return
     val modelId = downloadManager.getModelIdForTask(taskId) ?: return

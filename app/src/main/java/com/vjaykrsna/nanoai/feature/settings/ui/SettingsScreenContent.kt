@@ -27,7 +27,9 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
@@ -254,7 +256,12 @@ private fun SettingsCategoryContent(
           )
         }
 
-        item { OnDeviceModelsSection(statusMessage = state.uiUxState.statusMessage) }
+        item {
+          OnDeviceModelsSection(
+            statusMessage = state.uiUxState.statusMessage,
+            onStatusMessageShow = actions.onStatusMessageShow,
+          )
+        }
       }
       SettingsCategory.MODES -> {
         item {
@@ -367,8 +374,10 @@ private fun SettingsPlaceholderSection(
 @Composable
 private fun OnDeviceModelsSection(
   statusMessage: String?,
+  onStatusMessageShow: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
+  val latestOnStatusMessageShow = rememberUpdatedState(onStatusMessageShow)
   Card(
     modifier = modifier.fillMaxWidth(),
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -391,6 +400,7 @@ private fun OnDeviceModelsSection(
       )
 
       if (statusMessage != null) {
+        LaunchedEffect(statusMessage) { latestOnStatusMessageShow.value() }
         Text(
           text = statusMessage,
           style = MaterialTheme.typography.bodySmall,

@@ -339,18 +339,13 @@ private fun List<CommandAction>.lastEnabledIndex(): Int =
 
 private fun List<CommandAction>.nextEnabledIndex(current: Int): Int? {
   if (isEmpty()) return null
-  for (index in (current + 1).coerceAtLeast(0) until size) {
-    if (this[index].enabled) return index
-  }
-  return null
+  val startIndex = (current + 1).coerceAtLeast(0)
+  return (startIndex until size).firstOrNull { index -> this[index].enabled }
 }
 
 private fun List<CommandAction>.previousEnabledIndex(current: Int): Int? {
   if (isEmpty()) return null
-  for (index in current - 1 downTo 0) {
-    if (this[index].enabled) return index
-  }
-  return null
+  return (current - 1 downTo 0).firstOrNull { index -> this[index].enabled }
 }
 
 private fun filterCommands(actions: List<CommandAction>, query: String): List<CommandAction> {

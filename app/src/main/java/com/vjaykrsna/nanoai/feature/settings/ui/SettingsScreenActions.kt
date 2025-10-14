@@ -26,6 +26,7 @@ internal data class SettingsScreenActions(
   val onHuggingFaceLoginClick: () -> Unit,
   val onHuggingFaceApiKeyClick: () -> Unit,
   val onHuggingFaceDisconnectClick: () -> Unit,
+  val onStatusMessageShow: () -> Unit,
 )
 
 internal data class SettingsActionDependencies(
@@ -106,6 +107,7 @@ internal fun createSettingsActions(
     onHuggingFaceLoginClick = { dialogState.showHuggingFaceLoginDialog.value = true },
     onHuggingFaceApiKeyClick = { dialogState.showHuggingFaceApiKeyDialog.value = true },
     onHuggingFaceDisconnectClick = viewModel::disconnectHuggingFaceAccount,
+    onStatusMessageShow = viewModel::clearStatusMessage,
   )
 }
 
