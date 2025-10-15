@@ -1,22 +1,32 @@
 package com.vjaykrsna.nanoai.feature.library.ui
 
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.feature.library.domain.RefreshModelCatalogUseCase
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
 import com.vjaykrsna.nanoai.feature.library.model.ProviderType
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryViewModel
-import com.vjaykrsna.nanoai.testing.ComposeTestHarness
 import com.vjaykrsna.nanoai.testing.DomainTestBuilders
 import com.vjaykrsna.nanoai.testing.FakeModelCatalogRepository
 import com.vjaykrsna.nanoai.testing.FakeModelDownloadsAndExportUseCase
 import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
 import io.mockk.coEvery
 import io.mockk.mockk
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
@@ -39,7 +49,6 @@ class ModelLibraryScreenTest {
   private lateinit var downloadsUseCase: FakeModelDownloadsAndExportUseCase
   private lateinit var refreshUseCase: RefreshModelCatalogUseCase
   private lateinit var viewModel: ModelLibraryViewModel
-  private lateinit var harness: ComposeTestHarness
 
   @Before
   fun setup() {
@@ -50,7 +59,6 @@ class ModelLibraryScreenTest {
     coEvery { refreshUseCase.invoke() } returns Result.success(Unit)
 
     viewModel = ModelLibraryViewModel(downloadsUseCase, catalogRepository, refreshUseCase)
-    harness = ComposeTestHarness(composeTestRule)
   }
 
   @Test
@@ -68,19 +76,37 @@ class ModelLibraryScreenTest {
 
     composeTestRule.waitForIdle()
 
-    // Header should show model summary
-    composeTestRule.onNodeWithText("Model Library", substring = true).assertExists()
+    composeTestRule.onAllNodesWithText("Installed", substring = false).onFirst().assertExists()
+    composeTestRule.onAllNodesWithText("Storage", substring = false).onFirst().assertExists()
   }
 
   @Test
   fun modelLibraryScreen_displaysLoadingIndicator() = runTest {
     // Start with empty catalog to show loading
     catalogRepository.replaceCatalog(emptyList())
+    coEvery { refreshUseCase.invoke() } coAnswers
+      {
+        delay(1_200)
+        Result.success(Unit)
+      }
 
     composeTestRule.setContent { ModelLibraryScreen(viewModel = viewModel) }
 
-    // Initially loading
-    composeTestRule.onNodeWithContentDescription("Loading models").assertExists()
+    composeTestRule.runOnIdle { viewModel.refreshCatalog() }
+
+    composeTestRule.waitUntil(timeoutMillis = 5_000) { viewModel.isLoading.value }
+
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+      composeTestRule
+        .onAllNodes(hasTestTag(ModelLibraryUiConstants.LOADING_INDICATOR_TAG))
+        .fetchSemanticsNodes()
+        .isNotEmpty()
+    }
+
+    composeTestRule
+      .onAllNodes(hasTestTag(ModelLibraryUiConstants.LOADING_INDICATOR_TAG))
+      .onFirst()
+      .assertExists()
   }
 
   @Test
@@ -123,11 +149,20 @@ class ModelLibraryScreenTest {
     composeTestRule.waitForIdle()
 
     // Search for "Qwen"
-    composeTestRule.onNodeWithText("Search models...").performTextInput("Qwen")
-    composeTestRule.waitForIdle()
+    composeTestRule
+      .onNode(hasTestTag(ModelLibraryUiConstants.SEARCH_FIELD_TAG))
+      .performTextInput("Qwen")
+
+    composeTestRule.waitUntil {
+      composeTestRule
+        .onAllNodesWithText("Qwen Model", substring = true)
+        .fetchSemanticsNodes()
+        .isNotEmpty()
+    }
 
     // Only Qwen model should be visible
     composeTestRule.onNodeWithText("Qwen Model", substring = true).assertExists()
+    composeTestRule.onAllNodesWithText("Gemma Model", substring = true).assertCountEquals(0)
   }
 
   @Test
@@ -155,8 +190,20 @@ class ModelLibraryScreenTest {
     composeTestRule.onNodeWithText("HF Model", substring = true).assertExists()
     composeTestRule.onNodeWithText("Google Model", substring = true).assertExists()
 
-    // Filter by HUGGING_FACE provider (implementation depends on UI)
-    // This would require clicking on provider filter chip
+    composeTestRule
+      .onAllNodes(hasText("Media pipe", substring = false).and(hasClickAction()))
+      .onFirst()
+      .performClick()
+
+    composeTestRule.waitUntil {
+      composeTestRule
+        .onAllNodesWithText("Google Model", substring = true)
+        .fetchSemanticsNodes()
+        .isEmpty()
+    }
+
+    composeTestRule.onNodeWithText("HF Model", substring = true).assertExists()
+    composeTestRule.onAllNodesWithText("Google Model", substring = true).assertCountEquals(0)
   }
 
   @Test
@@ -184,7 +231,20 @@ class ModelLibraryScreenTest {
     composeTestRule.onNodeWithText("Chat Model", substring = true).assertExists()
     composeTestRule.onNodeWithText("Embedding Model", substring = true).assertExists()
 
-    // Toggle CHAT capability filter (implementation depends on UI)
+    composeTestRule
+      .onAllNodes(hasText("Chat", substring = false).and(hasClickAction()))
+      .onFirst()
+      .performClick()
+
+    composeTestRule.waitUntil {
+      composeTestRule
+        .onAllNodesWithText("Embedding Model", substring = true)
+        .fetchSemanticsNodes()
+        .isEmpty()
+    }
+
+    composeTestRule.onNodeWithText("Chat Model", substring = true).assertExists()
+    composeTestRule.onAllNodesWithText("Embedding Model", substring = true).assertCountEquals(0)
   }
 
   @Test
@@ -197,11 +257,27 @@ class ModelLibraryScreenTest {
     composeTestRule.waitForIdle()
 
     // Apply search filter
-    composeTestRule.onNodeWithText("Search models...").performTextInput("Test")
-    composeTestRule.waitForIdle()
+    composeTestRule
+      .onNode(hasTestTag(ModelLibraryUiConstants.SEARCH_FIELD_TAG))
+      .performTextInput("Test")
 
-    // Clear filters button should appear when filters are active
-    // (Implementation depends on UI - might be a button or chip)
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+      composeTestRule
+        .onAllNodesWithText("Clear filters", substring = false)
+        .fetchSemanticsNodes()
+        .isNotEmpty()
+    }
+
+    composeTestRule.onAllNodesWithText("Clear filters", substring = false).onFirst().performClick()
+
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+      composeTestRule
+        .onAllNodesWithText("Clear filters", substring = false)
+        .fetchSemanticsNodes()
+        .isEmpty()
+    }
+
+    composeTestRule.runOnIdle { assertThat(viewModel.filters.value.searchQuery).isEmpty() }
   }
 
   @Test
@@ -218,19 +294,24 @@ class ModelLibraryScreenTest {
 
     composeTestRule.waitForIdle()
 
-    // Model should show download button
     composeTestRule.onNodeWithText("Download Model", substring = true).assertExists()
 
-    // Click download (implementation depends on button accessibility)
+    composeTestRule
+      .onNodeWithContentDescription("Download Download Model", substring = false)
+      .performClick()
+
+    composeTestRule.runOnIdle {
+      assertThat(downloadsUseCase.lastDownloadedModelId).isEqualTo("download-model")
+    }
   }
 
   @Test
-  fun modelLibraryScreen_downloadingModel_showsProgress() = runTest {
+  fun modelLibraryScreen_errorModel_showsRetryAction() = runTest {
     val model =
       DomainTestBuilders.buildModelPackage(
-        modelId = "downloading-model",
-        displayName = "Downloading Model",
-        installState = InstallState.DOWNLOADING
+        modelId = "error-model",
+        displayName = "Error Model",
+        installState = InstallState.ERROR
       )
     catalogRepository.replaceCatalog(listOf(model))
 
@@ -238,8 +319,7 @@ class ModelLibraryScreenTest {
 
     composeTestRule.waitForIdle()
 
-    // Progress should be displayed
-    composeTestRule.onNodeWithText("50%", substring = true).assertExists()
+    composeTestRule.onAllNodesWithContentDescription("Retry Error Model").onFirst().assertExists()
   }
 
   @Test
@@ -256,8 +336,15 @@ class ModelLibraryScreenTest {
 
     composeTestRule.waitForIdle()
 
-    // Model should show as installed
     composeTestRule.onNodeWithText("Installed Model", substring = true).assertExists()
+
+    composeTestRule
+      .onNodeWithContentDescription("Remove Installed Model", substring = false)
+      .performClick()
+
+    composeTestRule.runOnIdle {
+      assertThat(downloadsUseCase.lastDeletedModelId).isEqualTo("installed-model")
+    }
   }
 
   @Test
@@ -288,8 +375,16 @@ class ModelLibraryScreenTest {
     viewModel.downloadModel("error-model")
     composeTestRule.waitForIdle()
 
-    // Error snackbar should appear
-    composeTestRule.onNodeWithText("Download failed", substring = true).assertExists()
+    composeTestRule.waitUntil {
+      composeTestRule
+        .onAllNodesWithText("Download failed for error-model", substring = true)
+        .fetchSemanticsNodes()
+        .isNotEmpty()
+    }
+
+    composeTestRule
+      .onNodeWithText("Download failed for error-model", substring = true)
+      .assertExists()
   }
 
   @Test
@@ -297,16 +392,19 @@ class ModelLibraryScreenTest {
     val needsAttention =
       DomainTestBuilders.buildModelPackage(
         modelId = "attention-model",
+        displayName = "Attention Model",
         installState = InstallState.ERROR
       )
     val installed =
       DomainTestBuilders.buildModelPackage(
         modelId = "installed-model",
+        displayName = "Installed Model",
         installState = InstallState.INSTALLED
       )
     val available =
       DomainTestBuilders.buildModelPackage(
         modelId = "available-model",
+        displayName = "Available Model",
         installState = InstallState.NOT_INSTALLED
       )
 
@@ -316,8 +414,17 @@ class ModelLibraryScreenTest {
 
     composeTestRule.waitForIdle()
 
-    // Sections should be organized: Needs Attention, Installed, Available
-    // (Exact section headers depend on implementation)
+    composeTestRule.runOnIdle { assertThat(viewModel.sections.value.available).isNotEmpty() }
+
+    val listNode = composeTestRule.onNode(hasTestTag(ModelLibraryUiConstants.LIST_TAG))
+    listNode.performScrollToNode(hasText("Attention Model", substring = false))
+    composeTestRule.onNodeWithText("Attention Model", substring = false).assertExists()
+
+    listNode.performScrollToNode(hasText("Installed Model", substring = false))
+    composeTestRule.onNodeWithText("Installed Model", substring = false).assertExists()
+
+    listNode.performScrollToNode(hasText("Available Model", substring = false))
+    composeTestRule.onNodeWithText("Available Model", substring = false).assertExists()
   }
 
   @Test
@@ -328,8 +435,7 @@ class ModelLibraryScreenTest {
 
     composeTestRule.waitForIdle()
 
-    // Should show empty state message
-    // (Implementation depends on UI)
+    composeTestRule.onNodeWithText("No models to show", substring = true).assertExists()
   }
 
   @Test
@@ -341,8 +447,8 @@ class ModelLibraryScreenTest {
 
     composeTestRule.waitForIdle()
 
-    // Filter chips should have proper semantics for TalkBack
-    // (Specific accessibility labels depend on implementation)
+    composeTestRule.onNodeWithText("All providers", substring = false).assertExists()
+    composeTestRule.onNodeWithText("Recommended", substring = false).assertExists()
   }
 
   @Test

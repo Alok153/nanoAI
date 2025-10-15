@@ -497,7 +497,7 @@ dependencies {
   androidTestImplementation(platform(libs.androidx.compose.bom))
   androidTestImplementation(libs.androidx.compose.ui.test.junit4)
   androidTestImplementation(libs.androidx.compose.ui.test)
-  androidTestImplementation(libs.mockk)
+  androidTestImplementation(libs.mockk.android)
   androidTestImplementation(libs.truth)
   androidTestImplementation(libs.kotlinx.coroutines.test)
   androidTestImplementation(libs.androidx.room.testing)

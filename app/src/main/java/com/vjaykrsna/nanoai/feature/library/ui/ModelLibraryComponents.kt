@@ -41,6 +41,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -55,8 +56,12 @@ import com.vjaykrsna.nanoai.feature.library.model.ProviderType
 import com.vjaykrsna.nanoai.feature.library.presentation.LibraryFilterState
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibrarySections
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelSort
+import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.LIST_TAG
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.MAX_CAPABILITY_CHIPS
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.PERCENTAGE_MULTIPLIER
+import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.SECTION_ATTENTION_TAG
+import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.SECTION_AVAILABLE_TAG
+import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.SECTION_INSTALLED_TAG
 import java.util.Locale
 import java.util.UUID
 
@@ -107,7 +112,7 @@ internal fun ModelLibraryToolbar(
     OutlinedTextField(
       value = filters.searchQuery,
       onValueChange = onSearchChange,
-      modifier = Modifier.fillMaxWidth(),
+      modifier = Modifier.fillMaxWidth().testTag(ModelLibraryUiConstants.SEARCH_FIELD_TAG),
       singleLine = true,
       leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
       trailingIcon =
@@ -210,13 +215,17 @@ internal fun ModelLibraryContent(
       sections.available.isNotEmpty()
 
   LazyColumn(
-    modifier = modifier.fillMaxWidth(),
+    modifier = modifier.fillMaxWidth().testTag(LIST_TAG),
     contentPadding = PaddingValues(bottom = 32.dp),
     verticalArrangement = Arrangement.spacedBy(16.dp),
   ) {
     if (sections.attention.isNotEmpty()) {
       item(key = "attention_header") {
-        SectionHeader(title = "Needs attention", subtitle = "Downloads that require manual action")
+        SectionHeader(
+          title = "Needs attention",
+          subtitle = "Downloads that require manual action",
+          modifier = Modifier.testTag(SECTION_ATTENTION_TAG),
+        )
       }
       items(
         items = sections.attention,
@@ -235,7 +244,11 @@ internal fun ModelLibraryContent(
 
     if (sections.installed.isNotEmpty()) {
       item(key = "installed_header") {
-        SectionHeader(title = "Installed", subtitle = "Local runtimes ready for inference")
+        SectionHeader(
+          title = "Installed",
+          subtitle = "Local runtimes ready for inference",
+          modifier = Modifier.testTag(SECTION_INSTALLED_TAG),
+        )
       }
       items(
         items = sections.installed,
@@ -256,7 +269,11 @@ internal fun ModelLibraryContent(
 
     if (sections.available.isNotEmpty()) {
       item(key = "available_header") {
-        SectionHeader(title = "Available", subtitle = "Models ready for download")
+        SectionHeader(
+          title = "Available",
+          subtitle = "Models ready for download",
+          modifier = Modifier.testTag(SECTION_AVAILABLE_TAG),
+        )
       }
       items(
         items = sections.available,
@@ -283,8 +300,9 @@ internal fun ModelLibraryContent(
 private fun SectionHeader(
   title: String,
   subtitle: String,
+  modifier: Modifier = Modifier,
 ) {
-  Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+  Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
     Text(
       text = title,
       style = MaterialTheme.typography.titleMedium,

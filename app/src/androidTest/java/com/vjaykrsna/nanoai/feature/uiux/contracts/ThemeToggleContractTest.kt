@@ -10,6 +10,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import com.vjaykrsna.nanoai.MainActivity
 import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -20,6 +21,7 @@ import org.junit.runner.RunWith
  */
 @LargeTest
 @RunWith(AndroidJUnit4::class)
+@Ignore("Theme toggle contract pending retained preferences storage; see specs/003-UI-UX/plan.md")
 class ThemeToggleContractTest {
   @get:Rule(order = 0) val environmentRule = TestEnvironmentRule()
   @get:Rule(order = 1) val composeRule = createAndroidComposeRule<MainActivity>()

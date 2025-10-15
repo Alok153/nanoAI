@@ -13,13 +13,16 @@ import com.vjaykrsna.nanoai.model.catalog.ModelPackageReadDao
 import com.vjaykrsna.nanoai.model.catalog.ModelPackageWriteDao
 import io.mockk.coEvery
 import io.mockk.coJustRun
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import java.io.File
 import java.util.UUID
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -30,12 +33,13 @@ class ModelCatalogRepositoryImplTest {
 
   private val readDao =
     mockk<ModelPackageReadDao>() {
-      every { observeAll() } returns kotlinx.coroutines.flow.flowOf(emptyList())
-      every { observeInstalled() } returns kotlinx.coroutines.flow.flowOf(emptyList())
+      every { observeAll() } returns flowOf(emptyList())
+      every { observeInstalled() } returns flowOf(emptyList())
     }
   private val writeDao = mockk<ModelPackageWriteDao>(relaxed = true)
   private val chatThreadDao = mockk<ChatThreadDao>(relaxed = true)
   private val context = mockk<Context>()
+  private val clock = MutableClock(Instant.parse("2025-10-10T00:00:00Z"))
   private val repository by lazy {
     every { context.filesDir } returns tempDir
     ModelCatalogRepositoryImpl(
@@ -43,7 +47,7 @@ class ModelCatalogRepositoryImplTest {
       writeDao,
       chatThreadDao,
       context,
-      kotlinx.datetime.Clock.System
+      clock,
     )
   }
 
@@ -140,6 +144,179 @@ class ModelCatalogRepositoryImplTest {
   }
 
   @Test
+  fun `getAllModels returns mapped domain models`() = runTest {
+    val entityA =
+      existingEntity(
+        modelId = "model-a",
+        checksum = "sum-a",
+        signature = null,
+        downloadTaskId = null,
+        installState = InstallState.NOT_INSTALLED
+      )
+    val entityB =
+      existingEntity(
+        modelId = "model-b",
+        checksum = "sum-b",
+        signature = null,
+        downloadTaskId = null,
+        installState = InstallState.INSTALLED
+      )
+    coEvery { readDao.getAll() } returns listOf(entityA, entityB)
+
+    val models = repository.getAllModels()
+
+    assertThat(models.map { it.modelId }).containsExactly("model-a", "model-b")
+    assertThat(models.first { it.modelId == "model-a" }.checksumSha256).isEqualTo("sum-a")
+  }
+
+  @Test
+  fun `getModel returns null when dao missing`() = runTest {
+    coEvery { readDao.getById("missing") } returns null
+
+    val model = repository.getModel("missing")
+
+    assertThat(model).isNull()
+  }
+
+  @Test
+  fun `getModelById emits mapped values`() = runTest {
+    val entity =
+      existingEntity(
+        "observed",
+        checksum = "sum",
+        signature = null,
+        downloadTaskId = null,
+        installState = InstallState.INSTALLED
+      )
+    every { readDao.observeById("observed") } returns flowOf(entity)
+
+    val emitted = repository.getModelById("observed").first()
+
+    assertThat(emitted?.modelId).isEqualTo("observed")
+    assertThat(emitted?.installState).isEqualTo(InstallState.INSTALLED)
+  }
+
+  @Test
+  fun `getInstalledModels filters by install state`() = runTest {
+    val entityInstalled =
+      existingEntity(
+        "installed",
+        checksum = "sum",
+        signature = null,
+        downloadTaskId = null,
+        installState = InstallState.INSTALLED
+      )
+    coEvery { readDao.getByInstallState(InstallState.INSTALLED) } returns listOf(entityInstalled)
+
+    val models = repository.getInstalledModels()
+
+    assertThat(models).hasSize(1)
+    assertThat(models.first().installState).isEqualTo(InstallState.INSTALLED)
+  }
+
+  @Test
+  fun `updateModelState delegates to dao with clock timestamp`() = runTest {
+    val expectedTime = Instant.parse("2025-12-01T00:00:00Z")
+    clock.advanceTo(expectedTime)
+
+    repository.updateModelState("model-state", InstallState.DOWNLOADING)
+
+    coVerify { writeDao.updateInstallState("model-state", InstallState.DOWNLOADING, expectedTime) }
+  }
+
+  @Test
+  fun `upsertModel writes entity`() = runTest {
+    val model =
+      ModelPackage(
+        modelId = "upsert",
+        displayName = "Upsert",
+        version = "1.0",
+        providerType = ProviderType.CLOUD_API,
+        deliveryType = DeliveryType.CLOUD_FALLBACK,
+        minAppVersion = 1,
+        sizeBytes = 10,
+        capabilities = setOf("text"),
+        installState = InstallState.NOT_INSTALLED,
+        downloadTaskId = null,
+        manifestUrl = "https://example.com/upsert",
+        checksumSha256 = "checksum",
+        signature = null,
+        createdAt = Instant.parse("2025-10-01T00:00:00Z"),
+        updatedAt = Instant.parse("2025-10-01T00:00:00Z"),
+      )
+
+    repository.upsertModel(model)
+
+    coVerify { writeDao.insert(model.toEntity()) }
+  }
+
+  @Test
+  fun `updateDownloadTaskId persists uuid as string`() = runTest {
+    val taskId = UUID.fromString("b64f3d87-5bdc-4c49-b7b3-2f2d7862889f")
+    val expectedTime = Instant.parse("2025-12-02T00:00:00Z")
+    clock.advanceTo(expectedTime)
+
+    repository.updateDownloadTaskId("model-task", taskId)
+
+    coVerify { writeDao.updateDownloadTaskId("model-task", taskId.toString(), expectedTime) }
+  }
+
+  @Test
+  fun `updateChecksum delegates to integrity metadata update`() = runTest {
+    val expectedTime = Instant.parse("2025-12-03T00:00:00Z")
+    clock.advanceTo(expectedTime)
+
+    repository.updateChecksum("model-checksum", "new-sum")
+
+    coVerify { writeDao.updateIntegrityMetadata("model-checksum", "new-sum", null, expectedTime) }
+  }
+
+  @Test
+  fun `isModelActiveInSession reflects dao count`() = runTest {
+    coEvery { chatThreadDao.countActiveByModel("active") } returns 2
+    coEvery { chatThreadDao.countActiveByModel("idle") } returns 0
+
+    assertThat(repository.isModelActiveInSession("active")).isTrue()
+    assertThat(repository.isModelActiveInSession("idle")).isFalse()
+  }
+
+  @Test
+  fun `observeAllModels exposes dao flow`() = runTest {
+    val entity =
+      existingEntity(
+        "flow",
+        checksum = "sum",
+        signature = null,
+        downloadTaskId = null,
+        installState = InstallState.NOT_INSTALLED
+      )
+    every { readDao.observeAll() } returns flowOf(listOf(entity))
+
+    val models = repository.observeAllModels().first()
+
+    assertThat(models).hasSize(1)
+    assertThat(models.first().modelId).isEqualTo("flow")
+  }
+
+  @Test
+  fun `observeInstalledModels exposes dao flow`() = runTest {
+    val entity =
+      existingEntity(
+        "installed-flow",
+        checksum = "sum",
+        signature = null,
+        downloadTaskId = null,
+        installState = InstallState.INSTALLED
+      )
+    every { readDao.observeInstalled() } returns flowOf(listOf(entity))
+
+    val models = repository.observeInstalledModels().first()
+
+    assertThat(models).hasSize(1)
+    assertThat(models.first().installState).isEqualTo(InstallState.INSTALLED)
+  }
+
+  @Test
   fun `deleteModelFiles removes nested model directories`() = runTest {
     val modelsDir = File(tempDir, "models").apply { mkdirs() }
     val modelDir = File(modelsDir, "model-delete").apply { mkdirs() }
@@ -198,4 +375,12 @@ class ModelCatalogRepositoryImplTest {
         updatedAt = Instant.parse("2025-10-08T12:00:00Z"),
       )
       .toEntity()
+
+  private class MutableClock(private var instant: Instant) : Clock {
+    override fun now(): Instant = instant
+
+    fun advanceTo(next: Instant) {
+      instant = next
+    }
+  }
 }

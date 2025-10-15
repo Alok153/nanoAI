@@ -76,7 +76,8 @@ constructor(
   }
 
   override suspend fun updatePinnedTools(userId: String, pinnedTools: List<String>) {
-    withContext(ioDispatcher) { local.updatePinnedTools(userId, pinnedTools) }
+    val sanitizedPinnedTools = UiPreferencesSnapshot(pinnedTools = pinnedTools).pinnedTools
+    withContext(ioDispatcher) { local.updatePinnedTools(userId, sanitizedPinnedTools) }
   }
 
   override suspend fun saveLayoutSnapshot(

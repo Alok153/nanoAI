@@ -15,7 +15,6 @@ import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
 import java.io.File
 import java.util.UUID
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Instant
@@ -98,7 +97,8 @@ class ModelCatalogRepositoryImplTest {
 
     repository.recordOfflineFallback(reason = "IOException", cachedCount = 2, message = "503")
 
-    val status = repository.observeRefreshStatus().drop(1).first()
+    val status =
+      repository.observeRefreshStatus().first { candidate -> candidate.lastFallbackReason != null }
     assertThat(status.lastFallbackReason).isEqualTo("IOException")
     assertThat(status.lastFallbackCachedCount).isEqualTo(2)
     assertThat(status.lastFallbackMessage).isEqualTo("503")

@@ -1,257 +1,161 @@
-# nanoAI – AI Assistant for Android
+# nanoAI Agent Rules & Wake-Up Calls
 
-## Project Overview
+## 🚨 Critical Rules for AI Agents
 
-nanoAI is a privacy-first Android application that brings powerful AI capabilities directly to your device. The app enables users to chat with AI, generate images, process audio, get coding help, and translate languages – all while keeping data private and secure. The app is built with a local-first architecture that runs small LLMs on-device for privacy and speed, with cloud fallbacks when needed or for larger models.
+### Architecture Guardians
+**NEVER** bypass clean architecture layers. Always route through:
+- `UseCase` → `Repository` → `DataSource` (Domain → Data flow)
+- `Composable` → `ViewModel` → `UseCase` (UI → Domain flow)
+- **Wake-up Call**: Mixing layers creates untestable code and violates the 75/65/70% coverage requirements.
 
-### Key Features
-- **Privacy by Design** – Conversations, personal data, and AI models stay on your device
-- **Offline Capabilities** – Works without internet for most features once models are downloaded
-- **Multimodal AI** – Chat, image generation, audio processing, code assistance, and translation
-- **Beautiful & Accessible** – Clean, intuitive interface with full TalkBack support and Material 3 design
-- **Flexible & Extensible** – Add cloud AI providers (OpenAI, Gemini, custom endpoints) or use local models
-- **Responsible AI** – No automated content filters; users are responsible for generated content
+### Testing Imperative
+**EVERY** code change requires tests. Targets are non-negotiable:
+- ViewModel: ≥75% coverage
+- UI: ≥65% coverage
+- Data: ≥70% coverage
+- **Wake-up Call**: Untested code ships bugs that break offline functionality and accessibility compliance.
 
-### Technology Stack
-- **Language**: Kotlin 1.9.x
-- **UI Framework**: Jetpack Compose with Material 3
-- **Architecture**: Clean architecture with domain, data, and presentation layers
-- **Dependency Injection**: Hilt
-- **Database**: Room with SQLite
-- **Preferences**: DataStore
-- **Networking**: Retrofit with OkHttp
-- **Background Tasks**: WorkManager
-- **Coroutines**: For asynchronous operations
-- **MediaPipe**: For on-device AI inference
-- **Testing**: JUnit 5, MockK, Compose UI Tests, Robolectric
+### Kotlin-First Purity
+**ONLY** use Kotlin. No Java interop unless absolutely necessary.
+- Use coroutines, not threads
+- Use sealed classes, not enums for states
+- Use data classes for immutable models
+- **Wake-up Call**: Java patterns slow development and miss Kotlin's null-safety advantages.
 
-## Architecture
+### Security First
+**ALWAYS** encrypt sensitive data:
+- API keys: Use `EncryptedSecretStore`
+- User preferences: Respect DataStore encryption
+- Exports: Warn about unencrypted data via `notifyUnencryptedExport()`
+- **Wake-up Call**: Unencrypted storage risks user privacy - the core value proposition.
 
-The project follows clean architecture principles with the following layers:
+### Performance Budgets
+**RESPECT** targets:
+- Cold start: <1.5s
+- Jank: <5% frame drops
+- Queue flush: <500ms
+- **Wake-up Call**: Poor performance kills user adoption on lower-end Android devices.
 
-### UI Layer (Compose)
-- Compose-based UI with Material 3 components
-- Navigation using Jetpack Compose Navigation
-- Accessible components with full TalkBack support
+## 💀 Common Agent Mistakes to Avoid
 
-### Presentation Layer (ViewModels)
-- HiltViewModel annotated ViewModels
-- State management using StateFlow and SharedFlow
-- Lifecycle-aware with viewModelScope
+### 1. Skipping Use Cases
+❌ Direct repository calls from ViewModels
+✅ Always create and inject UseCases for business logic
+**Why?** UseCases enforce testability and separation of concerns.
 
-### Domain Layer (Use Cases)
-- Business logic encapsulated in use cases
-- Repository pattern for data abstraction
-- Platform-agnostic Kotlin code
+### 2. Ignoring Offline Scenarios
+❌ Assuming always-online behavior
+✅ Test with `TestEnvironmentRule` for offline fallbacks
+**Why?** Users expect offline functionality after model downloads.
 
-### Data Layer (Repositories)
-- Data access through repositories
-- Multiple data sources (Room DB, DataStore, Network)
-- Background processing with WorkManager
+### 3. Breaking Material 3
+❌ Custom styling without Material tokens
+✅ Use `MaterialTheme` and semantic colors
+**Why?** Inconsistent UX frustrates users and fails accessibility audits.
 
-### External Systems
-- MediaPipe for on-device inference
-- Cloud APIs (OpenAI, Google Gemini, custom endpoints) as optional fallback
-- Device storage for models and user data
+### 4. Deprecated Dependencies
+❌ Using old libraries like RxJava or legacy support
+✅ Check `gradle/libs.versions.toml` for current versions
+**Why?** Deprecated code bloats APK and introduces security risks.
 
-## Building and Running
+### 5. Inefficient State Management
+❌ MutableState in composables
+✅ StateFlow in ViewModels, collectAsState in UI
+**Why?** Wrong state management causes UI glitches and memory leaks.
 
-### Prerequisites
-- Android Studio (latest version)
-- Android SDK with API level 31+
-- Android SDK Build Tools
-- Android NDK (for native libraries, if needed)
+### 6. Blocking UI Thread
+❌ Network calls on main thread
+✅ Always use coroutines with IO dispatcher
+**Why?** ANR crashes destroy user trust.
 
-### Setup Instructions
-```bash
-# Clone the repository
-git clone https://github.com/vjaykrsna/nanoAI.git
-cd nanoAI
+### 7. Incomplete Error Handling
+❌ Silent failures
+✅ Proper `NanoAIResult` usage with error propagation
+**Why?** Poor errors hide bugs and confuse users.
 
-# Build the project
-./gradlew build
+## ⚡ Quick Action Rules
 
-# Install debug version on connected device/emulator
-./gradlew installDebug
+### When Adding Features
+1. Create failing tests first (TDD)
+2. Add to risk register if coverage impact
+3. Update architecture diagram if changing data flow
+4. Test offline + accessibility scenarios
 
-# Run unit tests
-./gradlew testDebugUnitTest
+### When Refactoring
+1. Run full test suite before/after
+2. Update any affected docs in `/docs`
+3. Check coverage doesn't drop below targets
+4. Add migration tests for schema changes
 
-# Run instrumentation tests
-./gradlew connectedDebugAndroidTest
+### When Debugging
+## 📁 Project Structure
 
-# Generate full coverage report
-./gradlew jacocoFullReport
-
-# Run full check (build, tests, lint, coverage verification)
-./gradlew check
-```
-
-### Development Commands
-```bash
-# Run only unit tests
-./gradlew testDebugUnitTest
-
-# Run specific test class
-./gradlew testDebugUnitTest --tests "com.vjaykrsna.nanoai.*ViewModelTest"
-
-# Run instrumentation tests with managed device (CI-like setup)
-./gradlew ciManagedDeviceDebugAndroidTest
-
-# Generate and view coverage report
-./gradlew jacocoFullReport
-# Report available at: app/build/reports/jacoco/full/html/index.html
-
-# Run coverage verification against thresholds
-./gradlew verifyCoverageThresholds
-
-# Generate markdown coverage summary
-./gradlew coverageMarkdownSummary
-```
-
-## Development Conventions
-
-### Code Style
-- Follow official Kotlin coding conventions
-- Use KTFmt with Google style formatting (enforced by Spotless)
-- Use descriptive variable and function names
-- Prefer immutable data structures when possible
-- Use coroutines for asynchronous operations
-- Apply `@OptIn` annotations for experimental APIs
-
-### Testing Strategy
-- **Unit Tests**: JVM-based tests for ViewModels, Use Cases, Repositories (target ≥75% coverage)
-- **Instrumentation Tests**: UI and integration tests on real devices/emulators (target ≥65% coverage)
-- **DAO Tests**: Database operations with in-memory Room
-- **Contract Tests**: API schema validation
-- **Macrobenchmarks**: Performance tests for startup and UI jank
-
-### Quality Gates
-- Code formatting enforced by Spotless
-- Static analysis by Detekt
-- Test coverage thresholds: ViewModel (75%), UI (65%), Data layer (70%)
-- All tests must pass before merging
-
-### Architecture Patterns
-- **MVVM**: Model-View-ViewModel pattern with Jetpack Compose
-- **Repository Pattern**: Abstract data sources behind repository interfaces
-- **Use Cases**: Encapsulate business logic in single-responsibility classes
-- **Dependency Injection**: Use Hilt for dependency management
-- **State Management**: Use StateFlow, SharedFlow, and Flow for reactive programming
-- **Offline-First**: Design for offline capability with sync when online
-
-### Security and Privacy
-- All personal data stored locally using Room database
-- API keys stored securely (not in version control)
-- Encryption for sensitive data storage
-- Privacy-first design with user consent for any data sharing
-- No PII in telemetry by default
-
-### Accessibility
-- Full TalkBack support for visually impaired users
-- Semantic properties for screen readers
-- Sufficient color contrast ratios
-- Support for various font sizes and display preferences
-- Material 3 design principles for consistent UX
-
-## Project Structure
 ```
 nanoAI/
-├── app/                    # Main application module
-│   ├── src/main/java/      # Kotlin source code
-│   │   └── com.vjaykrsna.nanoai/
-│   │       ├── coverage/   # Coverage reporting utilities
-│   │       ├── data/       # Data layer (DAOs, repositories, data sources)
-│   │       ├── domain/     # Domain layer (use cases, models)
-│   │       ├── feature/    # Feature modules (chat, library, settings)
-│   │       ├── telemetry/  # Telemetry and analytics
-│   │       └── ui/         # UI layer (screens, composables)
-│   ├── src/test/           # Unit tests
-│   └── src/androidTest/    # Instrumentation tests
-├── docs/                   # Documentation
-├── config/                 # Configuration files (detekt, coverage, etc.)
-├── scripts/                # Build and utility scripts
-├── openspec/               # Specification-driven development files
-└── macrobenchmark/         # Performance benchmark module
+├── app/                           # Main application module
+│   ├── src/main/java/com/vjaykrsna/nanoai/
+│   │   ├── core/                  # Core utilities and base classes
+│   │   ├── di/                    # Dependency injection modules
+│   │   ├── feature/               # Feature modules (chat, uiux, etc.)
+│   │   ├── model/                 # Data models
+│   │   ├── security/              # Security-related utilities
+│   │   ├── telemetry/             # Analytics and logging
+│   │   └── ui/                    # UI components and navigation
+│   ├── src/test/java/com/vjaykrsna/nanoai/  # Unit tests (JVM)
+│   │   ├── core/
+│   │   ├── coverage/
+│   │   └── feature/
+│   └── src/androidTest/java/com/vjaykrsna/nanoai/  # Instrumentation tests
+│       ├── testing/               # Test utilities and fakes
+│       └── coverage/              # Coverage-specific UI tests
+├── docs/                          # Documentation
+├── specs/                         # Feature specifications
+├── config/                        # Configuration files (detekt, coverage)
+├── scripts/                       # Build and utility scripts
+├── macrobenchmark/                # Performance benchmarks
+├── build.gradle.kts               # Root build configuration
+├── settings.gradle.kts            # Project settings
+└── gradle/libs.versions.toml       # Approved dependency versions
 ```
+1. Check logs with `ShellTelemetry`
+2. Isolate layers (UI, Domain, Data)
+3. Use `TestEnvironmentRule` for controlled testing
+4. Verify on multiple screen sizes/densities
 
-## Testing Guidelines
+## 🚦 Code Quality Gates
 
-### Unit Tests
-- Located in `app/src/test/java`
-- Test ViewModels, Use Cases, and Repository logic
-- Use MockK for mocking dependencies
-- Use kotlinx-coroutines-test for coroutine testing
-- Use Truth for assertions
+**Must Pass Before Commit:**
+- `./gradlew spotlessCheck` (Kotlin formatting)
+- `./gradlew detekt` (Static analysis)
+- `./gradlew testDebugUnitTest` (Unit tests)
+- `./gradlew verifyCoverageThresholds` (Coverage gates)
 
-### Instrumentation Tests
-- Located in `app/src/androidTest/java`
-- Test UI interactions and end-to-end flows
-- Use Compose UI testing for declarative UI
-- Test accessibility and offline scenarios
+**Must Pass Before PR:**
+- `./gradlew check` (All quality gates)
+- Accessibility audit with TalkBack
+- Offline functionality verification
 
-### Coverage Requirements
-- ViewModel layer: ≥75% coverage
-- UI layer: ≥65% coverage
-- Data layer: ≥70% coverage
-- Coverage verification is part of the CI check process
+## 📚 Essential References
 
-## API Integration
+- `docs/ARCHITECTURE.md` - System design and data flows
+- `docs/testing.md` - Coverage requirements and test strategy
+- `specs/` - Feature specifications with acceptance criteria
+- `gradle/libs.versions.toml` - Approved dependency versions
+- `config/coverage/layer-map.json` - Coverage classification rules
 
-### Cloud Provider Support
-- OpenAI API compatibility
-- Google Gemini API compatibility
-- Custom endpoint support
-- Automatic fallback between local and cloud models
+## 🎯 Agent Success Metrics
 
-### Model Management
-- Download and manage AI models optimized for device
-- Checksum validation for downloaded models
-- Progress tracking and pause/resume functionality
-- Local model execution using MediaPipe
+- Code passes all `./gradlew check` gates
+- Coverage targets maintained or improved
+## 🛠️ Development Tools & Resources
 
-## Contributing
+### When Stuck or Implementing New Features
+**USE Context7 MCP** to fetch up-to-date documentation and code examples from official sources:
+- For unfamiliar libraries or AI runtimes
+- To verify API changes or deprecations
+- **Wake-up Call**: Don't guess - always check official docs to avoid deprecated patterns.
+- No new accessibility or offline issues
+- Architecture diagram remains accurate
+- Documentation updated for changes
 
-### Development Workflow
-1. Fork and clone the repository
-2. Create a feature branch from the main branch
-3. Make changes following the coding conventions
-4. Write tests for new functionality
-5. Run the full test suite with `./gradlew check`
-6. Submit a pull request with a clear description
-
-### Quality Checks
-Before submitting changes, ensure:
-- All tests pass (`./gradlew check`)
-- Code formatting is correct (`./gradlew spotlessApply`)
-- Coverage thresholds are met
-- Static analysis passes (Detekt)
-- Accessibility is maintained
-
-### Documentation
-- Update relevant documentation in the `docs/` directory
-- Add or update API documentation in `docs/API.md`
-- Update architecture diagrams if necessary
-- Include examples and usage instructions
-
-## Special Considerations
-
-### Performance
-- Use baseline profiles to optimize startup time
-- Monitor for UI jank with JankStats
-- Optimize for different device capabilities
-- Efficient data loading and caching strategies
-
-### Privacy and Security
-- All data processing happens on-device by default
-- Clear data retention policies
-- Secure storage for API keys and sensitive data
-- Explicit user consent for any data sharing
-
-### Accessibility
-- Full TalkBack compatibility
-- Semantic properties for all interactive elements
-- Support for various accessibility settings
-- Regular accessibility testing
-
-This AGENTS.md provides a comprehensive overview of the nanoAI project to help AI assistants understand the codebase, development practices, and project conventions for effective collaboration and development.
+**Remember**: This is a privacy-first app. Every decision impacts user trust. Test thoroughly, respect performance budgets, and maintain clean architecture.

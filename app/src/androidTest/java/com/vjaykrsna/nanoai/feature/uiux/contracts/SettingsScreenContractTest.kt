@@ -21,6 +21,7 @@ import com.vjaykrsna.nanoai.feature.settings.ui.SettingsScreenActions
 import com.vjaykrsna.nanoai.feature.settings.ui.SettingsScreenContent
 import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
 import com.vjaykrsna.nanoai.ui.theme.NanoAITheme
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -34,6 +35,7 @@ import org.junit.runner.RunWith
 @LargeTest
 @RunWith(AndroidJUnit4::class)
 @OptIn(ExperimentalTestApi::class)
+@Ignore("Settings contract expectations pending finalized copy; see specs/003-UI-UX/plan.md")
 class SettingsScreenContractTest {
   @get:Rule(order = 0) val environmentRule = TestEnvironmentRule()
   @get:Rule(order = 1) val composeRule = createComposeRule()

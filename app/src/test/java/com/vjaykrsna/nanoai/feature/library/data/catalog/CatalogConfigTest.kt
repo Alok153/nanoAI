@@ -75,6 +75,89 @@ class CatalogConfigTest {
     config.toModelPackage(FixedClock)
   }
 
+  @Test
+  fun `toModelPackage trims blank capabilities`() {
+    val payload =
+      """
+      {
+        "id": "capability-test",
+        "display_name": "Capability Test",
+        "version": "1.0",
+        "provider": "cloud_api",
+        "delivery": "cloud_fallback",
+        "min_app_version": 5,
+        "size_bytes": 2048,
+        "capabilities": [" text ", " ", "vision"],
+        "manifest_url": "hf://example/capability"
+      }
+      """
+        .trimIndent()
+
+    val config = json.decodeFromString(ModelConfig.serializer(), payload)
+
+    val model = config.toModelPackage(FixedClock)
+
+    assertThat(model.capabilities).containsExactly("text", "vision")
+  }
+
+  @Test
+  fun `toModelPackage falls back to clock when timestamps missing`() {
+    val payload =
+      """
+      {
+        "id": "timestamp-test",
+        "display_name": "Timestamp Test",
+        "version": "1.0",
+        "provider": "cloud_api",
+        "delivery": "cloud_fallback",
+        "min_app_version": 1,
+        "size_bytes": 1,
+        "capabilities": [],
+        "manifest_url": "hf://example/timestamp"
+      }
+      """
+        .trimIndent()
+
+    val config = json.decodeFromString(ModelConfig.serializer(), payload)
+
+    val model = config.toModelPackage(FixedClock)
+
+    assertThat(model.createdAt).isEqualTo(FixedClock.now())
+    assertThat(model.updatedAt).isEqualTo(FixedClock.now())
+  }
+
+  @Test(expected = IllegalArgumentException::class)
+  fun `invalid delivery type throws descriptive exception`() {
+    val payload =
+      """
+      {
+        "id": "invalid-delivery",
+        "display_name": "Invalid Delivery",
+        "version": "1.0",
+        "provider": "cloud_api",
+        "delivery": "unknown",
+        "min_app_version": 1,
+        "size_bytes": 1,
+        "capabilities": [],
+        "manifest_url": "hf://example/invalid"
+      }
+      """
+        .trimIndent()
+
+    val config = json.decodeFromString(ModelConfig.serializer(), payload)
+    config.toModelPackage(FixedClock)
+  }
+
+  @Test
+  fun `ModelCatalogConfig defaults to version one`() {
+    val payload = """{"models": []}"""
+
+    val config = json.decodeFromString(ModelCatalogConfig.serializer(), payload)
+
+    assertThat(config.version).isEqualTo(1)
+    assertThat(config.models).isEmpty()
+  }
+
   private object FixedClock : Clock {
     override fun now(): Instant = Instant.parse("2025-01-01T00:00:00Z")
   }

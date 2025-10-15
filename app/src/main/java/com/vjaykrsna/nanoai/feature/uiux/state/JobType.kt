@@ -11,7 +11,7 @@ enum class JobType {
 }
 
 /** Human-readable display name for the job type. */
-val JobType.displayName: String
+val JobType.label: String
   get() =
     when (this) {
       JobType.IMAGE_GENERATION -> "Image Generation"

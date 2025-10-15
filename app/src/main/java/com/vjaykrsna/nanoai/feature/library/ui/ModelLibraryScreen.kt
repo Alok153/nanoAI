@@ -24,12 +24,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.vjaykrsna.nanoai.feature.library.presentation.LibraryError
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryViewModel
+import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.LOADING_INDICATOR_TAG
 import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -101,7 +103,10 @@ fun ModelLibraryScreen(
       if (isLoading) {
         Box(modifier = Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
           CircularProgressIndicator(
-            modifier = Modifier.semantics { contentDescription = "Loading models" }
+            modifier =
+              Modifier.testTag(LOADING_INDICATOR_TAG).semantics {
+                contentDescription = "Loading models"
+              },
           )
         }
       } else {

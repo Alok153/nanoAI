@@ -9,6 +9,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -574,10 +575,14 @@ private fun ShellMainSurface(
   ) { innerPadding ->
     Column(
       modifier =
-        Modifier.fillMaxSize().padding(innerPadding).testTag("shell_content").semantics {
-          contentDescription = "Main content area"
-          stateDescription = layout.connectivityStatusDescription
-        },
+        Modifier.fillMaxSize()
+          .padding(innerPadding)
+          .testTag("shell_content")
+          .semantics {
+            contentDescription = "Main content area"
+            stateDescription = layout.connectivityStatusDescription
+          }
+          .focusable(),
       verticalArrangement = Arrangement.Top,
     ) {
       val bannerState = state.connectivityBanner

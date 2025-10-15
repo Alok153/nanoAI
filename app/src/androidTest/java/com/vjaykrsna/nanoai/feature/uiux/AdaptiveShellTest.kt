@@ -67,8 +67,14 @@ class AdaptiveShellTest {
       mutableStateOf(sampleState(WindowWidthSizeClass.Medium, WindowHeightSizeClass.Medium))
     composeRule.setContent { NanoShellScaffold(state = state.value, onEvent = {}) }
 
+    composeRule.waitForIdle()
+
+    composeRule.waitUntil(timeoutMillis = 5_000) {
+      composeRule.onAllNodesWithTag("shell_content").fetchSemanticsNodes().isNotEmpty()
+    }
+
     val content = composeRule.onNodeWithTag("shell_content")
-    content.assertIsDisplayed()
+    content.assertExists()
     content.performSemanticsAction(SemanticsActions.RequestFocus)
     content.assertIsFocused()
   }

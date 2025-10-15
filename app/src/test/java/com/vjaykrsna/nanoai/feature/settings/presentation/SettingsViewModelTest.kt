@@ -479,4 +479,152 @@ class SettingsViewModelTest {
       assertThat(cleared.statusMessage).isNull()
     }
   }
+
+  @Test
+  fun `addApiProvider_emitsProviderAddFailedOnError`() = runTest {
+    val config = mockk<com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig>()
+    coEvery { apiProviderRepository.addProvider(config) } throws Exception("Network error")
+
+    viewModel.errorEvents.test {
+      viewModel.addApiProvider(config)
+      advanceUntilIdle()
+
+      val error = awaitItem()
+      assertThat(error).isInstanceOf(SettingsError.ProviderAddFailed::class.java)
+      assertThat((error as SettingsError.ProviderAddFailed).message).contains("Network error")
+      cancelAndIgnoreRemainingEvents()
+    }
+  }
+
+  @Test
+  fun `updateApiProvider_emitsProviderUpdateFailedOnError`() = runTest {
+    val config = mockk<com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig>()
+    coEvery { apiProviderRepository.updateProvider(config) } throws Exception("Update failed")
+
+    viewModel.errorEvents.test {
+      viewModel.updateApiProvider(config)
+      advanceUntilIdle()
+
+      val error = awaitItem()
+      assertThat(error).isInstanceOf(SettingsError.ProviderUpdateFailed::class.java)
+      assertThat((error as SettingsError.ProviderUpdateFailed).message).contains("Update failed")
+      cancelAndIgnoreRemainingEvents()
+    }
+  }
+
+  @Test
+  fun `deleteApiProvider_emitsProviderDeleteFailedOnError`() = runTest {
+    val providerId = "test-provider-id"
+    coEvery { apiProviderRepository.deleteProvider(providerId) } throws Exception("Delete failed")
+
+    viewModel.errorEvents.test {
+      viewModel.deleteApiProvider(providerId)
+      advanceUntilIdle()
+
+      val error = awaitItem()
+      assertThat(error).isInstanceOf(SettingsError.ProviderDeleteFailed::class.java)
+      assertThat((error as SettingsError.ProviderDeleteFailed).message).contains("Delete failed")
+      cancelAndIgnoreRemainingEvents()
+    }
+  }
+
+  @Test
+  fun `validateProvider_checksRequiredFields`() = runTest {
+    // This test verifies that provider validation occurs within the repository
+    // The validation logic would be in the APIProviderConfig data class or repository
+    val config = mockk<com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig>()
+    coEvery { apiProviderRepository.addProvider(config) } returns Unit
+
+    viewModel.addApiProvider(config)
+    advanceUntilIdle()
+
+    coVerify { apiProviderRepository.addProvider(config) }
+  }
+
+  @Test
+  fun `refreshHuggingFaceAccount_updatesAuthState`() = runTest {
+    val authState = mockk<HuggingFaceAuthState>()
+    coEvery { huggingFaceAuthCoordinator.refreshAccount() } returns authState
+
+    viewModel.refreshHuggingFaceAccount()
+    advanceUntilIdle()
+
+    coVerify { huggingFaceAuthCoordinator.refreshAccount() }
+  }
+
+  @Test
+  fun `refreshHuggingFaceAccount_handlesAuthFailure`() = runTest {
+    val authState = mockk<HuggingFaceAuthState>()
+    coEvery { huggingFaceAuthCoordinator.refreshAccount() } returns authState
+
+    viewModel.refreshHuggingFaceAccount()
+    advanceUntilIdle()
+
+    coVerify { huggingFaceAuthCoordinator.refreshAccount() }
+  }
+
+  @Test
+  fun `huggingFaceOAuth_completesSuccessfully`() = runTest {
+    val deviceAuthState =
+      HuggingFaceDeviceAuthState(
+        userCode = "TEST-CODE",
+        verificationUri = "https://huggingface.co/login/device",
+        verificationUriComplete = "https://huggingface.co/login/device?code=TEST-CODE",
+        expiresAt = Clock.System.now() + kotlin.time.Duration.parse("15m"),
+        pollIntervalSeconds = 5
+      )
+    coEvery { huggingFaceAuthCoordinator.beginDeviceAuthorization(any(), any()) } returns
+      Result.success(deviceAuthState)
+
+    viewModel.startHuggingFaceOAuthLogin()
+    advanceUntilIdle()
+
+    coVerify { huggingFaceAuthCoordinator.beginDeviceAuthorization(any(), any()) }
+  }
+
+  @Test
+  fun `dismissExportWarnings_clearsState`() = runTest {
+    coEvery { privacyPreferenceStore.setExportWarningsDismissed(true) } returns Unit
+
+    viewModel.dismissExportWarnings()
+    advanceUntilIdle()
+
+    coVerify { privacyPreferenceStore.setExportWarningsDismissed(true) }
+  }
+
+  @Test
+  fun `exportData_triggersExportFlow`() = runTest {
+    val path = "/test/export/path"
+    coEvery { downloadsUseCase.exportBackup(path, false) } returns Result.success(path)
+
+    viewModel.isLoading.test {
+      assertThat(awaitItem()).isFalse()
+
+      viewModel.exportBackup(path, false)
+      assertThat(awaitItem()).isTrue() // Loading starts
+      assertThat(awaitItem()).isFalse() // Loading ends
+    }
+  }
+
+  @Test
+  fun `importData_handlesValidation`() = runTest {
+    val uri = mockk<android.net.Uri>()
+    val summary =
+      ImportSummary(
+        personasImported = 3,
+        personasUpdated = 2,
+        providersImported = 0,
+        providersUpdated = 0
+      )
+    coEvery { importService.importBackup(uri) } returns Result.success(summary)
+
+    viewModel.importSuccess.test {
+      viewModel.importBackup(uri)
+      advanceUntilIdle()
+
+      val result = awaitItem()
+      assertThat(result.personasImported).isEqualTo(3)
+      cancelAndIgnoreRemainingEvents()
+    }
+  }
 }

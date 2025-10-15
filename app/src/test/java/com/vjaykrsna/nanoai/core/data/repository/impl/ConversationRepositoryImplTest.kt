@@ -260,6 +260,18 @@ class ConversationRepositoryImplTest {
   }
 
   @Test
+  fun `updateThreadPersona clears persona when null`() = runTest {
+    val personaId = UUID.randomUUID()
+    val thread = DomainTestBuilders.buildChatThread(personaId = personaId)
+    repository.createThread(thread)
+
+    repository.updateThreadPersona(thread.threadId, null)
+
+    val retrieved = repository.getCurrentPersonaForThread(thread.threadId)
+    assertThat(retrieved).isNull()
+  }
+
+  @Test
   fun `saveMessage is alias for addMessage`() = runTest {
     val thread = DomainTestBuilders.buildChatThread()
     repository.createThread(thread)
@@ -284,6 +296,20 @@ class ConversationRepositoryImplTest {
     val retrieved = repository.getMessages(thread.threadId)
     assertThat(retrieved.first().role).isEqualTo(Role.ASSISTANT)
     assertThat(retrieved.first().latencyMs).isEqualTo(1500L)
+  }
+
+  @Test
+  fun `addMessage updates thread timestamp`() = runTest {
+    val thread = DomainTestBuilders.buildChatThread()
+    repository.createThread(thread)
+    val newTimestamp = Clock.System.now().plus(kotlin.time.Duration.parse("5s"))
+    val message =
+      DomainTestBuilders.buildUserMessage(threadId = thread.threadId).copy(createdAt = newTimestamp)
+
+    repository.addMessage(message)
+
+    val updatedThread = repository.getThread(thread.threadId)
+    assertThat(updatedThread?.updatedAt).isEqualTo(newTimestamp)
   }
 
   @Test

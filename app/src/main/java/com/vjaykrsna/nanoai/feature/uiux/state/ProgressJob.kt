@@ -13,6 +13,8 @@ data class ProgressJob(
   val eta: Duration? = null,
   val canRetry: Boolean = false,
   val queuedAt: Instant = Instant.EPOCH,
+  val subtitle: String? = null,
+  val accessibilityLabelOverride: String? = null,
 ) {
   /** Normalised progress value, clamped between 0f and 1f. */
   val normalizedProgress: Float
@@ -45,4 +47,12 @@ data class ProgressJob(
         JobStatus.COMPLETED -> "Completed"
         JobStatus.STREAMING -> "Streaming"
       }
+
+  /** Localised subtitle describing progress details (eta, queued time, etc.). */
+  val subtitleOrDefault: String?
+    get() = subtitle
+
+  /** Content description to use for screen reader announcements. */
+  val accessibilityLabel: String
+    get() = accessibilityLabelOverride ?: "${type.label}, $statusLabel"
 }

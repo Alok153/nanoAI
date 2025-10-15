@@ -12,6 +12,7 @@ import com.vjaykrsna.nanoai.core.model.Role
 import java.util.UUID
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
@@ -92,6 +93,110 @@ class ChatMessageDaoTest {
     assertThat(ordered.map { it.text }).containsExactly("first", "second", "third").inOrder()
   }
 
+  @Test
+  fun observeByThreadId_emitsUpdates() = runTest {
+    val threadId = UUID.randomUUID().toString()
+    chatThreadDao.insert(buildThread(threadId))
+
+    val flow = messageDao.observeByThreadId(threadId)
+    assertThat(flow.first()).isEmpty()
+
+    messageDao.insert(buildMessage(threadId, Clock.System.now(), "hello"))
+
+    val updated = flow.first()
+    assertThat(updated).hasSize(1)
+    assertThat(updated.first().text).isEqualTo("hello")
+  }
+
+  @Test
+  fun getLatestMessages_limitsToRequestedCount() = runTest {
+    val threadId = UUID.randomUUID().toString()
+    chatThreadDao.insert(buildThread(threadId))
+    val base = Clock.System.now()
+    repeat(4) { index ->
+      messageDao.insert(
+        buildMessage(
+          threadId,
+          base.plus((index + 1).seconds),
+          text = "msg$index",
+        )
+      )
+    }
+
+    val latest = messageDao.getLatestMessages(threadId, limit = 2)
+
+    assertThat(latest).hasSize(2)
+    assertThat(latest.map { it.text }).containsExactly("msg3", "msg2").inOrder()
+  }
+
+  @Test
+  fun getMessagesWithErrors_returnsOnlyErroredMessages() = runTest {
+    val threadId = UUID.randomUUID().toString()
+    chatThreadDao.insert(buildThread(threadId))
+    val base = Clock.System.now()
+    messageDao.insert(buildMessage(threadId, base.minus(1.seconds), text = "ok"))
+    messageDao.insert(
+      buildMessage(
+        threadId,
+        base,
+        text = null,
+        role = Role.ASSISTANT,
+        errorCode = "NETWORK",
+      )
+    )
+    messageDao.insert(
+      buildMessage(
+        threadId,
+        base.plus(1.seconds),
+        text = null,
+        role = Role.ASSISTANT,
+        errorCode = "TIMEOUT",
+      )
+    )
+
+    val errors = messageDao.getMessagesWithErrors()
+
+    assertThat(errors).hasSize(2)
+    assertThat(errors.map { it.errorCode }).containsExactly("TIMEOUT", "NETWORK").inOrder()
+  }
+
+  @Test
+  fun getAverageLatency_returnsMeanLatency() = runTest {
+    val threadId = UUID.randomUUID().toString()
+    chatThreadDao.insert(buildThread(threadId))
+    messageDao.insert(
+      buildMessage(
+        threadId,
+        Clock.System.now(),
+        role = Role.ASSISTANT,
+        latencyMs = 1000L,
+      )
+    )
+    messageDao.insert(
+      buildMessage(
+        threadId,
+        Clock.System.now().plus(1.seconds),
+        role = Role.ASSISTANT,
+        latencyMs = 500L,
+      )
+    )
+
+    val average = messageDao.getAverageLatency(threadId)
+
+    assertThat(average).isWithin(0.001).of(750.0)
+  }
+
+  @Test
+  fun getAverageLatency_returnsNullWhenNoLatencySamples() = runTest {
+    val threadId = UUID.randomUUID().toString()
+    chatThreadDao.insert(buildThread(threadId))
+    messageDao.insert(buildMessage(threadId, Clock.System.now(), role = Role.ASSISTANT))
+
+    val average = messageDao.getAverageLatency(threadId)
+
+    assertThat(average).isNull()
+  }
+
   private fun buildThread(
     threadId: String,
     updatedAt: Instant = Clock.System.now(),
@@ -109,14 +214,20 @@ class ChatMessageDaoTest {
   private fun buildMessage(
     threadId: String,
     createdAt: Instant,
-    text: String = "message",
+    text: String? = "message",
+    role: Role = Role.USER,
+    source: MessageSource = MessageSource.LOCAL_MODEL,
+    latencyMs: Long? = null,
+    errorCode: String? = null,
   ): MessageEntity =
     MessageEntity(
       messageId = UUID.randomUUID().toString(),
       threadId = threadId,
-      role = Role.USER,
+      role = role,
       text = text,
-      source = MessageSource.LOCAL_MODEL,
+      source = source,
+      latencyMs = latencyMs,
       createdAt = createdAt,
+      errorCode = errorCode,
     )
 }

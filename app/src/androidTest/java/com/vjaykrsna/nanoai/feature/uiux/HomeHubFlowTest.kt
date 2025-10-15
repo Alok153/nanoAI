@@ -11,8 +11,13 @@ import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSiz
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.SemanticsNodeInteractionCollection
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -40,6 +45,7 @@ import com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload
 import com.vjaykrsna.nanoai.feature.uiux.ui.shell.NanoShellScaffold
 import com.vjaykrsna.nanoai.feature.uiux.ui.shell.ShellUiEvent
 import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
+import com.vjaykrsna.nanoai.ui.theme.NanoAITheme
 import java.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Rule
@@ -58,11 +64,25 @@ class HomeHubFlowTest {
     val state = mutableStateOf(sampleState())
 
     composeRule.setContent {
-      NanoShellScaffold(state = state.value, onEvent = { event -> events += event })
+      NanoAITheme { NanoShellScaffold(state = state.value, onEvent = { event -> events += event }) }
     }
 
-    composeRule.onAllNodesWithTag("mode_card").assertCountEquals(3)
-    composeRule.onAllNodesWithTag("mode_card")[0].performClick()
+    composeRule.waitForIdle()
+
+    composeRule.waitUntil(timeoutMillis = 5_000) {
+      composeRule
+        .onAllNodesWithTag("mode_card", useUnmergedTree = true)
+        .fetchSemanticsNodes(false)
+        .size >= 3
+    }
+    val modeCards = composeRule.onAllNodesWithTag("mode_card", useUnmergedTree = true)
+    modeCards.assertCountEquals(3)
+    modeCards[0].performClick()
+
+    composeRule.waitUntil {
+      events.any { it is ShellUiEvent.ModeSelected && it.modeId == ModeId.CHAT }
+    }
+
     assertThat(events.filterIsInstance<ShellUiEvent.ModeSelected>().first().modeId)
       .isEqualTo(ModeId.CHAT)
   }
@@ -70,10 +90,19 @@ class HomeHubFlowTest {
   @Test
   fun recentActivity_showsLatestEntries() {
     val state = mutableStateOf(sampleState())
-    composeRule.setContent { NanoShellScaffold(state = state.value, onEvent = {}) }
+    composeRule.setContent { NanoAITheme { NanoShellScaffold(state = state.value, onEvent = {}) } }
 
-    composeRule.onNodeWithTag("recent_activity_list").assertIsDisplayed()
-    val items = composeRule.onAllNodesWithTag("recent_activity_item")
+    composeRule.waitForIdle()
+
+    composeRule.waitUntil(timeoutMillis = 5_000) {
+      composeRule
+        .onAllNodesWithTagPrefix("recent_activity_item", useUnmergedTree = true)
+        .fetchSemanticsNodes(false)
+        .size == 2
+    }
+
+    composeRule.onNodeWithTag("recent_activity_list", useUnmergedTree = true).assertIsDisplayed()
+    val items = composeRule.onAllNodesWithTagPrefix("recent_activity_item", useUnmergedTree = true)
     items.assertCountEquals(2)
     items[0].assertIsDisplayed()
   }
@@ -82,9 +111,25 @@ class HomeHubFlowTest {
   fun quickActions_sectionVisible() {
     val events = mutableListOf<ShellUiEvent>()
     val state = mutableStateOf(sampleState())
-    composeRule.setContent { NanoShellScaffold(state = state.value, onEvent = { events += it }) }
+    composeRule.setContent {
+      NanoAITheme { NanoShellScaffold(state = state.value, onEvent = { events += it }) }
+    }
 
-    composeRule.onNodeWithTag("quick_actions_row").assertIsDisplayed()
+    composeRule.waitForIdle()
+
+    composeRule
+      .onNodeWithTag("home_tools_toggle", useUnmergedTree = true)
+      .assertIsDisplayed()
+      .performClick()
+
+    composeRule.waitUntil(timeoutMillis = 5_000) {
+      composeRule
+        .onAllNodesWithTag("quick_actions_row", useUnmergedTree = true)
+        .fetchSemanticsNodes(false)
+        .isNotEmpty()
+    }
+
+    composeRule.onNodeWithTag("quick_actions_row", useUnmergedTree = true).assertIsDisplayed()
     composeRule.onNodeWithContentDescription("New Chat").assertIsDisplayed().performClick()
 
     composeRule.waitUntil {
@@ -173,5 +218,17 @@ class HomeHubFlowTest {
         ),
       enabled = true,
       badge = null,
+    )
+
+  private fun ComposeContentTestRule.onAllNodesWithTagPrefix(
+    prefix: String,
+    useUnmergedTree: Boolean = false,
+  ): SemanticsNodeInteractionCollection =
+    onAllNodes(
+      SemanticsMatcher("Has test tag with prefix $prefix") { node ->
+        val tag = node.config.getOrNull(SemanticsProperties.TestTag)
+        tag?.startsWith(prefix) == true
+      },
+      useUnmergedTree = useUnmergedTree,
     )
 }

@@ -255,6 +255,17 @@ class PersonaRepositoryImplTest {
   }
 
   @Test
+  fun `deletePersona on missing id is a no-op`() = runTest {
+    val persona = DomainTestBuilders.buildPersona(name = "Existing")
+    repository.createPersona(persona)
+
+    repository.deletePersona(UUID.randomUUID())
+
+    val all = repository.getAllPersonas()
+    assertThat(all).hasSize(1)
+  }
+
+  @Test
   fun `getPersonaById returns null for non-existent ID`() = runTest {
     val nonExistentId = UUID.randomUUID()
 

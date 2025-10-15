@@ -1,7 +1,9 @@
 package com.vjaykrsna.nanoai.feature.settings.ui
 
+import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -33,6 +35,7 @@ import org.junit.runner.RunWith
  * accessibility.
  */
 @RunWith(AndroidJUnit4::class)
+@OptIn(ExperimentalTestApi::class)
 class SettingsScreenTest {
 
   @get:Rule val composeTestRule = createComposeRule()
@@ -56,9 +59,9 @@ class SettingsScreenTest {
   private val mockUiUxState = MutableStateFlow(SettingsUiUxState())
   private val mockHuggingFaceAuthState = MutableStateFlow(HuggingFaceAuthState.unauthenticated())
   private val mockHuggingFaceDeviceAuthState = MutableStateFlow<HuggingFaceDeviceAuthState?>(null)
-  private val mockErrorEvents = MutableSharedFlow<SettingsError>()
-  private val mockExportSuccess = MutableSharedFlow<String>()
-  private val mockImportSuccess = MutableSharedFlow<ImportSummary>()
+  private val mockErrorEvents = MutableSharedFlow<SettingsError>(extraBufferCapacity = 1)
+  private val mockExportSuccess = MutableSharedFlow<String>(extraBufferCapacity = 1)
+  private val mockImportSuccess = MutableSharedFlow<ImportSummary>(extraBufferCapacity = 1)
 
   @Before
   fun setup() {
@@ -166,7 +169,9 @@ class SettingsScreenTest {
     composeTestRule.waitForIdle()
 
     // Login button should be visible
-    composeTestRule.onNodeWithText("Connect", substring = true).assertExists()
+    composeTestRule
+      .onNodeWithContentDescription("Login with Hugging Face account")
+      .assertIsDisplayed()
   }
 
   @Test
@@ -199,7 +204,7 @@ class SettingsScreenTest {
     composeTestRule.waitForIdle()
 
     // Click login
-    composeTestRule.onNodeWithText("Connect", substring = true).performClick()
+    composeTestRule.onNodeWithContentDescription("Login with Hugging Face account").performClick()
     composeTestRule.waitForIdle()
 
     // Login dialog should appear
@@ -237,10 +242,26 @@ class SettingsScreenTest {
     composeTestRule.waitForIdle()
 
     // Emit export success event
-    mockExportSuccess.tryEmit("Export successful")
+    composeTestRule.runOnIdle { mockExportSuccess.tryEmit("Export successful") }
 
     // Snackbar should appear
-    composeTestRule.onNodeWithText("Export successful", substring = true).assertExists()
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+      composeTestRule
+        .onAllNodesWithText(
+          "Backup exported to Export successful",
+          substring = true,
+          useUnmergedTree = true,
+        )
+        .fetchSemanticsNodes(false)
+        .isNotEmpty()
+    }
+    composeTestRule
+      .onNodeWithText(
+        "Backup exported to Export successful",
+        substring = true,
+        useUnmergedTree = true,
+      )
+      .assertExists()
   }
 
   @Test
@@ -264,17 +285,35 @@ class SettingsScreenTest {
     composeTestRule.waitForIdle()
 
     // Emit import success event
-    mockImportSuccess.tryEmit(
-      ImportSummary(
-        personasImported = 5,
-        personasUpdated = 0,
-        providersImported = 2,
-        providersUpdated = 1
+    composeTestRule.runOnIdle {
+      mockImportSuccess.tryEmit(
+        ImportSummary(
+          personasImported = 5,
+          personasUpdated = 0,
+          providersImported = 2,
+          providersUpdated = 1,
+        )
       )
-    )
+    }
 
     // Snackbar should appear
-    composeTestRule.onNodeWithText("Import completed", substring = true).assertExists()
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+      composeTestRule
+        .onAllNodesWithText(
+          "Imported backup: 5 personas, 3 providers",
+          substring = false,
+          useUnmergedTree = true,
+        )
+        .fetchSemanticsNodes(false)
+        .isNotEmpty()
+    }
+    composeTestRule
+      .onNodeWithText(
+        "Imported backup: 5 personas, 3 providers",
+        substring = false,
+        useUnmergedTree = true,
+      )
+      .assertExists()
   }
 
   @Test
@@ -284,10 +323,28 @@ class SettingsScreenTest {
     composeTestRule.waitForIdle()
 
     // Emit error event
-    mockErrorEvents.tryEmit(SettingsError.UnexpectedError("Test error"))
+    composeTestRule.runOnIdle {
+      mockErrorEvents.tryEmit(SettingsError.UnexpectedError("Test error"))
+    }
 
     // Snackbar should appear
-    composeTestRule.onNodeWithText("Test error", substring = true).assertExists()
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+      composeTestRule
+        .onAllNodesWithText(
+          "Unexpected error: Test error",
+          substring = false,
+          useUnmergedTree = true,
+        )
+        .fetchSemanticsNodes(false)
+        .isNotEmpty()
+    }
+    composeTestRule
+      .onNodeWithText(
+        "Unexpected error: Test error",
+        substring = false,
+        useUnmergedTree = true,
+      )
+      .assertExists()
   }
 
   @Test

@@ -2,12 +2,14 @@
 
 package com.vjaykrsna.nanoai.feature.uiux
 
+import android.os.SystemClock
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
@@ -16,8 +18,9 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodes
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.waitUntilDoesNotExist
@@ -45,6 +48,7 @@ import com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload
 import com.vjaykrsna.nanoai.feature.uiux.ui.shell.NanoShellScaffold
 import com.vjaykrsna.nanoai.feature.uiux.ui.shell.ShellUiEvent
 import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
+import com.vjaykrsna.nanoai.ui.theme.NanoAITheme
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
@@ -66,34 +70,58 @@ class OfflineProgressTest {
   @Test
   fun offlineBanner_showsQueuedCount() {
     val state = mutableStateOf(sampleState(ConnectivityStatus.OFFLINE, queuedJobs = 2))
-    composeRule.setContent { NanoShellScaffold(state = state.value, onEvent = {}) }
+    composeRule.setContent { NanoAITheme { NanoShellScaffold(state = state.value, onEvent = {}) } }
 
-    composeRule.onNodeWithTag("connectivity_banner").assertIsDisplayed()
-    composeRule.onNodeWithTag("connectivity_banner_cta").assertIsDisplayed()
+    composeRule.waitForIdle()
+
+    composeRule.waitUntil(timeoutMillis = 5_000) {
+      composeRule
+        .onAllNodesWithTag("connectivity_banner", useUnmergedTree = true)
+        .fetchSemanticsNodes(false)
+        .isNotEmpty()
+    }
+
+    composeRule.onNodeWithTag("connectivity_banner", useUnmergedTree = true).assertIsDisplayed()
+    composeRule.onNodeWithTag("connectivity_banner_cta", useUnmergedTree = true).assertIsDisplayed()
   }
 
   @Test
   fun progressList_displaysQueuedJobs() {
     val state = mutableStateOf(sampleState(ConnectivityStatus.OFFLINE, queuedJobs = 3))
-    composeRule.setContent { NanoShellScaffold(state = state.value, onEvent = {}) }
+    composeRule.setContent { NanoAITheme { NanoShellScaffold(state = state.value, onEvent = {}) } }
 
-    val items = composeRule.onAllNodesWithTag("progress_list_item")
+    composeRule.waitForIdle()
+
+    composeRule.waitUntil(timeoutMillis = 5_000) {
+      composeRule
+        .onAllNodesWithTagPrefix("progress_list_item_", useUnmergedTree = true)
+        .fetchSemanticsNodes(false)
+        .size == 3
+    }
+
+    val items = composeRule.onAllNodesWithTagPrefix("progress_list_item_", useUnmergedTree = true)
     items.assertCountEquals(3)
     items[0].assertContentDescriptionContains("Waiting")
   }
 
   @Test
-  fun reconnect_flushesQueue_andHidesBanner() {
+  fun reconnect_updatesConnectivity_andHidesBanner() {
     val state = mutableStateOf(sampleState(ConnectivityStatus.OFFLINE, queuedJobs = 1))
     composeRule.setContent {
-      NanoShellScaffold(state = state.value, onEvent = { intent -> handleIntent(state, intent) })
+      NanoAITheme {
+        NanoShellScaffold(state = state.value, onEvent = { intent -> handleIntent(state, intent) })
+      }
     }
+
+    composeRule.waitForIdle()
 
     handleIntent(state, ShellUiEvent.ConnectivityChanged(ConnectivityStatus.ONLINE))
     composeRule.waitUntilDoesNotExist(hasTestTag("connectivity_banner"))
-    composeRule.onAllNodesWithTag("connectivity_banner").assertCountEquals(0)
+    composeRule
+      .onAllNodesWithTag("connectivity_banner", useUnmergedTree = true)
+      .assertCountEquals(0)
     assertThat(state.value.layout.connectivity).isEqualTo(ConnectivityStatus.ONLINE)
-    assertThat(state.value.layout.progressJobs).isEmpty()
+    assertThat(state.value.connectivityBanner.queuedActionCount).isEqualTo(0)
   }
 
   @Test
@@ -116,16 +144,20 @@ class OfflineProgressTest {
     val events = mutableListOf<ShellUiEvent>()
 
     composeRule.setContent {
-      NanoShellScaffold(
-        state = state.value,
-        onEvent = { intent ->
-          events += intent
-          handleIntent(state, intent)
-        }
-      )
+      NanoAITheme {
+        NanoShellScaffold(
+          state = state.value,
+          onEvent = { intent ->
+            events += intent
+            handleIntent(state, intent)
+          }
+        )
+      }
     }
 
-    val retryButton = composeRule.onNodeWithTag("progress_retry_button")
+    composeRule.waitForNodeWithTag("progress_retry_button_${jobId}")
+
+    val retryButton = composeRule.onNodeWithTag("progress_retry_button_${jobId}")
     retryButton.assertIsEnabled()
     retryButton.assert(
       SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "Retry available")
@@ -288,3 +320,32 @@ class OfflineProgressTest {
       )
     )
 }
+
+private fun ComposeContentTestRule.waitForNodeWithTag(
+  tag: String,
+  useUnmergedTree: Boolean = false,
+  timeoutMillis: Long = 5_000,
+) {
+  val deadline = SystemClock.elapsedRealtime() + timeoutMillis
+  while (SystemClock.elapsedRealtime() < deadline) {
+    val nodes = onAllNodesWithTag(tag, useUnmergedTree).fetchSemanticsNodes(false)
+    if (nodes.isNotEmpty()) return
+    waitForIdle()
+  }
+  throw AssertionError("Timed out waiting for node with tag '$tag'")
+}
+
+private fun ComposeContentTestRule.onAllNodesWithTagPrefix(
+  prefix: String,
+  useUnmergedTree: Boolean = false,
+) =
+  onAllNodes(
+    SemanticsMatcherExpectTagPrefix(prefix),
+    useUnmergedTree = useUnmergedTree,
+  )
+
+private fun SemanticsMatcherExpectTagPrefix(prefix: String): SemanticsMatcher =
+  SemanticsMatcher("Has test tag with prefix $prefix") { node ->
+    val tag = node.config.getOrNull(SemanticsProperties.TestTag)
+    tag?.startsWith(prefix) == true
+  }

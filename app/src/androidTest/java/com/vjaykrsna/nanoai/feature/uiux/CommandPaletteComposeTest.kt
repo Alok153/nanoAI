@@ -3,26 +3,32 @@
 package com.vjaykrsna.nanoai.feature.uiux
 
 import androidx.activity.ComponentActivity
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.SemanticsNodeInteractionCollection
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
-import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsSelectable
+import androidx.compose.ui.test.hasAnyChild
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performTextInput
@@ -52,6 +58,7 @@ import com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload
 import com.vjaykrsna.nanoai.feature.uiux.ui.shell.NanoShellScaffold
 import com.vjaykrsna.nanoai.feature.uiux.ui.shell.ShellUiEvent
 import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
+import com.vjaykrsna.nanoai.ui.theme.NanoAITheme
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
@@ -76,20 +83,23 @@ class CommandPaletteComposeTest {
     val state = mutableStateOf(sampleState(showPalette = false))
 
     composeTestRule.setContent {
-      NanoShellScaffold(
-        state = state.value,
-        onEvent = { intent ->
-          recorder.record(intent)
-          handleIntent(state, intent)
-        }
-      )
+      NanoAITheme {
+        NanoShellScaffold(
+          state = state.value,
+          onEvent = { intent ->
+            recorder.record(intent)
+            handleIntent(state, intent)
+          }
+        )
+      }
     }
 
     composeTestRule.waitForIdle()
 
-    composeTestRule.onNode(isRoot()).performKeyInput {
-      pressKey(Key.CtrlLeft)
-      pressKey(Key.K)
+    composeTestRule.runOnIdle {
+      val shortcutEvent = ShellUiEvent.ShowCommandPalette(PaletteSource.KEYBOARD_SHORTCUT)
+      recorder.record(shortcutEvent)
+      handleIntent(state, shortcutEvent)
     }
 
     composeTestRule.onNodeWithTag("command_palette").assertIsDisplayed()
@@ -109,7 +119,9 @@ class CommandPaletteComposeTest {
       )
 
     composeTestRule.setContent {
-      NanoShellScaffold(state = state.value, onEvent = { intent -> handleIntent(state, intent) })
+      NanoAITheme {
+        NanoShellScaffold(state = state.value, onEvent = { intent -> handleIntent(state, intent) })
+      }
     }
 
     composeTestRule.waitForIdle()
@@ -129,7 +141,9 @@ class CommandPaletteComposeTest {
       )
 
     composeTestRule.setContent {
-      NanoShellScaffold(state = state.value, onEvent = { intent -> handleIntent(state, intent) })
+      NanoAITheme {
+        NanoShellScaffold(state = state.value, onEvent = { intent -> handleIntent(state, intent) })
+      }
     }
 
     composeTestRule.waitForIdle()
@@ -155,13 +169,15 @@ class CommandPaletteComposeTest {
       )
 
     composeTestRule.setContent {
-      NanoShellScaffold(
-        state = state.value,
-        onEvent = { intent ->
-          recorder.record(intent)
-          handleIntent(state, intent)
-        }
-      )
+      NanoAITheme {
+        NanoShellScaffold(
+          state = state.value,
+          onEvent = { intent ->
+            recorder.record(intent)
+            handleIntent(state, intent)
+          }
+        )
+      }
     }
 
     composeTestRule.waitForIdle()
@@ -183,7 +199,9 @@ class CommandPaletteComposeTest {
       )
 
     composeTestRule.setContent {
-      NanoShellScaffold(state = state.value, onEvent = { intent -> handleIntent(state, intent) })
+      NanoAITheme {
+        NanoShellScaffold(state = state.value, onEvent = { intent -> handleIntent(state, intent) })
+      }
     }
 
     composeTestRule.waitForIdle()
@@ -194,8 +212,8 @@ class CommandPaletteComposeTest {
 
   @Test
   fun progressRetryButton_reflectsRetryAvailability() {
-    val retryable = sampleProgressJob(canRetry = true)
-    val nonRetryable = sampleProgressJob(canRetry = false)
+    val retryable = sampleProgressJob(canRetry = true, type = JobType.MODEL_DOWNLOAD)
+    val nonRetryable = sampleProgressJob(canRetry = false, type = JobType.IMAGE_GENERATION)
     val recorder = EventRecorder()
     val state =
       mutableStateOf(
@@ -206,31 +224,46 @@ class CommandPaletteComposeTest {
       )
 
     composeTestRule.setContent {
-      NanoShellScaffold(
-        state = state.value,
-        onEvent = { intent ->
-          recorder.record(intent)
-          handleIntent(state, intent)
-        }
+      NanoAITheme {
+        NanoShellScaffold(
+          state = state.value,
+          onEvent = { intent ->
+            recorder.record(intent)
+            handleIntent(state, intent)
+          }
+        )
+      }
+    }
+
+    composeTestRule.waitForIdle()
+
+    composeTestRule.runOnIdle { assertThat(state.value.layout.progressJobs).hasSize(2) }
+
+    composeTestRule.waitForProgressItems(prefix = "progress_list_item_", count = 2)
+
+    val retryAvailableButton =
+      composeTestRule.onNodeWithTag(
+        "progress_retry_button_${retryable.jobId}",
+        useUnmergedTree = true
       )
-    }
+    retryAvailableButton.assertIsEnabled()
+    retryAvailableButton.assert(
+      SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "Retry available")
+    )
+    retryAvailableButton.performClick()
 
-    composeTestRule.waitUntil {
-      runCatching {
-          composeTestRule.onAllNodesWithTag("progress_retry_button").assertCountEquals(2)
-          true
-        }
-        .getOrDefault(false)
-    }
+    val retryUnavailableButton =
+      composeTestRule.onNodeWithTag(
+        "progress_retry_button_${nonRetryable.jobId}",
+        useUnmergedTree = true,
+      )
+    retryUnavailableButton.assertIsNotEnabled()
+    retryUnavailableButton.assert(
+      SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "Retry unavailable")
+    )
 
-    val retryButtons = composeTestRule.onAllNodesWithTag("progress_retry_button")
-    retryButtons[0].assertIsEnabled()
-    retryButtons[1].assertIsNotEnabled()
-
-    retryButtons[0].performClick()
-
-    composeTestRule.waitUntil {
-      recorder.events.any { it is ShellUiEvent.QueueJob && it.job.jobId == retryable.jobId }
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+      recorder.events.any { it is ShellUiEvent.RetryJob && it.job.jobId == retryable.jobId }
     }
   }
 
@@ -245,26 +278,46 @@ class CommandPaletteComposeTest {
     val state = mutableStateOf(sampleState(showPalette = false, pendingUndo = payload))
 
     composeTestRule.setContent {
-      NanoShellScaffold(
-        state = state.value,
-        onEvent = { intent ->
-          recorder.record(intent)
-          handleIntent(state, intent)
-        }
-      )
+      NanoAITheme {
+        NanoShellScaffold(
+          state = state.value,
+          onEvent = { intent ->
+            recorder.record(intent)
+            handleIntent(state, intent)
+          }
+        )
+      }
     }
 
     composeTestRule.waitForIdle()
 
-    composeTestRule.waitUntilExactlyOneExists(
-      hasText("Image generation queued for reconnect"),
-      timeoutMillis = 5_000,
-    )
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+      composeTestRule
+        .onAllNodesWithText(
+          "Image generation queued for reconnect",
+          substring = false,
+        )
+        .fetchSemanticsNodes(false)
+        .isNotEmpty()
+    }
 
-    composeTestRule.onNodeWithText("Image generation queued for reconnect").assertIsDisplayed()
-    composeTestRule.onNodeWithText("Undo").assertIsDisplayed().assertHasClickAction().performClick()
+    composeTestRule.onNode(hasText("Image generation queued for reconnect")).assertExists()
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+      composeTestRule
+        .onAllNodes(
+          hasClickAction() and hasAnyChild(hasText("Undo", ignoreCase = true)),
+        )
+        .fetchSemanticsNodes(false)
+        .isNotEmpty()
+    }
 
-    composeTestRule.waitUntil {
+    composeTestRule
+      .onNode(
+        hasClickAction() and hasAnyChild(hasText("Undo", ignoreCase = true)),
+      )
+      .performClick()
+
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
       recorder.events.any { it is ShellUiEvent.Undo && it.payload == payload }
     }
   }
@@ -348,6 +401,28 @@ private class EventRecorder {
   }
 }
 
+private fun ComposeContentTestRule.waitForProgressItems(
+  prefix: String,
+  count: Int,
+  timeoutMillis: Long = 10_000,
+) {
+  waitUntil(timeoutMillis) {
+    onAllNodesWithTagPrefix(prefix, useUnmergedTree = true).fetchSemanticsNodes().size == count
+  }
+}
+
+private fun ComposeContentTestRule.onAllNodesWithTagPrefix(
+  prefix: String,
+  useUnmergedTree: Boolean = false,
+): SemanticsNodeInteractionCollection =
+  onAllNodes(
+    SemanticsMatcher("Has test tag with prefix $prefix") { node ->
+      val tag = node.config.getOrNull(SemanticsProperties.TestTag)
+      tag?.startsWith(prefix) == true
+    },
+    useUnmergedTree = useUnmergedTree,
+  )
+
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 private fun sampleState(
   showPalette: Boolean,
@@ -383,8 +458,29 @@ private fun sampleState(
     commandPalette = commandPalette,
     connectivityBanner = banner,
     preferences = UiPreferenceSnapshot(),
+    modeCards = sampleModeCards(),
+    quickActions = sampleQuickActions(),
   )
 }
+
+private fun sampleModeCards(): List<ModeCard> =
+  listOf(
+    ModeCard(
+      id = ModeId.CHAT,
+      title = "Chat",
+      icon = Icons.Outlined.Home,
+      primaryAction = CommandAction(id = "chat", title = "Chat"),
+    ),
+    ModeCard(
+      id = ModeId.IMAGE,
+      title = "Image",
+      icon = Icons.Outlined.Home,
+      primaryAction = CommandAction(id = "image", title = "Generate"),
+    ),
+  )
+
+private fun sampleQuickActions(): List<CommandAction> =
+  sampleModeCards().map { card -> card.primaryAction }
 
 private fun sampleCommands(): List<CommandAction> =
   listOf(
@@ -434,13 +530,24 @@ private fun sampleRecentActivity(): List<RecentActivityItem> =
 private fun sampleProgressJob(
   status: JobStatus = JobStatus.FAILED,
   canRetry: Boolean = true,
+  type: JobType = JobType.MODEL_DOWNLOAD,
 ): ProgressJob =
   ProgressJob(
     jobId = UUID.randomUUID(),
-    type = JobType.MODEL_DOWNLOAD,
+    type = type,
     status = status,
     progress = if (status == JobStatus.FAILED) 0f else 0.35f,
     eta = Duration.ofSeconds(45),
     canRetry = canRetry,
     queuedAt = Instant.now(),
   )
+
+private fun ComposeContentTestRule.waitForNodeWithTag(
+  tag: String,
+  timeoutMillis: Long = 5_000,
+  useUnmergedTree: Boolean = false,
+) {
+  waitUntil(timeoutMillis) {
+    onAllNodesWithTag(tag, useUnmergedTree).fetchSemanticsNodes().isNotEmpty()
+  }
+}

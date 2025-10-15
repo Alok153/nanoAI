@@ -167,6 +167,100 @@ class UserProfileRepositoryImplTest {
       preferences = preferencesStore.uiPreferences.first()
       assertThat(preferences.commandPaletteRecents.first()).isEqualTo("beta")
     }
+
+  @Test
+  fun updateProfile_validatesPinnedTools() =
+    runTest(scheduler) {
+      userProfileDao.insert(
+        UserProfileEntity(
+          userId = USER_ID,
+          displayName = "Taylor",
+          themePreference = ThemePreference.SYSTEM,
+          visualDensity = VisualDensity.DEFAULT,
+          lastOpenedScreen = ScreenType.HOME,
+          compactMode = false,
+          pinnedTools = listOf("db-one", "db-two"),
+        )
+      )
+
+      val result = runCatching {
+        repository.updatePinnedTools(USER_ID, listOf("primary-tool", " "))
+      }
+
+      assertThat(result.exceptionOrNull()).isInstanceOf(IllegalArgumentException::class.java)
+      advanceUntilIdle()
+
+      val storedEntity = userProfileDao.getById(USER_ID)
+      requireNotNull(storedEntity)
+      assertThat(storedEntity.pinnedTools).containsExactly("db-one", "db-two").inOrder()
+
+      val preferences = preferencesStore.uiPreferences.first()
+      assertThat(preferences.pinnedToolIds).isEmpty()
+    }
+
+  @Test
+  fun updateProfile_handlesThemePreferenceConflicts() =
+    runTest(scheduler) {
+      userProfileDao.insert(
+        UserProfileEntity(
+          userId = USER_ID,
+          displayName = "Taylor",
+          themePreference = ThemePreference.LIGHT,
+          visualDensity = VisualDensity.DEFAULT,
+          lastOpenedScreen = ScreenType.HOME,
+          compactMode = false,
+          pinnedTools = emptyList(),
+        )
+      )
+
+      preferencesStore.setThemePreference(ThemePreference.SYSTEM)
+      advanceUntilIdle()
+
+      repository.updateThemePreference(USER_ID, "dark")
+      advanceUntilIdle()
+
+      val entity = userProfileDao.getById(USER_ID)
+      requireNotNull(entity)
+      assertThat(entity.themePreference).isEqualTo(ThemePreference.DARK)
+
+      val preferences = preferencesStore.uiPreferences.first()
+      assertThat(preferences.themePreference).isEqualTo(ThemePreference.DARK)
+    }
+
+  @Test
+  fun deleteProfile_clearsLayoutSnapshots() =
+    runTest(scheduler) {
+      val layoutOne =
+        LayoutSnapshotEntity(
+          layoutId = "layout-1",
+          userId = USER_ID,
+          name = "Workspace",
+          lastOpenedScreen = "home",
+          pinnedTools = listOf("a", "b"),
+          isCompact = false,
+          position = 0,
+        )
+      val layoutTwo =
+        LayoutSnapshotEntity(
+          layoutId = "layout-2",
+          userId = USER_ID,
+          name = "Canvas",
+          lastOpenedScreen = "canvas",
+          pinnedTools = listOf("c"),
+          isCompact = false,
+          position = 1,
+        )
+      layoutSnapshotDao.insert(layoutOne)
+      layoutSnapshotDao.insert(layoutTwo)
+
+      repository.deleteLayoutSnapshot(layoutOne.layoutId)
+      advanceUntilIdle()
+
+      assertThat(layoutSnapshotDao.getById(layoutOne.layoutId)).isNull()
+      assertThat(layoutSnapshotDao.getById(layoutTwo.layoutId)).isEqualTo(layoutTwo)
+      val remaining = layoutSnapshotDao.getAllByUserId(USER_ID)
+      assertThat(remaining).containsExactly(layoutTwo)
+    }
 }
 
 private class TestContext : ContextWrapper(Application()) {

@@ -36,67 +36,67 @@
 
 ### Download Manager Coverage (0% → 80%+)
 
-- [ ] **T027** [P] [HIGH] Create DownloadManagerImpl unit tests - Basic operations
+- [X] **T027** [P] [HIGH] Create DownloadManagerImpl unit tests - Basic operations
   - Path: `app/src/test/java/com/vjaykrsna/nanoai/feature/library/data/impl/DownloadManagerImplTest.kt` (NEW)
   - Test: startDownload, queueDownload, pauseDownload, resumeDownload, cancelDownload
 
-- [ ] **T028** [P] [HIGH] DownloadManagerImpl unit tests - Progress & Status
+- [X] **T028** [P] [HIGH] DownloadManagerImpl unit tests - Progress & Status
   - Path: Same as T027 (add methods)
   - Test: observeProgress, getDownloadStatus, getActiveDownloads, getQueuedDownloads, getTaskById
 
-- [ ] **T029** [P] [HIGH] DownloadManagerImpl unit tests - Error & Retry
+- [X] **T029** [P] [HIGH] DownloadManagerImpl unit tests - Error & Retry
   - Path: Same as T027 (add methods)
   - Test: retryDownload, resetTask, startDownload_handlesNetworkError, queueDownload_handlesDiskSpaceError
 
 ### Model Catalog Repository Coverage (0% → 85%+)
 
-- [ ] **T030** [P] [HIGH] ModelCatalogRepositoryImpl unit tests - CRUD operations
+- [X] **T030** [P] [HIGH] ModelCatalogRepositoryImpl unit tests - CRUD operations
   - Path: `app/src/test/java/com/vjaykrsna/nanoai/feature/library/data/impl/ModelCatalogRepositoryImplTest.kt` (expand)
   - Test: getAllModels, getModelById, getInstalledModels, getModelsByState, getModel
 
-- [ ] **T031** [P] [HIGH] ModelCatalogRepositoryImpl unit tests - Catalog refresh
+- [X] **T031** [P] [HIGH] ModelCatalogRepositoryImpl unit tests - Catalog refresh
   - Path: Same as T030 (add methods)
   - Test: replaceCatalog, refreshCatalog, refreshOffline, refreshCatalog_handlesVersionMismatch
 
-- [ ] **T032** [P] [HIGH] ModelCatalogRepositoryImpl unit tests - Session tracking
+- [X] **T032** [P] [HIGH] ModelCatalogRepositoryImpl unit tests - Session tracking
   - Path: Same as T030 (add methods)
   - Test: isModelActiveInSession, setActiveModel, clearActiveModel
 
 ### Catalog Source Coverage (0% → 80%+)
 
-- [ ] **T033** [P] [MEDIUM] AssetModelCatalogSource unit tests
+- [X] **T033** [P] [MEDIUM] AssetModelCatalogSource unit tests
   - Path: `app/src/test/java/com/vjaykrsna/nanoai/feature/library/data/catalog/AssetModelCatalogSourceTest.kt` (NEW)
   - Test: fetchCatalog_parsesAssetsCorrectly, fetchCatalog_handlesMalformedJson, fetchCatalog_handlesCompanionObject
 
-- [ ] **T034** [P] [MEDIUM] Catalog config unit tests
+- [X] **T034** [P] [MEDIUM] Catalog config unit tests
   - Path: `app/src/test/java/com/vjaykrsna/nanoai/feature/library/data/catalog/CatalogConfigTest.kt` (expand)
   - Test: ModelConfig_parsesAllFields, ModelConfig_validatesRequiredFields, ModelCatalogConfig_handlesVersioning, Companion_providesDefaults
 
 ### Repository Expansion (Partial → 85%+)
 
-- [ ] **T035** [P] [MEDIUM] Expand ConversationRepositoryImpl tests
+- [X] **T035** [P] [MEDIUM] Expand ConversationRepositoryImpl tests
   - Path: `app/src/test/java/com/vjaykrsna/nanoai/core/data/repository/impl/ConversationRepositoryImplTest.kt` (expand)
   - Test: syncConversations_handlesOfflineQueue, archiveConversation, deleteConversation_cascadesMessages, getConversationsPaginated
 
-- [ ] **T036** [P] [MEDIUM] Expand PersonaRepositoryImpl tests
+- [X] **T036** [P] [MEDIUM] Expand PersonaRepositoryImpl tests
   - Path: `app/src/test/java/com/vjaykrsna/nanoai/core/data/repository/impl/PersonaRepositoryImplTest.kt` (expand)
   - Test: switchPersona_updatesActivePersona, switchPersona_persistsPreference, getPersonaById_handlesNotFound, listPersonas_ordersCorrectly
 
-- [ ] **T037** [P] [MEDIUM] Create UserProfileRepositoryImpl additional tests
+- [X] **T037** [P] [MEDIUM] Create UserProfileRepositoryImpl additional tests
   - Path: `app/src/test/java/com/vjaykrsna/nanoai/core/data/repository/impl/UserProfileRepositoryImplTest.kt` (expand)
   - Test: updateProfile_validatesFields, updateProfile_handlesConflicts, deleteProfile_clearsAllData
 
 ### DAO Instrumentation Tests (Partial → 90%+)
 
-- [ ] **T038** [P] [MEDIUM] Create DownloadTaskDao instrumentation tests
+- [X] **T038** [P] [MEDIUM] Create DownloadTaskDao instrumentation tests
   - Path: `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/library/data/daos/DownloadTaskDaoTest.kt` (NEW)
   - Test: insert, update, delete, getTaskById, getAllTasks, getTasksByStatus
 
-- [ ] **T039** [P] [MEDIUM] Create ModelMetadataDao instrumentation tests
+- [X] **T039** [P] [MEDIUM] Create ModelMetadataDao instrumentation tests
   - Path: `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/library/data/daos/ModelMetadataDaoTest.kt` (NEW)
   - Test: insertMetadata, updateMetadata, deleteMetadata, getMetadataByModelId, foreign key constraints
 
-- [ ] **T040** [P] [MEDIUM] Expand ChatMessageDao tests for offline operations
+- [X] **T040** [P] [MEDIUM] Expand ChatMessageDao tests for offline operations
   - Path: `app/src/test/java/com/vjaykrsna/nanoai/core/data/db/ChatMessageDaoTest.kt` (expand)
   - Test: getMessagesOffline_returnsQueuedMessages, markMessageSynced, getUnsentMessages_filtersCorrectly
 
@@ -112,41 +112,41 @@
 
 ### Settings ViewModel Expansion (Partial → 90%+)
 
-- [ ] **T041** [P] [MEDIUM] Expand SettingsViewModel API provider tests
+- [X] **T041** [P] [MEDIUM] Expand SettingsViewModel API provider tests
   - Path: `app/src/test/java/com/vjaykrsna/nanoai/feature/settings/presentation/SettingsViewModelTest.kt` (expand)
   - Test: addApiProvider_emitsProviderAddFailedOnError, updateApiProvider_emitsProviderUpdateFailedOnError, deleteApiProvider_emitsProviderDeleteFailedOnError, validateProvider_checksRequiredFields
 
-- [ ] **T042** [P] [MEDIUM] SettingsViewModel HuggingFace integration tests
+- [X] **T042** [P] [MEDIUM] SettingsViewModel HuggingFace integration tests
   - Path: Same as T041 (add methods)
   - Test: refreshHuggingFaceAccount_updatesAuthState, refreshHuggingFaceAccount_handlesAuthFailure, huggingFaceOAuth_completesSuccessfully
 
-- [ ] **T043** [P] [MEDIUM] SettingsViewModel export/import tests
+- [X] **T043** [P] [MEDIUM] SettingsViewModel export/import tests
   - Path: Same as T041 (add methods)
   - Test: dismissExportWarnings_clearsState, exportData_triggersExportFlow, importData_handlesValidation
 
 ### App ViewModel Tests (0% → 85%+)
 
-- [ ] **T044** [P] [HIGH] Create AppViewModel unit tests
+- [X] **T044** [P] [HIGH] Create AppViewModel unit tests
   - Path: `app/src/test/java/com/vjaykrsna/nanoai/AppViewModelTest.kt` (NEW)
   - Test: onDisclaimerAccepted_persistsConsent, onDisclaimerAccepted_navigatesToMain, initialization_loadsConfiguration, initialization_handlesUnexpectedError, initialization_checksFirstLaunch
 
 ### Library ViewModel Expansion (Partial → 90%+)
 
-- [ ] **T045** [P] [MEDIUM] Expand ModelLibraryViewModel download tests
+- [X] **T045** [P] [MEDIUM] Expand ModelLibraryViewModel download tests
   - Path: `app/src/test/java/com/vjaykrsna/nanoai/feature/library/presentation/ModelLibraryViewModelTest.kt` (expand)
   - Test: downloadModel_tracksProgressCorrectly, pauseDownload_updatesStateImmediately, resumeDownload_continuesFromLastState, cancelDownload_cleansUpResources, handleMultipleDownloads_coordinatesCorrectly
 
-- [ ] **T046** [P] [MEDIUM] ModelLibraryViewModel catalog and filtering tests
+- [X] **T046** [P] [MEDIUM] ModelLibraryViewModel catalog and filtering tests
   - Path: Same as T045 (add methods)
   - Test: refreshCatalog_updatesStateOnSuccess, refreshCatalog_showsOfflineFallbackOnFailure, filterByProvider_updatesVisibleModels, filterByCapability_combinesFilters, searchModels_filtersCorrectly
 
 ### Chat ViewModel Expansion (Partial → 90%+)
 
-- [ ] **T047** [P] [MEDIUM] Expand ChatViewModel composition tests
+- [X] **T047** [P] [MEDIUM] Expand ChatViewModel composition tests
   - Path: `app/src/test/java/com/vjaykrsna/nanoai/feature/chat/presentation/ChatViewModelTest.kt` (expand)
   - Test: sendMessage_validatesInputNotEmpty, sendMessage_handlesStreamingResponse, sendMessage_emitsErrorOnNetworkFailure, cancelMessage_stopsStreaming
 
-- [ ] **T048** [P] [MEDIUM] ChatViewModel persona and thread tests
+- [X] **T048** [P] [MEDIUM] ChatViewModel persona and thread tests
   - Path: Same as T047 (add methods)
   - Test: switchPersona_maintainsConversationContext, switchThread_loadsMessagesCorrectly, createNewThread_initializesEmptyState, deleteThread_cleansUpAndNavigates
 

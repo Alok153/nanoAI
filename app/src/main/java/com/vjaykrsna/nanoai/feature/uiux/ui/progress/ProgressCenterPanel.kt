@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import com.vjaykrsna.nanoai.feature.uiux.state.JobStatus
 import com.vjaykrsna.nanoai.feature.uiux.state.JobType
 import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
+import com.vjaykrsna.nanoai.feature.uiux.state.label
 
 private val PROGRESS_PANEL_HORIZONTAL_PADDING = 20.dp
 private val PROGRESS_PANEL_VERTICAL_PADDING = 16.dp
@@ -98,9 +99,10 @@ fun ProgressCenterPanel(
               .testTag("progress_list"),
           verticalArrangement = Arrangement.spacedBy(PROGRESS_LIST_ITEM_SPACING),
         ) {
-          items(jobs, key = { it.jobId }) { job ->
+          itemsIndexed(jobs, key = { _, job -> job.jobId }) { index, job ->
             ProgressJobItem(
               job = job,
+              index = index,
               onRetry = onRetry,
               onDismiss = onDismissJob,
             )
@@ -114,20 +116,19 @@ fun ProgressCenterPanel(
 @Composable
 private fun ProgressJobItem(
   job: ProgressJob,
+  index: Int,
   onRetry: (ProgressJob) -> Unit,
   onDismiss: (ProgressJob) -> Unit,
 ) {
   Surface(
     modifier =
-      Modifier.fillMaxWidth().testTag("progress_list_item").semantics {
+      Modifier.fillMaxWidth().testTag("progress_list_item_$index").semantics {
         val percent =
           (job.normalizedProgress * PROGRESS_PERCENT_SCALE)
             .toInt()
             .coerceIn(PROGRESS_PERCENT_MIN, PROGRESS_PERCENT_MAX)
         contentDescription = buildString {
-          append(job.type.label)
-          append(", ")
-          append(job.statusLabel)
+          append(job.accessibilityLabel)
           append(", ")
           append(percent)
           append(" percent complete")
@@ -214,7 +215,7 @@ private fun ProgressJobItem(
               onClick = { onRetry(job) },
               enabled = job.canRetryNow,
               modifier =
-                Modifier.testTag("progress_retry_button").semantics {
+                Modifier.testTag("progress_retry_button_${job.jobId}").semantics {
                   contentDescription = "Retry ${job.type.label.lowercase()} job"
                   stateDescription = if (job.canRetryNow) "Retry available" else "Retry unavailable"
                 },

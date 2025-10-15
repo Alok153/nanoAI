@@ -466,4 +466,162 @@ class ModelLibraryViewModelTest {
       assertThat(capabilities).containsExactly("audio", "image", "text")
     }
   }
+
+  @Test
+  fun `downloadModel_tracksProgressCorrectly`() = runTest {
+    val modelId = "test-model"
+    val taskId = UUID.randomUUID()
+    coEvery { downloadsUseCase.downloadModel(modelId) } returns Result.success(taskId)
+
+    viewModel.downloadModel(modelId)
+    advanceUntilIdle()
+
+    coVerify { downloadsUseCase.downloadModel(modelId) }
+  }
+
+  @Test
+  fun `pauseDownload_updatesStateImmediately`() = runTest {
+    val taskId = UUID.randomUUID()
+    coEvery { downloadsUseCase.pauseDownload(taskId) } returns Unit
+
+    viewModel.pauseDownload(taskId)
+    advanceUntilIdle()
+
+    coVerify { downloadsUseCase.pauseDownload(taskId) }
+  }
+
+  @Test
+  fun `resumeDownload_continuesFromLastState`() = runTest {
+    val taskId = UUID.randomUUID()
+    coEvery { downloadsUseCase.resumeDownload(taskId) } returns Unit
+
+    viewModel.resumeDownload(taskId)
+    advanceUntilIdle()
+
+    coVerify { downloadsUseCase.resumeDownload(taskId) }
+  }
+
+  @Test
+  fun `cancelDownload_cleansUpResources`() = runTest {
+    val taskId = UUID.randomUUID()
+    coEvery { downloadsUseCase.cancelDownload(taskId) } returns Unit
+
+    viewModel.cancelDownload(taskId)
+    advanceUntilIdle()
+
+    coVerify { downloadsUseCase.cancelDownload(taskId) }
+  }
+
+  @Test
+  fun `handleMultipleDownloads_coordinatesCorrectly`() = runTest {
+    val modelId1 = "model-1"
+    val modelId2 = "model-2"
+    val taskId1 = UUID.randomUUID()
+    val taskId2 = UUID.randomUUID()
+    coEvery { downloadsUseCase.downloadModel(modelId1) } returns Result.success(taskId1)
+    coEvery { downloadsUseCase.downloadModel(modelId2) } returns Result.success(taskId2)
+
+    viewModel.downloadModel(modelId1)
+    viewModel.downloadModel(modelId2)
+    advanceUntilIdle()
+
+    coVerify { downloadsUseCase.downloadModel(modelId1) }
+    coVerify { downloadsUseCase.downloadModel(modelId2) }
+  }
+
+  @Test
+  fun `refreshCatalog_updatesStateOnSuccess`() = runTest {
+    coEvery { refreshUseCase.invoke() } returns Result.success(Unit)
+
+    viewModel.isRefreshing.test {
+      assertThat(awaitItem()).isFalse()
+
+      viewModel.refreshCatalog()
+      assertThat(awaitItem()).isTrue() // Refreshing starts
+
+      advanceUntilIdle()
+      assertThat(awaitItem()).isFalse() // Refreshing ends
+    }
+  }
+
+  @Test
+  fun `refreshCatalog_showsOfflineFallbackOnFailure`() = runTest {
+    coEvery { refreshUseCase.invoke() } returns Result.failure(Exception("Network error"))
+
+    viewModel.errorEvents.test {
+      viewModel.refreshCatalog()
+      advanceUntilIdle()
+
+      val error = awaitItem()
+      assertThat(error).isInstanceOf(LibraryError.UnexpectedError::class.java)
+      assertThat((error as LibraryError.UnexpectedError).message).contains("Failed to refresh")
+      cancelAndIgnoreRemainingEvents()
+    }
+  }
+
+  @Test
+  fun `filterByProvider_updatesVisibleModels`() = runTest {
+    val localModel =
+      DomainTestBuilders.buildModelPackage(
+        modelId = "local-model",
+        providerType = ProviderType.MEDIA_PIPE
+      )
+    val cloudModel =
+      DomainTestBuilders.buildModelPackage(
+        modelId = "cloud-model",
+        providerType = ProviderType.CLOUD_API
+      )
+    modelCatalogRepository.setModels(listOf(localModel, cloudModel))
+
+    viewModel.selectProvider(ProviderType.MEDIA_PIPE)
+    advanceUntilIdle()
+
+    viewModel.sections.test {
+      val sections = awaitItem()
+      val allFiltered = sections.attention + sections.installed + sections.available
+      assertThat(allFiltered).hasSize(1)
+      assertThat(allFiltered.first().providerType).isEqualTo(ProviderType.MEDIA_PIPE)
+    }
+  }
+
+  @Test
+  fun `filterByCapability_combinesFilters`() = runTest {
+    val model1 =
+      DomainTestBuilders.buildModelPackage(
+        modelId = "model-1",
+        capabilities = setOf("text", "image")
+      )
+    val model2 =
+      DomainTestBuilders.buildModelPackage(modelId = "model-2", capabilities = setOf("audio"))
+    modelCatalogRepository.setModels(listOf(model1, model2))
+
+    viewModel.toggleCapability("text")
+    advanceUntilIdle()
+
+    viewModel.sections.test {
+      val sections = awaitItem()
+      val allFiltered = sections.attention + sections.installed + sections.available
+      assertThat(allFiltered).hasSize(1)
+      assertThat(allFiltered.first().modelId).isEqualTo("model-1")
+    }
+  }
+
+  @Test
+  fun `searchModels_filtersCorrectly`() = runTest {
+    val model1 =
+      DomainTestBuilders.buildModelPackage(modelId = "gpt-model", displayName = "GPT Model")
+    val model2 =
+      DomainTestBuilders.buildModelPackage(modelId = "bert-model", displayName = "BERT Model")
+    modelCatalogRepository.setModels(listOf(model1, model2))
+
+    viewModel.updateSearchQuery("gpt")
+    advanceUntilIdle()
+
+    viewModel.sections.test {
+      val sections = awaitItem()
+      val allFiltered = sections.attention + sections.installed + sections.available
+      assertThat(allFiltered).hasSize(1)
+      assertThat(allFiltered.first().modelId).isEqualTo("gpt-model")
+    }
+  }
 }
