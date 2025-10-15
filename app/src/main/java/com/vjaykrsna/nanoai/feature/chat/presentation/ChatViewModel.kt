@@ -26,8 +26,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-private const val FLOW_STOP_TIMEOUT_MS = 5_000L
-
 @HiltViewModel
 class ChatViewModel
 @Inject
@@ -37,8 +35,7 @@ constructor(
   private val personaRepository: PersonaRepository,
   @MainImmediateDispatcher private val dispatcher: CoroutineDispatcher,
 ) : ViewModel() {
-  private val flowSharingStarted: SharingStarted =
-    SharingStarted.WhileSubscribed(FLOW_STOP_TIMEOUT_MS)
+  private val flowSharingStarted: SharingStarted = SharingStarted.Eagerly
   private val _currentThreadId = MutableStateFlow<UUID?>(null)
   val currentThreadId: StateFlow<UUID?> = _currentThreadId.asStateFlow()
 

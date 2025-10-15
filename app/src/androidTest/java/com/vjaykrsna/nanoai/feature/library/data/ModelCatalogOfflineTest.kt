@@ -66,6 +66,7 @@ class ModelCatalogOfflineTest {
         database.modelPackageWriteDao(),
         database.chatThreadDao(),
         context,
+        Clock.System,
       )
     useCase = RefreshModelCatalogUseCase(HttpModelCatalogSource(mockWebServer, json), repository)
   }

@@ -39,8 +39,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 
-private const val FLOW_STOP_TIMEOUT_MS = 5_000L
-
 @HiltViewModel
 class SettingsViewModel
 @Inject
@@ -79,12 +77,12 @@ constructor(
   val apiProviders: StateFlow<List<APIProviderConfig>> =
     apiProviderConfigRepository
       .observeAllProviders()
-      .stateIn(viewModelScope, SharingStarted.WhileSubscribed(FLOW_STOP_TIMEOUT_MS), emptyList())
+      .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
   val privacyPreferences: StateFlow<PrivacyPreference> =
     privacyPreferenceStore.privacyPreference.stateIn(
       viewModelScope,
-      SharingStarted.WhileSubscribed(FLOW_STOP_TIMEOUT_MS),
+      SharingStarted.Eagerly,
       PrivacyPreference(
         exportWarningsDismissed = false,
         telemetryOptIn = false,

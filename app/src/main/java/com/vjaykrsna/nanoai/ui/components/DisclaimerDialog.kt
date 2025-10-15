@@ -75,13 +75,13 @@ fun DisclaimerDialog(
       ) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
           Text(
-            text = "Review nanoAI privacy disclaimer",
+            text = "Review nanoAI disclaimer",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.SemiBold,
           )
           Text(
             text =
-              "nanoAI may generate inaccurate or unexpected content. Please review outputs before sharing and avoid entering sensitive information.",
+              "nanoAI may generate inaccurate or unexpected content. Please review outputs before sharing.",
             style = MaterialTheme.typography.bodyMedium,
           )
         }
@@ -111,7 +111,7 @@ fun DisclaimerDialog(
                   if (acceptEnabled) "Scroll complete" else "Scroll to the end to enable Accept"
               },
           ) {
-            Text("Agree and continue")
+            Text("Agree")
           }
         }
       }
@@ -125,9 +125,7 @@ private fun DisclaimerScrollableContent(scrollState: androidx.compose.foundation
     listOf(
       "You remain responsible for how generated content is used.",
       "Verify facts before sharing or acting on AI-produced responses.",
-      "Avoid entering personal, medical, or financial information in prompts.",
       "Generated content may reference third-party material; respect applicable policies.",
-      "Generated outputs may include code snippets or media that require additional review before distribution.",
       "Contact support if you encounter safety issues or unexpectedly harmful outputs so we can investigate.",
       "Continuing indicates you acknowledge the privacy policy and terms of use.",
     )

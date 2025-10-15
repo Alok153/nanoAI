@@ -6,16 +6,18 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.vjaykrsna.nanoai.core.domain.model.ModelCapability
-import com.vjaykrsna.nanoai.core.domain.model.ModelDownloadState
-import com.vjaykrsna.nanoai.core.domain.model.ModelProvider
+import com.vjaykrsna.nanoai.feature.library.domain.RefreshModelCatalogUseCase
+import com.vjaykrsna.nanoai.feature.library.model.InstallState
+import com.vjaykrsna.nanoai.feature.library.model.ProviderType
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryViewModel
 import com.vjaykrsna.nanoai.testing.ComposeTestHarness
 import com.vjaykrsna.nanoai.testing.DomainTestBuilders
 import com.vjaykrsna.nanoai.testing.FakeModelCatalogRepository
 import com.vjaykrsna.nanoai.testing.FakeModelDownloadsAndExportUseCase
-import com.vjaykrsna.nanoai.testing.FakeRefreshModelCatalogUseCase
 import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
+import io.mockk.coEvery
+import io.mockk.mockk
+import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -35,7 +37,7 @@ class ModelLibraryScreenTest {
 
   private lateinit var catalogRepository: FakeModelCatalogRepository
   private lateinit var downloadsUseCase: FakeModelDownloadsAndExportUseCase
-  private lateinit var refreshUseCase: FakeRefreshModelCatalogUseCase
+  private lateinit var refreshUseCase: RefreshModelCatalogUseCase
   private lateinit var viewModel: ModelLibraryViewModel
   private lateinit var harness: ComposeTestHarness
 
@@ -43,8 +45,11 @@ class ModelLibraryScreenTest {
   fun setup() {
     catalogRepository = FakeModelCatalogRepository()
     downloadsUseCase = FakeModelDownloadsAndExportUseCase()
-    refreshUseCase = FakeRefreshModelCatalogUseCase()
-    viewModel = ModelLibraryViewModel(catalogRepository, downloadsUseCase, refreshUseCase)
+    refreshUseCase = mockk(relaxed = true)
+
+    coEvery { refreshUseCase.invoke() } returns Result.success(Unit)
+
+    viewModel = ModelLibraryViewModel(downloadsUseCase, catalogRepository, refreshUseCase)
     harness = ComposeTestHarness(composeTestRule)
   }
 
@@ -68,7 +73,7 @@ class ModelLibraryScreenTest {
   }
 
   @Test
-  fun modelLibraryScreen_displaysLoadingIndicator() {
+  fun modelLibraryScreen_displaysLoadingIndicator() = runTest {
     // Start with empty catalog to show loading
     catalogRepository.replaceCatalog(emptyList())
 
@@ -79,18 +84,18 @@ class ModelLibraryScreenTest {
   }
 
   @Test
-  fun modelLibraryScreen_displaysModels() {
+  fun modelLibraryScreen_displaysModels() = runTest {
     val model1 =
       DomainTestBuilders.buildModelPackage(
         modelId = "model-1",
         displayName = "Test Model 1",
-        provider = ModelProvider.HUGGING_FACE
+        providerType = ProviderType.MEDIA_PIPE
       )
     val model2 =
       DomainTestBuilders.buildModelPackage(
         modelId = "model-2",
         displayName = "Test Model 2",
-        provider = ModelProvider.GOOGLE
+        providerType = ProviderType.CLOUD_API
       )
 
     catalogRepository.replaceCatalog(listOf(model1, model2))
@@ -105,7 +110,7 @@ class ModelLibraryScreenTest {
   }
 
   @Test
-  fun modelLibraryScreen_filterBySearchQuery() {
+  fun modelLibraryScreen_filterBySearchQuery() = runTest {
     val model1 =
       DomainTestBuilders.buildModelPackage(modelId = "model-1", displayName = "Qwen Model")
     val model2 =
@@ -126,18 +131,18 @@ class ModelLibraryScreenTest {
   }
 
   @Test
-  fun modelLibraryScreen_filterByProvider() {
+  fun modelLibraryScreen_filterByProvider() = runTest {
     val hfModel =
       DomainTestBuilders.buildModelPackage(
         modelId = "hf-model",
         displayName = "HF Model",
-        provider = ModelProvider.HUGGING_FACE
+        providerType = ProviderType.MEDIA_PIPE
       )
     val googleModel =
       DomainTestBuilders.buildModelPackage(
         modelId = "google-model",
         displayName = "Google Model",
-        provider = ModelProvider.GOOGLE
+        providerType = ProviderType.CLOUD_API
       )
 
     catalogRepository.replaceCatalog(listOf(hfModel, googleModel))
@@ -155,18 +160,18 @@ class ModelLibraryScreenTest {
   }
 
   @Test
-  fun modelLibraryScreen_filterByCapability() {
+  fun modelLibraryScreen_filterByCapability() = runTest {
     val chatModel =
       DomainTestBuilders.buildModelPackage(
         modelId = "chat-model",
         displayName = "Chat Model",
-        capabilities = setOf(ModelCapability.CHAT)
+        capabilities = setOf("chat")
       )
     val embeddingModel =
       DomainTestBuilders.buildModelPackage(
         modelId = "embedding-model",
         displayName = "Embedding Model",
-        capabilities = setOf(ModelCapability.EMBEDDINGS)
+        capabilities = setOf("embeddings")
       )
 
     catalogRepository.replaceCatalog(listOf(chatModel, embeddingModel))
@@ -183,7 +188,7 @@ class ModelLibraryScreenTest {
   }
 
   @Test
-  fun modelLibraryScreen_clearFilters() {
+  fun modelLibraryScreen_clearFilters() = runTest {
     val model = DomainTestBuilders.buildModelPackage(modelId = "test-model")
     catalogRepository.replaceCatalog(listOf(model))
 
@@ -200,12 +205,12 @@ class ModelLibraryScreenTest {
   }
 
   @Test
-  fun modelLibraryScreen_downloadModel() {
+  fun modelLibraryScreen_downloadModel() = runTest {
     val model =
       DomainTestBuilders.buildModelPackage(
         modelId = "download-model",
         displayName = "Download Model",
-        downloadState = ModelDownloadState.Available
+        installState = InstallState.NOT_INSTALLED
       )
     catalogRepository.replaceCatalog(listOf(model))
 
@@ -220,12 +225,12 @@ class ModelLibraryScreenTest {
   }
 
   @Test
-  fun modelLibraryScreen_downloadingModel_showsProgress() {
+  fun modelLibraryScreen_downloadingModel_showsProgress() = runTest {
     val model =
       DomainTestBuilders.buildModelPackage(
         modelId = "downloading-model",
         displayName = "Downloading Model",
-        downloadState = ModelDownloadState.Downloading(progress = 0.5f)
+        installState = InstallState.DOWNLOADING
       )
     catalogRepository.replaceCatalog(listOf(model))
 
@@ -238,12 +243,12 @@ class ModelLibraryScreenTest {
   }
 
   @Test
-  fun modelLibraryScreen_installedModel_showsDeleteOption() {
+  fun modelLibraryScreen_installedModel_showsDeleteOption() = runTest {
     val model =
       DomainTestBuilders.buildModelPackage(
         modelId = "installed-model",
         displayName = "Installed Model",
-        downloadState = ModelDownloadState.Installed
+        installState = InstallState.INSTALLED
       )
     catalogRepository.replaceCatalog(listOf(model))
 
@@ -270,10 +275,10 @@ class ModelLibraryScreenTest {
   }
 
   @Test
-  fun modelLibraryScreen_errorSnackbar_displaysDownloadError() {
+  fun modelLibraryScreen_errorSnackbar_displaysDownloadError() = runTest {
     val model = DomainTestBuilders.buildModelPackage(modelId = "error-model")
     catalogRepository.replaceCatalog(listOf(model))
-    downloadsUseCase.shouldFail = true
+    downloadsUseCase.shouldFailOnDownload = true
 
     composeTestRule.setContent { ModelLibraryScreen(viewModel = viewModel) }
 
@@ -288,21 +293,21 @@ class ModelLibraryScreenTest {
   }
 
   @Test
-  fun modelLibraryScreen_organizesModelsIntoSections() {
+  fun modelLibraryScreen_organizesModelsIntoSections() = runTest {
     val needsAttention =
       DomainTestBuilders.buildModelPackage(
         modelId = "attention-model",
-        downloadState = ModelDownloadState.Failed("Error")
+        installState = InstallState.ERROR
       )
     val installed =
       DomainTestBuilders.buildModelPackage(
         modelId = "installed-model",
-        downloadState = ModelDownloadState.Installed
+        installState = InstallState.INSTALLED
       )
     val available =
       DomainTestBuilders.buildModelPackage(
         modelId = "available-model",
-        downloadState = ModelDownloadState.Available
+        installState = InstallState.NOT_INSTALLED
       )
 
     catalogRepository.replaceCatalog(listOf(needsAttention, installed, available))
@@ -316,7 +321,7 @@ class ModelLibraryScreenTest {
   }
 
   @Test
-  fun modelLibraryScreen_emptyState() {
+  fun modelLibraryScreen_emptyState() = runTest {
     catalogRepository.replaceCatalog(emptyList())
 
     composeTestRule.setContent { ModelLibraryScreen(viewModel = viewModel) }
@@ -328,7 +333,7 @@ class ModelLibraryScreenTest {
   }
 
   @Test
-  fun modelLibraryScreen_filterChips_haveAccessibility() {
+  fun modelLibraryScreen_filterChips_haveAccessibility() = runTest {
     val model = DomainTestBuilders.buildModelPackage(modelId = "test-model")
     catalogRepository.replaceCatalog(listOf(model))
 
@@ -341,16 +346,16 @@ class ModelLibraryScreenTest {
   }
 
   @Test
-  fun modelLibraryScreen_downloadQueue_displaysQueuedDownloads() {
+  fun modelLibraryScreen_downloadQueue_displaysQueuedDownloads() = runTest {
     val model1 =
       DomainTestBuilders.buildModelPackage(
         modelId = "queued-1",
-        downloadState = ModelDownloadState.Queued
+        installState = InstallState.NOT_INSTALLED
       )
     val model2 =
       DomainTestBuilders.buildModelPackage(
         modelId = "queued-2",
-        downloadState = ModelDownloadState.Downloading(0.3f)
+        installState = InstallState.DOWNLOADING
       )
 
     catalogRepository.replaceCatalog(listOf(model1, model2))

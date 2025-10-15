@@ -1,8 +1,10 @@
 package com.vjaykrsna.nanoai.testing
 
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.ComposeTestRule
 
@@ -45,12 +47,12 @@ class ComposeTestHarness(
    */
   fun hasIndeterminateProgress(): SemanticsMatcher =
     SemanticsMatcher("has indeterminate progress") { node ->
-      val rangeInfo = node.config.getOrNull(SemanticsProperties.ProgressBarRangeInfo)
+      val rangeInfo = node.config[SemanticsProperties.ProgressBarRangeInfo]
       rangeInfo == ProgressBarRangeInfo.Indeterminate
     }
 
   /** Matches a clickable node. */
-  fun isClickable(): SemanticsMatcher = SemanticsMatcher.keyIsDefined(SemanticsProperties.OnClick)
+  fun isClickable(): SemanticsMatcher = SemanticsMatcher.keyIsDefined(SemanticsActions.OnClick)
 
   /** Matches a node that has text input semantics. */
   fun isTextInput(): SemanticsMatcher =

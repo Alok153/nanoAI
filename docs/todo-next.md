@@ -2,7 +2,7 @@
 
 Based on the completed 005-improve-test-coverage feature and codebase analysis, the nanoAI project now has a robust test foundation with automated quality gates. This document outlines the next development priorities, focusing on reaching target coverage thresholds, expanding multimodal capabilities, and continuing UX polish.
 
-**Last Updated**: 2025-10-13 (Post-Coverage Initiative Completion)
+**Last Updated**: 2025-10-14 (T019-T022 Implementation Complete)
 
 ## Phase 1: Coverage Threshold Achievement (High Priority)
 
@@ -25,19 +25,9 @@ The current coverage snapshot (2025-10-12) shows significant gaps from target th
 
 ## Phase 2: Resolved Flows & Test Infrastructure
 
-### Successfully Completed (Phase 005)
-✅ Stabilized managed Pixel 6 API 34 configuration with x86_64 ABI  
-✅ Introduced deterministic test harness with `TestEnvironmentRule` for DataStore/Room resets  
-✅ Migrated from JUnit4 to JUnit5 (Jupiter) across all test suites  
-✅ Implemented TDD workflow with 47 new/enhanced test cases (T003-T029)  
-✅ Added typed risk references and threshold enforcement in coverage models  
-✅ Implemented `slow_down` backoff handling in `HuggingFaceAuthCoordinator`  
-✅ Added cached-fallback logic in `RefreshModelCatalogUseCase`  
-✅ Enhanced accessibility support in Compose UI (TalkBack descriptions, semantic tags)  
-✅ Wired disclaimer flow with exposure state tracking  
-✅ Created comprehensive coverage tooling (JaCoCo merge, threshold verification, risk register)
 
 ### Deferred Items (from Phase 005)
+- **TODO**: Fix pre-existing androidTest compilation errors (unresolved references in ModelLibraryScreenTest, SettingsScreenTest, ComposeTestHarness) blocking instrumentation coverage collection.
 - **TODO**: Instrumentation coverage collection on full CI (currently unit-only due to virtualization constraints locally).
 - **TODO**: Additional schema validation for coverage JSON in contract tests.
 - **TODO**: Performance macrobenchmarks for coverage dashboard warm-load (<100ms target).

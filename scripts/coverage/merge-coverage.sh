@@ -44,6 +44,10 @@ if [ -f "${ROOT_DIR}/app/build/coverage/thresholds.md" ]; then
   cp "${ROOT_DIR}/app/build/coverage/thresholds.md" "${OUTPUT_DIR}/thresholds.md"
 fi
 
+if [ -f "${ROOT_DIR}/app/build/coverage/summary.json" ]; then
+  cp "${ROOT_DIR}/app/build/coverage/summary.json" "${OUTPUT_DIR}/summary.json"
+fi
+
 for source_root in "${EXEC_SOURCES[@]}"; do
   if [ -d "${source_root}" ]; then
     while IFS= read -r -d '' file; do
@@ -53,3 +57,7 @@ for source_root in "${EXEC_SOURCES[@]}"; do
 done
 
 printf '[merge-coverage] Coverage artifacts ready at %s\n' "${OUTPUT_DIR}"
+printf '[merge-coverage] Summary files:\n'
+[ -f "${OUTPUT_DIR}/summary.md" ] && printf '  - summary.md: %s bytes\n' "$(wc -c < "${OUTPUT_DIR}/summary.md")"
+[ -f "${OUTPUT_DIR}/summary.json" ] && printf '  - summary.json: %s bytes\n' "$(wc -c < "${OUTPUT_DIR}/summary.json")"
+[ -f "${OUTPUT_DIR}/jacocoFullReport.xml" ] && printf '  - jacocoFullReport.xml: %s bytes\n' "$(wc -c < "${OUTPUT_DIR}/jacocoFullReport.xml")"

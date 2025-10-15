@@ -48,6 +48,7 @@ class ModelCatalogRepositoryImplTest {
         database.modelPackageWriteDao(),
         database.chatThreadDao(),
         context,
+        kotlinx.datetime.Clock.System,
       )
   }
 

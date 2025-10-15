@@ -51,13 +51,20 @@ private constructor(
     val context = appContext ?: return@lazy null
     val key = masterKey ?: return@lazy null
 
-    EncryptedSharedPreferences.create(
-      context,
-      PREFS_NAME,
-      key,
-      EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-      EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
-    )
+    try {
+      EncryptedSharedPreferences.create(
+        context,
+        PREFS_NAME,
+        key,
+        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
+      )
+    } catch (e: Exception) {
+      // Handle keystore/encryption failures gracefully
+      // This can happen if Android Keystore is unavailable or corrupted
+      android.util.Log.w("EncryptedSecretStore", "Failed to create EncryptedSharedPreferences", e)
+      null
+    }
   }
 
   /** Persist a credential value and associated metadata. */

@@ -59,8 +59,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /** ViewModel coordinating shell layout state and user intents. */
-private const val SUBSCRIPTION_TIMEOUT_MILLIS = 5_000L
-
 private const val LAYOUT_INDEX = 0
 private const val PALETTE_INDEX = 1
 private const val BANNER_INDEX = 2
@@ -214,7 +212,7 @@ constructor(
       }
       .stateIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MILLIS),
+        started = SharingStarted.Eagerly,
         initialValue = buildInitialState(),
       )
 

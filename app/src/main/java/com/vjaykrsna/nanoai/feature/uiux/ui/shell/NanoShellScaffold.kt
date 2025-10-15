@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material.icons.outlined.Search
@@ -77,7 +78,6 @@ import com.vjaykrsna.nanoai.feature.uiux.state.CommandAction
 import com.vjaykrsna.nanoai.feature.uiux.state.CommandDestination
 import com.vjaykrsna.nanoai.feature.uiux.state.CommandInvocationSource
 import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityStatus
-import com.vjaykrsna.nanoai.feature.uiux.state.ModeCard
 import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
 import com.vjaykrsna.nanoai.feature.uiux.state.PaletteDismissReason
 import com.vjaykrsna.nanoai.feature.uiux.state.PaletteSource
@@ -218,7 +218,6 @@ fun NanoShellScaffold(
         drawerContent = {
           ShellDrawerContent(
             variant = DrawerVariant.Permanent,
-            modeCards = state.modeCards,
             activeMode = layout.activeMode,
             onModeSelect = { modeId -> dispatchEvent(ShellUiEvent.ModeSelected(modeId)) },
             onOpenCommandPalette = {
@@ -241,7 +240,6 @@ fun NanoShellScaffold(
         drawerContent = {
           ShellDrawerContent(
             variant = DrawerVariant.Modal,
-            modeCards = state.modeCards,
             activeMode = layout.activeMode,
             onModeSelect = { modeId -> dispatchEvent(ShellUiEvent.ModeSelected(modeId)) },
             onOpenCommandPalette = {
@@ -329,7 +327,6 @@ private enum class DrawerVariant {
 @Composable
 private fun ShellDrawerContent(
   variant: DrawerVariant,
-  modeCards: List<ModeCard>,
   activeMode: ModeId,
   onModeSelect: (ModeId) -> Unit,
   onOpenCommandPalette: () -> Unit,
@@ -339,7 +336,6 @@ private fun ShellDrawerContent(
     DrawerVariant.Modal ->
       ModalDrawerSheet {
         DrawerSheetContent(
-          modeCards = modeCards,
           activeMode = activeMode,
           onModeSelect = onModeSelect,
           onOpenCommandPalette = onOpenCommandPalette,
@@ -349,7 +345,6 @@ private fun ShellDrawerContent(
     DrawerVariant.Permanent ->
       PermanentDrawerSheet {
         DrawerSheetContent(
-          modeCards = modeCards,
           activeMode = activeMode,
           onModeSelect = onModeSelect,
           onOpenCommandPalette = onOpenCommandPalette,
@@ -361,7 +356,6 @@ private fun ShellDrawerContent(
 
 @Composable
 private fun DrawerSheetContent(
-  modeCards: List<ModeCard>,
   activeMode: ModeId,
   onModeSelect: (ModeId) -> Unit,
   onOpenCommandPalette: () -> Unit,
@@ -428,19 +422,18 @@ private fun DrawerSheetContent(
         },
       )
 
-      modeCards
-        .filter { card -> card.id != ModeId.HOME && card.id != ModeId.SETTINGS }
-        .forEach { card ->
-          DrawerNavigationItem(
-            icon = card.icon,
-            title = card.title,
-            selected = activeMode == card.id,
-            onClick = {
-              onModeSelect(card.id)
-              onCloseDrawer?.invoke()
-            },
-          )
-        }
+      // Chat History button
+      DrawerNavigationItem(
+        icon = Icons.Default.History,
+        title = "Chat History",
+        selected = activeMode == ModeId.HISTORY,
+        onClick = {
+          onModeSelect(ModeId.HISTORY)
+          onCloseDrawer?.invoke()
+        },
+      )
+
+      // Mode cards removed intentionally - only Home, Settings, and Chat History required
     }
   }
 }

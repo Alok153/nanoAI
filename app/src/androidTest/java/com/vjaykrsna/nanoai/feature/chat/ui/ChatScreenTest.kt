@@ -6,14 +6,17 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.vjaykrsna.nanoai.feature.chat.domain.SendPromptAndPersonaUseCase
 import com.vjaykrsna.nanoai.feature.chat.presentation.ChatViewModel
 import com.vjaykrsna.nanoai.testing.ComposeTestHarness
 import com.vjaykrsna.nanoai.testing.DomainTestBuilders
 import com.vjaykrsna.nanoai.testing.FakeConversationRepository
 import com.vjaykrsna.nanoai.testing.FakePersonaRepository
-import com.vjaykrsna.nanoai.testing.FakeSendPromptAndPersonaUseCase
 import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
+import io.mockk.coEvery
+import io.mockk.mockk
 import java.util.UUID
+import kotlinx.coroutines.test.StandardTestDispatcher
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -33,16 +36,22 @@ class ChatScreenTest {
 
   private lateinit var conversationRepository: FakeConversationRepository
   private lateinit var personaRepository: FakePersonaRepository
-  private lateinit var sendPromptUseCase: FakeSendPromptAndPersonaUseCase
+  private lateinit var sendPromptUseCase: SendPromptAndPersonaUseCase
   private lateinit var viewModel: ChatViewModel
   private lateinit var harness: ComposeTestHarness
+  private val testDispatcher = StandardTestDispatcher()
 
   @Before
   fun setup() {
     conversationRepository = FakeConversationRepository()
     personaRepository = FakePersonaRepository()
-    sendPromptUseCase = FakeSendPromptAndPersonaUseCase()
-    viewModel = ChatViewModel(sendPromptUseCase, conversationRepository, personaRepository)
+    sendPromptUseCase = mockk(relaxed = true)
+
+    coEvery { sendPromptUseCase.sendPrompt(any(), any(), any()) } returns Result.success(Unit)
+    coEvery { sendPromptUseCase.switchPersona(any(), any(), any()) } returns UUID.randomUUID()
+
+    viewModel =
+      ChatViewModel(sendPromptUseCase, conversationRepository, personaRepository, testDispatcher)
     harness = ComposeTestHarness(composeTestRule)
   }
 
@@ -196,7 +205,8 @@ class ChatScreenTest {
     val thread = DomainTestBuilders.buildChatThread(threadId = threadId, personaId = personaId)
 
     conversationRepository.addThread(thread)
-    sendPromptUseCase.shouldFailOnSend = true
+    coEvery { sendPromptUseCase.sendPrompt(any(), any(), any()) } returns
+      Result.failure(Exception("Failed to send prompt"))
     viewModel.selectThread(threadId)
 
     composeTestRule.setContent { ChatScreen(viewModel = viewModel) }

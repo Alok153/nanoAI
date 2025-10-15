@@ -1,54 +1,365 @@
-# Tasks: Improve Test Coverage for nanoAI
+# Tasks: Improve Test Coverage for nanoAI - Phase 2
 
-**Input**: Design documents from `/specs/005-improve-test-coverage/`
-**Prerequisites**: plan.md (required), research.md, data-model.md, contracts/ 
+**Branch**: `005-improve-test-coverage`
+**Current Status**: VM 66.76% (need 75%), UI 1.80% (need 65%), Data 8.51% (need 70%)
+**Goal**: Close 864 untested classes to meet thresholds
 
-## Task List
+## Format: `[ID] [P?] [Priority] Description`
+- **[P]**: Parallel (different files)
+- **Priority**: HIGH/MEDIUM/LOW
+- 1-3 lines per task max
 
-- [x] **T001** Update `.github/workflows/ci.yml` to run `./gradlew ciManagedDeviceDebugAndroidTest jacocoFullReport verifyCoverageThresholds` on a virtualization-enabled runner and upload merged coverage XML/HTML plus `app/build/coverage/summary.md` as CI artifacts. (Already configured)
-- [x] **T002 [P]** Extend `config/coverage/layer-map.json` with patterns for new `feature/chat`, `feature/library`, `feature/settings`, and `coverage/ui` test packages so JaCoCo layer classification tracks upcoming suites (ViewModel/UI/Data). (Already configured)
-- [x] **T003 [P]** Create reusable JVM test fixtures in `app/src/test/java/com/vjaykrsna/nanoai/testing/` (MainDispatcherRule, fake repositories/use cases, domain builders) to support high-traffic ViewModel coverage.
-- [x] **T004 [P]** Add Compose instrumentation harness in `app/src/androidTest/java/com/vjaykrsna/nanoai/testing/ComposeTestHarness.kt` exposing accessibility matchers, `TestEnvironmentRule` wiring, and managed-device helpers shared by new UI tests.
-- [x] **T005 [P]** Author failing unit tests `app/src/test/java/com/vjaykrsna/nanoai/feature/chat/presentation/ChatViewModelTest.kt` covering thread selection, send success/error, persona switch (START_NEW_THREAD), and archive/delete flows.
-- [x] **T006 [P]** Author failing unit tests `app/src/test/java/com/vjaykrsna/nanoai/feature/library/presentation/ModelLibraryViewModelTest.kt` covering refreshCatalog offline fallback, filter toggles, download monitoring, and error propagation.
-- [x] **T007 [P]** Author failing unit tests `app/src/test/java/com/vjaykrsna/nanoai/feature/settings/presentation/SettingsViewModelTest.kt` asserting Hugging Face slow-down announcements, privacy retention updates, and undo flows reach the UI state.
-- [x] **T008 [P]** Add Compose instrumentation suite `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/chat/ui/ChatScreenTest.kt` validating TalkBack semantics, send button enablement, offline banner copy, and loading indicators.
-- [x] **T009 [P]** Add Compose suite `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/library/ui/ModelLibraryScreenTest.kt` covering filter chips (provider, capability), download status semantics (Available, Downloading, Installed, Failed), and sections (Needs Attention, Installed, Available).
-- [x] **T010 [P]** Add Compose suite `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/settings/ui/SettingsScreenTest.kt` validating HuggingFace auth dialogs (OAuth flow, API key input), export/import snackbar messaging, privacy toggle accessibility (telemetry, retention policy).
-- [x] **T011 [P]** Add JUnit5 suite `app/src/test/java/com/vjaykrsna/nanoai/core/data/repository/impl/ConversationRepositoryImplTest.kt` covering Room DAO CRUD, cascade delete, reactive flows (Turbine).
-- [x] **T012 [P]** Create Room + filesystem instrumentation tests `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/library/data/ModelCatalogRepositoryImplTest.kt` covering replaceCatalog state preservation, offline fallback recording, and deleteModelFiles cleanup.
-- [x] **T013 [P]** Add DataStore unit tests `app/src/test/java/com/vjaykrsna/nanoai/core/data/preferences/PrivacyPreferenceStoreTest.kt` for telemetry opt-in, retention policy, and consent acknowledgement flows.
-- [x] **T014 [P]** Extend `app/src/test/java/com/vjaykrsna/nanoai/coverage/RiskRegisterCoordinatorTest.kt` with a failing scenario reproducing RR-HIGH-027 (release-style target build `r2025.43`, uppercase risk id) to keep mitigated risks from triggering `requiresAttention`.
-- [x] **T015** Update `app/src/main/java/com/vjaykrsna/nanoai/coverage/domain/RiskRegisterCoordinator.kt` to normalise release-style build identifiers and mitigation tags so T014 passes and RR-HIGH-027 is resolved.
-- [x] **T016** Refactor `app/src/main/java/com/vjaykrsna/nanoai/feature/chat/presentation/ChatViewModel.kt` to inject coroutine dispatchers/test hooks, emit `ChatError.ThreadCreationFailed` when no thread is active, and expose hot flows in support of T005.
-- [x] **T017** Refine `app/src/main/java/com/vjaykrsna/nanoai/feature/library/presentation/ModelLibraryViewModel.kt` to differentiate initial loading vs refresh states, surface offline fallback errors, and dispose download observers per T006 coverage.
-- [x] **T018** Update `app/src/main/java/com/vjaykrsna/nanoai/feature/settings/presentation/SettingsViewModel.kt` to propagate Hugging Face device-auth announcements/countdowns into UI state and clear transient status once consumed (satisfying T007).
-- [ ] **T019** Adjust data repositories (`app/src/main/java/com/vjaykrsna/nanoai/feature/library/data/impl/ModelCatalogRepositoryImpl.kt`, `app/src/main/java/com/vjaykrsna/nanoai/core/data/repository/impl/ConversationRepositoryImpl.kt`) to record refresh metadata, expose deterministic flows, and match instrumentation coverage expectations from T011–T012. *(In progress — flow/refresh wiring updated, but Hilt/KSP now fails on `ModelCatalogRepositoryImpl` constructor defaults; revert or provide explicit provider before marking complete.)*
-- [ ] **T020** Introduce coverage dashboard presenter (`app/src/main/java/com/vjaykrsna/nanoai/coverage/presentation/CoverageDashboardViewModel.kt`) plus DI wiring (`app/src/main/java/com/vjaykrsna/nanoai/di/CoverageModule.kt`) to fetch reports, merge trend data, and surface offline banners using `CoverageDashboardBanner.offline`, closing RR-CRIT-041. *(In progress — presenter + repository added, but detekt violations and asset/DI integration need follow-up before completion.)*
-- [ ] **T021** Update coverage publishing pipeline (`scripts/coverage/merge-coverage.sh`, `.github/workflows/ci.yml`) to post merged coverage summaries/JSON to CI artifacts and PR comments, ensuring stakeholders see threshold status.
-- [ ] **T022** Run `./gradlew ciManagedDeviceDebugAndroidTest jacocoFullReport verifyCoverageThresholds` and attach HTML/XML plus `app/build/coverage/summary.md` to the PR validating thresholds (≥75/65/70) are met.
-- [ ] **T023** Refresh documentation (`docs/todo-next.md`, `docs/coverage/risk-register.md`, `specs/005-improve-test-coverage/quickstart.md`) with new coverage percentages, resolved risks (RR-CRIT-041, RR-HIGH-027, RR-HIGH-033), and updated workflow guidance.
+## Phase 2.1: Critical Infrastructure Fixes (BLOCKING)
 
-## Dependencies
+**⚠️ CRITICAL**: Must complete before UI testing
 
-- T002 depends on T001 for updated CI naming when exporting artifacts.
-- T005 depends on T003; T006 depends on T003; T007 depends on T003.
-- T008 depends on T004; T009 depends on T004; T010 depends on T004.
-- T011 depends on T004; T012 depends on T004; T013 depends on T003.
-- T014 depends on T002 (layer mapping) and T003 (test fixtures).
-- T015 depends on T014.
-- T016 depends on T005; T017 depends on T006; T018 depends on T007.
-- T019 depends on T011 and T012.
-- T020 depends on T015 and existing instrumentation harness (T004).
-- T021 depends on T001 and T020.
-- T022 depends on T015–T021.
-- T023 depends on T022.
+- [ ] **T024** [HIGH] Fix AndroidTest compilation errors
+  - Fix MockK dependency issues in androidTest
+  - Resolve NoClassDefFoundError in ChatScreenTest
+  - Validate: `./gradlew ciManagedDeviceDebugAndroidTest` compiles
 
-## Parallel Execution Examples
+- [ ] **T025** [P] [HIGH] Fix CoverageDashboardTest failures
+  - Fix text assertion mismatches in offlineFallback and coverageLayers tests
+  - Update expected strings and semantic tree checks
 
-- After completing T003, run multiple ViewModel test authoring in parallel:
-  - `taskctl run --parallel T005 T006 T007`
-- Once T004 is finished, execute UI/data instrumentation tasks together:
-  - `taskctl run --parallel T008 T009 T010`
-- When repository instrumentation scaffolding (T011, T012) is ready, iterate on data fixes while coverage pipeline work proceeds:
-  - `taskctl run --parallel T019 T021`
+- [ ] **T026** [P] [HIGH] Fix ModelCatalogOfflineTest failure
+  - Fix null assertion in offlineRefresh_preservesCachedCatalogAndSignalsFallbackSuccess
+  - Review offline catalog caching logic
+
+---
+
+## Phase 2.2: Data Layer - Repository & Download Management (HIGH PRIORITY)
+
+**Purpose**: Achieve Data layer 70% coverage by testing critical download and repository components (currently 0% coverage)
+
+**Impact**: Prevents download failures, sync issues, database corruption - highest impact for app stability
+
+### Download Manager Coverage (0% → 80%+)
+
+- [ ] **T027** [P] [HIGH] Create DownloadManagerImpl unit tests - Basic operations
+  - Path: `app/src/test/java/com/vjaykrsna/nanoai/feature/library/data/impl/DownloadManagerImplTest.kt` (NEW)
+  - Test: startDownload, queueDownload, pauseDownload, resumeDownload, cancelDownload
+
+- [ ] **T028** [P] [HIGH] DownloadManagerImpl unit tests - Progress & Status
+  - Path: Same as T027 (add methods)
+  - Test: observeProgress, getDownloadStatus, getActiveDownloads, getQueuedDownloads, getTaskById
+
+- [ ] **T029** [P] [HIGH] DownloadManagerImpl unit tests - Error & Retry
+  - Path: Same as T027 (add methods)
+  - Test: retryDownload, resetTask, startDownload_handlesNetworkError, queueDownload_handlesDiskSpaceError
+
+### Model Catalog Repository Coverage (0% → 85%+)
+
+- [ ] **T030** [P] [HIGH] ModelCatalogRepositoryImpl unit tests - CRUD operations
+  - Path: `app/src/test/java/com/vjaykrsna/nanoai/feature/library/data/impl/ModelCatalogRepositoryImplTest.kt` (expand)
+  - Test: getAllModels, getModelById, getInstalledModels, getModelsByState, getModel
+
+- [ ] **T031** [P] [HIGH] ModelCatalogRepositoryImpl unit tests - Catalog refresh
+  - Path: Same as T030 (add methods)
+  - Test: replaceCatalog, refreshCatalog, refreshOffline, refreshCatalog_handlesVersionMismatch
+
+- [ ] **T032** [P] [HIGH] ModelCatalogRepositoryImpl unit tests - Session tracking
+  - Path: Same as T030 (add methods)
+  - Test: isModelActiveInSession, setActiveModel, clearActiveModel
+
+### Catalog Source Coverage (0% → 80%+)
+
+- [ ] **T033** [P] [MEDIUM] AssetModelCatalogSource unit tests
+  - Path: `app/src/test/java/com/vjaykrsna/nanoai/feature/library/data/catalog/AssetModelCatalogSourceTest.kt` (NEW)
+  - Test: fetchCatalog_parsesAssetsCorrectly, fetchCatalog_handlesMalformedJson, fetchCatalog_handlesCompanionObject
+
+- [ ] **T034** [P] [MEDIUM] Catalog config unit tests
+  - Path: `app/src/test/java/com/vjaykrsna/nanoai/feature/library/data/catalog/CatalogConfigTest.kt` (expand)
+  - Test: ModelConfig_parsesAllFields, ModelConfig_validatesRequiredFields, ModelCatalogConfig_handlesVersioning, Companion_providesDefaults
+
+### Repository Expansion (Partial → 85%+)
+
+- [ ] **T035** [P] [MEDIUM] Expand ConversationRepositoryImpl tests
+  - Path: `app/src/test/java/com/vjaykrsna/nanoai/core/data/repository/impl/ConversationRepositoryImplTest.kt` (expand)
+  - Test: syncConversations_handlesOfflineQueue, archiveConversation, deleteConversation_cascadesMessages, getConversationsPaginated
+
+- [ ] **T036** [P] [MEDIUM] Expand PersonaRepositoryImpl tests
+  - Path: `app/src/test/java/com/vjaykrsna/nanoai/core/data/repository/impl/PersonaRepositoryImplTest.kt` (expand)
+  - Test: switchPersona_updatesActivePersona, switchPersona_persistsPreference, getPersonaById_handlesNotFound, listPersonas_ordersCorrectly
+
+- [ ] **T037** [P] [MEDIUM] Create UserProfileRepositoryImpl additional tests
+  - Path: `app/src/test/java/com/vjaykrsna/nanoai/core/data/repository/impl/UserProfileRepositoryImplTest.kt` (expand)
+  - Test: updateProfile_validatesFields, updateProfile_handlesConflicts, deleteProfile_clearsAllData
+
+### DAO Instrumentation Tests (Partial → 90%+)
+
+- [ ] **T038** [P] [MEDIUM] Create DownloadTaskDao instrumentation tests
+  - Path: `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/library/data/daos/DownloadTaskDaoTest.kt` (NEW)
+  - Test: insert, update, delete, getTaskById, getAllTasks, getTasksByStatus
+
+- [ ] **T039** [P] [MEDIUM] Create ModelMetadataDao instrumentation tests
+  - Path: `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/library/data/daos/ModelMetadataDaoTest.kt` (NEW)
+  - Test: insertMetadata, updateMetadata, deleteMetadata, getMetadataByModelId, foreign key constraints
+
+- [ ] **T040** [P] [MEDIUM] Expand ChatMessageDao tests for offline operations
+  - Path: `app/src/test/java/com/vjaykrsna/nanoai/core/data/db/ChatMessageDaoTest.kt` (expand)
+  - Test: getMessagesOffline_returnsQueuedMessages, markMessageSynced, getUnsentMessages_filtersCorrectly
+
+**Checkpoint Phase 2.2**: Data layer coverage ≥70%, download and repository operations tested and protected
+
+---
+
+## Phase 2.3: ViewModel Layer - State Management & Error Handling (MEDIUM PRIORITY)
+
+**Purpose**: Achieve ViewModel layer 75% coverage by testing uncovered ViewModels (currently 66.76%)
+
+**Impact**: Prevents UI state bugs, race conditions, and improves error handling
+
+### Settings ViewModel Expansion (Partial → 90%+)
+
+- [ ] **T041** [P] [MEDIUM] Expand SettingsViewModel API provider tests
+  - Path: `app/src/test/java/com/vjaykrsna/nanoai/feature/settings/presentation/SettingsViewModelTest.kt` (expand)
+  - Test: addApiProvider_emitsProviderAddFailedOnError, updateApiProvider_emitsProviderUpdateFailedOnError, deleteApiProvider_emitsProviderDeleteFailedOnError, validateProvider_checksRequiredFields
+
+- [ ] **T042** [P] [MEDIUM] SettingsViewModel HuggingFace integration tests
+  - Path: Same as T041 (add methods)
+  - Test: refreshHuggingFaceAccount_updatesAuthState, refreshHuggingFaceAccount_handlesAuthFailure, huggingFaceOAuth_completesSuccessfully
+
+- [ ] **T043** [P] [MEDIUM] SettingsViewModel export/import tests
+  - Path: Same as T041 (add methods)
+  - Test: dismissExportWarnings_clearsState, exportData_triggersExportFlow, importData_handlesValidation
+
+### App ViewModel Tests (0% → 85%+)
+
+- [ ] **T044** [P] [HIGH] Create AppViewModel unit tests
+  - Path: `app/src/test/java/com/vjaykrsna/nanoai/AppViewModelTest.kt` (NEW)
+  - Test: onDisclaimerAccepted_persistsConsent, onDisclaimerAccepted_navigatesToMain, initialization_loadsConfiguration, initialization_handlesUnexpectedError, initialization_checksFirstLaunch
+
+### Library ViewModel Expansion (Partial → 90%+)
+
+- [ ] **T045** [P] [MEDIUM] Expand ModelLibraryViewModel download tests
+  - Path: `app/src/test/java/com/vjaykrsna/nanoai/feature/library/presentation/ModelLibraryViewModelTest.kt` (expand)
+  - Test: downloadModel_tracksProgressCorrectly, pauseDownload_updatesStateImmediately, resumeDownload_continuesFromLastState, cancelDownload_cleansUpResources, handleMultipleDownloads_coordinatesCorrectly
+
+- [ ] **T046** [P] [MEDIUM] ModelLibraryViewModel catalog and filtering tests
+  - Path: Same as T045 (add methods)
+  - Test: refreshCatalog_updatesStateOnSuccess, refreshCatalog_showsOfflineFallbackOnFailure, filterByProvider_updatesVisibleModels, filterByCapability_combinesFilters, searchModels_filtersCorrectly
+
+### Chat ViewModel Expansion (Partial → 90%+)
+
+- [ ] **T047** [P] [MEDIUM] Expand ChatViewModel composition tests
+  - Path: `app/src/test/java/com/vjaykrsna/nanoai/feature/chat/presentation/ChatViewModelTest.kt` (expand)
+  - Test: sendMessage_validatesInputNotEmpty, sendMessage_handlesStreamingResponse, sendMessage_emitsErrorOnNetworkFailure, cancelMessage_stopsStreaming
+
+- [ ] **T048** [P] [MEDIUM] ChatViewModel persona and thread tests
+  - Path: Same as T047 (add methods)
+  - Test: switchPersona_maintainsConversationContext, switchThread_loadsMessagesCorrectly, createNewThread_initializesEmptyState, deleteThread_cleansUpAndNavigates
+
+### Shell ViewModel Expansion (Partial → 90%+)
+
+- [ ] **T049** [P] [LOW] Expand ShellViewModel navigation tests
+  - Path: `app/src/test/java/com/vjaykrsna/nanoai/feature/uiux/presentation/ShellViewModelTest.kt` (expand)
+  - Test: navigateBack_handlesBackStack, toggleSidebar_updatesVisibility, toggleCompactMode_updatesLayout, handleDeepLink_navigatesCorrectly
+
+**Checkpoint Phase 2.3**: ViewModel layer coverage ≥75%, state management tested, error scenarios validated
+
+---
+
+## Phase 2.4: UI Layer - Screens & Components (HIGH PRIORITY)
+
+**Purpose**: Achieve UI layer 65% coverage by testing critical screens and components (currently 1.80%)
+
+**Depends on**: T024 (instrumentation compilation fix)
+
+**Impact**: Prevents UI crashes, validates accessibility, ensures Material Design compliance
+
+### Sidebar UI Tests (0% → 80%+)
+
+- [ ] **T050** [P] [HIGH] Create Sidebar thread list tests
+  - Path: `app/src/androidTest/java/com/vjaykrsna/nanoai/ui/sidebar/SidebarContentTest.kt` (NEW)
+  - Test: sidebarThreadList_displaysThreads, sidebarThreadList_emptyStateShowsMessage, sidebarThreadList_threadSelectionNavigates, sidebarThreadList_hasAccessibleLabels
+
+- [ ] **T051** [P] [HIGH] Sidebar interaction tests
+  - Path: Same as T050 (add methods)
+  - Test: sidebarNewConversation_createsThread, sidebarThreadDelete_showsConfirmation, sidebarThreadSwipe_revealsActions, sidebarTalkBack_announcesCorrectly
+
+- [ ] **T052** [P] [MEDIUM] Sidebar offline tests
+  - Path: Same as T050 (add methods)
+  - Test: sidebarOffline_showsIndicator, sidebarOffline_displaysCachedThreads, sidebarOffline_disablesSync
+
+### Chat Screen Fixes & Expansion (Many failures → 95%+)
+
+- [ ] **T053** [HIGH] Fix ChatScreenTest compilation and setup issues
+  - Path: `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/chat/ui/ChatScreenTest.kt` (fix existing)
+  - Fix MockK errors and setup issues, ensure all 15 existing tests pass (depends on T024)
+
+- [ ] **T054** [P] [MEDIUM] ChatScreen additional scenarios
+  - Path: Same as T053 (add methods after fixes)
+  - Test: chatScreen_multiModalMessage_rendersCorrectly, chatScreen_longMessage_scrollsAndTruncates, chatScreen_darkMode_rendersCorrectly
+
+### Settings Screen Tests (0% → 80%+)
+
+- [ ] **T055** [P] [HIGH] Create SettingsScreen provider management tests
+  - Path: `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/settings/ui/SettingsScreenTest.kt` (NEW)
+  - Test: settingsScreen_displaysProviderList, settingsScreen_addProviderDialog_showsForm, settingsScreen_editProvider_updatesData, settingsScreen_deleteProvider_showsConfirmation
+
+- [ ] **T056** [P] [HIGH] SettingsScreen HuggingFace auth tests
+  - Path: Same as T055 (add methods)
+  - Test: settingsScreen_huggingFaceLogin_triggersOAuth, settingsScreen_huggingFaceAccount_displaysInfo, settingsScreen_huggingFaceLogout_clearsCredentials
+
+- [ ] **T057** [P] [MEDIUM] SettingsScreen accessibility tests
+  - Path: Same as T055 (add methods)
+  - Test: settingsScreen_allControls_haveSemantic, settingsScreen_talkBack_navigatesCorrectly, settingsScreen_dynamicType_adjustsCorrectly, settingsScreen_colorContrast_meetsStandards
+
+### Library Screen Tests (0% → 80%+)
+
+- [ ] **T058** [P] [HIGH] Create ModelLibraryScreen list tests
+  - Path: `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/library/ui/ModelLibraryScreenTest.kt` (NEW)
+  - Test: libraryScreen_displaysModelList, libraryScreen_filterByProvider_updatesList, libraryScreen_searchModels_filtersCorrectly, libraryScreen_modelSections_renderCorrectly
+
+- [ ] **T059** [P] [HIGH] ModelLibraryScreen download interaction tests
+  - Path: Same as T058 (add methods)
+  - Test: libraryScreen_downloadButton_startsDownload, libraryScreen_pauseButton_pausesDownload, libraryScreen_progressBar_updatesRealtime, libraryScreen_downloadStatus_showsCorrectState
+
+- [ ] **T060** [P] [MEDIUM] ModelLibraryScreen offline tests
+  - Path: Same as T058 (add methods)
+  - Test: libraryScreen_offline_showsCatalogCached, libraryScreen_offline_disablesDownloads, libraryScreen_offline_showsBanner
+
+### UI Component Tests (0% → 75%+)
+
+- [ ] **T061** [P] [MEDIUM] Create CommandPalette tests
+  - Path: `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/ui/commandpalette/CommandPaletteTest.kt` (NEW)
+  - Test: commandPalette_opens_onShortcut, commandPalette_search_filtersCommands, commandPalette_execution_triggersAction, commandPalette_keyboard_navigates
+
+- [ ] **T062** [P] [MEDIUM] Create MessageComposer tests
+  - Path: `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/ui/components/composer/MessageComposerTest.kt` (NEW)
+  - Test: messageComposer_input_updatesText, messageComposer_sendButton_enabledWhenNotEmpty, messageComposer_multiLine_expands, messageComposer_characterLimit_enforces
+
+- [ ] **T063** [P] [MEDIUM] Create FeedbackSnackbar tests
+  - Path: `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/ui/components/feedback/FeedbackSnackbarTest.kt` (NEW)
+  - Test: snackbar_success_showsCorrectStyle, snackbar_error_showsCorrectStyle, snackbar_autoDismiss_dismissesAfterDelay, snackbar_action_triggersCallback, snackbar_accessibility_announces
+
+### Offline Flow Integration Tests (Skipped → 100%)
+
+- [ ] **T064** [MEDIUM] Fix and expand ModelCatalogOfflineTest
+  - Path: `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/library/data/ModelCatalogOfflineTest.kt` (fix existing)
+  - Fix offlineRefresh_preservesCachedCatalogAndSignalsFallbackSuccess assertion (depends on T026), add offline scenarios
+
+- [ ] **T065** [MEDIUM] Implement PersonaOfflineFlow tests
+  - Path: `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/chat/PersonaOfflineFlowTest.kt` (un-skip existing)
+  - Un-skip personaFlowsPending, add offline persona tests
+
+- [ ] **T066** [MEDIUM] Implement ModelLibraryOfflineFlow tests
+  - Path: `app/src/androidTest/java/com/vjaykrsna/nanoai/feature/library/ModelLibraryFlowTest.kt` (un-skip existing)
+  - Un-skip modelLibraryFlowsPending, add offline library tests
+
+**Checkpoint Phase 2.4**: UI layer coverage ≥65%, critical screens tested, accessibility validated, offline flows working
+
+---
+
+## Phase 2.5: Cross-Cutting Concerns & Validation (LOW PRIORITY)
+
+**Purpose**: Polish, documentation, and final validation
+
+- [ ] **T067** [P] [LOW] Expand HuggingFaceAuthCoordinator tests
+  - Path: `app/src/test/java/com/vjaykrsna/nanoai/feature/settings/domain/huggingface/HuggingFaceAuthCoordinatorTest.kt` (expand)
+  - Test: tokenRefresh_renews_beforeExpiry, oauthFlow_handlesUserCancellation, networkError_retriesWithBackoff
+
+- [ ] **T068** [P] [LOW] Create performance benchmarks
+  - Path: `macrobenchmark/src/main/java/com/vjaykrsna/nanoai/PerformanceBenchmarks.kt`
+  - Benchmarks: Chat message send (<500ms), Model list scroll (0 jank), App cold start (<2s)
+
+- [ ] **T069** [P] [LOW] Update comprehensive test documentation
+  - Path: `docs/testing.md` (expand)
+  - Add: New test patterns, MockK troubleshooting, offline testing best practices, maintenance guidelines
+
+- [ ] **T070** [P] [LOW] Update risk register with Phase 2 progress
+  - Path: `docs/coverage/risk-register.md`
+  - Actions: Mark resolved risks, update mitigation status, document new risks
+
+- [ ] **T071** [P] [LOW] Implement coverage telemetry
+  - Path: `app/src/main/java/com/vjaykrsna/nanoai/telemetry/CoverageTelemetryReporter.kt` (expand)
+  - Add: Coverage delta reporting, trend tracking, regression alerts
+
+- [ ] **T072** [LOW] Run comprehensive quickstart validation
+  - Path: Follow `specs/005-improve-test-coverage/quickstart.md`
+  - Validate: Commands execute, thresholds pass, documentation accuracy, update with Phase 2 findings
+
+- [ ] **T073** [LOW] Generate final coverage reports and summary
+  - Commands: `./gradlew jacocoFullReport`, `./gradlew verifyCoverageThresholds`, `./gradlew coverageMarkdownSummary`
+  - Publish: `app/build/coverage/summary.md`, validate all thresholds met
+
+- [ ] **T074** [LOW] Final code review and documentation sync
+  - Actions: Review Phase 2 test code, ensure KDoc comments, update AGENTS.md, validate constitution adherence, prepare stakeholder presentation
+
+**Checkpoint Phase 2.5**: All coverage targets met, documentation complete, ready for stakeholder approval
+
+---
+
+## Critical Dependencies
+
+**BLOCKING**: T024 must complete before any UI tests (T050-T066)
+
+**PARALLEL**: Data (T027-T040) + ViewModel (T041-T049) can run simultaneously
+
+---
+
+## Success Metrics
+
+- **Coverage Targets**: VM ≥75%, UI ≥65%, Data ≥70%
+- **Quality**: Zero flaky tests, CI <20min, 100% accessibility on critical screens
+- **Outcome**: >90% release confidence, >95% regression detection
+
+---
+
+## Risk Register
+
+| Risk ID | Severity | Description | Mitigation | Status |
+|---------|----------|-------------|------------|--------|
+| R2-001 | CRITICAL | Instrumentation doesn't compile | T024 | Open |
+| R2-002 | CRITICAL | UI layer 1.80% coverage | T050-T066 | Open |
+| R2-003 | HIGH | Data layer 8.51% coverage | T027-T040 | Open |
+| R2-004 | HIGH | DownloadManager 0% coverage | T027-T029 | Open |
+| R2-005 | HIGH | ModelCatalog 0% coverage | T030-T032 | Open |
+| R2-006 | HIGH | Sidebar UI 0% coverage | T050-T052 | Open |
+| R2-007 | MEDIUM | ViewModel 66.76% coverage | T041-T049 | Open |
+| R2-008 | MEDIUM | Settings errors untested | T041-T043 | Open |
+| R2-009 | MEDIUM | Existing test failures | T025, T026 | Open |
+| R2-010 | LOW | Offline flows skipped | T064-T066 | Open |
+
+---
+
+## Timeline (4 weeks, 3 developers)
+
+**Week 1**: T024 (blocking) + Start Data/ViewModel layers
+**Week 2**: Complete Data/ViewModel + Start UI (after T024)
+**Week 3**: Complete UI layer
+**Week 4**: Polish & validation (T067-T074)
+
+---
+
+## Best Practices
+
+- **[P]**: Parallel tasks touch different files
+- **Priority**: HIGH = prevents breakage, MEDIUM = improves stability, LOW = polish
+- **TDD**: Write failing tests first
+- **Isolation**: Use TestEnvironmentRule for instrumentation
+- **Mocks**: Fakes for repos, MockK for services, MockWebServer for network
+- **Accessibility**: Validate content descriptions and TalkBack
+- **Coverage**: Run `./gradlew verifyCoverageThresholds` after checkpoints
+
+---
+
+## Quick Commands
+
+```bash
+# Unit tests
+./gradlew testDebugUnitTest
+
+# Instrumentation (after T024)
+./gradlew ciManagedDeviceDebugAndroidTest
+
+# Coverage
+./gradlew jacocoFullReport
+./gradlew verifyCoverageThresholds
+cat app/build/coverage/summary.md
+```
+
+---
+
+*Phase 2: Comprehensive Coverage • Generated 2025-10-15*

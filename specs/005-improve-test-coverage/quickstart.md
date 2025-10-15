@@ -13,7 +13,9 @@ Follow this checklist to validate the coverage initiative end-to-end.
 ## 2. Run Automated Suites (JUnit5)
 - **ViewModel + Repository**: `./gradlew testDebugUnitTest`
   - Target specific Jupiter classes with `./gradlew testDebugUnitTest --tests "com.vjaykrsna.nanoai.coverage.*"`.
-- **Compose UI (instrumented)**: `./gradlew ciManagedDeviceDebugAndroidTest`
+  - **Status**: ✓ Passing (verified in T022)
+- **Compose UI (instrumented)**: Currently blocked by pre-existing compilation errors in androidTest code
+  - **Expected command**: `./gradlew ciManagedDeviceDebugAndroidTest` (when compilation errors are fixed)
   - Spins up the managed Pixel 6 API 34 virtual device (AOSP ATD) headlessly—the same configuration CI uses.
   - For local fallbacks with a running emulator or physical hardware, run `./gradlew connectedDebugAndroidTest`; if you previously enabled the managed-device property, pass `-Pnanoai.useManagedDevice=false` to force the direct device-provider task.
   - Add `-Pandroid.testInstrumentationRunnerArguments.notAnnotation=flaky` when triaging flaky-tagged cases.

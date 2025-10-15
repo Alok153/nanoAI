@@ -32,8 +32,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-private const val FLOW_STOP_TIMEOUT_MS = 5_000L
-
 @HiltViewModel
 class ModelLibraryViewModel
 @Inject
@@ -59,17 +57,17 @@ constructor(
   val allModels: StateFlow<List<ModelPackage>> =
     modelCatalogRepository
       .observeAllModels()
-      .stateIn(viewModelScope, SharingStarted.WhileSubscribed(FLOW_STOP_TIMEOUT_MS), emptyList())
+      .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
   val installedModels: StateFlow<List<ModelPackage>> =
     modelCatalogRepository
       .observeInstalledModels()
-      .stateIn(viewModelScope, SharingStarted.WhileSubscribed(FLOW_STOP_TIMEOUT_MS), emptyList())
+      .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
   val providerOptions: StateFlow<List<ProviderType>> =
     allModels
       .map { models -> models.map(ModelPackage::providerType).distinct().sortedBy { it.name } }
-      .stateIn(viewModelScope, SharingStarted.WhileSubscribed(FLOW_STOP_TIMEOUT_MS), emptyList())
+      .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
   val capabilityOptions: StateFlow<List<String>> =
     allModels
@@ -82,7 +80,7 @@ constructor(
           .distinct()
           .sorted()
       }
-      .stateIn(viewModelScope, SharingStarted.WhileSubscribed(FLOW_STOP_TIMEOUT_MS), emptyList())
+      .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
   val sections: StateFlow<ModelLibrarySections> =
     combine(allModels, filters) { models, filterState ->
@@ -95,7 +93,7 @@ constructor(
       }
       .stateIn(
         viewModelScope,
-        SharingStarted.WhileSubscribed(FLOW_STOP_TIMEOUT_MS),
+        SharingStarted.Eagerly,
         ModelLibrarySections(),
       )
 
@@ -113,19 +111,17 @@ constructor(
       }
       .stateIn(
         viewModelScope,
-        SharingStarted.WhileSubscribed(FLOW_STOP_TIMEOUT_MS),
+        SharingStarted.Eagerly,
         ModelLibrarySummary(),
       )
 
   val hasActiveFilters: StateFlow<Boolean> =
-    filters
-      .map { it.hasActiveFilters }
-      .stateIn(viewModelScope, SharingStarted.WhileSubscribed(FLOW_STOP_TIMEOUT_MS), false)
+    filters.map { it.hasActiveFilters }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
   val queuedDownloads: StateFlow<List<DownloadTask>> =
     modelDownloadsAndExportUseCase
       .getQueuedDownloads()
-      .stateIn(viewModelScope, SharingStarted.WhileSubscribed(FLOW_STOP_TIMEOUT_MS), emptyList())
+      .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
   init {
     refreshCatalog()
@@ -281,7 +277,7 @@ constructor(
   fun observeDownloadProgress(taskId: UUID): StateFlow<Float> =
     modelDownloadsAndExportUseCase
       .getDownloadProgress(taskId)
-      .stateIn(viewModelScope, SharingStarted.WhileSubscribed(FLOW_STOP_TIMEOUT_MS), 0f)
+      .stateIn(viewModelScope, SharingStarted.Eagerly, 0f)
 
   private fun monitorDownloadTask(taskId: UUID, modelId: String) {
     downloadObservers[taskId]?.cancel()

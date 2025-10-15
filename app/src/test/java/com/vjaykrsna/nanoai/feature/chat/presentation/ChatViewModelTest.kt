@@ -139,9 +139,8 @@ class ChatViewModelTest {
       assertThat(awaitItem()).isFalse()
 
       viewModel.sendMessage("Test", personaId)
-      assertThat(awaitItem()).isTrue()
-
       advanceUntilIdle()
+      assertThat(awaitItem()).isTrue()
       assertThat(awaitItem()).isFalse()
     }
   }
