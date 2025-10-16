@@ -578,7 +578,11 @@ class ModelLibraryViewModelTest {
 
     viewModel.sections.test {
       val sections = awaitItem()
-      val allFiltered = sections.attention + sections.installed + sections.available
+      val allFiltered =
+        sections.downloads.mapNotNull { it.model } +
+          sections.attention +
+          sections.installed +
+          sections.available
       assertThat(allFiltered).hasSize(1)
       assertThat(allFiltered.first().providerType).isEqualTo(ProviderType.MEDIA_PIPE)
     }
@@ -600,7 +604,11 @@ class ModelLibraryViewModelTest {
 
     viewModel.sections.test {
       val sections = awaitItem()
-      val allFiltered = sections.attention + sections.installed + sections.available
+      val allFiltered =
+        sections.downloads.mapNotNull { it.model } +
+          sections.attention +
+          sections.installed +
+          sections.available
       assertThat(allFiltered).hasSize(1)
       assertThat(allFiltered.first().modelId).isEqualTo("model-1")
     }
@@ -619,7 +627,11 @@ class ModelLibraryViewModelTest {
 
     viewModel.sections.test {
       val sections = awaitItem()
-      val allFiltered = sections.attention + sections.installed + sections.available
+      val allFiltered =
+        sections.downloads.mapNotNull { it.model } +
+          sections.attention +
+          sections.installed +
+          sections.available
       assertThat(allFiltered).hasSize(1)
       assertThat(allFiltered.first().modelId).isEqualTo("gpt-model")
     }

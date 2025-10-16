@@ -3,6 +3,8 @@
 package com.vjaykrsna.nanoai.feature.library.ui
 
 import androidx.annotation.VisibleForTesting
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -24,20 +26,30 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -53,12 +65,18 @@ import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
 import com.vjaykrsna.nanoai.feature.library.model.ProviderType
+import com.vjaykrsna.nanoai.feature.library.presentation.LibraryDownloadItem
 import com.vjaykrsna.nanoai.feature.library.presentation.LibraryFilterState
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibrarySections
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelSort
+import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.DOWNLOAD_QUEUE_HEADER_TAG
+import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.DOWNLOAD_QUEUE_TAG
+import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.FILTER_PANEL_TAG
+import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.FILTER_TOGGLE_TAG
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.LIST_TAG
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.MAX_CAPABILITY_CHIPS
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.PERCENTAGE_MULTIPLIER
+import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.SEARCH_FIELD_TAG
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.SECTION_ATTENTION_TAG
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.SECTION_AVAILABLE_TAG
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.SECTION_INSTALLED_TAG
@@ -108,96 +126,169 @@ internal fun ModelLibraryToolbar(
   onSortSelect: (ModelSort) -> Unit,
   onClearFilters: () -> Unit,
 ) {
-  Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-    OutlinedTextField(
-      value = filters.searchQuery,
-      onValueChange = onSearchChange,
-      modifier = Modifier.fillMaxWidth().testTag(ModelLibraryUiConstants.SEARCH_FIELD_TAG),
-      singleLine = true,
-      leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-      trailingIcon =
-        if (filters.searchQuery.isNotBlank()) {
-          {
-            IconButton(onClick = { onSearchChange("") }) {
-              Icon(Icons.Filled.Close, contentDescription = "Clear search query")
-            }
-          }
-        } else {
-          null
-        },
-      label = { Text("Search models") },
-      placeholder = { Text("Search by name, capability, or model id") },
-    )
-
-    FlowRow(
-      horizontalArrangement = Arrangement.spacedBy(8.dp),
-      verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-      FilterChip(
-        selected = filters.provider == null,
-        onClick = { onProviderSelect(null) },
-        label = { Text("All providers") },
-      )
-      providers.forEach { provider ->
-        val isSelected = filters.provider == provider
-        FilterChip(
-          selected = isSelected,
-          onClick = { onProviderSelect(if (isSelected) null else provider) },
-          label = { Text(provider.displayName()) },
-        )
-      }
+  var filtersExpanded by rememberSaveable { mutableStateOf(false) }
+  val activeFilterCount = filters.activeFilterCount
+  val badgeLabel =
+    when {
+      activeFilterCount <= 0 -> null
+      activeFilterCount > 9 -> "9+"
+      else -> activeFilterCount.toString()
     }
 
-    if (capabilities.isNotEmpty()) {
-      FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+  Surface(shape = MaterialTheme.shapes.large, tonalElevation = 4.dp) {
+    Column(
+      modifier = Modifier.fillMaxWidth().padding(16.dp),
+      verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+      Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
       ) {
-        capabilities.forEach { capability ->
-          val normalized = capability.lowercase(Locale.US)
-          val selected = normalized in filters.capabilities
-          AssistChip(
-            onClick = { onCapabilityToggle(capability) },
-            label = {
-              Text(
-                capability.replaceFirstChar {
-                  if (it.isLowerCase()) it.titlecase(Locale.US) else it.toString()
+        OutlinedTextField(
+          value = filters.searchQuery,
+          onValueChange = onSearchChange,
+          modifier = Modifier.weight(1f).testTag(SEARCH_FIELD_TAG),
+          singleLine = true,
+          shape = MaterialTheme.shapes.large,
+          placeholder = { Text("Search models") },
+          leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+          trailingIcon =
+            if (filters.searchQuery.isNotBlank()) {
+              {
+                IconButton(onClick = { onSearchChange("") }) {
+                  Icon(Icons.Filled.Close, contentDescription = "Clear search query")
                 }
-              )
+              }
+            } else {
+              null
             },
-            leadingIcon =
-              if (selected) {
-                {
-                  Icon(
-                    Icons.Filled.CheckCircle,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
-                  )
-                }
-              } else {
-                null
-              },
-          )
+          colors =
+            OutlinedTextFieldDefaults.colors(
+              focusedContainerColor = MaterialTheme.colorScheme.surface,
+              unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+              focusedBorderColor = MaterialTheme.colorScheme.primary,
+              unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+              cursorColor = MaterialTheme.colorScheme.primary,
+              focusedLeadingIconColor = MaterialTheme.colorScheme.primary,
+              unfocusedLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+              focusedTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+              unfocusedTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+              focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+              unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            ),
+        )
+
+        IconButton(
+          modifier = Modifier.testTag(FILTER_TOGGLE_TAG),
+          onClick = { filtersExpanded = !filtersExpanded },
+        ) {
+          BadgedBox(badge = { badgeLabel?.let { label -> Badge { Text(label) } } }) {
+            Icon(
+              imageVector = Icons.Outlined.Tune,
+              contentDescription = if (filtersExpanded) "Collapse filters" else "Expand filters",
+            )
+          }
         }
       }
-    }
 
-    FlowRow(
-      horizontalArrangement = Arrangement.spacedBy(8.dp),
-      verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-      ModelSort.entries.forEach { option ->
-        val selected = filters.sort == option
-        FilterChip(
-          selected = selected,
-          onClick = { if (!selected) onSortSelect(option) },
-          label = { Text(option.label()) },
-        )
+      AnimatedVisibility(visible = filtersExpanded || hasActiveFilters) {
+        Surface(
+          modifier = Modifier.fillMaxWidth().testTag(FILTER_PANEL_TAG),
+          shape = MaterialTheme.shapes.large,
+          tonalElevation = 1.dp,
+          color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+        ) {
+          Column(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+          ) {
+            FilterSection(title = "Provider") {
+              FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+              ) {
+                FilterChip(
+                  selected = filters.provider == null,
+                  onClick = { onProviderSelect(null) },
+                  label = { Text("All providers") },
+                )
+                providers.forEach { provider ->
+                  val isSelected = filters.provider == provider
+                  FilterChip(
+                    selected = isSelected,
+                    onClick = { onProviderSelect(if (isSelected) null else provider) },
+                    label = { Text(provider.displayName()) },
+                  )
+                }
+              }
+            }
+
+            if (capabilities.isNotEmpty()) {
+              HorizontalDivider()
+              FilterSection(title = "Capabilities") {
+                FlowRow(
+                  horizontalArrangement = Arrangement.spacedBy(8.dp),
+                  verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                  capabilities.forEach { capability ->
+                    val normalized = capability.lowercase(Locale.US)
+                    val selected = normalized in filters.capabilities
+                    AssistChip(
+                      onClick = { onCapabilityToggle(capability) },
+                      label = {
+                        Text(
+                          capability.replaceFirstChar {
+                            if (it.isLowerCase()) it.titlecase(Locale.US) else it.toString()
+                          }
+                        )
+                      },
+                      leadingIcon =
+                        if (selected) {
+                          {
+                            Icon(
+                              Icons.Filled.CheckCircle,
+                              contentDescription = null,
+                              tint = MaterialTheme.colorScheme.primary
+                            )
+                          }
+                        } else {
+                          null
+                        },
+                    )
+                  }
+                }
+              }
+            }
+
+            HorizontalDivider()
+            FilterSection(title = "Sort order") {
+              FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+              ) {
+                ModelSort.entries.forEach { option ->
+                  val selected = filters.sort == option
+                  FilterChip(
+                    selected = selected,
+                    onClick = { if (!selected) onSortSelect(option) },
+                    label = { Text(option.label()) },
+                  )
+                }
+              }
+            }
+
+            if (hasActiveFilters) {
+              HorizontalDivider()
+              Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+              ) {
+                TextButton(onClick = onClearFilters) { Text("Clear filters") }
+              }
+            }
+          }
+        }
       }
-    }
-
-    if (hasActiveFilters) {
-      TextButton(onClick = onClearFilters) { Text("Clear filters") }
     }
   }
 }
@@ -207,10 +298,15 @@ internal fun ModelLibraryContent(
   sections: ModelLibrarySections,
   onDownload: (ModelPackage) -> Unit,
   onDelete: (ModelPackage) -> Unit,
+  onPause: (UUID) -> Unit,
+  onResume: (UUID) -> Unit,
+  onCancel: (UUID) -> Unit,
+  onRetry: (UUID) -> Unit,
   modifier: Modifier = Modifier,
 ) {
   val listHasContent =
-    sections.attention.isNotEmpty() ||
+    sections.downloads.isNotEmpty() ||
+      sections.attention.isNotEmpty() ||
       sections.installed.isNotEmpty() ||
       sections.available.isNotEmpty()
 
@@ -219,6 +315,26 @@ internal fun ModelLibraryContent(
     contentPadding = PaddingValues(bottom = 32.dp),
     verticalArrangement = Arrangement.spacedBy(16.dp),
   ) {
+    if (sections.downloads.isNotEmpty()) {
+      item(key = "downloads_header") {
+        SectionHeader(
+          title = "Active downloads",
+          subtitle = "In-progress and queued runtime updates",
+          modifier = Modifier.testTag(DOWNLOAD_QUEUE_HEADER_TAG),
+        )
+      }
+      items(items = sections.downloads, key = { "download_${it.task.taskId}" }) { item ->
+        DownloadQueueCard(
+          item = item,
+          onPause = onPause,
+          onResume = onResume,
+          onCancel = onCancel,
+          onRetry = onRetry,
+          modifier = Modifier.testTag(DOWNLOAD_QUEUE_TAG),
+        )
+      }
+    }
+
     if (sections.attention.isNotEmpty()) {
       item(key = "attention_header") {
         SectionHeader(
@@ -292,6 +408,40 @@ internal fun ModelLibraryContent(
 
     if (!listHasContent) {
       item(key = "empty_state") { EmptyState() }
+    }
+  }
+}
+
+@Composable
+private fun DownloadQueueCard(
+  item: LibraryDownloadItem,
+  onPause: (UUID) -> Unit,
+  onResume: (UUID) -> Unit,
+  onCancel: (UUID) -> Unit,
+  onRetry: (UUID) -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  Card(
+    modifier = modifier.fillMaxWidth(),
+    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+  ) {
+    Column(
+      modifier = Modifier.fillMaxWidth().padding(16.dp),
+      verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+      Text(
+        text = item.model?.displayName ?: item.task.modelId,
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.SemiBold
+      )
+
+      DownloadTaskItem(
+        download = item.task,
+        onPause = onPause,
+        onResume = onResume,
+        onCancel = onCancel,
+        onRetry = onRetry,
+      )
     }
   }
 }
@@ -503,6 +653,21 @@ private fun ModelManagementCard(
 }
 
 @Composable
+private fun FilterSection(
+  title: String,
+  content: @Composable () -> Unit,
+) {
+  Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Text(
+      text = title,
+      style = MaterialTheme.typography.labelMedium,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    content()
+  }
+}
+
+@Composable
 private fun CapabilityRow(capabilities: Set<String>) {
   if (capabilities.isEmpty()) return
   FlowRow(
@@ -531,20 +696,44 @@ private fun CapabilityRow(capabilities: Set<String>) {
 
 @Composable
 private fun StatusBadge(state: InstallState) {
-  val (label, color) =
+  val (label, color, icon) =
     when (state) {
-      InstallState.INSTALLED -> "Installed" to MaterialTheme.colorScheme.primary
-      InstallState.DOWNLOADING -> "Downloading" to MaterialTheme.colorScheme.tertiary
-      InstallState.PAUSED -> "Paused" to MaterialTheme.colorScheme.secondary
-      InstallState.ERROR -> "Error" to MaterialTheme.colorScheme.error
-      InstallState.NOT_INSTALLED -> "Available" to MaterialTheme.colorScheme.outline
+      InstallState.INSTALLED ->
+        Triple("Installed", MaterialTheme.colorScheme.primary, Icons.Filled.CheckCircle)
+      InstallState.DOWNLOADING ->
+        Triple("Downloading", MaterialTheme.colorScheme.tertiary, Icons.Filled.Download)
+      InstallState.PAUSED ->
+        Triple("Paused", MaterialTheme.colorScheme.secondary, Icons.Filled.Pause)
+      InstallState.ERROR ->
+        Triple("Error", MaterialTheme.colorScheme.error, Icons.Filled.Close)
+      InstallState.NOT_INSTALLED ->
+        Triple("Available", MaterialTheme.colorScheme.outline, Icons.Filled.Download)
     }
-  AssistChip(
-    onClick = {},
-    enabled = false,
-    label = { Text(label) },
-    leadingIcon = { Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = color) },
-  )
+  val containerColor =
+    if (state == InstallState.NOT_INSTALLED) {
+      MaterialTheme.colorScheme.surfaceVariant
+    } else {
+      color.copy(alpha = 0.12f)
+    }
+  Surface(
+    shape = MaterialTheme.shapes.extraLarge,
+    color = containerColor,
+    border = BorderStroke(width = 1.dp, color = color.copy(alpha = 0.4f)),
+  ) {
+    Row(
+      modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+      verticalAlignment = Alignment.CenterVertically,
+      horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+      Icon(icon, contentDescription = null, tint = color)
+      Text(
+        text = label,
+        style = MaterialTheme.typography.labelMedium,
+        fontWeight = FontWeight.Medium,
+        color = color,
+      )
+    }
+  }
 }
 
 @Composable

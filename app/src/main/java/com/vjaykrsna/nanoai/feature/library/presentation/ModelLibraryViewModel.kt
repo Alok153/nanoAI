@@ -82,13 +82,38 @@ constructor(
       }
       .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
+  val queuedDownloads: StateFlow<List<DownloadTask>> =
+    modelDownloadsAndExportUseCase
+      .getQueuedDownloads()
+      .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
   val sections: StateFlow<ModelLibrarySections> =
-    combine(allModels, filters) { models, filterState ->
+    combine(allModels, filters, queuedDownloads) { models, filterState, downloads ->
         val filtered = models.filterBy(filterState)
+
+        val activeTasks = downloads.filter { it.status.isActiveDownload() }
+        val activeIds = activeTasks.map { it.modelId }.toSet()
+
+        val orderedTasks =
+          activeTasks.sortedWith(
+            compareBy<DownloadTask> { downloadPriority(it.status) }
+              .thenByDescending { it.progress }
+              .thenBy { it.modelId },
+          )
+
+        val downloadItems =
+          orderedTasks.map { task ->
+            val associatedModel = models.firstOrNull { it.modelId == task.modelId }
+            LibraryDownloadItem(task = task, model = associatedModel)
+          }
+
+        val remaining = filtered.filterNot { it.modelId in activeIds }
+
         ModelLibrarySections(
-          attention = filtered.filter { it.installState == InstallState.ERROR },
-          installed = filtered.filter { it.installState == InstallState.INSTALLED },
-          available = filtered.filter { it.installState == InstallState.NOT_INSTALLED },
+          downloads = downloadItems,
+          attention = remaining.filter { it.installState == InstallState.ERROR },
+          installed = remaining.filter { it.installState == InstallState.INSTALLED },
+          available = remaining.filter { it.installState == InstallState.NOT_INSTALLED },
         )
       }
       .stateIn(
@@ -117,11 +142,6 @@ constructor(
 
   val hasActiveFilters: StateFlow<Boolean> =
     filters.map { it.hasActiveFilters }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
-
-  val queuedDownloads: StateFlow<List<DownloadTask>> =
-    modelDownloadsAndExportUseCase
-      .getQueuedDownloads()
-      .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
   init {
     refreshCatalog()
@@ -385,7 +405,28 @@ constructor(
       ModelSort.SIZE_DESC -> sortedByDescending(ModelPackage::sizeBytes)
       ModelSort.UPDATED -> sortedByDescending(ModelPackage::updatedAt)
     }
+
+  private fun downloadPriority(status: DownloadStatus): Int =
+    when (status) {
+      DownloadStatus.DOWNLOADING -> 0
+      DownloadStatus.PAUSED -> 1
+      DownloadStatus.QUEUED -> 2
+      DownloadStatus.FAILED -> 3
+      DownloadStatus.COMPLETED -> 4
+      DownloadStatus.CANCELLED -> 5
+    }
+
+  private fun DownloadStatus.isActiveDownload(): Boolean =
+    this == DownloadStatus.DOWNLOADING ||
+      this == DownloadStatus.PAUSED ||
+      this == DownloadStatus.QUEUED ||
+      this == DownloadStatus.FAILED
 }
+
+data class LibraryDownloadItem(
+  val task: DownloadTask,
+  val model: ModelPackage?,
+)
 
 sealed class LibraryError {
   data class DownloadFailed(
@@ -435,9 +476,19 @@ data class LibraryFilterState(
         provider != null ||
         capabilities.isNotEmpty() ||
         sort != ModelSort.RECOMMENDED
+
+  val activeFilterCount: Int
+    get() {
+      var count = 0
+      if (provider != null) count++
+      count += capabilities.size
+      if (sort != ModelSort.RECOMMENDED) count++
+      return count
+    }
 }
 
 data class ModelLibrarySections(
+  val downloads: List<LibraryDownloadItem> = emptyList(),
   val attention: List<ModelPackage> = emptyList(),
   val installed: List<ModelPackage> = emptyList(),
   val available: List<ModelPackage> = emptyList(),

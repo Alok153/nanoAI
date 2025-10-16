@@ -91,6 +91,6 @@ class ModelLibraryAccessibilityTest {
 
     composeRule.onNodeWithContentDescription("Pause download").assertIsDisplayed()
     composeRule.onNodeWithContentDescription("Cancel download").assertIsDisplayed()
-    composeRule.onNodeWithContentDescription("Download progress 50%").assertIsDisplayed()
+    composeRule.onNodeWithContentDescription("Downloading 50%").assertIsDisplayed()
   }
 }

@@ -5,27 +5,27 @@
       "id": "gemma-3-270m",
       "display_name": "Gemma 3 270M",
       "version": "1.0.0",
-      "provider": "media_pipe",
+      "provider": "mlc_llm",
       "delivery": "cloud_fallback",
       "min_app_version": 1,
       "size_bytes": 304000000,
       "capabilities": ["chat", "text-generation"],
-  "manifest_url": "hf://litert-community/gemma-3-270m-it?artifact=gemma3-270m-it-q8.task&revision=main",
-      "created_at": "2024-09-01T00:00:00Z",
-      "updated_at": "2024-09-01T00:00:00Z"
+      "manifest_url": "hf://unsloth/gemma-3-270m-it?artifact=model.safetensors&revision=main",
+      "created_at": "2025-10-16T00:00:00Z",
+      "updated_at": "2025-10-16T00:00:00Z"
     },
     {
       "id": "gemma-3-1b",
       "display_name": "Gemma 3 1B IT",
       "version": "1.0.0",
-      "provider": "media_pipe",
+      "provider": "mlc_llm",
       "delivery": "cloud_fallback",
       "min_app_version": 1,
       "size_bytes": 555000000,
       "capabilities": ["chat", "text-generation"],
-      "manifest_url": "hf://litert-community/Gemma3-1B-IT?artifact=gemma3-1b-it-int4.task&revision=main",
-      "created_at": "2024-09-01T00:00:00Z",
-      "updated_at": "2024-09-01T00:00:00Z"
+      "manifest_url": "hf://unsloth/gemma-3-1b-it?artifact=model.safetensors&revision=main",
+      "created_at": "2025-10-16T00:00:00Z",
+      "updated_at": "2025-10-16T00:00:00Z"
     },
     {
       "id": "gemma-3n-e2b",

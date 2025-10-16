@@ -33,11 +33,11 @@ class FakeModelDownloadsAndExportUseCase : ModelDownloadsAndExportUseCaseInterfa
 
   fun updateDownloadProgress(taskId: UUID, progress: Float) {
     _downloadProgress[taskId]?.value = progress
+    updateTrackedTask(taskId) { current -> current.copy(progress = progress) }
   }
 
   fun updateDownloadStatus(taskId: UUID, status: DownloadStatus) {
-    val task = _downloadTasks[taskId]?.value ?: return
-    _downloadTasks[taskId]?.value = task.copy(status = status)
+    updateTrackedTask(taskId) { current -> current.copy(status = status) }
   }
 
   fun clearAll() {
@@ -120,5 +120,16 @@ class FakeModelDownloadsAndExportUseCase : ModelDownloadsAndExportUseCaseInterfa
     val task = _downloadTasks[taskId]?.value ?: return
     _downloadTasks[taskId]?.value = task.copy(status = DownloadStatus.CANCELLED)
     _queuedDownloads.value = _queuedDownloads.value.filter { it.taskId != taskId }
+  }
+
+  private fun updateTrackedTask(taskId: UUID, transform: (DownloadTask) -> DownloadTask) {
+    val stateFlow = _downloadTasks[taskId] ?: return
+    val current = stateFlow.value ?: return
+    val updated = transform(current)
+    stateFlow.value = updated
+    _queuedDownloads.value =
+      _queuedDownloads.value.map { existing ->
+        if (existing.taskId == taskId) updated else existing
+      }
   }
 }

@@ -13,8 +13,6 @@ import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -45,7 +43,6 @@ fun ModelLibraryScreen(
   val sections by viewModel.sections.collectAsState()
   val providerOptions by viewModel.providerOptions.collectAsState()
   val capabilityOptions by viewModel.capabilityOptions.collectAsState()
-  val queuedDownloads by viewModel.queuedDownloads.collectAsState()
   val hasActiveFilters by viewModel.hasActiveFilters.collectAsState()
   val isLoading by viewModel.isLoading.collectAsState()
   val isRefreshing by viewModel.isRefreshing.collectAsState()
@@ -82,7 +79,7 @@ fun ModelLibraryScreen(
   ) {
     Column(
       modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 16.dp),
-      verticalArrangement = Arrangement.spacedBy(20.dp),
+      verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
       LibraryHeader(summary = summary)
 
@@ -97,8 +94,6 @@ fun ModelLibraryScreen(
         onSortSelect = viewModel::setSort,
         onClearFilters = viewModel::clearFilters,
       )
-
-      HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
 
       if (isLoading) {
         Box(modifier = Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
@@ -115,6 +110,10 @@ fun ModelLibraryScreen(
           sections = sections,
           onDownload = { model -> viewModel.downloadModel(model.modelId) },
           onDelete = { model -> viewModel.deleteModel(model.modelId) },
+          onPause = viewModel::pauseDownload,
+          onResume = viewModel::resumeDownload,
+          onCancel = viewModel::cancelDownload,
+          onRetry = viewModel::retryDownload,
         )
       }
     }

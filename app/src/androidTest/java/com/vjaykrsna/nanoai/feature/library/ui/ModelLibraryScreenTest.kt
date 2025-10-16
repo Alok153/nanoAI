@@ -16,7 +16,9 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
+import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.feature.library.domain.RefreshModelCatalogUseCase
+import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
 import com.vjaykrsna.nanoai.feature.library.model.ProviderType
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryViewModel
@@ -26,6 +28,7 @@ import com.vjaykrsna.nanoai.testing.FakeModelDownloadsAndExportUseCase
 import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
 import io.mockk.coEvery
 import io.mockk.mockk
+import java.util.UUID
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -447,8 +450,45 @@ class ModelLibraryScreenTest {
 
     composeTestRule.waitForIdle()
 
+    composeTestRule.onNode(hasTestTag(ModelLibraryUiConstants.FILTER_TOGGLE_TAG)).performClick()
+
     composeTestRule.onNodeWithText("All providers", substring = false).assertExists()
     composeTestRule.onNodeWithText("Recommended", substring = false).assertExists()
+  }
+
+  @Test
+  fun modelLibraryScreen_activeDownloadsArePrioritized() = runTest {
+    val model =
+      DomainTestBuilders.buildModelPackage(
+        modelId = "active-model",
+        displayName = "Active Model",
+        installState = InstallState.NOT_INSTALLED
+      )
+    catalogRepository.replaceCatalog(listOf(model))
+
+    val taskId = UUID.randomUUID()
+    val task =
+      DownloadTask(
+        taskId = taskId,
+        modelId = model.modelId,
+        progress = 0.45f,
+        status = DownloadStatus.DOWNLOADING,
+      )
+    downloadsUseCase.addDownloadTask(task)
+    downloadsUseCase.updateDownloadProgress(taskId, 0.45f)
+    downloadsUseCase.updateDownloadStatus(taskId, DownloadStatus.DOWNLOADING)
+
+    composeTestRule.setContent { ModelLibraryScreen(viewModel = viewModel) }
+
+    composeTestRule.waitForIdle()
+
+    composeTestRule
+      .onNode(hasTestTag(ModelLibraryUiConstants.DOWNLOAD_QUEUE_HEADER_TAG))
+      .assertIsDisplayed()
+    composeTestRule.onNodeWithText("Active Model", substring = false).assertExists()
+    composeTestRule
+      .onAllNodesWithContentDescription("Download Active Model", substring = false)
+      .assertCountEquals(0)
   }
 
   @Test
