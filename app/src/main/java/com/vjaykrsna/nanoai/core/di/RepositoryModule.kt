@@ -16,6 +16,8 @@ import com.vjaykrsna.nanoai.core.data.repository.impl.UserProfileRepositoryImpl
 import com.vjaykrsna.nanoai.feature.library.data.DownloadManager
 import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
 import com.vjaykrsna.nanoai.feature.library.data.export.ExportServiceImpl
+import com.vjaykrsna.nanoai.feature.library.data.huggingface.HuggingFaceCatalogRepository
+import com.vjaykrsna.nanoai.feature.library.data.huggingface.HuggingFaceCatalogRepositoryImpl
 import com.vjaykrsna.nanoai.feature.library.data.impl.DownloadManagerImpl
 import com.vjaykrsna.nanoai.feature.library.data.impl.ModelCatalogRepositoryImpl
 import com.vjaykrsna.nanoai.feature.library.domain.ExportService
@@ -89,6 +91,12 @@ abstract class RepositoryModule {
   abstract fun bindDownloadManager(
     impl: DownloadManagerImpl,
   ): DownloadManager
+
+  @Binds
+  @Singleton
+  abstract fun bindHuggingFaceCatalogRepository(
+    impl: HuggingFaceCatalogRepositoryImpl,
+  ): HuggingFaceCatalogRepository
 
   @Binds
   @Singleton

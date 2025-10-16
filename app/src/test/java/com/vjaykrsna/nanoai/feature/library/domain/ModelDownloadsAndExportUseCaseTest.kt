@@ -227,11 +227,11 @@ class ModelDownloadsAndExportUseCaseTest {
   }
 
   @Test
-  fun `getQueuedDownloads emits current queue`() = runTest {
+  fun `observeDownloadTasks emits managed list`() = runTest {
     val queue = listOf(createDownloadTask(status = DownloadStatus.QUEUED))
-    every { downloadManager.getQueuedDownloads() } returns flowOf(queue)
+    every { downloadManager.observeManagedDownloads() } returns flowOf(queue)
 
-    useCase.getQueuedDownloads().test {
+    useCase.observeDownloadTasks().test {
       val emission = awaitItem()
       assertThat(emission).hasSize(1)
       assertThat(emission.first().status).isEqualTo(DownloadStatus.QUEUED)

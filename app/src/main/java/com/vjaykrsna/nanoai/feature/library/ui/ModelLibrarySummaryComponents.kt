@@ -8,11 +8,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibrarySummary
@@ -50,18 +50,19 @@ internal fun LibrarySummaryRow(summary: ModelLibrarySummary) {
 @Composable
 private fun SummaryInlineStat(label: String, value: String) {
   Text(
-    text = buildAnnotatedString {
-      append(label)
-      append(' ')
-      pushStyle(
-        SpanStyle(
-          fontWeight = FontWeight.SemiBold,
-          color = MaterialTheme.colorScheme.onSurface,
+    text =
+      buildAnnotatedString {
+        append(label)
+        append(' ')
+        pushStyle(
+          SpanStyle(
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+          )
         )
-      )
-      append(value)
-      pop()
-    },
+        append(value)
+        pop()
+      },
     style = MaterialTheme.typography.bodyMedium,
     color = MaterialTheme.colorScheme.onSurfaceVariant,
     maxLines = 1,

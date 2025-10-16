@@ -4,6 +4,7 @@ package com.vjaykrsna.nanoai.feature.library.presentation
 
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
+import com.vjaykrsna.nanoai.feature.library.domain.ListHuggingFaceModelsUseCase
 import com.vjaykrsna.nanoai.feature.library.domain.ModelDownloadsAndExportUseCaseInterface
 import com.vjaykrsna.nanoai.feature.library.domain.RefreshModelCatalogUseCase
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
@@ -35,6 +36,7 @@ class ModelLibraryViewModelTest {
   private lateinit var modelCatalogRepository: FakeModelCatalogRepository
   private lateinit var downloadsUseCase: ModelDownloadsAndExportUseCaseInterface
   private lateinit var refreshUseCase: RefreshModelCatalogUseCase
+  private lateinit var listHuggingFaceModelsUseCase: ListHuggingFaceModelsUseCase
   private lateinit var viewModel: ModelLibraryViewModel
 
   @BeforeEach
@@ -42,11 +44,19 @@ class ModelLibraryViewModelTest {
     modelCatalogRepository = FakeModelCatalogRepository()
     downloadsUseCase = spyk(FakeModelDownloadsAndExportUseCase())
     refreshUseCase = mockk(relaxed = true)
+    listHuggingFaceModelsUseCase = mockk(relaxed = true)
 
     // Setup default behaviors
     coEvery { refreshUseCase.invoke() } returns Result.success(Unit)
+    coEvery { listHuggingFaceModelsUseCase.invoke(any()) } returns Result.success(emptyList())
 
-    viewModel = ModelLibraryViewModel(downloadsUseCase, modelCatalogRepository, refreshUseCase)
+    viewModel =
+      ModelLibraryViewModel(
+        downloadsUseCase,
+        modelCatalogRepository,
+        refreshUseCase,
+        listHuggingFaceModelsUseCase,
+      )
   }
 
   @Test
@@ -170,7 +180,7 @@ class ModelLibraryViewModelTest {
     viewModel.updateSearchQuery("GPT")
     advanceUntilIdle()
 
-    viewModel.sections.test {
+    viewModel.curatedSections.test {
       val sections = awaitItem()
       val allFiltered = sections.available + sections.installed + sections.attention
       assertThat(allFiltered).hasSize(1)
@@ -195,7 +205,7 @@ class ModelLibraryViewModelTest {
     viewModel.selectProvider(ProviderType.MEDIA_PIPE)
     advanceUntilIdle()
 
-    viewModel.sections.test {
+    viewModel.curatedSections.test {
       val sections = awaitItem()
       val allModels = sections.attention + sections.installed + sections.available
       assertThat(allModels).hasSize(1)
@@ -379,7 +389,7 @@ class ModelLibraryViewModelTest {
 
     advanceUntilIdle()
 
-    viewModel.sections.test {
+    viewModel.curatedSections.test {
       val sections = awaitItem()
       assertThat(sections.attention).hasSize(1)
       assertThat(sections.installed).hasSize(1)
@@ -576,7 +586,7 @@ class ModelLibraryViewModelTest {
     viewModel.selectProvider(ProviderType.MEDIA_PIPE)
     advanceUntilIdle()
 
-    viewModel.sections.test {
+    viewModel.curatedSections.test {
       val sections = awaitItem()
       val allFiltered =
         sections.downloads.mapNotNull { it.model } +
@@ -602,7 +612,7 @@ class ModelLibraryViewModelTest {
     viewModel.toggleCapability("text")
     advanceUntilIdle()
 
-    viewModel.sections.test {
+    viewModel.curatedSections.test {
       val sections = awaitItem()
       val allFiltered =
         sections.downloads.mapNotNull { it.model } +
@@ -625,7 +635,7 @@ class ModelLibraryViewModelTest {
     viewModel.updateSearchQuery("gpt")
     advanceUntilIdle()
 
-    viewModel.sections.test {
+    viewModel.curatedSections.test {
       val sections = awaitItem()
       val allFiltered =
         sections.downloads.mapNotNull { it.model } +
@@ -635,5 +645,47 @@ class ModelLibraryViewModelTest {
       assertThat(allFiltered).hasSize(1)
       assertThat(allFiltered.first().modelId).isEqualTo("gpt-model")
     }
+  }
+
+  @Test
+  fun `updateSearchQuery syncs Hugging Face filters when active`() = runTest {
+    viewModel.selectTab(ModelLibraryTab.HUGGING_FACE)
+    viewModel.updateSearchQuery("qwen")
+    advanceUntilIdle()
+
+    assertThat(viewModel.huggingFaceFilters.value.searchQuery).isEqualTo("qwen")
+  }
+
+  @Test
+  fun `setHuggingFaceSort updates filter state`() = runTest {
+    viewModel.setHuggingFaceSort(HuggingFaceSortOption.MOST_LIKED)
+    advanceUntilIdle()
+
+    assertThat(viewModel.huggingFaceFilters.value.sort).isEqualTo(HuggingFaceSortOption.MOST_LIKED)
+  }
+
+  @Test
+  fun `setHuggingFacePipeline toggles selection`() = runTest {
+    viewModel.setHuggingFacePipeline("text-generation")
+    advanceUntilIdle()
+    assertThat(viewModel.huggingFaceFilters.value.pipelineTag).isEqualTo("text-generation")
+
+    viewModel.setHuggingFacePipeline(null)
+    advanceUntilIdle()
+    assertThat(viewModel.huggingFaceFilters.value.pipelineTag).isNull()
+  }
+
+  @Test
+  fun `clearHuggingFaceFilters resets filters and clears search`() = runTest {
+    viewModel.selectTab(ModelLibraryTab.HUGGING_FACE)
+    viewModel.updateSearchQuery("llama")
+    viewModel.setHuggingFaceSort(HuggingFaceSortOption.MOST_DOWNLOADED)
+    viewModel.setHuggingFacePipeline("text-generation")
+
+    viewModel.clearHuggingFaceFilters()
+    advanceUntilIdle()
+
+    assertThat(viewModel.huggingFaceFilters.value).isEqualTo(HuggingFaceFilterState())
+    assertThat(viewModel.filters.value.searchQuery).isEmpty()
   }
 }

@@ -5,7 +5,9 @@ package com.vjaykrsna.nanoai.feature.library.ui
 import androidx.annotation.VisibleForTesting
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -17,21 +19,25 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
@@ -43,11 +49,14 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -62,12 +71,16 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
+import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceModelSummary
 import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
 import com.vjaykrsna.nanoai.feature.library.model.ProviderType
+import com.vjaykrsna.nanoai.feature.library.presentation.HuggingFaceFilterState
+import com.vjaykrsna.nanoai.feature.library.presentation.HuggingFaceSortOption
 import com.vjaykrsna.nanoai.feature.library.presentation.LibraryDownloadItem
 import com.vjaykrsna.nanoai.feature.library.presentation.LibraryFilterState
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibrarySections
+import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryTab
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelSort
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.DOWNLOAD_QUEUE_HEADER_TAG
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.DOWNLOAD_QUEUE_TAG
@@ -96,11 +109,7 @@ internal fun ModelCard(
       model = model,
       primaryActionLabel = "Delete",
       onPrimaryAction = onDelete,
-      secondaryActionLabel = "Download",
-      onSecondaryAction = onDownload,
-      emphasizeSecondary = false,
       primaryActionIcon = Icons.Filled.Delete,
-      secondaryActionIcon = Icons.Filled.Download,
       modifier = modifier,
     )
   } else {
@@ -120,6 +129,7 @@ internal fun ModelLibraryToolbar(
   providers: List<ProviderType>,
   capabilities: List<String>,
   hasActiveFilters: Boolean,
+  showModelFilters: Boolean,
   onSearchChange: (String) -> Unit,
   onProviderSelect: (ProviderType?) -> Unit,
   onCapabilityToggle: (String) -> Unit,
@@ -127,10 +137,11 @@ internal fun ModelLibraryToolbar(
   onClearFilters: () -> Unit,
 ) {
   var filtersExpanded by rememberSaveable { mutableStateOf(false) }
-  val activeFilterCount = filters.activeFilterCount
+  if (!showModelFilters && filtersExpanded) filtersExpanded = false
+  val activeFilterCount = if (showModelFilters) filters.activeFilterCount else 0
   val badgeLabel =
     when {
-      activeFilterCount <= 0 -> null
+      !showModelFilters || activeFilterCount <= 0 -> null
       activeFilterCount > 9 -> "9+"
       else -> activeFilterCount.toString()
     }
@@ -178,20 +189,22 @@ internal fun ModelLibraryToolbar(
             ),
         )
 
-        IconButton(
-          modifier = Modifier.testTag(FILTER_TOGGLE_TAG),
-          onClick = { filtersExpanded = !filtersExpanded },
-        ) {
-          BadgedBox(badge = { badgeLabel?.let { label -> Badge { Text(label) } } }) {
-            Icon(
-              imageVector = Icons.Outlined.Tune,
-              contentDescription = if (filtersExpanded) "Collapse filters" else "Expand filters",
-            )
+        if (showModelFilters) {
+          IconButton(
+            modifier = Modifier.testTag(FILTER_TOGGLE_TAG),
+            onClick = { filtersExpanded = !filtersExpanded },
+          ) {
+            BadgedBox(badge = { badgeLabel?.let { label -> Badge { Text(label) } } }) {
+              Icon(
+                imageVector = Icons.Outlined.Tune,
+                contentDescription = if (filtersExpanded) "Collapse filters" else "Expand filters",
+              )
+            }
           }
         }
       }
 
-      AnimatedVisibility(visible = filtersExpanded || hasActiveFilters) {
+      AnimatedVisibility(visible = showModelFilters && (filtersExpanded || hasActiveFilters)) {
         Surface(
           modifier = Modifier.fillMaxWidth().testTag(FILTER_PANEL_TAG),
           shape = MaterialTheme.shapes.large,
@@ -203,9 +216,10 @@ internal fun ModelLibraryToolbar(
             verticalArrangement = Arrangement.spacedBy(16.dp),
           ) {
             FilterSection(title = "Provider") {
-              FlowRow(
+              val providerScroll = rememberScrollState()
+              Row(
+                modifier = Modifier.horizontalScroll(providerScroll),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
               ) {
                 FilterChip(
                   selected = filters.provider == null,
@@ -226,9 +240,10 @@ internal fun ModelLibraryToolbar(
             if (capabilities.isNotEmpty()) {
               HorizontalDivider()
               FilterSection(title = "Capabilities") {
-                FlowRow(
+                val capabilityScroll = rememberScrollState()
+                Row(
+                  modifier = Modifier.horizontalScroll(capabilityScroll),
                   horizontalArrangement = Arrangement.spacedBy(8.dp),
-                  verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                   capabilities.forEach { capability ->
                     val normalized = capability.lowercase(Locale.US)
@@ -262,9 +277,10 @@ internal fun ModelLibraryToolbar(
 
             HorizontalDivider()
             FilterSection(title = "Sort order") {
-              FlowRow(
+              val sortScroll = rememberScrollState()
+              Row(
+                modifier = Modifier.horizontalScroll(sortScroll),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
               ) {
                 ModelSort.entries.forEach { option ->
                   val selected = filters.sort == option
@@ -294,14 +310,131 @@ internal fun ModelLibraryToolbar(
 }
 
 @Composable
+internal fun HuggingFaceFilterBar(
+  filters: HuggingFaceFilterState,
+  pipelineOptions: List<String>,
+  libraryOptions: List<String>,
+  onSortSelect: (HuggingFaceSortOption) -> Unit,
+  onPipelineSelect: (String?) -> Unit,
+  onLibrarySelect: (String?) -> Unit,
+  onClearFilters: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  Surface(shape = MaterialTheme.shapes.large, tonalElevation = 2.dp, modifier = modifier) {
+    Column(
+      modifier = Modifier.fillMaxWidth().padding(16.dp),
+      verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+      FilterSection(title = "Sort order") {
+        val scroll = rememberScrollState()
+        Row(
+          modifier = Modifier.horizontalScroll(scroll),
+          horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+          HuggingFaceSortOption.entries.forEach { option ->
+            val selected = filters.sort == option
+            FilterChip(
+              selected = selected,
+              label = { Text(option.label()) },
+              onClick = { if (!selected) onSortSelect(option) },
+            )
+          }
+        }
+      }
+
+      if (pipelineOptions.isNotEmpty()) {
+        HorizontalDivider()
+        FilterSection(title = "Pipeline") {
+          val scroll = rememberScrollState()
+          Row(
+            modifier = Modifier.horizontalScroll(scroll),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+          ) {
+            FilterChip(
+              selected = filters.pipelineTag == null,
+              label = { Text("All pipelines") },
+              onClick = { onPipelineSelect(null) },
+            )
+            pipelineOptions.forEach { pipeline ->
+              val selected = filters.pipelineTag == pipeline
+              FilterChip(
+                selected = selected,
+                label = { Text(pipeline) },
+                onClick = { onPipelineSelect(if (selected) null else pipeline) },
+              )
+            }
+          }
+        }
+      }
+
+      if (libraryOptions.isNotEmpty()) {
+        HorizontalDivider()
+        FilterSection(title = "Library") {
+          val scroll = rememberScrollState()
+          Row(
+            modifier = Modifier.horizontalScroll(scroll),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+          ) {
+            FilterChip(
+              selected = filters.library == null,
+              label = { Text("All libraries") },
+              onClick = { onLibrarySelect(null) },
+            )
+            libraryOptions.forEach { library ->
+              val selected = filters.library == library
+              FilterChip(
+                selected = selected,
+                label = { Text(library) },
+                onClick = { onLibrarySelect(if (selected) null else library) },
+              )
+            }
+          }
+        }
+      }
+
+      if (filters.hasActiveFilters) {
+        HorizontalDivider()
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.End,
+        ) {
+          TextButton(onClick = onClearFilters) { Text("Clear filters") }
+        }
+      }
+    }
+  }
+}
+
+@Composable
+internal fun ModelLibraryTabs(
+  selectedTab: ModelLibraryTab,
+  onTabSelected: (ModelLibraryTab) -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  val tabs = ModelLibraryTab.entries
+  val selectedIndex = tabs.indexOf(selectedTab).coerceAtLeast(0)
+  TabRow(selectedTabIndex = selectedIndex, modifier = modifier.fillMaxWidth()) {
+    tabs.forEach { tab ->
+      Tab(
+        selected = tab == selectedTab,
+        onClick = { onTabSelected(tab) },
+        text = { Text(tab.label) },
+      )
+    }
+  }
+}
+
+@Composable
 internal fun ModelLibraryContent(
   sections: ModelLibrarySections,
+  selectedTab: ModelLibraryTab,
   onDownload: (ModelPackage) -> Unit,
   onDelete: (ModelPackage) -> Unit,
   onPause: (UUID) -> Unit,
   onResume: (UUID) -> Unit,
   onCancel: (UUID) -> Unit,
   onRetry: (UUID) -> Unit,
+  onImportLocalModel: (() -> Unit)? = null,
   modifier: Modifier = Modifier,
 ) {
   val listHasContent =
@@ -310,11 +443,21 @@ internal fun ModelLibraryContent(
       sections.installed.isNotEmpty() ||
       sections.available.isNotEmpty()
 
+  val showLocalCallout =
+    selectedTab == ModelLibraryTab.LOCAL &&
+      sections.downloads.isEmpty() &&
+      sections.attention.isEmpty() &&
+      sections.installed.isEmpty()
+
   LazyColumn(
     modifier = modifier.fillMaxWidth().testTag(LIST_TAG),
     contentPadding = PaddingValues(bottom = 32.dp),
     verticalArrangement = Arrangement.spacedBy(16.dp),
   ) {
+    if (showLocalCallout) {
+      item(key = "local_cta") { LocalLibraryCallout(onImportLocalModel = onImportLocalModel) }
+    }
+
     if (sections.downloads.isNotEmpty()) {
       item(key = "downloads_header") {
         SectionHeader(
@@ -374,11 +517,7 @@ internal fun ModelLibraryContent(
           model = model,
           primaryActionLabel = "Remove",
           onPrimaryAction = { onDelete(model) },
-          secondaryActionLabel = "Download",
-          onSecondaryAction = { onDownload(model) },
-          emphasizeSecondary = false,
           primaryActionIcon = Icons.Filled.Delete,
-          secondaryActionIcon = Icons.Filled.Download,
         )
       }
     }
@@ -409,6 +548,38 @@ internal fun ModelLibraryContent(
     if (!listHasContent) {
       item(key = "empty_state") { EmptyState() }
     }
+  }
+}
+
+@Composable
+internal fun HuggingFaceLibraryContent(
+  models: List<HuggingFaceModelSummary>,
+  isLoading: Boolean,
+  modifier: Modifier = Modifier,
+) {
+  if (isLoading && models.isEmpty()) {
+    Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+      CircularProgressIndicator()
+    }
+    return
+  }
+
+  if (models.isEmpty()) {
+    Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+      EmptyState(
+        title = "No Hugging Face models found",
+        message = "Try a different search term or explore the curated tab.",
+      )
+    }
+    return
+  }
+
+  LazyColumn(
+    modifier = modifier.fillMaxWidth().testTag(LIST_TAG),
+    contentPadding = PaddingValues(bottom = 32.dp),
+    verticalArrangement = Arrangement.spacedBy(16.dp),
+  ) {
+    items(models, key = { it.modelId }) { model -> HuggingFaceModelCard(model) }
   }
 }
 
@@ -463,6 +634,133 @@ private fun SectionHeader(
       style = MaterialTheme.typography.bodySmall,
       color = MaterialTheme.colorScheme.onSurfaceVariant
     )
+  }
+}
+
+@Composable
+private fun LocalLibraryCallout(onImportLocalModel: (() -> Unit)?) {
+  Surface(shape = MaterialTheme.shapes.large, tonalElevation = 2.dp) {
+    Column(
+      modifier = Modifier.fillMaxWidth().padding(16.dp),
+      verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+      Text(
+        text = "Your local library is empty",
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.SemiBold,
+      )
+      Text(
+        text =
+          "Download curated picks or browse Hugging Face to find something great. You can also import a local model file to get started immediately.",
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+      if (onImportLocalModel != null) {
+        FilledTonalButton(onClick = onImportLocalModel) {
+          Icon(Icons.Filled.FileUpload, contentDescription = null)
+          Spacer(modifier = Modifier.size(8.dp))
+          Text(text = "Import local model")
+        }
+      }
+    }
+  }
+}
+
+@Composable
+private fun HuggingFaceModelCard(model: HuggingFaceModelSummary) {
+  Card(
+    modifier = Modifier.fillMaxWidth(),
+    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+  ) {
+    Column(
+      modifier = Modifier.fillMaxWidth().padding(16.dp),
+      verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+      Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(
+          text = model.displayName,
+          style = MaterialTheme.typography.titleMedium,
+          fontWeight = FontWeight.SemiBold,
+          maxLines = 1,
+          overflow = TextOverflow.Ellipsis,
+        )
+        model.author
+          ?.takeIf { it.isNotBlank() }
+          ?.let { author ->
+            Text(
+              text = "By ${author}",
+              style = MaterialTheme.typography.bodySmall,
+              color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+          }
+        val pipelineTag = model.pipelineTag?.takeIf { it.isNotBlank() }
+        val libraryName = model.libraryName?.takeIf { it.isNotBlank() }
+        if (pipelineTag != null || libraryName != null) {
+          val descriptorScroll = rememberScrollState()
+          Row(
+            modifier = Modifier.horizontalScroll(descriptorScroll),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+          ) {
+            pipelineTag?.let { pipeline ->
+              AssistChip(onClick = {}, enabled = false, label = { Text(pipeline) })
+            }
+            libraryName?.let { library ->
+              AssistChip(onClick = {}, enabled = false, label = { Text(library) })
+            }
+          }
+        }
+        CapabilityRow(capabilities = model.tags)
+      }
+
+      Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        Row(
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+          Icon(
+            Icons.Filled.Download,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary
+          )
+          Text(
+            text = "${formatCount(model.downloads)} downloads",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+          )
+        }
+        Row(
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+          Icon(
+            Icons.Filled.Star,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.secondary
+          )
+          Text(
+            text = "${formatCount(model.likes)} likes",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+          )
+        }
+      }
+
+      model.lastModified?.let { lastModified ->
+        Text(
+          text = "Updated ${formatUpdated(lastModified)}",
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
+      if (model.createdAt != null && model.lastModified == null) {
+        Text(
+          text = "Published ${formatUpdated(model.createdAt)}",
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
+    }
   }
 }
 
@@ -668,13 +966,17 @@ private fun FilterSection(
 }
 
 @Composable
-private fun CapabilityRow(capabilities: Set<String>) {
-  if (capabilities.isEmpty()) return
-  FlowRow(
+private fun CapabilityRow(capabilities: Collection<String>) {
+  val displayTags = remember(capabilities) { sanitizeCapabilitiesForDisplay(capabilities) }
+  if (displayTags.isEmpty()) return
+
+  val scrollState = rememberScrollState()
+  Row(
+    modifier = Modifier.horizontalScroll(scrollState),
     horizontalArrangement = Arrangement.spacedBy(8.dp),
-    verticalArrangement = Arrangement.spacedBy(4.dp)
+    verticalAlignment = Alignment.CenterVertically,
   ) {
-    capabilities.take(MAX_CAPABILITY_CHIPS).forEach { capability ->
+    displayTags.take(MAX_CAPABILITY_CHIPS).forEach { capability ->
       AssistChip(
         onClick = {},
         enabled = false,
@@ -687,7 +989,7 @@ private fun CapabilityRow(capabilities: Set<String>) {
         },
       )
     }
-    val remaining = capabilities.size - MAX_CAPABILITY_CHIPS
+    val remaining = displayTags.size - MAX_CAPABILITY_CHIPS
     if (remaining > 0) {
       AssistChip(onClick = {}, enabled = false, label = { Text("+${remaining}") })
     }
@@ -704,8 +1006,7 @@ private fun StatusBadge(state: InstallState) {
         Triple("Downloading", MaterialTheme.colorScheme.tertiary, Icons.Filled.Download)
       InstallState.PAUSED ->
         Triple("Paused", MaterialTheme.colorScheme.secondary, Icons.Filled.Pause)
-      InstallState.ERROR ->
-        Triple("Error", MaterialTheme.colorScheme.error, Icons.Filled.Close)
+      InstallState.ERROR -> Triple("Error", MaterialTheme.colorScheme.error, Icons.Filled.Close)
       InstallState.NOT_INSTALLED ->
         Triple("Available", MaterialTheme.colorScheme.outline, Icons.Filled.Download)
     }
@@ -737,18 +1038,43 @@ private fun StatusBadge(state: InstallState) {
 }
 
 @Composable
-private fun EmptyState() {
+private fun EmptyState(
+  title: String = "No models to show",
+  message: String = "Adjust your filters or connect to the catalog to discover new runtimes.",
+) {
   Column(
     modifier = Modifier.fillMaxWidth().padding(vertical = 64.dp),
     horizontalAlignment = Alignment.CenterHorizontally,
     verticalArrangement = Arrangement.spacedBy(12.dp),
   ) {
-    Text(text = "No models to show", style = MaterialTheme.typography.titleMedium)
+    Text(text = title, style = MaterialTheme.typography.titleMedium)
     Text(
-      text = "Adjust your filters or connect to the catalog to discover new runtimes.",
+      text = message,
       style = MaterialTheme.typography.bodyMedium,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
       textAlign = TextAlign.Center,
     )
   }
+}
+
+private fun formatCount(value: Long): String {
+  if (value < 1_000) return value.toString()
+
+  val units = arrayOf("k", "M", "B", "T")
+  var remainder = value.toDouble()
+  var unitIndex = 0
+  while (remainder >= 1_000 && unitIndex < units.lastIndex) {
+    remainder /= 1_000
+    unitIndex += 1
+  }
+
+  val pattern = if (remainder >= 10 || remainder % 1.0 == 0.0) "%.0f%s" else "%.1f%s"
+  return pattern.format(Locale.US, remainder, units[unitIndex])
+}
+
+private fun sanitizeCapabilitiesForDisplay(raw: Collection<String>): List<String> {
+  if (raw.isEmpty()) return emptyList()
+  val normalized = raw.map { it.trim() }.filter { it.isNotEmpty() }
+  val hasMultimodal = normalized.any { it.equals("multimodal", ignoreCase = true) }
+  return normalized.filterNot { hasMultimodal && it.equals("text-generation", ignoreCase = true) }
 }

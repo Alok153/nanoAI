@@ -129,7 +129,8 @@ constructor(
     downloadManager.getTaskById(taskId)
 
   /** Observe queued download tasks. */
-  override fun getQueuedDownloads(): Flow<List<DownloadTask>> = downloadManager.getQueuedDownloads()
+  override fun observeDownloadTasks(): Flow<List<DownloadTask>> =
+    downloadManager.observeManagedDownloads()
 
   /** Retry a failed download task. */
   override suspend fun retryFailedDownload(taskId: UUID) {

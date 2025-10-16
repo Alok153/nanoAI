@@ -46,6 +46,9 @@ interface DownloadManager {
   /** Get queued downloads. */
   fun getQueuedDownloads(): Flow<List<DownloadTask>>
 
+  /** Observe all downloads the system is tracking (queued, running, paused, failed). */
+  fun observeManagedDownloads(): Flow<List<DownloadTask>>
+
   /** Observe download progress for a task. */
   fun observeProgress(taskId: UUID): Flow<Float>
 

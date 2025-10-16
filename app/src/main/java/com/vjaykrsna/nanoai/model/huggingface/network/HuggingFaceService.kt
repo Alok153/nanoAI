@@ -1,6 +1,7 @@
 package com.vjaykrsna.nanoai.model.huggingface.network
 
 import com.vjaykrsna.nanoai.model.huggingface.network.dto.HuggingFaceModelDto
+import com.vjaykrsna.nanoai.model.huggingface.network.dto.HuggingFaceModelListingDto
 import com.vjaykrsna.nanoai.model.huggingface.network.dto.HuggingFacePathInfoDto
 import com.vjaykrsna.nanoai.model.huggingface.network.dto.HuggingFaceTreeEntryDto
 import retrofit2.http.GET
@@ -35,4 +36,20 @@ interface HuggingFaceService {
     @Query("path") path: String,
     @Query("recursive") recursive: Boolean = false,
   ): List<HuggingFaceTreeEntryDto>
+
+  /**
+   * List models available on Hugging Face. This endpoint returns a paginated list that can be
+   * filtered using search queries.
+   */
+  @GET("api/models")
+  suspend fun listModels(
+    @Query("sort") sort: String? = null,
+    @Query("direction") direction: Int? = null,
+    @Query("limit") limit: Int? = null,
+    @Query("search") search: String? = null,
+    @Query("pipeline_tag") pipelineTag: String? = null,
+    @Query("library") library: String? = null,
+    @Query("private") includePrivate: Boolean? = null,
+    @Query("expand") expand: List<String>? = null,
+  ): List<HuggingFaceModelListingDto>
 }

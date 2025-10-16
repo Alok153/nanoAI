@@ -48,6 +48,10 @@ internal fun formatSize(bytes: Long): String {
 }
 
 internal fun formatUpdated(updatedAt: Instant): String {
-  val date = updatedAt.toLocalDateTime(TimeZone.currentSystemDefault()).date
-  return date.toString()
+  val localDateTime = updatedAt.toLocalDateTime(TimeZone.currentSystemDefault())
+  val month =
+    localDateTime.month.name.lowercase(Locale.US).replaceFirstChar { char ->
+      if (char.isLowerCase()) char.titlecase(Locale.US) else char.toString()
+    }
+  return "$month ${localDateTime.dayOfMonth}, ${localDateTime.year}"
 }

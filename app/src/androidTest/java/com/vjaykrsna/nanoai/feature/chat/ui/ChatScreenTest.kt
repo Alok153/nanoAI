@@ -91,7 +91,7 @@ class ChatScreenTest {
     composeTestRule.waitForIdle()
 
     // Input should be enabled
-    composeTestRule.onNodeWithText("Type a message…").assertIsDisplayed()
+    composeTestRule.onNodeWithText("Type a message...").assertIsDisplayed()
   }
 
   @Test
@@ -110,7 +110,7 @@ class ChatScreenTest {
     composeTestRule.waitForIdle()
 
     // Type a message
-    composeTestRule.onNodeWithText("Type a message…").performTextInput("Hello")
+    composeTestRule.onNodeWithText("Type a message...").performTextInput("Hello")
 
     // Send message triggers loading (though in this test it completes quickly)
     // The loading indicator would appear during actual network calls
@@ -195,7 +195,7 @@ class ChatScreenTest {
 
     // No messages should be displayed
     // Composer should still be available
-    composeTestRule.onNodeWithText("Type a message…").assertIsDisplayed()
+    composeTestRule.onNodeWithText("Type a message...").assertIsDisplayed()
   }
 
   @Test
@@ -214,7 +214,7 @@ class ChatScreenTest {
     composeTestRule.waitForIdle()
 
     // Type and send to trigger error
-    composeTestRule.onNodeWithText("Type a message…").performTextInput("Test")
+    composeTestRule.onNodeWithText("Type a message...").performTextInput("Test")
 
     // Error should be displayed (in production, this would show offline banner)
     composeTestRule.waitForIdle()
@@ -262,7 +262,7 @@ class ChatScreenTest {
     composeTestRule.waitForIdle()
 
     // Type a message
-    composeTestRule.onNodeWithText("Type a message…").performTextInput("Test message")
+    composeTestRule.onNodeWithText("Type a message...").performTextInput("Test message")
     composeTestRule.onNodeWithText("Test message").assertExists()
 
     // After sending, input should be cleared
@@ -282,7 +282,7 @@ class ChatScreenTest {
     composeTestRule.waitForIdle()
 
     // Try to send without persona
-    composeTestRule.onNodeWithText("Type a message…").performTextInput("Test")
+    composeTestRule.onNodeWithText("Type a message...").performTextInput("Test")
 
     // Error should be shown about no persona
     composeTestRule.waitForIdle()

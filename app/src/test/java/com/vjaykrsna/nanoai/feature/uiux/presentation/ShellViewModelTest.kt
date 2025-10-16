@@ -524,6 +524,10 @@ private class FakeDownloadManager : com.vjaykrsna.nanoai.feature.library.data.Do
     Flow<List<com.vjaykrsna.nanoai.core.domain.model.DownloadTask>> =
     kotlinx.coroutines.flow.flowOf(emptyList())
 
+  override fun observeManagedDownloads():
+    Flow<List<com.vjaykrsna.nanoai.core.domain.model.DownloadTask>> =
+    kotlinx.coroutines.flow.flowOf(emptyList())
+
   override fun observeProgress(taskId: UUID): Flow<Float> = kotlinx.coroutines.flow.flowOf(0f)
 
   override suspend fun getMaxConcurrentDownloads(): Int = 2

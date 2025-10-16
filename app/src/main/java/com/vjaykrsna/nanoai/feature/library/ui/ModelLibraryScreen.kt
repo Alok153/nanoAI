@@ -2,6 +2,9 @@
 
 package com.vjaykrsna.nanoai.feature.library.ui
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +31,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.vjaykrsna.nanoai.feature.library.presentation.LibraryError
+import com.vjaykrsna.nanoai.feature.library.presentation.LibraryUiEvent
+import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryTab
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryViewModel
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.LOADING_INDICATOR_TAG
 import kotlinx.coroutines.flow.collectLatest
@@ -40,14 +45,25 @@ fun ModelLibraryScreen(
 ) {
   val filters by viewModel.filters.collectAsState()
   val summary by viewModel.summary.collectAsState()
-  val sections by viewModel.sections.collectAsState()
+  val localSections by viewModel.localSections.collectAsState()
+  val curatedSections by viewModel.curatedSections.collectAsState()
+  val huggingFaceModels by viewModel.huggingFaceModels.collectAsState()
+  val huggingFaceFilters by viewModel.huggingFaceFilters.collectAsState()
+  val huggingFacePipelineOptions by viewModel.huggingFacePipelineOptions.collectAsState()
+  val huggingFaceLibraryOptions by viewModel.huggingFaceLibraryOptions.collectAsState()
   val providerOptions by viewModel.providerOptions.collectAsState()
   val capabilityOptions by viewModel.capabilityOptions.collectAsState()
   val hasActiveFilters by viewModel.hasActiveFilters.collectAsState()
   val isLoading by viewModel.isLoading.collectAsState()
   val isRefreshing by viewModel.isRefreshing.collectAsState()
+  val isHuggingFaceLoading by viewModel.isHuggingFaceLoading.collectAsState()
 
   val snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
+
+  val documentLauncher =
+    rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+      uri?.let(viewModel::importLocalModel)
+    }
 
   LaunchedEffect(Unit) {
     viewModel.errorEvents.collectLatest { error ->
@@ -60,8 +76,20 @@ fun ModelLibraryScreen(
           is LibraryError.CancelFailed -> "Cancel failed: ${error.message}"
           is LibraryError.RetryFailed -> "Retry failed: ${error.message}"
           is LibraryError.UnexpectedError -> "Error: ${error.message}"
+          is LibraryError.HuggingFaceLoadFailed -> "Hugging Face error: ${error.message}"
         }
       snackbarHostState.showSnackbar(message)
+    }
+  }
+
+  LaunchedEffect(documentLauncher) {
+    viewModel.uiEvents.collectLatest { event ->
+      when (event) {
+        LibraryUiEvent.RequestLocalModelImport ->
+          documentLauncher.launch(
+            arrayOf("application/octet-stream", "application/x-tflite", "*/*")
+          )
+      }
     }
   }
 
@@ -87,7 +115,9 @@ fun ModelLibraryScreen(
         filters = filters,
         providers = providerOptions,
         capabilities = capabilityOptions,
-        hasActiveFilters = hasActiveFilters,
+        hasActiveFilters =
+          if (filters.tab == ModelLibraryTab.HUGGING_FACE) false else hasActiveFilters,
+        showModelFilters = filters.tab != ModelLibraryTab.HUGGING_FACE,
         onSearchChange = viewModel::updateSearchQuery,
         onProviderSelect = viewModel::selectProvider,
         onCapabilityToggle = viewModel::toggleCapability,
@@ -95,26 +125,83 @@ fun ModelLibraryScreen(
         onClearFilters = viewModel::clearFilters,
       )
 
-      if (isLoading) {
-        Box(modifier = Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
-          CircularProgressIndicator(
-            modifier =
-              Modifier.testTag(LOADING_INDICATOR_TAG).semantics {
-                contentDescription = "Loading models"
-              },
+      ModelLibraryTabs(
+        selectedTab = filters.tab,
+        onTabSelected = viewModel::selectTab,
+      )
+
+      when (filters.tab) {
+        ModelLibraryTab.LOCAL -> {
+          if (isLoading) {
+            Box(
+              modifier = Modifier.fillMaxWidth().weight(1f),
+              contentAlignment = Alignment.Center,
+            ) {
+              CircularProgressIndicator(
+                modifier =
+                  Modifier.testTag(LOADING_INDICATOR_TAG).semantics {
+                    contentDescription = "Loading models"
+                  },
+              )
+            }
+          } else {
+            ModelLibraryContent(
+              modifier = Modifier.weight(1f),
+              sections = localSections,
+              selectedTab = ModelLibraryTab.LOCAL,
+              onDownload = { model -> viewModel.downloadModel(model.modelId) },
+              onDelete = { model -> viewModel.deleteModel(model.modelId) },
+              onPause = viewModel::pauseDownload,
+              onResume = viewModel::resumeDownload,
+              onCancel = viewModel::cancelDownload,
+              onRetry = viewModel::retryDownload,
+              onImportLocalModel = viewModel::requestLocalModelImport,
+            )
+          }
+        }
+        ModelLibraryTab.CURATED -> {
+          if (isLoading) {
+            Box(
+              modifier = Modifier.fillMaxWidth().weight(1f),
+              contentAlignment = Alignment.Center,
+            ) {
+              CircularProgressIndicator(
+                modifier =
+                  Modifier.testTag(LOADING_INDICATOR_TAG).semantics {
+                    contentDescription = "Loading curated models"
+                  },
+              )
+            }
+          } else {
+            ModelLibraryContent(
+              modifier = Modifier.weight(1f),
+              sections = curatedSections,
+              selectedTab = ModelLibraryTab.CURATED,
+              onDownload = { model -> viewModel.downloadModel(model.modelId) },
+              onDelete = { model -> viewModel.deleteModel(model.modelId) },
+              onPause = viewModel::pauseDownload,
+              onResume = viewModel::resumeDownload,
+              onCancel = viewModel::cancelDownload,
+              onRetry = viewModel::retryDownload,
+            )
+          }
+        }
+        ModelLibraryTab.HUGGING_FACE -> {
+          HuggingFaceFilterBar(
+            filters = huggingFaceFilters,
+            pipelineOptions = huggingFacePipelineOptions,
+            libraryOptions = huggingFaceLibraryOptions,
+            onSortSelect = viewModel::setHuggingFaceSort,
+            onPipelineSelect = viewModel::setHuggingFacePipeline,
+            onLibrarySelect = viewModel::setHuggingFaceLibrary,
+            onClearFilters = viewModel::clearHuggingFaceFilters,
+          )
+          HuggingFaceLibraryContent(
+            modifier = Modifier.weight(1f),
+            models = huggingFaceModels,
+            isLoading = isHuggingFaceLoading,
           )
         }
-      } else {
-        ModelLibraryContent(
-          modifier = Modifier.weight(1f),
-          sections = sections,
-          onDownload = { model -> viewModel.downloadModel(model.modelId) },
-          onDelete = { model -> viewModel.deleteModel(model.modelId) },
-          onPause = viewModel::pauseDownload,
-          onResume = viewModel::resumeDownload,
-          onCancel = viewModel::cancelDownload,
-          onRetry = viewModel::retryDownload,
-        )
       }
     }
 

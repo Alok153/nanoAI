@@ -105,6 +105,7 @@ class ProgressCenterCoordinatorTest {
   private class FakeDownloadManager : DownloadManager {
     private val activeFlow = MutableStateFlow<List<DownloadTask>>(emptyList())
     private val queuedFlow = MutableStateFlow<List<DownloadTask>>(emptyList())
+    private val managedFlow = MutableStateFlow<List<DownloadTask>>(emptyList())
     private val statusMap = mutableMapOf<UUID, DownloadTask>()
 
     val actions = mutableListOf<String>()
@@ -112,20 +113,25 @@ class ProgressCenterCoordinatorTest {
     suspend fun setActiveTasks(tasks: List<DownloadTask>) {
       tasks.forEach { statusMap[it.taskId] = it }
       activeFlow.emit(tasks)
+      updateManaged()
     }
 
     suspend fun setQueuedTasks(tasks: List<DownloadTask>) {
       tasks.forEach { statusMap.putIfAbsent(it.taskId, it) }
       queuedFlow.emit(tasks)
+      updateManaged()
     }
 
     fun registerTask(task: DownloadTask) {
       statusMap[task.taskId] = task
+      updateManaged()
     }
 
     override suspend fun getActiveDownloads(): Flow<List<DownloadTask>> = activeFlow
 
     override fun getQueuedDownloads(): Flow<List<DownloadTask>> = queuedFlow
+
+    override fun observeManagedDownloads(): Flow<List<DownloadTask>> = managedFlow
 
     override suspend fun getDownloadStatus(taskId: UUID): DownloadTask? = statusMap[taskId]
 
@@ -169,5 +175,10 @@ class ProgressCenterCoordinatorTest {
     override suspend fun resetTask(taskId: UUID) = Unit
 
     override fun observeProgress(taskId: UUID): Flow<Float> = emptyFlow()
+
+    private fun updateManaged() {
+      val combined = (activeFlow.value + queuedFlow.value).associateBy { it.taskId }.values.toList()
+      managedFlow.value = combined
+    }
   }
 }

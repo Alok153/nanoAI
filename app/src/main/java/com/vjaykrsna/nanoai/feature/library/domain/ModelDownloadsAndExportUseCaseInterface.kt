@@ -27,7 +27,7 @@ interface ModelDownloadsAndExportUseCaseInterface {
 
   suspend fun observeDownloadTask(taskId: UUID): Flow<DownloadTask?>
 
-  fun getQueuedDownloads(): Flow<List<DownloadTask>>
+  fun observeDownloadTasks(): Flow<List<DownloadTask>>
 
   suspend fun retryFailedDownload(taskId: UUID)
 }

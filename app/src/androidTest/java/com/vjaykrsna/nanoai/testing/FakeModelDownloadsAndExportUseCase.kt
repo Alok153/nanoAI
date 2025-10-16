@@ -86,7 +86,7 @@ class FakeModelDownloadsAndExportUseCase : ModelDownloadsAndExportUseCaseInterfa
   override suspend fun observeDownloadTask(taskId: UUID): Flow<DownloadTask?> =
     _downloadTasks[taskId] ?: flowOf(null)
 
-  override fun getQueuedDownloads(): Flow<List<DownloadTask>> = _queuedDownloads
+  override fun observeDownloadTasks(): Flow<List<DownloadTask>> = _queuedDownloads
 
   override suspend fun retryFailedDownload(taskId: UUID) {
     updateDownloadStatus(taskId, DownloadStatus.QUEUED)

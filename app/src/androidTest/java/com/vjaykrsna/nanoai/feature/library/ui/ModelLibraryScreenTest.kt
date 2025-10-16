@@ -417,7 +417,7 @@ class ModelLibraryScreenTest {
 
     composeTestRule.waitForIdle()
 
-    composeTestRule.runOnIdle { assertThat(viewModel.sections.value.available).isNotEmpty() }
+    composeTestRule.runOnIdle { assertThat(viewModel.curatedSections.value.available).isNotEmpty() }
 
     val listNode = composeTestRule.onNode(hasTestTag(ModelLibraryUiConstants.LIST_TAG))
     listNode.performScrollToNode(hasText("Attention Model", substring = false))

@@ -59,6 +59,17 @@ interface DownloadTaskDao {
   @Query("SELECT * FROM download_tasks WHERE status = 'QUEUED' ORDER BY started_at ASC")
   fun observeQueuedDownloads(): Flow<List<DownloadTaskEntity>>
 
+  /** Observe all active, queued, paused, or failed downloads (reactive). */
+  @Query(
+    """
+        SELECT *
+        FROM download_tasks
+        WHERE status IN ('QUEUED','DOWNLOADING','PAUSED','FAILED')
+        ORDER BY started_at ASC
+        """,
+  )
+  fun observeManagedDownloads(): Flow<List<DownloadTaskEntity>>
+
   /** Get all active downloads (DOWNLOADING status). */
   @Query("SELECT * FROM download_tasks WHERE status = 'DOWNLOADING' ORDER BY started_at ASC")
   suspend fun getActiveDownloads(): List<DownloadTaskEntity>

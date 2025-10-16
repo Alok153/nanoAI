@@ -92,15 +92,9 @@ class SettingsScreenContractTest {
     composeRule
       .onNodeWithContentDescription("Settings screen organized by tabs with contextual sections")
       .assertIsDisplayed()
-    composeRule.onNodeWithText("General").assertIsDisplayed()
-    composeRule.onNodeWithText("General").assertHasClickAction()
-    composeRule
-      .onNodeWithText("Choose the interface language, locale, and measurement units.")
-      .assertIsDisplayed()
-    val appearanceTab = composeRule.onNodeWithText("Appearance")
-    appearanceTab.assertIsDisplayed()
-    appearanceTab.assertHasClickAction()
-    appearanceTab.performClick()
+    composeRule.onNodeWithText("Appearance").assertIsDisplayed()
+    composeRule.onNodeWithText("Appearance").assertHasClickAction()
+    composeRule.onNodeWithText("Appearance").performClick()
     composeRule.waitUntilExactlyOneExists(
       hasText("Switch between light, dark, or follow the system theme.")
     )
@@ -110,7 +104,7 @@ class SettingsScreenContractTest {
   }
 
   @Test
-  fun settingsScreen_offlineAndModelsSection_showsProvidersAndFab() {
+  fun settingsScreen_apisSection_showsProvidersAndFab() {
     composeRule.setContent {
       NanoAITheme {
         SettingsScreenContent(
@@ -121,10 +115,10 @@ class SettingsScreenContractTest {
       }
     }
 
-    val offlineTab = composeRule.onNodeWithText("Offline & Models")
-    offlineTab.assertIsDisplayed()
-    offlineTab.assertHasClickAction()
-    offlineTab.performClick()
+    val apisTab = composeRule.onNodeWithText("APIs")
+    apisTab.assertIsDisplayed()
+    apisTab.assertHasClickAction()
+    apisTab.performClick()
     composeRule.waitUntilExactlyOneExists(hasText("Test Provider"))
 
     composeRule.onNodeWithText("Test Provider").assertIsDisplayed()
@@ -140,7 +134,7 @@ class SettingsScreenContractTest {
   }
 
   @Test
-  fun settingsScreen_backupRestoreSection_exposesImportAndExport() {
+  fun settingsScreen_backupSyncSection_exposesImportAndExport() {
     composeRule.setContent {
       NanoAITheme {
         SettingsScreenContent(
@@ -151,7 +145,7 @@ class SettingsScreenContractTest {
       }
     }
 
-    val backupTab = composeRule.onNodeWithText("Backup & Restore")
+    val backupTab = composeRule.onNodeWithText("Backup & Sync")
     backupTab.assertIsDisplayed()
     backupTab.assertHasClickAction()
     backupTab.performClick()

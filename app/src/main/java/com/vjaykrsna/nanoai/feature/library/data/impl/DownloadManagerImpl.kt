@@ -112,6 +112,9 @@ constructor(
   override fun getQueuedDownloads(): Flow<List<DownloadTask>> =
     downloadTaskDao.observeQueuedDownloads().map { tasks -> tasks.map { it.toDomain() } }
 
+  override fun observeManagedDownloads(): Flow<List<DownloadTask>> =
+    downloadTaskDao.observeManagedDownloads().map { tasks -> tasks.map { it.toDomain() } }
+
   override fun observeProgress(taskId: UUID): Flow<Float> =
     downloadTaskDao.observeById(taskId.toString()).map { it?.progress ?: 0f }
 
