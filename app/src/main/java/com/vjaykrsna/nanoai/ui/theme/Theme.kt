@@ -80,6 +80,38 @@ private val DarkColorScheme =
     inversePrimary = DarkInversePrimary,
   )
 
+// NOTE: Pure black for OLED power savings
+private val AmoledColorScheme =
+  darkColorScheme(
+    primary = DarkPrimary,
+    onPrimary = DarkOnPrimary,
+    primaryContainer = DarkPrimaryContainer,
+    onPrimaryContainer = DarkOnPrimaryContainer,
+    secondary = DarkSecondary,
+    onSecondary = DarkOnSecondary,
+    secondaryContainer = DarkSecondaryContainer,
+    onSecondaryContainer = DarkOnSecondaryContainer,
+    tertiary = DarkTertiary,
+    onTertiary = DarkOnTertiary,
+    tertiaryContainer = DarkTertiaryContainer,
+    onTertiaryContainer = DarkOnTertiaryContainer,
+    background = androidx.compose.ui.graphics.Color(0xFF000000),
+    onBackground = DarkOnBackground,
+    surface = androidx.compose.ui.graphics.Color(0xFF000000),
+    onSurface = DarkOnSurface,
+    surfaceVariant = androidx.compose.ui.graphics.Color(0xFF0A0A0A),
+    onSurfaceVariant = DarkOnSurfaceVariant,
+    outline = DarkOutline,
+    outlineVariant = DarkOutlineVariant,
+    error = DarkError,
+    onError = DarkOnError,
+    errorContainer = DarkErrorContainer,
+    onErrorContainer = DarkOnErrorContainer,
+    inverseSurface = DarkInverseSurface,
+    inverseOnSurface = DarkInverseOnSurface,
+    inversePrimary = DarkInversePrimary,
+  )
+
 @Composable
 fun NanoAITheme(
   themePreference: ThemePreference = ThemePreference.SYSTEM,
@@ -88,7 +120,13 @@ fun NanoAITheme(
 ) {
   val systemDarkTheme = isSystemInDarkTheme()
   val darkTheme = resolveDarkTheme(themePreference, systemDarkTheme)
-  val colorScheme = rememberNanoAIColorScheme(darkTheme = darkTheme, dynamicColor = dynamicColor)
+  val isAmoled = themePreference == ThemePreference.AMOLED
+  val colorScheme =
+    rememberNanoAIColorScheme(
+      darkTheme = darkTheme,
+      isAmoled = isAmoled,
+      dynamicColor = dynamicColor,
+    )
 
   ApplySystemBars(colorScheme = colorScheme, darkTheme = darkTheme)
 
@@ -105,7 +143,8 @@ private fun resolveDarkTheme(
 ): Boolean {
   return when (themePreference) {
     ThemePreference.SYSTEM -> systemDarkTheme
-    ThemePreference.DARK -> true
+    ThemePreference.DARK,
+    ThemePreference.AMOLED -> true
     ThemePreference.LIGHT -> false
   }
 }
@@ -113,16 +152,14 @@ private fun resolveDarkTheme(
 @Composable
 private fun rememberNanoAIColorScheme(
   darkTheme: Boolean,
+  isAmoled: Boolean,
   dynamicColor: Boolean,
 ): ColorScheme {
   return when {
+    isAmoled -> AmoledColorScheme
     dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
       val context = LocalContext.current
-      if (darkTheme) {
-        dynamicDarkColorScheme(context)
-      } else {
-        dynamicLightColorScheme(context)
-      }
+      if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
     }
     darkTheme -> DarkColorScheme
     else -> LightColorScheme

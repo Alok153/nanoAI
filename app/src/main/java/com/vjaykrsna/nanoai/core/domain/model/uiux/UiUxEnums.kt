@@ -9,6 +9,7 @@ package com.vjaykrsna.nanoai.core.domain.model.uiux
 enum class ThemePreference {
   LIGHT,
   DARK,
+  AMOLED, // Pure black backgrounds for OLED power savings
   SYSTEM,
   ;
 

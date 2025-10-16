@@ -26,7 +26,7 @@ internal fun AppearanceThemeSection(
   SettingsSection(title = "Theme", modifier = modifier) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
       Text(
-        text = "Switch between light, dark, or follow the system theme.",
+        text = "Switch between light, dark, AMOLED (pitch black), or follow the system theme.",
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )

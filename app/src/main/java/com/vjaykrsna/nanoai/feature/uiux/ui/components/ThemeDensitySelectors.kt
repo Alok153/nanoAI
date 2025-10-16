@@ -91,6 +91,7 @@ private fun themeLabel(theme: ThemePreference): String =
   when (theme) {
     ThemePreference.LIGHT -> "Light"
     ThemePreference.DARK -> "Dark"
+    ThemePreference.AMOLED -> "AMOLED"
     ThemePreference.SYSTEM -> "System"
   }
 
