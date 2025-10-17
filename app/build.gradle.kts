@@ -16,6 +16,32 @@ plugins {
   jacoco
 }
 
+fun com.android.build.api.dsl.DefaultConfig.createQuotedStringBuildConfigField(
+  name: String,
+  propertyName: String,
+  defaultValue: String
+) {
+  val propertyValue = (project.findProperty(propertyName) as? String)?.trim()
+  val finalValue = propertyValue.takeIf { !it.isNullOrBlank() } ?: defaultValue
+  val quotedValue = "\"${finalValue.replace("\"", "\\\"")}\""
+  buildConfigField("String", name, quotedValue)
+}
+
+// Common exclusion patterns for Jacoco reports to avoid repetition.
+val jacocoExclusionPatterns =
+  listOf("**/R.class", "**/R$*.class", "**/BuildConfig.*", "**/Manifest*.*", "**/*Test*.*")
+
+// Helper function to generate class directories for Jacoco, reducing repetition.
+fun jacocoClassDirectories(variant: String) =
+  files(
+    fileTree(layout.buildDirectory.dir("tmp/kotlin-classes/$variant").get()) {
+      exclude(jacocoExclusionPatterns)
+    },
+    fileTree(layout.buildDirectory.dir("intermediates/javac/$variant/classes").get()) {
+      exclude(jacocoExclusionPatterns)
+    }
+  )
+
 val isCiEnvironment = System.getenv("CI")?.equals("true", ignoreCase = true) == true
 val useManagedDeviceProperty =
   (project.findProperty("nanoai.useManagedDevice") as? String)?.toBoolean() ?: false
@@ -41,25 +67,18 @@ android {
     versionName = "1.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
     vectorDrawables { useSupportLibrary = true }
 
-    val hfClientId = (project.findProperty("nanoai.hf.oauth.clientId") as? String)?.trim().orEmpty()
-    val hfScope = (project.findProperty("nanoai.hf.oauth.scope") as? String)?.trim().orEmpty()
-    val hfRedirectUri =
-      (project.findProperty("nanoai.hf.oauth.redirectUri") as? String)?.trim().orEmpty()
-    val quote: (String) -> String = { value -> "\"${value.replace("\"", "\\\"")}\"" }
-
-    buildConfigField("String", "HF_OAUTH_CLIENT_ID", quote(hfClientId))
-    buildConfigField(
-      "String",
+    createQuotedStringBuildConfigField("HF_OAUTH_CLIENT_ID", "nanoai.hf.oauth.clientId", "")
+    createQuotedStringBuildConfigField(
       "HF_OAUTH_SCOPE",
-      quote(hfScope.ifBlank { "all offline_access" }),
+      "nanoai.hf.oauth.scope",
+      "all offline_access"
     )
-    buildConfigField(
-      "String",
+    createQuotedStringBuildConfigField(
       "HF_OAUTH_REDIRECT_URI",
-      quote(hfRedirectUri.ifBlank { "nanoai://auth/huggingface" }),
+      "nanoai.hf.oauth.redirectUri",
+      "nanoai://auth/huggingface"
     )
   }
 
@@ -91,13 +110,13 @@ android {
   }
 
   compileOptions {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
   }
 
   kotlin {
     compilerOptions {
-      jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+      jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
       val composeMetricsDir = project.layout.buildDirectory.dir("compose/metrics")
       val composeReportsDir = project.layout.buildDirectory.dir("compose/reports")
       freeCompilerArgs.addAll(
@@ -146,8 +165,12 @@ android {
     }
   }
 
-  sourceSets { getByName("test") { java.srcDir("src/test/contract") } }
-  sourceSets { getByName("test") { resources.srcDir("$rootDir/config") } }
+  sourceSets {
+    getByName("test") {
+      java.srcDir("src/test/contract")
+      resources.srcDir("$rootDir/config")
+    }
+  }
 }
 
 room { schemaDirectory("$projectDir/schemas") }
@@ -185,25 +208,16 @@ val coverageExecutionData =
     },
   )
 
-val coverageClassDirectories =
-  files(
-    fileTree(layout.buildDirectory.dir("tmp/kotlin-classes/debug").get()) {
-      exclude("**/R.class", "**/R$*.class", "**/BuildConfig.*", "**/Manifest*.*", "**/*Test*.*")
-    },
-    fileTree(layout.buildDirectory.dir("intermediates/javac/debug/classes").get()) {
-      exclude("**/R.class", "**/R$*.class", "**/BuildConfig.*", "**/Manifest*.*", "**/*Test*.*")
-    },
-  )
-
+val coverageClassDirectories = jacocoClassDirectories("debug")
 val coverageSourceDirectories = files("src/main/java", "src/main/kotlin")
 
 tasks.register<JacocoReport>("jacocoFullReport") {
   group = "verification"
   description = "Generates a merged coverage report for unit and instrumentation tests."
 
-  dependsOn("testDebugUnitTest")
+  dependsOn(tasks.named("testDebugUnitTest"))
   if (!skipInstrumentation) {
-    dependsOn("connectedDebugAndroidTest")
+    dependsOn(tasks.named("connectedDebugAndroidTest"))
   }
 
   classDirectories.setFrom(coverageClassDirectories)
@@ -246,22 +260,13 @@ if (useManagedDeviceForInstrumentation) {
     }
 }
 
-val coverageClassDirectoriesUnit =
-  files(
-    fileTree(layout.buildDirectory.dir("tmp/kotlin-classes/debugUnitTest").get()) {
-      exclude("**/R.class", "**/R$*.class", "**/BuildConfig.*", "**/Manifest*.*", "**/*Test*.*")
-    },
-    fileTree(layout.buildDirectory.dir("intermediates/javac/debugUnitTest/classes").get()) {
-      exclude("**/R.class", "**/R$*.class", "**/BuildConfig.*", "**/Manifest*.*", "**/*Test*.*")
-    },
-  )
-
 tasks.register<JacocoReport>("jacocoUnitReport") {
   group = "verification"
   description = "Generates a coverage report for unit tests only."
 
-  dependsOn("testDebugUnitTest")
+  dependsOn(tasks.named("testDebugUnitTest"))
 
+  val coverageClassDirectoriesUnit = jacocoClassDirectories("debugUnitTest")
   classDirectories.setFrom(coverageClassDirectoriesUnit)
   additionalClassDirs.setFrom(coverageClassDirectoriesUnit)
   sourceDirectories.setFrom(coverageSourceDirectories)
@@ -289,8 +294,8 @@ tasks.register<JavaExec>("verifyCoverageThresholds") {
   group = "verification"
   description = "Verifies merged coverage meets minimum layer thresholds."
 
-  dependsOn("compileDebugKotlin")
-  dependsOn("jacocoFullReport")
+  dependsOn(tasks.named("compileDebugKotlin"))
+  dependsOn(tasks.named("jacocoFullReport"))
 
   inputs.file(coverageReportXml)
   inputs.file(layerMapFile)
@@ -328,8 +333,8 @@ tasks.register<JavaExec>("verifyCoverageThresholds") {
 }
 
 tasks.named("check") {
-  dependsOn("jacocoFullReport")
-  dependsOn("verifyCoverageThresholds")
+  dependsOn(tasks.named("jacocoFullReport"))
+  dependsOn(tasks.named("verifyCoverageThresholds"))
 }
 
 tasks.register<Exec>("coverageMergeArtifacts") {
@@ -351,7 +356,7 @@ tasks.register<Exec>("coverageMarkdownSummary") {
   group = "verification"
   description = "Generates markdown coverage summary from merged JaCoCo XML report."
 
-  dependsOn("jacocoFullReport")
+  dependsOn(tasks.named("jacocoFullReport"))
 
   val xmlReport = layout.buildDirectory.file("reports/jacoco/full/jacocoFullReport.xml")
   val layerMap = rootProject.layout.projectDirectory.file("config/coverage/layer-map.json")
@@ -445,7 +450,7 @@ dependencies {
 
   // WorkManager
   implementation(libs.androidx.work.runtime.ktx)
-  implementation(libs.androidx.security.crypto)
+
   // Security
   implementation(libs.androidx.security.crypto)
 

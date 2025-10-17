@@ -11,6 +11,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteractionCollection
@@ -24,6 +25,7 @@ import androidx.compose.ui.test.assertIsSelectable
 import androidx.compose.ui.test.hasAnyChild
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
@@ -46,6 +48,7 @@ import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityBannerState
 import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityStatus
 import com.vjaykrsna.nanoai.feature.uiux.state.JobStatus
 import com.vjaykrsna.nanoai.feature.uiux.state.JobType
+import com.vjaykrsna.nanoai.feature.uiux.state.ModeCard
 import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
 import com.vjaykrsna.nanoai.feature.uiux.state.PaletteSource
 import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
@@ -401,7 +404,7 @@ private class EventRecorder {
   }
 }
 
-private fun ComposeContentTestRule.waitForProgressItems(
+private fun AndroidComposeTestRule<*, *>.waitForProgressItems(
   prefix: String,
   count: Int,
   timeoutMillis: Long = 10_000,
@@ -411,7 +414,7 @@ private fun ComposeContentTestRule.waitForProgressItems(
   }
 }
 
-private fun ComposeContentTestRule.onAllNodesWithTagPrefix(
+private fun AndroidComposeTestRule<*, *>.onAllNodesWithTagPrefix(
   prefix: String,
   useUnmergedTree: Boolean = false,
 ): SemanticsNodeInteractionCollection =
@@ -541,13 +544,3 @@ private fun sampleProgressJob(
     canRetry = canRetry,
     queuedAt = Instant.now(),
   )
-
-private fun ComposeContentTestRule.waitForNodeWithTag(
-  tag: String,
-  timeoutMillis: Long = 5_000,
-  useUnmergedTree: Boolean = false,
-) {
-  waitUntil(timeoutMillis) {
-    onAllNodesWithTag(tag, useUnmergedTree).fetchSemanticsNodes().isNotEmpty()
-  }
-}

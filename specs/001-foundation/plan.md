@@ -34,7 +34,7 @@
 Deliver an offline-first Android chat assistant with Compose UI, sidebar history, and persona toggles. The MVP runs small LLMs locally via MediaPipe Generative (LiteRT), integrates OpenAI/Gemini and custom endpoints for cloud fallback, and ships a model library with download/pause controls. Research establishes a runtime-agnostic abstraction so TensorFlow Lite, MLC LLM, and ONNX Runtime Mobile can be added iteratively.
 
 ## Technical Context
-**Language/Version**: Kotlin 1.9.x (JDK 11 baseline)  
+**Language/Version**: Kotlin 1.9.x (JDK 17 baseline)  
 **Primary Dependencies**: Jetpack Compose Material 3, Hilt, WorkManager, Room, DataStore, Retrofit + Kotlin Serialization, OkHttp, MediaPipe Generative (LiteRT), Coil, Kotlin Coroutines  
 **Storage**: Room (SQLite) for chats/models/personas; EncryptedSharedPreferences/DataStore for credentials and privacy preferences  
 **Testing**: JUnit 5, Turbine/Coroutines test, Espresso & Compose UI tests, Macrobenchmark + Baseline Profile, Robolectric for unit UI coverage  

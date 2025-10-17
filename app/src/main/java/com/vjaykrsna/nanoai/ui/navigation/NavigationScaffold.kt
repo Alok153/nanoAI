@@ -25,8 +25,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.metrics.performance.PerformanceMetricsState
+import com.vjaykrsna.nanoai.feature.audio.ui.AudioScreen
 import com.vjaykrsna.nanoai.feature.chat.presentation.ChatViewModel
 import com.vjaykrsna.nanoai.feature.chat.ui.ChatScreen
+import com.vjaykrsna.nanoai.feature.image.ui.ImageFeatureContainer
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryScreen
 import com.vjaykrsna.nanoai.feature.settings.ui.SettingsScreen
 import com.vjaykrsna.nanoai.feature.uiux.presentation.AppUiState
@@ -159,8 +161,8 @@ private fun ShellModeContent(
     ModeId.CHAT -> ChatScreen(modifier = modifier, onUpdateChatState = onUpdateChatState)
     ModeId.LIBRARY -> ModelLibraryScreen(modifier = modifier)
     ModeId.SETTINGS -> SettingsScreen(modifier = modifier)
-    ModeId.IMAGE -> ModePlaceholder("Image generation", modifier)
-    ModeId.AUDIO -> ModePlaceholder("Audio / Live voice", modifier)
+    ModeId.IMAGE -> ImageFeatureContainer(modifier = modifier)
+    ModeId.AUDIO -> AudioScreen(modifier = modifier)
     ModeId.CODE -> ModePlaceholder("Code workspace", modifier)
     ModeId.TRANSLATE -> ModePlaceholder("Translation", modifier)
     ModeId.HISTORY -> ModePlaceholder("History", modifier)

@@ -18,9 +18,9 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.hasTestTag
-import androidx.compose.ui.test.junit4.ComposeContentTestRule
+import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onAllNodes
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.waitUntilDoesNotExist
@@ -321,7 +321,7 @@ class OfflineProgressTest {
     )
 }
 
-private fun ComposeContentTestRule.waitForNodeWithTag(
+private fun AndroidComposeTestRule<*, *>.waitForNodeWithTag(
   tag: String,
   useUnmergedTree: Boolean = false,
   timeoutMillis: Long = 5_000,
@@ -335,7 +335,7 @@ private fun ComposeContentTestRule.waitForNodeWithTag(
   throw AssertionError("Timed out waiting for node with tag '$tag'")
 }
 
-private fun ComposeContentTestRule.onAllNodesWithTagPrefix(
+private fun AndroidComposeTestRule<*, *>.onAllNodesWithTagPrefix(
   prefix: String,
   useUnmergedTree: Boolean = false,
 ) =

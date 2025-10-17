@@ -74,7 +74,6 @@ class AppViewModelTest {
   @Test
   fun `initialization handles unexpected error gracefully`() = runTest {
     // Given
-    val exception = RuntimeException("Unexpected error")
     val userProfileResult =
       ObserveUserProfileUseCase.Result(
         userProfile = null,

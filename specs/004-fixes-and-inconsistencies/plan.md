@@ -34,7 +34,7 @@
 Stabilize the Android codebase before Phase 4 by eliminating critical static-analysis violations, securing secrets, validating model downloads, completing high-priority tests, and refactoring oversized components without regressing UX or performance. The approach prioritizes Detekt blockers, WorkManager-based download integrity, Jetpack Security–backed credential storage, and deterministic test coverage for offline, disclaimer, model library, and cloud fallback flows.
 
 ## Technical Context
-**Language/Version**: Kotlin 1.9.x (JDK 11 baseline)  
+**Language/Version**: Kotlin 1.9.x (JDK 17 baseline)  
 **Primary Dependencies**: Jetpack Compose Material 3, Hilt, WorkManager, Room (KSP), DataStore, Retrofit + Kotlin Serialization, OkHttp, MediaPipe Tasks GenAI LiteRT, Coil, Kotlin Coroutines  
 **Storage**: Room (SQLite) for structured data, DataStore Preferences/Proto for lightweight state, EncryptedSharedPreferences (Jetpack Security) for secrets  
 **Testing**: JUnit4, Kotlin test, Robolectric, MockK, Turbine, Compose UI Test JUnit4, Espresso, Macrobenchmark harness  

@@ -61,3 +61,8 @@ val DarkOnErrorContainer = Color(0xFFFFDAD6)
 val DarkInverseSurface = Color(0xFFE2E8F0)
 val DarkInverseOnSurface = Color(0xFF0F172A)
 val DarkInversePrimary = Color(0xFF4F46E5)
+
+// AMOLED colors for power saving on AMOLED displays
+val AmoledBackground = Color(0xFF000000)
+val AmoledSurface = Color(0xFF000000)
+val AmoledSurfaceVariant = Color(0xFF0A0A0A)

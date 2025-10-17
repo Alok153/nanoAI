@@ -42,6 +42,14 @@ import kotlinx.coroutines.launch
 
 private const val HUGGING_FACE_SEARCH_DEBOUNCE_MS = 350L
 
+// Download priority constants (lower number = higher priority)
+private const val DOWNLOAD_PRIORITY_DOWNLOADING = 0
+private const val DOWNLOAD_PRIORITY_PAUSED = 1
+private const val DOWNLOAD_PRIORITY_QUEUED = 2
+private const val DOWNLOAD_PRIORITY_FAILED = 3
+private const val DOWNLOAD_PRIORITY_COMPLETED = 4
+private const val DOWNLOAD_PRIORITY_CANCELLED = 5
+
 @HiltViewModel
 class ModelLibraryViewModel
 @Inject
@@ -99,8 +107,14 @@ constructor(
   private val _huggingFaceModels = MutableStateFlow<List<HuggingFaceModelSummary>>(emptyList())
   val huggingFaceModels: StateFlow<List<HuggingFaceModelSummary>> = _huggingFaceModels.asStateFlow()
 
-  private val _huggingFaceFilters = MutableStateFlow(HuggingFaceFilterState())
-  val huggingFaceFilters: StateFlow<HuggingFaceFilterState> = _huggingFaceFilters.asStateFlow()
+  val huggingFaceFilters: StateFlow<HuggingFaceFilterState> =
+    filters
+      .map { it.toHuggingFaceFilterState() }
+      .stateIn(
+        viewModelScope,
+        SharingStarted.Eagerly,
+        LibraryFilterState().toHuggingFaceFilterState(),
+      )
 
   val huggingFacePipelineOptions: StateFlow<List<String>> =
     huggingFaceModels
@@ -112,6 +126,8 @@ constructor(
       }
       .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
+  val pipelineOptions: StateFlow<List<String>> = huggingFacePipelineOptions
+
   val huggingFaceLibraryOptions: StateFlow<List<String>> =
     huggingFaceModels
       .map { models ->
@@ -121,11 +137,6 @@ constructor(
           .sortedBy { it.lowercase(Locale.US) }
       }
       .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
-
-  val huggingFaceHasActiveFilters: StateFlow<Boolean> =
-    huggingFaceFilters
-      .map { it.hasActiveFilters }
-      .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
   private val _isHuggingFaceLoading = MutableStateFlow(false)
   val isHuggingFaceLoading: StateFlow<Boolean> = _isHuggingFaceLoading.asStateFlow()
@@ -309,59 +320,52 @@ constructor(
   }
 
   fun updateSearchQuery(query: String) {
-    val currentTab = filters.value.tab
-    _filters.update { it.copy(searchQuery = query) }
-    if (currentTab == ModelLibraryTab.HUGGING_FACE) {
-      _huggingFaceFilters.update { it.copy(searchQuery = query) }
-    }
-  }
-
-  fun selectProvider(providerType: ProviderType?) {
-    _filters.update { it.copy(provider = providerType) }
-  }
-
-  fun toggleCapability(capability: String) {
     _filters.update { state ->
-      val normalized = capability.lowercase(Locale.US)
-      val updated =
-        if (normalized in state.capabilities) state.capabilities - normalized
-        else state.capabilities + normalized
-      state.copy(capabilities = updated)
+      when (state.tab) {
+        ModelLibraryTab.HUGGING_FACE -> state.copy(huggingFaceSearchQuery = query)
+        else -> state.copy(localSearchQuery = query)
+      }
     }
   }
 
-  fun setSort(sort: ModelSort) {
-    _filters.update { it.copy(sort = sort) }
+  fun setPipeline(pipelineTag: String?) {
+    _filters.update { it.copy(pipelineTag = pipelineTag) }
+  }
+
+  fun setLocalSort(sort: ModelSort) {
+    _filters.update { it.copy(localSort = sort) }
+  }
+
+  fun setHuggingFaceSort(sort: HuggingFaceSortOption) {
+    _filters.update { it.copy(huggingFaceSort = sort) }
+  }
+
+  fun selectLocalLibrary(providerType: ProviderType?) {
+    _filters.update { it.copy(localLibrary = providerType) }
+  }
+
+  fun setHuggingFaceLibrary(library: String?) {
+    _filters.update { it.copy(huggingFaceLibrary = library) }
   }
 
   fun clearFilters() {
     _filters.update { state ->
-      state.copy(
-        searchQuery = "",
-        provider = null,
-        capabilities = emptySet(),
-        sort = ModelSort.RECOMMENDED,
-      )
-    }
-  }
-
-  fun setHuggingFaceSort(sort: HuggingFaceSortOption) {
-    _huggingFaceFilters.update { it.copy(sort = sort) }
-  }
-
-  fun setHuggingFacePipeline(pipelineTag: String?) {
-    _huggingFaceFilters.update { state -> state.copy(pipelineTag = pipelineTag) }
-  }
-
-  fun setHuggingFaceLibrary(library: String?) {
-    _huggingFaceFilters.update { state -> state.copy(library = library) }
-  }
-
-  fun clearHuggingFaceFilters() {
-    val wasHuggingFace = filters.value.tab == ModelLibraryTab.HUGGING_FACE
-    _huggingFaceFilters.value = HuggingFaceFilterState()
-    if (wasHuggingFace) {
-      _filters.update { it.copy(searchQuery = "") }
+      when (state.tab) {
+        ModelLibraryTab.HUGGING_FACE ->
+          state.copy(
+            huggingFaceSearchQuery = "",
+            pipelineTag = null,
+            huggingFaceSort = HuggingFaceSortOption.TRENDING,
+            huggingFaceLibrary = null,
+          )
+        else ->
+          state.copy(
+            localSearchQuery = "",
+            pipelineTag = null,
+            localSort = ModelSort.RECOMMENDED,
+            localLibrary = null,
+          )
+      }
     }
   }
 
@@ -370,12 +374,7 @@ constructor(
       if (state.tab == tab) {
         state
       } else {
-        val newSearch =
-          when (tab) {
-            ModelLibraryTab.HUGGING_FACE -> huggingFaceFilters.value.searchQuery
-            else -> state.searchQuery
-          }
-        state.copy(tab = tab, searchQuery = newSearch)
+        state.copy(tab = tab)
       }
     }
   }
@@ -384,6 +383,7 @@ constructor(
     viewModelScope.launch { _uiEvents.emit(LibraryUiEvent.RequestLocalModelImport) }
   }
 
+  @Suppress("UnusedParameter")
   fun importLocalModel(uri: Uri) {
     viewModelScope.launch {
       _errorEvents.emit(
@@ -556,7 +556,7 @@ constructor(
 
   private fun List<ModelPackage>.filterBy(filters: LibraryFilterState): List<ModelPackage> {
     var current = this
-    val query = filters.searchQuery.trim()
+    val query = filters.localSearchQuery.trim()
     if (query.isNotEmpty()) {
       val normalized = query.lowercase(Locale.US)
       current =
@@ -569,18 +569,19 @@ constructor(
         }
     }
 
-    filters.provider?.let { provider -> current = current.filter { it.providerType == provider } }
+    filters.localLibrary?.let { provider ->
+      current = current.filter { it.providerType == provider }
+    }
 
-    if (filters.capabilities.isNotEmpty()) {
+    filters.pipelineTag?.let { pipeline ->
+      val normalized = pipeline.lowercase(Locale.US)
       current =
         current.filter { model ->
-          model.capabilities
-            .map { it.lowercase(Locale.US) }
-            .any { capability -> capability in filters.capabilities }
+          model.capabilities.any { capability -> capability.lowercase(Locale.US) == normalized }
         }
     }
 
-    return current.sortBy(filters.sort)
+    return current.sortBy(filters.localSort)
   }
 
   private fun List<ModelPackage>.sortBy(sort: ModelSort): List<ModelPackage> =
@@ -600,12 +601,12 @@ constructor(
 
   private fun downloadPriority(status: DownloadStatus): Int =
     when (status) {
-      DownloadStatus.DOWNLOADING -> 0
-      DownloadStatus.PAUSED -> 1
-      DownloadStatus.QUEUED -> 2
-      DownloadStatus.FAILED -> 3
-      DownloadStatus.COMPLETED -> 4
-      DownloadStatus.CANCELLED -> 5
+      DownloadStatus.DOWNLOADING -> DOWNLOAD_PRIORITY_DOWNLOADING
+      DownloadStatus.PAUSED -> DOWNLOAD_PRIORITY_PAUSED
+      DownloadStatus.QUEUED -> DOWNLOAD_PRIORITY_QUEUED
+      DownloadStatus.FAILED -> DOWNLOAD_PRIORITY_FAILED
+      DownloadStatus.COMPLETED -> DOWNLOAD_PRIORITY_COMPLETED
+      DownloadStatus.CANCELLED -> DOWNLOAD_PRIORITY_CANCELLED
     }
 
   private fun DownloadStatus.isActiveDownload(): Boolean =
@@ -672,28 +673,66 @@ sealed class LibraryUiEvent {
 }
 
 data class LibraryFilterState(
-  val searchQuery: String = "",
-  val provider: ProviderType? = null,
-  val capabilities: Set<String> = emptySet(),
-  val sort: ModelSort = ModelSort.RECOMMENDED,
   val tab: ModelLibraryTab = ModelLibraryTab.LOCAL,
+  val localSearchQuery: String = "",
+  val huggingFaceSearchQuery: String = "",
+  val pipelineTag: String? = null,
+  val localSort: ModelSort = ModelSort.RECOMMENDED,
+  val localLibrary: ProviderType? = null,
+  val huggingFaceSort: HuggingFaceSortOption = HuggingFaceSortOption.TRENDING,
+  val huggingFaceLibrary: String? = null,
 ) {
+  fun currentSearchQuery(): String =
+    when (tab) {
+      ModelLibraryTab.HUGGING_FACE -> huggingFaceSearchQuery
+      else -> localSearchQuery
+    }
+
+  fun hasActiveFiltersFor(targetTab: ModelLibraryTab = tab): Boolean =
+    when (targetTab) {
+      ModelLibraryTab.HUGGING_FACE ->
+        huggingFaceSearchQuery.isNotBlank() ||
+          pipelineTag != null ||
+          huggingFaceLibrary != null ||
+          huggingFaceSort != HuggingFaceSortOption.TRENDING
+      else ->
+        localSearchQuery.isNotBlank() ||
+          pipelineTag != null ||
+          localLibrary != null ||
+          localSort != ModelSort.RECOMMENDED
+    }
+
+  fun activeFilterCountFor(targetTab: ModelLibraryTab = tab): Int {
+    var count = 0
+    if (pipelineTag != null) count++
+    when (targetTab) {
+      ModelLibraryTab.HUGGING_FACE -> {
+        if (huggingFaceLibrary != null) count++
+        if (huggingFaceSort != HuggingFaceSortOption.TRENDING) count++
+      }
+      else -> {
+        if (localLibrary != null) count++
+        if (localSort != ModelSort.RECOMMENDED) count++
+      }
+    }
+    return count
+  }
+
   val hasActiveFilters: Boolean
-    get() =
-      searchQuery.isNotBlank() ||
-        provider != null ||
-        capabilities.isNotEmpty() ||
-        sort != ModelSort.RECOMMENDED
+    get() = hasActiveFiltersFor(tab)
 
   val activeFilterCount: Int
-    get() {
-      var count = 0
-      if (provider != null) count++
-      count += capabilities.size
-      if (sort != ModelSort.RECOMMENDED) count++
-      return count
-    }
+    get() = activeFilterCountFor(tab)
 }
+
+internal fun LibraryFilterState.toHuggingFaceFilterState(): HuggingFaceFilterState =
+  HuggingFaceFilterState(
+    searchQuery = huggingFaceSearchQuery,
+    sort = huggingFaceSort,
+    pipelineTag = pipelineTag,
+    library = huggingFaceLibrary,
+    includePrivate = false,
+  )
 
 data class ModelLibrarySections(
   val downloads: List<LibraryDownloadItem> = emptyList(),

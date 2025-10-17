@@ -3,7 +3,7 @@
 Auto-generated from all feature plans. Last updated: 2025-10-02
 
 ## Active Technologies (main)
-- Kotlin 1.9.x (JDK 11 baseline), Jetpack Compose Material 3, Hilt, WorkManager, Room (SQLite database), DataStore (preferences), Retrofit + Kotlin Serialization, OkHttp, MediaPipe Generative (LiteRT), Coil, Kotlin Coroutines, Junit5
+- Kotlin 1.9.x (JDK 17 baseline), Jetpack Compose Material 3, Hilt, WorkManager, Room (SQLite database), DataStore (preferences), Retrofit + Kotlin Serialization, OkHttp, MediaPipe Generative (LiteRT), Coil, Kotlin Coroutines, Junit5
 
 See `gradle/libs.versions.toml` for version details and updates.
 

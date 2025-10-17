@@ -35,6 +35,13 @@ sealed class Screen(
       modeId = ModeId.IMAGE,
     )
 
+  data object ImageGallery :
+    Screen(
+      route = "image/gallery",
+      deepLinks = buildDeepLinks("image/gallery"),
+      modeId = ModeId.IMAGE,
+    )
+
   data object Audio :
     Screen(
       route = "audio",

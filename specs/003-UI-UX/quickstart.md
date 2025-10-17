@@ -2,7 +2,7 @@
 
 ## Prerequisites
 - Android Studio Ladybug (2025.2) with Arctic Fox compatible Compose tooling
-- Java 11 (corretto) installed and configured
+- Java 17 (temurin) installed and configured
 - Pixel 7 / emulator API 36 image with hardware keyboard enabled
 - Node of at least 8 GB RAM for macrobenchmark runs
 

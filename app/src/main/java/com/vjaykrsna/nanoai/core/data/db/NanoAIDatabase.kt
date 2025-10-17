@@ -23,6 +23,8 @@ import com.vjaykrsna.nanoai.core.maintenance.db.CodeQualityMetricDao
 import com.vjaykrsna.nanoai.core.maintenance.db.CodeQualityMetricEntity
 import com.vjaykrsna.nanoai.core.maintenance.db.RepoMaintenanceTaskDao
 import com.vjaykrsna.nanoai.core.maintenance.db.RepoMaintenanceTaskEntity
+import com.vjaykrsna.nanoai.feature.image.data.db.GeneratedImageDao
+import com.vjaykrsna.nanoai.feature.image.data.db.GeneratedImageEntity
 import com.vjaykrsna.nanoai.feature.library.data.daos.DownloadTaskDao
 import com.vjaykrsna.nanoai.feature.library.data.entities.DownloadTaskEntity
 import com.vjaykrsna.nanoai.model.catalog.DownloadManifestDao
@@ -42,7 +44,8 @@ import com.vjaykrsna.nanoai.model.catalog.ModelPackageWriteDao
  * UIStateSnapshot entities for UI/UX feature. Version 3: Added maintenance tracking tables and
  * download manifests. Version 4: Added public key metadata to download manifests. Version 5:
  * Extended ui_state_snapshots persistence for unified shell drawers and palette state. Version 6:
- * Schema update for test coverage improvements.
+ * Schema update for test coverage improvements. Version 7: Added GeneratedImage entity for image
+ * feature gallery.
  *
  * Foreign keys are enabled to ensure referential integrity and cascade deletes. TypeConverters
  * handle UUID, Instant, Set<String>, List<String>, Map<String, Boolean>, and enum conversions.
@@ -63,8 +66,9 @@ import com.vjaykrsna.nanoai.model.catalog.ModelPackageWriteDao
       RepoMaintenanceTaskEntity::class,
       CodeQualityMetricEntity::class,
       DownloadManifestEntity::class,
+      GeneratedImageEntity::class,
     ],
-  version = 6,
+  version = 7,
   exportSchema = true,
 )
 @TypeConverters(
@@ -108,6 +112,9 @@ abstract class NanoAIDatabase : RoomDatabase() {
   abstract fun layoutSnapshotDao(): LayoutSnapshotDao
 
   abstract fun uiStateSnapshotDao(): UIStateSnapshotDao
+
+  // Image feature DAOs
+  abstract fun generatedImageDao(): GeneratedImageDao
 
   companion object {
     const val DATABASE_NAME = "nanoai_database"
