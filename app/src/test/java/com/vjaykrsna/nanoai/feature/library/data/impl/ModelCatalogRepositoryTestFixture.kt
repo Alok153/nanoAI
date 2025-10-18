@@ -50,11 +50,15 @@ internal data class ModelCatalogRepositoryTestFixture(
     )
 }
 
-internal fun createModelCatalogRepositoryFixture(tempDir: File): ModelCatalogRepositoryTestFixture {
+internal fun createModelCatalogRepositoryFixture(
+  tempDir: File,
+  configureDao: ModelPackageReadDao.() -> Unit = {}
+): ModelCatalogRepositoryTestFixture {
   val readDao =
     mockk<ModelPackageReadDao>(relaxed = true) {
       every { observeAll() } returns flowOf(emptyList())
       every { observeInstalled() } returns flowOf(emptyList())
+      configureDao()
     }
   val writeDao = mockk<ModelPackageWriteDao>(relaxed = true)
   val chatThreadDao = mockk<ChatThreadDao>(relaxed = true)

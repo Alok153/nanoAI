@@ -105,9 +105,13 @@ class ModelCatalogRepositoryReadOperationsTest {
         downloadTaskId = null,
         installState = InstallState.NOT_INSTALLED,
       )
-    every { fixture.modelPackageReadDao.observeAll() } returns flowOf(listOf(entity))
 
-    val models = fixture.repository.observeAllModels().first()
+    val testFixture =
+      createModelCatalogRepositoryFixture(tempDir) {
+        every { observeAll() } returns flowOf(listOf(entity))
+      }
+
+    val models = testFixture.repository.observeAllModels().first()
 
     assertThat(models).hasSize(1)
     assertThat(models.first().modelId).isEqualTo("flow")
@@ -123,9 +127,13 @@ class ModelCatalogRepositoryReadOperationsTest {
         downloadTaskId = null,
         installState = InstallState.INSTALLED,
       )
-    every { fixture.modelPackageReadDao.observeInstalled() } returns flowOf(listOf(entity))
 
-    val models = fixture.repository.observeInstalledModels().first()
+    val testFixture =
+      createModelCatalogRepositoryFixture(tempDir) {
+        every { observeInstalled() } returns flowOf(listOf(entity))
+      }
+
+    val models = testFixture.repository.observeInstalledModels().first()
 
     assertThat(models).hasSize(1)
     assertThat(models.first().installState).isEqualTo(InstallState.INSTALLED)

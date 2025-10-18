@@ -154,7 +154,7 @@ class ModelLibraryScreenFilteringTest : BaseModelLibraryScreenTest() {
         .isNotEmpty()
     }
 
-    composeTestRule.onAllNodesWithText("Clear filters", substring = false).onFirst().performClick()
+    composeTestRule.onAllNodesWithText("Clear filters", substring = false)[0].performClick()
 
     composeTestRule.waitUntil(timeoutMillis = 5_000) {
       composeTestRule

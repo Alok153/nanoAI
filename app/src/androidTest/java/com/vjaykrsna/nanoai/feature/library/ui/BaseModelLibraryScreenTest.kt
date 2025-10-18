@@ -2,9 +2,9 @@ package com.vjaykrsna.nanoai.feature.library.ui
 
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
-import com.vjaykrsna.nanoai.feature.library.domain.ListHuggingFaceModelsUseCase
 import com.vjaykrsna.nanoai.feature.library.domain.RefreshModelCatalogUseCase
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryViewModel
+import com.vjaykrsna.nanoai.testing.FakeHuggingFaceCatalogRepository
 import com.vjaykrsna.nanoai.testing.FakeModelCatalogRepository
 import com.vjaykrsna.nanoai.testing.FakeModelDownloadsAndExportUseCase
 import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
@@ -21,7 +21,7 @@ abstract class BaseModelLibraryScreenTest {
   protected lateinit var catalogRepository: FakeModelCatalogRepository
   protected lateinit var downloadsUseCase: FakeModelDownloadsAndExportUseCase
   protected lateinit var refreshUseCase: RefreshModelCatalogUseCase
-  protected lateinit var listHuggingFaceModelsUseCase: ListHuggingFaceModelsUseCase
+  protected lateinit var huggingFaceCatalogRepository: FakeHuggingFaceCatalogRepository
   protected lateinit var viewModel: ModelLibraryViewModel
 
   @Before
@@ -29,7 +29,7 @@ abstract class BaseModelLibraryScreenTest {
     catalogRepository = FakeModelCatalogRepository()
     downloadsUseCase = FakeModelDownloadsAndExportUseCase()
     refreshUseCase = mockk(relaxed = true)
-    listHuggingFaceModelsUseCase = mockk(relaxed = true)
+    huggingFaceCatalogRepository = FakeHuggingFaceCatalogRepository()
 
     coEvery { refreshUseCase.invoke() } returns Result.success(Unit)
 
@@ -38,7 +38,7 @@ abstract class BaseModelLibraryScreenTest {
         downloadsUseCase,
         catalogRepository,
         refreshUseCase,
-        listHuggingFaceModelsUseCase,
+        huggingFaceCatalogRepository,
       )
   }
 

@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai.testing
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -7,6 +8,7 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.ComposeTestRule
+import com.vjaykrsna.nanoai.ui.theme.NanoAITheme
 
 /**
  * Compose test harness providing reusable accessibility matchers and test helpers.
@@ -143,4 +145,13 @@ sealed class AccessibilityAssertion {
   data object IsClickable : AccessibilityAssertion()
 
   data object IsHeading : AccessibilityAssertion()
+}
+
+/**
+ * Simple theme wrapper for Compose tests. Uses the app's theme with default parameters suitable for
+ * testing.
+ */
+@Composable
+fun TestingTheme(content: @Composable () -> Unit) {
+  NanoAITheme(content = content)
 }

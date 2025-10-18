@@ -4,12 +4,12 @@ package com.vjaykrsna.nanoai.feature.library.presentation
 
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
-import com.vjaykrsna.nanoai.feature.library.domain.ListHuggingFaceModelsUseCase
 import com.vjaykrsna.nanoai.feature.library.domain.ModelDownloadsAndExportUseCaseInterface
 import com.vjaykrsna.nanoai.feature.library.domain.RefreshModelCatalogUseCase
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
 import com.vjaykrsna.nanoai.feature.library.model.ProviderType
 import com.vjaykrsna.nanoai.testing.DomainTestBuilders
+import com.vjaykrsna.nanoai.testing.FakeHuggingFaceCatalogRepository
 import com.vjaykrsna.nanoai.testing.FakeModelCatalogRepository
 import com.vjaykrsna.nanoai.testing.FakeModelDownloadsAndExportUseCase
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
@@ -36,7 +36,7 @@ class ModelLibraryViewModelTest {
   private lateinit var modelCatalogRepository: FakeModelCatalogRepository
   private lateinit var downloadsUseCase: ModelDownloadsAndExportUseCaseInterface
   private lateinit var refreshUseCase: RefreshModelCatalogUseCase
-  private lateinit var listHuggingFaceModelsUseCase: ListHuggingFaceModelsUseCase
+  private lateinit var huggingFaceCatalogRepository: FakeHuggingFaceCatalogRepository
   private lateinit var viewModel: ModelLibraryViewModel
 
   @BeforeEach
@@ -44,18 +44,17 @@ class ModelLibraryViewModelTest {
     modelCatalogRepository = FakeModelCatalogRepository()
     downloadsUseCase = spyk(FakeModelDownloadsAndExportUseCase())
     refreshUseCase = mockk(relaxed = true)
-    listHuggingFaceModelsUseCase = mockk(relaxed = true)
+    huggingFaceCatalogRepository = FakeHuggingFaceCatalogRepository()
 
     // Setup default behaviors
     coEvery { refreshUseCase.invoke() } returns Result.success(Unit)
-    coEvery { listHuggingFaceModelsUseCase.invoke(any()) } returns Result.success(emptyList())
 
     viewModel =
       ModelLibraryViewModel(
         downloadsUseCase,
         modelCatalogRepository,
         refreshUseCase,
-        listHuggingFaceModelsUseCase,
+        huggingFaceCatalogRepository,
       )
   }
 
