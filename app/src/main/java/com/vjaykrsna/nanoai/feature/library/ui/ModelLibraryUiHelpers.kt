@@ -3,11 +3,12 @@ package com.vjaykrsna.nanoai.feature.library.ui
 import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
 import com.vjaykrsna.nanoai.feature.library.model.ProviderType
-import com.vjaykrsna.nanoai.feature.library.presentation.ModelSort
+import com.vjaykrsna.nanoai.feature.library.presentation.model.ModelSort
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.toJavaInstant
 
 internal fun downloadStatusLabel(task: DownloadTask): String {
   val progressPercent = (task.progress * ModelLibraryUiConstants.PERCENTAGE_MULTIPLIER).toInt()
@@ -32,6 +33,8 @@ internal fun ModelSort.label(): String =
     ModelSort.NAME -> "Name"
     ModelSort.SIZE_DESC -> "Size"
     ModelSort.UPDATED -> "Updated"
+    ModelSort.NEWEST -> "Newest"
+    ModelSort.OLDEST -> "Oldest"
   }
 
 internal fun formatSize(bytes: Long): String {
@@ -48,10 +51,6 @@ internal fun formatSize(bytes: Long): String {
 }
 
 internal fun formatUpdated(updatedAt: Instant): String {
-  val localDateTime = updatedAt.toLocalDateTime(TimeZone.currentSystemDefault())
-  val month =
-    localDateTime.month.name.lowercase(Locale.US).replaceFirstChar { char ->
-      if (char.isLowerCase()) char.titlecase(Locale.US) else char.toString()
-    }
-  return "$month ${localDateTime.dayOfMonth}, ${localDateTime.year}"
+  val formatter = DateTimeFormatter.ofPattern("MM/dd/yy")
+  return formatter.format(updatedAt.toJavaInstant().atZone(ZoneId.systemDefault()))
 }

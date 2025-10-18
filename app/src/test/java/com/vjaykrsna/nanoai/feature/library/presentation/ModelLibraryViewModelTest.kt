@@ -4,12 +4,16 @@ package com.vjaykrsna.nanoai.feature.library.presentation
 
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
-import com.vjaykrsna.nanoai.feature.library.domain.ListHuggingFaceModelsUseCase
 import com.vjaykrsna.nanoai.feature.library.domain.ModelDownloadsAndExportUseCaseInterface
 import com.vjaykrsna.nanoai.feature.library.domain.RefreshModelCatalogUseCase
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
 import com.vjaykrsna.nanoai.feature.library.model.ProviderType
+import com.vjaykrsna.nanoai.feature.library.presentation.model.HuggingFaceFilterState
+import com.vjaykrsna.nanoai.feature.library.presentation.model.HuggingFaceSortOption
+import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryError
+import com.vjaykrsna.nanoai.feature.library.presentation.model.ModelSort
 import com.vjaykrsna.nanoai.testing.DomainTestBuilders
+import com.vjaykrsna.nanoai.testing.FakeHuggingFaceCatalogRepository
 import com.vjaykrsna.nanoai.testing.FakeModelCatalogRepository
 import com.vjaykrsna.nanoai.testing.FakeModelDownloadsAndExportUseCase
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
@@ -36,7 +40,7 @@ class ModelLibraryViewModelTest {
   private lateinit var modelCatalogRepository: FakeModelCatalogRepository
   private lateinit var downloadsUseCase: ModelDownloadsAndExportUseCaseInterface
   private lateinit var refreshUseCase: RefreshModelCatalogUseCase
-  private lateinit var listHuggingFaceModelsUseCase: ListHuggingFaceModelsUseCase
+  private lateinit var huggingFaceCatalogRepository: FakeHuggingFaceCatalogRepository
   private lateinit var viewModel: ModelLibraryViewModel
 
   @BeforeEach
@@ -44,18 +48,19 @@ class ModelLibraryViewModelTest {
     modelCatalogRepository = FakeModelCatalogRepository()
     downloadsUseCase = spyk(FakeModelDownloadsAndExportUseCase())
     refreshUseCase = mockk(relaxed = true)
-    listHuggingFaceModelsUseCase = mockk(relaxed = true)
+    huggingFaceCatalogRepository = FakeHuggingFaceCatalogRepository()
+    val huggingFaceLibraryViewModel = HuggingFaceLibraryViewModel(huggingFaceCatalogRepository)
+    val downloadManager = DownloadManager(downloadsUseCase)
 
     // Setup default behaviors
     coEvery { refreshUseCase.invoke() } returns Result.success(Unit)
-    coEvery { listHuggingFaceModelsUseCase.invoke(any()) } returns Result.success(emptyList())
 
     viewModel =
       ModelLibraryViewModel(
-        downloadsUseCase,
         modelCatalogRepository,
         refreshUseCase,
-        listHuggingFaceModelsUseCase,
+        huggingFaceLibraryViewModel,
+        downloadManager,
       )
   }
 
@@ -189,7 +194,7 @@ class ModelLibraryViewModelTest {
   }
 
   @Test
-  fun `selectProvider filters models correctly`() = runTest {
+  fun `selectLocalLibrary filters models correctly`() = runTest {
     val local =
       DomainTestBuilders.buildModelPackage(
         modelId = "local-1",
@@ -202,7 +207,7 @@ class ModelLibraryViewModelTest {
       )
     modelCatalogRepository.setModels(listOf(local, cloud))
 
-    viewModel.selectProvider(ProviderType.MEDIA_PIPE)
+    viewModel.selectLocalLibrary(ProviderType.MEDIA_PIPE)
     advanceUntilIdle()
 
     viewModel.curatedSections.test {
@@ -214,47 +219,47 @@ class ModelLibraryViewModelTest {
   }
 
   @Test
-  fun `toggleCapability adds and removes capability filter`() = runTest {
-    viewModel.toggleCapability("text")
+  fun `setPipeline updates shared pipeline filter`() = runTest {
+    viewModel.setPipeline("text")
     advanceUntilIdle()
 
     viewModel.filters.test {
       var filters = awaitItem()
-      assertThat(filters.capabilities).contains("text")
+      assertThat(filters.pipelineTag).isEqualTo("text")
 
-      viewModel.toggleCapability("text")
+      viewModel.setPipeline(null)
       filters = awaitItem()
-      assertThat(filters.capabilities).doesNotContain("text")
+      assertThat(filters.pipelineTag).isNull()
     }
   }
 
   @Test
-  fun `setSort changes sort order`() = runTest {
-    viewModel.setSort(ModelSort.NAME)
+  fun `setLocalSort changes sort order`() = runTest {
+    viewModel.setLocalSort(ModelSort.NAME)
     advanceUntilIdle()
 
     viewModel.filters.test {
       val filters = awaitItem()
-      assertThat(filters.sort).isEqualTo(ModelSort.NAME)
+      assertThat(filters.localSort).isEqualTo(ModelSort.NAME)
     }
   }
 
   @Test
   fun `clearFilters resets all filters`() = runTest {
     viewModel.updateSearchQuery("test")
-    viewModel.selectProvider(ProviderType.CLOUD_API)
-    viewModel.toggleCapability("text")
-    viewModel.setSort(ModelSort.SIZE_DESC)
+    viewModel.selectLocalLibrary(ProviderType.CLOUD_API)
+    viewModel.setPipeline("text")
+    viewModel.setLocalSort(ModelSort.SIZE_DESC)
 
     viewModel.clearFilters()
     advanceUntilIdle()
 
     viewModel.filters.test {
       val filters = awaitItem()
-      assertThat(filters.searchQuery).isEmpty()
-      assertThat(filters.provider).isNull()
-      assertThat(filters.capabilities).isEmpty()
-      assertThat(filters.sort).isEqualTo(ModelSort.RECOMMENDED)
+      assertThat(filters.localSearchQuery).isEmpty()
+      assertThat(filters.localLibrary).isNull()
+      assertThat(filters.pipelineTag).isNull()
+      assertThat(filters.localSort).isEqualTo(ModelSort.RECOMMENDED)
     }
   }
 
@@ -570,7 +575,7 @@ class ModelLibraryViewModelTest {
   }
 
   @Test
-  fun `filterByProvider_updatesVisibleModels`() = runTest {
+  fun `filterByLocalLibrary_updatesVisibleModels`() = runTest {
     val localModel =
       DomainTestBuilders.buildModelPackage(
         modelId = "local-model",
@@ -583,7 +588,7 @@ class ModelLibraryViewModelTest {
       )
     modelCatalogRepository.setModels(listOf(localModel, cloudModel))
 
-    viewModel.selectProvider(ProviderType.MEDIA_PIPE)
+    viewModel.selectLocalLibrary(ProviderType.MEDIA_PIPE)
     advanceUntilIdle()
 
     viewModel.curatedSections.test {
@@ -599,7 +604,7 @@ class ModelLibraryViewModelTest {
   }
 
   @Test
-  fun `filterByCapability_combinesFilters`() = runTest {
+  fun `filterByPipeline_combinesFilters`() = runTest {
     val model1 =
       DomainTestBuilders.buildModelPackage(
         modelId = "model-1",
@@ -609,7 +614,7 @@ class ModelLibraryViewModelTest {
       DomainTestBuilders.buildModelPackage(modelId = "model-2", capabilities = setOf("audio"))
     modelCatalogRepository.setModels(listOf(model1, model2))
 
-    viewModel.toggleCapability("text")
+    viewModel.setPipeline("text")
     advanceUntilIdle()
 
     viewModel.curatedSections.test {
@@ -665,27 +670,29 @@ class ModelLibraryViewModelTest {
   }
 
   @Test
-  fun `setHuggingFacePipeline toggles selection`() = runTest {
-    viewModel.setHuggingFacePipeline("text-generation")
+  fun `setPipeline updates Hugging Face state when tab active`() = runTest {
+    viewModel.selectTab(ModelLibraryTab.HUGGING_FACE)
+    viewModel.setPipeline("text-generation")
     advanceUntilIdle()
     assertThat(viewModel.huggingFaceFilters.value.pipelineTag).isEqualTo("text-generation")
 
-    viewModel.setHuggingFacePipeline(null)
+    viewModel.setPipeline(null)
     advanceUntilIdle()
     assertThat(viewModel.huggingFaceFilters.value.pipelineTag).isNull()
   }
 
   @Test
-  fun `clearHuggingFaceFilters resets filters and clears search`() = runTest {
+  fun `clearFilters resets Hugging Face filters when tab active`() = runTest {
     viewModel.selectTab(ModelLibraryTab.HUGGING_FACE)
     viewModel.updateSearchQuery("llama")
     viewModel.setHuggingFaceSort(HuggingFaceSortOption.MOST_DOWNLOADED)
-    viewModel.setHuggingFacePipeline("text-generation")
+    viewModel.setPipeline("text-generation")
 
-    viewModel.clearHuggingFaceFilters()
+    viewModel.clearFilters()
     advanceUntilIdle()
 
     assertThat(viewModel.huggingFaceFilters.value).isEqualTo(HuggingFaceFilterState())
-    assertThat(viewModel.filters.value.searchQuery).isEmpty()
+    assertThat(viewModel.filters.value.huggingFaceSearchQuery).isEmpty()
+    assertThat(viewModel.filters.value.pipelineTag).isNull()
   }
 }

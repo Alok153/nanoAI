@@ -9,6 +9,7 @@ data class HuggingFaceCatalogQuery(
   val library: String? = null,
   val includePrivate: Boolean = false,
   val limit: Int = DEFAULT_LIMIT,
+  val offset: Int = 0,
 )
 
 /** Supported sort fields for Hugging Face listings. */

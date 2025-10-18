@@ -9,6 +9,12 @@ internal object ModelLibraryUiConstants {
   const val BYTES_PER_KIB = 1024.0
   const val BYTES_PER_MIB = BYTES_PER_KIB * 1024.0
   const val BYTES_PER_GIB = BYTES_PER_MIB * 1024.0
+  const val THOUSAND = 1000.0
+  const val TEN = 10.0
+  const val ONE = 1.0
+  const val COUNT_FORMAT_THRESHOLD_LONG = THOUSAND
+  const val COUNT_DECIMAL_THRESHOLD = TEN
+  const val COUNT_INTEGER_CHECK = ONE
   const val SEARCH_FIELD_TAG = "model_library_search_field"
   const val FILTER_TOGGLE_TAG = "model_library_filter_toggle"
   const val FILTER_PANEL_TAG = "model_library_filter_panel"

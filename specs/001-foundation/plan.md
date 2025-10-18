@@ -34,7 +34,7 @@
 Deliver a polished, offline-first Android multimodal AI assistant with comprehensive UI/UX, robust code quality, and thorough test coverage. The application provides offline chat with small LLMs via MediaPipe Generative (LiteRT), integrates OpenAI/Gemini and custom endpoints for cloud fallback, includes a model library with download/pause controls, supports multiple personas, and offers a first-launch disclaimer with data import/export capabilities. The implementation follows clean architecture with Kotlin-first principles, Material 3 design, automated quality gates, and meets coverage targets (ViewModel ≥75%, UI ≥65%, Data ≥70%).
 
 ## Technical Context
-**Language/Version**: Kotlin 1.9.x (JDK 11 baseline)  
+**Language/Version**: Kotlin 1.9.x (JDK 17 baseline)  
 **Primary Dependencies**: Jetpack Compose Material 3, Hilt, WorkManager, Room, DataStore, Retrofit + Kotlin Serialization, OkHttp, MediaPipe Generative (LiteRT), Coil, Kotlin Coroutines  
 **Storage**: Room (SQLite) for chats/models/personas; EncryptedSharedPreferences/DataStore for credentials and privacy preferences  
 **Testing**: JUnit 5, Turbine/Coroutines test, Espresso & Compose UI tests, Macrobenchmark + Baseline Profile, Robolectric for unit UI coverage  

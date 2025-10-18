@@ -143,8 +143,7 @@ private fun DisclaimerScrollableContent(scrollState: androidx.compose.foundation
       }
 
       Text(
-        text =
-          "By selecting Agree and continue you confirm you have read this disclaimer and accept responsibility for your use of nanoAI.",
+        text = "By selecting Agree you accept responsibility for your use of nanoAI.",
         style = MaterialTheme.typography.bodyMedium,
         textAlign = TextAlign.Start,
         modifier = Modifier.testTag("disclaimer_last_text"),

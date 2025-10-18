@@ -30,10 +30,10 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.vjaykrsna.nanoai.feature.library.presentation.LibraryError
-import com.vjaykrsna.nanoai.feature.library.presentation.LibraryUiEvent
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryTab
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryViewModel
+import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryError
+import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryUiEvent
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.LOADING_INDICATOR_TAG
 import kotlinx.coroutines.flow.collectLatest
 
@@ -48,12 +48,9 @@ fun ModelLibraryScreen(
   val localSections by viewModel.localSections.collectAsState()
   val curatedSections by viewModel.curatedSections.collectAsState()
   val huggingFaceModels by viewModel.huggingFaceModels.collectAsState()
-  val huggingFaceFilters by viewModel.huggingFaceFilters.collectAsState()
-  val huggingFacePipelineOptions by viewModel.huggingFacePipelineOptions.collectAsState()
+  val pipelineOptions by viewModel.pipelineOptions.collectAsState()
   val huggingFaceLibraryOptions by viewModel.huggingFaceLibraryOptions.collectAsState()
   val providerOptions by viewModel.providerOptions.collectAsState()
-  val capabilityOptions by viewModel.capabilityOptions.collectAsState()
-  val hasActiveFilters by viewModel.hasActiveFilters.collectAsState()
   val isLoading by viewModel.isLoading.collectAsState()
   val isRefreshing by viewModel.isRefreshing.collectAsState()
   val isHuggingFaceLoading by viewModel.isHuggingFaceLoading.collectAsState()
@@ -112,22 +109,28 @@ fun ModelLibraryScreen(
       LibraryHeader(summary = summary)
 
       ModelLibraryToolbar(
-        filters = filters,
-        providers = providerOptions,
-        capabilities = capabilityOptions,
-        hasActiveFilters =
-          if (filters.tab == ModelLibraryTab.HUGGING_FACE) false else hasActiveFilters,
-        showModelFilters = filters.tab != ModelLibraryTab.HUGGING_FACE,
+        tab = filters.tab,
+        searchQuery = filters.currentSearchQuery(),
+        pipelineOptions = pipelineOptions,
+        selectedPipeline = filters.pipelineTag,
+        localSort = filters.localSort,
+        huggingFaceSort = filters.huggingFaceSort,
+        localLibraryOptions = providerOptions,
+        selectedLocalLibrary = filters.localLibrary,
+        huggingFaceLibraryOptions = huggingFaceLibraryOptions,
+        selectedHuggingFaceLibrary = filters.huggingFaceLibrary,
+        activeFilterCount = filters.activeFilterCount,
         onSearchChange = viewModel::updateSearchQuery,
-        onProviderSelect = viewModel::selectProvider,
-        onCapabilityToggle = viewModel::toggleCapability,
-        onSortSelect = viewModel::setSort,
-        onClearFilters = viewModel::clearFilters,
+        onPipelineSelect = viewModel::setPipeline,
+        onSelectLocalSort = viewModel::setLocalSort,
+        onSelectHuggingFaceSort = viewModel::setHuggingFaceSort,
+        onSelectLocalLibrary = viewModel::selectLocalLibrary,
+        onSelectHuggingFaceLibrary = viewModel::setHuggingFaceLibrary,
       )
 
       ModelLibraryTabs(
         selectedTab = filters.tab,
-        onTabSelected = viewModel::selectTab,
+        onTabSelect = viewModel::selectTab,
       )
 
       when (filters.tab) {
@@ -187,15 +190,6 @@ fun ModelLibraryScreen(
           }
         }
         ModelLibraryTab.HUGGING_FACE -> {
-          HuggingFaceFilterBar(
-            filters = huggingFaceFilters,
-            pipelineOptions = huggingFacePipelineOptions,
-            libraryOptions = huggingFaceLibraryOptions,
-            onSortSelect = viewModel::setHuggingFaceSort,
-            onPipelineSelect = viewModel::setHuggingFacePipeline,
-            onLibrarySelect = viewModel::setHuggingFaceLibrary,
-            onClearFilters = viewModel::clearHuggingFaceFilters,
-          )
           HuggingFaceLibraryContent(
             modifier = Modifier.weight(1f),
             models = huggingFaceModels,

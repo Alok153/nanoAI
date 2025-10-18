@@ -14,11 +14,13 @@ import com.vjaykrsna.nanoai.core.data.db.daos.UIStateSnapshotDao
 import com.vjaykrsna.nanoai.core.data.db.daos.UserProfileDao
 import com.vjaykrsna.nanoai.core.maintenance.db.CodeQualityMetricDao
 import com.vjaykrsna.nanoai.core.maintenance.db.RepoMaintenanceTaskDao
+import com.vjaykrsna.nanoai.feature.image.data.db.GeneratedImageDao
 import com.vjaykrsna.nanoai.feature.library.data.daos.DownloadManifestDao
 import com.vjaykrsna.nanoai.feature.library.data.daos.DownloadTaskDao
 import com.vjaykrsna.nanoai.feature.library.data.daos.ModelPackageReadDao
 import com.vjaykrsna.nanoai.feature.library.data.daos.ModelPackageRelationsDao
 import com.vjaykrsna.nanoai.feature.library.data.daos.ModelPackageWriteDao
+import com.vjaykrsna.nanoai.feature.library.data.huggingface.dao.HuggingFaceModelCacheDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -88,6 +90,11 @@ object DatabaseModule {
 
   @Provides
   @Singleton
+  fun provideHuggingFaceModelCacheDao(database: NanoAIDatabase): HuggingFaceModelCacheDao =
+    database.huggingFaceModelCacheDao()
+
+  @Provides
+  @Singleton
   fun provideUserProfileDao(database: NanoAIDatabase): UserProfileDao = database.userProfileDao()
 
   @Provides
@@ -109,4 +116,9 @@ object DatabaseModule {
   @Singleton
   fun provideCodeQualityMetricDao(database: NanoAIDatabase): CodeQualityMetricDao =
     database.codeQualityMetricDao()
+
+  @Provides
+  @Singleton
+  fun provideGeneratedImageDao(database: NanoAIDatabase): GeneratedImageDao =
+    database.generatedImageDao()
 }

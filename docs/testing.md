@@ -1,111 +1,111 @@
 # Testing & Coverage Guide
 
-This guide explains how the nanoAI test suites are organised, how they embody the product design philosophy, and how contributors can confidently measure coverage. New teammates should be able to get productive by following the practices documented here.
+Use this guide when you need to run nanoAI’s automated checks, add new tests, or understand how coverage is enforced. It condenses every workflow into a single reference so new contributors can get productive without wading through multiple documents.
 
-## Testing Philosophy
-- **Kotlin-first clean architecture**: Every test reinforces separation between UI (Jetpack Compose), domain (ViewModels and coordinators), and data (Room, Retrofit). Tests focus on contract boundaries so layers remain swappable.
-- **Accessibility and offline resilience**: Instrumentation scenarios validate Material 3 semantics, TalkBack descriptions, and offline fallbacks so we never trade usability for velocity.
-- **Deterministic asynchronous code**: Coroutine-heavy components run under `kotlinx.coroutines.test` with explicit dispatchers (see `app/src/test/java/com/vjaykrsna/nanoai/testing/MainDispatcherExtension.kt`) to prevent flakiness.
-- **Coverage as a quality gate**: We enforce ≥75% ViewModel, 65% UI, and 70% data-layer coverage through Gradle tasks wired into `check`. Risk register metadata is part of the report so leadership can approve releases with evidence.
-- **Test-driven delivery**: Feature work lands with failing tests first (see `specs/005-improve-test-coverage/tasks.md`) to guard against regressions and remind us to prove behaviour before wiring implementation.
+## 1. What We Optimise For
+- **Layered Kotlin architecture**: UI (Compose), domain (UseCases/ViewModels), and data (Room/Retrofit) stay decoupled and are tested at their boundaries.
+- **Accessibility + offline parity**: UI tests mirror Material 3 semantics, TalkBack output, and offline fallbacks so no feature ships without assistive coverage.
+- **Deterministic async code**: Coroutine code runs under `kotlinx.coroutines.test` with explicit dispatchers (`MainDispatcherExtension`) to keep flakes out of CI.
+- **Coverage gates as the guardrail**: CI fails if coverage drops below 75 % (ViewModel), 65 % (UI), or 70 % (Data). Reports feed the risk register so leadership signs off with evidence.
 
-## Test Suite Map
-| Suite | Location | Purpose | Key Libraries |
+| Layer | Target | Measured Via |
+| --- | --- | --- |
+| ViewModel / domain | ≥ 75 % | JaCoCo layer map → `verifyCoverageThresholds` |
+| UI / Compose | ≥ 65 % | Managed + connected instrumentation coverage |
+| Data / repositories | ≥ 70 % | JVM + instrumentation merged coverage |
+
+## 2. Test Suite Matrix
+| Suite | Path | Default Command | Notes |
 | --- | --- | --- | --- |
-| JVM unit tests | `app/src/test/java` | ViewModels, repositories, coordinators, contract tests | JUnit 5, Truth, MockK, kotlinx.coroutines.test, Robolectric (when Android deps needed) |
-| Instrumentation UI | `app/src/androidTest/java` | Compose UI flows, accessibility, offline fallbacks | AndroidX Test Runner, Espresso, Compose UI Test, MockWebServer |
-| Contracts & schemas | `app/src/test/contract` resources + `config/schemas` | Schema conformance (e.g. coverage JSON) | networknt JSON Schema validator, Jackson |
-| Macrobenchmarks | `macrobenchmark/src/main/java` | App startup and coverage dashboard warm-load performance | AndroidX Macrobenchmark |
-| Coverage tooling | `scripts/coverage` | Report merge & markdown summary | Python 3, Bash, JaCoCo |
+| JVM unit + contract | `app/src/test/java` | `./gradlew testDebugUnitTest` | Supports `--tests "pkg.ClassTest"` selectors. Generates HTML in `app/build/reports/tests/testDebugUnitTest/` and JaCoCo `.exec` files. |
+| Instrumentation (Compose UI + device flows) | `app/src/androidTest/java` | `./gradlew ciManagedDeviceDebugAndroidTest` | Boots the CI-managed Pixel 6 ATD image. For physical device testing pass `-Pnanoai.usePhysicalDevice=true`. |
+| Macrobenchmark | `macrobenchmark/src/main` | `./gradlew :macrobenchmark:connectedCheck` | Runs only when a device/emulator is attached. CI gate is optional but results are published for performance budgets. |
+| Coverage tooling | `scripts/coverage` | `./gradlew jacocoFullReport` | Merges JVM + instrumentation coverage, produces HTML + XML under `app/build/reports/jacoco/full/`. |
 
-### Common Patterns
-- **Coroutine helpers**: Use `MainDispatcherExtension` with `@ExtendWith` or instantiate per-test to override `Dispatchers.Main`.
-- **Test environment isolation**: Apply `TestEnvironmentRule` (located at `app/src/androidTest/java/com/vjaykrsna/nanoai/testing/TestEnvironmentRule.kt`) to instrumentation tests to reset DataStore/Room state and network toggles before each test. This ensures first-launch disclaimers and offline flows start from a clean slate, preventing cross-test contamination.
-- **Fixture builders**: Domain- and data-layer packages expose factory helpers under `app/src/test/java/com/vjaykrsna/nanoai/**/fixtures` (search for `Fixture.kt`) to keep test setup terse.
-- **Compose assertions**: Prefer semantics matchers (`onNodeWithContentDescription`, `assertHasClickAction`) over screenshot testing for determinism.
-- **Room DAO checks**: Run against in-memory databases; leverage `androidx.room:room-testing` and `runTest` to cover suspend DAO calls.
-- **Network fallbacks**: Use `MockWebServer` to script success/latency/failure for repositories and instrumentation flows.
+### Module-Specific Test Tasks
+For focused development and faster feedback, run tests for specific layers using command line filters:
 
-## Running the Test Suites
-1. **Unit & contract tests**
+| Module | Command | Description |
+| --- | --- | --- |
+| Core | `./gradlew testDebugUnitTest --tests "*.core.*"` | Core utilities and base classes |
+| Feature | `./gradlew testDebugUnitTest --tests "*.feature.*"` | Feature-specific logic and ViewModels |
+| Model | `./gradlew testDebugUnitTest --tests "*.model.*"` | Data models and domain entities |
+| Security | `./gradlew testDebugUnitTest --tests "*.security.*"` | Security-related utilities |
+| UI | `./gradlew testDebugUnitTest --tests "*.ui.*"` | UI components and Compose logic |
+| Data | `./gradlew testDebugUnitTest --tests "*.data.*"` | Repositories, DAOs, and data access |
+| Domain | `./gradlew testDebugUnitTest --tests "*.domain.*"` | Use cases and business logic |
+
+**Note**: Custom Gradle tasks for each module can be added to `app/build.gradle.kts` if needed, but command line filters provide the same functionality with simpler configuration.
+
+### Shared helpers
+- `MainDispatcherExtension` overrides `Dispatchers.Main` for coroutine tests.
+- `TestEnvironmentRule` resets Room/DataStore/network toggles between instrumentation runs.
+- Fixture builders live under `app/src/test/java/com/vjaykrsna/nanoai/**/fixtures` and `DomainTestBuilders` simplifies thread/message creation.
+
+## 3. Everyday Runbook
+1. **While coding** run targeted JVM tests: `./gradlew testDebugUnitTest --tests "*.YourTest"`.
+2. **Before pushing** execute the fast lane:
    ```bash
-   ./gradlew testDebugUnitTest
+   ./gradlew spotlessCheck detekt testDebugUnitTest
    ```
-   Generates `app/build/reports/tests/testDebugUnitTest/index.html` and `*.exec` coverage data.
-- Tip: Use the Jupiter selector to narrow execution, e.g. `./gradlew testDebugUnitTest --tests "com.vjaykrsna.nanoai.coverage.*"` when validating coverage helpers.
-2. **Instrumentation & Compose UI tests** (requires virtualization or a device)
+3. **Before opening a PR** (mirrors the CI `check` task):
+   ```bash
+   ./gradlew check
+   ```
+   `check` runs Spotless, Detekt, all JVM tests, managed-device instrumentation, merged coverage, and threshold verification.
+4. **After large UI changes** run instrumentation locally:
    ```bash
    ./gradlew ciManagedDeviceDebugAndroidTest
    ```
-   Spins up the managed Pixel 6 API 34 (AOSP ATD) virtual device headlessly—matching the CI configuration—and produces reports under `app/build/reports/androidTests/connected/` with coverage files in `app/build/outputs/managed_device_code_coverage/`.
-- To reuse an existing emulator or physical hardware, run `./gradlew connectedDebugAndroidTest`; if you previously enabled managed devices (e.g., via `-Pnanoai.useManagedDevice=true`), override it with `-Pnanoai.useManagedDevice=false` to force the direct device-provider task.
-- To run specific tests, use `-Pandroid.testInstrumentationRunnerArguments.class="*TestClass*"` (e.g., `-Pandroid.testInstrumentationRunnerArguments.class="*OfflineProgressTest*"`), as `--tests` is not supported for instrumentation tasks.
-- When triaging flakes, append `-Pandroid.testInstrumentationRunnerArguments.notAnnotation=flaky` and explicitly toggle radios (`adb shell svc wifi disable|enable`, `adb shell svc data disable|enable`) to rehearse offline fallbacks.
-3. **Macrobenchmarks** (optional, CI-only by default)
-   ```bash
-   ./gradlew :macrobenchmark:connectedCheck
-   ```
+   Use `-Pandroid.testInstrumentationRunnerArguments.class="*YourTest"` to target specific suites.
 
-### Recommended Development Loop
-- Run targeted JVM tests via `--tests` (e.g. `--tests "com.vjaykrsna.nanoai.coverage.*"`).
-- For instrumentation tests, use Android runner arguments like `-Pandroid.testInstrumentationRunnerArguments.class="*TestClass*"` to filter execution.
-- Before submitting changes run `./gradlew check` to execute formatting, lint, tests, merged coverage, and threshold verification.
-
-## Coverage Workflow
-1. **Merge coverage**
+## 4. Coverage Pipeline
+1. **Merge reports**
    ```bash
    ./gradlew jacocoFullReport
    ```
-   Produces the merged XML + HTML report under `app/build/reports/jacoco/full/`. On CI (or whenever `-Pnanoai.useManagedDevice=true` is supplied) the task bootstraps the managed Pixel 6 API 34 virtual device before running instrumentation tests; otherwise it falls back to any connected hardware. When local virtualization is unavailable, you can append `-Pnanoai.skipInstrumentation=true` to merge unit-test coverage only (CI must keep instrumentation enabled).
-2. **Verify thresholds**
+   - Uses emulator by default locally; pass `-Pnanoai.usePhysicalDevice=true` for physical device testing.
+   - Pass `-Pnanoai.skipInstrumentation=true` when you only need JVM coverage locally (CI must keep instrumentation enabled).
+2. **Enforce thresholds**
    ```bash
    ./gradlew verifyCoverageThresholds --report-xml app/build/reports/jacoco/full/jacocoFullReport.xml --json app/build/coverage/report.json
    ```
-   Executes `CoverageThresholdVerifier` via `VerifyCoverageThresholdsTask`, writing a human-readable gate summary to `app/build/coverage/thresholds.md` and optional JSON report matching `coverage-report.schema.json`. The task fails if any layer falls below the 75/65/70 targets and is wired into `check`.
-3. **Publish coverage summaries**
+   Fails fast if any layer slips below its target and writes a summary to `app/build/coverage/thresholds.md`.
+3. **Publish summaries**
    ```bash
    ./gradlew coverageMarkdownSummary
    ```
-   Runs `scripts/coverage/generate-summary.py` to emit `app/build/coverage/summary.md` and `app/build/coverage/summary.json`. A legacy copy of the markdown is kept at `app/build/reports/jacoco/full/summary.md` for existing CI uploads.
-4. **Bundle CI artefacts**
+   Generates `app/build/coverage/summary.{md,json}` and an HTML mirror under `app/build/reports/jacoco/full/`.
+4. **Bundle artefacts for CI uploads** *(optional locally, required for release pipelines)*
    ```bash
    ./gradlew coverageMergeArtifacts
    ```
-   Wraps `scripts/coverage/merge-coverage.sh`, re-running the full suite, copying HTML/XML outputs, summarised markdown/JSON, and all `.exec`/`.ec` inputs into `app/build/reports/jacoco/full/`. Use this before publishing artefacts in CI.
+   Packages HTML, XML, Markdown, JSON, and raw `.exec/.ec` inputs into `app/build/reports/jacoco/full/`.
 
-### Coverage Artefacts
-- **Contract schema**: `specs/005-improve-test-coverage/contracts/coverage-report.schema.json` documents the JSON payload consumed by dashboards.
-- **Layer classification**: `config/coverage/layer-map.json` maps class name patterns to `TestLayer`s for threshold enforcement. Update this map when new modules land.
-- **Report generator**: `app/src/main/java/com/vjaykrsna/nanoai/coverage/domain/CoverageReportGenerator.kt` enforces severity ordering and ensures every risk is mitigated by a catalog entry.
-- **Risk register alignment**: Tests in `app/src/test/java/com/vjaykrsna/nanoai/coverage/` validate sorting, tag enforcement, and risk escalation logic.
-- **Telemetry**: `app/src/main/java/com/vjaykrsna/nanoai/telemetry/CoverageTelemetryReporter.kt` forwards layer deltas and actionable risks to the shared `TelemetryReporter` without PII.
+### Quick artefact map
+- `app/build/reports/tests/testDebugUnitTest/index.html` — JVM report
+- `app/build/reports/androidTests/managedDebug/` — instrumentation report
+- `app/build/reports/jacoco/full/index.html` — merged coverage dashboard
+- `app/build/coverage/summary.md` — layer-by-layer digest consumed by the risk register
+- `config/coverage/layer-map.json` — class → layer rules (update when adding packages)
 
-## Integration with Design Principles
-- **Automated quality gates**: `verifyCoverageThresholds` plugs into CI to block regressions automatically.
-- **AI integrity**: Hugging Face auth flows (`app/src/test/java/com/vjaykrsna/nanoai/feature/settings/domain/huggingface`) are covered to guarantee slower polling and accessible failure copy—see `HuggingFaceAuthCoordinatorTest`.
-- **Offline readiness**: Repository tests under `app/src/test/java/com/vjaykrsna/nanoai/feature/library/data` pair MockWebServer with Room to mimic flaky networks.
-- **Material UX**: `app/src/androidTest/java/com/vjaykrsna/nanoai/coverage/ui/CoverageDashboardTest.kt` asserts TalkBack output and fallback banners.
-- **Performance guardrails**: `macrobenchmark/src/main/java/com/vjaykrsna/nanoai/coverage/CoverageDashboardStartupBenchmark.kt` enforces the <100ms warm-load target and publishes results for CI artefacts.
+## 5. Adding or Updating Tests
+1. Start from the task list (`specs/005-improve-test-coverage/tasks.md`) and write the failing test first.
+2. Choose the smallest suite that can prove the behaviour:
+   - JVM: pure Kotlin, ViewModels, repositories, type converters.
+   - Instrumentation: Composables, accessibility semantics, offline UX.
+   - Macrobenchmark: startup, transitions, frame timing.
+3. Inject dependencies through Hilt test components or fakes; never hit live services.
+4. Use deterministic tools (`Clock.System`, `MainDispatcherExtension`, `StandardTestDispatcher`).
+5. Document intent with concise KDoc and mention the related risk ID (see `docs/coverage/risk-register.md`).
+6. Re-run `jacocoFullReport` + `verifyCoverageThresholds` before committing to catch regressions locally.
 
-## Adding or Updating Tests
-1. **Start with a failing test** aligned to the task plan (see `specs/005-improve-test-coverage/tasks.md`).
-2. **Select the right suite**:
-   - Pure Kotlin or ViewModel logic → JVM tests.
-   - Composable behaviour or end-to-end flows → instrumentation.
-   - Performance regressions → macrobenchmark.
-3. **Inject dependencies** via Hilt test components or fakes—avoid real network calls.
-4. **Use deterministic clocks and dispatchers** (`kotlinx.datetime.Clock`, `MainDispatcherExtension`).
-5. **Document scenarios** with concise KDoc and link relevant risk IDs where applicable so coverage dashboards stay meaningful.
-6. **Run coverage tasks** before pushing to catch threshold regressions locally.
+## 6. Troubleshooting Cheat Sheet
+- **Physical device required**: Pass `-Pnanoai.usePhysicalDevice=true` to run tests on a physical device instead of the default emulator.
+- **Instrumentation filtering**: Use runner args (`-Pandroid.testInstrumentationRunnerArguments.class="*Test"`). The standard `--tests` flag is ignored for device tasks.
+- **Offline scenario flakes**: After toggling radios, clear state with `adb shell pm clear com.vjaykrsna.nanoai` and rerun with `TestEnvironmentRule` enabled.
+- **Coverage gaps**: Open `app/build/reports/jacoco/full/index.html`, filter by package, then cross-check `app/build/coverage/summary.md` to see which layer failed.
+- **Long-running managed runs**: Add `-Pandroid.testInstrumentationRunnerArguments.notAnnotation=flaky` to skip known unstable tests while a fix is in progress (and file a risk-register item).
+- **Physical device sleeps**: Keep the screen awake with `adb shell svc power stayon true` during test runs; revert to `false` afterwards.
 
-## Troubleshooting
-- **Missing emulator**: `connectedDebugAndroidTest` will fail quickly—set `ANDROID_SERIAL` or launch an emulator via Android Studio / `emulator` CLI.
-- **Managed device prerequisites**: Ensure hardware virtualization is enabled locally (`egrep -c '(vmx|svm)' /proc/cpuinfo` > 0) before relying on the managed device task; otherwise fall back to a manually launched emulator and run `./gradlew connectedDebugAndroidTest`, or as a last resort skip instrumentation entirely with `-Pnanoai.skipInstrumentation=true` (unit coverage only).
-- **Instrumentation test filtering**: Use `-Pandroid.testInstrumentationRunnerArguments.class="*TestClass*"` since `--tests` is not supported for `connectedAndroidTest` tasks (they are `DeviceProviderInstrumentTestTask`, not standard `Test` tasks).
-- **Offline instrumentation flakes**: After simulating offline states, clear the app cache with `adb shell pm clear com.vjaykrsna.nanoai` so MockWebServer fixtures rehydrate cleanly before reruns.
-- **Physical device screen timeout**: For physical devices, enable stay-on mode with `adb shell svc power stayon true` before running tests to prevent the screen from turning off. Disable with `adb shell svc power stayon false` afterward.
-- **Coverage gaps reported**: Inspect `app/build/coverage/summary.md` for the failing layer, then open the HTML report to locate uncovered classes.
-- **Risk register digest**: `docs/coverage/risk-register.md` summarises escalated items, mitigation owners, and linked JUnit5 suites.
-- **Flaky tests**: Temporarily annotate with `@Tag("flaky")`, open an incident in the risk register, and prioritise stabilisation before release.
-
-For quick onboarding, pair this guide with `specs/005-improve-test-coverage/quickstart.md` to rehearse the full workflow end to end.
+Pair this guide with `specs/005-improve-test-coverage/quickstart.md` when onboarding or rehearsing the full workflow end-to-end.
