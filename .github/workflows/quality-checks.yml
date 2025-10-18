@@ -1,0 +1,77 @@
+name: Quality Checks
+
+on:
+  workflow_call:
+    inputs:
+      upload-reports:
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  detekt-spotless:
+    name: Code Quality (Spotless & Detekt)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Android environment
+        uses: ./.github/actions/setup-android
+
+      - name: Run Detekt & Spotless
+        run: ./gradlew detekt spotlessCheck
+
+      - name: Enforce blocking Detekt rules
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -d '' reports < <(find . -path "*build/reports/detekt/*.xml" -print0)
+          if [[ ${#reports[@]} -eq 0 ]]; then
+            echo "::warning::No Detekt XML reports found to inspect."
+            exit 0
+          fi
+
+          violations=0
+          for report in "${reports[@]}"; do
+            if grep -Eq 'TooManyFunctions|LongMethod|CyclomaticComplexMethod|LongParameterList' "$report"; then
+              echo "::error file=$report::Blocking Detekt rule violation detected (TooManyFunctions/LongMethod/CyclomaticComplexMethod/LongParameterList)."
+              violations=1
+            fi
+          done
+
+          if [[ $violations -eq 1 ]]; then
+            echo "Blocking Detekt rule violations found. Failing job."
+            exit 1
+          fi
+
+      - name: Upload lint reports
+        if: inputs.upload-reports && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: detekt-spotless-reports
+          path: |
+            **/build/reports/spotless/
+            **/build/reports/detekt/
+
+  android-lint:
+    name: Android Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Android environment
+        uses: ./.github/actions/setup-android
+
+      - name: Run Android Lint
+        run: ./gradlew lintDebug --continue
+
+      - name: Upload Android Lint reports
+        if: inputs.upload-reports && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-lint-reports
+          path: '**/build/reports/lint-results-*.html'

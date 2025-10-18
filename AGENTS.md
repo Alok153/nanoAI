@@ -16,7 +16,7 @@
 - **Wake-up Call**: Untested code ships bugs that break offline functionality and accessibility compliance.
 
 ### Kotlin-First Purity
-**ONLY** use Kotlin. No Java interop unless absolutely necessary.
+**ONLY use Kotlin**. **No Java** interop unless absolutely necessary.
 - Use coroutines, not threads
 - Use sealed classes, not enums for states
 - Use data classes for immutable models
@@ -77,15 +77,12 @@
 
 ### When Adding Features
 1. Create failing tests first (TDD)
-2. Add to risk register if coverage impact
-3. Update architecture diagram if changing data flow
-4. Test offline + accessibility scenarios
+2. Update architecture diagram if changing data flow
+3. Test offline + accessibility scenarios
 
 ### When Refactoring
-1. Run full test suite before/after
-2. Update any affected docs in `/docs`
-3. Check coverage doesn't drop below targets
-4. Add migration tests for schema changes
+1. Update any affected docs in `/docs`
+2. Add migration tests for schema changes
 
 ### When Debugging
 ## 📁 Project Structure
@@ -115,7 +112,7 @@ nanoAI/
 ├── macrobenchmark/                # Performance benchmarks
 ├── build.gradle.kts               # Root build configuration
 ├── settings.gradle.kts            # Project settings
-└── gradle/libs.versions.toml       # Approved dependency versions
+└── gradle/libs.versions.toml      # Approved dependency versions
 ```
 1. Check logs with `ShellTelemetry`
 2. Isolate layers (UI, Domain, Data)
@@ -130,11 +127,6 @@ nanoAI/
 - `./gradlew testDebugUnitTest` (Unit tests)
 - `./gradlew verifyCoverageThresholds` (Coverage gates)
 
-**Must Pass Before PR:**
-- `./gradlew check` (All quality gates)
-- Accessibility audit with TalkBack
-- Offline functionality verification
-
 ## 📚 Essential References
 
 - `docs/ARCHITECTURE.md` - System design and data flows
@@ -143,10 +135,6 @@ nanoAI/
 - `gradle/libs.versions.toml` - Approved dependency versions
 - `config/coverage/layer-map.json` - Coverage classification rules
 
-## 🎯 Agent Success Metrics
-
-- Code passes all `./gradlew check` gates
-- Coverage targets maintained or improved
 ## 🛠️ Development Tools & Resources
 
 ### When Stuck or Implementing New Features

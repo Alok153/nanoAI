@@ -1,0 +1,55 @@
+name: Macrobenchmark
+
+on:
+  workflow_call:
+    inputs:
+      api-level:
+        required: false
+        type: number
+        default: 31
+      target:
+        required: false
+        type: string
+        default: 'google_apis'
+      upload-reports:
+        required: false
+        type: boolean
+        default: true
+      timeout-minutes:
+        required: false
+        type: number
+        default: 60
+
+jobs:
+  macrobenchmark:
+    name: Macrobenchmark Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ inputs.timeout-minutes }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Android environment
+        uses: ./.github/actions/setup-android
+
+      - name: Setup emulator
+        uses: ./.github/actions/setup-emulator
+
+      - name: Run macrobenchmark smoke test
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ inputs.api-level }}
+          target: ${{ inputs.target }}
+          arch: x86_64
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          disable-animations: true
+          script: ./gradlew :macrobenchmark:connectedBenchmarkAndroidTest --continue
+
+      - name: Upload benchmark results
+        if: inputs.upload-reports && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: '**/build/outputs/androidTest-results/connected/'

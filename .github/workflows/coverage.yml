@@ -1,0 +1,109 @@
+name: Coverage Analysis
+
+on:
+  workflow_call:
+    inputs:
+      api-level:
+        required: false
+        type: number
+        default: 34
+      target:
+        required: false
+        type: string
+        default: 'google_apis'
+      upload-reports:
+        required: false
+        type: boolean
+        default: true
+      post-pr-comment:
+        required: false
+        type: boolean
+        default: true
+      timeout-minutes:
+        required: false
+        type: number
+        default: 70
+
+jobs:
+  coverage:
+    name: Coverage Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ inputs.timeout-minutes }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Android environment
+        uses: ./.github/actions/setup-android
+
+      - name: Setup emulator
+        uses: ./.github/actions/setup-emulator
+        with:
+          cache-key: coverage-avd-${{ inputs.api-level }}-${{ inputs.target }}
+
+      - name: Run coverage suite
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ inputs.api-level }}
+          target: ${{ inputs.target }}
+          arch: x86_64
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: ./gradlew testDebugUnitTest connectedDebugAndroidTest jacocoFullReport coverageMarkdownSummary verifyCoverageThresholds --continue
+
+      - name: Upload coverage artifacts
+        if: inputs.upload-reports && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-artifacts
+          path: |
+            app/build/reports/jacoco/full/jacocoFullReport.xml
+            app/build/reports/jacoco/full/html/
+            app/build/reports/jacoco/full/summary.md
+            app/build/coverage/summary.md
+
+      - name: Post coverage summary to PR
+        if: inputs.post-pr-comment && github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const summaryPath = 'app/build/reports/jacoco/full/summary.md';
+
+            if (!fs.existsSync(summaryPath)) {
+              console.log('Coverage summary not found, skipping PR comment');
+              return;
+            }
+
+            const summary = fs.readFileSync(summaryPath, 'utf8');
+            const body = `## 📊 Coverage Report\n\n${summary}\n\n*Generated on: ${new Date().toISOString()}*`;
+
+            // Find existing coverage comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' && comment.body.includes('📊 Coverage Report')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }

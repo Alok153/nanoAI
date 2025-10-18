@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Quality checks - run in parallel
+  quality-checks:
+    name: Quality Checks
+    uses: ./.github/workflows/quality-checks.yml
+
+  # Unit tests - run in parallel
+  unit-tests:
+    name: Unit Tests
+    uses: ./.github/workflows/unit-tests.yml
+
+  # Instrumented tests - run on multiple API levels
+  instrumented-tests:
+    name: Instrumented Tests
+    uses: ./.github/workflows/instrumented-tests.yml
+
+  # Macrobenchmark - only on main branch or when explicitly requested
+  macrobenchmark:
+    name: Macrobenchmark
+    if: |
+      github.ref == 'refs/heads/main' ||
+      github.base_ref == 'main' ||
+      (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'benchmark'))
+    uses: ./.github/workflows/macrobenchmark.yml
+
+  # Coverage analysis - depends on quality checks and unit tests
+  coverage:
+    name: Coverage Analysis
+    needs: [quality-checks, unit-tests]
+    uses: ./.github/workflows/coverage.yml
+
+  # Final build - depends on all quality gates
+  build:
+    name: Build APK
+    needs: [quality-checks, unit-tests, coverage]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Android environment
+        uses: ./.github/actions/setup-android
+
+      - name: Build debug APK
+        run: ./gradlew assembleDebug
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug
+          path: app/build/outputs/apk/debug/app-debug.apk

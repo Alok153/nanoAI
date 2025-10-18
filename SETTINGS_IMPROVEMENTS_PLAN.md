@@ -7,101 +7,6 @@
 
 Comprehensive plan to enhance settings organization, add AMOLED theme support, implement startup screen selection, and optimize app launch performance.
 
----
-
-## 1. AMOLED Theme Support
-
-### Current State
-- Theme options: Light, Dark, System
-- Uses Material 3 `darkColorScheme()` for dark mode
-- Dynamic color support on Android 12+
-
-### Proposed Changes
-
-#### 1.1 Add AMOLED Theme Enum
-**File**: `core/domain/model/uiux/UiUxEnums.kt`
-
-```kotlin
-enum class ThemePreference {
-  LIGHT,
-  DARK,
-  AMOLED,  // TODO: Add AMOLED/pitch black theme
-  SYSTEM,
-}
-```
-
-#### 1.2 Create AMOLED Color Scheme
-**File**: `ui/theme/Color.kt`
-
-```kotlin
-// AMOLED colors - pure black backgrounds for power savings
-private val AmoledBackground = Color(0xFF000000)  // Pure black
-private val AmoledSurface = Color(0xFF000000)
-private val AmoledSurfaceVariant = Color(0xFF0A0A0A)  // Slight elevation
-```
-
-**File**: `ui/theme/Theme.kt`
-
-```kotlin
-private val AmoledColorScheme = darkColorScheme(
-  background = Color(0xFF000000),  // Pure black
-  surface = Color(0xFF000000),
-  surfaceVariant = Color(0xFF0A0A0A),
-  // ... other colors same as DarkColorScheme
-)
-
-// Update rememberNanoAIColorScheme
-@Composable
-private fun rememberNanoAIColorScheme(
-  themePreference: ThemePreference,
-  systemDarkTheme: Boolean,
-  dynamicColor: Boolean,
-): ColorScheme {
-  val darkTheme = resolveDarkTheme(themePreference, systemDarkTheme)
-  val isAmoled = themePreference == ThemePreference.AMOLED
-  
-  return when {
-    dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !isAmoled -> {
-      // Dynamic colors (skip for AMOLED to maintain pure black)
-    }
-    isAmoled -> AmoledColorScheme
-    darkTheme -> DarkColorScheme
-    else -> LightColorScheme
-  }
-}
-```
-
-#### 1.3 Update Theme Selector UI
-**File**: `feature/uiux/ui/components/ThemeDensitySelectors.kt`
-
-```kotlin
-private fun themeLabel(theme: ThemePreference): String =
-  when (theme) {
-    ThemePreference.LIGHT -> "Light"
-    ThemePreference.DARK -> "Dark"
-    ThemePreference.AMOLED -> "AMOLED"
-    ThemePreference.SYSTEM -> "System"
-  }
-```
-
-#### 1.4 Update Theme Section Description
-**File**: `feature/settings/ui/AppearanceSettingsSections.kt`
-
-```kotlin
-Text(
-  text = "Switch between light, dark, AMOLED (pitch black), or follow the system theme.",
-  style = MaterialTheme.typography.bodySmall,
-  color = MaterialTheme.colorScheme.onSurfaceVariant,
-)
-```
-
-### Benefits
-- **Power savings** on OLED/AMOLED displays (pure black pixels are off)
-- **Reduced eye strain** in complete darkness
-- **User choice** for preferred dark mode intensity
-
----
-
 ## 2. Startup Screen Selection
 
 ### Current State
@@ -319,14 +224,6 @@ override fun onCreate(savedInstanceState: Bundle?) {
 
 ## 4. Implementation Order
 
-### Phase 1: Theme Improvements (Quick Wins)
-1. ✅ Remove Accent Colors placeholder
-2. ⬜ Add AMOLED theme enum
-3. ⬜ Create AMOLED color scheme
-4. ⬜ Update theme selector UI
-5. ⬜ Update theme description text
-6. ⬜ Test theme switching behavior
-
 ### Phase 2: Startup Screen Selection
 1. ⬜ Add startup preferences to DataStore
 2. ⬜ Create startup screen selector UI
@@ -380,7 +277,6 @@ override fun onCreate(savedInstanceState: Bundle?) {
 
 ## 7. Success Criteria
 
-- [ ] AMOLED theme shows pure black backgrounds
 - [ ] Theme switches smoothly without flicker
 - [ ] Startup screen preference persists across app restarts
 - [ ] App launches to selected screen correctly
@@ -392,7 +288,6 @@ override fun onCreate(savedInstanceState: Bundle?) {
 
 ## Notes
 
-- **Priority**: Phase 1 (theme) is easiest and highest user value
 - **Complexity**: Phase 3 (performance) needs careful profiling and iteration
 - **Dependencies**: None - all phases can proceed independently
 - **Timeline**: Phase 1 (1 day), Phase 2 (2 days), Phase 3 (3-5 days)

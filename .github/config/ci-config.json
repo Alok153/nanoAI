@@ -1,0 +1,24 @@
+{
+  "java": {
+    "version": "17",
+    "distribution": "temurin"
+  },
+  "emulator": {
+    "defaultApiLevel": 34,
+    "defaultTarget": "google_apis",
+    "architectures": ["x86_64"],
+    "options": {
+      "common": "-no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none",
+      "benchmark": "-no-window -gpu swiftshader_indirect -noaudio -no-boot-anim"
+    }
+  },
+  "testMatrix": {
+    "apiLevels": [31, 34],
+    "targets": ["google_apis"]
+  },
+  "timeouts": {
+    "instrumentedTests": 60,
+    "macrobenchmark": 60,
+    "coverage": 70
+  }
+}

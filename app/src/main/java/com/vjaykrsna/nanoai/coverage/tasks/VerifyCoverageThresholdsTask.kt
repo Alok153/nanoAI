@@ -59,6 +59,7 @@ object VerifyCoverageThresholdsTask {
   @JvmStatic
   fun main(rawArgs: Array<String>) {
     val parsedArgs = parseArgumentsOrExit(rawArgs)
+    @Suppress("NewApi") // This is build-time code running on JVM, not Android runtime
     val layerMapPath = parsedArgs.layerMap ?: Path.of(DEFAULT_LAYER_MAP)
 
     validateInputPaths(parsedArgs.reportXml, layerMapPath)
@@ -91,6 +92,7 @@ object VerifyCoverageThresholdsTask {
 
         var index = 0
         while (index < arguments.size) {
+          @Suppress("NewApi") // This is build-time code running on JVM, not Android runtime
           when (val arg = arguments[index]) {
             "--report-xml" -> {
               reportXml = Path.of(next(arguments, ++index, arg))

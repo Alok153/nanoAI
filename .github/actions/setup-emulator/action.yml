@@ -1,0 +1,33 @@
+name: 'Setup Android Emulator'
+description: 'Reusable action to setup Android emulator with KVM permissions'
+
+inputs:
+  enable-kvm:
+    description: 'Enable KVM permissions for emulator'
+    required: false
+    default: 'true'
+  cache-key:
+    description: 'Cache key for AVD cache'
+    required: false
+    default: ''
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Enable KVM group perms
+      if: inputs.enable-kvm == 'true'
+      run: |
+        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+        sudo udevadm control --reload-rules
+        sudo udevadm trigger --name-match=kvm
+      shell: bash
+
+    - name: AVD cache
+      if: inputs.cache-key != ''
+      uses: actions/cache@v4
+      id: avd-cache
+      with:
+        path: |
+          ~/.android/avd/*
+          ~/.android/adb*
+        key: ${{ inputs.cache-key }}

@@ -100,6 +100,12 @@ Building on the solid test foundation, these features can now be developed with 
 - Coverage tooling operational (enables continuous threshold monitoring)
 - Managed device configuration stable (supports deterministic CI runs)
 
+### Critical Issues
+1. **Instrumentation Compilation**: MockK dependency conflicts blocking AndroidTest execution
+2. **Large Test Classes**: `ModelCatalogRepositoryImplTest`, `SettingsScreenTest`, `ModelLibraryScreenTest` exceed complexity limits
+3. **Test Organization**: Mixed patterns, inconsistent mocking, lack of shared fixtures
+4. **Execution Reliability**: Device dependency issues and flaky async tests
+
 ## How to Update This Document
 
 1. Review quarterly or when a major feature phase completes.
