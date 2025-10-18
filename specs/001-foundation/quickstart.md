@@ -5,15 +5,18 @@
 2. Install latest build from `app/build/outputs/apk/debug/app-debug.apk`.
 3. Clear app data before each run to validate onboarding.
 
-## Smoke Test Flow
-1. Launch app → confirm first-launch responsibility notice is shown and can be dismissed.
-2. From sidebar, open **Model Library** → download "Nano Phi-2 Lite" (MediaPipe bundle).
-   - Verify progress bar, pause/resume, and completion state.
+## Smoke Test Flow (Foundation + Consolidated Features)
+1. Launch app → confirm first-launch disclaimer dialog appears with responsibility notice and acknowledge button.
+2. From sidebar (left drawer), navigate to **Model Library** → download "Nano Phi-2 Lite" (MediaPipe bundle).
+   - Verify progress bar, pause/resume controls, and completion state.
 3. Return to chat view → ensure downloaded model is preselected; send "Summarize the benefits of offline AI." → response within 2 s median.
-4. Toggle persona to "Creative Muse" → when prompted, choose **Continue in current thread**. Confirm persona switch log entry appears in debug overlay.
-5. Disable local model via quick toggle → select OpenAI configuration → send prompt → verify cloud badge and quota info chips.
-6. Open **Settings → Export & Backup** → run universal export and confirm warning about unencrypted archive.
-7. Navigate to **Privacy Dashboard** → confirm consent timestamp and telemetry toggle (off by default).
+4. Toggle persona to "Creative Muse" → when prompted, choose **Continue in current thread**. Confirm persona switch log entry.
+5. Use sidebar quick toggles to switch between local/cloud inference modes and clear conversation context.
+6. Test command palette (Ctrl+K / Cmd+K) → search for "New Chat" and verify navigation works.
+7. Open **Settings → Export & Backup** → run universal export and confirm warning about unencrypted JSON archive.
+8. Navigate to **Privacy Dashboard** → confirm consent timestamp, disclaimer acknowledgment count, and telemetry toggle (off by default).
+9. Test Material 3 theming → toggle between light/dark modes and verify instant theme switching.
+10. Verify home hub grid layout → confirm mode cards (Chat, Image, Audio, Code, Translate) with proper icons and accessibility labels.
 
 ## Offline Readiness
 1. Enable airplane mode with local model installed.

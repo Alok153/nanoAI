@@ -3,68 +3,9 @@
 **Feature Branch**: `001-foundation`  
 **Created**: 2025-09-30  
 **Status**: Draft  
-**Input**: User description: "I want to build an android app that lets user run small llm offline on the android, It will have a modern polished Ui will support text, image and audio input output, it will be a like a normal chatapp with a sidebar that has all the chathistory\nIt will use backend libraries that are already optimised to run on edge device with low resource requirements to run the llms\nI went on to create this new app because none of the app available online is good or their maintainers left the project some support text generation but don't have support for image generation or similar small issues\nIt will have online api support as well for openai api, gemini api and configurable openai api format configuration to configure more models and api endpoints if user wants to connect to external api (no limitation on that front), it will have model library ui with download play pause options, it will have option to configure personal for ai to quickly switch into it\neverything will be organised in the settings and easy to setup and navigate and quick toggles and switching from sidebar menu"
+**Input**: See `overview.md` for detailed user requirements and design vision
 
-## Execution Flow (main)
-```
-1. Parse user description from Input
-   → If empty: ERROR "No feature description provided"
-2. Extract key concepts from description
-   → Identify: actors, actions, data, constraints
-3. For each unclear aspect:
-   → Mark with [NEEDS CLARIFICATION: specific question]
-4. Fill User Scenarios & Testing section
-   → If no clear user flow: ERROR "Cannot determine user scenarios"
-5. Generate Functional Requirements
-   → Each requirement must be testable
-   → Mark ambiguous requirements
-6. Identify Key Entities (if data involved)
-7. Run Review Checklist
-   → If any [NEEDS CLARIFICATION]: WARN "Spec has uncertainties"
-   → If implementation details found: ERROR "Remove tech details"
-8. Return: SUCCESS (spec ready for planning)
-```
-
----
-
-## Clarifications
-
-### Session 2025-09-30
-- Q: How should the export archive be protected? → A: Option C (export stays unencrypted, user warned to store safely)
-- Q: Which mobile LLM runtime do we prioritize for the initial offline release? → A: Option D (MediaPipe Generative / LiteRT pipeline first, research others for future integration)
-- Q: How should we handle audio output (assistant responses) in the initial release? → A: Option A (text-only responses; audio output deferred)
-- Q: How should the initial app handle image generation? → A: Option A (no image generation at launch; plan future local/cloud integrations)
-- Q: Persona switch behavior for ongoing chats? → A: Option C/D (prompt user each time with default governed by settings)
-
----
-
-## ⚡ Quick Guidelines
-- ✅ Focus on WHAT users need and WHY
-- ❌ Avoid HOW to implement (no tech stack, APIs, code structure)
-- 👥 Written for business stakeholders, not developers
-- 🎯 Capture Material UX, performance, offline, and privacy expectations aligned with the constitution.
-
-### Section Requirements
-- **Mandatory sections**: Must be completed for every feature
-- **Optional sections**: Include only when relevant to the feature
-- When a section doesn't apply, remove it entirely (don't leave as "N/A")
-
-### For AI Generation
-When creating this spec from a user prompt:
-1. **Mark all ambiguities**: Use [NEEDS CLARIFICATION: specific question] for any assumption you'd need to make
-2. **Don't guess**: If the prompt doesn't specify something (e.g., "login system" without auth method), mark it
-3. **Think like a tester**: Every vague requirement should fail the "testable and unambiguous" checklist item
-4. **Common underspecified areas**:
-   - User types and permissions
-   - Data retention/deletion policies  
-   - Performance targets and scale
-   - Error handling behaviors
-   - Integration requirements
-   - Security/compliance needs
-
----
-
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing
 
 ### Primary User Story
 A privacy-conscious mobile professional installs nanoAI, downloads an on-device model, and chats with the assistant using text, voice, or images while reviewing past conversations from a sidebar history.
@@ -136,52 +77,78 @@ A privacy-conscious mobile professional installs nanoAI, downloads an on-device 
 - **FR-036**: App MUST gracefully handle model deletion by stopping active inferences, notifying users of session interruptions, and preventing data corruption.
 - **FR-037**: App MUST include manual content moderation warnings in the chat UI for responses that may be uncensored or inappropriate.
 
-### Key Entities *(include if feature involves data)*
-- **ChatThread**: Represents a conversation session; stores participants (user, assistant persona), chronological messages, associated model, and timestamps.
-- **Message**: Holds content payloads (text, audio reference, image reference), modality metadata, and generation source (local vs cloud).
-- **ModelPackage**: Describes downloadable local models with version, size, capabilities, and download state.
-- **PersonaProfile**: Captures persona name, instructions, preferred models/APIs, response style, and quick-toggle defaults.
-- **APIProviderConfig**: Stores credentials, endpoint URLs, supported modalities, and usage quotas for each external provider.
-- **DownloadTask**: Tracks model library transfer progress, pause/resume status, checksum verification, and failure reasons.
-- **PrivacyPreference**: Records consent status, retention policies, and telemetry opt-in/out choices.
+### First-Launch Disclaimer & Data Management (002-disclaimer-and-fixes)
+- **FR-038**: The product MUST display a first-launch disclaimer dialog reminding users they are responsible for generated content, with an acknowledge action that records consent and prevents unnecessary repetition.
+- **FR-039**: The product MUST support importing/exporting personas, API configurations, and settings via a documented JSON schema (ZIP optional where justified). Backups MUST be accompanied by a clear user-facing warning if they are stored unencrypted.
+- **FR-040**: The product MUST provide UI controls for switching between local and cloud inference modes and for clearing conversation context; the controls MUST persist user preference.
+- **FR-041**: The product MUST enforce automated quality gates: static analysis and test targets defined in the feature plan must run in CI and pass before merge; the plan must list the exact commands that constitute the gate.
+- **FR-042**: The product MUST follow Material design accessibility expectations for any new UI elements (labels, semantics, and contrast). Performance-related guidance should be documented in the plan when measurable targets are required.
 
----
+### UI/UX Polish & Navigation (003-UI-UX)
+- **FR-043**: App MUST present a home hub as the central entry point, featuring a grid of mode cards (Chat, Image Generation, Audio Processing, Code Assistance, Translation) with clear icons and labels for quick access to any mode within two interactions.
+- **FR-044**: Primary navigation MUST use a left-side persistent sidebar (collapsible on mobile) with sections for Home, History, Library, Tools, and Settings, ensuring consistent and discoverable navigation across all modes.
+- **FR-045**: Interface MUST maintain visual consistency with a documented design system including reusable components (Button, Card, ListItem, etc.), neutral color palette, generous whitespace, and subtle motion to convey polish without clutter.
+- **FR-046**: App MUST support light and dark themes with manual toggle and system sync, providing fully specified color tokens for backgrounds, surfaces, text, and accents, with instantaneous theme switches and contrast compliance.
+- **FR-047**: Performance MUST meet targets: First Meaningful Paint ≤ 300ms on mid-range devices, perceived interaction latency ≤ 100ms, progressive loading skeletons within 150ms for network content, and automated performance smoke tests validating these metrics.
+- **FR-048**: Offline UX MUST show cached content where available, disable unavailable features with informative messaging, queue user actions for sync, and provide graceful banners for connectivity status.
+- **FR-049**: Settings MUST be organized into logical sections (General, Appearance, Privacy, etc.) with concise labels, inline help text, and persistent Save/Undo for destructive changes.
+- **FR-050**: Error handling MUST display clear, actionable messaging for failures (e.g., connectivity issues), with inline remedies and optional undo for safe operations.
+- **FR-051**: Onboarding MUST include a minimal single-screen highlight of primary modes with a clear CTA, unobtrusive skip control, and persistent Help to re-open onboarding.
+- **FR-052**: Contextual help MUST provide lightweight, dismissible tooltips for discoverable features, with 'Don't show again' options and re-openable from Help menu.
+- **FR-053**: Layout MUST adapt to screen size classes (compact/phone, regular/tablet, expanded/desktop) with explicit spacing and column rules to ensure usability across devices.
 
-## Review & Acceptance Checklist
-*GATE: Automated checks run during main() execution*
+### Code Quality & Stabilization (004-fixes-and-inconsistencies)
+- **FR-054**: The codebase MUST be brought to a state where CI's ktlint and Detekt checks pass for the rules marked as blocking in `config/detekt/detekt.yml`. Specifically: no remaining offenses that exceed the configured thresholds for TooManyFunctions, LongMethod, CyclomaticComplexMethod, or LongParameterList for production code. All naming and format violations affecting readability should be fixed.
+- **FR-055**: Implement or provide a documented and tested alternative for critical TODOs identified in `docs/inconsistencies.md` before Phase 4. This includes at minimum: local inference runtime placeholder in `MediaPipeLocalModelRuntime.kt`, model download checksum verification in `ModelDownloadWorker.kt`, and secure storage of provider/API keys (see FR-056).
+- **FR-056**: All API keys, provider credentials, and similar secrets MUST be stored encrypted at rest (Jetpack Security / EncryptedSharedPreferences or keystore-backed solution). No plaintext secrets in source, test fixtures, or CI logs. Provide migration and key-rotation notes if applicable.
+- **FR-057**: Model downloads MUST be validated using an authentic manifest and checksum (e.g., SHA256) stored in the package or retrieved from a signed catalog. The download worker must verify integrity before installation and expose retry/backoff behavior on failure.
+- **FR-058**: Critical user flows listed in `docs/inconsistencies.md` and `docs/todo-next.md` (offline persona flow, disclaimer dialog, model library flow, cloud fallback) MUST have deterministic tests (unit or instrumented) that run in CI. Any remaining manual/integration tests must be documented with a tracking ticket.
+- **FR-059**: Large composables and classes flagged (e.g., `NavigationScaffold`, `HomeScreen`, `UserProfileRepository`) MUST be refactored into smaller units with preserved behavior and covered by tests. Public APIs should remain stable or have migration notes.
+- **FR-060**: Standardize error handling across domain layers using sealed result types or a Result wrapper. No unchecked exceptions should bubble to the UI in normal error scenarios.
+- **FR-061**: Remove or document dead/unused code (e.g., legacy onboarding placeholders, unused `savedStateHandle` instances) and remove hardcoded URLs or secrets. Each removal must include a short rationale in the commit message.
+- **FR-062**: Update `docs/inconsistencies.md` and `docs/todo-next.md` to reflect completed fixes and add explicit tracking issues for deferred items. Add a changelog entry for this stabilization pass.
+- **FR-063**: For any runtime changes (local inference), measure and document median P95 response times on representative hardware; local response should target <2s per prior spec, or the spec must include a justification and fallback strategy.
 
-### Content Quality
-- [x] No implementation details (languages, frameworks, APIs)
-- [x] Focused on user value and business needs
-- [x] Written for non-technical stakeholders
-- [x] All mandatory sections completed
+### Test Coverage & Quality Assurance (005-improve-test-coverage)
+- **FR-064**: The program MUST publish a consolidated coverage summary for ViewModel, UI, and data layers after every CI build so stakeholders can assess readiness.
+- **FR-065**: Automated verification MUST exist for all critical ViewModel state transitions (happy path, error, loading) referenced in docs/todo-next.md, ensuring regressions are detected before release.
+- **FR-066**: Critical Compose UI flows (conversation list, chat detail, message composition) MUST have automated scenarios that validate user-facing behavior, accessibility, and Material design compliance.
+- **FR-067**: Data access paths (Room DAOs, repositories, caching rules) MUST have automated checks that confirm read/write integrity, error propagation, and offline resilience promises.
+- **FR-068**: Coverage reporting MUST surface trend data and highlight areas below the target threshold so leadership can prioritize subsequent hardening work.
+- **FR-069**: Coverage targets MUST meet or exceed ViewModel 75%, UI 65%, and Data 70%.
 
-### Requirement Completeness
-- [x] No [NEEDS CLARIFICATION] markers remain
-- [x] Requirements are testable and unambiguous  
-- [x] Success criteria are measurable
-- [x] Scope is clearly bounded
-- [x] Dependencies and assumptions identified
+### Key Entities *(consolidated from all branches)*
+#### Core Chat & Inference Entities
+- **ChatThread**: Conversation session with messages, persona, and model associations
+- **Message**: Content payloads with modality metadata and generation source tracking
+- **PersonaProfile**: Persona configurations with system prompts and model preferences
+- **PersonaSwitchLog**: Audit trail of persona changes within conversations
 
-### Constitution Alignment
-- [x] UX stories note Material compliance and accessibility expectations.
-- [x] Reasonable performance budgets and offline behavior are described (optimized later).
-- [x] Data handling, permissions, consent, and encryption obligations are documented.
+#### Model Management Entities
+- **ModelPackage**: Downloadable AI models with integrity verification and metadata
+- **DownloadTask**: Transfer progress tracking with pause/resume capabilities
+- **DownloadManifest**: Signed manifests for model integrity verification
+- **SecretCredential**: Encrypted storage for API keys and provider credentials
 
----
+#### User Preferences & Privacy
+- **PrivacyPreference**: Consent tracking and data retention preferences
+- **UiPreferenceSnapshot**: Theme, density, and accessibility settings
 
-## Execution Status
-*Updated by main() during processing*
+#### Quality Assurance & Maintenance
+- **RepoMaintenanceTask**: Stabilization work tracking with priority levels
+- **CodeQualityMetric**: Static analysis violation monitoring and trends
+- **CoverageSummary**: Test coverage reporting with layer-specific metrics
+- **CoverageTrendPoint**: Historical coverage data for trend analysis
+- **TestSuiteCatalogEntry**: Test suite inventory with coverage contributions
+- **RiskRegisterItem**: Unmitigated coverage gaps with mitigation plans
 
-- [x] User description parsed
-- [x] Key concepts extracted
-- [x] Ambiguities marked
-- [x] User scenarios defined
-- [x] Requirements generated
-- [x] Entities identified
-- [x] Review checklist passed
+#### Runtime State Management
+- **ShellLayoutState**: UI navigation and connectivity state (runtime only)
+- **ProgressJob**: Background task progress tracking (runtime only)
+- **RecentActivityItem**: Recent conversation and generation activity (runtime only)
+- **ErrorEnvelope**: Standardized error payloads with retry policies (runtime only)
+- **ImportJob**: Import operation progress tracking (transient)
 
 ---
 *Align with Constitution v1.0.0 (see `.specify/memory/constitution.md` for principles)*
-
 ---
