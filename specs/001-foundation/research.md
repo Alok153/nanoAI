@@ -38,15 +38,34 @@
 - Configurable generic OpenAI-compatible endpoints: allow user to define base URL + API key + model list.
 - Track Google’s deprecation of the standalone Gemini Android SDK in favor of the unified Firebase/Vertex AI SDK path so the fallback client keeps parity with Gemini 2.x endpoints.[^4]
 
-## UX & Accessibility
-- Compose UI with sidebar navigation (Navigation Drawer + adaptive layout for tablets).
-- Accessibility: ensure TalkBack labels, dynamic type scaling, focus order, optional vibration feedback.
-- Offline-first messaging: differentiate local vs cloud responses visually; show status chips for queued online requests.
+## UX & Accessibility (Foundation + Consolidated)
+- Compose Material 3 UI with persistent left sidebar, command palette (Ctrl+K/Cmd+K), and adaptive layouts (compact/phone, regular/tablet, expanded/desktop).
+- Home hub with mode grid cards (Chat, Image, Audio, Code, Translate) for quick access within two interactions.
+- Accessibility: TalkBack labels, dynamic type scaling (0.8x-2.0x), high contrast mode, focus management, and 100ms tactile feedback requirement.
+- Offline-first messaging: cached content display, unavailable feature banners, action queuing for sync, and visual differentiation between local/cloud responses.
+- Error handling: clear actionable messaging, inline remedies, undo support for safe operations, and standardized error envelopes.
+- Onboarding: single-screen mode introduction with skip option and persistent help access.
+- Contextual help: dismissible tooltips with "Don't show again" options and re-openable from Help menu.
 
 ## Performance & Observability
-- Performance budgets per constitution: cold start <1.5s, response <2s median, dropped frames <5%.
-- Instrument macrobenchmark tests for cold start and scrolling.
-- Logging stays local; use structured files for debugging export.
+- Performance budgets per constitution: cold start <1.5s, local response <2s median, FMP ≤300ms, interaction latency ≤100ms, dropped frames <5%.
+- Progressive loading skeletons within 150ms for network content.
+- Instrument macrobenchmark tests for cold start, scrolling stability, and baseline profile generation.
+- Logging stays local; use structured files for debugging export with privacy preservation.
+
+## Code Quality & Stabilization
+- **Static Analysis**: ktlint for Kotlin formatting, Detekt for code quality with blocking rules (TooManyFunctions, LongMethod, CyclomaticComplexMethod, LongParameterList).
+- **Security**: EncryptedSharedPreferences for API keys and credentials; SHA256 checksum verification for model downloads.
+- **Error Handling**: Standardized Result types and error envelopes with retry policies and context preservation.
+- **Refactoring**: Break down large composables (NavigationScaffold, HomeScreen) and god-classes into smaller, testable units.
+- **Maintenance Tracking**: RepoMaintenanceTask system for tracking stabilization work with priority levels and blocking rules.
+
+## Test Coverage & Quality Assurance
+- **Coverage Targets**: ViewModel ≥75%, UI ≥65%, Data ≥70% with automated CI enforcement.
+- **Coverage Reporting**: Post-CI summaries with trend analysis, risk flagging, and historical data retention.
+- **Risk Register**: Track untested scenarios with severity levels (Critical/High/Medium/Low) and mitigation plans.
+- **Test Infrastructure**: Automated verification for critical flows, contract tests, and accessibility validation.
+- **CI Gates**: ktlint, Detekt, Android Lint, unit tests, instrumented tests, coverage verification, and macrobenchmarks.
 
 ## References
 [^1]: MediaPipe v0.10.14 release notes (May 13, 2024) – https://github.com/google-ai-edge/mediapipe/releases/tag/v0.10.14

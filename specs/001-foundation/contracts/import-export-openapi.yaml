@@ -1,0 +1,245 @@
+openapi: 3.0.1
+info:
+  title: nanoAI Import/Export API Contract (feature 002)
+  version: "1.0.0"
+  description: |-
+    Minimal contract describing the export/import JSON bundle used for backup and restore
+paths:
+  /import:
+    post:
+      summary: Import an export backup JSON bundle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportBackup'
+      responses:
+        '200':
+          description: Import accepted and applied
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+  /export:
+    get:
+      summary: Retrieve an export backup JSON bundle
+      responses:
+        '200':
+          description: Export bundle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportBackup'
+components:
+  schemas:
+    ExportBackup:
+      type: object
+      properties:
+        version:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        device:
+          type: string
+        conversations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Thread'
+        personas:
+          type: array
+          items:
+            $ref: '#/components/schemas/Persona'
+        apiProviders:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiProvider'
+        privacy:
+          $ref: '#/components/schemas/PrivacySettings'
+        modelCatalog:
+          type: array
+          items:
+            $ref: '#/components/schemas/Model'
+      required: [version, timestamp]
+
+    Thread:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+          nullable: true
+        personaId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        isArchived:
+          type: boolean
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Message'
+        switches:
+          type: array
+          items:
+            $ref: '#/components/schemas/PersonaSwitch'
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+        role:
+          type: string
+          enum: [user, assistant, system]
+        content:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        latencyMs:
+          type: integer
+          nullable: true
+        errorCode:
+          type: string
+          nullable: true
+
+    PersonaSwitch:
+      type: object
+      properties:
+        id:
+          type: string
+        fromPersonaId:
+          type: string
+          nullable: true
+        toPersonaId:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        action:
+          type: string
+          enum: [CONTINUE_THREAD, START_NEW_THREAD]
+
+    Persona:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        systemPrompt:
+          type: string
+        temperature:
+          type: number
+        topP:
+          type: number
+        modelPreference:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    ApiProvider:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        baseUrl:
+          type: string
+        apiKey:
+          type: string
+          nullable: true
+        isDefault:
+          type: boolean
+        status:
+          type: string
+        quotaResetAt:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    PrivacySettings:
+      type: object
+      properties:
+        telemetryOptIn:
+          type: boolean
+        retentionDays:
+          type: integer
+        consentTimestamp:
+          type: string
+          nullable: true
+
+    Model:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        version:
+          type: string
+        provider:
+          type: string
+        localPath:
+          type: string
+          nullable: true
+openapi: 3.0.3
+info:
+  title: nanoAI Import/Export and Settings API (spec stubs)
+  version: 0.1.0
+paths:
+  /settings/export:
+    post:
+      summary: Export user settings and personas
+      requestBody:
+        required: false
+      responses:
+        '200':
+          description: JSON backup created
+  /settings/import:
+    post:
+      summary: Import user settings and personas
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                personas:
+                  type: array
+                apiProviders:
+                  type: array
+                settings:
+                  type: object
+      responses:
+        '200':
+          description: Import accepted
+        '400':
+          description: Invalid backup file
+  /settings/disclaimer/acknowledge:
+    post:
+      summary: Record that user acknowledged disclaimer
+      requestBody:
+        required: false
+      responses:
+        '200':
+          description: Acknowledgement recorded

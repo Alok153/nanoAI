@@ -31,7 +31,7 @@
 - Phase 3-4: Implementation execution (manual or via tools)
 
 ## Summary
-Deliver an offline-first Android chat assistant with Compose UI, sidebar history, and persona toggles. The MVP runs small LLMs locally via MediaPipe Generative (LiteRT), integrates OpenAI/Gemini and custom endpoints for cloud fallback, and ships a model library with download/pause controls. Research establishes a runtime-agnostic abstraction so TensorFlow Lite, MLC LLM, and ONNX Runtime Mobile can be added iteratively.
+Deliver a polished, offline-first Android multimodal AI assistant with comprehensive UI/UX, robust code quality, and thorough test coverage. The application provides offline chat with small LLMs via MediaPipe Generative (LiteRT), integrates OpenAI/Gemini and custom endpoints for cloud fallback, includes a model library with download/pause controls, supports multiple personas, and offers a first-launch disclaimer with data import/export capabilities. The implementation follows clean architecture with Kotlin-first principles, Material 3 design, automated quality gates, and meets coverage targets (ViewModel ≥75%, UI ≥65%, Data ≥70%).
 
 ## Technical Context
 **Language/Version**: Kotlin 1.9.x (JDK 11 baseline)  
@@ -69,26 +69,31 @@ specs/[###-feature]/
 
 ### Source Code (repository root)
 ```
-android/
-└── app/
-      ├── build.gradle.kts
-      └── src/
-            ├── main/
-            │   ├── AndroidManifest.xml
-            │   ├── java/com/vjaykrsna/nanoai/
-            │   │   ├── core/
-            │   │   │   ├── data/
-            │   │   │   ├── domain/
-            │   │   │   └── ui/
-            │   │   ├── feature/chat/
-            │   │   ├── feature/library/
-            │   │   └── feature/settings/
-            │   └── res/
-            ├── androidTest/java/com/vjaykrsna/nanoai/
-            └── test/java/com/vjaykrsna/nanoai/
+app/
+├── build.gradle.kts
+├── proguard-rules.pro
+├── schemas/                          # Room database schemas
+└── src/
+    ├── main/
+    │   ├── AndroidManifest.xml
+    │   ├── assets/                   # Model metadata, coverage dashboard
+    │   ├── baseline-prof.txt         # Performance baseline profile
+    │   ├── java/com/vjaykrsna/nanoai/
+    │   │   ├── core/                 # Shared utilities and base classes
+    │   │   │   ├── data/             # Database, preferences, network
+    │   │   │   ├── domain/           # Use cases and business logic
+    │   │   │   └── ui/               # Reusable Compose components
+    │   │   ├── feature/              # Feature modules
+    │   │   │   ├── chat/             # Chat interface and logic
+    │   │   │   ├── library/          # Model management
+    │   │   │   └── settings/         # Configuration and preferences
+    │   │   └── security/             # Security utilities
+    │   └── res/                      # Android resources
+    ├── androidTest/java/com/vjaykrsna/nanoai/  # Instrumentation tests
+    └── test/java/com/vjaykrsna/nanoai/         # JVM unit tests
 ```
 
-**Structure Decision**: Single Android app module today. We layer packages under `com.vjaykrsna.nanoai` for `core` shared utilities and Compose UI, with feature packages (`feature.chat`, `feature.library`, `feature.settings`). Future splits into dedicated Gradle modules (`core`, `feature-chat`, `feature-library`) will pivot from this baseline without changing public APIs.
+**Structure Decision**: Single Android app module with clean architecture. Packages organized under `com.vjaykrsna.nanoai` with `core` for shared utilities and `feature` packages for domain-specific logic. Current structure supports the foundation implementation while enabling future modularization.
 
 ## Phase 0: Outline & Research
 1. **Extract unknowns from Technical Context** above:
@@ -170,38 +175,18 @@ android/
 
 **IMPORTANT**: This phase is executed by the /tasks command, NOT by /plan
 
-## Phase 3+: Future Implementation
-*These phases are beyond the scope of the /plan command*
+## Quality Gates & Standards
+*See branches 002-005 for detailed requirements and implementation*
 
-**Phase 3**: Task execution (/tasks command creates tasks.md)  
-**Phase 4**: Implementation (execute tasks.md following constitutional principles)  
-**Phase 5**: Validation (run tests, execute quickstart.md, performance validation)
+- **002-disclaimer-and-fixes**: CI gates, security, privacy compliance
+- **003-UI-UX**: Material 3 design system, accessibility, responsive layouts
+- **004-fixes-and-inconsistencies**: Code quality, error handling, runtime integrity
+- **005-improve-test-coverage**: Coverage targets (ViewModel ≥75%, UI ≥65%, Data ≥70%)
 
-## Complexity Tracking
-*Fill ONLY if Constitution Check has violations that must be justified*
+**Aggregate CI Command**: `./gradlew ktlintFormat detekt lintDebug :app:testDebugUnitTest verifyCoverageThresholds`
 
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
-
-
-## Progress Tracking
-*This checklist is updated during execution flow*
-
-**Phase Status**:
-- [x] Phase 0: Research complete (/plan command)
-- [x] Phase 1: Design complete (/plan command)
-- [x] Phase 2: Task planning complete (/plan command - describe approach only)
-- [ ] Phase 3: Tasks generated (/tasks command)
-- [ ] Phase 4: Implementation complete
-- [ ] Phase 5: Validation passed
-
-**Gate Status**:
-- [x] Initial Constitution Check: PASS
-- [x] Post-Design Constitution Check: PASS
-- [x] All NEEDS CLARIFICATION resolved
-- [ ] Complexity deviations documented
+## Implementation Status
+*See `tasks.md` for complete task breakdown and current progress*
 
 ---
 *Based on Constitution v1.0.0 - See `.specify/memory/constitution.md`*
