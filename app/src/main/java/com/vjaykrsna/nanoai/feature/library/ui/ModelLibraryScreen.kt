@@ -30,10 +30,10 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.vjaykrsna.nanoai.feature.library.presentation.LibraryError
-import com.vjaykrsna.nanoai.feature.library.presentation.LibraryUiEvent
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryTab
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryViewModel
+import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryError
+import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryUiEvent
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.LOADING_INDICATOR_TAG
 import kotlinx.coroutines.flow.collectLatest
 
@@ -119,7 +119,6 @@ fun ModelLibraryScreen(
         selectedLocalLibrary = filters.localLibrary,
         huggingFaceLibraryOptions = huggingFaceLibraryOptions,
         selectedHuggingFaceLibrary = filters.huggingFaceLibrary,
-        hasActiveFilters = filters.hasActiveFilters,
         activeFilterCount = filters.activeFilterCount,
         onSearchChange = viewModel::updateSearchQuery,
         onPipelineSelect = viewModel::setPipeline,
@@ -127,7 +126,6 @@ fun ModelLibraryScreen(
         onSelectHuggingFaceSort = viewModel::setHuggingFaceSort,
         onSelectLocalLibrary = viewModel::selectLocalLibrary,
         onSelectHuggingFaceLibrary = viewModel::setHuggingFaceLibrary,
-        onClearFilters = viewModel::clearFilters,
       )
 
       ModelLibraryTabs(

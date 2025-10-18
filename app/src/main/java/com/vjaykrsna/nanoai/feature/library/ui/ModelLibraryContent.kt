@@ -43,9 +43,9 @@ import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceModelSummary
 import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
-import com.vjaykrsna.nanoai.feature.library.presentation.LibraryDownloadItem
-import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibrarySections
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryTab
+import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryDownloadItem
+import com.vjaykrsna.nanoai.feature.library.presentation.model.ModelLibrarySections
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.DOWNLOAD_QUEUE_HEADER_TAG
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.DOWNLOAD_QUEUE_TAG
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.LIST_TAG

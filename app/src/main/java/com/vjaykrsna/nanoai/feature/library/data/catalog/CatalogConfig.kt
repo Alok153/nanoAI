@@ -33,6 +33,15 @@ internal data class ModelConfig(
   val signature: String? = null,
   @SerialName("created_at") val createdAt: String? = null,
   @SerialName("updated_at") val updatedAt: String? = null,
+  // Enhanced metadata for consistency with HuggingFace models
+  val author: String? = null,
+  val license: String? = null,
+  val languages: List<String> = emptyList(),
+  @SerialName("base_model") val baseModel: String? = null,
+  val architectures: List<String> = emptyList(),
+  @SerialName("model_type") val modelType: String? = null,
+  val summary: String? = null,
+  val description: String? = null,
 ) {
   fun toModelPackage(clock: Clock): ModelPackage {
     val provider =
@@ -58,6 +67,15 @@ internal data class ModelConfig(
       signature = signature,
       createdAt = createdAt?.let(::parseInstant) ?: now,
       updatedAt = updatedAt?.let(::parseInstant) ?: now,
+      // Enhanced metadata for consistency with HuggingFace models
+      author = author,
+      license = license,
+      languages = languages,
+      baseModel = baseModel,
+      architectures = architectures,
+      modelType = modelType,
+      summary = summary,
+      description = description,
     )
   }
 

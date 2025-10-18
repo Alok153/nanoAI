@@ -27,6 +27,8 @@ import com.vjaykrsna.nanoai.feature.image.data.db.GeneratedImageDao
 import com.vjaykrsna.nanoai.feature.image.data.db.GeneratedImageEntity
 import com.vjaykrsna.nanoai.feature.library.data.daos.DownloadTaskDao
 import com.vjaykrsna.nanoai.feature.library.data.entities.DownloadTaskEntity
+import com.vjaykrsna.nanoai.feature.library.data.huggingface.dao.HuggingFaceModelCacheDao
+import com.vjaykrsna.nanoai.feature.library.data.huggingface.entities.HuggingFaceModelCacheEntity
 import com.vjaykrsna.nanoai.model.catalog.DownloadManifestDao
 import com.vjaykrsna.nanoai.model.catalog.DownloadManifestEntity
 import com.vjaykrsna.nanoai.model.catalog.ModelPackageEntity
@@ -67,8 +69,9 @@ import com.vjaykrsna.nanoai.model.catalog.ModelPackageWriteDao
       CodeQualityMetricEntity::class,
       DownloadManifestEntity::class,
       GeneratedImageEntity::class,
+      HuggingFaceModelCacheEntity::class,
     ],
-  version = 7,
+  version = 8,
   exportSchema = true,
 )
 @TypeConverters(
@@ -105,6 +108,8 @@ abstract class NanoAIDatabase : RoomDatabase() {
   abstract fun downloadManifestDao(): DownloadManifestDao
 
   abstract fun downloadTaskDao(): DownloadTaskDao
+
+  abstract fun huggingFaceModelCacheDao(): HuggingFaceModelCacheDao
 
   // UI/UX feature DAOs
   abstract fun userProfileDao(): UserProfileDao

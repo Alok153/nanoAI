@@ -12,7 +12,13 @@
       "capabilities": ["text-generation"],
       "manifest_url": "hf://unsloth/gemma-3-270m-it?artifact=model.safetensors&revision=main",
       "created_at": "2025-10-16T00:00:00Z",
-      "updated_at": "2025-10-16T00:00:00Z"
+      "updated_at": "2025-10-16T00:00:00Z",
+      "author": "Google",
+      "license": "apache-2.0",
+      "languages": ["en"],
+      "architectures": ["Transformer"],
+      "model_type": "gemma",
+      "summary": "Lightweight Gemma 3 model optimized for instruction tuning"
     },
     {
       "id": "gemma-3-1b",
@@ -25,7 +31,13 @@
       "capabilities": ["text-generation"],
       "manifest_url": "hf://unsloth/gemma-3-1b-it?artifact=model.safetensors&revision=main",
       "created_at": "2025-10-16T00:00:00Z",
-      "updated_at": "2025-10-16T00:00:00Z"
+      "updated_at": "2025-10-16T00:00:00Z",
+      "author": "Google",
+      "license": "apache-2.0",
+      "languages": ["en"],
+      "architectures": ["Transformer"],
+      "model_type": "gemma",
+      "summary": "Efficient Gemma 3 model with instruction tuning capabilities"
     },
     {
       "id": "gemma-3n-e2b",
@@ -38,7 +50,13 @@
       "capabilities": ["image-text-to-text"],
       "manifest_url": "hf://google/gemma-3n-E2B-it-litert-lm",
       "created_at": "2024-09-01T00:00:00Z",
-      "updated_at": "2024-09-01T00:00:00Z"
+      "updated_at": "2024-09-01T00:00:00Z",
+      "author": "Google",
+      "license": "apache-2.0",
+      "languages": ["en"],
+      "architectures": ["Transformer"],
+      "model_type": "gemma",
+      "summary": "Gemma 3 nano vision model for image-text understanding"
     },
     {
       "id": "gemma-3n-e4b",
@@ -51,7 +69,13 @@
       "capabilities": ["image-text-to-text"],
       "manifest_url": "hf://google/gemma-3n-E4B-it-litert-lm",
       "created_at": "2024-09-01T00:00:00Z",
-      "updated_at": "2024-09-01T00:00:00Z"
+      "updated_at": "2024-09-01T00:00:00Z",
+      "author": "Google",
+      "license": "apache-2.0",
+      "languages": ["en"],
+      "architectures": ["Transformer"],
+      "model_type": "gemma",
+      "summary": "Enhanced Gemma 3 nano vision model for advanced image-text tasks"
     }
   ]
 }

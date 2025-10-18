@@ -43,12 +43,12 @@ fun jacocoClassDirectories(variant: String) =
   )
 
 val isCiEnvironment = System.getenv("CI")?.equals("true", ignoreCase = true) == true
-val useManagedDeviceProperty =
-  (project.findProperty("nanoai.useManagedDevice") as? String)?.toBoolean() ?: false
+val usePhysicalDeviceProperty =
+  (project.findProperty("nanoai.usePhysicalDevice") as? String)?.toBoolean() ?: false
 val skipInstrumentation =
   (project.findProperty("nanoai.skipInstrumentation") as? String)?.toBoolean() ?: false
 val useManagedDeviceForInstrumentation =
-  !skipInstrumentation && (isCiEnvironment || useManagedDeviceProperty)
+  !skipInstrumentation && (isCiEnvironment || !usePhysicalDeviceProperty)
 // Pixel 6 API 34 managed virtual device ships an x86_64-only system image starting in
 // Android 14. Lock the ABI so CI and local runs share the same emulator bits.
 val managedDeviceAbi = "x86_64"
@@ -160,7 +160,6 @@ android {
       pixel6.apiLevel = 34
       pixel6.systemImageSource = "aosp-atd"
       pixel6.testedAbi = managedDeviceAbi
-
       groups.create("ci") { targetDevices.add(pixel6) }
     }
   }

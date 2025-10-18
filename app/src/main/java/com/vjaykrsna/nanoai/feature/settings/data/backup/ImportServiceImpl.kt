@@ -230,7 +230,7 @@ constructor(
           while (zip.read(buffer).also { read = it } != -1) {
             output.write(buffer, 0, read)
           }
-          return output.toString(Charsets.UTF_8)
+          return String(output.toByteArray(), Charsets.UTF_8)
         }
     }
     throw ImportException.InvalidFormat("ZIP archive does not contain a JSON file")

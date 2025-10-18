@@ -12,8 +12,24 @@ data class HuggingFaceModelSummary(
   val tags: List<String>,
   val likes: Long,
   val downloads: Long,
+  val license: String? = null,
+  val languages: List<String> = emptyList(),
+  val baseModel: String? = null,
+  val datasets: List<String> = emptyList(),
+  val architectures: List<String> = emptyList(),
+  val modelType: String? = null,
+  val baseModelRelations: List<String> = emptyList(),
+  val hasGatedAccess: Boolean = false,
+  val isDisabled: Boolean = false,
+  val totalSizeBytes: Long? = null,
+  val summary: String? = null,
+  val description: String? = null,
   val trendingScore: Long?,
   val createdAt: Instant?,
   val lastModified: Instant?,
   val isPrivate: Boolean,
+  val sizeBucket: HuggingFaceSizeBucket? =
+    totalSizeBytes?.let { bytes ->
+      HuggingFaceSizeBucket.values().firstOrNull { bucket -> bytes.belongsTo(bucket) }
+    },
 )

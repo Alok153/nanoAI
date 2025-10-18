@@ -18,7 +18,7 @@ Use this guide when you need to run nanoAI’s automated checks, add new tests, 
 | Suite | Path | Default Command | Notes |
 | --- | --- | --- | --- |
 | JVM unit + contract | `app/src/test/java` | `./gradlew testDebugUnitTest` | Supports `--tests "pkg.ClassTest"` selectors. Generates HTML in `app/build/reports/tests/testDebugUnitTest/` and JaCoCo `.exec` files. |
-| Instrumentation (Compose UI + device flows) | `app/src/androidTest/java` | `./gradlew ciManagedDeviceDebugAndroidTest` | Boots the CI-managed Pixel 6 ATD image. For local hardware use `connectedDebugAndroidTest` and pass `-Pnanoai.useManagedDevice=false`. |
+| Instrumentation (Compose UI + device flows) | `app/src/androidTest/java` | `./gradlew ciManagedDeviceDebugAndroidTest` | Boots the CI-managed Pixel 6 ATD image. For physical device testing pass `-Pnanoai.usePhysicalDevice=true`. |
 | Macrobenchmark | `macrobenchmark/src/main` | `./gradlew :macrobenchmark:connectedCheck` | Runs only when a device/emulator is attached. CI gate is optional but results are published for performance budgets. |
 | Coverage tooling | `scripts/coverage` | `./gradlew jacocoFullReport` | Merges JVM + instrumentation coverage, produces HTML + XML under `app/build/reports/jacoco/full/`. |
 
@@ -64,7 +64,7 @@ For focused development and faster feedback, run tests for specific layers using
    ```bash
    ./gradlew jacocoFullReport
    ```
-   - Boots the managed device when `-Pnanoai.useManagedDevice=true` (default in CI).
+   - Uses emulator by default locally; pass `-Pnanoai.usePhysicalDevice=true` for physical device testing.
    - Pass `-Pnanoai.skipInstrumentation=true` when you only need JVM coverage locally (CI must keep instrumentation enabled).
 2. **Enforce thresholds**
    ```bash
@@ -101,7 +101,7 @@ For focused development and faster feedback, run tests for specific layers using
 6. Re-run `jacocoFullReport` + `verifyCoverageThresholds` before committing to catch regressions locally.
 
 ## 6. Troubleshooting Cheat Sheet
-- **Managed device not available**: Disable it with `-Pnanoai.useManagedDevice=false` and run `connectedDebugAndroidTest` against a local emulator or device.
+- **Physical device required**: Pass `-Pnanoai.usePhysicalDevice=true` to run tests on a physical device instead of the default emulator.
 - **Instrumentation filtering**: Use runner args (`-Pandroid.testInstrumentationRunnerArguments.class="*Test"`). The standard `--tests` flag is ignored for device tasks.
 - **Offline scenario flakes**: After toggling radios, clear state with `adb shell pm clear com.vjaykrsna.nanoai` and rerun with `TestEnvironmentRule` enabled.
 - **Coverage gaps**: Open `app/build/reports/jacoco/full/index.html`, filter by package, then cross-check `app/build/coverage/summary.md` to see which layer failed.

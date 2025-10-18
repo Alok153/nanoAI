@@ -29,6 +29,15 @@ data class ModelPackage(
   val signature: String? = null,
   val createdAt: Instant,
   val updatedAt: Instant,
+  // Enhanced metadata for consistency with HuggingFace models
+  val author: String? = null,
+  val license: String? = null,
+  val languages: List<String> = emptyList(),
+  val baseModel: String? = null,
+  val architectures: List<String> = emptyList(),
+  val modelType: String? = null,
+  val summary: String? = null,
+  val description: String? = null,
 )
 
 /** Extension function to convert entity to domain model. */

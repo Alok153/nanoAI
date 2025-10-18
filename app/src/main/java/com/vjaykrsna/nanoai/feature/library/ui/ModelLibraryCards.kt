@@ -108,12 +108,56 @@ internal fun ModelManagementCard(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
           )
-          Text(
-            text = model.providerType.displayName(),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-          )
+          model.author
+            ?.takeIf { it.isNotBlank() }
+            ?.let { author ->
+              Text(
+                text = author,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+              )
+            }
+            ?: Text(
+              text = model.providerType.displayName(),
+              style = MaterialTheme.typography.bodySmall,
+              color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
           CapabilityRow(capabilities = model.capabilities)
+
+          // Enhanced metadata row for consistency with HuggingFace models
+          val allTags = buildList {
+            model.license?.takeIf { it.isNotBlank() }?.let { add("License: $it") }
+            if (model.architectures.isNotEmpty()) {
+              add("Arch: ${model.architectures.joinToString(", ")}")
+            }
+            model.modelType?.takeIf { it.isNotBlank() }?.let { add("Type: $it") }
+            if (model.languages.isNotEmpty()) {
+              add("Lang: ${model.languages.joinToString(", ")}")
+            }
+          }
+
+          if (allTags.isNotEmpty()) {
+            Text(
+              text = allTags.joinToString(" • "),
+              style = MaterialTheme.typography.bodySmall,
+              color = MaterialTheme.colorScheme.onSurfaceVariant,
+              maxLines = 1,
+              overflow = TextOverflow.Ellipsis
+            )
+          }
+
+          // Summary/description when available
+          model.summary
+            ?.takeIf { it.isNotBlank() }
+            ?.let { summary ->
+              Text(
+                text = summary,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+              )
+            }
         }
         StatusBadge(state = model.installState)
       }
@@ -123,17 +167,12 @@ internal fun ModelManagementCard(
         verticalArrangement = Arrangement.spacedBy(4.dp)
       ) {
         Text(
-          text = "Version ${model.version}",
-          style = MaterialTheme.typography.bodySmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
           text = formatSize(model.sizeBytes),
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
-          text = "Updated ${formatUpdated(model.updatedAt)}",
+          text = formatUpdated(model.updatedAt),
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -213,22 +252,12 @@ internal fun HuggingFaceModelCard(model: HuggingFaceModelSummary) {
           }
         val pipelineTag = model.pipelineTag?.takeIf { it.isNotBlank() }
         val libraryName = model.libraryName?.takeIf { it.isNotBlank() }
-        if (pipelineTag != null || libraryName != null) {
-          val descriptorScroll = rememberScrollState()
-          Row(
-            modifier = Modifier.horizontalScroll(descriptorScroll),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-          ) {
-            pipelineTag?.let { pipeline ->
-              AssistChip(onClick = {}, enabled = false, label = { Text(pipeline) })
-            }
-            libraryName?.let { library ->
-              AssistChip(onClick = {}, enabled = false, label = { Text(library) })
-            }
-          }
+        val allTags = buildList {
+          pipelineTag?.let { add(it) }
+          libraryName?.let { add(it) }
+          addAll(model.tags)
         }
-        CapabilityRow(capabilities = model.tags)
+        CapabilityRow(capabilities = allTags)
       }
 
       Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -266,14 +295,14 @@ internal fun HuggingFaceModelCard(model: HuggingFaceModelSummary) {
 
       model.lastModified?.let { lastModified ->
         Text(
-          text = "Updated ${formatUpdated(lastModified)}",
+          text = formatUpdated(lastModified),
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
       }
       if (model.createdAt != null && model.lastModified == null) {
         Text(
-          text = "Published ${formatUpdated(model.createdAt)}",
+          text = formatUpdated(model.createdAt),
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -374,6 +403,7 @@ private fun formatCount(value: Long): String {
 private fun sanitizeCapabilitiesForDisplay(raw: Collection<String>): List<String> {
   if (raw.isEmpty()) return emptyList()
   val normalized = raw.map { it.trim() }.filter { it.isNotEmpty() }
-  val hasMultimodal = normalized.any { it.equals("multimodal", ignoreCase = true) }
-  return normalized.filterNot { hasMultimodal && it.equals("text-generation", ignoreCase = true) }
+  val deduplicated = normalized.distinctBy { it.lowercase() }
+  val hasMultimodal = deduplicated.any { it.equals("multimodal", ignoreCase = true) }
+  return deduplicated.filterNot { hasMultimodal && it.equals("text-generation", ignoreCase = true) }
 }

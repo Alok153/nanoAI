@@ -15,7 +15,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibrarySummary
+import com.vjaykrsna.nanoai.feature.library.presentation.model.ModelLibrarySummary
 
 @Composable
 internal fun LibraryHeader(summary: ModelLibrarySummary) {

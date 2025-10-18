@@ -16,7 +16,6 @@ import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -26,7 +25,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,9 +35,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.vjaykrsna.nanoai.feature.library.model.ProviderType
-import com.vjaykrsna.nanoai.feature.library.presentation.HuggingFaceSortOption
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryTab
-import com.vjaykrsna.nanoai.feature.library.presentation.ModelSort
+import com.vjaykrsna.nanoai.feature.library.presentation.model.HuggingFaceSortOption
+import com.vjaykrsna.nanoai.feature.library.presentation.model.ModelSort
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.FILTER_PANEL_TAG
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.FILTER_TOGGLE_TAG
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.SEARCH_FIELD_TAG
@@ -57,7 +55,6 @@ internal fun ModelLibraryToolbar(
   selectedLocalLibrary: ProviderType?,
   huggingFaceLibraryOptions: List<String>,
   selectedHuggingFaceLibrary: String?,
-  hasActiveFilters: Boolean,
   activeFilterCount: Int,
   onSearchChange: (String) -> Unit,
   onPipelineSelect: (String?) -> Unit,
@@ -65,7 +62,6 @@ internal fun ModelLibraryToolbar(
   onSelectHuggingFaceSort: (HuggingFaceSortOption) -> Unit,
   onSelectLocalLibrary: (ProviderType?) -> Unit,
   onSelectHuggingFaceLibrary: (String?) -> Unit,
-  onClearFilters: () -> Unit,
 ) {
   var filtersExpanded by rememberSaveable { mutableStateOf(false) }
   val hasFilterPanel =
@@ -140,7 +136,7 @@ internal fun ModelLibraryToolbar(
         }
       }
 
-      AnimatedVisibility(visible = hasFilterPanel && (filtersExpanded || hasActiveFilters)) {
+      AnimatedVisibility(visible = hasFilterPanel && filtersExpanded) {
         Surface(
           modifier = Modifier.fillMaxWidth().testTag(FILTER_PANEL_TAG),
           shape = MaterialTheme.shapes.large,
@@ -183,7 +179,6 @@ internal fun ModelLibraryToolbar(
             }
 
             if (pipelineOptions.isNotEmpty()) {
-              HorizontalDivider()
               FilterSection(title = "Pipeline") {
                 val pipelineScroll = rememberScrollState()
                 Row(
@@ -215,7 +210,6 @@ internal fun ModelLibraryToolbar(
               tab == ModelLibraryTab.HUGGING_FACE && huggingFaceLibraryOptions.isNotEmpty()
 
             if (showLocalLibrary || showHuggingFaceLibrary) {
-              HorizontalDivider()
               FilterSection(title = "Library") {
                 val libraryScroll = rememberScrollState()
                 Row(
@@ -255,16 +249,6 @@ internal fun ModelLibraryToolbar(
                     }
                   }
                 }
-              }
-            }
-
-            if (hasActiveFilters) {
-              HorizontalDivider()
-              Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
-              ) {
-                TextButton(onClick = onClearFilters) { Text("Clear filters") }
               }
             }
           }

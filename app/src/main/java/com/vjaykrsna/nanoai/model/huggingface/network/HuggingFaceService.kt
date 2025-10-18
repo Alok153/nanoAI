@@ -46,6 +46,7 @@ interface HuggingFaceService {
     @Query("sort") sort: String? = null,
     @Query("direction") direction: Int? = null,
     @Query("limit") limit: Int? = null,
+    @Query("skip") skip: Int? = null,
     @Query("search") search: String? = null,
     @Query("pipeline_tag") pipelineTag: String? = null,
     @Query("library") library: String? = null,

@@ -8,6 +8,10 @@ import com.vjaykrsna.nanoai.feature.library.domain.ModelDownloadsAndExportUseCas
 import com.vjaykrsna.nanoai.feature.library.domain.RefreshModelCatalogUseCase
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
 import com.vjaykrsna.nanoai.feature.library.model.ProviderType
+import com.vjaykrsna.nanoai.feature.library.presentation.model.HuggingFaceFilterState
+import com.vjaykrsna.nanoai.feature.library.presentation.model.HuggingFaceSortOption
+import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryError
+import com.vjaykrsna.nanoai.feature.library.presentation.model.ModelSort
 import com.vjaykrsna.nanoai.testing.DomainTestBuilders
 import com.vjaykrsna.nanoai.testing.FakeHuggingFaceCatalogRepository
 import com.vjaykrsna.nanoai.testing.FakeModelCatalogRepository
@@ -45,16 +49,18 @@ class ModelLibraryViewModelTest {
     downloadsUseCase = spyk(FakeModelDownloadsAndExportUseCase())
     refreshUseCase = mockk(relaxed = true)
     huggingFaceCatalogRepository = FakeHuggingFaceCatalogRepository()
+    val huggingFaceLibraryViewModel = HuggingFaceLibraryViewModel(huggingFaceCatalogRepository)
+    val downloadManager = DownloadManager(downloadsUseCase)
 
     // Setup default behaviors
     coEvery { refreshUseCase.invoke() } returns Result.success(Unit)
 
     viewModel =
       ModelLibraryViewModel(
-        downloadsUseCase,
         modelCatalogRepository,
         refreshUseCase,
-        huggingFaceCatalogRepository,
+        huggingFaceLibraryViewModel,
+        downloadManager,
       )
   }
 

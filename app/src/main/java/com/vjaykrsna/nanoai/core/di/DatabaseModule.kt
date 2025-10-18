@@ -20,6 +20,7 @@ import com.vjaykrsna.nanoai.feature.library.data.daos.DownloadTaskDao
 import com.vjaykrsna.nanoai.feature.library.data.daos.ModelPackageReadDao
 import com.vjaykrsna.nanoai.feature.library.data.daos.ModelPackageRelationsDao
 import com.vjaykrsna.nanoai.feature.library.data.daos.ModelPackageWriteDao
+import com.vjaykrsna.nanoai.feature.library.data.huggingface.dao.HuggingFaceModelCacheDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -86,6 +87,11 @@ object DatabaseModule {
   @Provides
   @Singleton
   fun provideDownloadTaskDao(database: NanoAIDatabase): DownloadTaskDao = database.downloadTaskDao()
+
+  @Provides
+  @Singleton
+  fun provideHuggingFaceModelCacheDao(database: NanoAIDatabase): HuggingFaceModelCacheDao =
+    database.huggingFaceModelCacheDao()
 
   @Provides
   @Singleton
