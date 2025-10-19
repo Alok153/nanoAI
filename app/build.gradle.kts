@@ -51,7 +51,6 @@ val useManagedDeviceForInstrumentation =
   !skipInstrumentation && (isCiEnvironment || !usePhysicalDeviceProperty)
 // Pixel 6 API 34 managed virtual device ships an x86_64-only system image starting in
 // Android 14. Lock the ABI so CI and local runs share the same emulator bits.
-val managedDeviceAbi = "x86_64"
 val managedDeviceName = "pixel6Api34"
 val managedDeviceTaskName = "${managedDeviceName}DebugAndroidTest"
 
@@ -159,7 +158,6 @@ android {
       pixel6.device = "Pixel 6"
       pixel6.apiLevel = 34
       pixel6.systemImageSource = "aosp-atd"
-      pixel6.testedAbi = managedDeviceAbi
       groups.create("ci") { targetDevices.add(pixel6) }
     }
   }
@@ -236,14 +234,13 @@ tasks.register<JacocoReport>("jacocoFullReport") {
 tasks.register("ciManagedDeviceDebugAndroidTest") {
   group = "verification"
   description =
-    "Runs instrumentation tests on the CI managed Pixel 6 API 34 (${managedDeviceAbi}) virtual device."
+    "Runs instrumentation tests on the CI managed Pixel 6 API 34 virtual device."
 
   dependsOn(tasks.named(managedDeviceTaskName))
   onlyIf { !skipInstrumentation }
-  inputs.property("managedDeviceAbi", managedDeviceAbi)
   doFirst {
     logger.lifecycle(
-      "Executing managed-device instrumentation on $managedDeviceName ($managedDeviceAbi ABI)",
+      "Executing managed-device instrumentation on $managedDeviceName",
     )
   }
 }
