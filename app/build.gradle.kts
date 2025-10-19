@@ -233,8 +233,7 @@ tasks.register<JacocoReport>("jacocoFullReport") {
 
 tasks.register("ciManagedDeviceDebugAndroidTest") {
   group = "verification"
-  description =
-    "Runs instrumentation tests on the CI managed Pixel 6 API 34 virtual device."
+  description = "Runs instrumentation tests on the CI managed Pixel 6 API 34 virtual device."
 
   dependsOn(tasks.named(managedDeviceTaskName))
   onlyIf { !skipInstrumentation }
