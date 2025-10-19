@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.progressBarRangeInfo
@@ -28,6 +29,7 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.vjaykrsna.nanoai.R
 import com.vjaykrsna.nanoai.feature.uiux.state.JobStatus
 import com.vjaykrsna.nanoai.feature.uiux.state.JobType
 import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
@@ -77,14 +79,14 @@ fun ProgressCenterPanel(
       verticalArrangement = Arrangement.spacedBy(PROGRESS_SECTION_SPACING),
     ) {
       Text(
-        text = "Progress center",
+        text = stringResource(R.string.progress_center_panel_title),
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.SemiBold,
       )
 
       if (jobs.isEmpty()) {
         Text(
-          text = "No queued tasks",
+          text = stringResource(R.string.progress_center_panel_no_tasks),
           style = MaterialTheme.typography.bodyMedium,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
           modifier =
@@ -206,6 +208,27 @@ private fun ProgressJobItem(
         val showRetry = job.status == JobStatus.FAILED
         val showClear = job.status == JobStatus.COMPLETED || job.status == JobStatus.FAILED
 
+        // Resolve strings outside semantics blocks
+        val retryContentDescription =
+          stringResource(
+            R.string.progress_center_panel_retry_content_description,
+            job.type.label.lowercase()
+          )
+        val retryStateDescription =
+          if (job.canRetryNow) stringResource(R.string.progress_center_panel_retry_available)
+          else stringResource(R.string.progress_center_panel_retry_unavailable)
+        val clearContentDescription =
+          stringResource(
+            R.string.progress_center_panel_clear_content_description,
+            job.type.label.lowercase()
+          )
+        val clearStateDescription =
+          if (job.status == JobStatus.COMPLETED) {
+            stringResource(R.string.progress_center_panel_clear_completed)
+          } else {
+            stringResource(R.string.progress_center_panel_clear_failed)
+          }
+
         Row(
           horizontalArrangement = Arrangement.spacedBy(PROGRESS_ACTION_SPACING),
           verticalAlignment = Alignment.CenterVertically,
@@ -216,11 +239,11 @@ private fun ProgressJobItem(
               enabled = job.canRetryNow,
               modifier =
                 Modifier.testTag("progress_retry_button_${job.jobId}").semantics {
-                  contentDescription = "Retry ${job.type.label.lowercase()} job"
-                  stateDescription = if (job.canRetryNow) "Retry available" else "Retry unavailable"
+                  contentDescription = retryContentDescription
+                  stateDescription = retryStateDescription
                 },
             ) {
-              Text("Retry")
+              Text(stringResource(R.string.progress_center_panel_retry))
             }
           }
 
@@ -229,16 +252,11 @@ private fun ProgressJobItem(
               onClick = { onDismiss(job) },
               modifier =
                 Modifier.testTag("progress_clear_button").semantics {
-                  contentDescription = "Clear ${job.type.label.lowercase()} job"
-                  stateDescription =
-                    if (job.status == JobStatus.COMPLETED) {
-                      "Job completed; clear from queue"
-                    } else {
-                      "Job failed; clear from queue"
-                    }
+                  contentDescription = clearContentDescription
+                  stateDescription = clearStateDescription
                 },
             ) {
-              Text("Clear")
+              Text(stringResource(R.string.progress_center_panel_clear))
             }
           }
         }
@@ -246,7 +264,7 @@ private fun ProgressJobItem(
 
       HorizontalDivider()
       Text(
-        text = "Queued at ${job.queuedAt}",
+        text = stringResource(R.string.progress_center_panel_queued_at, job.queuedAt),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )

@@ -66,12 +66,14 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import com.vjaykrsna.nanoai.R
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellUiState
@@ -389,7 +391,10 @@ private fun DrawerSheetContent(
           verticalAlignment = Alignment.CenterVertically,
           horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-          Text("Search", style = MaterialTheme.typography.titleSmall)
+          Text(
+            stringResource(R.string.nano_shell_search),
+            style = MaterialTheme.typography.titleSmall
+          )
           Text(
             "Ctrl+K",
             style = MaterialTheme.typography.bodySmall,
@@ -688,7 +693,7 @@ private fun ShellTopAppBar(
           onDismissRequest = { expanded = false },
         ) {
           DropdownMenuItem(
-            text = { Text("Select model") },
+            text = { Text(stringResource(R.string.nano_shell_select_model)) },
             onClick = {
               onToggleRightDrawer(RightPanel.MODEL_SELECTOR)
               expanded = false

@@ -134,7 +134,9 @@ fun ChatScreen(
     SnackbarHost(
       hostState = snackbarHostState,
       modifier =
-        Modifier.align(Alignment.BottomCenter).padding(horizontal = 16.dp, vertical = 24.dp),
+        Modifier.align(Alignment.BottomCenter)
+          .padding(horizontal = 16.dp, vertical = 24.dp)
+          .semantics { contentDescription = "Chat notifications and messages" },
     )
   }
 }
@@ -179,7 +181,8 @@ private fun MessagesList(
           contentAlignment = Alignment.Center,
         ) {
           CircularProgressIndicator(
-            modifier = Modifier.size(24.dp).semantics { contentDescription = "Loading response" },
+            modifier =
+              Modifier.size(24.dp).semantics { contentDescription = "AI is generating a response" },
           )
         }
       }
@@ -233,6 +236,7 @@ private fun MessageBubble(message: Message, modifier: Modifier = Modifier) {
           text = timestamp,
           style = MaterialTheme.typography.labelSmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
+          modifier = Modifier.semantics { contentDescription = "Message sent at $timestamp" },
         )
       }
     }

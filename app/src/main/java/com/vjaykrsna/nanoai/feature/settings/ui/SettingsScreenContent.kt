@@ -30,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -62,9 +63,15 @@ internal fun SettingsScreenContent(
 
   Scaffold(
     modifier =
-      modifier.fillMaxSize().semantics {
-        contentDescription = "Settings screen organized by tabs with contextual sections"
-      },
+      modifier
+        .fillMaxSize()
+        .semantics {
+          contentDescription = "Settings screen organized by tabs with contextual sections"
+        }
+        .focusProperties {
+          // Ensure tab navigation starts from the tabs
+          canFocus = false
+        },
     snackbarHost = {
       SnackbarHost(
         hostState = snackbarHostState,
@@ -83,7 +90,7 @@ internal fun SettingsScreenContent(
     },
   ) { innerPadding ->
     Column(
-      modifier = Modifier.fillMaxSize().padding(horizontal = NanoSpacing.lg),
+      modifier = Modifier.fillMaxSize().padding(innerPadding).padding(horizontal = NanoSpacing.lg),
     ) {
       SettingsCategoryTabs(
         categories = categories,
@@ -123,9 +130,12 @@ private fun SettingsCategoryTabs(
   ScrollableTabRow(
     selectedTabIndex = selectedIndex,
     edgePadding = 0.dp,
-    modifier = modifier.fillMaxWidth(),
+    modifier =
+      modifier.fillMaxWidth().semantics {
+        contentDescription = "Settings categories navigation tabs"
+      },
   ) {
-    categories.forEach { category ->
+    categories.forEachIndexed { index, category ->
       val isSelected = category == selectedCategory
       Tab(
         selected = isSelected,

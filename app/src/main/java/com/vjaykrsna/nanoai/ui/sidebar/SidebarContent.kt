@@ -31,6 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.role
@@ -39,6 +40,7 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.vjaykrsna.nanoai.R
 import com.vjaykrsna.nanoai.core.domain.model.ChatThread
 import com.vjaykrsna.nanoai.core.model.InferenceMode
 import com.vjaykrsna.nanoai.feature.uiux.ui.SidebarDrawer
@@ -76,10 +78,14 @@ fun SidebarContent(
   interactions: SidebarInteractions,
   modifier: Modifier = Modifier,
 ) {
+  // String resources
+  val sidebarContentDescription = stringResource(R.string.sidebar_content_description)
+  val pinnedToolsContentDesc = stringResource(R.string.sidebar_pinned_tools_content_description)
+
   Column(
     modifier =
       modifier.fillMaxHeight().testTag("sidebar_drawer_container").semantics {
-        contentDescription = "Conversation navigation drawer"
+        contentDescription = sidebarContentDescription
       },
   ) {
     SidebarDrawer(
@@ -87,8 +93,7 @@ fun SidebarContent(
       activeRoute = state.activeRoute,
       onNavigateSettings = interactions.onNavigateSettings,
       onNavigateHome = interactions.onNavigateHome,
-      modifier =
-        Modifier.fillMaxWidth().semantics { contentDescription = "Pinned tools shortcuts" },
+      modifier = Modifier.fillMaxWidth().semantics { contentDescription = pinnedToolsContentDesc },
     )
 
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
@@ -122,20 +127,24 @@ fun SidebarContent(
 
 @Composable
 private fun SidebarHeader(onNewThread: () -> Unit) {
+  // String resources
+  val conversationsTxt = stringResource(R.string.sidebar_header_conversations)
+  val createNewDesc = stringResource(R.string.sidebar_header_create_new)
+
   Row(
     modifier = Modifier.fillMaxWidth(),
     horizontalArrangement = Arrangement.SpaceBetween,
     verticalAlignment = Alignment.CenterVertically,
   ) {
     Text(
-      text = "Conversations",
+      text = conversationsTxt,
       style = MaterialTheme.typography.titleLarge,
       fontWeight = FontWeight.Bold,
       modifier = Modifier.semantics { heading() },
     )
     IconButton(
       onClick = onNewThread,
-      modifier = Modifier.semantics { contentDescription = "Create new conversation" },
+      modifier = Modifier.semantics { contentDescription = createNewDesc },
     ) {
       Icon(Icons.Default.Add, contentDescription = null)
     }
@@ -148,12 +157,16 @@ private fun SidebarSearchField(
   query: String,
   onQueryChange: (String) -> Unit,
 ) {
+  // String resources
+  val placeholderTxt = stringResource(R.string.sidebar_search_placeholder)
+  val searchContentDesc = stringResource(R.string.sidebar_search_content_description)
+
   TextField(
     value = query,
     onValueChange = onQueryChange,
-    placeholder = { Text("Search conversations...") },
+    placeholder = { Text(placeholderTxt) },
     leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-    modifier = Modifier.fillMaxWidth().semantics { contentDescription = "Search conversations" },
+    modifier = Modifier.fillMaxWidth().semantics { contentDescription = searchContentDesc },
   )
 }
 
@@ -162,20 +175,27 @@ private fun SidebarArchiveToggle(
   showArchived: Boolean,
   onToggleArchive: () -> Unit,
 ) {
+  // String resources
+  val activeText = stringResource(R.string.sidebar_archive_toggle_active)
+  val archivedText = stringResource(R.string.sidebar_archive_toggle_archived)
+  val showActiveText = stringResource(R.string.sidebar_archive_toggle_show_active)
+  val showArchivedText = stringResource(R.string.sidebar_archive_toggle_show_archived)
+  val toggleContentDescription = stringResource(R.string.sidebar_archive_toggle_content_description)
+
   Row(
     modifier = Modifier.fillMaxWidth(),
     horizontalArrangement = Arrangement.SpaceBetween,
     verticalAlignment = Alignment.CenterVertically,
   ) {
     Text(
-      text = if (showArchived) "Archived" else "Active",
+      text = if (showArchived) archivedText else activeText,
       style = MaterialTheme.typography.titleMedium,
     )
     AssistChip(
       onClick = onToggleArchive,
-      label = { Text(if (showArchived) "Show Active" else "Show Archived") },
+      label = { Text(if (showArchived) showActiveText else showArchivedText) },
       leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
-      modifier = Modifier.semantics { contentDescription = "Toggle archived conversations" },
+      modifier = Modifier.semantics { contentDescription = toggleContentDescription },
     )
   }
 }
@@ -186,10 +206,13 @@ private fun SidebarThreadList(
   interactions: SidebarInteractions,
   modifier: Modifier = Modifier,
 ) {
+  // String resources
+  val threadListContentDesc = stringResource(R.string.sidebar_thread_list_content_description)
+
   LazyColumn(
     verticalArrangement = Arrangement.spacedBy(8.dp),
     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 8.dp),
-    modifier = modifier.semantics { contentDescription = "Conversation threads list" },
+    modifier = modifier.semantics { contentDescription = threadListContentDesc },
   ) {
     items(
       items = threads,
@@ -213,15 +236,25 @@ fun InferencePreferenceToggleRow(
   onInferenceModeChange: (InferenceMode) -> Unit,
   modifier: Modifier = Modifier,
 ) {
+  // String resources
+  val inferenceContentDesc =
+    stringResource(R.string.sidebar_inference_preference_content_description)
+  val localStateDesc = stringResource(R.string.sidebar_inference_preference_local_state)
+  val cloudStateDesc = stringResource(R.string.sidebar_inference_preference_cloud_state)
+  val inferenceTitle = stringResource(R.string.sidebar_inference_preference_title)
+  val localDesc = stringResource(R.string.sidebar_inference_preference_local_description)
+  val cloudDesc = stringResource(R.string.sidebar_inference_preference_cloud_description)
+  val toggleDesc = stringResource(R.string.sidebar_inference_preference_toggle_content_description)
+
   Row(
     modifier =
       modifier.semantics {
-        contentDescription = "Inference preference"
+        contentDescription = inferenceContentDesc
         stateDescription =
           if (inferenceMode == InferenceMode.LOCAL_FIRST) {
-            "Prefers on-device models"
+            localStateDesc
           } else {
-            "Prefers cloud inference"
+            cloudStateDesc
           }
       },
     horizontalArrangement = Arrangement.SpaceBetween,
@@ -229,15 +262,15 @@ fun InferencePreferenceToggleRow(
   ) {
     Column(modifier = Modifier.weight(1f)) {
       Text(
-        text = "Inference Preference",
+        text = inferenceTitle,
         style = MaterialTheme.typography.titleMedium,
       )
       Text(
         text =
           if (inferenceMode == InferenceMode.LOCAL_FIRST) {
-            "Prefer on-device models when available"
+            localDesc
           } else {
-            "Prefer cloud inference when online"
+            cloudDesc
           },
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -252,7 +285,7 @@ fun InferencePreferenceToggleRow(
       modifier =
         Modifier.semantics {
           role = androidx.compose.ui.semantics.Role.Switch
-          contentDescription = "Toggle inference preference"
+          contentDescription = toggleDesc
         },
     )
   }
@@ -266,12 +299,21 @@ private fun ThreadItem(
   onDelete: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
+  // String resources
+  val threadUntitledText = stringResource(R.string.sidebar_thread_item_untitled)
+  val threadContentDescFormat = stringResource(R.string.sidebar_thread_item_content_description)
+  val archiveDesc = stringResource(R.string.sidebar_thread_item_archive_content_description)
+  val deleteDesc = stringResource(R.string.sidebar_thread_item_delete_content_description)
+  val archiveIconDesc = stringResource(R.string.sidebar_thread_item_archive_icon)
+  val deleteIconDesc = stringResource(R.string.sidebar_thread_item_delete_icon)
+
   Card(
     modifier =
       modifier.fillMaxWidth().clickable(onClick = onClick).semantics {
         val localDateTime = thread.updatedAt.toLocalDateTime(TimeZone.currentSystemDefault())
         val dateStr = "${localDateTime.monthNumber}/${localDateTime.dayOfMonth}"
-        contentDescription = "Conversation ${thread.title ?: "Untitled Chat"} last updated $dateStr"
+        contentDescription =
+          threadContentDescFormat.format(thread.title ?: threadUntitledText, dateStr)
       },
     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
   ) {
@@ -283,7 +325,7 @@ private fun ThreadItem(
       ) {
         Column(modifier = Modifier.weight(1f)) {
           Text(
-            text = thread.title ?: "Untitled Chat",
+            text = thread.title ?: threadUntitledText,
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Medium,
             maxLines = 2,
@@ -303,15 +345,15 @@ private fun ThreadItem(
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
           IconButton(
             onClick = onArchive,
-            modifier = Modifier.semantics { contentDescription = "Archive conversation" },
+            modifier = Modifier.semantics { contentDescription = archiveDesc },
           ) {
-            Icon(Icons.Default.Delete, contentDescription = "Archive")
+            Icon(Icons.Default.Delete, contentDescription = archiveIconDesc)
           }
           IconButton(
             onClick = onDelete,
-            modifier = Modifier.semantics { contentDescription = "Delete conversation" },
+            modifier = Modifier.semantics { contentDescription = deleteDesc },
           ) {
-            Icon(Icons.Default.Delete, contentDescription = "Delete")
+            Icon(Icons.Default.Delete, contentDescription = deleteIconDesc)
           }
         }
       }

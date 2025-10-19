@@ -9,9 +9,9 @@
 **Setup Goal**: Establish the foundation for UI quality improvements and testing infrastructure.
 
 **Setup Tasks**:
-- [ ] T001 Extract hardcoded UI strings to `app/src/main/res/values/strings.xml` - Create comprehensive string resources for all user-facing text found in UI components
-- [ ] T002 Configure accessibility testing infrastructure in `app/build.gradle.kts` - Add accessibility testing dependencies and configuration
-- [ ] T003 Set up UI testing baselines in `config/` - Create baseline files for accessibility and UI quality checks
+- [X] T001 Extract hardcoded UI strings to `app/src/main/res/values/strings.xml` - Create comprehensive string resources for all user-facing text found in UI components
+- [X] T002 Configure accessibility testing infrastructure in `app/build.gradle.kts` - Add accessibility testing dependencies and configuration
+- [X] T003 Set up UI testing baselines in `config/` - Create baseline files for accessibility and UI quality checks
 
 ## Phase 2: User Story - UI Polish & Quality Assurance
 **Story Goal**: As a user, I want a polished, accessible UI that follows Material Design guidelines and maintains clean architecture principles.
@@ -27,20 +27,20 @@
 **Implementation Tasks**:
 
 ### String Resource Extraction [P]
-- [ ] T004 Extract strings from `app/src/main/java/com/vjaykrsna/nanoai/ui/components/DisclaimerDialog.kt` - Extract "Decline", "Agree", disclaimer points to `strings.xml` with proper naming convention
-- [ ] T005 Extract strings from `app/src/main/java/com/vjaykrsna/nanoai/ui/components/OfflineBanner.kt` - Extract "Retry now" and banner messages to resources
-- [ ] T006 Extract strings from `app/src/main/java/com/vjaykrsna/nanoai/ui/components/PrimaryActionCard.kt` - Extract "Run" text to resources
-- [ ] T007 Extract strings from `app/src/main/java/com/vjaykrsna/nanoai/ui/sidebar/SidebarContent.kt` - Extract "Conversations", "Search conversations...", "Show Active"/"Show Archived" labels
-- [ ] T008 Extract strings from `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/sidebar/SettingsShortcutsPanel.kt` - Extract "Open settings", "Theme", "Density" labels
-- [ ] T009 Extract strings from `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/sidebar/ModelSelectorPanel.kt` - Extract "Manage installed models", "Activate"/"Unavailable offline" states
-- [ ] T010 Extract strings from `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/shell/NanoShellScaffold.kt` - Extract "Search", "Select model" and all UI labels
-- [ ] T011 Extract strings from `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/progress/ProgressCenterPanel.kt` - Extract "Retry", "Clear" and progress messages
+- [X] T004 Extract strings from `app/src/main/java/com/vjaykrsna/nanoai/ui/components/DisclaimerDialog.kt` - Extract "Decline", "Agree", disclaimer points to `strings.xml` with proper naming convention
+- [X] T005 Extract strings from `app/src/main/java/com/vjaykrsna/nanoai/ui/components/OfflineBanner.kt` - Extract "Retry now" and banner messages to resources
+- [X] T006 Extract strings from `app/src/main/java/com/vjaykrsna/nanoai/ui/components/PrimaryActionCard.kt` - Extract "Run" text to resources
+- [X] T007 Extract strings from `app/src/main/java/com/vjaykrsna/nanoai/ui/sidebar/SidebarContent.kt` - Extract "Conversations", "Search conversations...", "Show Active"/"Show Archived" labels
+- [X] T008 Extract strings from `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/sidebar/SettingsShortcutsPanel.kt` - Extract "Open settings", "Theme", "Density" labels
+- [X] T009 Extract strings from `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/sidebar/ModelSelectorPanel.kt` - Extract "Manage installed models", "Activate"/"Unavailable offline" states
+- [X] T010 Extract strings from `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/shell/NanoShellScaffold.kt` - Extract "Search", "Select model" and all UI labels
+- [X] T011 Extract strings from `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/progress/ProgressCenterPanel.kt` - Extract "Retry", "Clear" and progress messages
 
 ### Accessibility Improvements [P]
-- [ ] T012 Audit and fix touch targets in `app/src/main/java/com/vjaykrsna/nanoai/ui/components/` - Ensure all interactive elements meet 48dp minimum using `Modifier.minimumTouchTargetSize()`
-- [ ] T013 Implement proper content descriptions in `app/src/main/java/com/vjaykrsna/nanoai/feature/chat/ui/ChatScreen.kt` - Add descriptive contentDescription for screen readers
-- [ ] T014 Add semantic properties to `app/src/main/java/com/vjaykrsna/nanoai/feature/library/ui/ModelLibraryScreen.kt` - Implement proper heading structure and navigation semantics
-- [ ] T015 Enhance keyboard navigation in `app/src/main/java/com/vjaykrsna/nanoai/feature/settings/ui/SettingsScreen.kt` - Add focus management and keyboard shortcuts
+- [X] T012 Audit and fix touch targets in `app/src/main/java/com/vjaykrsna/nanoai/ui/components/` - Ensure all interactive elements meet 48dp minimum using `Modifier.minimumTouchTargetSize()`
+- [X] T013 Implement proper content descriptions in `app/src/main/java/com/vjaykrsna/nanoai/feature/chat/ui/ChatScreen.kt` - Add descriptive contentDescription for screen readers
+- [X] T014 Add semantic properties to `app/src/main/java/com/vjaykrsna/nanoai/feature/library/ui/ModelLibraryScreen.kt` - Implement proper heading structure and navigation semantics
+- [X] T015 Enhance keyboard navigation in `app/src/main/java/com/vjaykrsna/nanoai/feature/settings/ui/SettingsScreen.kt` - Add focus management and keyboard shortcuts
 - [ ] T016 Validate color contrast ratios in `app/src/main/java/com/vjaykrsna/nanoai/ui/theme/Color.kt` - Test all color combinations against WCAG AA standards (4.5:1 minimum)
 
 ### ViewModel Architecture Refactoring

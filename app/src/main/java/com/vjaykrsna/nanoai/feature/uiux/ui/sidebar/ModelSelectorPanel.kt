@@ -20,10 +20,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.vjaykrsna.nanoai.R
 import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityStatus
 import com.vjaykrsna.nanoai.feature.uiux.state.ModeCard
 import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
@@ -47,7 +49,11 @@ internal fun ModelSelectorPanel(
   ) {
     val fallbackModeName =
       remember(activeMode) { activeMode.name.lowercase().replaceFirstChar { it.uppercase() } }
-    val headerLabel = "Adjust models for ${activeCard?.title ?: fallbackModeName}"
+    val headerLabel =
+      stringResource(
+        R.string.model_selector_panel_adjust_models,
+        activeCard?.title ?: fallbackModeName
+      )
     Text(
       text = headerLabel,
       style = MaterialTheme.typography.bodyMedium,
@@ -57,18 +63,18 @@ internal fun ModelSelectorPanel(
     )
 
     if (supportedCards.isEmpty()) {
-      InfoCard("Model controls are unavailable for this mode.")
+      InfoCard(stringResource(R.string.model_selector_panel_controls_unavailable))
     } else {
       ModeStrip(modeCards = supportedCards, activeMode = activeMode, onModeSelect = onModeSelect)
     }
 
     if (connectivity != ConnectivityStatus.ONLINE) {
-      InfoCard("Offline: cloud-only models will queue until connection resumes.")
+      InfoCard(stringResource(R.string.model_selector_panel_offline_message))
     }
 
     val options = modelOptionsForMode(activeMode)
     if (options.isEmpty()) {
-      InfoCard("Switch to a supported mode to tune models.")
+      InfoCard(stringResource(R.string.model_selector_panel_switch_mode_message))
     } else {
       Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         options.forEach { option ->
@@ -81,11 +87,15 @@ internal fun ModelSelectorPanel(
       }
     }
 
+    val openLibraryContentDescription =
+      stringResource(R.string.model_selector_panel_open_library_content_description)
+
     OutlinedButton(
       onClick = onOpenLibrary,
-      modifier = Modifier.fillMaxWidth().semantics { contentDescription = "Open model library" }
+      modifier =
+        Modifier.fillMaxWidth().semantics { contentDescription = openLibraryContentDescription }
     ) {
-      Text("Manage installed models")
+      Text(stringResource(R.string.model_selector_panel_manage_models))
     }
   }
 }
@@ -160,19 +170,23 @@ private fun ModelOptionCard(
         enabled = isAvailable,
         modifier = Modifier.fillMaxWidth(),
       ) {
-        Text(if (isAvailable) "Activate" else "Unavailable offline")
+        Text(
+          if (isAvailable) stringResource(R.string.model_selector_panel_activate)
+          else stringResource(R.string.model_selector_panel_unavailable_offline)
+        )
       }
     }
   }
 }
 
+@Composable
 private fun optionAvailabilityIcon(
   option: ModelOption
 ): Pair<androidx.compose.ui.graphics.vector.ImageVector, String> =
   if (option.availableOffline) {
-    Icons.Rounded.Download to "On-device capable"
+    Icons.Rounded.Download to stringResource(R.string.model_selector_panel_on_device_capable)
   } else {
-    Icons.Outlined.Cloud to "Requires connectivity"
+    Icons.Outlined.Cloud to stringResource(R.string.model_selector_panel_requires_connectivity)
   }
 
 private fun modelOptionsForMode(modeId: ModeId): List<ModelOption> =

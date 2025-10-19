@@ -1,3 +1,96 @@
 <resources>
     <string name="app_name">NanoAI</string>
+
+    <!-- Disclaimer Dialog -->
+    <string name="disclaimer_title">Review nanoAI disclaimer</string>
+    <string name="disclaimer_subtitle">nanoAI may generate inaccurate or unexpected content. Please review outputs before sharing.</string>
+    <string name="disclaimer_decline">Decline</string>
+    <string name="disclaimer_agree">Agree</string>
+    <string name="disclaimer_decline_content_description">Decline and review later</string>
+    <string name="disclaimer_agree_content_description">Accept privacy terms</string>
+    <string name="disclaimer_scroll_complete">Scroll complete</string>
+    <string name="disclaimer_scroll_incomplete">Scroll to the end to enable Accept</string>
+    <string name="disclaimer_dialog_content_description">nanoAI privacy disclaimer dialog</string>
+    <string name="disclaimer_responsibility_statement">By selecting Agree you accept responsibility for your use of nanoAI.</string>
+
+    <!-- Disclaimer Bullet Points -->
+    <string name="disclaimer_bullet_1">You remain responsible for how generated content is used.</string>
+    <string name="disclaimer_bullet_2">Verify facts before sharing or acting on AI-produced responses.</string>
+    <string name="disclaimer_bullet_3">Generated content may reference third-party material; respect applicable policies.</string>
+    <string name="disclaimer_bullet_4">Contact support if you encounter safety issues or unexpectedly harmful outputs so we can investigate.</string>
+    <string name="disclaimer_bullet_5">Continuing indicates you acknowledge the privacy policy and terms of use.</string>
+
+    <!-- Offline Banner -->
+    <string name="offline_banner_content_description">Offline status banner</string>
+    <string name="offline_banner_message">You\'re offline. Some features are temporarily unavailable.</string>
+    <string name="offline_banner_disabled_actions">Actions will resume when you\'re back online.</string>
+    <string name="offline_banner_queue_status">Queued: %d</string>
+    <string name="offline_banner_retry">Retry now</string>
+
+    <!-- Primary Action Card -->
+    <string name="primary_action_card_run">Run</string>
+    <string name="primary_action_card_content_description">%s action</string>
+
+    <!-- Sidebar Content -->
+    <string name="sidebar_content_description">Conversation navigation drawer</string>
+    <string name="sidebar_pinned_tools_content_description">Pinned tools shortcuts</string>
+    <string name="sidebar_header_conversations">Conversations</string>
+    <string name="sidebar_header_create_new">Create new conversation</string>
+    <string name="sidebar_search_placeholder">Search conversations…</string>
+    <string name="sidebar_search_content_description">Search conversations</string>
+    <string name="sidebar_archive_toggle_active">Active</string>
+    <string name="sidebar_archive_toggle_archived">Archived</string>
+    <string name="sidebar_archive_toggle_show_active">Show Active</string>
+    <string name="sidebar_archive_toggle_show_archived">Show Archived</string>
+    <string name="sidebar_archive_toggle_content_description">Toggle archived conversations</string>
+    <string name="sidebar_thread_list_content_description">Conversation threads list</string>
+    <string name="sidebar_inference_preference_content_description">Inference preference</string>
+    <string name="sidebar_inference_preference_local_state">Prefers on-device models</string>
+    <string name="sidebar_inference_preference_cloud_state">Prefers cloud inference</string>
+    <string name="sidebar_inference_preference_title">Inference Preference</string>
+    <string name="sidebar_inference_preference_local_description">Prefer on-device models when available</string>
+    <string name="sidebar_inference_preference_cloud_description">Prefer cloud inference when online</string>
+    <string name="sidebar_inference_preference_toggle_content_description">Toggle inference preference</string>
+    <string name="sidebar_thread_item_archive_content_description">Archive conversation</string>
+    <string name="sidebar_thread_item_delete_content_description">Delete conversation</string>
+    <string name="sidebar_thread_item_archive_icon">Archive</string>
+    <string name="sidebar_thread_item_delete_icon">Delete</string>
+    <string name="sidebar_thread_item_untitled">Untitled Chat</string>
+    <string name="sidebar_thread_item_content_description" formatted="false">Conversation %s last updated %s</string>
+
+    <!-- Nano Shell Scaffold -->
+    <string name="nano_shell_search">Search</string>
+    <string name="nano_shell_select_model">Select model</string>
+
+    <!-- Settings Shortcuts Panel -->
+    <string name="settings_shortcuts_panel_description">Fine-tune appearance and layout instantly.</string>
+    <string name="settings_shortcuts_panel_open_settings">Open settings</string>
+    <string name="settings_shortcuts_panel_open_settings_content_description">Open settings screen</string>
+    <string name="settings_shortcuts_panel_theme">Theme</string>
+    <string name="settings_shortcuts_panel_density">Density</string>
+
+    <!-- Model Selector Panel -->
+    <string name="model_selector_panel_adjust_models">Adjust models for %s</string>
+    <string name="model_selector_panel_controls_unavailable">Model controls are unavailable for this mode.</string>
+    <string name="model_selector_panel_offline_message">Offline: cloud-only models will queue until connection resumes.</string>
+    <string name="model_selector_panel_switch_mode_message">Switch to a supported mode to tune models.</string>
+    <string name="model_selector_panel_open_library_content_description">Open model library</string>
+    <string name="model_selector_panel_manage_models">Manage installed models</string>
+    <string name="model_selector_panel_activate">Activate</string>
+    <string name="model_selector_panel_unavailable_offline">Unavailable offline</string>
+    <string name="model_selector_panel_on_device_capable">On-device capable</string>
+    <string name="model_selector_panel_requires_connectivity">Requires connectivity</string>
+
+    <!-- Progress Center Panel -->
+    <string name="progress_center_panel_title">Progress center</string>
+    <string name="progress_center_panel_no_tasks">No queued tasks</string>
+    <string name="progress_center_panel_retry">Retry</string>
+    <string name="progress_center_panel_clear">Clear</string>
+    <string name="progress_center_panel_queued_at">Queued at %s</string>
+    <string name="progress_center_panel_retry_content_description">Retry %s job</string>
+    <string name="progress_center_panel_retry_available">Retry available</string>
+    <string name="progress_center_panel_retry_unavailable">Retry unavailable</string>
+    <string name="progress_center_panel_clear_content_description">Clear %s job</string>
+    <string name="progress_center_panel_clear_completed">Job completed; clear from queue</string>
+    <string name="progress_center_panel_clear_failed">Job failed; clear from queue</string>
 </resources>

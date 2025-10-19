@@ -15,11 +15,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.vjaykrsna.nanoai.R
 
 @Composable
 fun OfflineBanner(
@@ -28,6 +30,9 @@ fun OfflineBanner(
   onRetry: () -> Unit,
   modifier: Modifier = Modifier
 ) {
+  // String resources
+  val bannerContentDescription = stringResource(R.string.offline_banner_content_description)
+
   if (!isOffline) return
 
   Surface(
@@ -39,18 +44,18 @@ fun OfflineBanner(
     Column(
       modifier =
         Modifier.padding(16.dp).semantics {
-          contentDescription = "Offline status banner"
+          contentDescription = bannerContentDescription
           liveRegion = LiveRegionMode.Polite
         },
     ) {
       Text(
-        text = "You're offline. Some features are temporarily unavailable.",
+        text = stringResource(R.string.offline_banner_message),
         style = MaterialTheme.typography.bodyMedium,
         modifier = Modifier.testTag("offline_banner_message"),
       )
       Spacer(modifier = Modifier.height(8.dp))
       Text(
-        text = "Actions will resume when you're back online.",
+        text = stringResource(R.string.offline_banner_disabled_actions),
         style = MaterialTheme.typography.bodySmall,
         modifier = Modifier.testTag("offline_banner_disabled_actions"),
       )
@@ -61,7 +66,7 @@ fun OfflineBanner(
         verticalAlignment = Alignment.CenterVertically,
       ) {
         Text(
-          text = "Queued: $queuedActions",
+          text = stringResource(R.string.offline_banner_queue_status, queuedActions),
           style = MaterialTheme.typography.labelMedium,
           modifier = Modifier.testTag("offline_banner_queue_status"),
         )
@@ -69,7 +74,7 @@ fun OfflineBanner(
           onClick = onRetry,
           modifier = Modifier.testTag("offline_banner_retry"),
         ) {
-          Text("Retry now")
+          Text(stringResource(R.string.offline_banner_retry))
         }
       }
     }

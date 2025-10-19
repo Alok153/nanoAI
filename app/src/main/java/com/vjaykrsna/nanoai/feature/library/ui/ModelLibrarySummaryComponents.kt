@@ -10,6 +10,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -19,13 +21,13 @@ import com.vjaykrsna.nanoai.feature.library.presentation.model.ModelLibrarySumma
 
 @Composable
 internal fun LibraryHeader(summary: ModelLibrarySummary) {
-  LibrarySummaryRow(summary = summary)
+  LibrarySummaryRow(summary = summary, modifier = Modifier.semantics { heading() })
 }
 
 @Composable
-internal fun LibrarySummaryRow(summary: ModelLibrarySummary) {
+internal fun LibrarySummaryRow(summary: ModelLibrarySummary, modifier: Modifier = Modifier) {
   Surface(
-    modifier = Modifier.fillMaxWidth(),
+    modifier = modifier.fillMaxWidth(),
     shape = MaterialTheme.shapes.large,
     tonalElevation = 3.dp,
     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),

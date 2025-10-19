@@ -201,7 +201,10 @@ fun ModelLibraryScreen(
 
     SnackbarHost(
       hostState = snackbarHostState,
-      modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp),
+      modifier =
+        Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp).semantics {
+          contentDescription = "Model library notifications and messages"
+        },
     )
 
     PullRefreshIndicator(

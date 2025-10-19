@@ -13,9 +13,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.vjaykrsna.nanoai.R
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
 import com.vjaykrsna.nanoai.feature.uiux.state.UiPreferenceSnapshot
@@ -34,7 +36,7 @@ internal fun SettingsShortcutsPanel(
     modifier = Modifier.testTag("settings_shortcuts_panel")
   ) {
     Text(
-      text = "Fine-tune appearance and layout instantly.",
+      text = stringResource(R.string.settings_shortcuts_panel_description),
       style = MaterialTheme.typography.bodyMedium,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
@@ -42,16 +44,19 @@ internal fun SettingsShortcutsPanel(
     ShortcutThemeSelector(preferences.theme, onThemeSelect)
     ShortcutDensitySelector(preferences.density, onDensitySelect)
 
+    val openSettingsContentDescription =
+      stringResource(R.string.settings_shortcuts_panel_open_settings_content_description)
+
     OutlinedButton(
       onClick = onOpenSettings,
       modifier =
         Modifier.fillMaxWidth()
-          .semantics { contentDescription = "Open settings screen" }
+          .semantics { contentDescription = openSettingsContentDescription }
           .testTag("open_settings_button"),
     ) {
       androidx.compose.material3.Icon(Icons.Outlined.Settings, contentDescription = null)
       Spacer(modifier = Modifier.width(8.dp))
-      Text("Open settings")
+      Text(stringResource(R.string.settings_shortcuts_panel_open_settings))
     }
   }
 }
@@ -62,7 +67,10 @@ private fun ShortcutThemeSelector(
   onSelect: (ThemePreference) -> Unit,
 ) {
   Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-    Text("Theme", style = MaterialTheme.typography.titleSmall)
+    Text(
+      stringResource(R.string.settings_shortcuts_panel_theme),
+      style = MaterialTheme.typography.titleSmall
+    )
     ThemePreferenceChips(
       selected = selected,
       onSelect = onSelect,
@@ -77,7 +85,10 @@ private fun ShortcutDensitySelector(
   onSelect: (VisualDensity) -> Unit,
 ) {
   Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-    Text("Density", style = MaterialTheme.typography.titleSmall)
+    Text(
+      stringResource(R.string.settings_shortcuts_panel_density),
+      style = MaterialTheme.typography.titleSmall
+    )
     VisualDensityChips(
       selected = selected,
       onSelect = onSelect,

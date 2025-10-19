@@ -18,13 +18,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
@@ -33,6 +33,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.vjaykrsna.nanoai.R
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 
@@ -45,6 +46,13 @@ fun DisclaimerDialog(
   modifier: Modifier = Modifier,
   onDialogShow: (() -> Unit)? = null,
 ) {
+  // String resources
+  val dialogContentDescription = stringResource(R.string.disclaimer_dialog_content_description)
+  val declineContentDescription = stringResource(R.string.disclaimer_decline_content_description)
+  val agreeContentDescription = stringResource(R.string.disclaimer_agree_content_description)
+  val scrollComplete = stringResource(R.string.disclaimer_scroll_complete)
+  val scrollIncomplete = stringResource(R.string.disclaimer_scroll_incomplete)
+
   val scrollState = rememberScrollState()
   var acceptEnabled by rememberSaveable { mutableStateOf(false) }
 
@@ -64,7 +72,7 @@ fun DisclaimerDialog(
     Surface(
       modifier =
         modifier.fillMaxWidth().testTag("disclaimer_dialog_container").semantics {
-          contentDescription = "nanoAI privacy disclaimer dialog"
+          contentDescription = dialogContentDescription
         },
       shape = MaterialTheme.shapes.extraLarge,
       tonalElevation = 6.dp,
@@ -75,13 +83,12 @@ fun DisclaimerDialog(
       ) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
           Text(
-            text = "Review nanoAI disclaimer",
+            text = stringResource(R.string.disclaimer_title),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.SemiBold,
           )
           Text(
-            text =
-              "nanoAI may generate inaccurate or unexpected content. Please review outputs before sharing.",
+            text = stringResource(R.string.disclaimer_subtitle),
             style = MaterialTheme.typography.bodyMedium,
           )
         }
@@ -96,22 +103,21 @@ fun DisclaimerDialog(
             onClick = onDecline,
             modifier =
               Modifier.testTag("disclaimer_decline_button").semantics {
-                contentDescription = "Decline and review later"
+                contentDescription = declineContentDescription
               },
           ) {
-            Text("Decline")
+            Text(stringResource(R.string.disclaimer_decline))
           }
           Button(
             onClick = onAccept,
             enabled = acceptEnabled,
             modifier =
               Modifier.testTag("disclaimer_accept_button").semantics {
-                contentDescription = "Accept privacy terms"
-                stateDescription =
-                  if (acceptEnabled) "Scroll complete" else "Scroll to the end to enable Accept"
+                contentDescription = agreeContentDescription
+                stateDescription = if (acceptEnabled) scrollComplete else scrollIncomplete
               },
           ) {
-            Text("Agree")
+            Text(stringResource(R.string.disclaimer_agree))
           }
         }
       }
@@ -121,15 +127,14 @@ fun DisclaimerDialog(
 
 @Composable
 private fun DisclaimerScrollableContent(scrollState: androidx.compose.foundation.ScrollState) {
-  val bulletPoints = remember {
+  val bulletPoints =
     listOf(
-      "You remain responsible for how generated content is used.",
-      "Verify facts before sharing or acting on AI-produced responses.",
-      "Generated content may reference third-party material; respect applicable policies.",
-      "Contact support if you encounter safety issues or unexpectedly harmful outputs so we can investigate.",
-      "Continuing indicates you acknowledge the privacy policy and terms of use.",
+      stringResource(R.string.disclaimer_bullet_1),
+      stringResource(R.string.disclaimer_bullet_2),
+      stringResource(R.string.disclaimer_bullet_3),
+      stringResource(R.string.disclaimer_bullet_4),
+      stringResource(R.string.disclaimer_bullet_5),
     )
-  }
   Box(
     modifier =
       Modifier.fillMaxWidth()
@@ -143,7 +148,7 @@ private fun DisclaimerScrollableContent(scrollState: androidx.compose.foundation
       }
 
       Text(
-        text = "By selecting Agree you accept responsibility for your use of nanoAI.",
+        text = stringResource(R.string.disclaimer_responsibility_statement),
         style = MaterialTheme.typography.bodyMedium,
         textAlign = TextAlign.Start,
         modifier = Modifier.testTag("disclaimer_last_text"),

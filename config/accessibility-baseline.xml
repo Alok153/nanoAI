@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Accessibility Baseline Configuration for nanoAI
+
+This file contains baseline accessibility violations that are acceptable
+for the current implementation. New accessibility violations should be
+fixed rather than added to this baseline.
+
+Generated for UI quality gates and accessibility compliance testing.
+-->
+<accessibility-baseline>
+    <!-- No baseline violations - all accessibility issues should be fixed -->
+    <violations>
+        <!-- Add specific violations here if they cannot be immediately fixed -->
+        <!-- Example format:
+        <violation>
+            <class>com.example.MyActivity</class>
+            <check>TouchTargetSizeCheck</check>
+            <view-id>com.example:id/my_view</view-id>
+            <severity>WARNING</severity>
+            <description>Touch target size too small</description>
+        </violation>
+        -->
+    </violations>
+</accessibility-baseline>

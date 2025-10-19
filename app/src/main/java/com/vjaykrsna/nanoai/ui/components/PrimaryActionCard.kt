@@ -18,12 +18,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
+import com.vjaykrsna.nanoai.R
 
 @Composable
 fun PrimaryActionCard(
@@ -33,6 +35,9 @@ fun PrimaryActionCard(
   onClick: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
+  // String resources
+  val contentDescriptionFormat = stringResource(R.string.primary_action_card_content_description)
+
   val haptics = LocalHapticFeedback.current
 
   Card(
@@ -42,7 +47,7 @@ fun PrimaryActionCard(
     },
     modifier =
       modifier.fillMaxWidth().testTag(tag).semantics {
-        contentDescription = "$title action"
+        contentDescription = contentDescriptionFormat.format(title)
         stateDescription = "$description"
         role = Role.Button
       },
@@ -62,7 +67,7 @@ fun PrimaryActionCard(
       ) {
         Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null)
         Text(
-          text = "Run",
+          text = stringResource(R.string.primary_action_card_run),
           style = MaterialTheme.typography.labelLarge,
           modifier = Modifier.padding(start = 4.dp),
         )

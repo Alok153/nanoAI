@@ -33,6 +33,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.vjaykrsna.nanoai.feature.library.model.ProviderType
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryTab
@@ -266,7 +268,11 @@ internal fun ModelLibraryTabs(
 ) {
   val tabs = ModelLibraryTab.entries
   val selectedIndex = tabs.indexOf(selectedTab).coerceAtLeast(0)
-  TabRow(selectedTabIndex = selectedIndex, modifier = modifier.fillMaxWidth()) {
+  TabRow(
+    selectedTabIndex = selectedIndex,
+    modifier =
+      modifier.fillMaxWidth().semantics { contentDescription = "Model library navigation tabs" }
+  ) {
     tabs.forEach { tab ->
       Tab(
         selected = tab == selectedTab,
