@@ -57,10 +57,7 @@ fun NanoSection(
         modifier = Modifier.semantics { heading() },
         verticalArrangement = Arrangement.spacedBy(NanoSpacing.xs),
       ) {
-        Text(
-          text = title,
-          style = MaterialTheme.typography.titleMedium,
-        )
+        Text(text = title, style = MaterialTheme.typography.titleMedium)
         subtitle?.let {
           Text(
             text = it,

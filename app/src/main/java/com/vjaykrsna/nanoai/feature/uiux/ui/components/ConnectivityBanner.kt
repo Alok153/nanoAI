@@ -109,17 +109,11 @@ fun ConnectivityBanner(
         )
       }
       state.ctaLabel?.let { label ->
-        Button(
-          onClick = onCtaClick,
-          modifier = Modifier.testTag("connectivity_banner_cta"),
-        ) {
+        Button(onClick = onCtaClick, modifier = Modifier.testTag("connectivity_banner_cta")) {
           Text(label)
         }
       }
-      IconButton(
-        onClick = onDismiss,
-        modifier = Modifier.testTag("connectivity_banner_close"),
-      ) {
+      IconButton(onClick = onDismiss, modifier = Modifier.testTag("connectivity_banner_close")) {
         Icon(Icons.Outlined.Close, contentDescription = "Dismiss connectivity banner")
       }
     }

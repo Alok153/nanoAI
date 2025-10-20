@@ -19,10 +19,7 @@ class SettingsViewModelUiUxTest {
       runCatching {
           SettingsViewModel::class
             .java
-            .getDeclaredMethod(
-              "setThemePreference",
-              ThemePreference::class.java,
-            )
+            .getDeclaredMethod("setThemePreference", ThemePreference::class.java)
         }
         .getOrNull()
 
@@ -36,10 +33,7 @@ class SettingsViewModelUiUxTest {
       runCatching {
           SettingsViewModel::class
             .java
-            .getDeclaredMethod(
-              "applyDensityPreference",
-              java.lang.Boolean.TYPE,
-            )
+            .getDeclaredMethod("applyDensityPreference", java.lang.Boolean.TYPE)
         }
         .getOrNull()
     assertNotNull(densityMethod)

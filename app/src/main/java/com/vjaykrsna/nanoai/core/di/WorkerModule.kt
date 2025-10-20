@@ -28,7 +28,7 @@ object WorkerModule {
   @Provides
   @Singleton
   fun provideOkHttpClient(
-    authInterceptor: com.vjaykrsna.nanoai.core.network.huggingface.HuggingFaceAuthInterceptor,
+    authInterceptor: com.vjaykrsna.nanoai.core.network.huggingface.HuggingFaceAuthInterceptor
   ): OkHttpClient =
     OkHttpClient.Builder()
       .connectTimeout(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)

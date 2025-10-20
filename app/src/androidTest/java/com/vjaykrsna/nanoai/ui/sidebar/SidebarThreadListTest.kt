@@ -48,7 +48,7 @@ class SidebarThreadListTest : BaseSidebarContentTest() {
 
     renderSidebar(
       state,
-      interactions = SidebarInteractions(onThreadSelected = { selectedThread = it })
+      interactions = SidebarInteractions(onThreadSelected = { selectedThread = it }),
     )
 
     composeRule.onNodeWithText("Test Conversation 1").performClick()

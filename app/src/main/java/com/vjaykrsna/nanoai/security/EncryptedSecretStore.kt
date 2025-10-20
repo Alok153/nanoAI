@@ -30,11 +30,7 @@ private constructor(
 ) {
   private val clock: Clock = suppliedClock ?: Clock.System
 
-  @Inject
-  constructor(
-    @ApplicationContext context: Context,
-    json: Json,
-  ) : this(context, json, null)
+  @Inject constructor(@ApplicationContext context: Context, json: Json) : this(context, json, null)
 
   @VisibleForTesting constructor(json: Json, clock: Clock) : this(null, json, clock)
 

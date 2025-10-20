@@ -98,7 +98,7 @@ interface UIStateSnapshotDao {
       SET right_drawer_open = :open,
           active_right_panel = :panel
       WHERE user_id = :userId
-    """,
+    """
   )
   suspend fun updateRightDrawerState(userId: String, open: Boolean, panel: String?): Int
 
@@ -217,7 +217,7 @@ interface UIStateSnapshotDao {
           activeMode = UIStateSnapshot.DEFAULT_MODE_ROUTE,
           activeRightPanel = null,
           paletteVisible = false,
-        ),
+        )
       )
     }
   }
@@ -259,7 +259,7 @@ interface UIStateSnapshotDao {
           activeMode = UIStateSnapshot.DEFAULT_MODE_ROUTE,
           activeRightPanel = null,
           paletteVisible = false,
-        ),
+        )
       )
     }
   }

@@ -185,12 +185,7 @@ object VerifyCoverageThresholdsTask {
     val violation = verifyThresholds(parseResult.summary)
     val trend = buildTrendPoints(parseResult.summary)
     val markdown =
-      MarkdownRenderer.render(
-        parseResult.summary,
-        violation,
-        parseResult.unmappedClasses,
-        trend,
-      )
+      MarkdownRenderer.render(parseResult.summary, violation, parseResult.unmappedClasses, trend)
     return TaskOutcome(
       summary = parseResult.summary,
       unmappedClasses = parseResult.unmappedClasses,
@@ -261,7 +256,7 @@ object VerifyCoverageThresholdsTask {
     }
     System.err.println(
       "verifyCoverage: coverage below threshold for " +
-        violation.layers.joinToString { it.displayName },
+        violation.layers.joinToString { it.displayName }
     )
     exitProcess(EXIT_THRESHOLD_FAILURE)
   }
@@ -489,18 +484,18 @@ object VerifyCoverageThresholdsTask {
         "Status breakdown: " +
           CoverageMetric.Status.entries.joinToString(separator = ", ") { status ->
             "${status.name}=${breakdown[status] ?: 0}"
-          },
+          }
       )
     }
 
     private fun StringBuilder.appendThresholdMessage(
-      violation: CoverageThresholdVerifier.ThresholdViolation?,
+      violation: CoverageThresholdVerifier.ThresholdViolation?
     ) {
       if (violation == null) {
         appendLine("> ✅ Coverage thresholds satisfied.")
       } else {
         appendLine(
-          "> ❌ Coverage below threshold for: " + violation.layers.joinToString { it.displayName },
+          "> ❌ Coverage below threshold for: " + violation.layers.joinToString { it.displayName }
         )
       }
     }
@@ -521,7 +516,7 @@ object VerifyCoverageThresholdsTask {
         } else {
           val delta = summary.trendDeltaFor(layer)
           appendLine(
-            "- ${layer.displayName}: ${formatPercentage(latest.coverage)} (${formatDelta(delta)})",
+            "- ${layer.displayName}: ${formatPercentage(latest.coverage)} (${formatDelta(delta)})"
           )
         }
       }

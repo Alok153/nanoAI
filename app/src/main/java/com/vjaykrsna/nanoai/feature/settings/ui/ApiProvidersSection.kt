@@ -26,10 +26,7 @@ import androidx.compose.ui.unit.dp
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
 
 @Composable
-internal fun ApiProvidersSectionHeader(
-  hasProviders: Boolean,
-  modifier: Modifier = Modifier,
-) {
+internal fun ApiProvidersSectionHeader(hasProviders: Boolean, modifier: Modifier = Modifier) {
   SettingsSection(title = "Model Providers", modifier = modifier) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
       Text(

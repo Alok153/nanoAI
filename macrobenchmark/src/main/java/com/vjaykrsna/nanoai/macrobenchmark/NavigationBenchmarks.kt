@@ -79,10 +79,7 @@ class NavigationBenchmarks {
 
         val start = SystemClock.elapsedRealtime()
         chatQuickAction.click()
-        device.wait(
-          Until.hasObject(By.desc("Chat screen with message history and input")),
-          3_000,
-        )
+        device.wait(Until.hasObject(By.desc("Chat screen with message history and input")), 3_000)
         durations += SystemClock.elapsedRealtime() - start
 
         // Reset to home for the next iteration.

@@ -35,10 +35,7 @@ class ChatMessageDaoTest {
   @Before
   fun setup() {
     database =
-      Room.inMemoryDatabaseBuilder(
-          RuntimeEnvironment.getApplication(),
-          NanoAIDatabase::class.java,
-        )
+      Room.inMemoryDatabaseBuilder(RuntimeEnvironment.getApplication(), NanoAIDatabase::class.java)
         .allowMainThreadQueries()
         .build()
 
@@ -114,13 +111,7 @@ class ChatMessageDaoTest {
     chatThreadDao.insert(buildThread(threadId))
     val base = Clock.System.now()
     repeat(4) { index ->
-      messageDao.insert(
-        buildMessage(
-          threadId,
-          base.plus((index + 1).seconds),
-          text = "msg$index",
-        )
-      )
+      messageDao.insert(buildMessage(threadId, base.plus((index + 1).seconds), text = "msg$index"))
     }
 
     val latest = messageDao.getLatestMessages(threadId, limit = 2)
@@ -136,13 +127,7 @@ class ChatMessageDaoTest {
     val base = Clock.System.now()
     messageDao.insert(buildMessage(threadId, base.minus(1.seconds), text = "ok"))
     messageDao.insert(
-      buildMessage(
-        threadId,
-        base,
-        text = null,
-        role = Role.ASSISTANT,
-        errorCode = "NETWORK",
-      )
+      buildMessage(threadId, base, text = null, role = Role.ASSISTANT, errorCode = "NETWORK")
     )
     messageDao.insert(
       buildMessage(
@@ -165,12 +150,7 @@ class ChatMessageDaoTest {
     val threadId = UUID.randomUUID().toString()
     chatThreadDao.insert(buildThread(threadId))
     messageDao.insert(
-      buildMessage(
-        threadId,
-        Clock.System.now(),
-        role = Role.ASSISTANT,
-        latencyMs = 1000L,
-      )
+      buildMessage(threadId, Clock.System.now(), role = Role.ASSISTANT, latencyMs = 1000L)
     )
     messageDao.insert(
       buildMessage(

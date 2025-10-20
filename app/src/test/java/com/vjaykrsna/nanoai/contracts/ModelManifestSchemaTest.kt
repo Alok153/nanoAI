@@ -290,7 +290,7 @@ class ModelManifestSchemaTest {
 
   private fun createMinimalManifest(
     runtime: String = "MEDIA_PIPE",
-    capabilities: List<String> = listOf("TEXT_GEN")
+    capabilities: List<String> = listOf("TEXT_GEN"),
   ): String {
     val capabilitiesJson = capabilities.joinToString(",") { "\"$it\"" }
     return """

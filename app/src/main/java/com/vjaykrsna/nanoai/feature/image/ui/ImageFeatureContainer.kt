@@ -17,14 +17,8 @@ fun ImageFeatureContainer(modifier: Modifier = Modifier) {
   var showGallery by rememberSaveable { mutableStateOf(false) }
 
   if (showGallery) {
-    ImageGalleryScreen(
-      modifier = modifier,
-      onNavigateBack = { showGallery = false },
-    )
+    ImageGalleryScreen(modifier = modifier, onNavigateBack = { showGallery = false })
   } else {
-    ImageGenerationScreen(
-      modifier = modifier,
-      onGalleryClick = { showGallery = true },
-    )
+    ImageGenerationScreen(modifier = modifier, onGalleryClick = { showGallery = true })
   }
 }

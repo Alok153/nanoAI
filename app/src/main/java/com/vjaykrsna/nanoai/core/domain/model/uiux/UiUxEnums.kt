@@ -10,8 +10,9 @@ enum class ThemePreference {
   LIGHT,
   DARK,
   AMOLED, // Pure black backgrounds for OLED power savings
-  SYSTEM,
-  ;
+  HIGH_CONTRAST_LIGHT, // High contrast light mode for accessibility (WCAG AAA)
+  HIGH_CONTRAST_DARK, // High contrast dark mode for accessibility (WCAG AAA)
+  SYSTEM;
 
   companion object {
     fun fromName(value: String?): ThemePreference {
@@ -25,8 +26,7 @@ enum class ThemePreference {
 enum class VisualDensity {
   DEFAULT,
   COMPACT,
-  EXPANDED,
-  ;
+  EXPANDED;
 
   companion object {
     const val COMPACT_PINNED_TOOL_CAP = 6
@@ -38,8 +38,7 @@ enum class ScreenType {
   SETTINGS,
   SIDEBAR,
   TOOLBOX,
-  UNKNOWN,
-  ;
+  UNKNOWN;
 
   companion object {
     fun fromRoute(route: String?): ScreenType {

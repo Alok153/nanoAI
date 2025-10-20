@@ -45,14 +45,14 @@ internal fun ModelSelectorPanel(
 
   Column(
     verticalArrangement = Arrangement.spacedBy(16.dp),
-    modifier = Modifier.testTag("model_selector_panel")
+    modifier = Modifier.testTag("model_selector_panel"),
   ) {
     val fallbackModeName =
       remember(activeMode) { activeMode.name.lowercase().replaceFirstChar { it.uppercase() } }
     val headerLabel =
       stringResource(
         R.string.model_selector_panel_adjust_models,
-        activeCard?.title ?: fallbackModeName
+        activeCard?.title ?: fallbackModeName,
       )
     Text(
       text = headerLabel,
@@ -93,7 +93,7 @@ internal fun ModelSelectorPanel(
     OutlinedButton(
       onClick = onOpenLibrary,
       modifier =
-        Modifier.fillMaxWidth().semantics { contentDescription = openLibraryContentDescription }
+        Modifier.fillMaxWidth().semantics { contentDescription = openLibraryContentDescription },
     ) {
       Text(stringResource(R.string.model_selector_panel_manage_models))
     }
@@ -197,7 +197,7 @@ private fun modelOptionsForMode(modeId: ModeId): List<ModelOption> =
         ModelOption(
           "Gemini Pro",
           "Cloud-enhanced responses and longer context.",
-          availableOffline = false
+          availableOffline = false,
         ),
       )
     ModeId.IMAGE ->
@@ -210,7 +210,7 @@ private fun modelOptionsForMode(modeId: ModeId): List<ModelOption> =
         ModelOption(
           "Audio Scribe",
           "On-device transcription for meetings.",
-          availableOffline = true
+          availableOffline = true,
         ),
         ModelOption("Audio Studio", "Cloud mastering and cleanup.", availableOffline = false),
       )
@@ -219,7 +219,7 @@ private fun modelOptionsForMode(modeId: ModeId): List<ModelOption> =
         ModelOption(
           "Code Mentor",
           "Inline suggestions for Kotlin & Java.",
-          availableOffline = true
+          availableOffline = true,
         ),
         ModelOption("Code Expert", "Cloud analysis for large projects.", availableOffline = false),
       )
@@ -228,7 +228,7 @@ private fun modelOptionsForMode(modeId: ModeId): List<ModelOption> =
         ModelOption(
           "Polyglot Mini",
           "On-device translation for core languages.",
-          availableOffline = true
+          availableOffline = true,
         ),
         ModelOption("Polyglot Cloud", "Extended language coverage.", availableOffline = false),
       )

@@ -82,11 +82,7 @@ private fun ProviderDialogHost(
   onSave: (name: String, baseUrl: String, apiKey: String?) -> Unit,
 ) {
   if (isVisible) {
-    ApiProviderDialog(
-      provider = provider,
-      onDismiss = onDismiss,
-      onSave = onSave,
-    )
+    ApiProviderDialog(provider = provider, onDismiss = onDismiss, onSave = onSave)
   }
 }
 
@@ -97,10 +93,7 @@ private fun ExportDialogHost(
   onConfirm: (dontShowAgain: Boolean) -> Unit,
 ) {
   if (isVisible) {
-    ExportDialog(
-      onDismiss = onDismiss,
-      onConfirm = onConfirm,
-    )
+    ExportDialog(onDismiss = onDismiss, onConfirm = onConfirm)
   }
 }
 
@@ -119,9 +112,7 @@ private fun ApiProviderDialog(
     onDismissRequest = onDismiss,
     title = { Text(if (provider != null) "Edit API Provider" else "Add API Provider") },
     text = {
-      Column(
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-      ) {
+      Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         OutlinedTextField(
           value = name,
           onValueChange = { name = it },
@@ -204,10 +195,7 @@ internal fun ExportDialog(
 }
 
 @Composable
-private fun ExportDialogBody(
-  dontShowAgain: Boolean,
-  onDontShowAgainChange: (Boolean) -> Unit,
-) {
+private fun ExportDialogBody(dontShowAgain: Boolean, onDontShowAgainChange: (Boolean) -> Unit) {
   Column {
     Text("This will export all your data including:")
     Spacer(modifier = Modifier.height(8.dp))
@@ -229,18 +217,12 @@ private fun ExportDialogBody(
       fontWeight = FontWeight.SemiBold,
     )
     Spacer(modifier = Modifier.height(12.dp))
-    ExportDialogCheckbox(
-      checked = dontShowAgain,
-      onCheckedChange = onDontShowAgainChange,
-    )
+    ExportDialogCheckbox(checked = dontShowAgain, onCheckedChange = onDontShowAgainChange)
   }
 }
 
 @Composable
-private fun ExportDialogCheckbox(
-  checked: Boolean,
-  onCheckedChange: (Boolean) -> Unit,
-) {
+private fun ExportDialogCheckbox(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
   Row(verticalAlignment = Alignment.CenterVertically) {
     Checkbox(
       checked = checked,
@@ -248,9 +230,6 @@ private fun ExportDialogCheckbox(
       modifier = Modifier.semantics { contentDescription = "Don't warn me again checkbox" },
     )
     Spacer(modifier = Modifier.width(8.dp))
-    Text(
-      text = "Don't warn me again",
-      style = MaterialTheme.typography.bodyMedium,
-    )
+    Text(text = "Don't warn me again", style = MaterialTheme.typography.bodyMedium)
   }
 }

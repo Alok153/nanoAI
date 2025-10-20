@@ -37,10 +37,7 @@ constructor(private val getCoverageReportUseCase: GetCoverageReportUseCase) : Vi
         .onSuccess { result -> _uiState.value = result.toUiState(isRefreshing = false) }
         .onFailure { error ->
           _uiState.update { current ->
-            current.copy(
-              isRefreshing = false,
-              errorBanner = CoverageDashboardBanner.offline(error),
-            )
+            current.copy(isRefreshing = false, errorBanner = CoverageDashboardBanner.offline(error))
           }
         }
     }

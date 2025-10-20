@@ -15,25 +15,13 @@ sealed class Screen(
   val modeId: ModeId? = null,
 ) {
   data object Home :
-    Screen(
-      route = "home",
-      deepLinks = buildDeepLinks("home"),
-      modeId = ModeId.HOME,
-    )
+    Screen(route = "home", deepLinks = buildDeepLinks("home"), modeId = ModeId.HOME)
 
   data object Chat :
-    Screen(
-      route = "chat",
-      deepLinks = buildDeepLinks("chat"),
-      modeId = ModeId.CHAT,
-    )
+    Screen(route = "chat", deepLinks = buildDeepLinks("chat"), modeId = ModeId.CHAT)
 
   data object Image :
-    Screen(
-      route = "image",
-      deepLinks = buildDeepLinks("image"),
-      modeId = ModeId.IMAGE,
-    )
+    Screen(route = "image", deepLinks = buildDeepLinks("image"), modeId = ModeId.IMAGE)
 
   data object ImageGallery :
     Screen(
@@ -43,53 +31,25 @@ sealed class Screen(
     )
 
   data object Audio :
-    Screen(
-      route = "audio",
-      deepLinks = buildDeepLinks("audio"),
-      modeId = ModeId.AUDIO,
-    )
+    Screen(route = "audio", deepLinks = buildDeepLinks("audio"), modeId = ModeId.AUDIO)
 
   data object Code :
-    Screen(
-      route = "code",
-      deepLinks = buildDeepLinks("code"),
-      modeId = ModeId.CODE,
-    )
+    Screen(route = "code", deepLinks = buildDeepLinks("code"), modeId = ModeId.CODE)
 
   data object Translate :
-    Screen(
-      route = "translate",
-      deepLinks = buildDeepLinks("translate"),
-      modeId = ModeId.TRANSLATE,
-    )
+    Screen(route = "translate", deepLinks = buildDeepLinks("translate"), modeId = ModeId.TRANSLATE)
 
   data object History :
-    Screen(
-      route = "history",
-      deepLinks = buildDeepLinks("history"),
-      modeId = ModeId.HISTORY,
-    )
+    Screen(route = "history", deepLinks = buildDeepLinks("history"), modeId = ModeId.HISTORY)
 
   data object Library :
-    Screen(
-      route = "library",
-      deepLinks = buildDeepLinks("library"),
-      modeId = ModeId.LIBRARY,
-    )
+    Screen(route = "library", deepLinks = buildDeepLinks("library"), modeId = ModeId.LIBRARY)
 
   data object Tools :
-    Screen(
-      route = "tools",
-      deepLinks = buildDeepLinks("tools"),
-      modeId = ModeId.TOOLS,
-    )
+    Screen(route = "tools", deepLinks = buildDeepLinks("tools"), modeId = ModeId.TOOLS)
 
   data object Settings :
-    Screen(
-      route = "settings",
-      deepLinks = buildDeepLinks("settings"),
-      modeId = ModeId.SETTINGS,
-    )
+    Screen(route = "settings", deepLinks = buildDeepLinks("settings"), modeId = ModeId.SETTINGS)
 
   data object SettingsAppearance :
     Screen(
@@ -105,17 +65,10 @@ sealed class Screen(
       modeId = ModeId.SETTINGS,
     )
 
-  data object HelpDocs :
-    Screen(
-      route = "help/docs",
-      deepLinks = buildDeepLinks("help/docs"),
-    )
+  data object HelpDocs : Screen(route = "help/docs", deepLinks = buildDeepLinks("help/docs"))
 
   data object HelpShortcuts :
-    Screen(
-      route = "help/shortcuts",
-      deepLinks = buildDeepLinks("help/shortcuts"),
-    )
+    Screen(route = "help/shortcuts", deepLinks = buildDeepLinks("help/shortcuts"))
 
   companion object {
     /** Stable listing of screens for lookup helpers. */
@@ -158,7 +111,4 @@ private const val DEEP_LINK_SCHEME = "nanoai"
 private const val DEEP_LINK_HOST = "shell"
 
 private fun buildDeepLinks(route: String): List<String> =
-  listOf(
-    "$DEEP_LINK_SCHEME://$DEEP_LINK_HOST/$route",
-    "$DEEP_LINK_SCHEME://$route",
-  )
+  listOf("$DEEP_LINK_SCHEME://$DEEP_LINK_HOST/$route", "$DEEP_LINK_SCHEME://$route")

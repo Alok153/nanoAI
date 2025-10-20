@@ -33,7 +33,7 @@ internal fun SettingsShortcutsPanel(
 ) {
   Column(
     verticalArrangement = Arrangement.spacedBy(16.dp),
-    modifier = Modifier.testTag("settings_shortcuts_panel")
+    modifier = Modifier.testTag("settings_shortcuts_panel"),
   ) {
     Text(
       text = stringResource(R.string.settings_shortcuts_panel_description),
@@ -62,14 +62,11 @@ internal fun SettingsShortcutsPanel(
 }
 
 @Composable
-private fun ShortcutThemeSelector(
-  selected: ThemePreference,
-  onSelect: (ThemePreference) -> Unit,
-) {
+private fun ShortcutThemeSelector(selected: ThemePreference, onSelect: (ThemePreference) -> Unit) {
   Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
     Text(
       stringResource(R.string.settings_shortcuts_panel_theme),
-      style = MaterialTheme.typography.titleSmall
+      style = MaterialTheme.typography.titleSmall,
     )
     ThemePreferenceChips(
       selected = selected,
@@ -80,14 +77,11 @@ private fun ShortcutThemeSelector(
 }
 
 @Composable
-private fun ShortcutDensitySelector(
-  selected: VisualDensity,
-  onSelect: (VisualDensity) -> Unit,
-) {
+private fun ShortcutDensitySelector(selected: VisualDensity, onSelect: (VisualDensity) -> Unit) {
   Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
     Text(
       stringResource(R.string.settings_shortcuts_panel_density),
-      style = MaterialTheme.typography.titleSmall
+      style = MaterialTheme.typography.titleSmall,
     )
     VisualDensityChips(
       selected = selected,

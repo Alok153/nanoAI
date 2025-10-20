@@ -46,7 +46,7 @@ constructor(
     personas: List<PersonaProfile>,
     apiProviders: List<APIProviderConfig>,
     destinationPath: String,
-    chatHistory: List<ChatThread>
+    chatHistory: List<ChatThread>,
   ): String {
     val outputFile = File(destinationPath)
     outputFile.parentFile?.mkdirs()
@@ -69,14 +69,14 @@ constructor(
   override suspend fun notifyUnencryptedExport(destinationPath: String) {
     Log.w(
       TAG,
-      "Export bundle created at $destinationPath is not encrypted. Advise user to store securely."
+      "Export bundle created at $destinationPath is not encrypted. Advise user to store securely.",
     )
   }
 
   private fun buildExportPayload(
     personas: List<PersonaProfile>,
     providers: List<APIProviderConfig>,
-    chatThreads: List<ChatThread>
+    chatThreads: List<ChatThread>,
   ): JsonObject = buildJsonObject {
     put("schemaVersion", JsonPrimitive(EXPORT_SCHEMA_VERSION))
     put("generatedAt", JsonPrimitive(Clock.System.now().toString()))
@@ -100,7 +100,7 @@ constructor(
           putString("defaultImageStyle", persona.defaultImageStyle)
           putString("createdAt", persona.createdAt.toString())
           putString("updatedAt", persona.updatedAt.toString())
-        },
+        }
       )
     }
   }
@@ -117,7 +117,7 @@ constructor(
           put("enabled", JsonPrimitive(provider.isEnabled))
           putString("quotaResetAt", provider.quotaResetAt?.toString())
           putString("lastStatus", provider.lastStatus.name)
-        },
+        }
       )
     }
   }
@@ -133,7 +133,7 @@ constructor(
           putString("createdAt", thread.createdAt.toString())
           putString("updatedAt", thread.updatedAt.toString())
           put("isArchived", JsonPrimitive(thread.isArchived))
-        },
+        }
       )
     }
   }

@@ -60,10 +60,7 @@ import kotlinx.coroutines.flow.collectLatest
  * Follows Material 3 design and nanoAI calling interface patterns.
  */
 @Composable
-fun AudioScreen(
-  modifier: Modifier = Modifier,
-  viewModel: AudioViewModel = hiltViewModel(),
-) {
+fun AudioScreen(modifier: Modifier = Modifier, viewModel: AudioViewModel = hiltViewModel()) {
   val uiState by viewModel.uiState.collectAsState()
   val snackbarHostState = remember { SnackbarHostState() }
 
@@ -238,15 +235,8 @@ private fun WaveformVisualization(
   val primaryColor = MaterialTheme.colorScheme.primary
   val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
 
-  Surface(
-    modifier = modifier,
-    shape = CircleShape,
-    color = surfaceVariant,
-  ) {
-    Box(
-      modifier = Modifier.fillMaxSize(),
-      contentAlignment = Alignment.Center,
-    ) {
+  Surface(modifier = modifier, shape = CircleShape, color = surfaceVariant) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
       // Outer waveform ring
       if (isActive && waveformData.isNotEmpty()) {
         Canvas(modifier = Modifier.fillMaxSize().padding(NanoSpacing.md)) {
@@ -282,10 +272,7 @@ private fun WaveformVisualization(
         shape = CircleShape,
         color = if (isActive) primaryColor else MaterialTheme.colorScheme.surface,
       ) {
-        Box(
-          modifier = Modifier.fillMaxSize(),
-          contentAlignment = Alignment.Center,
-        ) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
           Icon(
             imageVector = Icons.Default.Mic,
             contentDescription = null,

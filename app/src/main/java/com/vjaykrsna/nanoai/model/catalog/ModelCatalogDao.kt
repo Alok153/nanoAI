@@ -59,7 +59,7 @@ interface ModelPackageWriteDao {
     """
       UPDATE model_packages SET install_state = :state, updated_at = :updatedAt 
       WHERE model_id = :modelId
-    """,
+    """
   )
   suspend fun updateInstallState(modelId: String, state: InstallState, updatedAt: Instant)
 
@@ -67,7 +67,7 @@ interface ModelPackageWriteDao {
     """
       UPDATE model_packages SET download_task_id = :taskId, updated_at = :updatedAt 
       WHERE model_id = :modelId
-    """,
+    """
   )
   suspend fun updateDownloadTaskId(modelId: String, taskId: String?, updatedAt: Instant)
 
@@ -75,7 +75,7 @@ interface ModelPackageWriteDao {
     """
       UPDATE model_packages SET checksum_sha256 = :checksum, signature = :signature, 
       updated_at = :updatedAt WHERE model_id = :modelId
-    """,
+    """
   )
   suspend fun updateIntegrityMetadata(
     modelId: String,
@@ -112,12 +112,12 @@ interface DownloadManifestDao {
   suspend fun upsertManifests(manifests: List<DownloadManifestEntity>)
 
   @Query(
-    "SELECT * FROM download_manifests WHERE model_id = :modelId AND version = :version LIMIT 1",
+    "SELECT * FROM download_manifests WHERE model_id = :modelId AND version = :version LIMIT 1"
   )
   suspend fun getManifest(modelId: String, version: String): DownloadManifestEntity?
 
   @Query(
-    "SELECT * FROM download_manifests WHERE model_id = :modelId ORDER BY fetched_at DESC LIMIT 1",
+    "SELECT * FROM download_manifests WHERE model_id = :modelId ORDER BY fetched_at DESC LIMIT 1"
   )
   suspend fun getLatestManifest(modelId: String): DownloadManifestEntity?
 

@@ -41,13 +41,13 @@
 - [X] T013 Implement proper content descriptions in `app/src/main/java/com/vjaykrsna/nanoai/feature/chat/ui/ChatScreen.kt` - Add descriptive contentDescription for screen readers
 - [X] T014 Add semantic properties to `app/src/main/java/com/vjaykrsna/nanoai/feature/library/ui/ModelLibraryScreen.kt` - Implement proper heading structure and navigation semantics
 - [X] T015 Enhance keyboard navigation in `app/src/main/java/com/vjaykrsna/nanoai/feature/settings/ui/SettingsScreen.kt` - Add focus management and keyboard shortcuts
-- [ ] T016 Validate color contrast ratios in `app/src/main/java/com/vjaykrsna/nanoai/ui/theme/Color.kt` - Test all color combinations against WCAG AA standards (4.5:1 minimum)
+- [X] T016 Validate color contrast ratios in `app/src/main/java/com/vjaykrsna/nanoai/ui/theme/Color.kt` - Test all color combinations against WCAG AA standards (4.5:1 minimum)
 
 ### ViewModel Architecture Refactoring
-- [ ] T017 Split `ShellViewModel` navigation logic into `NavigationViewModel` (`app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/presentation/NavigationViewModel.kt`) - Extract navigation state management
-- [ ] T018 Create `ConnectivityViewModel` for network status (`app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/presentation/ConnectivityViewModel.kt`) - Handle connectivity banner and offline state
-- [ ] T019 Extract `ProgressViewModel` for background jobs (`app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/presentation/ProgressViewModel.kt`) - Manage download and processing progress
-- [ ] T020 Create `ThemeViewModel` for appearance settings (`app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/presentation/ThemeViewModel.kt`) - Handle theme switching and UI preferences
+- [X] T017 Split `ShellViewModel` navigation logic into `NavigationViewModel` (`app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/presentation/NavigationViewModel.kt`) - Extract navigation state management
+- [X] T018 Create `ConnectivityViewModel` for network status (`app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/presentation/ConnectivityViewModel.kt`) - Handle connectivity banner and offline state
+- [X] T019 Extract `ProgressViewModel` for background jobs (`app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/presentation/ProgressViewModel.kt`) - Manage download and processing progress
+- [X] T020 Create `ThemeViewModel` for appearance settings (`app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/presentation/ThemeViewModel.kt`) - Handle theme switching and UI preferences
 - [ ] T021 Refactor `ShellViewModel` to coordinate child ViewModels (`app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/presentation/ShellViewModel.kt`) - Reduce from 518 lines to focused orchestration logic
 - [ ] T022 Create missing UseCases for ViewModel operations - Address ViewModel layer violations where repositories are called directly instead of through UseCase layer
 

@@ -13,7 +13,7 @@ interface HuggingFaceService {
   /** Retrieve repository summary including sibling file metadata. */
   @GET("api/models/{modelId}")
   suspend fun getModelSummary(
-    @Path(value = "modelId", encoded = true) modelId: String,
+    @Path(value = "modelId", encoded = true) modelId: String
   ): HuggingFaceModelDto
 
   /**

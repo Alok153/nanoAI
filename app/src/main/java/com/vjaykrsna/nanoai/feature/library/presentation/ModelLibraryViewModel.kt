@@ -132,7 +132,7 @@ constructor(
             .sortedWith(
               compareBy<DownloadTask> { downloadPriority(it.status) }
                 .thenByDescending { it.progress }
-                .thenBy { it.modelId },
+                .thenBy { it.modelId }
             )
         val downloadItems =
           prioritizedDownloads.map { task ->
@@ -171,29 +171,17 @@ constructor(
             ),
         )
       }
-      .stateIn(
-        viewModelScope,
-        SharingStarted.Eagerly,
-        ModelLibraryTabSections(),
-      )
+      .stateIn(viewModelScope, SharingStarted.Eagerly, ModelLibraryTabSections())
 
   val localSections: StateFlow<ModelLibrarySections> =
     tabSections
       .map { it.local }
-      .stateIn(
-        viewModelScope,
-        SharingStarted.Eagerly,
-        ModelLibrarySections(),
-      )
+      .stateIn(viewModelScope, SharingStarted.Eagerly, ModelLibrarySections())
 
   val curatedSections: StateFlow<ModelLibrarySections> =
     tabSections
       .map { it.curated }
-      .stateIn(
-        viewModelScope,
-        SharingStarted.Eagerly,
-        ModelLibrarySections(),
-      )
+      .stateIn(viewModelScope, SharingStarted.Eagerly, ModelLibrarySections())
 
   val summary: StateFlow<ModelLibrarySummary> =
     combine(allModels, installedModels) { all, installed ->
@@ -207,11 +195,7 @@ constructor(
           installedBytes = installed.sumOf(ModelPackage::sizeBytes),
         )
       }
-      .stateIn(
-        viewModelScope,
-        SharingStarted.Eagerly,
-        ModelLibrarySummary(),
-      )
+      .stateIn(viewModelScope, SharingStarted.Eagerly, ModelLibrarySummary())
 
   val hasActiveFilters: StateFlow<Boolean> =
     filters.map { it.hasActiveFilters }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
@@ -325,7 +309,7 @@ constructor(
     viewModelScope.launch {
       _errorEvents.emit(
         LibraryError.UnexpectedError(
-          "Manual import isn't available yet. Check curated or Hugging Face tabs for downloads.",
+          "Manual import isn't available yet. Check curated or Hugging Face tabs for downloads."
         )
       )
     }

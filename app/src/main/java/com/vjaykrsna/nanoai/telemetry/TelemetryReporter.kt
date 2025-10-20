@@ -93,10 +93,7 @@ constructor(
   }
 
   sealed class TelemetryEvent {
-    data class Success(
-      val source: String,
-      val metadata: Map<String, String>,
-    ) : TelemetryEvent()
+    data class Success(val source: String, val metadata: Map<String, String>) : TelemetryEvent()
 
     data class Recoverable(
       val source: String,
@@ -114,10 +111,7 @@ constructor(
       val context: Map<String, String>,
     ) : TelemetryEvent()
 
-    data class Interaction(
-      val name: String,
-      val metadata: Map<String, String>,
-    ) : TelemetryEvent()
+    data class Interaction(val name: String, val metadata: Map<String, String>) : TelemetryEvent()
   }
 
   private fun TelemetryEvent.toLogMessage(): String =

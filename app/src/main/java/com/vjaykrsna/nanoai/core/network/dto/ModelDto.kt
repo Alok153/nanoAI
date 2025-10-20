@@ -4,10 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /** DTOs for the GET /v1/models endpoint. */
-@Serializable
-data class ModelListResponseDto(
-  val data: List<RemoteModelDto>,
-)
+@Serializable data class ModelListResponseDto(val data: List<RemoteModelDto>)
 
 @Serializable
 data class RemoteModelDto(

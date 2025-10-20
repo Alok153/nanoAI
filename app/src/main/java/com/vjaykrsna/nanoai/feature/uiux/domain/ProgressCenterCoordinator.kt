@@ -68,7 +68,7 @@ constructor(
 
   private fun mergeDownloadTasks(
     active: List<DownloadTask>,
-    queued: List<DownloadTask>
+    queued: List<DownloadTask>,
   ): List<ProgressJob> {
     if (active.isEmpty() && queued.isEmpty()) return emptyList()
 

@@ -22,9 +22,7 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class ImageGalleryViewModel
 @Inject
-constructor(
-  private val imageGalleryRepository: ImageGalleryRepository,
-) : ViewModel() {
+constructor(private val imageGalleryRepository: ImageGalleryRepository) : ViewModel() {
 
   private companion object {
     private const val STATE_FLOW_STOP_TIMEOUT_MS = 5000L
@@ -36,7 +34,7 @@ constructor(
       .stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(STATE_FLOW_STOP_TIMEOUT_MS),
-        emptyList()
+        emptyList(),
       )
 
   private val _events = MutableSharedFlow<ImageGalleryEvent>()

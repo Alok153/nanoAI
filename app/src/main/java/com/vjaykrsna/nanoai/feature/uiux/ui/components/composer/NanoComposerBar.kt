@@ -99,14 +99,8 @@ fun NanoComposerBar(
                     strokeWidth = 2.dp,
                   )
                 } else {
-                  IconButton(
-                    onClick = { if (sendEnabled) onSend() },
-                    enabled = sendEnabled,
-                  ) {
-                    Icon(
-                      imageVector = sendIcon,
-                      contentDescription = sendButtonContentDescription,
-                    )
+                  IconButton(onClick = { if (sendEnabled) onSend() }, enabled = sendEnabled) {
+                    Icon(imageVector = sendIcon, contentDescription = sendButtonContentDescription)
                   }
                 }
               }

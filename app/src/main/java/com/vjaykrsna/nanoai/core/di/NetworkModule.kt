@@ -26,7 +26,7 @@ abstract class NetworkModule {
   @Binds
   @Singleton
   abstract fun bindConnectivityStatusProvider(
-    impl: AndroidConnectivityStatusProvider,
+    impl: AndroidConnectivityStatusProvider
   ): ConnectivityStatusProvider
 
   companion object {
@@ -45,10 +45,7 @@ abstract class NetworkModule {
     @Provides
     @Singleton
     @Named("ModelCatalog")
-    fun provideModelCatalogRetrofit(
-      json: Json,
-      okHttpClient: OkHttpClient,
-    ): Retrofit =
+    fun provideModelCatalogRetrofit(json: Json, okHttpClient: OkHttpClient): Retrofit =
       Retrofit.Builder()
         .baseUrl(MODEL_CATALOG_BASE_URL)
         .client(okHttpClient)
@@ -57,17 +54,13 @@ abstract class NetworkModule {
 
     @Provides
     @Singleton
-    fun provideModelCatalogService(
-      @Named("ModelCatalog") retrofit: Retrofit,
-    ): ModelCatalogService = retrofit.create(ModelCatalogService::class.java)
+    fun provideModelCatalogService(@Named("ModelCatalog") retrofit: Retrofit): ModelCatalogService =
+      retrofit.create(ModelCatalogService::class.java)
 
     @Provides
     @Singleton
     @Named("HuggingFace")
-    fun provideHuggingFaceRetrofit(
-      json: Json,
-      okHttpClient: OkHttpClient,
-    ): Retrofit =
+    fun provideHuggingFaceRetrofit(json: Json, okHttpClient: OkHttpClient): Retrofit =
       Retrofit.Builder()
         .baseUrl(HUGGING_FACE_BASE_URL)
         .client(okHttpClient)
@@ -76,20 +69,19 @@ abstract class NetworkModule {
 
     @Provides
     @Singleton
-    fun provideHuggingFaceService(
-      @Named("HuggingFace") retrofit: Retrofit,
-    ): HuggingFaceService = retrofit.create(HuggingFaceService::class.java)
+    fun provideHuggingFaceService(@Named("HuggingFace") retrofit: Retrofit): HuggingFaceService =
+      retrofit.create(HuggingFaceService::class.java)
 
     @Provides
     @Singleton
     fun provideHuggingFaceAccountService(
-      @Named("HuggingFace") retrofit: Retrofit,
+      @Named("HuggingFace") retrofit: Retrofit
     ): HuggingFaceAccountService = retrofit.create(HuggingFaceAccountService::class.java)
 
     @Provides
     @Singleton
     fun provideHuggingFaceOAuthService(
-      @Named("HuggingFace") retrofit: Retrofit,
+      @Named("HuggingFace") retrofit: Retrofit
     ): HuggingFaceOAuthService = retrofit.create(HuggingFaceOAuthService::class.java)
   }
 }

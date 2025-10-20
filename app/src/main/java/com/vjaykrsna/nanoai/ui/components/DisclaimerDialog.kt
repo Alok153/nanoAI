@@ -140,7 +140,7 @@ private fun DisclaimerScrollableContent(scrollState: androidx.compose.foundation
       Modifier.fillMaxWidth()
         .heightIn(min = 160.dp, max = 280.dp)
         .verticalScroll(scrollState)
-        .testTag("disclaimer_scrollable_content"),
+        .testTag("disclaimer_scrollable_content")
   ) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
       bulletPoints.forEach { point ->

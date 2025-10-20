@@ -43,9 +43,7 @@ class SendPromptAndPersonaUseCaseTest {
     inferencePreferenceRepository = mockk(relaxed = true)
 
     every { inferencePreferenceRepository.observeInferencePreference() } returns
-      flowOf(
-        InferencePreference(InferenceMode.LOCAL_FIRST),
-      )
+      flowOf(InferencePreference(InferenceMode.LOCAL_FIRST))
 
     useCase =
       SendPromptAndPersonaUseCase(
@@ -100,7 +98,7 @@ class SendPromptAndPersonaUseCaseTest {
       inferenceOrchestrator.generateResponse(
         prompt = "hello",
         personaId = personaId,
-        options = any()
+        options = any(),
       )
     }
     coVerify {
@@ -110,7 +108,7 @@ class SendPromptAndPersonaUseCaseTest {
             message.role == Role.ASSISTANT &&
             message.source == MessageSource.LOCAL_MODEL &&
             message.latencyMs == latency
-        },
+        }
       )
     }
     assertThat(result.isFailure).isFalse()
@@ -125,10 +123,7 @@ class SendPromptAndPersonaUseCaseTest {
     coEvery { inferenceOrchestrator.isOnline() } returns true
     coEvery { inferenceOrchestrator.hasLocalModelAvailable() } returns false
     coEvery { inferenceOrchestrator.generateResponse(any(), any(), any()) } returns
-      InferenceResult.Error(
-        errorCode = "RATE_LIMIT",
-        message = "Too many requests",
-      )
+      InferenceResult.Error(errorCode = "RATE_LIMIT", message = "Too many requests")
 
     val result = useCase.sendPrompt(threadId, "question", personaId)
 
@@ -137,7 +132,7 @@ class SendPromptAndPersonaUseCaseTest {
       conversationRepository.saveMessage(
         match { message ->
           message.threadId == threadId && message.errorCode == "RATE_LIMIT" && message.text == null
-        },
+        }
       )
     }
   }
@@ -148,16 +143,11 @@ class SendPromptAndPersonaUseCaseTest {
     val personaId = UUID.randomUUID()
 
     every { inferencePreferenceRepository.observeInferencePreference() } returns
-      flowOf(
-        InferencePreference(InferenceMode.CLOUD_FIRST),
-      )
+      flowOf(InferencePreference(InferenceMode.CLOUD_FIRST))
     coEvery { inferenceOrchestrator.isOnline() } returns true
     coEvery { inferenceOrchestrator.hasLocalModelAvailable() } returns true
     coEvery { inferenceOrchestrator.generateResponse(any(), any(), any()) } returns
-      InferenceResult.Error(
-        errorCode = "CLOUD_FAIL",
-        message = "Cloud unavailable",
-      )
+      InferenceResult.Error(errorCode = "CLOUD_FAIL", message = "Cloud unavailable")
 
     val result = useCase.sendPrompt(threadId, "prompt", personaId)
 
@@ -168,7 +158,7 @@ class SendPromptAndPersonaUseCaseTest {
           message.threadId == threadId &&
             message.source == MessageSource.CLOUD_API &&
             message.errorCode == "CLOUD_FAIL"
-        },
+        }
       )
     }
   }
@@ -197,11 +187,7 @@ class SendPromptAndPersonaUseCaseTest {
     coEvery { inferenceOrchestrator.hasLocalModelAvailable() } returns true
     coEvery { personaRepository.getPersonaById(personaId) } returns flowOf(persona)
     coEvery { inferenceOrchestrator.generateResponse(any(), any(), any()) } returns
-      InferenceResult.Success(
-        text = "ok",
-        source = MessageSource.LOCAL_MODEL,
-        latencyMs = 1000,
-      )
+      InferenceResult.Success(text = "ok", source = MessageSource.LOCAL_MODEL, latencyMs = 1000)
 
     useCase.sendPrompt(threadId, "prompt", personaId)
 
@@ -237,7 +223,7 @@ class SendPromptAndPersonaUseCaseTest {
             log.previousPersonaId == oldPersona &&
             log.newPersonaId == newPersona &&
             log.actionTaken == PersonaSwitchAction.CONTINUE_THREAD
-        },
+        }
       )
     }
   }
@@ -262,7 +248,7 @@ class SendPromptAndPersonaUseCaseTest {
           log.threadId == newThreadId &&
             log.newPersonaId == newPersona &&
             log.actionTaken == PersonaSwitchAction.START_NEW_THREAD
-        },
+        }
       )
     }
   }
@@ -279,7 +265,7 @@ class SendPromptAndPersonaUseCaseTest {
           newPersonaId = UUID.randomUUID(),
           actionTaken = PersonaSwitchAction.CONTINUE_THREAD,
           createdAt = Clock.System.now(),
-        ),
+        )
       )
 
     coEvery { personaSwitchLogRepository.getLogsByThreadId(threadId) } returns flowOf(logs)

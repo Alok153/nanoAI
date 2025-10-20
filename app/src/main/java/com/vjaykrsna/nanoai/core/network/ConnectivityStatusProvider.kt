@@ -20,9 +20,7 @@ interface ConnectivityStatusProvider {
 @Singleton
 class AndroidConnectivityStatusProvider
 @Inject
-constructor(
-  @ApplicationContext private val context: Context,
-) : ConnectivityStatusProvider {
+constructor(@ApplicationContext private val context: Context) : ConnectivityStatusProvider {
   override suspend fun isOnline(): Boolean =
     withContext(Dispatchers.IO) {
       val connectivityManager =

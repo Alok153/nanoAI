@@ -17,11 +17,8 @@ import kotlinx.coroutines.flow.map
  * Wraps PersonaProfileDao, converting between entities and domain models.
  */
 @Singleton
-class PersonaRepositoryImpl
-@Inject
-constructor(
-  private val personaProfileDao: PersonaProfileDao,
-) : PersonaRepository {
+class PersonaRepositoryImpl @Inject constructor(private val personaProfileDao: PersonaProfileDao) :
+  PersonaRepository {
   override suspend fun getAllPersonas(): List<PersonaProfile> =
     personaProfileDao.getAll().map { it.toDomain() }
 

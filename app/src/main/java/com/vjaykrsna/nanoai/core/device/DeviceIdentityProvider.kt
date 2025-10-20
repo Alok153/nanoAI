@@ -18,9 +18,7 @@ interface DeviceIdentityProvider {
 @Singleton
 class AndroidDeviceIdentityProvider
 @Inject
-constructor(
-  @ApplicationContext private val context: Context,
-) : DeviceIdentityProvider {
+constructor(@ApplicationContext private val context: Context) : DeviceIdentityProvider {
   override fun deviceId(): String {
     val androidId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
     val seed =

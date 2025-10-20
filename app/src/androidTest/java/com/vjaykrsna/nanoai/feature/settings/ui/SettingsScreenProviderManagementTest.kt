@@ -52,7 +52,7 @@ class SettingsScreenProviderManagementTest : BaseSettingsScreenTest() {
           apiKey = "test-key-123",
           apiType = APIType.OPENAI_COMPATIBLE,
           isEnabled = true,
-        ),
+        )
       )
 
     renderSettingsScreen()
@@ -82,7 +82,7 @@ class SettingsScreenProviderManagementTest : BaseSettingsScreenTest() {
           apiKey = "test-key-123",
           apiType = APIType.OPENAI_COMPATIBLE,
           isEnabled = true,
-        ),
+        )
       )
 
     renderSettingsScreen()

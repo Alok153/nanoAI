@@ -19,7 +19,7 @@ plugins {
 fun com.android.build.api.dsl.DefaultConfig.createQuotedStringBuildConfigField(
   name: String,
   propertyName: String,
-  defaultValue: String
+  defaultValue: String,
 ) {
   val propertyValue = (project.findProperty(propertyName) as? String)?.trim()
   val finalValue = propertyValue.takeIf { !it.isNullOrBlank() } ?: defaultValue
@@ -39,7 +39,7 @@ fun jacocoClassDirectories(variant: String) =
     },
     fileTree(layout.buildDirectory.dir("intermediates/javac/$variant/classes").get()) {
       exclude(jacocoExclusionPatterns)
-    }
+    },
   )
 
 val isCiEnvironment = System.getenv("CI")?.equals("true", ignoreCase = true) == true
@@ -72,12 +72,12 @@ android {
     createQuotedStringBuildConfigField(
       "HF_OAUTH_SCOPE",
       "nanoai.hf.oauth.scope",
-      "all offline_access"
+      "all offline_access",
     )
     createQuotedStringBuildConfigField(
       "HF_OAUTH_REDIRECT_URI",
       "nanoai.hf.oauth.redirectUri",
-      "nanoai://auth/huggingface"
+      "nanoai://auth/huggingface",
     )
   }
 
@@ -85,10 +85,7 @@ android {
     release {
       isMinifyEnabled = true
       isShrinkResources = true
-      proguardFiles(
-        getDefaultProguardFile("proguard-android-optimize.txt"),
-        "proguard-rules.pro",
-      )
+      proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
     }
     debug {
       enableAndroidTestCoverage = true
@@ -237,11 +234,7 @@ tasks.register("ciManagedDeviceDebugAndroidTest") {
 
   dependsOn(tasks.named(managedDeviceTaskName))
   onlyIf { !skipInstrumentation }
-  doFirst {
-    logger.lifecycle(
-      "Executing managed-device instrumentation on $managedDeviceName",
-    )
-  }
+  doFirst { logger.lifecycle("Executing managed-device instrumentation on $managedDeviceName") }
 }
 
 if (useManagedDeviceForInstrumentation) {
@@ -339,7 +332,7 @@ tasks.register<Exec>("coverageMergeArtifacts") {
   commandLine(
     "bash",
     "${rootDir}/scripts/coverage/merge-coverage.sh",
-    layout.buildDirectory.dir("reports/jacoco/full").get().asFile.absolutePath
+    layout.buildDirectory.dir("reports/jacoco/full").get().asFile.absolutePath,
   )
 }
 
@@ -380,10 +373,7 @@ tasks.register<Exec>("coverageMarkdownSummary") {
     coverageSummaryMarkdown
       .get()
       .asFile
-      .copyTo(
-        target = legacyCoverageMarkdown.get().asFile,
-        overwrite = true,
-      )
+      .copyTo(target = legacyCoverageMarkdown.get().asFile, overwrite = true)
   }
 }
 

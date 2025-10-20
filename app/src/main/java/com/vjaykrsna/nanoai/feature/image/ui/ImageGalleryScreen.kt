@@ -82,9 +82,7 @@ fun ImageGalleryScreen(
   }
 
   Box(modifier = modifier.fillMaxSize().semantics { contentDescription = "Image gallery screen" }) {
-    Column(
-      modifier = Modifier.fillMaxSize().padding(NanoSpacing.lg),
-    ) {
+    Column(modifier = Modifier.fillMaxSize().padding(NanoSpacing.lg)) {
       // Header
       Row(
         modifier = Modifier.fillMaxWidth(),
@@ -95,10 +93,7 @@ fun ImageGalleryScreen(
           verticalAlignment = Alignment.CenterVertically,
           horizontalArrangement = Arrangement.spacedBy(NanoSpacing.sm),
         ) {
-          IconButton(
-            onClick = onNavigateBack,
-            modifier = Modifier.testTag("back_button"),
-          ) {
+          IconButton(onClick = onNavigateBack, modifier = Modifier.testTag("back_button")) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
           }
           Text(
@@ -118,10 +113,7 @@ fun ImageGalleryScreen(
 
       // Gallery grid
       if (images.isEmpty()) {
-        Box(
-          modifier = Modifier.fillMaxSize(),
-          contentAlignment = Alignment.Center,
-        ) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
           Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(NanoSpacing.sm),
@@ -212,18 +204,14 @@ private fun ImageGalleryItem(
     modifier = modifier.clickable(onClick = onClick).testTag("gallery_item_${image.id}"),
     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
   ) {
-    Column(
-      modifier = Modifier.fillMaxWidth().padding(NanoSpacing.sm),
-    ) {
+    Column(modifier = Modifier.fillMaxWidth().padding(NanoSpacing.sm)) {
       // Image placeholder
       Surface(
         modifier = Modifier.fillMaxWidth().height(150.dp),
         color = MaterialTheme.colorScheme.surfaceVariant,
         shape = MaterialTheme.shapes.small,
       ) {
-        Box(
-          contentAlignment = Alignment.Center,
-        ) {
+        Box(contentAlignment = Alignment.Center) {
           Icon(
             Icons.Default.Image,
             contentDescription = null,
@@ -241,9 +229,7 @@ private fun ImageGalleryItem(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Top,
       ) {
-        Column(
-          modifier = Modifier.weight(1f),
-        ) {
+        Column(modifier = Modifier.weight(1f)) {
           Text(
             text = image.prompt,
             style = MaterialTheme.typography.bodySmall,
@@ -266,10 +252,7 @@ private fun ImageGalleryItem(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
           )
         }
-        IconButton(
-          onClick = onDeleteClick,
-          modifier = Modifier.size(32.dp),
-        ) {
+        IconButton(onClick = onDeleteClick, modifier = Modifier.size(32.dp)) {
           Icon(
             Icons.Default.Delete,
             contentDescription = "Delete image",

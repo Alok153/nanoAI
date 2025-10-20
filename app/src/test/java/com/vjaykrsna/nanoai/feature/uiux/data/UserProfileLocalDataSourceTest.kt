@@ -42,7 +42,7 @@ class UserProfileLocalDataSourceTest {
         lastOpenedScreen = ScreenType.HOME,
         compactMode = false,
         pinnedTools = listOf("one", "two"),
-      ),
+      )
     )
 
     layoutDao.insertAll(
@@ -55,8 +55,8 @@ class UserProfileLocalDataSourceTest {
           pinnedTools = listOf("alpha", "beta"),
           isCompact = false,
           position = 0,
-        ),
-      ),
+        )
+      )
     )
 
     preferencesFlow.value =
@@ -101,7 +101,7 @@ class UserProfileLocalDataSourceTest {
         lastOpenedScreen = ScreenType.HOME,
         compactMode = false,
         pinnedTools = listOf("one", "two"),
-      ),
+      )
     )
 
     layoutDao.insertAll(
@@ -114,8 +114,8 @@ class UserProfileLocalDataSourceTest {
           pinnedTools = listOf("a", "b", "c", "d", "e", "f", "g"),
           isCompact = false,
           position = 0,
-        ),
-      ),
+        )
+      )
     )
 
     val dataSource =
@@ -201,7 +201,7 @@ private class InMemoryUserProfileDao : UserProfileDao {
 
   override suspend fun updateThemePreference(
     userId: String,
-    themePreference: ThemePreference
+    themePreference: ThemePreference,
   ): Int = modifyProfile(userId) { profile -> profile.copy(themePreference = themePreference) }
 
   override suspend fun updateVisualDensity(userId: String, visualDensity: VisualDensity): Int =

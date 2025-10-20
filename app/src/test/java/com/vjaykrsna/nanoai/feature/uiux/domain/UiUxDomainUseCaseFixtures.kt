@@ -40,7 +40,7 @@ internal object UiUxDomainReflection {
     name: String = "Daily Focus",
     lastOpenedScreen: String = "home",
     pinnedTools: List<String> = listOf("tool-1"),
-    isCompact: Boolean = false
+    isCompact: Boolean = false,
   ): Any {
     val ctor = primaryConstructor(loadClass(LAYOUT_SNAPSHOT))
     return ctor.newInstance(id, name, lastOpenedScreen, pinnedTools, isCompact)
@@ -274,10 +274,10 @@ internal class UserProfileRepositorySpy {
   fun asProxy(): Any {
     val repositoryClass =
       loadClass("com.vjaykrsna.nanoai.core.data.repository.UserProfileRepository")
-    return Proxy.newProxyInstance(
-      repositoryClass.classLoader,
-      arrayOf(repositoryClass),
-    ) { _, method, args ->
+    return Proxy.newProxyInstance(repositoryClass.classLoader, arrayOf(repositoryClass)) {
+      _,
+      method,
+      args ->
       val name = method.name
       when {
         name.startsWith("observe", ignoreCase = true) -> handleObserve(name)
@@ -359,7 +359,7 @@ internal class UserProfileRepositorySpy {
 internal fun instantiateUiUxUseCase(
   className: String,
   repository: Any,
-  dispatcher: CoroutineDispatcher
+  dispatcher: CoroutineDispatcher,
 ): Any {
   val clazz = UiUxDomainTestHelper.loadClass(className)
   val constructors = clazz.constructors.sortedBy { it.parameterCount }
@@ -392,10 +392,10 @@ internal class AnalyticsRecorder {
       error("Analytics dependency ${parameterType.name} must be an interface for testing")
     }
 
-    return Proxy.newProxyInstance(
-      parameterType.classLoader,
-      arrayOf(parameterType),
-    ) { _, method, args ->
+    return Proxy.newProxyInstance(parameterType.classLoader, arrayOf(parameterType)) {
+      _,
+      method,
+      args ->
       val payload = args?.firstOrNull { it is String } as? String
       payload?.let { events += it }
       when (method.returnType) {

@@ -60,7 +60,7 @@ import org.junit.runner.RunWith
 @OptIn(
   ExperimentalCoroutinesApi::class,
   ExperimentalMaterial3WindowSizeClassApi::class,
-  ExperimentalTestApi::class
+  ExperimentalTestApi::class,
 )
 @RunWith(AndroidJUnit4::class)
 class OfflineProgressTest {
@@ -150,7 +150,7 @@ class OfflineProgressTest {
           onEvent = { intent ->
             events += intent
             handleIntent(state, intent)
-          }
+          },
         )
       }
     }
@@ -189,7 +189,7 @@ class OfflineProgressTest {
 
   private fun handleConnectivityChanged(
     current: ShellUiState,
-    intent: ShellUiEvent.ConnectivityChanged
+    intent: ShellUiEvent.ConnectivityChanged,
   ) =
     current.copy(
       layout = current.layout.copy(connectivity = intent.status),
@@ -229,7 +229,7 @@ class OfflineProgressTest {
 
   private fun handleToggleRightDrawer(
     current: ShellUiState,
-    intent: ShellUiEvent.ToggleRightDrawer
+    intent: ShellUiEvent.ToggleRightDrawer,
   ) =
     current.copy(
       layout =
@@ -338,11 +338,7 @@ private fun AndroidComposeTestRule<*, *>.waitForNodeWithTag(
 private fun AndroidComposeTestRule<*, *>.onAllNodesWithTagPrefix(
   prefix: String,
   useUnmergedTree: Boolean = false,
-) =
-  onAllNodes(
-    SemanticsMatcherExpectTagPrefix(prefix),
-    useUnmergedTree = useUnmergedTree,
-  )
+) = onAllNodes(SemanticsMatcherExpectTagPrefix(prefix), useUnmergedTree = useUnmergedTree)
 
 private fun SemanticsMatcherExpectTagPrefix(prefix: String): SemanticsMatcher =
   SemanticsMatcher("Has test tag with prefix $prefix") { node ->

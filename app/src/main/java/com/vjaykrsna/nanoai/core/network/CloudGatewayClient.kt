@@ -25,10 +25,7 @@ import retrofit2.converter.kotlinx.serialization.asConverterFactory
 @Singleton
 class CloudGatewayClient
 @Inject
-constructor(
-  private val okHttpClient: OkHttpClient,
-  private val json: Json,
-) {
+constructor(private val okHttpClient: OkHttpClient, private val json: Json) {
   private val jsonMediaType = "application/json".toMediaType()
 
   /** Execute a text completion request against the configured provider. */
@@ -39,9 +36,7 @@ constructor(
     execute(provider) { service -> service.createCompletion(request) }
 
   /** Retrieve the provider's available model list. */
-  suspend fun listModels(
-    provider: APIProviderConfig,
-  ): CloudGatewayResult<ModelListResponseDto> =
+  suspend fun listModels(provider: APIProviderConfig): CloudGatewayResult<ModelListResponseDto> =
     execute(provider) { service -> service.listModels() }
 
   @OptIn(ExperimentalTime::class)

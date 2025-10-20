@@ -25,10 +25,7 @@ data class HuggingFaceManifestRequest(
 @Singleton
 class HuggingFaceManifestFetcher
 @Inject
-constructor(
-  private val service: HuggingFaceService,
-  private val clock: Clock = Clock.System,
-) {
+constructor(private val service: HuggingFaceService, private val clock: Clock = Clock.System) {
 
   suspend fun fetchManifest(request: HuggingFaceManifestRequest): DownloadManifest {
     val normalizedPath = request.artifactPath.removePrefix("/")
@@ -88,13 +85,7 @@ constructor(
         .firstOrNull()
 
     val size =
-      sequenceOf(
-          sizeFromPaths,
-          siblingSize,
-          treeEntry?.bestSize(),
-        )
-        .filterNotNull()
-        .firstOrNull()
+      sequenceOf(sizeFromPaths, siblingSize, treeEntry?.bestSize()).filterNotNull().firstOrNull()
 
     require(!checksum.isNullOrBlank()) {
       "Unable to resolve SHA-256 checksum for ${request.repository}/${request.artifactPath}"
@@ -134,11 +125,7 @@ constructor(
   ): HuggingFaceSiblingDto? {
     val siblings = summary?.siblings ?: return null
     return siblings.firstOrNull { sibling ->
-      val candidates =
-        setOf(
-          sibling.relativeFilename,
-          sibling.relativeFilename.removePrefix("/"),
-        )
+      val candidates = setOf(sibling.relativeFilename, sibling.relativeFilename.removePrefix("/"))
       normalizedPath in candidates
     }
   }

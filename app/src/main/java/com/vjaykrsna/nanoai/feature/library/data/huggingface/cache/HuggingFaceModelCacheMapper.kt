@@ -9,7 +9,7 @@ import kotlinx.datetime.Instant
 internal object HuggingFaceModelCacheMapper {
   fun toEntity(
     model: HuggingFaceModelSummary,
-    fetchedAt: Instant = Clock.System.now()
+    fetchedAt: Instant = Clock.System.now(),
   ): HuggingFaceModelCacheEntity {
     return HuggingFaceModelCacheEntity(
       modelId = model.modelId,

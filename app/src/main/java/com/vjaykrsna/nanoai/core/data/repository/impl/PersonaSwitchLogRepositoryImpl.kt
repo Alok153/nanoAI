@@ -19,9 +19,7 @@ import kotlinx.coroutines.flow.map
 @Singleton
 class PersonaSwitchLogRepositoryImpl
 @Inject
-constructor(
-  private val personaSwitchLogDao: PersonaSwitchLogDao,
-) : PersonaSwitchLogRepository {
+constructor(private val personaSwitchLogDao: PersonaSwitchLogDao) : PersonaSwitchLogRepository {
   override suspend fun logSwitch(log: PersonaSwitchLog) {
     personaSwitchLogDao.insert(log.toEntity())
   }

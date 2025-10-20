@@ -41,7 +41,7 @@ interface PersonaSwitchLogDao {
         WHERE thread_id = :threadId 
         ORDER BY created_at DESC 
         LIMIT 1
-        """,
+        """
   )
   suspend fun getLatestForThread(threadId: String): PersonaSwitchLogEntity?
 
@@ -51,7 +51,7 @@ interface PersonaSwitchLogDao {
         SELECT * FROM persona_switch_logs 
         WHERE new_persona_id = :personaId OR previous_persona_id = :personaId
         ORDER BY created_at DESC
-        """,
+        """
   )
   suspend fun getByPersonaId(personaId: String): List<PersonaSwitchLogEntity>
 

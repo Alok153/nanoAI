@@ -89,7 +89,7 @@ constructor(
 
   private suspend fun processPersona(
     dto: BackupPersonaDto,
-    defaultTimestamp: Instant
+    defaultTimestamp: Instant,
   ): PersonaImportAction {
     val personaId = dto.resolvePersonaId()
     val existing = personaRepository.getPersona(personaId)
@@ -106,7 +106,7 @@ constructor(
   private fun BackupPersonaDto.toPersonaProfile(
     personaId: UUID,
     existing: PersonaProfile?,
-    defaultTimestamp: Instant
+    defaultTimestamp: Instant,
   ): PersonaProfile {
     val persistedCreatedAt = resolveCreatedAt(existing, defaultTimestamp)
     val persistedUpdatedAt = resolveUpdatedAt(defaultTimestamp)
@@ -252,18 +252,12 @@ constructor(
     return this[0].toInt() == ZIP_MAGIC_FIRST && this[1].toInt() == ZIP_MAGIC_SECOND
   }
 
-  private sealed class ImportException(
-    message: String,
-    cause: Throwable? = null,
-  ) : IOException(message, cause) {
-    class FileNotFound(
-      message: String,
-    ) : ImportException(message)
+  private sealed class ImportException(message: String, cause: Throwable? = null) :
+    IOException(message, cause) {
+    class FileNotFound(message: String) : ImportException(message)
 
-    class InvalidFormat(
-      message: String,
-      cause: Throwable? = null,
-    ) : ImportException(message, cause)
+    class InvalidFormat(message: String, cause: Throwable? = null) :
+      ImportException(message, cause)
   }
 
   companion object {

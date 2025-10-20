@@ -10,9 +10,7 @@ import okhttp3.Response
 @Singleton
 class HuggingFaceAuthInterceptor
 @Inject
-constructor(
-  private val tokenProvider: HuggingFaceTokenProvider,
-) : Interceptor {
+constructor(private val tokenProvider: HuggingFaceTokenProvider) : Interceptor {
   override fun intercept(chain: Interceptor.Chain): Response {
     val token = tokenProvider.accessToken()?.takeIf { it.isNotBlank() }
     val original = chain.request()

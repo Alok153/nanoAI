@@ -94,18 +94,18 @@ class HuggingFaceCatalogRepositoryImplTest {
             baseModel = JsonPrimitive("base-model-123"),
             datasets = JsonArray(listOf(JsonPrimitive("dataset1"), JsonPrimitive("dataset2"))),
             summary = "A test model summary",
-            description = "A detailed description of the test model"
+            description = "A detailed description of the test model",
           ),
         config = ModelConfigDto(architectures = listOf("Transformer", "BERT"), modelType = "bert"),
         siblings =
           listOf(
             ModelSiblingDto(filename = "model.bin", sizeBytes = 1000000L),
-            ModelSiblingDto(filename = "config.json", sizeBytes = 2000L)
+            ModelSiblingDto(filename = "config.json", sizeBytes = 2000L),
           ),
         trendingScore = 50,
         createdAt = "2024-01-01T00:00:00Z",
         lastModified = "2024-01-02T00:00:00Z",
-        isPrivate = false
+        isPrivate = false,
       )
 
     val query = HuggingFaceCatalogQuery(limit = 10, offset = 0)
@@ -163,7 +163,7 @@ class HuggingFaceCatalogRepositoryImplTest {
       trendingScore = null,
       createdAt = null,
       lastModified = null,
-      isPrivate = false
+      isPrivate = false,
     )
 
   private fun createTestDto(modelId: String) =

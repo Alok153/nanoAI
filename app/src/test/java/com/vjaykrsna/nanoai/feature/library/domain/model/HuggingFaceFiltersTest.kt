@@ -55,7 +55,7 @@ class HuggingFaceFiltersTest {
         trendingScore = null,
         createdAt = null,
         lastModified = null,
-        isPrivate = false
+        isPrivate = false,
       )
 
     val smallModel =
@@ -71,7 +71,7 @@ class HuggingFaceFiltersTest {
         trendingScore = null,
         createdAt = null,
         lastModified = null,
-        isPrivate = false
+        isPrivate = false,
       )
 
     val largeModel =
@@ -87,7 +87,7 @@ class HuggingFaceFiltersTest {
         trendingScore = null,
         createdAt = null,
         lastModified = null,
-        isPrivate = false
+        isPrivate = false,
       )
 
     val unknownSizeModel =
@@ -104,7 +104,7 @@ class HuggingFaceFiltersTest {
         trendingScore = null,
         createdAt = null,
         lastModified = null,
-        isPrivate = false
+        isPrivate = false,
       )
 
     assertThat(tinyModel.sizeBucket).isEqualTo(HuggingFaceSizeBucket.TINY)

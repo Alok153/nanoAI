@@ -94,7 +94,7 @@ class FakeModelDownloadsAndExportUseCase : ModelDownloadsAndExportUseCaseInterfa
 
   override suspend fun exportBackup(
     destinationPath: String,
-    includeChatHistory: Boolean
+    includeChatHistory: Boolean,
   ): Result<String> {
     lastExportPath = destinationPath
     return if (shouldFailOnExport) {

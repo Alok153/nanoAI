@@ -27,11 +27,7 @@ class BaselineProfileGenerator {
 
   @Test
   fun generateBaselineProfile() =
-    rule.collect(
-      packageName = "com.vjaykrsna.nanoai",
-      maxIterations = 15,
-      stableIterations = 3,
-    ) {
+    rule.collect(packageName = "com.vjaykrsna.nanoai", maxIterations = 15, stableIterations = 3) {
       pressHome()
       startActivityAndWait()
 

@@ -26,11 +26,7 @@ class FakeSendPromptAndPersonaUseCase {
     shouldFailOnSwitch = false
   }
 
-  suspend fun sendPrompt(
-    threadId: UUID,
-    prompt: String,
-    personaId: UUID,
-  ): Result<Unit> {
+  suspend fun sendPrompt(threadId: UUID, prompt: String, personaId: UUID): Result<Unit> {
     lastThreadId = threadId
     lastPrompt = prompt
     lastPersonaId = personaId
@@ -42,11 +38,7 @@ class FakeSendPromptAndPersonaUseCase {
     }
   }
 
-  suspend fun switchPersona(
-    threadId: UUID,
-    newPersonaId: UUID,
-    action: PersonaSwitchAction,
-  ): UUID {
+  suspend fun switchPersona(threadId: UUID, newPersonaId: UUID, action: PersonaSwitchAction): UUID {
     if (shouldFailOnSwitch) {
       error("Failed to switch persona")
     }

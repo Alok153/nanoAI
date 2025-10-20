@@ -181,7 +181,7 @@ interface LayoutSnapshotDao {
         SELECT * FROM layout_snapshots 
         WHERE user_id = :userId 
         ORDER BY position ASC
-        """,
+        """
   )
   suspend fun findAllLayouts(userId: String): List<LayoutSnapshotEntity>
 }

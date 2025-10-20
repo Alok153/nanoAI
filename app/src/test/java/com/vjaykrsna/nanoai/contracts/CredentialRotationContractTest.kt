@@ -11,10 +11,7 @@ import org.junit.Test
  */
 class CredentialRotationContractTest {
   private val rotationRequest =
-    mapOf(
-      "environment" to "production",
-      "encryptedKey" to "BASE64_PAYLOAD",
-    )
+    mapOf("environment" to "production", "encryptedKey" to "BASE64_PAYLOAD")
 
   private val rotationResponse =
     mapOf(

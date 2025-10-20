@@ -85,10 +85,7 @@ class MainActivity : ComponentActivity() {
       val appUiState by appViewModel.uiState.collectAsStateWithLifecycle()
 
       NanoAITheme(themePreference = appUiState.themePreference) {
-        Surface(
-          modifier = Modifier.fillMaxSize(),
-          color = MaterialTheme.colorScheme.background,
-        ) {
+        Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
           if (appUiState.isHydrating) {
             AppHydrationState(isOffline = appUiState.offline)
           } else {

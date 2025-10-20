@@ -26,9 +26,7 @@ interface ImageGalleryRepository {
 @Singleton
 class ImageGalleryRepositoryImpl
 @Inject
-constructor(
-  private val generatedImageDao: GeneratedImageDao,
-) : ImageGalleryRepository {
+constructor(private val generatedImageDao: GeneratedImageDao) : ImageGalleryRepository {
 
   override fun observeAllImages(): Flow<List<GeneratedImage>> =
     generatedImageDao.observeAll().map { entities -> entities.map { it.toDomain() } }

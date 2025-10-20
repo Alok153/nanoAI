@@ -68,9 +68,7 @@ fun HomeScreen(
   val columnCount = remember(layout.windowSizeClass.widthSizeClass) { columnsForLayout(layout) }
   val modeById = remember(modeCards) { modeCards.associateBy { it.id } }
 
-  NanoScreen(
-    modifier = modifier.testTag("home_hub"),
-  ) {
+  NanoScreen(modifier = modifier.testTag("home_hub")) {
     var toolsExpanded by rememberSaveable { mutableStateOf(false) }
     var recentConfirmation by rememberSaveable { mutableStateOf<String?>(null) }
 
@@ -89,11 +87,7 @@ fun HomeScreen(
     )
 
     NanoSection(title = "Modes") {
-      ModeGrid(
-        columns = columnCount,
-        modeCards = modeCards,
-        onModeSelect = onModeSelect,
-      )
+      ModeGrid(columns = columnCount, modeCards = modeCards, onModeSelect = onModeSelect)
     }
 
     if (progressJobs.isNotEmpty()) {
@@ -111,7 +105,7 @@ fun HomeScreen(
       title = "Recent activity",
       action = {
         if (recentActivity.isNotEmpty()) {
-          TextButton(onClick = { /* placeholder until history navigation is wired */}) {
+          TextButton(onClick = { /* placeholder until history navigation is wired */ }) {
             Text("View history")
           }
         }
@@ -239,18 +233,14 @@ private fun QuickActionsRow(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ModeGrid(
-  columns: Int,
-  modeCards: List<ModeCard>,
-  onModeSelect: (ModeId) -> Unit,
-) {
+private fun ModeGrid(columns: Int, modeCards: List<ModeCard>, onModeSelect: (ModeId) -> Unit) {
   Box(
     modifier =
       Modifier.fillMaxWidth().testTag("home_mode_grid").semantics {
         val rowCount = ((modeCards.size + columns - 1) / columns).coerceAtLeast(1)
         this[SemanticsProperties.CollectionInfo] =
           CollectionInfo(rowCount = rowCount, columnCount = columns)
-      },
+      }
   ) {
     FlowRow(
       modifier = Modifier.fillMaxWidth(),
@@ -258,21 +248,13 @@ private fun ModeGrid(
       verticalArrangement = Arrangement.spacedBy(NanoSpacing.md),
       maxItemsInEachRow = columns,
     ) {
-      modeCards.forEach { card ->
-        ModeCardItem(
-          card = card,
-          onClick = { onModeSelect(card.id) },
-        )
-      }
+      modeCards.forEach { card -> ModeCardItem(card = card, onClick = { onModeSelect(card.id) }) }
     }
   }
 }
 
 @Composable
-private fun ModeCardItem(
-  card: ModeCard,
-  onClick: () -> Unit,
-) {
+private fun ModeCardItem(card: ModeCard, onClick: () -> Unit) {
   NanoCard(
     title = card.title,
     subtitle = card.subtitle,
@@ -307,7 +289,7 @@ private fun RecentActivityContent(
     Surface(
       shape = MaterialTheme.shapes.large,
       tonalElevation = 1.dp,
-      modifier = Modifier.testTag("recent_activity_list")
+      modifier = Modifier.testTag("recent_activity_list"),
     ) {
       Box(
         modifier = Modifier.fillMaxWidth().padding(NanoSpacing.lg),

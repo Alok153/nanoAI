@@ -7,10 +7,7 @@ import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceSortField
 import com.vjaykrsna.nanoai.feature.library.model.ProviderType
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryTab
 
-data class LibraryDownloadItem(
-  val task: DownloadTask,
-  val model: ModelPackage?,
-)
+data class LibraryDownloadItem(val task: DownloadTask, val model: ModelPackage?)
 
 data class LibraryFilterState(
   val tab: ModelLibraryTab = ModelLibraryTab.LOCAL,

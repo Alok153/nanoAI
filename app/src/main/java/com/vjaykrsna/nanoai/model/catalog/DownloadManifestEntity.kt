@@ -18,12 +18,10 @@ import kotlinx.datetime.Instant
         childColumns = ["model_id"],
         onUpdate = ForeignKey.CASCADE,
         onDelete = ForeignKey.CASCADE,
-      ),
+      )
     ],
   indices =
-    [
-      Index(value = ["model_id"]), Index(value = ["expires_at"]), Index(value = ["checksum_sha256"])
-    ],
+    [Index(value = ["model_id"]), Index(value = ["expires_at"]), Index(value = ["checksum_sha256"])],
 )
 data class DownloadManifestEntity(
   @ColumnInfo(name = "model_id") val modelId: String,

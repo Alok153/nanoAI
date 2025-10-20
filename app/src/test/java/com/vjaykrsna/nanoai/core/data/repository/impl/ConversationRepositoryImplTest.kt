@@ -41,10 +41,7 @@ class ConversationRepositoryImplTest {
   @Before
   fun setup() {
     database =
-      Room.inMemoryDatabaseBuilder(
-          RuntimeEnvironment.getApplication(),
-          NanoAIDatabase::class.java,
-        )
+      Room.inMemoryDatabaseBuilder(RuntimeEnvironment.getApplication(), NanoAIDatabase::class.java)
         .allowMainThreadQueries()
         .build()
 

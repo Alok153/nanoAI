@@ -24,11 +24,7 @@ class CoverageSummaryTest {
             TestLayer.DATA to CoverageMetric(coverage = 71.0, threshold = 70.0),
           ),
         thresholds =
-          mapOf(
-            TestLayer.VIEW_MODEL to 75.0,
-            TestLayer.UI to 65.0,
-            TestLayer.DATA to 70.0,
-          ),
+          mapOf(TestLayer.VIEW_MODEL to 75.0, TestLayer.UI to 65.0, TestLayer.DATA to 70.0),
         trendDelta = emptyMap(),
         riskItems = emptyList(),
       )
@@ -52,17 +48,9 @@ class CoverageSummaryTest {
             TestLayer.DATA to CoverageMetric(coverage = 74.0, threshold = 70.0),
           ),
         thresholds =
-          mapOf(
-            TestLayer.VIEW_MODEL to 75.0,
-            TestLayer.UI to 65.0,
-            TestLayer.DATA to 70.0,
-          ),
+          mapOf(TestLayer.VIEW_MODEL to 75.0, TestLayer.UI to 65.0, TestLayer.DATA to 70.0),
         trendDelta =
-          mapOf(
-            TestLayer.VIEW_MODEL to -1.5,
-            TestLayer.UI to -0.5,
-            TestLayer.DATA to 2.0,
-          ),
+          mapOf(TestLayer.VIEW_MODEL to -1.5, TestLayer.UI to -0.5, TestLayer.DATA to 2.0),
         riskItems = listOf(RiskRegisterItemRef("risk-critical-data")),
       )
 
@@ -78,9 +66,7 @@ class CoverageSummaryTest {
         buildId = "build-invalid",
         timestamp = Instant.parse("2025-10-09T07:00:00Z"),
         layerMetrics =
-          mapOf(
-            TestLayer.VIEW_MODEL to CoverageMetric(coverage = 112.0, threshold = 75.0),
-          ),
+          mapOf(TestLayer.VIEW_MODEL to CoverageMetric(coverage = 112.0, threshold = 75.0)),
         thresholds = mapOf(TestLayer.VIEW_MODEL to 75.0),
         trendDelta = emptyMap(),
         riskItems = emptyList(),
@@ -101,17 +87,9 @@ class CoverageSummaryTest {
             TestLayer.DATA to CoverageMetric(coverage = 81.0, threshold = 70.0),
           ),
         thresholds =
-          mapOf(
-            TestLayer.VIEW_MODEL to 75.0,
-            TestLayer.UI to 65.0,
-            TestLayer.DATA to 70.0,
-          ),
+          mapOf(TestLayer.VIEW_MODEL to 75.0, TestLayer.UI to 65.0, TestLayer.DATA to 70.0),
         trendDelta =
-          mapOf(
-            TestLayer.VIEW_MODEL to -2.0,
-            TestLayer.UI to 0.0,
-            TestLayer.DATA to 5.0,
-          ),
+          mapOf(TestLayer.VIEW_MODEL to -2.0, TestLayer.UI to 0.0, TestLayer.DATA to 5.0),
         riskItems = emptyList(),
       )
 
@@ -137,10 +115,7 @@ class CoverageSummaryTest {
       CoverageSummary(
         buildId = "build-rounding",
         timestamp = Instant.parse("2025-10-09T07:00:00Z"),
-        layerMetrics =
-          mapOf(
-            TestLayer.UI to CoverageMetric(coverage = 63.4, threshold = 65.0),
-          ),
+        layerMetrics = mapOf(TestLayer.UI to CoverageMetric(coverage = 63.4, threshold = 65.0)),
         thresholds = mapOf(TestLayer.UI to 65.0),
         trendDelta = mapOf(TestLayer.UI to 1.345),
         riskItems = emptyList(),

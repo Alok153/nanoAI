@@ -72,7 +72,7 @@ private fun List<ModelPackage>.sortBy(sort: ModelSort): List<ModelPackage> =
           .thenBy {
             it.installState != InstallState.DOWNLOADING && it.installState != InstallState.PAUSED
           }
-          .thenBy { it.displayName.lowercase(Locale.US) },
+          .thenBy { it.displayName.lowercase(Locale.US) }
       )
     ModelSort.NAME -> sortedBy { it.displayName.lowercase(Locale.US) }
     ModelSort.SIZE_DESC -> sortedByDescending(ModelPackage::sizeBytes)

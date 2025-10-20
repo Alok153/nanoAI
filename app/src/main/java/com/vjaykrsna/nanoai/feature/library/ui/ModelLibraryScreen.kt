@@ -41,7 +41,7 @@ import kotlinx.coroutines.flow.collectLatest
 @Composable
 fun ModelLibraryScreen(
   modifier: Modifier = Modifier,
-  viewModel: ModelLibraryViewModel = hiltViewModel()
+  viewModel: ModelLibraryViewModel = hiltViewModel(),
 ) {
   val filters by viewModel.filters.collectAsState()
   val summary by viewModel.summary.collectAsState()
@@ -91,16 +91,13 @@ fun ModelLibraryScreen(
   }
 
   val pullRefreshState =
-    rememberPullRefreshState(
-      refreshing = isRefreshing,
-      onRefresh = viewModel::refreshCatalog,
-    )
+    rememberPullRefreshState(refreshing = isRefreshing, onRefresh = viewModel::refreshCatalog)
 
   Box(
     modifier =
       modifier.fillMaxSize().pullRefresh(pullRefreshState).semantics {
         contentDescription = "Model library screen with enhanced management controls"
-      },
+      }
   ) {
     Column(
       modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 16.dp),
@@ -128,10 +125,7 @@ fun ModelLibraryScreen(
         onSelectHuggingFaceLibrary = viewModel::setHuggingFaceLibrary,
       )
 
-      ModelLibraryTabs(
-        selectedTab = filters.tab,
-        onTabSelect = viewModel::selectTab,
-      )
+      ModelLibraryTabs(selectedTab = filters.tab, onTabSelect = viewModel::selectTab)
 
       when (filters.tab) {
         ModelLibraryTab.LOCAL -> {
@@ -144,7 +138,7 @@ fun ModelLibraryScreen(
                 modifier =
                   Modifier.testTag(LOADING_INDICATOR_TAG).semantics {
                     contentDescription = "Loading models"
-                  },
+                  }
               )
             }
           } else {
@@ -172,7 +166,7 @@ fun ModelLibraryScreen(
                 modifier =
                   Modifier.testTag(LOADING_INDICATOR_TAG).semantics {
                     contentDescription = "Loading curated models"
-                  },
+                  }
               )
             }
           } else {

@@ -159,7 +159,7 @@ class ChatScreenTest {
       .onNodeWithContentDescription(
         "Your message: Test message",
         substring = true,
-        useUnmergedTree = true
+        useUnmergedTree = true,
       )
       .assertExists()
   }
@@ -296,7 +296,7 @@ class ChatScreenTest {
     val assistantMessage =
       DomainTestBuilders.buildAssistantMessage(
         threadId = threadId,
-        text = "I can help you with that"
+        text = "I can help you with that",
       )
 
     conversationRepository.addThread(thread)
@@ -312,7 +312,7 @@ class ChatScreenTest {
       .onNodeWithContentDescription(
         "Assistant's message: I can help you with that",
         substring = true,
-        useUnmergedTree = true
+        useUnmergedTree = true,
       )
       .assertExists()
   }
@@ -329,7 +329,7 @@ class ChatScreenTest {
     val richMessage =
       DomainTestBuilders.buildUserMessage(
         threadId = threadId,
-        text = "Here is a code snippet:\n```kotlin\nfun example() { println(\"test\") }\n```"
+        text = "Here is a code snippet:\n```kotlin\nfun example() { println(\"test\") }\n```",
       )
 
     conversationRepository.addThread(thread)

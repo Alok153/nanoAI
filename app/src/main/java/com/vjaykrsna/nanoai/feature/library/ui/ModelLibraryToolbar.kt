@@ -271,23 +271,16 @@ internal fun ModelLibraryTabs(
   TabRow(
     selectedTabIndex = selectedIndex,
     modifier =
-      modifier.fillMaxWidth().semantics { contentDescription = "Model library navigation tabs" }
+      modifier.fillMaxWidth().semantics { contentDescription = "Model library navigation tabs" },
   ) {
     tabs.forEach { tab ->
-      Tab(
-        selected = tab == selectedTab,
-        onClick = { onTabSelect(tab) },
-        text = { Text(tab.label) },
-      )
+      Tab(selected = tab == selectedTab, onClick = { onTabSelect(tab) }, text = { Text(tab.label) })
     }
   }
 }
 
 @Composable
-private fun FilterSection(
-  title: String,
-  content: @Composable () -> Unit,
-) {
+private fun FilterSection(title: String, content: @Composable () -> Unit) {
   Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
     Text(
       text = title,

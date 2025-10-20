@@ -31,7 +31,7 @@ class HuggingFaceModelCardTest {
         trendingScore = null,
         createdAt = null,
         lastModified = null,
-        isPrivate = false
+        isPrivate = false,
       )
 
     composeTestRule.setContent { TestingTheme { HuggingFaceModelCard(model) } }
@@ -65,7 +65,7 @@ class HuggingFaceModelCardTest {
         trendingScore = 95,
         createdAt = Instant.parse("2024-01-01T00:00:00Z"),
         lastModified = Instant.parse("2024-01-02T00:00:00Z"),
-        isPrivate = false
+        isPrivate = false,
       )
 
     composeTestRule.setContent { TestingTheme { HuggingFaceModelCard(model) } }
@@ -110,7 +110,7 @@ class HuggingFaceModelCardTest {
         trendingScore = null,
         createdAt = null,
         lastModified = null,
-        isPrivate = false
+        isPrivate = false,
       )
 
     composeTestRule.setContent { TestingTheme { HuggingFaceModelCard(model) } }
@@ -140,7 +140,7 @@ class HuggingFaceModelCardTest {
         lastModified = null,
         hasGatedAccess = true,
         isDisabled = false,
-        isPrivate = false
+        isPrivate = false,
       )
 
     val disabledModel =
@@ -158,7 +158,7 @@ class HuggingFaceModelCardTest {
         lastModified = null,
         hasGatedAccess = false,
         isDisabled = true,
-        isPrivate = false
+        isPrivate = false,
       )
 
     composeTestRule.setContent { TestingTheme { HuggingFaceModelCard(gatedModel) } }
@@ -188,7 +188,7 @@ class HuggingFaceModelCardTest {
         createdAt = null,
         lastModified = null,
         totalSizeBytes = 500L * 1024 * 1024, // 500 MB -> TINY
-        isPrivate = false
+        isPrivate = false,
       )
 
     val largeModel =
@@ -205,7 +205,7 @@ class HuggingFaceModelCardTest {
         createdAt = null,
         lastModified = null,
         totalSizeBytes = 15L * 1024 * 1024 * 1024, // 15 GB -> LARGE
-        isPrivate = false
+        isPrivate = false,
       )
 
     composeTestRule.setContent { TestingTheme { HuggingFaceModelCard(tinyModel) } }

@@ -50,10 +50,7 @@ data class BaseModelRelationDto(
   @SerialName("models") val models: List<BaseModelRefDto>? = null,
 )
 
-@Serializable
-data class BaseModelRefDto(
-  @SerialName("id") val id: String? = null,
-)
+@Serializable data class BaseModelRefDto(@SerialName("id") val id: String? = null)
 
 @Serializable
 data class ModelSiblingDto(

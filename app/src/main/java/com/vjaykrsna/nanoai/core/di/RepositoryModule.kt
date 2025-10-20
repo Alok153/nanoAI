@@ -46,75 +46,55 @@ import kotlinx.coroutines.CoroutineDispatcher
 abstract class RepositoryModule {
   @Binds
   @Singleton
-  abstract fun bindConversationRepository(
-    impl: ConversationRepositoryImpl,
-  ): ConversationRepository
+  abstract fun bindConversationRepository(impl: ConversationRepositoryImpl): ConversationRepository
 
   @Binds
   @Singleton
-  abstract fun bindPersonaRepository(
-    impl: PersonaRepositoryImpl,
-  ): PersonaRepository
+  abstract fun bindPersonaRepository(impl: PersonaRepositoryImpl): PersonaRepository
 
   @Binds
   @Singleton
   abstract fun bindPersonaSwitchLogRepository(
-    impl: PersonaSwitchLogRepositoryImpl,
+    impl: PersonaSwitchLogRepositoryImpl
   ): PersonaSwitchLogRepository
 
   @Binds
   @Singleton
   abstract fun bindInferencePreferenceRepository(
-    impl: InferencePreferenceRepositoryImpl,
+    impl: InferencePreferenceRepositoryImpl
   ): InferencePreferenceRepository
 
   @Binds
   @Singleton
   abstract fun bindApiProviderConfigRepository(
-    impl: ApiProviderConfigRepositoryImpl,
+    impl: ApiProviderConfigRepositoryImpl
   ): ApiProviderConfigRepository
 
   @Binds
   @Singleton
-  abstract fun bindModelCatalogRepository(
-    impl: ModelCatalogRepositoryImpl,
-  ): ModelCatalogRepository
+  abstract fun bindModelCatalogRepository(impl: ModelCatalogRepositoryImpl): ModelCatalogRepository
 
   @Binds
   @Singleton
   abstract fun bindModelManifestRepository(
-    impl: ModelManifestRepositoryImpl,
+    impl: ModelManifestRepositoryImpl
   ): ModelManifestRepository
 
-  @Binds
-  @Singleton
-  abstract fun bindDownloadManager(
-    impl: DownloadManagerImpl,
-  ): DownloadManager
+  @Binds @Singleton abstract fun bindDownloadManager(impl: DownloadManagerImpl): DownloadManager
 
   @Binds
   @Singleton
   abstract fun bindHuggingFaceCatalogRepository(
-    impl: HuggingFaceCatalogRepositoryImpl,
+    impl: HuggingFaceCatalogRepositoryImpl
   ): HuggingFaceCatalogRepository
 
-  @Binds
-  @Singleton
-  abstract fun bindExportService(
-    impl: ExportServiceImpl,
-  ): ExportService
+  @Binds @Singleton abstract fun bindExportService(impl: ExportServiceImpl): ExportService
+
+  @Binds @Singleton abstract fun bindImportService(impl: ImportServiceImpl): ImportService
 
   @Binds
   @Singleton
-  abstract fun bindImportService(
-    impl: ImportServiceImpl,
-  ): ImportService
-
-  @Binds
-  @Singleton
-  abstract fun bindUserProfileRepository(
-    impl: UserProfileRepositoryImpl,
-  ): UserProfileRepository
+  abstract fun bindUserProfileRepository(impl: UserProfileRepositoryImpl): UserProfileRepository
 
   companion object {
     @Provides

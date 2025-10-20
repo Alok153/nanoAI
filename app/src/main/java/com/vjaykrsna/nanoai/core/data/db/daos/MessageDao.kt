@@ -54,7 +54,7 @@ interface MessageDao {
         WHERE thread_id = :threadId 
         ORDER BY created_at DESC 
         LIMIT :limit
-        """,
+        """
   )
   suspend fun getLatestMessages(threadId: String, limit: Int): List<MessageEntity>
 
@@ -71,7 +71,7 @@ interface MessageDao {
         WHERE thread_id = :threadId 
         ORDER BY created_at DESC 
         LIMIT 1
-        """,
+        """
   )
   suspend fun getLastMessage(threadId: String): MessageEntity?
 
@@ -99,7 +99,7 @@ interface MessageDao {
         SELECT AVG(latency_ms) 
         FROM messages 
         WHERE thread_id = :threadId AND latency_ms IS NOT NULL
-        """,
+        """
   )
   suspend fun getAverageLatency(threadId: String): Double?
 }

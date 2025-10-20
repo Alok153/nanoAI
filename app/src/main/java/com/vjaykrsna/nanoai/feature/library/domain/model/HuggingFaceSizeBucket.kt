@@ -9,16 +9,11 @@ import androidx.compose.runtime.Immutable
  * requiring exact parameter counts from metadata.
  */
 @Immutable
-enum class HuggingFaceSizeBucket(
-  val label: String,
-  val minBytes: Long?,
-  val maxBytes: Long?,
-) {
+enum class HuggingFaceSizeBucket(val label: String, val minBytes: Long?, val maxBytes: Long?) {
   TINY(label = "< 1 GB", minBytes = null, maxBytes = 1073741824L),
   SMALL(label = "1 - 4 GB", minBytes = 1073741824L, maxBytes = 4294967296L),
   MEDIUM(label = "4 - 10 GB", minBytes = 4294967296L, maxBytes = 10737418240L),
-  LARGE(label = ">= 10 GB", minBytes = 10737418240L, maxBytes = null),
-  ;
+  LARGE(label = ">= 10 GB", minBytes = 10737418240L, maxBytes = null);
 
   companion object {
     const val ONE_GB = 1L shl 30

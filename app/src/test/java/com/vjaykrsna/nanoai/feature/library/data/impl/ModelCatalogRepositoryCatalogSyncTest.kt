@@ -57,7 +57,7 @@ class ModelCatalogRepositoryCatalogSyncTest {
           signature = "",
           createdAt = Instant.parse("2025-10-09T00:00:00Z"),
           updatedAt = Instant.parse("2025-10-10T00:00:00Z"),
-        ),
+        )
       )
     val captured = slot<List<ModelPackageEntity>>()
     coJustRun { fixture.modelPackageWriteDao.replaceCatalog(capture(captured)) }
@@ -109,7 +109,7 @@ class ModelCatalogRepositoryCatalogSyncTest {
           signature = existingPrimary.signature,
           createdAt = Instant.parse("2025-10-09T00:00:00Z"),
           updatedAt = Instant.parse("2025-10-11T00:00:00Z"),
-        ),
+        )
       )
     val captured = slot<List<ModelPackageEntity>>()
     coJustRun { fixture.modelPackageWriteDao.replaceCatalog(capture(captured)) }

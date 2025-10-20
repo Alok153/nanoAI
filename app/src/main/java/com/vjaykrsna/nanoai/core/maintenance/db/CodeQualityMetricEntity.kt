@@ -19,14 +19,9 @@ import kotlinx.datetime.Instant
         childColumns = ["task_id"],
         onUpdate = ForeignKey.CASCADE,
         onDelete = ForeignKey.SET_NULL,
-      ),
+      )
     ],
-  indices =
-    [
-      Index(value = ["task_id"]),
-      Index(value = ["rule_id"]),
-      Index(value = ["file_path"]),
-    ],
+  indices = [Index(value = ["task_id"]), Index(value = ["rule_id"]), Index(value = ["file_path"])],
 )
 data class CodeQualityMetricEntity(
   @PrimaryKey @ColumnInfo(name = "metric_id") val id: String,

@@ -59,10 +59,7 @@ private fun DataManagementCard(
 ) {
   Card(
     modifier = modifier.fillMaxWidth(),
-    colors =
-      CardDefaults.cardColors(
-        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-      ),
+    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
   ) {
     Row(
       modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(16.dp),

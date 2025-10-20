@@ -60,8 +60,8 @@ class UserProfileContractTest {
                           "themePreference": "LIGHT"
                         }
                     """
-            .trimIndent(),
-        ),
+            .trimIndent()
+        )
     )
 
     val response = service.getUserProfile()

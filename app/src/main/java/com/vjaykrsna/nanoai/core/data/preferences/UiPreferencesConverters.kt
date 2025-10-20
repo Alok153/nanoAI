@@ -12,9 +12,7 @@ import kotlinx.serialization.json.Json
  * Serialization.
  */
 @Singleton
-class UiPreferencesConverters(
-  private val json: Json,
-) {
+class UiPreferencesConverters(private val json: Json) {
   private val stringListSerializer = ListSerializer(String.serializer())
   private val stringBooleanMapSerializer = MapSerializer(String.serializer(), Boolean.serializer())
 

@@ -54,13 +54,7 @@ class ShellViewModelTest {
       val repository = FakeShellStateRepository()
       val actionProvider = FakeCommandPaletteActionProvider()
       val progressCoordinator = FakeProgressCenterCoordinator()
-      val viewModel =
-        ShellViewModel(
-          repository,
-          actionProvider,
-          progressCoordinator,
-          dispatcher,
-        )
+      val viewModel = ShellViewModel(repository, actionProvider, progressCoordinator, dispatcher)
 
       viewModel.openMode(ModeId.CHAT)
       advanceUntilIdle()
@@ -81,13 +75,7 @@ class ShellViewModelTest {
       val repository = FakeShellStateRepository()
       val actionProvider = FakeCommandPaletteActionProvider()
       val progressCoordinator = FakeProgressCenterCoordinator()
-      val viewModel =
-        ShellViewModel(
-          repository,
-          actionProvider,
-          progressCoordinator,
-          dispatcher,
-        )
+      val viewModel = ShellViewModel(repository, actionProvider, progressCoordinator, dispatcher)
 
       viewModel.toggleRightDrawer(RightPanel.MODEL_SELECTOR)
       advanceUntilIdle()
@@ -108,13 +96,7 @@ class ShellViewModelTest {
       val repository = FakeShellStateRepository(initialConnectivity = ConnectivityStatus.OFFLINE)
       val actionProvider = FakeCommandPaletteActionProvider()
       val progressCoordinator = FakeProgressCenterCoordinator()
-      val viewModel =
-        ShellViewModel(
-          repository,
-          actionProvider,
-          progressCoordinator,
-          dispatcher,
-        )
+      val viewModel = ShellViewModel(repository, actionProvider, progressCoordinator, dispatcher)
 
       val jobId = UUID.randomUUID()
       val job =
@@ -146,13 +128,7 @@ class ShellViewModelTest {
       val repository = FakeShellStateRepository()
       val actionProvider = FakeCommandPaletteActionProvider()
       val progressCoordinator = FakeProgressCenterCoordinator()
-      val viewModel =
-        ShellViewModel(
-          repository,
-          actionProvider,
-          progressCoordinator,
-          dispatcher,
-        )
+      val viewModel = ShellViewModel(repository, actionProvider, progressCoordinator, dispatcher)
 
       val jobId = UUID.randomUUID()
       val job =
@@ -181,13 +157,7 @@ class ShellViewModelTest {
       val repository = FakeShellStateRepository(initialConnectivity = ConnectivityStatus.OFFLINE)
       val actionProvider = FakeCommandPaletteActionProvider()
       val progressCoordinator = FakeProgressCenterCoordinator()
-      val viewModel =
-        ShellViewModel(
-          repository,
-          actionProvider,
-          progressCoordinator,
-          dispatcher,
-        )
+      val viewModel = ShellViewModel(repository, actionProvider, progressCoordinator, dispatcher)
 
       val jobId = UUID.randomUUID()
       val job =
@@ -233,17 +203,11 @@ class ShellViewModelTest {
                 canRetry = false,
                 queuedAt = Instant.parse("2025-10-06T00:00:00Z"),
               )
-            ),
+            )
         )
       val actionProvider = FakeCommandPaletteActionProvider()
       val progressCoordinator = FakeProgressCenterCoordinator()
-      val viewModel =
-        ShellViewModel(
-          repository,
-          actionProvider,
-          progressCoordinator,
-          dispatcher,
-        )
+      val viewModel = ShellViewModel(repository, actionProvider, progressCoordinator, dispatcher)
 
       viewModel.completeJob(jobId)
       advanceUntilIdle()
@@ -263,13 +227,7 @@ class ShellViewModelTest {
       val repository = FakeShellStateRepository(initialConnectivity = ConnectivityStatus.OFFLINE)
       val actionProvider = FakeCommandPaletteActionProvider()
       val progressCoordinator = FakeProgressCenterCoordinator()
-      val viewModel =
-        ShellViewModel(
-          repository,
-          actionProvider,
-          progressCoordinator,
-          dispatcher,
-        )
+      val viewModel = ShellViewModel(repository, actionProvider, progressCoordinator, dispatcher)
 
       viewModel.updateConnectivity(ConnectivityStatus.ONLINE)
       advanceUntilIdle()
@@ -396,9 +354,7 @@ class ShellViewModelTest {
       queuedJobs += job
       _layout.value = _layout.value.copy(progressJobs = _layout.value.progressJobs + job)
       _layout.value =
-        _layout.value.copy(
-          pendingUndoAction = UndoPayload(actionId = "queue-${job.jobId}"),
-        )
+        _layout.value.copy(pendingUndoAction = UndoPayload(actionId = "queue-${job.jobId}"))
       _banner.value =
         _banner.value.copy(
           queuedActionCount = _layout.value.progressJobs.size,
@@ -420,10 +376,7 @@ class ShellViewModelTest {
       connectivityUpdates += status
       _layout.value = _layout.value.copy(connectivity = status)
       _banner.value =
-        _banner.value.copy(
-          status = status,
-          queuedActionCount = _layout.value.progressJobs.size,
-        )
+        _banner.value.copy(status = status, queuedActionCount = _layout.value.progressJobs.size)
     }
 
     override suspend fun recordUndoPayload(payload: UndoPayload?) {
@@ -488,7 +441,7 @@ private fun FakeProgressCenterCoordinator():
   com.vjaykrsna.nanoai.feature.uiux.domain.ProgressCenterCoordinator {
   val downloadManager = FakeDownloadManager()
   return com.vjaykrsna.nanoai.feature.uiux.domain.ProgressCenterCoordinator(
-    downloadManager = downloadManager,
+    downloadManager = downloadManager
   )
 }
 
@@ -534,7 +487,7 @@ private class FakeDownloadManager : com.vjaykrsna.nanoai.feature.library.data.Do
 
   override suspend fun updateTaskStatus(
     taskId: UUID,
-    status: com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
+    status: com.vjaykrsna.nanoai.feature.library.model.DownloadStatus,
   ) = Unit
 
   override suspend fun getModelIdForTask(taskId: UUID): String? = null

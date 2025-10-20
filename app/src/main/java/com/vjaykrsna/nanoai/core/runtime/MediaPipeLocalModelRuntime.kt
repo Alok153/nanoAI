@@ -26,9 +26,7 @@ private const val DEFAULT_TEMPERATURE = 0.7f
 @Singleton
 class MediaPipeLocalModelRuntime
 @Inject
-constructor(
-  @ApplicationContext private val context: Context,
-) : LocalModelRuntime {
+constructor(@ApplicationContext private val context: Context) : LocalModelRuntime {
   private val modelDirectory: File by lazy { File(context.filesDir, "models") }
 
   private var llmInference: LlmInference? = null
@@ -49,7 +47,7 @@ constructor(
       val file = modelFile(request.modelId)
       if (!file.exists()) {
         return@withContext Result.failure(
-          FileNotFoundException("Local model ${request.modelId} is not installed"),
+          FileNotFoundException("Local model ${request.modelId} is not installed")
         )
       }
 
@@ -72,7 +70,7 @@ constructor(
               "temperature" to request.temperature,
               "topP" to request.topP,
             ),
-        ),
+        )
       )
     }
   }

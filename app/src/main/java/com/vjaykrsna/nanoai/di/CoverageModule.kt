@@ -25,6 +25,6 @@ object CoverageModule {
   @Provides
   @Singleton
   fun provideGetCoverageReportUseCase(
-    repository: CoverageDashboardRepository,
+    repository: CoverageDashboardRepository
   ): GetCoverageReportUseCase = GetCoverageReportUseCase(repository)
 }

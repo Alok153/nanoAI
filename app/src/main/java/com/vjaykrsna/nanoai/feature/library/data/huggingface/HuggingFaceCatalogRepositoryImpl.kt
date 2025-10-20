@@ -29,15 +29,11 @@ constructor(
   private val clock: Clock = Clock.System,
 ) : HuggingFaceCatalogRepository {
   override suspend fun listModels(
-    query: HuggingFaceCatalogQuery,
+    query: HuggingFaceCatalogQuery
   ): Result<List<HuggingFaceModelSummary>> = runCatching {
     val cacheExpiry = clock.now().minus(DEFAULT_CACHE_TTL)
     val cachedResults =
-      cacheDataSource.getFreshModels(
-        limit = query.limit,
-        offset = query.offset,
-        ttl = cacheExpiry,
-      )
+      cacheDataSource.getFreshModels(limit = query.limit, offset = query.offset, ttl = cacheExpiry)
     if (cachedResults.isNotEmpty()) {
       return@runCatching cachedResults
     }
@@ -186,7 +182,4 @@ private data class NormalizedCardData(
   val description: String?,
 )
 
-private data class NormalizedConfigData(
-  val architectures: List<String>,
-  val modelType: String?,
-)
+private data class NormalizedConfigData(val architectures: List<String>, val modelType: String?)

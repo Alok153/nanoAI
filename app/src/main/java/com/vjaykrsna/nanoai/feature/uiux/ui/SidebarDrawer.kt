@@ -27,7 +27,7 @@ fun SidebarDrawer(
   activeRoute: String?,
   onNavigateSettings: () -> Unit,
   onNavigateHome: () -> Unit,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
 ) {
   Column(
     modifier =
@@ -35,7 +35,7 @@ fun SidebarDrawer(
         .fillMaxWidth()
         .padding(16.dp)
         .semantics { contentDescription = "Sidebar navigation" }
-        .testTag("sidebar_drawer"),
+        .testTag("sidebar_drawer")
   ) {
     Text(
       text = "Navigation",

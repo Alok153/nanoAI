@@ -45,7 +45,7 @@ class ImportExportContractTest {
         "personas",
         "apiProviders",
         "privacy",
-        "modelCatalog"
+        "modelCatalog",
       )
     requiredKeys.forEach { key -> assertThat(sampleBackup.containsKey(key)).isTrue() }
   }

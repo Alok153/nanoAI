@@ -102,12 +102,7 @@ fun ProgressCenterPanel(
           verticalArrangement = Arrangement.spacedBy(PROGRESS_LIST_ITEM_SPACING),
         ) {
           itemsIndexed(jobs, key = { _, job -> job.jobId }) { index, job ->
-            ProgressJobItem(
-              job = job,
-              index = index,
-              onRetry = onRetry,
-              onDismiss = onDismissJob,
-            )
+            ProgressJobItem(job = job, index = index, onRetry = onRetry, onDismiss = onDismissJob)
           }
         }
       }
@@ -145,12 +140,12 @@ private fun ProgressJobItem(
           horizontal = PROGRESS_ITEM_HORIZONTAL_PADDING,
           vertical = PROGRESS_ITEM_VERTICAL_PADDING,
         ),
-      verticalArrangement = Arrangement.spacedBy(PROGRESS_ITEM_SPACING)
+      verticalArrangement = Arrangement.spacedBy(PROGRESS_ITEM_SPACING),
     ) {
       Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
       ) {
         Column(
           modifier = Modifier.weight(1f),
@@ -163,10 +158,7 @@ private fun ProgressJobItem(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
           )
-          Text(
-            text = job.statusLabel,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-          )
+          Text(text = job.statusLabel, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         val percent =
           (job.normalizedProgress * PROGRESS_PERCENT_SCALE)
@@ -212,7 +204,7 @@ private fun ProgressJobItem(
         val retryContentDescription =
           stringResource(
             R.string.progress_center_panel_retry_content_description,
-            job.type.label.lowercase()
+            job.type.label.lowercase(),
           )
         val retryStateDescription =
           if (job.canRetryNow) stringResource(R.string.progress_center_panel_retry_available)
@@ -220,7 +212,7 @@ private fun ProgressJobItem(
         val clearContentDescription =
           stringResource(
             R.string.progress_center_panel_clear_content_description,
-            job.type.label.lowercase()
+            job.type.label.lowercase(),
           )
         val clearStateDescription =
           if (job.status == JobStatus.COMPLETED) {

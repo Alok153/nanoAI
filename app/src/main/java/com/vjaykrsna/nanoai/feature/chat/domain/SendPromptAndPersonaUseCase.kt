@@ -125,7 +125,7 @@ constructor(
 private fun shouldPreferLocal(
   hasLocalModel: Boolean,
   isOnline: Boolean,
-  userPrefersLocal: Boolean
+  userPrefersLocal: Boolean,
 ): Boolean {
   if (!hasLocalModel) return false
   if (!isOnline) return true
@@ -135,10 +135,5 @@ private fun shouldPreferLocal(
 class OfflineNoModelException :
   IllegalStateException("Device offline with no local model available")
 
-class InferenceFailedException(
-  val code: String,
-  message: String?,
-) :
-  IllegalStateException(
-    message ?: "Inference failed with code $code",
-  )
+class InferenceFailedException(val code: String, message: String?) :
+  IllegalStateException(message ?: "Inference failed with code $code")

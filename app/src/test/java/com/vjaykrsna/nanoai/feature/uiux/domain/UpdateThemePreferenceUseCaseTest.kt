@@ -26,7 +26,7 @@ class UpdateThemePreferenceUseCaseTest {
     val spy = UserProfileRepositorySpy()
     spy.preferencesFlow.value =
       UiUxDomainReflection.newUiPreferences(
-        themePreference = UiUxDomainReflection.themePreference("LIGHT"),
+        themePreference = UiUxDomainReflection.themePreference("LIGHT")
       )
     val dispatcher = StandardTestDispatcher(testScheduler)
     val useCase =
@@ -60,7 +60,7 @@ class UpdateThemePreferenceUseCaseTest {
   private fun instantiateUseCase(
     className: String,
     repository: Any,
-    dispatcher: CoroutineDispatcher
+    dispatcher: CoroutineDispatcher,
   ): Any {
     val clazz = UiUxDomainTestHelper.loadClass(className)
     val constructors = clazz.constructors.sortedBy { it.parameterCount }

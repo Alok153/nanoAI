@@ -86,7 +86,7 @@ interface ChatThreadDao {
   suspend fun updatePersona(
     threadId: String,
     personaId: String?,
-    updatedAt: kotlinx.datetime.Instant
+    updatedAt: kotlinx.datetime.Instant,
   )
 
   /** Update only the last-modified timestamp for a thread. */

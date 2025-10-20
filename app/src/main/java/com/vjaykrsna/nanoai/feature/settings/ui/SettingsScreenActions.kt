@@ -83,7 +83,7 @@ internal fun createSettingsActions(
     onProviderDelete = dialogCallbacks.onDeleteProvider,
     onImportBackupClick = {
       importBackupLauncher.launch(
-        arrayOf("application/json", "application/zip", "application/octet-stream"),
+        arrayOf("application/json", "application/zip", "application/octet-stream")
       )
     },
     onExportBackupClick = {
@@ -147,13 +147,7 @@ internal fun saveProvider(
   apiKey: String?,
 ) {
   mutation.editingProvider?.let { provider ->
-    mutation.onUpdate(
-      provider.copy(
-        providerName = name,
-        baseUrl = baseUrl,
-        apiKey = apiKey ?: "",
-      ),
-    )
+    mutation.onUpdate(provider.copy(providerName = name, baseUrl = baseUrl, apiKey = apiKey ?: ""))
   }
     ?: mutation.onAdd(
       APIProviderConfig(
@@ -163,7 +157,7 @@ internal fun saveProvider(
         apiKey = apiKey ?: "",
         apiType = APIType.OPENAI_COMPATIBLE,
         isEnabled = true,
-      ),
+      )
     )
 }
 

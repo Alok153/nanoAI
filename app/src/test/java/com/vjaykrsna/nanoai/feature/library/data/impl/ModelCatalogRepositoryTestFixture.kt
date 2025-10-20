@@ -52,7 +52,7 @@ internal data class ModelCatalogRepositoryTestFixture(
 
 internal fun createModelCatalogRepositoryFixture(
   tempDir: File,
-  configureDao: ModelPackageReadDao.() -> Unit = {}
+  configureDao: ModelPackageReadDao.() -> Unit = {},
 ): ModelCatalogRepositoryTestFixture {
   val readDao =
     mockk<ModelPackageReadDao>(relaxed = true) {

@@ -53,7 +53,7 @@ constructor(
   suspend fun generateResponse(
     prompt: String,
     personaId: UUID?,
-    options: GenerationOptions = GenerationOptions()
+    options: GenerationOptions = GenerationOptions(),
   ): InferenceResult {
     val installedModels = modelCatalogRepository.getInstalledModels()
     val localCandidates = installedModels.filterNot { it.providerType == ProviderType.CLOUD_API }
@@ -92,7 +92,7 @@ constructor(
   private fun resolvePreference(
     hasLocalCandidate: Boolean,
     isOnline: Boolean,
-    userPrefersLocal: Boolean
+    userPrefersLocal: Boolean,
   ): Boolean =
     when {
       !hasLocalCandidate -> false
@@ -103,7 +103,7 @@ constructor(
   private suspend fun runLocalInference(
     model: ModelPackage,
     prompt: String,
-    options: GenerationOptions
+    options: GenerationOptions,
   ): InferenceResult {
     if (!localModelRuntime.isModelReady(model.modelId)) {
       return InferenceResult.Error(
@@ -132,10 +132,7 @@ constructor(
             latencyMs = result.latencyMs,
             metadata =
               result.metadata +
-                mapOf(
-                  "modelId" to model.modelId,
-                  "providerType" to model.providerType.name,
-                ),
+                mapOf("modelId" to model.modelId, "providerType" to model.providerType.name),
           )
         },
         onFailure = { throwable ->
@@ -151,7 +148,7 @@ constructor(
 
   private suspend fun runCloudInference(
     prompt: String,
-    options: GenerationOptions
+    options: GenerationOptions,
   ): InferenceResult {
     val provider = selectCloudProvider()
     val cloudModelId = resolveCloudModel(options.cloudModel)
@@ -170,7 +167,7 @@ constructor(
     preferLocal: Boolean,
     preferredLocalModel: ModelPackage?,
     prompt: String,
-    options: GenerationOptions
+    options: GenerationOptions,
   ): InferenceResult? {
     if (preferLocal || preferredLocalModel == null) return null
     return runLocalInference(preferredLocalModel, prompt, options)
@@ -195,7 +192,7 @@ constructor(
 
   private fun buildCloudMessages(
     prompt: String,
-    options: GenerationOptions
+    options: GenerationOptions,
   ): List<CompletionMessageDto> {
     val messages = mutableListOf<CompletionMessageDto>()
     options.systemPrompt
@@ -210,7 +207,7 @@ constructor(
   private fun buildCompletionRequest(
     cloudModelId: String,
     messages: List<CompletionMessageDto>,
-    options: GenerationOptions
+    options: GenerationOptions,
   ): CompletionRequestDto =
     CompletionRequestDto(
       model = cloudModelId,
@@ -225,7 +222,7 @@ constructor(
   private suspend fun executeCloudRequest(
     provider: APIProviderConfig,
     cloudModelId: String,
-    request: CompletionRequestDto
+    request: CompletionRequestDto,
   ): InferenceResult {
     val result = cloudGatewayClient.createCompletion(provider, request)
     return when (result) {
@@ -242,7 +239,7 @@ constructor(
   private fun mapCompletionSuccess(
     result: CloudGatewayResult.Success<CompletionResponseDto>,
     providerId: String,
-    modelId: String
+    modelId: String,
   ): InferenceResult {
     val choice =
       result.data.choices.firstOrNull()
@@ -287,7 +284,7 @@ constructor(
 
   private fun networkError(
     result: CloudGatewayResult.NetworkError,
-    providerId: String
+    providerId: String,
   ): InferenceResult =
     InferenceResult.Error(
       errorCode = "NETWORK_ERROR",
@@ -298,7 +295,7 @@ constructor(
 
   private fun unknownError(
     result: CloudGatewayResult.UnknownError,
-    providerId: String
+    providerId: String,
   ): InferenceResult =
     InferenceResult.Error(
       errorCode = "UNKNOWN_ERROR",
@@ -327,7 +324,7 @@ constructor(
 
   private fun selectLocalModel(
     localModels: List<ModelPackage>,
-    preferredModelId: String?
+    preferredModelId: String?,
   ): ModelPackage? {
     if (preferredModelId != null) {
       localModels

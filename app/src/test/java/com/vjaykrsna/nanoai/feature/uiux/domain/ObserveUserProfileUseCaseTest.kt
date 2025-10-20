@@ -181,7 +181,7 @@ class ObserveUserProfileUseCaseTest {
   private fun instantiateUseCase(
     className: String,
     repository: Any,
-    dispatcher: CoroutineDispatcher
+    dispatcher: CoroutineDispatcher,
   ): Any {
     val clazz = UiUxDomainTestHelper.loadClass(className)
     val constructors = clazz.constructors.sortedBy { it.parameterCount }

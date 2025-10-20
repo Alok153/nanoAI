@@ -86,7 +86,7 @@ fun SidebarContent(
     modifier =
       modifier.fillMaxHeight().testTag("sidebar_drawer_container").semantics {
         contentDescription = sidebarContentDescription
-      },
+      }
   ) {
     SidebarDrawer(
       pinnedTools = state.pinnedTools,
@@ -153,10 +153,7 @@ private fun SidebarHeader(onNewThread: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SidebarSearchField(
-  query: String,
-  onQueryChange: (String) -> Unit,
-) {
+private fun SidebarSearchField(query: String, onQueryChange: (String) -> Unit) {
   // String resources
   val placeholderTxt = stringResource(R.string.sidebar_search_placeholder)
   val searchContentDesc = stringResource(R.string.sidebar_search_content_description)
@@ -171,10 +168,7 @@ private fun SidebarSearchField(
 }
 
 @Composable
-private fun SidebarArchiveToggle(
-  showArchived: Boolean,
-  onToggleArchive: () -> Unit,
-) {
+private fun SidebarArchiveToggle(showArchived: Boolean, onToggleArchive: () -> Unit) {
   // String resources
   val activeText = stringResource(R.string.sidebar_archive_toggle_active)
   val archivedText = stringResource(R.string.sidebar_archive_toggle_archived)
@@ -214,11 +208,8 @@ private fun SidebarThreadList(
     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 8.dp),
     modifier = modifier.semantics { contentDescription = threadListContentDesc },
   ) {
-    items(
-      items = threads,
-      key = { it.threadId.toString() },
-      contentType = { "thread_item" },
-    ) { thread ->
+    items(items = threads, key = { it.threadId.toString() }, contentType = { "thread_item" }) {
+      thread ->
       ThreadItem(
         thread = thread,
         onClick = { interactions.onThreadSelected(thread) },
@@ -261,10 +252,7 @@ fun InferencePreferenceToggleRow(
     verticalAlignment = Alignment.CenterVertically,
   ) {
     Column(modifier = Modifier.weight(1f)) {
-      Text(
-        text = inferenceTitle,
-        style = MaterialTheme.typography.titleMedium,
-      )
+      Text(text = inferenceTitle, style = MaterialTheme.typography.titleMedium)
       Text(
         text =
           if (inferenceMode == InferenceMode.LOCAL_FIRST) {

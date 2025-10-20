@@ -73,9 +73,7 @@ class UIStateSnapshotModelTest {
   }
 
   private fun uiStateSnapshotConstructor() =
-    primaryConstructor(
-      loadClass("com.vjaykrsna.nanoai.core.domain.model.uiux.UIStateSnapshot"),
-    )
+    primaryConstructor(loadClass("com.vjaykrsna.nanoai.core.domain.model.uiux.UIStateSnapshot"))
 
   private fun defaultUiStateSnapshotArgs(): Array<Any?> =
     arrayOf(

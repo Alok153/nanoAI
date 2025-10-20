@@ -10,9 +10,7 @@ import javax.inject.Singleton
 @Singleton
 class ListHuggingFaceModelsUseCase
 @Inject
-constructor(
-  private val repository: HuggingFaceCatalogRepository,
-) {
+constructor(private val repository: HuggingFaceCatalogRepository) {
   suspend operator fun invoke(
     query: HuggingFaceCatalogQuery = HuggingFaceCatalogQuery()
   ): Result<List<HuggingFaceModelSummary>> = repository.listModels(query)

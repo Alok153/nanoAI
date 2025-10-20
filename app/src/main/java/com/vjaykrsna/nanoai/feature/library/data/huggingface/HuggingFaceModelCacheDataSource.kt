@@ -12,10 +12,7 @@ import kotlinx.datetime.Instant
 @Singleton
 class HuggingFaceModelCacheDataSource
 @Inject
-constructor(
-  private val dao: HuggingFaceModelCacheDao,
-  private val clock: Clock = Clock.System,
-) {
+constructor(private val dao: HuggingFaceModelCacheDao, private val clock: Clock = Clock.System) {
   suspend fun getFreshModels(limit: Int, offset: Int, ttl: Instant): List<HuggingFaceModelSummary> {
     return dao.getFreshModels(ttl, limit, offset).map(HuggingFaceModelCacheMapper::toDomain)
   }

@@ -82,12 +82,7 @@ class ShellTelemetry @Inject constructor(private val telemetryReporter: Telemetr
   }
 
   /** Track when the left or right drawers are toggled. */
-  fun trackDrawerToggle(
-    side: DrawerSide,
-    isOpen: Boolean,
-    panel: RightPanel?,
-    activeMode: ModeId,
-  ) {
+  fun trackDrawerToggle(side: DrawerSide, isOpen: Boolean, panel: RightPanel?, activeMode: ModeId) {
     telemetryReporter.trackInteraction(
       event = DRAWER_TOGGLE,
       metadata =
@@ -102,11 +97,7 @@ class ShellTelemetry @Inject constructor(private val telemetryReporter: Telemetr
   }
 
   /** Track when a progress job is queued from the shell (typically while offline). */
-  fun trackProgressJobQueued(
-    job: ProgressJob,
-    offline: Boolean,
-    activeMode: ModeId,
-  ) {
+  fun trackProgressJobQueued(job: ProgressJob, offline: Boolean, activeMode: ModeId) {
     telemetryReporter.trackInteraction(
       event = PROGRESS_JOB_QUEUED,
       metadata =

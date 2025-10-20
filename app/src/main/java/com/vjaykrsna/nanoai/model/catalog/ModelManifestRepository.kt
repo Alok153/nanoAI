@@ -150,11 +150,7 @@ constructor(
     return dto
   }
 
-  private fun <T> failure(
-    message: String,
-    modelId: String,
-    error: Throwable,
-  ): NanoAIResult<T> {
+  private fun <T> failure(message: String, modelId: String, error: Throwable): NanoAIResult<T> {
     if (error is HttpException) {
       return httpError(message, modelId, error)
     }
@@ -272,11 +268,7 @@ constructor(
           NanoAIResult.success(manifest)
         },
         onFailure = {
-          failure(
-            message = "Failed to fetch Hugging Face manifest",
-            modelId = modelId,
-            error = it,
-          )
+          failure(message = "Failed to fetch Hugging Face manifest", modelId = modelId, error = it)
         },
       )
   }

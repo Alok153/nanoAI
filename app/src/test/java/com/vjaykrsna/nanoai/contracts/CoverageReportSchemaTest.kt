@@ -112,17 +112,8 @@ class CoverageReportSchemaTest {
           TestLayer.DATA to CoverageMetric(coverage = 69.5, threshold = 70.0),
         ),
       thresholds =
-        mapOf(
-          TestLayer.VIEW_MODEL to 75.0,
-          TestLayer.UI to 65.0,
-          TestLayer.DATA to 70.0,
-        ),
-      trendDelta =
-        mapOf(
-          TestLayer.VIEW_MODEL to -1.5,
-          TestLayer.UI to 0.0,
-          TestLayer.DATA to 2.1,
-        ),
+        mapOf(TestLayer.VIEW_MODEL to 75.0, TestLayer.UI to 65.0, TestLayer.DATA to 70.0),
+      trendDelta = mapOf(TestLayer.VIEW_MODEL to -1.5, TestLayer.UI to 0.0, TestLayer.DATA to 2.1),
       riskItems = listOf(RiskRegisterItemRef("risk-offline-catalog")),
     )
 
@@ -154,7 +145,7 @@ class CoverageReportSchemaTest {
         targetBuild = "build-130",
         status = RiskRegisterItem.Status.OPEN,
         mitigation = "Add cached fallback and retry queue",
-      ),
+      )
     )
 
   private fun sampleCatalog(): List<TestSuiteCatalogEntry> =
@@ -166,6 +157,6 @@ class CoverageReportSchemaTest {
         journey = "Model catalog fallback",
         coverageContribution = 4.0,
         riskTags = setOf("risk-offline-catalog"),
-      ),
+      )
     )
 }

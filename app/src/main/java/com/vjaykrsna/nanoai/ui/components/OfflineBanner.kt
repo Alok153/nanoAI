@@ -28,7 +28,7 @@ fun OfflineBanner(
   isOffline: Boolean,
   queuedActions: Int,
   onRetry: () -> Unit,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
 ) {
   // String resources
   val bannerContentDescription = stringResource(R.string.offline_banner_content_description)
@@ -46,7 +46,7 @@ fun OfflineBanner(
         Modifier.padding(16.dp).semantics {
           contentDescription = bannerContentDescription
           liveRegion = LiveRegionMode.Polite
-        },
+        }
     ) {
       Text(
         text = stringResource(R.string.offline_banner_message),
@@ -70,10 +70,7 @@ fun OfflineBanner(
           style = MaterialTheme.typography.labelMedium,
           modifier = Modifier.testTag("offline_banner_queue_status"),
         )
-        Button(
-          onClick = onRetry,
-          modifier = Modifier.testTag("offline_banner_retry"),
-        ) {
+        Button(onClick = onRetry, modifier = Modifier.testTag("offline_banner_retry")) {
           Text(stringResource(R.string.offline_banner_retry))
         }
       }

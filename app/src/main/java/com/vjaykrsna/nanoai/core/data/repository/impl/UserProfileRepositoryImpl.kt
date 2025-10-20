@@ -36,10 +36,7 @@ constructor(
       withContext(ioDispatcher) {
         if (local.getUserProfile(userId) == null) {
           val defaultProfile =
-            UserProfile.fromPreferences(
-              id = userId,
-              preferences = UiPreferencesSnapshot(),
-            )
+            UserProfile.fromPreferences(id = userId, preferences = UiPreferencesSnapshot())
           local.saveUserProfile(defaultProfile)
         }
       }
@@ -68,10 +65,7 @@ constructor(
     withContext(ioDispatcher) { local.updateVisualDensity(userId, density) }
   }
 
-  override suspend fun updateCompactMode(
-    userId: String,
-    enabled: Boolean,
-  ) {
+  override suspend fun updateCompactMode(userId: String, enabled: Boolean) {
     withContext(ioDispatcher) { local.updateCompactMode(userId, enabled) }
   }
 
@@ -80,11 +74,7 @@ constructor(
     withContext(ioDispatcher) { local.updatePinnedTools(userId, sanitizedPinnedTools) }
   }
 
-  override suspend fun saveLayoutSnapshot(
-    userId: String,
-    layout: LayoutSnapshot,
-    position: Int,
-  ) {
+  override suspend fun saveLayoutSnapshot(userId: String, layout: LayoutSnapshot, position: Int) {
     withContext(ioDispatcher) { local.saveLayoutSnapshot(userId, layout, position) }
   }
 

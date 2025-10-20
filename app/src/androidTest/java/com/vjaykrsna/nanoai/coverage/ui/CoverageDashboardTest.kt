@@ -85,7 +85,7 @@ class CoverageDashboardTest {
             LayerCoverageState(
               layer = TestLayer.DATA,
               metric = CoverageMetric(coverage = 71.0, threshold = 70.0),
-            ),
+            )
           ),
         risks =
           listOf(
@@ -94,7 +94,7 @@ class CoverageDashboardTest {
               title = "Offline writes failing",
               severity = "CRITICAL",
               status = "OPEN",
-            ),
+            )
           ),
         trendDelta = emptyMap(),
         errorBanner = null,

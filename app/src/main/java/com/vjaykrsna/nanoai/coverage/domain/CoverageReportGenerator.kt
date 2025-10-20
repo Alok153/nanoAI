@@ -58,7 +58,7 @@ class CoverageReportGenerator(
               "coverage" to JsonPrimitive(metric.coverage),
               "threshold" to JsonPrimitive(metric.threshold),
               "status" to JsonPrimitive(metric.status.name),
-            ),
+            )
           )
           .also { ensureSummaryThresholdConsistency(summary, layer, metric) }
       }
@@ -84,7 +84,7 @@ class CoverageReportGenerator(
           "coverage" to JsonPrimitive(point.coverage),
           "threshold" to JsonPrimitive(point.threshold),
           "delta" to JsonPrimitive(summary.trendDeltaFor(point.layer)),
-        ),
+        )
       )
     }
 
@@ -105,7 +105,7 @@ class CoverageReportGenerator(
           referencesByRiskId[risk.riskId]
             ?.takeIf { it.isNotEmpty() }
             ?.let { refs -> put("references", JsonArray(refs.map { JsonPrimitive(it.riskId) })) }
-        },
+        }
       )
     }
   }
@@ -158,10 +158,7 @@ class CoverageReportGenerator(
     }
   }
 
-  private fun ensureTrendThresholdConsistency(
-    summary: CoverageSummary,
-    point: CoverageTrendPoint,
-  ) {
+  private fun ensureTrendThresholdConsistency(summary: CoverageSummary, point: CoverageTrendPoint) {
     val expected = summary.thresholdFor(point.layer)
     require(expected == point.threshold) {
       "Trend point ${point.buildId} threshold ${point.threshold} does not align with summary threshold $expected"

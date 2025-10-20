@@ -1,10 +1,7 @@
 package com.vjaykrsna.nanoai.coverage.model
 
 /** Value object storing coverage percentage, target threshold, and derived status. */
-data class CoverageMetric(
-  val coverage: Double,
-  val threshold: Double,
-) {
+data class CoverageMetric(val coverage: Double, val threshold: Double) {
   init {
     require(coverage in MIN_PERCENTAGE..MAX_PERCENTAGE) {
       "Coverage must be between $MIN_PERCENTAGE and $MAX_PERCENTAGE: $coverage"

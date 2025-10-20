@@ -108,7 +108,7 @@ class AdaptiveShellTest {
             "view-queue",
             "View queue",
             category = CommandCategory.JOBS,
-            destination = CommandDestination.OpenRightPanel(RightPanel.MODEL_SELECTOR)
+            destination = CommandDestination.OpenRightPanel(RightPanel.MODEL_SELECTOR),
           ),
       )
 

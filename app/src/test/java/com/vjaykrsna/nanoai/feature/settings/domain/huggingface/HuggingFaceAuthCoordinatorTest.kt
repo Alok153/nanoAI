@@ -186,7 +186,7 @@ class HuggingFaceAuthCoordinatorTest {
       name = "tester",
       displayName = "Test User",
       email = null,
-      accountType = "user"
+      accountType = "user",
     )
 
   private fun unauthorizedException(): HttpException {
@@ -288,7 +288,7 @@ class HuggingFaceAuthCoordinatorTest {
 
     override suspend fun requestDeviceCode(
       clientId: String,
-      scope: String
+      scope: String,
     ): HuggingFaceDeviceCodeResponse = deviceResponse
 
     override suspend fun exchangeDeviceCode(
@@ -300,8 +300,7 @@ class HuggingFaceAuthCoordinatorTest {
         throw HttpException(
           Response.error<HuggingFaceTokenResponse>(
             428,
-            "{\"error\":\"authorization_pending\"}"
-              .toResponseBody("application/json".toMediaType()),
+            "{\"error\":\"authorization_pending\"}".toResponseBody("application/json".toMediaType()),
           )
         )
       }

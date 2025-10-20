@@ -22,7 +22,7 @@ class RiskRegisterCoordinatorTest {
           targetBuild = "build-110",
           status = RiskRegisterItem.Status.IN_PROGRESS,
           mitigation = "Add Compose semantics assertions",
-        ),
+        )
       )
 
     val catalog =
@@ -34,7 +34,7 @@ class RiskRegisterCoordinatorTest {
           journey = "Chat composer semantics",
           coverageContribution = 2.5,
           riskTags = setOf("accessibility", "risk-high-ui"),
-        ),
+        )
       )
 
     val coordinator = RiskRegisterCoordinator(risks, catalog)
@@ -76,7 +76,7 @@ class RiskRegisterCoordinatorTest {
           journey = "Coverage dashboard accessibility",
           coverageContribution = 3.1,
           riskTags = setOf("risk-critical-ui"),
-        ),
+        )
       )
 
     val coordinator = RiskRegisterCoordinator(risks, catalog)
@@ -98,7 +98,7 @@ class RiskRegisterCoordinatorTest {
           targetBuild = "build-118",
           status = RiskRegisterItem.Status.RESOLVED,
           mitigation = "Suite history-pagination",
-        ),
+        )
       )
     val catalog = emptyList<TestSuiteCatalogEntry>()
 
@@ -119,7 +119,7 @@ class RiskRegisterCoordinatorTest {
           targetBuild = "build-2025-10-10",
           status = RiskRegisterItem.Status.OPEN,
           mitigation = null,
-        ),
+        )
       )
 
     val catalog =
@@ -131,7 +131,7 @@ class RiskRegisterCoordinatorTest {
           journey = "Chat composer semantics",
           coverageContribution = 2.5,
           riskTags = setOf("rr-high-027", " accessibility "),
-        ),
+        )
       )
 
     val coordinator = RiskRegisterCoordinator(risks, catalog)
@@ -153,7 +153,7 @@ class RiskRegisterCoordinatorTest {
           targetBuild = "r2025.43",
           status = RiskRegisterItem.Status.IN_PROGRESS,
           mitigation = "Suite coverage-dashboard",
-        ),
+        )
       )
 
     val catalog =
@@ -165,7 +165,7 @@ class RiskRegisterCoordinatorTest {
           journey = "Risk register coverage",
           coverageContribution = 1.2,
           riskTags = setOf("RR_HIGH_027"),
-        ),
+        )
       )
 
     val coordinator = RiskRegisterCoordinator(risks, catalog)
@@ -188,7 +188,7 @@ class RiskRegisterCoordinatorTest {
           targetBuild = null,
           status = RiskRegisterItem.Status.OPEN,
           mitigation = null,
-        ),
+        )
       )
 
     val catalog =
@@ -200,7 +200,7 @@ class RiskRegisterCoordinatorTest {
           journey = "Catalog offline fallback",
           coverageContribution = 1.7,
           riskTags = setOf(" rr-high-041  "),
-        ),
+        )
       )
 
     val coordinator = RiskRegisterCoordinator(risks, catalog)
@@ -221,7 +221,7 @@ class RiskRegisterCoordinatorTest {
           targetBuild = "build-2025-10-01",
           status = RiskRegisterItem.Status.IN_PROGRESS,
           mitigation = null,
-        ),
+        )
       )
 
     val coordinator = RiskRegisterCoordinator(risks, emptyList())

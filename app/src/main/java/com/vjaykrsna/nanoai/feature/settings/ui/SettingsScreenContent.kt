@@ -1,21 +1,25 @@
 package com.vjaykrsna.nanoai.feature.settings.ui
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -90,7 +94,7 @@ internal fun SettingsScreenContent(
     },
   ) { innerPadding ->
     Column(
-      modifier = Modifier.fillMaxSize().padding(innerPadding).padding(horizontal = NanoSpacing.lg),
+      modifier = Modifier.fillMaxSize().padding(innerPadding).padding(horizontal = NanoSpacing.lg)
     ) {
       SettingsCategoryTabs(
         categories = categories,
@@ -102,10 +106,7 @@ internal fun SettingsScreenContent(
       )
 
       Box(modifier = Modifier.weight(1f, fill = true)) {
-        HorizontalPager(
-          state = pagerState,
-          modifier = Modifier.fillMaxSize(),
-        ) { pageIndex ->
+        HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { pageIndex ->
           val category = categories[pageIndex]
           SettingsCategoryContent(
             category = category,
@@ -160,6 +161,26 @@ private fun SettingsCategoryContent(
   actions: SettingsScreenActions,
   modifier: Modifier = Modifier,
 ) {
+  if (state.isLoading) {
+    Box(
+      modifier = modifier.fillMaxSize().semantics { contentDescription = "Loading settings" },
+      contentAlignment = Alignment.Center,
+    ) {
+      Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+      ) {
+        CircularProgressIndicator()
+        Text(
+          "Loading settings...",
+          style = MaterialTheme.typography.bodyMedium,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
+    }
+    return
+  }
+
   LazyColumn(
     modifier = modifier.fillMaxSize(),
     verticalArrangement = Arrangement.spacedBy(NanoSpacing.lg),
@@ -400,29 +421,17 @@ private fun SettingsPlaceholderSection(
   modifier: Modifier = Modifier,
 ) {
   SettingsSection(title = title, modifier = modifier) {
-    SettingsPlaceholderCard(
-      description = description,
-      supportingText = supportingText,
-    )
+    SettingsPlaceholderCard(description = description, supportingText = supportingText)
   }
 }
 
 @Composable
-internal fun MigrationSuccessCard(
-  onDismiss: () -> Unit,
-  modifier: Modifier = Modifier,
-) {
+internal fun MigrationSuccessCard(onDismiss: () -> Unit, modifier: Modifier = Modifier) {
   Card(
     modifier = modifier.fillMaxWidth(),
-    colors =
-      CardDefaults.cardColors(
-        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-      ),
+    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
   ) {
-    Column(
-      modifier = Modifier.padding(16.dp),
-      verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
+    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
       Text(
         text = "Migration Successful",
         style = MaterialTheme.typography.titleMedium,
@@ -434,11 +443,50 @@ internal fun MigrationSuccessCard(
             "For enhanced security, please rotate your provider credentials.",
         style = MaterialTheme.typography.bodyMedium,
       )
-      TextButton(
-        onClick = onDismiss,
-        modifier = Modifier.align(Alignment.End),
-      ) {
-        Text("Dismiss")
+      TextButton(onClick = onDismiss, modifier = Modifier.align(Alignment.End)) { Text("Dismiss") }
+    }
+  }
+}
+
+/**
+ * Skeleton loading placeholder for settings sections. Displays animated placeholder while settings
+ * load.
+ */
+@Composable
+internal fun SettingsSectionSkeleton(modifier: Modifier = Modifier) {
+  Card(
+    modifier = modifier.fillMaxWidth(),
+    colors =
+      CardDefaults.cardColors(
+        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+      ),
+    shape = RoundedCornerShape(12.dp),
+  ) {
+    Column(
+      modifier = Modifier.fillMaxWidth().padding(16.dp),
+      verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+      // Header skeleton
+      Box(
+        modifier =
+          Modifier.fillMaxWidth(0.6f)
+            .height(16.dp)
+            .background(
+              MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+              shape = RoundedCornerShape(4.dp),
+            )
+      )
+      // Content skeletons
+      repeat(2) {
+        Box(
+          modifier =
+            Modifier.fillMaxWidth()
+              .height(12.dp)
+              .background(
+                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
+                shape = RoundedCornerShape(4.dp),
+              )
+        )
       }
     }
   }

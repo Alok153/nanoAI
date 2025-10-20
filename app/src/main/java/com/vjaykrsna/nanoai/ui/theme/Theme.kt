@@ -112,6 +112,70 @@ private val AmoledColorScheme =
     inversePrimary = DarkInversePrimary,
   )
 
+// High contrast light scheme - WCAG AAA compliant
+private val HighContrastLightColorScheme =
+  lightColorScheme(
+    primary = HighContrastLightPrimary,
+    onPrimary = HighContrastLightOnPrimary,
+    primaryContainer = HighContrastLightPrimaryContainer,
+    onPrimaryContainer = HighContrastLightOnPrimaryContainer,
+    secondary = HighContrastLightSecondary,
+    onSecondary = HighContrastLightOnSecondary,
+    secondaryContainer = HighContrastLightSecondaryContainer,
+    onSecondaryContainer = HighContrastLightOnSecondaryContainer,
+    tertiary = HighContrastLightTertiary,
+    onTertiary = HighContrastLightOnTertiary,
+    tertiaryContainer = HighContrastLightTertiaryContainer,
+    onTertiaryContainer = HighContrastLightOnTertiaryContainer,
+    background = HighContrastLightBackground,
+    onBackground = HighContrastLightOnBackground,
+    surface = HighContrastLightSurface,
+    onSurface = HighContrastLightOnSurface,
+    surfaceVariant = HighContrastLightSurfaceVariant,
+    onSurfaceVariant = HighContrastLightOnSurfaceVariant,
+    outline = HighContrastLightOutline,
+    outlineVariant = HighContrastLightOutlineVariant,
+    error = HighContrastLightError,
+    onError = HighContrastLightOnError,
+    errorContainer = HighContrastLightErrorContainer,
+    onErrorContainer = HighContrastLightOnErrorContainer,
+    inverseSurface = HighContrastLightInverseSurface,
+    inverseOnSurface = HighContrastLightInverseOnSurface,
+    inversePrimary = HighContrastLightInversePrimary,
+  )
+
+// High contrast dark scheme - WCAG AAA compliant
+private val HighContrastDarkColorScheme =
+  darkColorScheme(
+    primary = HighContrastDarkPrimary,
+    onPrimary = HighContrastDarkOnPrimary,
+    primaryContainer = HighContrastDarkPrimaryContainer,
+    onPrimaryContainer = HighContrastDarkOnPrimaryContainer,
+    secondary = HighContrastDarkSecondary,
+    onSecondary = HighContrastDarkOnSecondary,
+    secondaryContainer = HighContrastDarkSecondaryContainer,
+    onSecondaryContainer = HighContrastDarkOnSecondaryContainer,
+    tertiary = HighContrastDarkTertiary,
+    onTertiary = HighContrastDarkOnTertiary,
+    tertiaryContainer = HighContrastDarkTertiaryContainer,
+    onTertiaryContainer = HighContrastDarkOnTertiaryContainer,
+    background = HighContrastDarkBackground,
+    onBackground = HighContrastDarkOnBackground,
+    surface = HighContrastDarkSurface,
+    onSurface = HighContrastDarkOnSurface,
+    surfaceVariant = HighContrastDarkSurfaceVariant,
+    onSurfaceVariant = HighContrastDarkOnSurfaceVariant,
+    outline = HighContrastDarkOutline,
+    outlineVariant = HighContrastDarkOutlineVariant,
+    error = HighContrastDarkError,
+    onError = HighContrastDarkOnError,
+    errorContainer = HighContrastDarkErrorContainer,
+    onErrorContainer = HighContrastDarkOnErrorContainer,
+    inverseSurface = HighContrastDarkInverseSurface,
+    inverseOnSurface = HighContrastDarkInverseOnSurface,
+    inversePrimary = HighContrastDarkInversePrimary,
+  )
+
 @Composable
 fun NanoAITheme(
   themePreference: ThemePreference = ThemePreference.SYSTEM,
@@ -121,31 +185,30 @@ fun NanoAITheme(
   val systemDarkTheme = isSystemInDarkTheme()
   val darkTheme = resolveDarkTheme(themePreference, systemDarkTheme)
   val isAmoled = themePreference == ThemePreference.AMOLED
+  val isHighContrast =
+    themePreference == ThemePreference.HIGH_CONTRAST_LIGHT ||
+      themePreference == ThemePreference.HIGH_CONTRAST_DARK
   val colorScheme =
     rememberNanoAIColorScheme(
       darkTheme = darkTheme,
       isAmoled = isAmoled,
       dynamicColor = dynamicColor,
+      isHighContrast = isHighContrast,
     )
 
   ApplySystemBars(colorScheme = colorScheme, darkTheme = darkTheme)
 
-  MaterialTheme(
-    colorScheme = colorScheme,
-    typography = NanoAITypography,
-    content = content,
-  )
+  MaterialTheme(colorScheme = colorScheme, typography = NanoAITypography, content = content)
 }
 
-private fun resolveDarkTheme(
-  themePreference: ThemePreference,
-  systemDarkTheme: Boolean,
-): Boolean {
+private fun resolveDarkTheme(themePreference: ThemePreference, systemDarkTheme: Boolean): Boolean {
   return when (themePreference) {
     ThemePreference.SYSTEM -> systemDarkTheme
     ThemePreference.DARK,
-    ThemePreference.AMOLED -> true
-    ThemePreference.LIGHT -> false
+    ThemePreference.AMOLED,
+    ThemePreference.HIGH_CONTRAST_DARK -> true
+    ThemePreference.LIGHT,
+    ThemePreference.HIGH_CONTRAST_LIGHT -> false
   }
 }
 
@@ -154,8 +217,11 @@ private fun rememberNanoAIColorScheme(
   darkTheme: Boolean,
   isAmoled: Boolean,
   dynamicColor: Boolean,
+  isHighContrast: Boolean,
 ): ColorScheme {
   return when {
+    isHighContrast && darkTheme -> HighContrastDarkColorScheme
+    isHighContrast && !darkTheme -> HighContrastLightColorScheme
     isAmoled -> AmoledColorScheme
     dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
       val context = LocalContext.current
@@ -167,10 +233,7 @@ private fun rememberNanoAIColorScheme(
 }
 
 @Composable
-private fun ApplySystemBars(
-  colorScheme: ColorScheme,
-  darkTheme: Boolean,
-) {
+private fun ApplySystemBars(colorScheme: ColorScheme, darkTheme: Boolean) {
   val view = LocalView.current
   if (view.isInEditMode) {
     return

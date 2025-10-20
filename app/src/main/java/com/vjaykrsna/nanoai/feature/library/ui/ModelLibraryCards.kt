@@ -89,16 +89,16 @@ internal fun ModelManagementCard(
 ) {
   Card(
     modifier = modifier.fillMaxWidth(),
-    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
   ) {
     Column(
       modifier = Modifier.fillMaxWidth().padding(16.dp),
-      verticalArrangement = Arrangement.spacedBy(12.dp)
+      verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
       Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.Top
+        verticalAlignment = Alignment.Top,
       ) {
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
           Text(
@@ -106,7 +106,7 @@ internal fun ModelManagementCard(
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis,
           )
           model.author
             ?.takeIf { it.isNotBlank() }
@@ -114,13 +114,13 @@ internal fun ModelManagementCard(
               Text(
                 text = author,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
               )
             }
             ?: Text(
               text = model.providerType.displayName(),
               style = MaterialTheme.typography.bodySmall,
-              color = MaterialTheme.colorScheme.onSurfaceVariant
+              color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
           CapabilityRow(capabilities = model.capabilities)
 
@@ -142,7 +142,7 @@ internal fun ModelManagementCard(
               style = MaterialTheme.typography.bodySmall,
               color = MaterialTheme.colorScheme.onSurfaceVariant,
               maxLines = 1,
-              overflow = TextOverflow.Ellipsis
+              overflow = TextOverflow.Ellipsis,
             )
           }
 
@@ -155,7 +155,7 @@ internal fun ModelManagementCard(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 2,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
               )
             }
         }
@@ -164,17 +164,17 @@ internal fun ModelManagementCard(
 
       FlowRow(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(4.dp),
       ) {
         Text(
           text = formatSize(model.sizeBytes),
           style = MaterialTheme.typography.bodySmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
           text = formatUpdated(model.updatedAt),
           style = MaterialTheme.typography.bodySmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
       }
 
@@ -263,12 +263,12 @@ internal fun HuggingFaceModelCard(model: HuggingFaceModelSummary) {
       Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         Row(
           verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.spacedBy(4.dp)
+          horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
           Icon(
             Icons.Filled.Download,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary
+            tint = MaterialTheme.colorScheme.primary,
           )
           Text(
             text = "${formatCount(model.downloads)} downloads",
@@ -278,12 +278,12 @@ internal fun HuggingFaceModelCard(model: HuggingFaceModelSummary) {
         }
         Row(
           verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.spacedBy(4.dp)
+          horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
           Icon(
             Icons.Filled.Star,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.secondary
+            tint = MaterialTheme.colorScheme.secondary,
           )
           Text(
             text = "${formatCount(model.likes)} likes",

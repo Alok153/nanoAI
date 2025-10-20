@@ -39,7 +39,7 @@ class ModelCatalogRepositoryWriteOperationsTest {
       fixture.modelPackageWriteDao.updateInstallState(
         "model-state",
         InstallState.DOWNLOADING,
-        expectedTime
+        expectedTime,
       )
     }
   }
@@ -82,7 +82,7 @@ class ModelCatalogRepositoryWriteOperationsTest {
       fixture.modelPackageWriteDao.updateDownloadTaskId(
         "model-task",
         taskId.toString(),
-        expectedTime
+        expectedTime,
       )
     }
   }
@@ -99,7 +99,7 @@ class ModelCatalogRepositoryWriteOperationsTest {
         "model-checksum",
         "new-sum",
         null,
-        expectedTime
+        expectedTime,
       )
     }
   }
@@ -141,7 +141,7 @@ class ModelCatalogRepositoryWriteOperationsTest {
     fixture.repository.recordOfflineFallback(
       reason = "IOException",
       cachedCount = 2,
-      message = "503"
+      message = "503",
     )
 
     val status = fixture.repository.observeRefreshStatus().first()

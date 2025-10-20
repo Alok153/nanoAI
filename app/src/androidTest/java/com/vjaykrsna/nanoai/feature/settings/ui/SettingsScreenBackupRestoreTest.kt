@@ -108,11 +108,7 @@ class SettingsScreenBackupRestoreTest : BaseSettingsScreenTest() {
         .isNotEmpty()
     }
     composeTestRule
-      .onNodeWithText(
-        "Unexpected error: Test error",
-        substring = false,
-        useUnmergedTree = true,
-      )
+      .onNodeWithText("Unexpected error: Test error", substring = false, useUnmergedTree = true)
       .assertExists()
   }
 }

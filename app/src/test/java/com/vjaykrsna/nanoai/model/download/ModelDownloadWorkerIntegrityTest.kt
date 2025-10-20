@@ -136,9 +136,7 @@ class ModelDownloadWorkerIntegrityTest {
       modelId: String,
       request: ManifestVerificationRequestDto,
     ): ManifestVerificationResponseDto =
-      ManifestVerificationResponseDto(
-        status = ManifestVerificationResponseStatusDto.ACCEPTED,
-      )
+      ManifestVerificationResponseDto(status = ManifestVerificationResponseStatusDto.ACCEPTED)
   }
 
   private object NoopModelPackageRelationsDao : ModelPackageRelationsDao {

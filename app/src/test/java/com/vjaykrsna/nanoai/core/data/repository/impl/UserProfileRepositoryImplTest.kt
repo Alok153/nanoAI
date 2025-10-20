@@ -330,7 +330,7 @@ private class FakeUserProfileDao : UserProfileDao {
 
   override suspend fun updateThemePreference(
     userId: String,
-    themePreference: ThemePreference
+    themePreference: ThemePreference,
   ): Int = modify(userId) { it.copy(themePreference = themePreference) }
 
   override suspend fun updateVisualDensity(userId: String, visualDensity: VisualDensity): Int =
@@ -528,7 +528,7 @@ private class FakeUiStateSnapshotDao : UIStateSnapshotDao {
           activeMode = UIStateSnapshot.DEFAULT_MODE_ROUTE,
           activeRightPanel = null,
           paletteVisible = false,
-        ),
+        )
       )
     }
   }
@@ -560,7 +560,7 @@ private class FakeUiStateSnapshotDao : UIStateSnapshotDao {
           activeMode = UIStateSnapshot.DEFAULT_MODE_ROUTE,
           activeRightPanel = null,
           paletteVisible = false,
-        ),
+        )
       )
     }
   }

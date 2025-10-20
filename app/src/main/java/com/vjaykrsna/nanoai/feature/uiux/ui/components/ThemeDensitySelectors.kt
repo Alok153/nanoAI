@@ -22,10 +22,7 @@ fun ThemePreferenceChips(
   modifier: Modifier = Modifier,
   chipModifier: (ThemePreference) -> Modifier = { Modifier },
 ) {
-  Row(
-    horizontalArrangement = Arrangement.spacedBy(8.dp),
-    modifier = modifier,
-  ) {
+  Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = modifier) {
     ThemePreference.entries.forEach { theme ->
       val label = themeLabel(theme)
       FilterChip(
@@ -48,10 +45,7 @@ fun VisualDensityChips(
   onUnsupportedSelect: ((VisualDensity) -> Unit)? = null,
   chipModifier: (VisualDensity) -> Modifier = { Modifier },
 ) {
-  Row(
-    horizontalArrangement = Arrangement.spacedBy(8.dp),
-    modifier = modifier,
-  ) {
+  Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = modifier) {
     supportedDensities.forEach { density ->
       val label = densityLabel(density)
       FilterChip(
@@ -59,9 +53,7 @@ fun VisualDensityChips(
         onClick = { if (selected != density) onSelect(density) },
         label = { Text(label) },
         modifier =
-          chipModifier(density).semantics {
-            contentDescription = "Switch to $label layout density"
-          },
+          chipModifier(density).semantics { contentDescription = "Switch to $label layout density" },
       )
     }
 
@@ -75,10 +67,7 @@ fun VisualDensityChips(
           onClick = { onUnsupportedSelect?.invoke(density) },
           enabled = onUnsupportedSelect != null,
           label = {
-            Text(
-              text = label,
-              color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-            )
+            Text(text = label, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
           },
           modifier = Modifier.semantics { contentDescription = "${label} density coming soon" },
         )
@@ -92,6 +81,8 @@ private fun themeLabel(theme: ThemePreference): String =
     ThemePreference.LIGHT -> "Light"
     ThemePreference.DARK -> "Dark"
     ThemePreference.AMOLED -> "AMOLED"
+    ThemePreference.HIGH_CONTRAST_LIGHT -> "High Contrast Light"
+    ThemePreference.HIGH_CONTRAST_DARK -> "High Contrast Dark"
     ThemePreference.SYSTEM -> "System"
   }
 

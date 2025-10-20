@@ -98,7 +98,11 @@ internal fun ModelLibraryContent(
           modifier = Modifier.testTag(DOWNLOAD_QUEUE_HEADER_TAG),
         )
       }
-      items(items = sections.downloads, key = { "download_${it.task.taskId}" }) { item ->
+      items(
+        items = sections.downloads,
+        key = { "download_${it.task.taskId}" },
+        contentType = { "download_item" },
+      ) { item ->
         DownloadQueueCard(
           item = item,
           onPause = onPause,
@@ -120,7 +124,8 @@ internal fun ModelLibraryContent(
       }
       items(
         items = sections.attention,
-        key = { "attention_${it.modelId}_${it.providerType}_${it.version}" }
+        key = { "attention_${it.modelId}_${it.providerType}_${it.version}" },
+        contentType = { "model_attention_item" },
       ) { model ->
         ModelManagementCard(
           model = model,
@@ -143,7 +148,8 @@ internal fun ModelLibraryContent(
       }
       items(
         items = sections.installed,
-        key = { "installed_${it.modelId}_${it.providerType}_${it.version}" }
+        key = { "installed_${it.modelId}_${it.providerType}_${it.version}" },
+        contentType = { "model_installed_item" },
       ) { model ->
         ModelManagementCard(
           model = model,
@@ -164,7 +170,8 @@ internal fun ModelLibraryContent(
       }
       items(
         items = sections.available,
-        key = { "available_${it.modelId}_${it.providerType}_${it.version}" }
+        key = { "available_${it.modelId}_${it.providerType}_${it.version}" },
+        contentType = { "model_available_item" },
       ) { model ->
         ModelManagementCard(
           model = model,
@@ -210,7 +217,10 @@ internal fun HuggingFaceLibraryContent(
         contentPadding = PaddingValues(bottom = 32.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
       ) {
-        items(models, key = { it.modelId }) { model -> HuggingFaceModelCard(model) }
+        items(items = models, key = { it.modelId }, contentType = { "huggingface_model_item" }) {
+          model ->
+          HuggingFaceModelCard(model)
+        }
       }
     }
   }
@@ -227,16 +237,16 @@ private fun DownloadQueueCard(
 ) {
   Card(
     modifier = modifier.fillMaxWidth(),
-    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
   ) {
     Column(
       modifier = Modifier.fillMaxWidth().padding(16.dp),
-      verticalArrangement = Arrangement.spacedBy(12.dp)
+      verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
       Text(
         text = item.model?.displayName ?: item.task.modelId,
         style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.SemiBold
+        fontWeight = FontWeight.SemiBold,
       )
 
       DownloadTaskItem(
@@ -251,22 +261,18 @@ private fun DownloadQueueCard(
 }
 
 @Composable
-private fun SectionHeader(
-  title: String,
-  subtitle: String,
-  modifier: Modifier = Modifier,
-) {
+private fun SectionHeader(title: String, subtitle: String, modifier: Modifier = Modifier) {
   Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
     Text(
       text = title,
       style = MaterialTheme.typography.titleMedium,
       fontWeight = FontWeight.SemiBold,
-      modifier = Modifier.semantics { heading() }
+      modifier = Modifier.semantics { heading() },
     )
     Text(
       text = subtitle,
       style = MaterialTheme.typography.bodySmall,
-      color = MaterialTheme.colorScheme.onSurfaceVariant
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
   }
 }
@@ -314,19 +320,19 @@ internal fun DownloadTaskItem(
     Row(
       modifier = Modifier.fillMaxWidth(),
       horizontalArrangement = Arrangement.SpaceBetween,
-      verticalAlignment = Alignment.CenterVertically
+      verticalAlignment = Alignment.CenterVertically,
     ) {
       Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
           text = download.modelId,
           style = MaterialTheme.typography.titleSmall,
           maxLines = 1,
-          overflow = TextOverflow.Ellipsis
+          overflow = TextOverflow.Ellipsis,
         )
         Text(
           text = downloadStatusLabel(download),
           style = MaterialTheme.typography.bodySmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
       }
 

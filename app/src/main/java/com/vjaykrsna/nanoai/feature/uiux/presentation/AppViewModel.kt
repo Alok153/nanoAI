@@ -32,10 +32,9 @@ constructor(
 
   init {
     viewModelScope.launch {
-      combine(
-          observeUserProfileUseCase.flow,
-          privacyPreferenceStore.disclaimerExposure,
-        ) { result, disclaimer ->
+      combine(observeUserProfileUseCase.flow, privacyPreferenceStore.disclaimerExposure) {
+          result,
+          disclaimer ->
           result to disclaimer
         }
         .collect { (result, disclaimer) ->

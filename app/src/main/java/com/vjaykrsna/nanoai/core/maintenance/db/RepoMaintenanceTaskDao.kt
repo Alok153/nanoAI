@@ -28,7 +28,7 @@ interface RepoMaintenanceTaskDao {
         WHEN 'CRITICAL' THEN 4 WHEN 'HIGH' THEN 3 
         WHEN 'MEDIUM' THEN 2 WHEN 'LOW' THEN 1 ELSE 0 
       END DESC, updated_at DESC
-    """,
+    """
   )
   fun observeBacklog(): Flow<List<RepoMaintenanceTaskEntity>>
 
@@ -42,7 +42,7 @@ interface RepoMaintenanceTaskDao {
     """
       UPDATE repo_maintenance_tasks SET status = :status, updated_at = :updatedAt 
       WHERE task_id = :id
-    """,
+    """
   )
   suspend fun updateStatus(id: String, status: MaintenanceStatus, updatedAt: Instant)
 

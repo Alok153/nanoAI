@@ -14,7 +14,7 @@ class CoverageDashboardRepository
 @Inject
 constructor(
   @ApplicationContext private val context: Context,
-  private val json: Json = Json { ignoreUnknownKeys = true }
+  private val json: Json = Json { ignoreUnknownKeys = true },
 ) {
 
   suspend fun loadSnapshot(): CoverageDashboardPayload =
@@ -41,7 +41,7 @@ data class CoverageDashboardPayload(
   val generatedAt: String,
   val layers: List<LayerPayload>,
   val trend: Map<String, Double> = emptyMap(),
-  val risks: List<RiskPayload> = emptyList()
+  val risks: List<RiskPayload> = emptyList(),
 )
 
 @Serializable
@@ -52,5 +52,5 @@ data class RiskPayload(
   val riskId: String,
   val title: String,
   val severity: String,
-  val status: String
+  val status: String,
 )

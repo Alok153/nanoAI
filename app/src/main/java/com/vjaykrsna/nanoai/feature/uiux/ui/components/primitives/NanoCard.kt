@@ -137,11 +137,7 @@ fun NanoCard(
       content()
     }
   } else {
-    Surface(
-      modifier = semanticsModifier,
-      shape = shape,
-      tonalElevation = NanoElevation.level1,
-    ) {
+    Surface(modifier = semanticsModifier, shape = shape, tonalElevation = NanoElevation.level1) {
       content()
     }
   }

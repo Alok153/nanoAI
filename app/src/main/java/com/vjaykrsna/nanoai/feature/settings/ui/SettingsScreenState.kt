@@ -127,4 +127,5 @@ internal data class SettingsContentState(
   val privacyPreferences: PrivacyPreference,
   val uiUxState: SettingsUiUxState,
   val huggingFaceState: HuggingFaceAuthState,
+  val isLoading: Boolean = false,
 )

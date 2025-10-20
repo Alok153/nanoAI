@@ -93,7 +93,7 @@ fun RightSidebarPanels(
                 onEvent(
                   ShellUiEvent.ChatPersonaSelected(
                     persona.personaId,
-                    com.vjaykrsna.nanoai.core.model.PersonaSwitchAction.CONTINUE_THREAD
+                    com.vjaykrsna.nanoai.core.model.PersonaSwitchAction.CONTINUE_THREAD,
                   )
                 )
               },
@@ -146,7 +146,7 @@ private fun RightSidebarHeader(
     if (isDrawerOpen) {
       IconButton(
         onClick = onClose,
-        modifier = Modifier.semantics { contentDescription = "Close contextual drawer" }
+        modifier = Modifier.semantics { contentDescription = "Close contextual drawer" },
       ) {
         Icon(Icons.Outlined.Close, contentDescription = null)
       }
@@ -155,15 +155,9 @@ private fun RightSidebarHeader(
 }
 
 @Composable
-private fun RightPanelSwitcher(
-  activePanel: RightPanel,
-  onPanelSelect: (RightPanel) -> Unit,
-) {
+private fun RightPanelSwitcher(activePanel: RightPanel, onPanelSelect: (RightPanel) -> Unit) {
   val panels = remember { RightPanel.entries }
-  Row(
-    modifier = Modifier.fillMaxWidth(),
-    horizontalArrangement = Arrangement.spacedBy(12.dp),
-  ) {
+  Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
     panels.forEach { panel ->
       val (label, icon) = panelLabel(panel)
       FilterChip(

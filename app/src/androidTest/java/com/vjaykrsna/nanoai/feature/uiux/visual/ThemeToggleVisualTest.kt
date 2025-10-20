@@ -59,7 +59,7 @@ class ThemeToggleVisualTest {
       NanoAITheme(themePreference = themeState.value, dynamicColor = false) {
         Box(
           modifier =
-            Modifier.padding(24.dp).testTag(ROOT_TAG).background(MaterialTheme.colorScheme.surface),
+            Modifier.padding(24.dp).testTag(ROOT_TAG).background(MaterialTheme.colorScheme.surface)
         ) {
           ThemeToggle(currentTheme = themeState.value, onThemeChange = { themeState.value = it })
         }

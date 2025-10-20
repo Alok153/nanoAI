@@ -6,10 +6,8 @@ package com.vjaykrsna.nanoai.core.common
  */
 sealed class NanoAIResult<out T> {
   /** Successful outcome optionally carrying a payload. */
-  data class Success<T>(
-    val value: T,
-    val metadata: Map<String, String> = emptyMap(),
-  ) : NanoAIResult<T>()
+  data class Success<T>(val value: T, val metadata: Map<String, String> = emptyMap()) :
+    NanoAIResult<T>()
 
   /** Recoverable error that surfaces retry guidance and telemetry correlation identifiers. */
   data class RecoverableError(

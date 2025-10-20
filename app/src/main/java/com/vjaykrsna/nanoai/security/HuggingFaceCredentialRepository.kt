@@ -15,9 +15,7 @@ interface HuggingFaceTokenProvider {
 @Singleton
 class HuggingFaceCredentialRepository
 @Inject
-constructor(
-  private val secretStore: EncryptedSecretStore,
-) : HuggingFaceTokenProvider {
+constructor(private val secretStore: EncryptedSecretStore) : HuggingFaceTokenProvider {
 
   override fun accessToken(): String? = credential()?.encryptedValue?.takeIf { it.isNotBlank() }
 

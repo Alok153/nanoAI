@@ -26,7 +26,7 @@ class ToggleCompactModeUseCaseTest {
     spy.layoutSnapshotsFlow.value = listOf(initialLayout, secondaryLayout)
     spy.preferencesFlow.value =
       UiUxDomainReflection.newUiPreferences(
-        visualDensity = UiUxDomainReflection.visualDensity("DEFAULT"),
+        visualDensity = UiUxDomainReflection.visualDensity("DEFAULT")
       )
 
     val dispatcher = StandardTestDispatcher(testScheduler)
@@ -75,7 +75,7 @@ class ToggleCompactModeUseCaseTest {
   private fun instantiateUseCase(
     className: String,
     repository: Any,
-    dispatcher: CoroutineDispatcher
+    dispatcher: CoroutineDispatcher,
   ): Any {
     val clazz = UiUxDomainTestHelper.loadClass(className)
     val constructors = clazz.constructors.sortedBy { it.parameterCount }

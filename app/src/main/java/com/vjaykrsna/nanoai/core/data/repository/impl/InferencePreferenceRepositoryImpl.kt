@@ -18,9 +18,7 @@ import kotlinx.coroutines.flow.map
 @Singleton
 class InferencePreferenceRepositoryImpl
 @Inject
-constructor(
-  @ApplicationContext private val context: Context,
-) : InferencePreferenceRepository {
+constructor(@ApplicationContext private val context: Context) : InferencePreferenceRepository {
   override fun observeInferencePreference(): Flow<InferencePreference> =
     context.dataStore.data.map { preferences ->
       val modeName = preferences[KEY_INFERENCE_MODE]

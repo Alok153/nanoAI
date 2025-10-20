@@ -74,11 +74,7 @@ class CommandPaletteActionProviderTest {
           subtitle = "Open help center",
           category = CommandCategory.HELP,
         ),
-        CommandAction(
-          id = "settings_main",
-          title = "Settings",
-          category = CommandCategory.SETTINGS,
-        ),
+        CommandAction(id = "settings_main", title = "Settings", category = CommandCategory.SETTINGS),
       )
 
     assertThat(subject.filterActions(actions, "   ")).containsExactlyElementsIn(actions)

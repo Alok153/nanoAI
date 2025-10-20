@@ -10,17 +10,10 @@ import org.junit.Test
  * contract guarantees retry backoff metadata and integrity failure envelopes.
  */
 class ModelVerificationContractTest {
-  private val retryResponse =
-    mapOf(
-      "status" to "RETRY",
-      "nextRetryAfterSeconds" to 120,
-    )
+  private val retryResponse = mapOf("status" to "RETRY", "nextRetryAfterSeconds" to 120)
 
   private val integrityFailureEnvelope =
-    mapOf(
-      "code" to "INTEGRITY_FAILURE",
-      "message" to "Checksum mismatch detected",
-    )
+    mapOf("code" to "INTEGRITY_FAILURE", "message" to "Checksum mismatch detected")
 
   @Test
   fun `retry response must include nextRetryAfterSeconds when status is RETRY`() {

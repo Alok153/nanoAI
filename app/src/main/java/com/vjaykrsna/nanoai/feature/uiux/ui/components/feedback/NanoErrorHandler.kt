@@ -103,14 +103,9 @@ private fun InlineErrorMessage(
         Text(
           text = title,
           style = MaterialTheme.typography.titleSmall,
-          fontWeight = FontWeight.SemiBold
+          fontWeight = FontWeight.SemiBold,
         )
-        description?.let {
-          Text(
-            text = it,
-            style = MaterialTheme.typography.bodySmall,
-          )
-        }
+        description?.let { Text(text = it, style = MaterialTheme.typography.bodySmall) }
       }
       Column(
         verticalArrangement = Arrangement.spacedBy(NanoSpacing.xs),

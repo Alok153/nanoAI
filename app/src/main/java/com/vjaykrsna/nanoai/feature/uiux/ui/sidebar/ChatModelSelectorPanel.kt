@@ -24,7 +24,7 @@ internal fun ChatModelSelectorPanel(
 ) {
   Column(
     verticalArrangement = Arrangement.spacedBy(12.dp),
-    modifier = modifier.testTag("chat_model_selector_panel")
+    modifier = modifier.testTag("chat_model_selector_panel"),
   ) {
     Text(
       text = "Select AI Model",

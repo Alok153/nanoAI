@@ -345,10 +345,7 @@ constructor(
     )
 
   private fun offlinePollingDecision(): PollingDecision =
-    PollingDecision.Stop(
-      message = OFFLINE_DEVICE_MESSAGE,
-      announcement = OFFLINE_DEVICE_MESSAGE,
-    )
+    PollingDecision.Stop(message = OFFLINE_DEVICE_MESSAGE, announcement = OFFLINE_DEVICE_MESSAGE)
 
   private fun genericPollingFailure(
     oauthError: HuggingFaceOAuthErrorResponse?,

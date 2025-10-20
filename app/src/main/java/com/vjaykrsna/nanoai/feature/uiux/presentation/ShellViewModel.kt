@@ -190,10 +190,7 @@ constructor(
         val mergedJobs = mergeProgressJobs(layout.progressJobs, jobs)
         val sanitizedUndo = sanitizeUndoPayload(layout.pendingUndoAction, mergedJobs)
         val normalizedLayout =
-          layout.copy(
-            progressJobs = mergedJobs,
-            pendingUndoAction = sanitizedUndo,
-          )
+          layout.copy(progressJobs = mergedJobs, pendingUndoAction = sanitizedUndo)
         val normalizedBanner =
           banner.copy(
             status = normalizedLayout.connectivity,
@@ -407,10 +404,7 @@ constructor(
     return merged.values.sortedBy(ProgressJob::queuedAt)
   }
 
-  private fun sanitizeUndoPayload(
-    payload: UndoPayload?,
-    jobs: List<ProgressJob>,
-  ): UndoPayload? {
+  private fun sanitizeUndoPayload(payload: UndoPayload?, jobs: List<ProgressJob>): UndoPayload? {
     val currentPayload = payload ?: return null
     val jobId = currentPayload.extractJobId()
     val activeJob = jobId?.let { id -> jobs.firstOrNull { it.jobId == id } }

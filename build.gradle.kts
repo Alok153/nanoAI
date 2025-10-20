@@ -6,8 +6,8 @@ plugins {
     alias(libs.plugins.kotlin.serialization) apply false
     alias(libs.plugins.ksp) apply false
     alias(libs.plugins.hilt) apply false
-    id("io.gitlab.arturbosch.detekt") version "1.23.7"
-    id("com.diffplug.spotless") version "6.25.0"
+    id("io.gitlab.arturbosch.detekt") version "1.23.8"
+    id("com.diffplug.spotless") version "7.0.4"
 }
 
 detekt {

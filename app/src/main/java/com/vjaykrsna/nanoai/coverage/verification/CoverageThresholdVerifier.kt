@@ -4,16 +4,12 @@ import com.vjaykrsna.nanoai.coverage.model.CoverageSummary
 import com.vjaykrsna.nanoai.coverage.model.TestLayer
 
 /** Validates that coverage results honour the agreed upon minimum thresholds per layer. */
-class CoverageThresholdVerifier(
-  private val minimums: Map<TestLayer, Double> = DEFAULT_MINIMUMS,
-) {
+class CoverageThresholdVerifier(private val minimums: Map<TestLayer, Double> = DEFAULT_MINIMUMS) {
 
   data class Result(val belowThresholdLayers: Set<TestLayer>)
 
   class ThresholdViolation(val layers: Set<TestLayer>) :
-    IllegalStateException(
-      "Coverage below threshold for layers: ${layers.joinToString()}",
-    )
+    IllegalStateException("Coverage below threshold for layers: ${layers.joinToString()}")
 
   fun verify(summary: CoverageSummary): Result {
     val failingLayers =
@@ -33,10 +29,6 @@ class CoverageThresholdVerifier(
 
   companion object {
     private val DEFAULT_MINIMUMS =
-      mapOf(
-        TestLayer.VIEW_MODEL to 75.0,
-        TestLayer.UI to 65.0,
-        TestLayer.DATA to 70.0,
-      )
+      mapOf(TestLayer.VIEW_MODEL to 75.0, TestLayer.UI to 65.0, TestLayer.DATA to 70.0)
   }
 }

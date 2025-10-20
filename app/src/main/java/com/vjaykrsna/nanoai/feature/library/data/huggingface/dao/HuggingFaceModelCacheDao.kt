@@ -19,7 +19,7 @@ interface HuggingFaceModelCacheDao {
   suspend fun getModels(limit: Int, offset: Int): List<HuggingFaceModelCacheEntity>
 
   @Query(
-    "SELECT * FROM huggingface_models WHERE fetched_at > :expiryThreshold ORDER BY downloads DESC LIMIT :limit OFFSET :offset",
+    "SELECT * FROM huggingface_models WHERE fetched_at > :expiryThreshold ORDER BY downloads DESC LIMIT :limit OFFSET :offset"
   )
   suspend fun getFreshModels(
     expiryThreshold: Instant,

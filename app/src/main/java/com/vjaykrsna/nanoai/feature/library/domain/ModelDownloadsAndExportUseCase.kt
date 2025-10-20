@@ -108,7 +108,7 @@ constructor(
   /** Export personas, provider configs, and optional chat history as bundle. */
   override suspend fun exportBackup(
     destinationPath: String,
-    includeChatHistory: Boolean
+    includeChatHistory: Boolean,
   ): Result<String> = runCatching {
     val personas = exportService.gatherPersonas()
     val providers = exportService.gatherAPIProviderConfigs()
@@ -145,6 +145,5 @@ constructor(
   }
 }
 
-class ModelInUseException(
-  modelId: String,
-) : IllegalStateException("Model $modelId is active in a conversation")
+class ModelInUseException(modelId: String) :
+  IllegalStateException("Model $modelId is active in a conversation")

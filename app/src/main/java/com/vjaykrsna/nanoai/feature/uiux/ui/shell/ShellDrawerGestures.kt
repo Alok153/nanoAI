@@ -38,13 +38,7 @@ internal fun Modifier.shellDrawerGestures(
   val allowRightGestures = !layout.supportsRightRail
   if (!allowLeftGestures && !allowRightGestures) return this
 
-  return pointerInput(
-    allowLeftGestures,
-    allowRightGestures,
-    layout,
-    thresholds,
-    onEvent,
-  ) {
+  return pointerInput(allowLeftGestures, allowRightGestures, layout, thresholds, onEvent) {
     handleShellDrawerGestures(
       allowLeftGestures = allowLeftGestures,
       allowRightGestures = allowRightGestures,
@@ -136,7 +130,7 @@ private data class DrawerGestureMetrics(
 )
 
 private fun DrawerGestureContext.detectRightDrawerGesture(
-  metrics: DrawerGestureMetrics,
+  metrics: DrawerGestureMetrics
 ): DrawerSwipeAction? {
   if (!allowRightGestures) return null
 
@@ -155,7 +149,7 @@ private fun DrawerGestureContext.detectRightDrawerGesture(
 }
 
 private fun DrawerGestureContext.detectLeftDrawerGesture(
-  metrics: DrawerGestureMetrics,
+  metrics: DrawerGestureMetrics
 ): DrawerSwipeAction? {
   if (!allowLeftGestures) return null
 

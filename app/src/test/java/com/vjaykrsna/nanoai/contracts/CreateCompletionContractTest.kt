@@ -17,10 +17,7 @@ class CreateCompletionContractTest {
     val request =
       mapOf(
         "model" to "gpt-4o-mini",
-        "messages" to
-          listOf(
-            mapOf("role" to "user", "content" to "Hello, AI!"),
-          ),
+        "messages" to listOf(mapOf("role" to "user", "content" to "Hello, AI!")),
       )
 
     // Assert: Verify required fields are present
@@ -142,13 +139,9 @@ class CreateCompletionContractTest {
           listOf(
             mapOf(
               "index" to 0,
-              "message" to
-                mapOf(
-                  "role" to "assistant",
-                  "content" to "Hello! How can I help you?",
-                ),
+              "message" to mapOf("role" to "assistant", "content" to "Hello! How can I help you?"),
               "finish_reason" to "stop",
-            ),
+            )
           ),
       )
 
@@ -190,12 +183,7 @@ class CreateCompletionContractTest {
         "id" to "chatcmpl-123",
         "created" to 1234567890,
         "choices" to listOf<Map<String, Any>>(),
-        "usage" to
-          mapOf(
-            "prompt_tokens" to 10,
-            "completion_tokens" to 20,
-            "total_tokens" to 30,
-          ),
+        "usage" to mapOf("prompt_tokens" to 10, "completion_tokens" to 20, "total_tokens" to 30),
       )
 
     val responseWithoutUsage =
@@ -224,9 +212,7 @@ class CreateCompletionContractTest {
         "model" to "gemini-pro",
         "messages" to listOf(mapOf("role" to "user", "content" to "Test")),
         "metadata" to
-          mapOf(
-            "safety_settings" to mapOf("harm_category" to "HARM_CATEGORY_DANGEROUS_CONTENT"),
-          ),
+          mapOf("safety_settings" to mapOf("harm_category" to "HARM_CATEGORY_DANGEROUS_CONTENT")),
       )
 
     // Assert: Metadata field can contain arbitrary provider options

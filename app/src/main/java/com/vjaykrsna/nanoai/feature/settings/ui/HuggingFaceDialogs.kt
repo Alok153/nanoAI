@@ -141,7 +141,7 @@ private fun HuggingFaceLoginDialogBody(deviceAuthState: HuggingFaceDeviceAuthSta
       if (deviceAuthState.isPolling) {
         Row(
           verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.spacedBy(12.dp)
+          horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
           CircularProgressIndicator(modifier = Modifier.size(20.dp))
           Text(
@@ -216,7 +216,7 @@ private fun HuggingFaceApiKeyDialog(
           onSave(apiKey.trim())
           onDismiss()
         },
-        enabled = apiKey.trim().isNotEmpty()
+        enabled = apiKey.trim().isNotEmpty(),
       ) {
         Text("Save")
       }

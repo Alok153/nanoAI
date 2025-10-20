@@ -45,7 +45,7 @@ class AppViewModelTest {
         layoutSnapshots = emptyList(),
         uiState = null,
         hydratedFromCache = true,
-        offline = false
+        offline = false,
       )
     val disclaimerState =
       mockk<com.vjaykrsna.nanoai.core.data.preferences.DisclaimerExposureState> {
@@ -80,7 +80,7 @@ class AppViewModelTest {
         layoutSnapshots = emptyList(),
         uiState = null,
         hydratedFromCache = true,
-        offline = false
+        offline = false,
       )
     every { observeUserProfileUseCase.flow } returns MutableStateFlow(userProfileResult)
     val disclaimerState =
@@ -111,7 +111,7 @@ class AppViewModelTest {
         layoutSnapshots = emptyList(),
         uiState = null,
         hydratedFromCache = true,
-        offline = false
+        offline = false,
       )
     val disclaimerState =
       mockk<com.vjaykrsna.nanoai.core.data.preferences.DisclaimerExposureState> {
@@ -143,7 +143,7 @@ class AppViewModelTest {
         layoutSnapshots = emptyList(),
         uiState = null,
         hydratedFromCache = true,
-        offline = false
+        offline = false,
       )
     val disclaimerState =
       mockk<com.vjaykrsna.nanoai.core.data.preferences.DisclaimerExposureState> {
@@ -174,7 +174,7 @@ class AppViewModelTest {
         layoutSnapshots = emptyList(),
         uiState = null,
         hydratedFromCache = true,
-        offline = false
+        offline = false,
       )
     val disclaimerState =
       mockk<com.vjaykrsna.nanoai.core.data.preferences.DisclaimerExposureState> {

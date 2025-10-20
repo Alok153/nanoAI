@@ -58,7 +58,7 @@ class HuggingFaceModelCacheDataSourceTest {
           trendingScore = 50,
           createdAt = Instant.parse("2024-01-01T00:00:00Z"),
           lastModified = Instant.parse("2024-01-02T00:00:00Z"),
-          isPrivate = false
+          isPrivate = false,
         )
       )
 
@@ -105,7 +105,7 @@ class HuggingFaceModelCacheDataSourceTest {
           trendingScore = null,
           createdAt = null,
           lastModified = null,
-          isPrivate = false
+          isPrivate = false,
         )
       )
 

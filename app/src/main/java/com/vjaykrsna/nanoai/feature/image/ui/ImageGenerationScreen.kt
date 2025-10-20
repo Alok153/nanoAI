@@ -92,10 +92,7 @@ fun ImageGenerationScreen(
           style = MaterialTheme.typography.headlineMedium,
           fontWeight = FontWeight.Bold,
         )
-        IconButton(
-          onClick = onGalleryClick,
-          modifier = Modifier.testTag("gallery_button"),
-        ) {
+        IconButton(onClick = onGalleryClick, modifier = Modifier.testTag("gallery_button")) {
           Icon(
             Icons.Default.PhotoLibrary,
             contentDescription = "Open gallery",
@@ -164,10 +161,7 @@ fun ImageGenerationScreen(
 
       // Steps slider
       Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-          text = "Steps: ${uiState.steps}",
-          style = MaterialTheme.typography.bodyMedium,
-        )
+        Text(text = "Steps: ${uiState.steps}", style = MaterialTheme.typography.bodyMedium)
         Slider(
           value = uiState.steps.toFloat(),
           onValueChange = { viewModel.updateSteps(it.toInt()) },
@@ -256,10 +250,7 @@ private fun ImageDisplayArea(
     color = MaterialTheme.colorScheme.surfaceVariant,
     shape = MaterialTheme.shapes.medium,
   ) {
-    Box(
-      modifier = Modifier.fillMaxSize(),
-      contentAlignment = Alignment.Center,
-    ) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
       when {
         isGenerating -> {
           Column(
@@ -343,10 +334,7 @@ private fun DimensionInput(
   modifier: Modifier = Modifier,
 ) {
   Column(modifier = modifier) {
-    Text(
-      text = label,
-      style = MaterialTheme.typography.bodyMedium,
-    )
+    Text(text = label, style = MaterialTheme.typography.bodyMedium)
     Spacer(modifier = Modifier.height(4.dp))
     OutlinedTextField(
       value = value.toString(),

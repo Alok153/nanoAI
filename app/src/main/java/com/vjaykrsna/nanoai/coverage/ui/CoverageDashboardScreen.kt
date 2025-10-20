@@ -49,10 +49,7 @@ data class CoverageDashboardUiState(
 )
 
 /** Simple value object describing coverage metrics per layer. */
-data class LayerCoverageState(
-  val layer: TestLayer,
-  val metric: CoverageMetric,
-)
+data class LayerCoverageState(val layer: TestLayer, val metric: CoverageMetric)
 
 /** Describes risk chips surfaced on the dashboard. */
 data class RiskChipState(
@@ -72,7 +69,7 @@ fun CoverageDashboardScreen(
 ) {
   Column(
     modifier = modifier.fillMaxSize().padding(16.dp),
-    verticalArrangement = Arrangement.spacedBy(16.dp)
+    verticalArrangement = Arrangement.spacedBy(16.dp),
   ) {
     HeaderSection(state = state, onRefresh = onRefresh, onShareRequest = onShareRequest)
 
@@ -109,17 +106,13 @@ private fun HeaderSection(
     RowActions(
       isRefreshing = state.isRefreshing,
       onRefresh = onRefresh,
-      onShareRequest = onShareRequest
+      onShareRequest = onShareRequest,
     )
   }
 }
 
 @Composable
-private fun RowActions(
-  isRefreshing: Boolean,
-  onRefresh: () -> Unit,
-  onShareRequest: () -> Unit,
-) {
+private fun RowActions(isRefreshing: Boolean, onRefresh: () -> Unit, onShareRequest: () -> Unit) {
   androidx.compose.foundation.layout.Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
     Button(onClick = onRefresh, enabled = !isRefreshing) {
       if (isRefreshing) {
@@ -157,11 +150,11 @@ private fun RiskSection(risks: List<RiskChipState>, onRiskSelect: (RiskChipState
     Text(
       text = "Risks",
       style = MaterialTheme.typography.titleMedium,
-      fontWeight = FontWeight.SemiBold
+      fontWeight = FontWeight.SemiBold,
     )
     FlowRow(
       horizontalArrangement = Arrangement.spacedBy(8.dp),
-      verticalArrangement = Arrangement.spacedBy(8.dp)
+      verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
       risks.forEach { risk ->
         AssistChip(
@@ -202,12 +195,12 @@ private fun LayerCard(state: LayerCoverageState, delta: Double?) {
   ) {
     Column(
       modifier = Modifier.fillMaxWidth().padding(16.dp),
-      verticalArrangement = Arrangement.spacedBy(8.dp)
+      verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
       Text(
         text = layer.displayName,
         style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.SemiBold
+        fontWeight = FontWeight.SemiBold,
       )
       Text(
         text =

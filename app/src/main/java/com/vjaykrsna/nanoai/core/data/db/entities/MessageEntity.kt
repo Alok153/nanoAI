@@ -35,12 +35,9 @@ import kotlinx.datetime.Instant
         parentColumns = ["thread_id"],
         childColumns = ["thread_id"],
         onDelete = ForeignKey.CASCADE,
-      ),
+      )
     ],
-  indices =
-    [
-      Index(value = ["thread_id", "created_at"]),
-    ],
+  indices = [Index(value = ["thread_id", "created_at"])],
 )
 data class MessageEntity(
   @PrimaryKey @ColumnInfo(name = "message_id") val messageId: String,

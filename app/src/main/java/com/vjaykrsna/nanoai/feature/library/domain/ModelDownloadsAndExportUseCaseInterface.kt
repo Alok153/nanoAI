@@ -20,7 +20,7 @@ interface ModelDownloadsAndExportUseCaseInterface {
 
   suspend fun exportBackup(
     destinationPath: String,
-    includeChatHistory: Boolean = false
+    includeChatHistory: Boolean = false,
   ): Result<String>
 
   fun getDownloadProgress(taskId: UUID): Flow<Float>

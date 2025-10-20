@@ -40,11 +40,7 @@ constructor(private val repository: CoverageDashboardRepository) {
     require(payload.layers.isNotEmpty()) { "Coverage dashboard payload must contain layers" }
     return payload.layers.associate { layerPayload ->
       val layer = normalizeLayer(layerPayload.layer)
-      layer to
-        CoverageMetric(
-          coverage = layerPayload.coverage,
-          threshold = layerPayload.threshold,
-        )
+      layer to CoverageMetric(coverage = layerPayload.coverage, threshold = layerPayload.threshold)
     }
   }
 

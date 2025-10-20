@@ -23,7 +23,7 @@ abstract class RuntimeModule {
   @Binds
   @Singleton
   abstract fun bindDeviceIdentityProvider(
-    impl: AndroidDeviceIdentityProvider,
+    impl: AndroidDeviceIdentityProvider
   ): DeviceIdentityProvider
 
   companion object {

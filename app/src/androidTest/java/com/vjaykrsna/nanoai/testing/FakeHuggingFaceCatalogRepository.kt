@@ -16,7 +16,7 @@ class FakeHuggingFaceCatalogRepository : HuggingFaceCatalogRepository {
 
   fun setShouldFail(
     shouldFail: Boolean,
-    exception: Exception = RuntimeException("Simulated failure")
+    exception: Exception = RuntimeException("Simulated failure"),
   ) {
     this.shouldFail = shouldFail
     this.failureException = exception

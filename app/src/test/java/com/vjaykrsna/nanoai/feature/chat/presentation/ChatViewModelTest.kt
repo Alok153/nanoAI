@@ -403,7 +403,7 @@ class ChatViewModelTest {
       DomainTestBuilders.buildChatThread(
         threadId = threadId,
         personaId = personaId,
-        title = "Test Thread"
+        title = "Test Thread",
       )
     conversationRepository.addThread(thread)
 
@@ -539,13 +539,13 @@ class ChatViewModelTest {
       DomainTestBuilders.buildChatThread(
         threadId = threadId1,
         personaId = personaId,
-        title = "Thread 1"
+        title = "Thread 1",
       )
     val thread2 =
       DomainTestBuilders.buildChatThread(
         threadId = threadId2,
         personaId = personaId,
-        title = "Thread 2"
+        title = "Thread 2",
       )
 
     conversationRepository.addThread(thread1)

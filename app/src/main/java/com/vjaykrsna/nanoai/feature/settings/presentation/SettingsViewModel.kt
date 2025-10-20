@@ -130,7 +130,7 @@ constructor(
       runCatching { apiProviderConfigRepository.addProvider(config) }
         .onFailure { error ->
           _errorEvents.emit(
-            SettingsError.ProviderAddFailed(error.message ?: "Failed to add provider"),
+            SettingsError.ProviderAddFailed(error.message ?: "Failed to add provider")
           )
         }
       _isLoading.value = false
@@ -143,7 +143,7 @@ constructor(
       runCatching { apiProviderConfigRepository.updateProvider(config) }
         .onFailure { error ->
           _errorEvents.emit(
-            SettingsError.ProviderUpdateFailed(error.message ?: "Failed to update provider"),
+            SettingsError.ProviderUpdateFailed(error.message ?: "Failed to update provider")
           )
         }
       _isLoading.value = false
@@ -156,7 +156,7 @@ constructor(
       runCatching { apiProviderConfigRepository.deleteProvider(providerId) }
         .onFailure { error ->
           _errorEvents.emit(
-            SettingsError.ProviderDeleteFailed(error.message ?: "Failed to delete provider"),
+            SettingsError.ProviderDeleteFailed(error.message ?: "Failed to delete provider")
           )
         }
       _isLoading.value = false
@@ -174,15 +174,11 @@ constructor(
             result
               .onSuccess { path -> _exportSuccess.emit(path) }
               .onFailure { error ->
-                _errorEvents.emit(
-                  SettingsError.ExportFailed(error.message ?: "Export failed"),
-                )
+                _errorEvents.emit(SettingsError.ExportFailed(error.message ?: "Export failed"))
               }
           },
           onFailure = { error ->
-            _errorEvents.emit(
-              SettingsError.UnexpectedError(error.message ?: "Unexpected error"),
-            )
+            _errorEvents.emit(SettingsError.UnexpectedError(error.message ?: "Unexpected error"))
           },
         )
       _isLoading.value = false
@@ -198,15 +194,11 @@ constructor(
             result
               .onSuccess { summary -> _importSuccess.emit(summary) }
               .onFailure { error ->
-                _errorEvents.emit(
-                  SettingsError.ImportFailed(error.message ?: "Import failed"),
-                )
+                _errorEvents.emit(SettingsError.ImportFailed(error.message ?: "Import failed"))
               }
           },
           onFailure = { error ->
-            _errorEvents.emit(
-              SettingsError.UnexpectedError(error.message ?: "Unexpected error"),
-            )
+            _errorEvents.emit(SettingsError.UnexpectedError(error.message ?: "Unexpected error"))
           },
         )
       _isLoading.value = false
@@ -218,9 +210,7 @@ constructor(
       runCatching { privacyPreferenceStore.setTelemetryOptIn(optIn) }
         .onFailure { error ->
           _errorEvents.emit(
-            SettingsError.PreferenceUpdateFailed(
-              error.message ?: "Failed to update preference",
-            ),
+            SettingsError.PreferenceUpdateFailed(error.message ?: "Failed to update preference")
           )
         }
     }
@@ -231,9 +221,7 @@ constructor(
       runCatching { privacyPreferenceStore.acknowledgeConsent(Clock.System.now()) }
         .onFailure { error ->
           _errorEvents.emit(
-            SettingsError.PreferenceUpdateFailed(
-              error.message ?: "Failed to acknowledge consent",
-            ),
+            SettingsError.PreferenceUpdateFailed(error.message ?: "Failed to acknowledge consent")
           )
         }
     }
@@ -244,9 +232,7 @@ constructor(
       runCatching { privacyPreferenceStore.setRetentionPolicy(policy) }
         .onFailure { error ->
           _errorEvents.emit(
-            SettingsError.PreferenceUpdateFailed(
-              error.message ?: "Failed to set retention policy",
-            ),
+            SettingsError.PreferenceUpdateFailed(error.message ?: "Failed to set retention policy")
           )
         }
     }
@@ -257,9 +243,7 @@ constructor(
       runCatching { privacyPreferenceStore.setExportWarningsDismissed(true) }
         .onFailure { error ->
           _errorEvents.emit(
-            SettingsError.PreferenceUpdateFailed(
-              error.message ?: "Failed to dismiss warnings",
-            ),
+            SettingsError.PreferenceUpdateFailed(error.message ?: "Failed to dismiss warnings")
           )
         }
     }
@@ -328,8 +312,8 @@ constructor(
         .onFailure { throwable ->
           _errorEvents.emit(
             SettingsError.HuggingFaceAuthFailed(
-              throwable.message ?: "Failed to save Hugging Face API key",
-            ),
+              throwable.message ?: "Failed to save Hugging Face API key"
+            )
           )
         }
     }
@@ -346,9 +330,7 @@ constructor(
 
       if (clientId.isBlank()) {
         _errorEvents.emit(
-          SettingsError.HuggingFaceAuthFailed(
-            "Hugging Face OAuth client ID is not configured",
-          ),
+          SettingsError.HuggingFaceAuthFailed("Hugging Face OAuth client ID is not configured")
         )
         return@launch
       }
@@ -358,8 +340,8 @@ constructor(
         .onFailure { throwable ->
           _errorEvents.emit(
             SettingsError.HuggingFaceAuthFailed(
-              throwable.message ?: "Unable to start Hugging Face sign-in",
-            ),
+              throwable.message ?: "Unable to start Hugging Face sign-in"
+            )
           )
         }
     }
@@ -388,37 +370,21 @@ constructor(
 }
 
 sealed class SettingsError {
-  data class ProviderAddFailed(
-    val message: String,
-  ) : SettingsError()
+  data class ProviderAddFailed(val message: String) : SettingsError()
 
-  data class ProviderUpdateFailed(
-    val message: String,
-  ) : SettingsError()
+  data class ProviderUpdateFailed(val message: String) : SettingsError()
 
-  data class ProviderDeleteFailed(
-    val message: String,
-  ) : SettingsError()
+  data class ProviderDeleteFailed(val message: String) : SettingsError()
 
-  data class ExportFailed(
-    val message: String,
-  ) : SettingsError()
+  data class ExportFailed(val message: String) : SettingsError()
 
-  data class ImportFailed(
-    val message: String,
-  ) : SettingsError()
+  data class ImportFailed(val message: String) : SettingsError()
 
-  data class PreferenceUpdateFailed(
-    val message: String,
-  ) : SettingsError()
+  data class PreferenceUpdateFailed(val message: String) : SettingsError()
 
-  data class UnexpectedError(
-    val message: String,
-  ) : SettingsError()
+  data class UnexpectedError(val message: String) : SettingsError()
 
-  data class HuggingFaceAuthFailed(
-    val message: String,
-  ) : SettingsError()
+  data class HuggingFaceAuthFailed(val message: String) : SettingsError()
 }
 
 data class SettingsUiUxState(

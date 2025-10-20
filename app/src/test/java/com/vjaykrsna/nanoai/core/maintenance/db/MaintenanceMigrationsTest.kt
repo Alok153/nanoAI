@@ -139,7 +139,7 @@ class MaintenanceMigrationsTest {
           NULL
         )
       """
-        .trimIndent(),
+        .trimIndent()
     )
   }
 
@@ -211,7 +211,7 @@ class MaintenanceMigrationsTest {
                 updated_at INTEGER NOT NULL
               )
               """
-                .trimIndent(),
+                .trimIndent()
             )
             db.execSQL(
               """
@@ -239,7 +239,7 @@ class MaintenanceMigrationsTest {
                 1700000000000
               )
               """
-                .trimIndent(),
+                .trimIndent()
             )
             db.execSQL(RoomMasterTable.CREATE_QUERY)
             db.execSQL(
@@ -250,12 +250,8 @@ class MaintenanceMigrationsTest {
             )
           }
 
-          override fun onUpgrade(
-            db: SupportSQLiteDatabase,
-            oldVersion: Int,
-            newVersion: Int,
-          ) = Unit
-        },
+          override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+        }
       )
       .build()
   }

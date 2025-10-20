@@ -156,7 +156,7 @@ fun CommandPaletteSheet(
           .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.45f))
           .clickable(interactionSource = interactionSource, indication = null) {
             onDismissRequest(PaletteDismissReason.HIDDEN)
-          },
+          }
     )
 
     Surface(
@@ -258,11 +258,7 @@ private fun CommandPaletteResultList(
 }
 
 @Composable
-private fun CommandPaletteItem(
-  action: CommandAction,
-  selected: Boolean,
-  onSelect: () -> Unit,
-) {
+private fun CommandPaletteItem(action: CommandAction, selected: Boolean, onSelect: () -> Unit) {
   val indicatorColor =
     if (selected) MaterialTheme.colorScheme.secondaryContainer
     else MaterialTheme.colorScheme.surfaceVariant

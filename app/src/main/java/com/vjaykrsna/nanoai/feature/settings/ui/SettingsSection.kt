@@ -12,10 +12,5 @@ internal fun SettingsSection(
   modifier: Modifier = Modifier,
   content: @Composable ColumnScope.() -> Unit,
 ) {
-  NanoSection(
-    title = title,
-    modifier = modifier.fillMaxWidth(),
-  ) {
-    content()
-  }
+  NanoSection(title = title, modifier = modifier.fillMaxWidth()) { content() }
 }

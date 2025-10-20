@@ -24,11 +24,7 @@ class VerifyCoverageThresholdsTaskTest {
             TestLayer.DATA to CoverageMetric(coverage = 72.0, threshold = 70.0),
           ),
         thresholds =
-          mapOf(
-            TestLayer.VIEW_MODEL to 75.0,
-            TestLayer.UI to 65.0,
-            TestLayer.DATA to 70.0,
-          ),
+          mapOf(TestLayer.VIEW_MODEL to 75.0, TestLayer.UI to 65.0, TestLayer.DATA to 70.0),
         trendDelta = emptyMap(),
         riskItems = emptyList(),
       )
@@ -51,11 +47,7 @@ class VerifyCoverageThresholdsTaskTest {
             TestLayer.DATA to CoverageMetric(coverage = 72.0, threshold = 70.0),
           ),
         thresholds =
-          mapOf(
-            TestLayer.VIEW_MODEL to 75.0,
-            TestLayer.UI to 65.0,
-            TestLayer.DATA to 70.0,
-          ),
+          mapOf(TestLayer.VIEW_MODEL to 75.0, TestLayer.UI to 65.0, TestLayer.DATA to 70.0),
         trendDelta = emptyMap(),
         riskItems = emptyList(),
       )

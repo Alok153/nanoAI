@@ -51,6 +51,7 @@ private const val KEY_ERROR_RETRY_AFTER = "ERROR_RETRY_AFTER"
 private const val KEY_ERROR_CONTEXT = "ERROR_CONTEXT"
 private const val ERROR_TYPE_RECOVERABLE = "recoverable"
 private const val ERROR_TYPE_FATAL = "fatal"
+
 /**
  * WorkManager worker that downloads model artifacts after fetching signed manifests and enforcing
  * integrity checks.
@@ -200,7 +201,7 @@ constructor(
                     "PROGRESS" to progress,
                     "BYTES_DOWNLOADED" to downloaded,
                     "TOTAL_BYTES" to total,
-                  ),
+                  )
                 )
               },
             )
@@ -263,11 +264,7 @@ constructor(
       } else {
         output.write(buffer, 0, read)
         downloaded += read
-        onProgress(
-          progressFor(downloaded, totalBytes),
-          downloaded,
-          totalBytes,
-        )
+        onProgress(progressFor(downloaded, totalBytes), downloaded, totalBytes)
         read = input.read(buffer)
       }
     }
@@ -310,10 +307,7 @@ constructor(
                 message = "Checksum mismatch detected",
                 retryAfterSeconds = 30L,
                 context =
-                  mapOf(
-                    "expectedChecksum" to manifest.checksumSha256,
-                    "actualChecksum" to checksum,
-                  ),
+                  mapOf("expectedChecksum" to manifest.checksumSha256, "actualChecksum" to checksum),
               )
             }
             manifest.signature != null &&
@@ -421,11 +415,7 @@ constructor(
       source = "ModelDownloadWorker",
       result = error,
       extraContext =
-        mapOf(
-          "taskId" to taskId,
-          "modelId" to modelId,
-          "attempt" to runAttemptCount.toString(),
-        ),
+        mapOf("taskId" to taskId, "modelId" to modelId, "attempt" to runAttemptCount.toString()),
     )
     return WorkResult.failure(fatalResultData(error))
   }
@@ -448,7 +438,7 @@ constructor(
         KEY_MODEL_ID to modelId,
         KEY_MODEL_VERSION to manifest.version,
         KEY_CHECKSUM to checksum,
-      ),
+      )
     )
   }
 
@@ -474,54 +464,31 @@ constructor(
           source = "ModelDownloadWorker.reportVerification",
           result = result,
           extraContext =
-            mapOf(
-              "modelId" to modelId,
-              "version" to manifest.version,
-              "outcome" to outcome.name,
-            ),
+            mapOf("modelId" to modelId, "version" to manifest.version, "outcome" to outcome.name),
         )
       is NanoAIResult.FatalError ->
         telemetryReporter.report(
           source = "ModelDownloadWorker.reportVerification",
           result = result,
           extraContext =
-            mapOf(
-              "modelId" to modelId,
-              "version" to manifest.version,
-              "outcome" to outcome.name,
-            ),
+            mapOf("modelId" to modelId, "version" to manifest.version, "outcome" to outcome.name),
         )
     }
   }
 }
 
 private fun fatalFailureResult(message: String): WorkResult =
-  WorkResult.failure(
-    workDataOf(
-      KEY_ERROR_TYPE to ERROR_TYPE_FATAL,
-      KEY_ERROR_MESSAGE to message,
-    ),
-  )
+  WorkResult.failure(workDataOf(KEY_ERROR_TYPE to ERROR_TYPE_FATAL, KEY_ERROR_MESSAGE to message))
 
-private suspend fun markTaskStarting(
-  downloadTaskDao: DownloadTaskDao,
-  taskId: String,
-) {
+private suspend fun markTaskStarting(downloadTaskDao: DownloadTaskDao, taskId: String) {
   val task = downloadTaskDao.getById(taskId) ?: return
   downloadTaskDao.update(
-    task.copy(
-      startedAt = Clock.System.now(),
-      finishedAt = null,
-      errorMessage = null,
-    ),
+    task.copy(startedAt = Clock.System.now(), finishedAt = null, errorMessage = null)
   )
   downloadTaskDao.updateStatus(taskId, DownloadStatus.DOWNLOADING)
 }
 
-private suspend fun markTaskFinished(
-  downloadTaskDao: DownloadTaskDao,
-  taskId: String,
-) {
+private suspend fun markTaskFinished(downloadTaskDao: DownloadTaskDao, taskId: String) {
   val task = downloadTaskDao.getById(taskId) ?: return
   downloadTaskDao.update(task.copy(finishedAt = Clock.System.now()))
 }

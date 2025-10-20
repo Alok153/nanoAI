@@ -21,9 +21,7 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class AudioViewModel
 @Inject
-constructor(
-  @MainImmediateDispatcher private val dispatcher: CoroutineDispatcher,
-) : ViewModel() {
+constructor(@MainImmediateDispatcher private val dispatcher: CoroutineDispatcher) : ViewModel() {
 
   private companion object {
     private const val WAVEFORM_UPDATE_DELAY_MS = 100L
@@ -39,10 +37,7 @@ constructor(
   fun startAudioSession() {
     viewModelScope.launch(dispatcher) {
       _uiState.value =
-        _uiState.value.copy(
-          sessionState = AudioSessionState.ACTIVE,
-          errorMessage = null,
-        )
+        _uiState.value.copy(sessionState = AudioSessionState.ACTIVE, errorMessage = null)
 
       // TODO: Implement actual audio session logic
       // Simulate waveform updates
@@ -64,10 +59,7 @@ constructor(
 
   fun endSession() {
     _uiState.value =
-      _uiState.value.copy(
-        sessionState = AudioSessionState.ENDED,
-        waveformData = emptyList(),
-      )
+      _uiState.value.copy(sessionState = AudioSessionState.ENDED, waveformData = emptyList())
   }
 
   private fun generateSimulatedWaveform(): List<Float> {

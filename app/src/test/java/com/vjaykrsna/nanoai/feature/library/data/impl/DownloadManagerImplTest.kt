@@ -126,7 +126,7 @@ class DownloadManagerImplTest {
       workManager.enqueueUniqueWork(
         capture(uniqueSlot),
         capture(policySlot),
-        any<OneTimeWorkRequest>()
+        any<OneTimeWorkRequest>(),
       )
     } returns mockk(relaxed = true)
 
@@ -148,7 +148,7 @@ class DownloadManagerImplTest {
       workManager.enqueueUniqueWork(
         any<String>(),
         any<ExistingWorkPolicy>(),
-        any<OneTimeWorkRequest>()
+        any<OneTimeWorkRequest>(),
       )
     }
     coVerify(exactly = 0) {
@@ -175,7 +175,7 @@ class DownloadManagerImplTest {
         status = DownloadStatus.FAILED,
         progress = 0.6f,
         bytesDownloaded = 1_024L,
-        errorMessage = "boom"
+        errorMessage = "boom",
       )
     coEvery { downloadTaskDao.getById(taskId.toString()) } returnsMany listOf(entity, entity)
     val updatedSlot = slot<DownloadTaskEntity>()
@@ -186,7 +186,7 @@ class DownloadManagerImplTest {
       workManager.enqueueUniqueWork(
         capture(uniqueSlot),
         capture(policySlot),
-        any<OneTimeWorkRequest>()
+        any<OneTimeWorkRequest>(),
       )
     } returns mockk(relaxed = true)
 
@@ -216,7 +216,7 @@ class DownloadManagerImplTest {
       workManager.enqueueUniqueWork(
         any<String>(),
         any<ExistingWorkPolicy>(),
-        any<OneTimeWorkRequest>()
+        any<OneTimeWorkRequest>(),
       )
     }
     coVerify(exactly = 0) { downloadTaskDao.update(any<DownloadTaskEntity>()) }
@@ -386,7 +386,7 @@ class DownloadManagerImplTest {
     status: DownloadStatus = DownloadStatus.DOWNLOADING,
     progress: Float = 0.5f,
     bytesDownloaded: Long = 512L,
-    errorMessage: String? = null
+    errorMessage: String? = null,
   ): DownloadTaskEntity =
     DownloadTaskEntity(
       taskId = taskId.toString(),
@@ -396,6 +396,6 @@ class DownloadManagerImplTest {
       bytesDownloaded = bytesDownloaded,
       startedAt = Instant.fromEpochMilliseconds(0),
       finishedAt = null,
-      errorMessage = errorMessage
+      errorMessage = errorMessage,
     )
 }

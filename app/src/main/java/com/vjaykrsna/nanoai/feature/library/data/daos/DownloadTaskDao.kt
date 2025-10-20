@@ -66,7 +66,7 @@ interface DownloadTaskDao {
         FROM download_tasks
         WHERE status IN ('QUEUED','DOWNLOADING','PAUSED','FAILED')
         ORDER BY started_at ASC
-        """,
+        """
   )
   fun observeManagedDownloads(): Flow<List<DownloadTaskEntity>>
 
@@ -96,7 +96,7 @@ interface DownloadTaskDao {
         UPDATE download_tasks
         SET status = :status, error_message = :errorMessage
         WHERE task_id = :taskId
-        """,
+        """
   )
   suspend fun updateStatusWithError(taskId: String, status: DownloadStatus, errorMessage: String)
 
@@ -106,7 +106,7 @@ interface DownloadTaskDao {
         UPDATE download_tasks
         SET progress = :progress, bytes_downloaded = :bytesDownloaded
         WHERE task_id = :taskId
-        """,
+        """
   )
   suspend fun updateProgress(taskId: String, progress: Float, bytesDownloaded: Long)
 

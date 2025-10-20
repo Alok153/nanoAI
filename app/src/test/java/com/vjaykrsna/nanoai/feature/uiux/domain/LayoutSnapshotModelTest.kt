@@ -67,18 +67,10 @@ class LayoutSnapshotModelTest {
   }
 
   private fun layoutSnapshotConstructor() =
-    primaryConstructor(
-      loadClass("com.vjaykrsna.nanoai.core.domain.model.uiux.LayoutSnapshot"),
-    )
+    primaryConstructor(loadClass("com.vjaykrsna.nanoai.core.domain.model.uiux.LayoutSnapshot"))
 
   private fun defaultLayoutSnapshotArgs(): Array<Any?> =
-    arrayOf(
-      "layout-1",
-      "Daily Focus",
-      "home_screen",
-      listOf("tool-1", "tool-2"),
-      false,
-    )
+    arrayOf("layout-1", "Daily Focus", "home_screen", listOf("tool-1", "tool-2"), false)
 
   private fun assertValidInstance(instance: Any): Pair<String, Boolean> {
     val clazz = instance.javaClass

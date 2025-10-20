@@ -32,13 +32,9 @@ import kotlinx.datetime.Instant
         parentColumns = ["model_id"],
         childColumns = ["model_id"],
         onDelete = ForeignKey.CASCADE,
-      ),
+      )
     ],
-  indices =
-    [
-      Index(value = ["model_id"]),
-      Index(value = ["status"]),
-    ],
+  indices = [Index(value = ["model_id"]), Index(value = ["status"])],
 )
 data class DownloadTaskEntity(
   @PrimaryKey @ColumnInfo(name = "task_id") val taskId: String,

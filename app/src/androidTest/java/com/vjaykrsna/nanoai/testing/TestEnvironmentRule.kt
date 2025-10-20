@@ -55,11 +55,7 @@ class TestEnvironmentRule : TestWatcher() {
 
   private fun enableNetworks() {
     val device = UiDevice.getInstance(instrumentation)
-    listOf(
-        "svc wifi enable",
-        "svc data enable",
-        "cmd connectivity airplane-mode disable",
-      )
+    listOf("svc wifi enable", "svc data enable", "cmd connectivity airplane-mode disable")
       .forEach { command -> runCatching { device.executeShellCommand(command) } }
   }
 }

@@ -37,14 +37,8 @@ internal fun LibrarySummaryRow(summary: ModelLibrarySummary, modifier: Modifier 
       verticalAlignment = Alignment.CenterVertically,
       horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-      SummaryInlineStat(
-        label = "Installed",
-        value = summary.installed.toString(),
-      )
-      SummaryInlineStat(
-        label = "Storage",
-        value = formatSize(summary.installedBytes),
-      )
+      SummaryInlineStat(label = "Installed", value = summary.installed.toString())
+      SummaryInlineStat(label = "Storage", value = formatSize(summary.installedBytes))
     }
   }
 }
@@ -57,10 +51,7 @@ private fun SummaryInlineStat(label: String, value: String) {
         append(label)
         append(' ')
         pushStyle(
-          SpanStyle(
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface,
-          )
+          SpanStyle(fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
         )
         append(value)
         pop()

@@ -15,7 +15,7 @@ class ModelManifestLocatorTest {
   fun `parse returns hugging face locator`() {
     val locator =
       ModelManifestLocator.parse(
-        "hf://google/gemma-2-2b-it?artifact=LiteRT/model.bin&revision=main",
+        "hf://google/gemma-2-2b-it?artifact=LiteRT/model.bin&revision=main"
       )
 
     assertThat(locator).isInstanceOf(ModelManifestLocator.HuggingFace::class.java)

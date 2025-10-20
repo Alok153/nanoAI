@@ -17,7 +17,7 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.UIStateSnapshot
         childColumns = ["user_id"],
         onDelete = ForeignKey.CASCADE,
         onUpdate = ForeignKey.CASCADE,
-      ),
+      )
     ],
 )
 data class UIStateSnapshotEntity(

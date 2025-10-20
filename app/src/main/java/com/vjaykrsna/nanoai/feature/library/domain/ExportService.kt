@@ -30,7 +30,7 @@ interface ExportService {
     personas: List<PersonaProfile>,
     apiProviders: List<APIProviderConfig>,
     destinationPath: String,
-    chatHistory: List<ChatThread> = emptyList()
+    chatHistory: List<ChatThread> = emptyList(),
   ): String
 
   /**

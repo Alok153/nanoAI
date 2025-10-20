@@ -22,9 +22,8 @@ import kotlinx.coroutines.launch
 @Suppress("TooManyFunctions")
 class DownloadManager
 @Inject
-constructor(
-  private val modelDownloadsAndExportUseCase: ModelDownloadsAndExportUseCaseInterface,
-) : ViewModel() {
+constructor(private val modelDownloadsAndExportUseCase: ModelDownloadsAndExportUseCaseInterface) :
+  ViewModel() {
 
   private val downloadObservers = mutableMapOf<UUID, Job>()
   private val activeOperations = AtomicInteger(0)
@@ -45,15 +44,13 @@ constructor(
           .onSuccess { taskId -> monitorDownloadTask(taskId, modelId) }
           .onFailure { error ->
             _errorEvents.emit(
-              LibraryError.DownloadFailed(modelId, error.message ?: "Unknown error"),
+              LibraryError.DownloadFailed(modelId, error.message ?: "Unknown error")
             )
           }
       } catch (cancellation: CancellationException) {
         throw cancellation
       } catch (error: Throwable) {
-        _errorEvents.emit(
-          LibraryError.UnexpectedError(error.message ?: "Unexpected error"),
-        )
+        _errorEvents.emit(LibraryError.UnexpectedError(error.message ?: "Unexpected error"))
       } finally {
         stopOperation()
       }
@@ -65,7 +62,7 @@ constructor(
       runCatching { modelDownloadsAndExportUseCase.pauseDownload(taskId) }
         .onFailure { error ->
           _errorEvents.emit(
-            LibraryError.PauseFailed(taskId.toString(), error.message ?: "Failed to pause"),
+            LibraryError.PauseFailed(taskId.toString(), error.message ?: "Failed to pause")
           )
         }
     }
@@ -76,7 +73,7 @@ constructor(
       runCatching { modelDownloadsAndExportUseCase.resumeDownload(taskId) }
         .onFailure { error ->
           _errorEvents.emit(
-            LibraryError.ResumeFailed(taskId.toString(), error.message ?: "Failed to resume"),
+            LibraryError.ResumeFailed(taskId.toString(), error.message ?: "Failed to resume")
           )
         }
     }
@@ -87,7 +84,7 @@ constructor(
       runCatching { modelDownloadsAndExportUseCase.cancelDownload(taskId) }
         .onFailure { error ->
           _errorEvents.emit(
-            LibraryError.CancelFailed(taskId.toString(), error.message ?: "Failed to cancel"),
+            LibraryError.CancelFailed(taskId.toString(), error.message ?: "Failed to cancel")
           )
         }
     }
@@ -98,7 +95,7 @@ constructor(
       runCatching { modelDownloadsAndExportUseCase.retryFailedDownload(taskId) }
         .onFailure { error ->
           _errorEvents.emit(
-            LibraryError.RetryFailed(taskId.toString(), error.message ?: "Failed to retry"),
+            LibraryError.RetryFailed(taskId.toString(), error.message ?: "Failed to retry")
           )
         }
     }
@@ -111,16 +108,12 @@ constructor(
       try {
         val result = modelDownloadsAndExportUseCase.deleteModel(modelId)
         result.onFailure { error ->
-          _errorEvents.emit(
-            LibraryError.DeleteFailed(modelId, error.message ?: "Unknown error"),
-          )
+          _errorEvents.emit(LibraryError.DeleteFailed(modelId, error.message ?: "Unknown error"))
         }
       } catch (cancellation: CancellationException) {
         throw cancellation
       } catch (error: Throwable) {
-        _errorEvents.emit(
-          LibraryError.UnexpectedError(error.message ?: "Unexpected error"),
-        )
+        _errorEvents.emit(LibraryError.UnexpectedError(error.message ?: "Unexpected error"))
       } finally {
         stopOperation()
       }
@@ -146,7 +139,7 @@ constructor(
           when (task?.status) {
             DownloadStatus.FAILED -> {
               _errorEvents.emit(
-                LibraryError.DownloadFailed(modelId, task.errorMessage ?: "Unknown error"),
+                LibraryError.DownloadFailed(modelId, task.errorMessage ?: "Unknown error")
               )
               cancel()
             }

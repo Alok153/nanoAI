@@ -24,7 +24,7 @@ class HuggingFaceModelCacheMapperTest {
         trendingScore = 50,
         createdAt = Instant.parse("2024-01-01T00:00:00Z"),
         lastModified = Instant.parse("2024-01-02T00:00:00Z"),
-        isPrivate = false
+        isPrivate = false,
       )
 
     val entity = HuggingFaceModelCacheMapper.toEntity(domain, now)
@@ -72,7 +72,7 @@ class HuggingFaceModelCacheMapperTest {
         trendingScore = null,
         createdAt = null,
         lastModified = null,
-        isPrivate = false
+        isPrivate = false,
       )
 
     val entity = HuggingFaceModelCacheMapper.toEntity(domain)
@@ -108,7 +108,7 @@ class HuggingFaceModelCacheMapperTest {
         createdAt = Instant.parse("2024-01-01T00:00:00Z"),
         lastModified = Instant.parse("2024-01-02T00:00:00Z"),
         isPrivate = false,
-        fetchedAt = Instant.parse("2024-01-01T12:00:00Z")
+        fetchedAt = Instant.parse("2024-01-01T12:00:00Z"),
       )
 
     val domain = HuggingFaceModelCacheMapper.toDomain(entity)
@@ -166,7 +166,7 @@ class HuggingFaceModelCacheMapperTest {
         trendingScore = 50,
         createdAt = Instant.parse("2024-01-01T00:00:00Z"),
         lastModified = Instant.parse("2024-01-02T00:00:00Z"),
-        isPrivate = false
+        isPrivate = false,
       )
 
     val entity = HuggingFaceModelCacheMapper.toEntity(original)

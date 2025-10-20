@@ -39,10 +39,7 @@ data class UIStateSnapshot(
   fun toggleLeftDrawer(open: Boolean): UIStateSnapshot = copy(isLeftDrawerOpen = open)
 
   fun toggleRightDrawer(open: Boolean, panelId: String?): UIStateSnapshot =
-    copy(
-      isRightDrawerOpen = open,
-      activeRightPanel = panelId?.takeIf { it.isNotBlank() },
-    )
+    copy(isRightDrawerOpen = open, activeRightPanel = panelId?.takeIf { it.isNotBlank() })
 
   fun updateActiveMode(route: String): UIStateSnapshot =
     copy(activeModeRoute = sanitizeRoute(route))
@@ -99,7 +96,7 @@ fun Flow<UIStateSnapshotRecord?>.mapToUiStateSnapshot(): Flow<UIStateSnapshot?> 
 }
 
 fun Flow<UIStateSnapshotRecord?>.requireUiStateSnapshot(
-  fallback: () -> UIStateSnapshot,
+  fallback: () -> UIStateSnapshot
 ): Flow<UIStateSnapshot> {
   return map { record -> record?.toDomain() ?: fallback() }
 }

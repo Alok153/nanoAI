@@ -10,11 +10,8 @@ sealed class ModelManifestLocator {
   data class Remote(val manifestUrl: String) : ModelManifestLocator()
 
   /** Manifest derived from Hugging Face repository metadata. */
-  data class HuggingFace(
-    val repository: String,
-    val artifactPath: String,
-    val revision: String?,
-  ) : ModelManifestLocator()
+  data class HuggingFace(val repository: String, val artifactPath: String, val revision: String?) :
+    ModelManifestLocator()
 
   companion object {
     private const val HUGGING_FACE_SCHEME = "hf"
@@ -67,10 +64,7 @@ sealed class ModelManifestLocator {
         .joinToString(separator = "/")
     }
 
-    private fun extractArtifactPath(
-      queryParams: Map<String, String>,
-      uri: URI,
-    ): String? {
+    private fun extractArtifactPath(queryParams: Map<String, String>, uri: URI): String? {
       return queryParams["artifact"] ?: queryParams["file"] ?: queryParams["path"] ?: uri.fragment
     }
   }

@@ -83,11 +83,7 @@ internal fun HuggingFaceAuthCard(
               else -> MaterialTheme.colorScheme.onSurfaceVariant
             }
 
-          Text(
-            text = statusText,
-            style = MaterialTheme.typography.bodySmall,
-            color = statusColor,
-          )
+          Text(text = statusText, style = MaterialTheme.typography.bodySmall, color = statusColor)
 
           val supportingText = supportingStatusLine(state)
           if (supportingText != null) {
@@ -103,16 +99,11 @@ internal fun HuggingFaceAuthCard(
         }
       }
 
-      Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-      ) {
+      Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         OutlinedButton(
           onClick = onLoginClick,
           modifier =
-            Modifier.weight(1f).semantics {
-              contentDescription = "Login with Hugging Face account"
-            },
+            Modifier.weight(1f).semantics { contentDescription = "Login with Hugging Face account" },
         ) {
           Icon(
             Icons.AutoMirrored.Filled.Login,
@@ -124,8 +115,7 @@ internal fun HuggingFaceAuthCard(
 
         FilledTonalButton(
           onClick = onApiKeyClick,
-          modifier =
-            Modifier.weight(1f).semantics { contentDescription = "Enter API key manually" },
+          modifier = Modifier.weight(1f).semantics { contentDescription = "Enter API key manually" },
         ) {
           Icon(
             Icons.Default.Key,

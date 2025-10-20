@@ -153,12 +153,7 @@ constructor(
     val workRequest =
       OneTimeWorkRequestBuilder<ModelDownloadWorker>()
         .setConstraints(constraints)
-        .setInputData(
-          workDataOf(
-            "TASK_ID" to taskId.toString(),
-            "MODEL_ID" to modelId,
-          ),
-        )
+        .setInputData(workDataOf("TASK_ID" to taskId.toString(), "MODEL_ID" to modelId))
         .addTag(tagFor(taskId))
         .build()
 

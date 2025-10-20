@@ -80,13 +80,12 @@ constructor(
       .stateIn(scope, SharingStarted.Eagerly, defaultSnapshot(userId))
 
   private val shellLayout: StateFlow<ShellLayoutState> =
-    combine(
-        windowSizeClass,
-        uiSnapshot,
-        connectivity,
-        undoPayload,
-        progressJobs,
-      ) { window, snapshot, connectivityStatus, undo, jobs ->
+    combine(windowSizeClass, uiSnapshot, connectivity, undoPayload, progressJobs) {
+        window,
+        snapshot,
+        connectivityStatus,
+        undo,
+        jobs ->
         ShellLayoutInputs(
           window = window,
           snapshot = snapshot,
@@ -110,7 +109,7 @@ constructor(
             undo = undoPayload.value,
             jobs = progressJobs.value,
             activity = _recentActivity.value,
-          ),
+          )
         ),
       )
 
@@ -128,11 +127,7 @@ constructor(
           cta = modelLibraryCta(status),
         )
       }
-      .stateIn(
-        scope,
-        SharingStarted.Eagerly,
-        ConnectivityBannerState(status = connectivity.value),
-      )
+      .stateIn(scope, SharingStarted.Eagerly, ConnectivityBannerState(status = connectivity.value))
 
   open val shellLayoutState: Flow<ShellLayoutState> = shellLayout
 

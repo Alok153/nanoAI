@@ -51,6 +51,7 @@ internal fun rememberSettingsScreenState(viewModel: SettingsViewModel): Settings
   val uiUxState by viewModel.uiUxState.collectAsState()
   val huggingFaceAuthState by viewModel.huggingFaceAuthState.collectAsState()
   val huggingFaceDeviceAuthState by viewModel.huggingFaceDeviceAuthState.collectAsState()
+  val isLoading by viewModel.isLoading.collectAsState()
 
   val snackbarHostState = remember { SnackbarHostState() }
   val dialogState = rememberMutableSettingsDialogState()
@@ -70,6 +71,7 @@ internal fun rememberSettingsScreenState(viewModel: SettingsViewModel): Settings
       privacyPreferences = privacyPreferences,
       uiUxState = uiUxState,
       huggingFaceState = huggingFaceAuthState,
+      isLoading = isLoading,
     )
 
   return SettingsScreenCoordinator(
@@ -84,7 +86,7 @@ internal fun rememberSettingsScreenState(viewModel: SettingsViewModel): Settings
 
 @Composable
 internal fun rememberImportBackupLauncher(
-  onImport: (Uri) -> Unit,
+  onImport: (Uri) -> Unit
 ): ManagedActivityResultLauncher<Array<String>, Uri?> {
   return rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
     uri?.let(onImport)

@@ -51,33 +51,19 @@ class UserProfileModelTest {
 
     val instance = ctor.newInstance(*args)
     val savedLayouts = UiUxDomainReflection.getProperty(instance, "savedLayouts") as? List<*>
-    assertTrue(
-      savedLayouts?.size == 6,
-      "Expected saved layouts to retain all six entries",
-    )
+    assertTrue(savedLayouts?.size == 6, "Expected saved layouts to retain all six entries")
   }
 
   private fun userProfileConstructor() =
-    primaryConstructor(
-      loadClass("com.vjaykrsna.nanoai.core.domain.model.uiux.UserProfile"),
-    )
+    primaryConstructor(loadClass("com.vjaykrsna.nanoai.core.domain.model.uiux.UserProfile"))
 
   private fun defaultUserProfileArgs(): Array<Any?> {
     val themePreference =
-      loadEnumConstant(
-        "com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference",
-        "LIGHT",
-      )
+      loadEnumConstant("com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference", "LIGHT")
     val visualDensity =
-      loadEnumConstant(
-        "com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity",
-        "DEFAULT",
-      )
+      loadEnumConstant("com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity", "DEFAULT")
     val screenType =
-      loadEnumConstant(
-        "com.vjaykrsna.nanoai.core.domain.model.uiux.ScreenType",
-        "HOME",
-      )
+      loadEnumConstant("com.vjaykrsna.nanoai.core.domain.model.uiux.ScreenType", "HOME")
 
     return arrayOf(
       "user-123",

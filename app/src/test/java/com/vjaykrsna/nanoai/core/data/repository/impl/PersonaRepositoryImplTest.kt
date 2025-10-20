@@ -37,10 +37,7 @@ class PersonaRepositoryImplTest {
   @Before
   fun setup() {
     database =
-      Room.inMemoryDatabaseBuilder(
-          RuntimeEnvironment.getApplication(),
-          NanoAIDatabase::class.java,
-        )
+      Room.inMemoryDatabaseBuilder(RuntimeEnvironment.getApplication(), NanoAIDatabase::class.java)
         .allowMainThreadQueries()
         .build()
 
@@ -179,7 +176,7 @@ class PersonaRepositoryImplTest {
         systemPrompt = "You are a test assistant",
         temperature = 0.7f,
         topP = 0.9f,
-        defaultModelPreference = "test-model-id"
+        defaultModelPreference = "test-model-id",
       )
 
     repository.createPersona(persona)
@@ -291,7 +288,7 @@ class PersonaRepositoryImplTest {
     val persona =
       DomainTestBuilders.buildPersona(
         defaultVoice = "voice-id-future",
-        defaultImageStyle = "realistic"
+        defaultImageStyle = "realistic",
       )
 
     repository.createPersona(persona)

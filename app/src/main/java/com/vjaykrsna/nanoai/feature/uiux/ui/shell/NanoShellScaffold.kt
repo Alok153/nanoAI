@@ -104,6 +104,25 @@ fun NanoShellScaffold(
   modifier: Modifier = Modifier,
   modeContent: @Composable (ModeId) -> Unit = {},
 ) {
+  /**
+   * Architecture Overview: NanoShellScaffold is the root container for the unified shell
+   * experience. It orchestrates:
+   * 1. Left Navigation Drawer (modal or permanent based on layout)
+   * 2. Right Panels (model selector, progress, etc.)
+   * 3. Command Palette overlay
+   * 4. Responsive layout adapting to window size class
+   *
+   * The main composable is focused on:
+   * - State management and synchronization with Material3 drawer
+   * - Keyboard shortcuts handling
+   * - Event dispatch orchestration
+   * - Conditional UI rendering based on layout
+   *
+   * Child composables handle specific UI sections:
+   * - ShellDrawerContent: Navigation drawer UI
+   * - ShellRightRailHost: Right panels and main content area
+   * - CommandPaletteSheet: Command palette overlay
+   */
   val layout = state.layout
   val snackbarHostState = remember { SnackbarHostState() }
   val focusRequester = remember { FocusRequester() }
@@ -185,11 +204,7 @@ fun NanoShellScaffold(
   LaunchedEffect(layout.pendingUndoAction) {
     val payload = layout.pendingUndoAction ?: return@LaunchedEffect
     val message = payload.metadata["message"] as? String ?: "Action completed"
-    val result =
-      snackbarHostState.showSnackbar(
-        message = message,
-        actionLabel = "Undo",
-      )
+    val result = snackbarHostState.showSnackbar(message = message, actionLabel = "Undo")
     if (result == SnackbarResult.ActionPerformed) {
       currentOnEvent(ShellUiEvent.Undo(payload))
     }
@@ -214,7 +229,7 @@ fun NanoShellScaffold(
         .onPreviewKeyEvent { event ->
           handleShellShortcuts(event, layout.isPaletteVisible, dispatchEvent)
         }
-        .testTag("shell_root"),
+        .testTag("shell_root")
   ) {
     if (layout.usesPermanentLeftDrawer) {
       PermanentNavigationDrawer(
@@ -296,10 +311,8 @@ sealed interface ShellUiEvent {
 
   data class HideCommandPalette(val reason: PaletteDismissReason) : ShellUiEvent
 
-  data class CommandInvoked(
-    val action: CommandAction,
-    val source: CommandInvocationSource,
-  ) : ShellUiEvent
+  data class CommandInvoked(val action: CommandAction, val source: CommandInvocationSource) :
+    ShellUiEvent
 
   data class QueueJob(val job: ProgressJob) : ShellUiEvent
 
@@ -317,13 +330,13 @@ sealed interface ShellUiEvent {
 
   data class ChatPersonaSelected(
     val personaId: java.util.UUID,
-    val action: com.vjaykrsna.nanoai.core.model.PersonaSwitchAction
+    val action: com.vjaykrsna.nanoai.core.model.PersonaSwitchAction,
   ) : ShellUiEvent
 }
 
 private enum class DrawerVariant {
   Modal,
-  Permanent
+  Permanent,
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -375,7 +388,7 @@ private fun DrawerSheetContent(
       onClick = {
         onOpenCommandPalette()
         onCloseDrawer?.invoke()
-      }
+      },
     ) {
       Row(
         modifier =
@@ -389,16 +402,16 @@ private fun DrawerSheetContent(
         Row(
           modifier = Modifier.weight(1f),
           verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.spacedBy(8.dp)
+          horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
           Text(
             stringResource(R.string.nano_shell_search),
-            style = MaterialTheme.typography.titleSmall
+            style = MaterialTheme.typography.titleSmall,
           )
           Text(
             "Ctrl+K",
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
           )
         }
       }
@@ -460,13 +473,13 @@ private fun DrawerNavigationItem(
     Row(
       modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
       verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.spacedBy(12.dp)
+      horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
       Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(24.dp))
       Text(
         text = title,
         style = MaterialTheme.typography.titleSmall,
-        modifier = Modifier.weight(1f)
+        modifier = Modifier.weight(1f),
       )
     }
   }
@@ -496,11 +509,7 @@ private fun ShellRightRailHost(
         tonalElevation = 3.dp,
         modifier = Modifier.fillMaxHeight().width(320.dp).testTag("right_sidebar_permanent"),
       ) {
-        RightSidebarPanels(
-          state = state,
-          onEvent = onEvent,
-          modifier = Modifier.fillMaxSize(),
-        )
+        RightSidebarPanels(state = state, onEvent = onEvent, modifier = Modifier.fillMaxSize())
       }
     }
   } else {
@@ -541,11 +550,7 @@ private fun ShellRightRailHost(
                 .width(320.dp)
                 .testTag("right_sidebar_modal"),
           ) {
-            RightSidebarPanels(
-              state = state,
-              onEvent = onEvent,
-              modifier = Modifier.fillMaxSize(),
-            )
+            RightSidebarPanels(state = state, onEvent = onEvent, modifier = Modifier.fillMaxSize())
           }
         }
       }
@@ -656,11 +661,7 @@ private fun ShellTopAppBar(
             it.titlecase(Locale.ROOT)
           }
         }
-      Text(
-        text = titleText,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-      )
+      Text(text = titleText, maxLines = 1, overflow = TextOverflow.Ellipsis)
     },
     navigationIcon = {
       IconButton(onClick = onToggleLeftDrawer, modifier = Modifier.testTag("topbar_nav_icon")) {

@@ -25,9 +25,7 @@ private const val HUGGING_FACE_SEARCH_DEBOUNCE_MS = 350L
 
 class HuggingFaceLibraryViewModel
 @Inject
-constructor(
-  private val huggingFaceCatalogRepository: HuggingFaceCatalogRepository,
-) : ViewModel() {
+constructor(private val huggingFaceCatalogRepository: HuggingFaceCatalogRepository) : ViewModel() {
 
   private val _models = MutableStateFlow<List<HuggingFaceModelSummary>>(emptyList())
   val models: StateFlow<List<HuggingFaceModelSummary>> = _models.asStateFlow()

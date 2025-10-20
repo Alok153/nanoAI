@@ -51,10 +51,7 @@ internal fun PrivacySettings(
 ) {
   Card(
     modifier = modifier.fillMaxWidth(),
-    colors =
-      CardDefaults.cardColors(
-        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-      ),
+    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
   ) {
     val telemetryOptIn = preferences?.telemetryOptIn ?: false
     val selectedPolicy = preferences?.retentionPolicy ?: RetentionPolicy.INDEFINITE
@@ -62,10 +59,7 @@ internal fun PrivacySettings(
       modifier = Modifier.fillMaxWidth().padding(16.dp),
       verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-      TelemetryPreferenceRow(
-        telemetryOptIn = telemetryOptIn,
-        onTelemetryToggle = onTelemetryToggle,
-      )
+      TelemetryPreferenceRow(telemetryOptIn = telemetryOptIn, onTelemetryToggle = onTelemetryToggle)
 
       HorizontalDivider()
 
@@ -82,10 +76,7 @@ internal fun PrivacySettings(
 }
 
 @Composable
-private fun TelemetryPreferenceRow(
-  telemetryOptIn: Boolean,
-  onTelemetryToggle: (Boolean) -> Unit,
-) {
+private fun TelemetryPreferenceRow(telemetryOptIn: Boolean, onTelemetryToggle: (Boolean) -> Unit) {
   Row(
     modifier = Modifier.fillMaxWidth(),
     horizontalArrangement = Arrangement.SpaceBetween,

@@ -18,9 +18,7 @@ import kotlinx.coroutines.flow.map
 @Singleton
 class ApiProviderConfigRepositoryImpl
 @Inject
-constructor(
-  private val apiProviderConfigDao: ApiProviderConfigDao,
-) : ApiProviderConfigRepository {
+constructor(private val apiProviderConfigDao: ApiProviderConfigDao) : ApiProviderConfigRepository {
   override suspend fun getAllProviders(): List<APIProviderConfig> =
     apiProviderConfigDao.getAll().map { it.toDomain() }
 

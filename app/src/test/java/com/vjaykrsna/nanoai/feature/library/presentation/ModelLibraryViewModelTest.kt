@@ -158,12 +158,12 @@ class ModelLibraryViewModelTest {
     val installed =
       DomainTestBuilders.buildModelPackage(
         modelId = "installed",
-        installState = InstallState.INSTALLED
+        installState = InstallState.INSTALLED,
       )
     val notInstalled =
       DomainTestBuilders.buildModelPackage(
         modelId = "not-installed",
-        installState = InstallState.NOT_INSTALLED
+        installState = InstallState.NOT_INSTALLED,
       )
     modelCatalogRepository.setModels(listOf(installed, notInstalled))
 
@@ -198,12 +198,12 @@ class ModelLibraryViewModelTest {
     val local =
       DomainTestBuilders.buildModelPackage(
         modelId = "local-1",
-        providerType = ProviderType.MEDIA_PIPE
+        providerType = ProviderType.MEDIA_PIPE,
       )
     val cloud =
       DomainTestBuilders.buildModelPackage(
         modelId = "cloud-1",
-        providerType = ProviderType.CLOUD_API
+        providerType = ProviderType.CLOUD_API,
       )
     modelCatalogRepository.setModels(listOf(local, cloud))
 
@@ -383,12 +383,12 @@ class ModelLibraryViewModelTest {
     val installed =
       DomainTestBuilders.buildModelPackage(
         modelId = "installed",
-        installState = InstallState.INSTALLED
+        installState = InstallState.INSTALLED,
       )
     val available =
       DomainTestBuilders.buildModelPackage(
         modelId = "available",
-        installState = InstallState.NOT_INSTALLED
+        installState = InstallState.NOT_INSTALLED,
       )
     modelCatalogRepository.setModels(listOf(error, installed, available))
 
@@ -408,18 +408,18 @@ class ModelLibraryViewModelTest {
       DomainTestBuilders.buildModelPackage(
         modelId = "i1",
         installState = InstallState.INSTALLED,
-        sizeBytes = 1000
+        sizeBytes = 1000,
       )
     val installed2 =
       DomainTestBuilders.buildModelPackage(
         modelId = "i2",
         installState = InstallState.INSTALLED,
-        sizeBytes = 2000
+        sizeBytes = 2000,
       )
     val available =
       DomainTestBuilders.buildModelPackage(
         modelId = "a1",
-        installState = InstallState.NOT_INSTALLED
+        installState = InstallState.NOT_INSTALLED,
       )
     modelCatalogRepository.setModels(listOf(installed1, installed2, available))
 
@@ -579,12 +579,12 @@ class ModelLibraryViewModelTest {
     val localModel =
       DomainTestBuilders.buildModelPackage(
         modelId = "local-model",
-        providerType = ProviderType.MEDIA_PIPE
+        providerType = ProviderType.MEDIA_PIPE,
       )
     val cloudModel =
       DomainTestBuilders.buildModelPackage(
         modelId = "cloud-model",
-        providerType = ProviderType.CLOUD_API
+        providerType = ProviderType.CLOUD_API,
       )
     modelCatalogRepository.setModels(listOf(localModel, cloudModel))
 
@@ -608,7 +608,7 @@ class ModelLibraryViewModelTest {
     val model1 =
       DomainTestBuilders.buildModelPackage(
         modelId = "model-1",
-        capabilities = setOf("text", "image")
+        capabilities = setOf("text", "image"),
       )
     val model2 =
       DomainTestBuilders.buildModelPackage(modelId = "model-2", capabilities = setOf("audio"))

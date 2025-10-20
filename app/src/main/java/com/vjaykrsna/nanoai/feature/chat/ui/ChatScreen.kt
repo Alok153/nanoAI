@@ -11,8 +11,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -83,7 +83,7 @@ fun ChatScreen(
     modifier =
       modifier.fillMaxSize().semantics {
         contentDescription = "Chat screen with message history and input"
-      },
+      }
   ) {
     Column(
       modifier =
@@ -145,9 +145,9 @@ fun ChatScreen(
 private fun MessagesList(
   messages: List<Message>,
   isLoading: Boolean,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
 ) {
-  val listState = rememberLazyListState()
+  val listState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
 
   LaunchedEffect(messages.size) {
     if (messages.isNotEmpty()) {
@@ -166,23 +166,17 @@ private fun MessagesList(
         contentDescription = "Message history list"
       },
   ) {
-    items(
-      items = messages,
-      key = { it.messageId.toString() },
-      contentType = { it.role },
-    ) { message ->
+    items(items = messages, key = { it.messageId.toString() }, contentType = { it.role }) { message
+      ->
       MessageBubble(message = message)
     }
 
     if (isLoading) {
       item {
-        Box(
-          modifier = Modifier.fillMaxWidth(),
-          contentAlignment = Alignment.Center,
-        ) {
+        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
           CircularProgressIndicator(
             modifier =
-              Modifier.size(24.dp).semantics { contentDescription = "AI is generating a response" },
+              Modifier.size(24.dp).semantics { contentDescription = "AI is generating a response" }
           )
         }
       }
@@ -202,10 +196,7 @@ private fun MessageBubble(message: Message, modifier: Modifier = Modifier) {
 
   val alignment = if (isUser) Alignment.End else Alignment.Start
 
-  Column(
-    horizontalAlignment = alignment,
-    modifier = modifier.fillMaxWidth(),
-  ) {
+  Column(horizontalAlignment = alignment, modifier = modifier.fillMaxWidth()) {
     Card(
       colors = CardDefaults.cardColors(containerColor = backgroundColor),
       shape = RoundedCornerShape(NanoRadii.medium),
@@ -215,15 +206,8 @@ private fun MessageBubble(message: Message, modifier: Modifier = Modifier) {
           contentDescription = "$roleDescription message: ${message.text ?: ""}"
         },
     ) {
-      Column(
-        modifier = Modifier.padding(NanoSpacing.md),
-      ) {
-        message.text?.let { text ->
-          Text(
-            text = text,
-            style = MaterialTheme.typography.bodyLarge,
-          )
-        }
+      Column(modifier = Modifier.padding(NanoSpacing.md)) {
+        message.text?.let { text -> Text(text = text, style = MaterialTheme.typography.bodyLarge) }
 
         Spacer(modifier = Modifier.height(NanoSpacing.xs))
 
@@ -246,34 +230,16 @@ private fun MessageBubble(message: Message, modifier: Modifier = Modifier) {
 private fun ChatError.toNanoError(): NanoError {
   return when (this) {
     is ChatError.InferenceFailed ->
-      NanoError.Inline(
-        title = "Couldn't complete inference",
-        description = message,
-      )
+      NanoError.Inline(title = "Couldn't complete inference", description = message)
     is ChatError.PersonaSwitchFailed ->
-      NanoError.Inline(
-        title = "Persona switch failed",
-        description = message,
-      )
+      NanoError.Inline(title = "Persona switch failed", description = message)
     is ChatError.ThreadCreationFailed ->
-      NanoError.Inline(
-        title = "Couldn't start conversation",
-        description = message,
-      )
+      NanoError.Inline(title = "Couldn't start conversation", description = message)
     is ChatError.ThreadArchiveFailed ->
-      NanoError.Inline(
-        title = "Couldn't archive conversation",
-        description = message,
-      )
+      NanoError.Inline(title = "Couldn't archive conversation", description = message)
     is ChatError.ThreadDeletionFailed ->
-      NanoError.Inline(
-        title = "Couldn't delete conversation",
-        description = message,
-      )
+      NanoError.Inline(title = "Couldn't delete conversation", description = message)
     is ChatError.UnexpectedError ->
-      NanoError.Inline(
-        title = "Something went wrong",
-        description = message,
-      )
+      NanoError.Inline(title = "Something went wrong", description = message)
   }
 }

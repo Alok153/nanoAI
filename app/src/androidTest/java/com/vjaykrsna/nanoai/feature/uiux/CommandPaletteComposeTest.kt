@@ -73,7 +73,7 @@ import org.junit.runner.RunWith
 @OptIn(
   ExperimentalCoroutinesApi::class,
   ExperimentalTestApi::class,
-  ExperimentalMaterial3WindowSizeClassApi::class
+  ExperimentalMaterial3WindowSizeClassApi::class,
 )
 @RunWith(AndroidJUnit4::class)
 class CommandPaletteComposeTest {
@@ -92,7 +92,7 @@ class CommandPaletteComposeTest {
           onEvent = { intent ->
             recorder.record(intent)
             handleIntent(state, intent)
-          }
+          },
         )
       }
     }
@@ -178,7 +178,7 @@ class CommandPaletteComposeTest {
           onEvent = { intent ->
             recorder.record(intent)
             handleIntent(state, intent)
-          }
+          },
         )
       }
     }
@@ -220,10 +220,7 @@ class CommandPaletteComposeTest {
     val recorder = EventRecorder()
     val state =
       mutableStateOf(
-        sampleState(
-          showPalette = false,
-          progressJobs = listOf(retryable, nonRetryable),
-        )
+        sampleState(showPalette = false, progressJobs = listOf(retryable, nonRetryable))
       )
 
     composeTestRule.setContent {
@@ -233,7 +230,7 @@ class CommandPaletteComposeTest {
           onEvent = { intent ->
             recorder.record(intent)
             handleIntent(state, intent)
-          }
+          },
         )
       }
     }
@@ -247,7 +244,7 @@ class CommandPaletteComposeTest {
     val retryAvailableButton =
       composeTestRule.onNodeWithTag(
         "progress_retry_button_${retryable.jobId}",
-        useUnmergedTree = true
+        useUnmergedTree = true,
       )
     retryAvailableButton.assertIsEnabled()
     retryAvailableButton.assert(
@@ -287,7 +284,7 @@ class CommandPaletteComposeTest {
           onEvent = { intent ->
             recorder.record(intent)
             handleIntent(state, intent)
-          }
+          },
         )
       }
     }
@@ -296,10 +293,7 @@ class CommandPaletteComposeTest {
 
     composeTestRule.waitUntil(timeoutMillis = 5_000) {
       composeTestRule
-        .onAllNodesWithText(
-          "Image generation queued for reconnect",
-          substring = false,
-        )
+        .onAllNodesWithText("Image generation queued for reconnect", substring = false)
         .fetchSemanticsNodes(false)
         .isNotEmpty()
     }
@@ -307,17 +301,13 @@ class CommandPaletteComposeTest {
     composeTestRule.onNode(hasText("Image generation queued for reconnect")).assertExists()
     composeTestRule.waitUntil(timeoutMillis = 5_000) {
       composeTestRule
-        .onAllNodes(
-          hasClickAction() and hasAnyChild(hasText("Undo", ignoreCase = true)),
-        )
+        .onAllNodes(hasClickAction() and hasAnyChild(hasText("Undo", ignoreCase = true)))
         .fetchSemanticsNodes(false)
         .isNotEmpty()
     }
 
     composeTestRule
-      .onNode(
-        hasClickAction() and hasAnyChild(hasText("Undo", ignoreCase = true)),
-      )
+      .onNode(hasClickAction() and hasAnyChild(hasText("Undo", ignoreCase = true)))
       .performClick()
 
     composeTestRule.waitUntil(timeoutMillis = 5_000) {
@@ -332,7 +322,7 @@ private fun handleIntent(state: MutableState<ShellUiState>, intent: ShellUiEvent
     is ShellUiEvent.ShowCommandPalette ->
       state.value =
         current.copy(
-          layout = current.layout.copy(showCommandPalette = true, isLeftDrawerOpen = false),
+          layout = current.layout.copy(showCommandPalette = true, isLeftDrawerOpen = false)
         )
     is ShellUiEvent.HideCommandPalette ->
       state.value = current.copy(layout = current.layout.copy(showCommandPalette = false))
@@ -344,7 +334,7 @@ private fun handleIntent(state: MutableState<ShellUiState>, intent: ShellUiEvent
               activeMode = intent.modeId,
               showCommandPalette = false,
               isLeftDrawerOpen = false,
-            ),
+            )
         )
     is ShellUiEvent.ToggleRightDrawer ->
       state.value =
@@ -353,7 +343,7 @@ private fun handleIntent(state: MutableState<ShellUiState>, intent: ShellUiEvent
             current.layout.copy(
               isRightDrawerOpen = !current.layout.isRightDrawerOpen,
               activeRightPanel = intent.panel,
-            ),
+            )
         )
     is ShellUiEvent.ToggleLeftDrawer ->
       state.value =
@@ -362,12 +352,12 @@ private fun handleIntent(state: MutableState<ShellUiState>, intent: ShellUiEvent
             current.layout.copy(
               isLeftDrawerOpen = !current.layout.isLeftDrawerOpen,
               showCommandPalette = false,
-            ),
+            )
         )
     is ShellUiEvent.QueueJob ->
       state.value =
         current.copy(
-          layout = current.layout.copy(progressJobs = current.layout.progressJobs + intent.job),
+          layout = current.layout.copy(progressJobs = current.layout.progressJobs + intent.job)
         )
     is ShellUiEvent.CompleteJob ->
       state.value =
@@ -375,8 +365,8 @@ private fun handleIntent(state: MutableState<ShellUiState>, intent: ShellUiEvent
           layout =
             current.layout.copy(
               progressJobs =
-                current.layout.progressJobs.filterNot { job -> job.jobId == intent.jobId },
-            ),
+                current.layout.progressJobs.filterNot { job -> job.jobId == intent.jobId }
+            )
         )
     is ShellUiEvent.Undo ->
       state.value = current.copy(layout = current.layout.copy(pendingUndoAction = null))

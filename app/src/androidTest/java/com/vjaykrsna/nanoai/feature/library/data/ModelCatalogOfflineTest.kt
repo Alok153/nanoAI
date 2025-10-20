@@ -115,9 +115,7 @@ class ModelCatalogOfflineTest {
       updatedAt = Instant.parse("2025-10-10T00:00:00Z"),
     )
 
-  private class FailingModelCatalogSource(
-    private val error: IOException,
-  ) : ModelCatalogSource {
+  private class FailingModelCatalogSource(private val error: IOException) : ModelCatalogSource {
     var fetchAttempts: Int = 0
       private set
 

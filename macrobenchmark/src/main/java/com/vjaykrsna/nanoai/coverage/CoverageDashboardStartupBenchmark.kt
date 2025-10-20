@@ -86,7 +86,7 @@ class CoverageDashboardStartupBenchmark {
       val fallbackVisible =
         device.wait(
           Until.hasObject(By.textContains("Coverage Dashboard")),
-          DASHBOARD_WAIT_TIMEOUT_MS
+          DASHBOARD_WAIT_TIMEOUT_MS,
         )
       require(dashboardVisible || fallbackVisible) {
         "Coverage dashboard never rendered within timeout"

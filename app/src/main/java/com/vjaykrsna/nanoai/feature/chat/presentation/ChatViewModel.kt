@@ -117,7 +117,7 @@ constructor(
         }
         .onFailure { error ->
           _errorEvents.emit(
-            ChatError.PersonaSwitchFailed(error.message ?: "Failed to switch persona"),
+            ChatError.PersonaSwitchFailed(error.message ?: "Failed to switch persona")
           )
         }
     }
@@ -134,7 +134,7 @@ constructor(
         .onSuccess { threadId -> _currentThreadId.value = threadId }
         .onFailure { error ->
           _errorEvents.emit(
-            ChatError.ThreadCreationFailed(error.message ?: "Failed to create thread"),
+            ChatError.ThreadCreationFailed(error.message ?: "Failed to create thread")
           )
         }
     }
@@ -150,7 +150,7 @@ constructor(
         }
         .onFailure { error ->
           _errorEvents.emit(
-            ChatError.ThreadArchiveFailed(error.message ?: "Failed to archive thread"),
+            ChatError.ThreadArchiveFailed(error.message ?: "Failed to archive thread")
           )
         }
     }
@@ -166,7 +166,7 @@ constructor(
         }
         .onFailure { error ->
           _errorEvents.emit(
-            ChatError.ThreadDeletionFailed(error.message ?: "Failed to delete thread"),
+            ChatError.ThreadDeletionFailed(error.message ?: "Failed to delete thread")
           )
         }
     }
@@ -174,27 +174,15 @@ constructor(
 }
 
 sealed class ChatError {
-  data class InferenceFailed(
-    val message: String,
-  ) : ChatError()
+  data class InferenceFailed(val message: String) : ChatError()
 
-  data class PersonaSwitchFailed(
-    val message: String,
-  ) : ChatError()
+  data class PersonaSwitchFailed(val message: String) : ChatError()
 
-  data class ThreadCreationFailed(
-    val message: String,
-  ) : ChatError()
+  data class ThreadCreationFailed(val message: String) : ChatError()
 
-  data class ThreadArchiveFailed(
-    val message: String,
-  ) : ChatError()
+  data class ThreadArchiveFailed(val message: String) : ChatError()
 
-  data class ThreadDeletionFailed(
-    val message: String,
-  ) : ChatError()
+  data class ThreadDeletionFailed(val message: String) : ChatError()
 
-  data class UnexpectedError(
-    val message: String,
-  ) : ChatError()
+  data class UnexpectedError(val message: String) : ChatError()
 }

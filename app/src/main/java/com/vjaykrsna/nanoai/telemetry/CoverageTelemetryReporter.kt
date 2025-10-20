@@ -74,10 +74,7 @@ constructor(
           metadata["targetBuild"] = target
         }
       }
-      telemetryReporter.trackInteraction(
-        event = "coverage_risk_escalation",
-        metadata = metadata,
-      )
+      telemetryReporter.trackInteraction(event = "coverage_risk_escalation", metadata = metadata)
     }
   }
 

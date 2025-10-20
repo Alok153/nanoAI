@@ -14,16 +14,7 @@ class ListModelsContractTest {
   @Test
   fun `models response should have data array`() {
     // Arrange: Create a mock response per OpenAPI spec
-    val response =
-      mapOf(
-        "data" to
-          listOf(
-            mapOf(
-              "id" to "gpt-4o-mini",
-              "provider" to "openai",
-            ),
-          ),
-      )
+    val response = mapOf("data" to listOf(mapOf("id" to "gpt-4o-mini", "provider" to "openai")))
 
     // Assert: Response has required data field
     assertThat(response).containsKey("data")
@@ -35,11 +26,7 @@ class ListModelsContractTest {
   @Test
   fun `model object should have required fields`() {
     // Arrange: Create a model object with required fields
-    val model =
-      mapOf(
-        "id" to "gpt-4o-mini",
-        "provider" to "openai",
-      )
+    val model = mapOf("id" to "gpt-4o-mini", "provider" to "openai")
 
     // Assert: Model has id and provider
     assertThat(model).containsKey("id")
@@ -59,11 +46,7 @@ class ListModelsContractTest {
         "capabilities" to listOf("TEXT_GEN", "CODE_GEN"),
       )
 
-    val modelWithoutCapabilities =
-      mapOf(
-        "id" to "gemini-pro",
-        "provider" to "google",
-      )
+    val modelWithoutCapabilities = mapOf("id" to "gemini-pro", "provider" to "google")
 
     // Assert: Capabilities is optional
     assertThat(modelWithCapabilities).containsKey("capabilities")
@@ -112,17 +95,9 @@ class ListModelsContractTest {
   fun `model object should support optional context_window integer`() {
     // Arrange: Models with and without context window
     val modelWithContext =
-      mapOf(
-        "id" to "gpt-4-turbo",
-        "provider" to "openai",
-        "context_window" to 128000,
-      )
+      mapOf("id" to "gpt-4-turbo", "provider" to "openai", "context_window" to 128000)
 
-    val modelWithoutContext =
-      mapOf(
-        "id" to "gpt-3.5-turbo",
-        "provider" to "openai",
-      )
+    val modelWithoutContext = mapOf("id" to "gpt-3.5-turbo", "provider" to "openai")
 
     // Assert: context_window is optional integer
     assertThat(modelWithContext).containsKey("context_window")
@@ -143,7 +118,7 @@ class ListModelsContractTest {
             mapOf("id" to "gemini-pro", "provider" to "google"),
             mapOf("id" to "claude-3-opus", "provider" to "anthropic"),
             mapOf("id" to "custom-model", "provider" to "custom"),
-          ),
+          )
       )
 
     // Assert: Multiple providers are supported
@@ -159,10 +134,7 @@ class ListModelsContractTest {
   @Test
   fun `models response can be empty array`() {
     // Arrange: Empty response when no models configured
-    val emptyResponse =
-      mapOf(
-        "data" to emptyList<Map<String, Any>>(),
-      )
+    val emptyResponse = mapOf("data" to emptyList<Map<String, Any>>())
 
     // Assert: Empty data array is valid
     assertThat(emptyResponse).containsKey("data")
@@ -193,14 +165,7 @@ class ListModelsContractTest {
   @Test
   fun `model capabilities should use standard enum values`() {
     // Arrange: Standard capability values per spec
-    val standardCapabilities =
-      setOf(
-        "TEXT_GEN",
-        "CODE_GEN",
-        "IMAGE_GEN",
-        "AUDIO_IN",
-        "AUDIO_OUT",
-      )
+    val standardCapabilities = setOf("TEXT_GEN", "CODE_GEN", "IMAGE_GEN", "AUDIO_IN", "AUDIO_OUT")
 
     val model =
       mapOf(
@@ -218,12 +183,7 @@ class ListModelsContractTest {
   fun `models response should handle large model lists`() {
     // Arrange: Response with many models (stress test)
     val largeModelList =
-      (1..100).map { index ->
-        mapOf(
-          "id" to "model-$index",
-          "provider" to "test-provider",
-        )
-      }
+      (1..100).map { index -> mapOf("id" to "model-$index", "provider" to "test-provider") }
 
     val response = mapOf("data" to largeModelList)
 

@@ -92,7 +92,7 @@ class ProgressCenterCoordinatorTest {
   private fun downloadTask(
     status: DownloadStatus,
     progress: Float = 0f,
-    id: UUID = UUID.randomUUID()
+    id: UUID = UUID.randomUUID(),
   ): DownloadTask =
     DownloadTask(
       taskId = id,

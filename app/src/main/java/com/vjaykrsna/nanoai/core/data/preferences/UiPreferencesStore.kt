@@ -27,9 +27,7 @@ class UiPreferencesStore(
 ) {
   companion object {
     private val Context.dataStore: DataStore<Preferences> by
-      preferencesDataStore(
-        name = "ui_preferences",
-      )
+      preferencesDataStore(name = "ui_preferences")
 
     private val KEY_THEME_PREFERENCE = stringPreferencesKey("theme_preference")
     private val KEY_VISUAL_DENSITY = stringPreferencesKey("visual_density")
@@ -52,18 +50,11 @@ class UiPreferencesStore(
           preferences[KEY_VISUAL_DENSITY]?.let { name ->
             VisualDensity.values().firstOrNull { it.name.equals(name, ignoreCase = true) }
           } ?: VisualDensity.DEFAULT,
-        pinnedToolIds =
-          converters.decodeStringList(
-            preferences[KEY_PINNED_TOOL_IDS],
-          ),
+        pinnedToolIds = converters.decodeStringList(preferences[KEY_PINNED_TOOL_IDS]),
         commandPaletteRecents =
-          converters.decodeStringList(
-            preferences[KEY_COMMAND_PALETTE_RECENTS],
-          ),
+          converters.decodeStringList(preferences[KEY_COMMAND_PALETTE_RECENTS]),
         connectivityBannerLastDismissed =
-          converters.decodeInstant(
-            preferences[KEY_CONNECTIVITY_BANNER_DISMISSED],
-          ),
+          converters.decodeInstant(preferences[KEY_CONNECTIVITY_BANNER_DISMISSED]),
       )
     }
 
@@ -107,10 +98,7 @@ class UiPreferencesStore(
    */
   suspend fun addPinnedTool(toolId: String) {
     context.dataStore.edit { preferences ->
-      val current =
-        converters.decodeStringList(
-          preferences[KEY_PINNED_TOOL_IDS],
-        )
+      val current = converters.decodeStringList(preferences[KEY_PINNED_TOOL_IDS])
 
       val updated = current.toMutableList()
       if (!updated.contains(toolId) && updated.size < MAX_PINNED_TOOLS) {
@@ -127,10 +115,7 @@ class UiPreferencesStore(
    */
   suspend fun removePinnedTool(toolId: String) {
     context.dataStore.edit { preferences ->
-      val current =
-        converters.decodeStringList(
-          preferences[KEY_PINNED_TOOL_IDS],
-        )
+      val current = converters.decodeStringList(preferences[KEY_PINNED_TOOL_IDS])
 
       val updated = current.toMutableList()
       if (updated.remove(toolId)) {

@@ -30,13 +30,9 @@ import kotlinx.datetime.Instant
         parentColumns = ["thread_id"],
         childColumns = ["thread_id"],
         onDelete = ForeignKey.CASCADE,
-      ),
+      )
     ],
-  indices =
-    [
-      Index(value = ["thread_id"]),
-      Index(value = ["new_persona_id"]),
-    ],
+  indices = [Index(value = ["thread_id"]), Index(value = ["new_persona_id"])],
 )
 data class PersonaSwitchLogEntity(
   @PrimaryKey @ColumnInfo(name = "log_id") val logId: String,

@@ -18,7 +18,7 @@ abstract class HuggingFaceAuthModule {
   @Binds
   @Singleton
   abstract fun bindHuggingFaceTokenProvider(
-    repository: HuggingFaceCredentialRepository,
+    repository: HuggingFaceCredentialRepository
   ): HuggingFaceTokenProvider
 
   companion object {

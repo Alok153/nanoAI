@@ -52,7 +52,7 @@ fun ThemeToggle(
       modifier
         .fillMaxWidth()
         .semantics { contentDescription = "Theme toggle row" }
-        .padding(vertical = 12.dp, horizontal = 16.dp),
+        .padding(vertical = 12.dp, horizontal = 16.dp)
   ) {
     ThemeToggleHeader()
     Spacer(modifier = Modifier.height(8.dp))
@@ -70,13 +70,8 @@ fun ThemeToggle(
       onThemeChange = onThemeChange,
     )
     Spacer(modifier = Modifier.height(8.dp))
-    ThemeStatusRow(
-      currentTheme = currentTheme,
-      animationsEnabled = animationsEnabled,
-    )
-    Spacer(
-      modifier = Modifier.fillMaxWidth().height(1.dp).testTag("theme_layout_stability_check"),
-    )
+    ThemeStatusRow(currentTheme = currentTheme, animationsEnabled = animationsEnabled)
+    Spacer(modifier = Modifier.fillMaxWidth().height(1.dp).testTag("theme_layout_stability_check"))
   }
 }
 
@@ -214,17 +209,11 @@ private fun ThemePreferenceSwitch(
 }
 
 @Composable
-private fun ThemeStatusRow(
-  currentTheme: ThemePreference,
-  animationsEnabled: Boolean,
-) {
+private fun ThemeStatusRow(currentTheme: ThemePreference, animationsEnabled: Boolean) {
   val statusText = "Current: ${currentTheme.displayName()}"
 
   if (animationsEnabled) {
-    AnimatedContent(
-      targetState = statusText,
-      label = "theme_status_animation",
-    ) { animatedText ->
+    AnimatedContent(targetState = statusText, label = "theme_status_animation") { animatedText ->
       Text(
         text = animatedText,
         style = MaterialTheme.typography.bodySmall,

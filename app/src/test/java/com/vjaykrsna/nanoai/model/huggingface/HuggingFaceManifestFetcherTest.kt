@@ -61,7 +61,7 @@ class HuggingFaceManifestFetcherTest {
           }
         ]
         """
-          .trimIndent(),
+          .trimIndent()
     )
 
     val request =
@@ -107,7 +107,7 @@ class HuggingFaceManifestFetcherTest {
           ]
         }
         """
-          .trimIndent(),
+          .trimIndent()
     )
 
     val request =
@@ -142,7 +142,7 @@ class HuggingFaceManifestFetcherTest {
           ]
         }
         """
-          .trimIndent(),
+          .trimIndent()
     )
 
     val request =
@@ -162,7 +162,7 @@ class HuggingFaceManifestFetcherTest {
       MockResponse()
         .setResponseCode(status)
         .setHeader("Content-Type", "application/json")
-        .setBody(Buffer().writeString(body, Charsets.UTF_8)),
+        .setBody(Buffer().writeString(body, Charsets.UTF_8))
     )
   }
 

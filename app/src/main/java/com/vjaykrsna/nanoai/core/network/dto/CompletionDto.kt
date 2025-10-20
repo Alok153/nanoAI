@@ -37,11 +37,7 @@ data class CompletionRequestDto(
   }
 }
 
-@Serializable
-data class CompletionMessageDto(
-  val role: CompletionRole,
-  val content: String,
-)
+@Serializable data class CompletionMessageDto(val role: CompletionRole, val content: String)
 
 /** Limited role enum for completion messages. */
 @Serializable
@@ -76,7 +72,7 @@ data class CompletionChoiceMessageDto(
 /** Response message role (assistant only per contract). */
 @Serializable
 enum class CompletionResponseRole {
-  @SerialName("assistant") ASSISTANT,
+  @SerialName("assistant") ASSISTANT
 }
 
 @Serializable

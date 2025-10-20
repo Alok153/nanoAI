@@ -315,7 +315,7 @@ class ModelDownloadsAndExportUseCaseTest {
     taskId: UUID = UUID.randomUUID(),
     modelId: String = "model",
     status: DownloadStatus,
-    progress: Float = 0.5f
+    progress: Float = 0.5f,
   ): DownloadTask =
     DownloadTask(
       taskId = taskId,

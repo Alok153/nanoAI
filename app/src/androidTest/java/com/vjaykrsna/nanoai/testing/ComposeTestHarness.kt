@@ -21,9 +21,7 @@ import com.vjaykrsna.nanoai.ui.theme.NanoAITheme
  * }
  * ```
  */
-class ComposeTestHarness(
-  private val composeTestRule: ComposeTestRule,
-) {
+class ComposeTestHarness(private val composeTestRule: ComposeTestRule) {
   /** Matches a node by its semantic content description. */
   fun hasContentDescription(description: String): SemanticsMatcher =
     SemanticsMatcher.expectValue(SemanticsProperties.ContentDescription, listOf(description))
@@ -64,10 +62,7 @@ class ComposeTestHarness(
   fun hasTag(tag: String): SemanticsMatcher = hasTestTag(tag)
 
   /** Asserts accessibility properties of a node identified by test tag. */
-  fun assertAccessibilityOf(
-    testTag: String,
-    builder: AccessibilityAssertionBuilder.() -> Unit,
-  ) {
+  fun assertAccessibilityOf(testTag: String, builder: AccessibilityAssertionBuilder.() -> Unit) {
     val assertions = AccessibilityAssertionBuilder().apply(builder).build()
     val node = composeTestRule.onNode(hasTestTag(testTag))
 

@@ -94,12 +94,12 @@ class SettingsViewModelTest {
               lastOpenedScreen = ScreenType.HOME,
               compactMode = false,
               pinnedTools = emptyList(),
-              savedLayouts = emptyList()
+              savedLayouts = emptyList(),
             ),
           layoutSnapshots = emptyList(),
           uiState = null,
           offline = false,
-          hydratedFromCache = false
+          hydratedFromCache = false,
         )
       )
     every { huggingFaceAuthCoordinator.state } returns
@@ -270,7 +270,7 @@ class SettingsViewModelTest {
         verificationUri = "https://huggingface.co/login/device",
         verificationUriComplete = "https://huggingface.co/login/device?code=TEST-CODE",
         expiresAt = Clock.System.now() + kotlin.time.Duration.parse("15m"),
-        pollIntervalSeconds = 5
+        pollIntervalSeconds = 5,
       )
     coEvery { huggingFaceAuthCoordinator.beginDeviceAuthorization(any(), any()) } returns
       Result.success(deviceAuthState)
@@ -356,7 +356,7 @@ class SettingsViewModelTest {
         personasImported = 3,
         personasUpdated = 2,
         providersImported = 0,
-        providersUpdated = 0
+        providersUpdated = 0,
       )
     coEvery { importService.importBackup(uri) } returns Result.success(summary)
 
@@ -571,7 +571,7 @@ class SettingsViewModelTest {
         verificationUri = "https://huggingface.co/login/device",
         verificationUriComplete = "https://huggingface.co/login/device?code=TEST-CODE",
         expiresAt = Clock.System.now() + kotlin.time.Duration.parse("15m"),
-        pollIntervalSeconds = 5
+        pollIntervalSeconds = 5,
       )
     coEvery { huggingFaceAuthCoordinator.beginDeviceAuthorization(any(), any()) } returns
       Result.success(deviceAuthState)
@@ -614,7 +614,7 @@ class SettingsViewModelTest {
         personasImported = 3,
         personasUpdated = 2,
         providersImported = 0,
-        providersUpdated = 0
+        providersUpdated = 0,
       )
     coEvery { importService.importBackup(uri) } returns Result.success(summary)
 

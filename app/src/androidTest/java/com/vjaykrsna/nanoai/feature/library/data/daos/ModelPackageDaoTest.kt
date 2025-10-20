@@ -126,7 +126,7 @@ class ModelPackageDaoTest {
     writeDao.updateInstallState(
       "observe",
       InstallState.INSTALLED,
-      Instant.parse("2025-06-06T00:00:00Z")
+      Instant.parse("2025-06-06T00:00:00Z"),
     )
     val updated = flow.first()
     assertThat(updated?.installState).isEqualTo(InstallState.INSTALLED)

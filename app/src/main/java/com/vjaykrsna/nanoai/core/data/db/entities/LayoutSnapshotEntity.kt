@@ -18,7 +18,7 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.LayoutSnapshot
         childColumns = ["user_id"],
         onDelete = ForeignKey.CASCADE,
         onUpdate = ForeignKey.CASCADE,
-      ),
+      )
     ],
   indices =
     [

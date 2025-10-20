@@ -23,16 +23,10 @@ import kotlinx.datetime.Instant
  * DataStore for simple key-value storage.
  */
 @Singleton
-class PrivacyPreferenceStore
-@Inject
-constructor(
-  @ApplicationContext private val context: Context,
-) {
+class PrivacyPreferenceStore @Inject constructor(@ApplicationContext private val context: Context) {
   companion object {
     private val Context.dataStore: DataStore<Preferences> by
-      preferencesDataStore(
-        name = "privacy_preferences",
-      )
+      preferencesDataStore(name = "privacy_preferences")
 
     private val KEY_EXPORT_WARNINGS_DISMISSED = booleanPreferencesKey("export_warnings_dismissed")
     private val KEY_TELEMETRY_OPT_IN = booleanPreferencesKey("telemetry_opt_in")
