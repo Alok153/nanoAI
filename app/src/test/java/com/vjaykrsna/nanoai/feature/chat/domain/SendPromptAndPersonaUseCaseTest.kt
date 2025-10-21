@@ -12,6 +12,9 @@ import com.vjaykrsna.nanoai.core.model.InferenceMode
 import com.vjaykrsna.nanoai.core.model.MessageSource
 import com.vjaykrsna.nanoai.core.model.PersonaSwitchAction
 import com.vjaykrsna.nanoai.core.model.Role
+import com.vjaykrsna.nanoai.testing.assertIsSuccess
+import com.vjaykrsna.nanoai.testing.assertRecoverableError
+import com.vjaykrsna.nanoai.testing.assertSuccess
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -65,8 +68,7 @@ class SendPromptAndPersonaUseCaseTest {
 
     val result = useCase.sendPrompt(threadId, "hi", personaId)
 
-    assertThat(result.isFailure).isTrue()
-    assertThat(result.exceptionOrNull()).isInstanceOf(OfflineNoModelException::class.java)
+    result.assertRecoverableError()
     coVerify(exactly = 0) {
       inferenceOrchestrator.generateResponse(
         prompt = "hi",
@@ -93,7 +95,7 @@ class SendPromptAndPersonaUseCaseTest {
 
     val result = useCase.sendPrompt(threadId, "hello", personaId)
 
-    assertThat(result.isSuccess).isTrue()
+    result.assertIsSuccess()
     coVerify {
       inferenceOrchestrator.generateResponse(
         prompt = "hello",
@@ -111,7 +113,7 @@ class SendPromptAndPersonaUseCaseTest {
         }
       )
     }
-    assertThat(result.isFailure).isFalse()
+    result.assertIsSuccess()
     verify { inferencePreferenceRepository.observeInferencePreference() }
   }
 
@@ -127,7 +129,7 @@ class SendPromptAndPersonaUseCaseTest {
 
     val result = useCase.sendPrompt(threadId, "question", personaId)
 
-    assertThat(result.isFailure).isTrue()
+    result.assertRecoverableError()
     coVerify {
       conversationRepository.saveMessage(
         match { message ->
@@ -151,7 +153,7 @@ class SendPromptAndPersonaUseCaseTest {
 
     val result = useCase.sendPrompt(threadId, "prompt", personaId)
 
-    assertThat(result.isFailure).isTrue()
+    result.assertRecoverableError()
     coVerify {
       conversationRepository.saveMessage(
         match { message ->
@@ -213,8 +215,10 @@ class SendPromptAndPersonaUseCaseTest {
 
     coEvery { conversationRepository.getCurrentPersonaForThread(threadId) } returns oldPersona
 
-    useCase.switchPersona(threadId, newPersona, PersonaSwitchAction.CONTINUE_THREAD)
+    val result = useCase.switchPersona(threadId, newPersona, PersonaSwitchAction.CONTINUE_THREAD)
+    val returnedThreadId = result.assertSuccess()
 
+    assertThat(returnedThreadId).isEqualTo(threadId)
     coVerify { conversationRepository.updateThreadPersona(threadId, newPersona) }
     coVerify {
       personaSwitchLogRepository.logSwitch(
@@ -240,7 +244,8 @@ class SendPromptAndPersonaUseCaseTest {
     val result =
       useCase.switchPersona(originalThread, newPersona, PersonaSwitchAction.START_NEW_THREAD)
 
-    assertThat(result).isEqualTo(newThreadId)
+    val returnedThreadId = result.assertSuccess()
+    assertThat(returnedThreadId).isEqualTo(newThreadId)
     coVerify { conversationRepository.createNewThread(newPersona) }
     coVerify {
       personaSwitchLogRepository.logSwitch(

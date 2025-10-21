@@ -5,6 +5,7 @@ package com.vjaykrsna.nanoai.feature.settings.presentation
 import android.net.Uri
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
+import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreference
 import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreferenceStore
 import com.vjaykrsna.nanoai.core.data.preferences.RetentionPolicy
@@ -323,7 +324,7 @@ class SettingsViewModelTest {
   @Test
   fun `exportBackup calls use case and emits success`() = runTest {
     val path = "/backup/path"
-    coEvery { downloadsUseCase.exportBackup(path, false) } returns Result.success(path)
+    coEvery { downloadsUseCase.exportBackup(path, false) } returns NanoAIResult.success(path)
 
     viewModel.exportSuccess.test {
       viewModel.exportBackup(path, false)
@@ -337,7 +338,7 @@ class SettingsViewModelTest {
   @Test
   fun `exportBackup emits error on failure`() = runTest {
     coEvery { downloadsUseCase.exportBackup(any(), any()) } returns
-      Result.failure(Exception("Export error"))
+      NanoAIResult.recoverable(message = "Export error")
 
     viewModel.errorEvents.test {
       viewModel.exportBackup("/path", false)
@@ -595,7 +596,7 @@ class SettingsViewModelTest {
   @Test
   fun `exportData_triggersExportFlow`() = runTest {
     val path = "/test/export/path"
-    coEvery { downloadsUseCase.exportBackup(path, false) } returns Result.success(path)
+    coEvery { downloadsUseCase.exportBackup(path, false) } returns NanoAIResult.success(path)
 
     viewModel.isLoading.test {
       assertThat(awaitItem()).isFalse()

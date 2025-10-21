@@ -2,6 +2,8 @@ package com.vjaykrsna.nanoai.feature.library.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.vjaykrsna.nanoai.core.common.onFailure
+import com.vjaykrsna.nanoai.core.common.onSuccess
 import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.feature.library.domain.ModelDownloadsAndExportUseCaseInterface
 import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus

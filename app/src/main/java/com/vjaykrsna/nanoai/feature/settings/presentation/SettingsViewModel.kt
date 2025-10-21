@@ -5,6 +5,8 @@ package com.vjaykrsna.nanoai.feature.settings.presentation
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.vjaykrsna.nanoai.core.common.onFailure
+import com.vjaykrsna.nanoai.core.common.onSuccess
 import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreference
 import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreferenceStore
 import com.vjaykrsna.nanoai.core.data.preferences.RetentionPolicy
@@ -166,21 +168,12 @@ constructor(
   fun exportBackup(destinationPath: String, includeChatHistory: Boolean = false) {
     viewModelScope.launch {
       _isLoading.value = true
-      runCatching {
-          modelDownloadsAndExportUseCase.exportBackup(destinationPath, includeChatHistory)
+      modelDownloadsAndExportUseCase
+        .exportBackup(destinationPath, includeChatHistory)
+        .onSuccess { path -> _exportSuccess.emit(path) }
+        .onFailure { error ->
+          _errorEvents.emit(SettingsError.ExportFailed(error.message ?: "Export failed"))
         }
-        .fold(
-          onSuccess = { result ->
-            result
-              .onSuccess { path -> _exportSuccess.emit(path) }
-              .onFailure { error ->
-                _errorEvents.emit(SettingsError.ExportFailed(error.message ?: "Export failed"))
-              }
-          },
-          onFailure = { error ->
-            _errorEvents.emit(SettingsError.UnexpectedError(error.message ?: "Unexpected error"))
-          },
-        )
       _isLoading.value = false
     }
   }

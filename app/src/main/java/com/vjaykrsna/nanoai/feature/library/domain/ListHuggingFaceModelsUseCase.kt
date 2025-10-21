@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai.feature.library.domain
 
+import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.feature.library.data.huggingface.HuggingFaceCatalogRepository
 import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceCatalogQuery
 import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceModelSummary
@@ -13,5 +14,18 @@ class ListHuggingFaceModelsUseCase
 constructor(private val repository: HuggingFaceCatalogRepository) {
   suspend operator fun invoke(
     query: HuggingFaceCatalogQuery = HuggingFaceCatalogQuery()
-  ): Result<List<HuggingFaceModelSummary>> = repository.listModels(query)
+  ): NanoAIResult<List<HuggingFaceModelSummary>> {
+    return repository
+      .listModels(query)
+      .fold(
+        onSuccess = { models -> NanoAIResult.success(models) },
+        onFailure = { error ->
+          NanoAIResult.recoverable(
+            message = "Failed to list Hugging Face models",
+            cause = error,
+            context = mapOf("query" to query.toString()),
+          )
+        },
+      )
+  }
 }

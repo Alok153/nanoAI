@@ -3,6 +3,8 @@ package com.vjaykrsna.nanoai.feature.chat.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
+import com.vjaykrsna.nanoai.core.common.onFailure
+import com.vjaykrsna.nanoai.core.common.onSuccess
 import com.vjaykrsna.nanoai.core.data.repository.ConversationRepository
 import com.vjaykrsna.nanoai.core.data.repository.PersonaRepository
 import com.vjaykrsna.nanoai.core.domain.model.ChatThread
@@ -92,16 +94,17 @@ constructor(
               createdAt = kotlinx.datetime.Clock.System.now(),
             )
           conversationRepository.saveMessage(userMessage)
-          sendPromptAndPersonaUseCase.sendPrompt(threadId, text, personaId)
-        }
-        .onSuccess { result ->
-          result.onFailure { error ->
-            _errorEvents.emit(ChatError.InferenceFailed(error.message ?: "Unknown error"))
-          }
         }
         .onFailure { error ->
-          _errorEvents.emit(ChatError.UnexpectedError(error.message ?: "Unexpected error"))
+          _errorEvents.emit(ChatError.UnexpectedError("Failed to save message: ${error.message}"))
+          _isLoading.value = false
+          return@launch
         }
+
+      sendPromptAndPersonaUseCase.sendPrompt(threadId, text, personaId).onFailure { error ->
+        _errorEvents.emit(ChatError.InferenceFailed(error.message ?: "Unknown error"))
+      }
+
       _isLoading.value = false
     }
   }
@@ -109,7 +112,8 @@ constructor(
   fun switchPersona(newPersonaId: UUID, action: PersonaSwitchAction) {
     val threadId = _currentThreadId.value ?: return
     viewModelScope.launch(dispatcher) {
-      runCatching { sendPromptAndPersonaUseCase.switchPersona(threadId, newPersonaId, action) }
+      sendPromptAndPersonaUseCase
+        .switchPersona(threadId, newPersonaId, action)
         .onSuccess { newThreadId ->
           if (action == PersonaSwitchAction.START_NEW_THREAD) {
             _currentThreadId.value = newThreadId

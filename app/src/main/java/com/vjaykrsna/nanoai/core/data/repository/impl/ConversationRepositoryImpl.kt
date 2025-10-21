@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai.core.data.repository.impl
 
+import com.vjaykrsna.nanoai.core.common.IoDispatcher
 import com.vjaykrsna.nanoai.core.data.db.daos.ChatThreadDao
 import com.vjaykrsna.nanoai.core.data.db.daos.MessageDao
 import com.vjaykrsna.nanoai.core.data.repository.ConversationRepository
@@ -10,18 +11,22 @@ import com.vjaykrsna.nanoai.core.domain.model.toEntity
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
 
 @Singleton
+@Suppress("UnusedPrivateProperty") // Will be used for future IO operations
 class ConversationRepositoryImpl
 @Inject
 constructor(
   private val chatThreadDao: ChatThreadDao,
   private val messageDao: MessageDao,
   private val clock: Clock = Clock.System,
+  @IoDispatcher private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : ConversationRepository {
 
   companion object {

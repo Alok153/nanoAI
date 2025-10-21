@@ -4,6 +4,7 @@ package com.vjaykrsna.nanoai.feature.library.presentation
 
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
+import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceModelCompatibilityChecker
 import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceToModelPackageConverter
 import com.vjaykrsna.nanoai.feature.library.domain.ModelDownloadsAndExportUseCase
@@ -61,7 +62,7 @@ class ModelLibraryViewModelTest {
     val downloadManager = DownloadManager(downloadsUseCase)
 
     // Setup default behaviors
-    coEvery { refreshUseCase.invoke() } returns Result.success(Unit)
+    coEvery { refreshUseCase.invoke() } returns NanoAIResult.success(Unit)
 
     viewModel =
       ModelLibraryViewModel(
@@ -124,7 +125,7 @@ class ModelLibraryViewModelTest {
 
   @Test
   fun `refreshCatalog emits error on failure`() = runTest {
-    coEvery { refreshUseCase.invoke() } returns Result.failure(Exception("Refresh failed"))
+    coEvery { refreshUseCase.invoke() } returns NanoAIResult.recoverable(message = "Refresh failed")
 
     viewModel.errorEvents.test {
       viewModel.refreshCatalog()
@@ -138,7 +139,7 @@ class ModelLibraryViewModelTest {
 
   @Test
   fun `refreshCatalog records offline fallback on error`() = runTest {
-    coEvery { refreshUseCase.invoke() } returns Result.failure(Exception("Refresh failed"))
+    coEvery { refreshUseCase.invoke() } returns NanoAIResult.recoverable(message = "Refresh failed")
     val existingModel = DomainTestBuilders.buildModelPackage(modelId = "cached-model")
     modelCatalogRepository.addModel(existingModel)
 
@@ -287,7 +288,7 @@ class ModelLibraryViewModelTest {
   @Test
   fun `downloadModel emits error on failure`() = runTest {
     coEvery { downloadsUseCase.downloadModel(any()) } returns
-      Result.failure(Exception("Download failed"))
+      NanoAIResult.recoverable(message = "Download failed")
 
     viewModel.errorEvents.test {
       viewModel.downloadModel("test-model")
@@ -373,7 +374,7 @@ class ModelLibraryViewModelTest {
   @Test
   fun `deleteModel emits error on failure`() = runTest {
     coEvery { downloadsUseCase.deleteModel(any()) } returns
-      Result.failure(Exception("Delete failed"))
+      NanoAIResult.recoverable(message = "Delete failed")
 
     viewModel.errorEvents.test {
       viewModel.deleteModel("test-model")
@@ -497,7 +498,7 @@ class ModelLibraryViewModelTest {
   fun `downloadModel_tracksProgressCorrectly`() = runTest {
     val modelId = "test-model"
     val taskId = UUID.randomUUID()
-    coEvery { downloadsUseCase.downloadModel(modelId) } returns Result.success(taskId)
+    coEvery { downloadsUseCase.downloadModel(modelId) } returns NanoAIResult.success(taskId)
 
     viewModel.downloadModel(modelId)
     advanceUntilIdle()
@@ -544,8 +545,8 @@ class ModelLibraryViewModelTest {
     val modelId2 = "model-2"
     val taskId1 = UUID.randomUUID()
     val taskId2 = UUID.randomUUID()
-    coEvery { downloadsUseCase.downloadModel(modelId1) } returns Result.success(taskId1)
-    coEvery { downloadsUseCase.downloadModel(modelId2) } returns Result.success(taskId2)
+    coEvery { downloadsUseCase.downloadModel(modelId1) } returns NanoAIResult.success(taskId1)
+    coEvery { downloadsUseCase.downloadModel(modelId2) } returns NanoAIResult.success(taskId2)
 
     viewModel.downloadModel(modelId1)
     viewModel.downloadModel(modelId2)
@@ -557,7 +558,7 @@ class ModelLibraryViewModelTest {
 
   @Test
   fun `refreshCatalog_updatesStateOnSuccess`() = runTest {
-    coEvery { refreshUseCase.invoke() } returns Result.success(Unit)
+    coEvery { refreshUseCase.invoke() } returns NanoAIResult.success(Unit)
 
     viewModel.isRefreshing.test {
       assertThat(awaitItem()).isFalse()
@@ -572,7 +573,7 @@ class ModelLibraryViewModelTest {
 
   @Test
   fun `refreshCatalog_showsOfflineFallbackOnFailure`() = runTest {
-    coEvery { refreshUseCase.invoke() } returns Result.failure(Exception("Network error"))
+    coEvery { refreshUseCase.invoke() } returns NanoAIResult.recoverable(message = "Network error")
 
     viewModel.errorEvents.test {
       viewModel.refreshCatalog()

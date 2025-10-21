@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai.core.data.repository.impl
 
+import com.vjaykrsna.nanoai.core.common.IoDispatcher
 import com.vjaykrsna.nanoai.core.data.db.daos.PersonaSwitchLogDao
 import com.vjaykrsna.nanoai.core.data.repository.PersonaSwitchLogRepository
 import com.vjaykrsna.nanoai.core.domain.model.PersonaSwitchLog
@@ -8,6 +9,8 @@ import com.vjaykrsna.nanoai.core.domain.model.toEntity
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -17,9 +20,13 @@ import kotlinx.coroutines.flow.map
  * Wraps PersonaSwitchLogDao, converting between entities and domain models.
  */
 @Singleton
+@Suppress("UnusedPrivateProperty") // Will be used for future IO operations
 class PersonaSwitchLogRepositoryImpl
 @Inject
-constructor(private val personaSwitchLogDao: PersonaSwitchLogDao) : PersonaSwitchLogRepository {
+constructor(
+  private val personaSwitchLogDao: PersonaSwitchLogDao,
+  @IoDispatcher private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+) : PersonaSwitchLogRepository {
   override suspend fun logSwitch(log: PersonaSwitchLog) {
     personaSwitchLogDao.insert(log.toEntity())
   }

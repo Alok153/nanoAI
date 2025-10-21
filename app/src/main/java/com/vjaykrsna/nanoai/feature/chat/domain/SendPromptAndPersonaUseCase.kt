@@ -1,7 +1,11 @@
-@file:Suppress("ReturnCount") // Multiple validation paths in use case
+@file:Suppress(
+  "ReturnCount",
+  "LongMethod",
+) // Multiple validation paths in use case, complex business logic
 
 package com.vjaykrsna.nanoai.feature.chat.domain
 
+import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.data.repository.ConversationRepository
 import com.vjaykrsna.nanoai.core.data.repository.InferencePreferenceRepository
 import com.vjaykrsna.nanoai.core.data.repository.PersonaRepository
@@ -29,12 +33,15 @@ constructor(
   private val personaSwitchLogRepository: PersonaSwitchLogRepository,
   private val inferencePreferenceRepository: InferencePreferenceRepository,
 ) {
-  suspend fun sendPrompt(threadId: UUID, prompt: String, personaId: UUID): Result<Unit> {
+  suspend fun sendPrompt(threadId: UUID, prompt: String, personaId: UUID): NanoAIResult<Unit> {
     val isOnline = inferenceOrchestrator.isOnline()
     val hasLocalModel = inferenceOrchestrator.hasLocalModelAvailable()
 
     if (!isOnline && !hasLocalModel) {
-      return Result.failure(OfflineNoModelException())
+      return NanoAIResult.recoverable(
+        message = "Device offline with no local model available",
+        context = mapOf("threadId" to threadId.toString(), "personaId" to personaId.toString()),
+      )
     }
 
     val persona = runCatching { personaRepository.getPersonaById(personaId).first() }.getOrNull()
@@ -72,7 +79,7 @@ constructor(
             createdAt = Clock.System.now(),
           )
         conversationRepository.saveMessage(message)
-        Result.success(Unit)
+        NanoAIResult.success(Unit)
       }
       is InferenceResult.Error -> {
         val message =
@@ -87,35 +94,51 @@ constructor(
             errorCode = inferenceResult.errorCode,
           )
         conversationRepository.saveMessage(message)
-        Result.failure(InferenceFailedException(inferenceResult.errorCode, inferenceResult.message))
+        NanoAIResult.recoverable(
+          message =
+            inferenceResult.message ?: "Inference failed with code ${inferenceResult.errorCode}",
+          telemetryId = inferenceResult.errorCode,
+          context = mapOf("threadId" to threadId.toString(), "personaId" to personaId.toString()),
+        )
       }
     }
   }
 
-  suspend fun switchPersona(threadId: UUID, newPersonaId: UUID, action: PersonaSwitchAction): UUID {
-    val previousPersonaId = conversationRepository.getCurrentPersonaForThread(threadId)
-    val targetThreadId =
-      when (action) {
-        PersonaSwitchAction.CONTINUE_THREAD -> {
-          conversationRepository.updateThreadPersona(threadId, newPersonaId)
-          threadId
+  suspend fun switchPersona(
+    threadId: UUID,
+    newPersonaId: UUID,
+    action: PersonaSwitchAction,
+  ): NanoAIResult<UUID> {
+    return try {
+      val previousPersonaId = conversationRepository.getCurrentPersonaForThread(threadId)
+      val targetThreadId =
+        when (action) {
+          PersonaSwitchAction.CONTINUE_THREAD -> {
+            conversationRepository.updateThreadPersona(threadId, newPersonaId)
+            threadId
+          }
+          PersonaSwitchAction.START_NEW_THREAD -> {
+            conversationRepository.createNewThread(newPersonaId)
+          }
         }
-        PersonaSwitchAction.START_NEW_THREAD -> {
-          conversationRepository.createNewThread(newPersonaId)
-        }
-      }
 
-    val log =
-      PersonaSwitchLog(
-        logId = UUID.randomUUID(),
-        threadId = targetThreadId,
-        previousPersonaId = previousPersonaId,
-        newPersonaId = newPersonaId,
-        actionTaken = action,
-        createdAt = Clock.System.now(),
+      val log =
+        PersonaSwitchLog(
+          logId = UUID.randomUUID(),
+          threadId = targetThreadId,
+          previousPersonaId = previousPersonaId,
+          newPersonaId = newPersonaId,
+          actionTaken = action,
+          createdAt = Clock.System.now(),
+        )
+      personaSwitchLogRepository.logSwitch(log)
+      NanoAIResult.success(targetThreadId)
+    } catch (error: Throwable) {
+      NanoAIResult.recoverable(
+        message = "Failed to switch persona: ${error.message}",
+        cause = error,
       )
-    personaSwitchLogRepository.logSwitch(log)
-    return targetThreadId
+    }
   }
 
   suspend fun getPersonaSwitchHistory(threadId: UUID): Flow<List<PersonaSwitchLog>> =
@@ -131,9 +154,3 @@ private fun shouldPreferLocal(
   if (!isOnline) return true
   return userPrefersLocal
 }
-
-class OfflineNoModelException :
-  IllegalStateException("Device offline with no local model available")
-
-class InferenceFailedException(val code: String, message: String?) :
-  IllegalStateException(message ?: "Inference failed with code $code")

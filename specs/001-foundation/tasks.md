@@ -1,118 +1,132 @@
-# Tasks: UI Layer Architecture & Quality Fixes
+# Tasks: Comprehensive Architecture Layer Violations Cleanup
 
-**Input**: findings.md audit results and codebase analysis from `/specs/001-foundation/`
-**Prerequisites**: `plan.md`, `research.md`, `data-model.md`, `contracts/`, `quickstart.md`
-**Scope**: Fix all UI layer violations identified in findings.md audit + related ViewModel layer violations that impact UI architecture
-**Scope Expansion**: Added ViewModel-UseCase layer fixes (T022) as they directly affect UI layer clean architecture compliance
+**Input**: Design documents from `/specs/001-foundation/`, architectural issues from `/findings.md`
+**Prerequisites**: plan.md (required), research.md, data-model.md, contracts/
 
-## Phase 1: UI Quality Infrastructure Setup
-**Setup Goal**: Establish the foundation for UI quality improvements and testing infrastructure.
+## Task List
 
-**Setup Tasks**:
-- [X] T001 Extract hardcoded UI strings to `app/src/main/res/values/strings.xml` - Create comprehensive string resources for all user-facing text found in UI components
-- [X] T002 Configure accessibility testing infrastructure in `app/build.gradle.kts` - Add accessibility testing dependencies and configuration
-- [X] T003 Set up UI testing baselines in `config/` - Create baseline files for accessibility and UI quality checks
+### Phase 1: Setup
+- [x] T001 Audit current architectural violations in `findings.md` and verify issues exist in codebase
+- [x] T002 Create backup branch for architectural changes with format `arch-cleanup-{timestamp}`
 
-## Phase 2: User Story - UI Polish & Quality Assurance
-**Story Goal**: As a user, I want a polished, accessible UI that follows Material Design guidelines and maintains clean architecture principles.
+### Phase 2: Foundational
+- [x] T003 [P] Standardize result types across domain layer - migrate all UseCases to `NanoAIResult<T>` in `app/src/main/java/com/vjaykrsna/nanoai/core/common/NanoAIResult.kt`
+- [x] T004 [P] Create base repository interface contracts in `app/src/main/java/com/vjaykrsna/nanoai/core/data/repository/` for proper abstraction
+- [x] T005 [P] Add injected CoroutineDispatcher to repository constructors following pattern in `app/src/main/java/com/vjaykrsna/nanoai/core/common/IoDispatcher.kt`
 
-**Independent Test Criteria**:
-- All UI strings are extracted to resources and support localization
-- Touch targets meet 48dp minimum accessibility requirements
-- Color contrast ratios meet WCAG AA standards (4.5:1 for normal text, 3:1 for large text)
-- ShellViewModel is split into focused, single-responsibility ViewModels
-- No hardcoded strings remain in UI composables
-- UI layer maintains clean architecture (no repository imports)
+### Phase 3: UseCase Layer Cleanup [US1]
+**Story Goal**: Eliminate single responsibility violations in UseCases by splitting monolithic implementations
+**Independent Test Criteria**: Each UseCase handles exactly one business operation with clear boundaries
+**Tests**: Unit tests verify single responsibility and proper result type usage
 
-**Implementation Tasks**:
+- [ ] T006 Split `SendPromptAndPersonaUseCase` into separate UseCases for prompt execution and persona switching in `app/src/main/java/com/vjaykrsna/nanoai/feature/chat/domain/`
+- [ ] T007 Split `ModelDownloadsAndExportUseCase` into focused UseCases for downloads, verification, and export operations in `app/src/main/java/com/vjaykrsna/nanoai/feature/library/domain/`
+- [ ] T008 Fix `SettingsOperationsUseCase` - remove custom CoroutineScope and inject dispatcher instead in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/domain/SettingsOperationsUseCase.kt`
+- [ ] T009 Create `ModelCatalogUseCase` for ModelLibraryViewModel operations (getAllModels, recordOfflineFallback, getModel, upsertModel) in `app/src/main/java/com/vjaykrsna/nanoai/feature/library/domain/`
+- [ ] T010 Create `HuggingFaceCatalogUseCase` for HuggingFaceLibraryViewModel listModels operation in `app/src/main/java/com/vjaykrsna/nanoai/feature/library/domain/`
+- [ ] T011 Create `ApiProviderConfigUseCase` for SettingsViewModel CRUD operations in `app/src/main/java/com/vjaykrsna/nanoai/feature/settings/domain/`
+- [ ] T012 Create `ImageGalleryUseCase` for image gallery operations in `app/src/main/java/com/vjaykrsna/nanoai/feature/image/domain/`
+- [ ] T013 Create `ConversationUseCase` for ChatViewModel conversation operations in `app/src/main/java/com/vjaykrsna/nanoai/feature/chat/domain/`
+- [ ] T014 Update all UseCase result types to use `NanoAIResult<T>` consistently
+- [ ] T015 Update UseCase unit tests to verify new split responsibilities and result types
 
-### String Resource Extraction [P]
-- [X] T004 Extract strings from `app/src/main/java/com/vjaykrsna/nanoai/ui/components/DisclaimerDialog.kt` - Extract "Decline", "Agree", disclaimer points to `strings.xml` with proper naming convention
-- [X] T005 Extract strings from `app/src/main/java/com/vjaykrsna/nanoai/ui/components/OfflineBanner.kt` - Extract "Retry now" and banner messages to resources
-- [X] T006 Extract strings from `app/src/main/java/com/vjaykrsna/nanoai/ui/components/PrimaryActionCard.kt` - Extract "Run" text to resources
-- [X] T007 Extract strings from `app/src/main/java/com/vjaykrsna/nanoai/ui/sidebar/SidebarContent.kt` - Extract "Conversations", "Search conversations...", "Show Active"/"Show Archived" labels
-- [X] T008 Extract strings from `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/sidebar/SettingsShortcutsPanel.kt` - Extract "Open settings", "Theme", "Density" labels
-- [X] T009 Extract strings from `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/sidebar/ModelSelectorPanel.kt` - Extract "Manage installed models", "Activate"/"Unavailable offline" states
-- [X] T010 Extract strings from `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/shell/NanoShellScaffold.kt` - Extract "Search", "Select model" and all UI labels
-- [X] T011 Extract strings from `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/progress/ProgressCenterPanel.kt` - Extract "Retry", "Clear" and progress messages
+### Phase 4: Repository Layer Cleanup [US2]
+**Story Goal**: Fix repository violations by moving business logic to UseCases and implementing proper abstractions
+**Independent Test Criteria**: Repositories contain only data access logic with injected dispatchers
+**Tests**: Unit tests verify repository interfaces and data operations
 
-### Accessibility Improvements [P]
-- [X] T012 Audit and fix touch targets in `app/src/main/java/com/vjaykrsna/nanoai/ui/components/` - Ensure all interactive elements meet 48dp minimum using `Modifier.minimumTouchTargetSize()`
-- [X] T013 Implement proper content descriptions in `app/src/main/java/com/vjaykrsna/nanoai/feature/chat/ui/ChatScreen.kt` - Add descriptive contentDescription for screen readers
-- [X] T014 Add semantic properties to `app/src/main/java/com/vjaykrsna/nanoai/feature/library/ui/ModelLibraryScreen.kt` - Implement proper heading structure and navigation semantics
-- [X] T015 Enhance keyboard navigation in `app/src/main/java/com/vjaykrsna/nanoai/feature/settings/ui/SettingsScreen.kt` - Add focus management and keyboard shortcuts
-- [X] T016 Validate color contrast ratios in `app/src/main/java/com/vjaykrsna/nanoai/ui/theme/Color.kt` - Test all color combinations against WCAG AA standards (4.5:1 minimum)
+- [ ] T016 Split `ShellStateRepository` (343 lines) into focused repositories: `NavigationRepository`, `ConnectivityRepository`, `ThemeRepository`, `ProgressRepository` in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/data/`
+- [ ] T017 Move business logic from `ModelManifestRepositoryImpl` (complex manifest validation, resolution strategies, caching, telemetry) to appropriate UseCases
+- [ ] T018 Remove custom CoroutineScope creation from repositories and use injected dispatchers
+- [ ] T019 Implement consistent offline error handling across all network repositories (HuggingFaceCatalogRepositoryImpl, ModelManifestRepositoryImpl)
+- [ ] T020 Create repository interface contracts for all repository implementations where missing
+- [ ] T021 Add UseCase interfaces for consistency (currently only ModelDownloadsAndExportUseCase has an interface)
+- [ ] T022 Update repository unit tests for new interfaces and injected dispatchers
 
-### ViewModel Architecture Refactoring
-- [X] T017 Split `ShellViewModel` navigation logic into `NavigationViewModel` (`app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/presentation/NavigationViewModel.kt`) - Extract navigation state management
-- [X] T018 Create `ConnectivityViewModel` for network status (`app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/presentation/ConnectivityViewModel.kt`) - Handle connectivity banner and offline state
-- [X] T019 Extract `ProgressViewModel` for background jobs (`app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/presentation/ProgressViewModel.kt`) - Manage download and processing progress
-- [X] T020 Create `ThemeViewModel` for appearance settings (`app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/presentation/ThemeViewModel.kt`) - Handle theme switching and UI preferences
-- [X] T021 Refactor `ShellViewModel` to coordinate child ViewModels (`app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/presentation/ShellViewModel.kt`) - Reduce from 518 lines to focused orchestration logic
-- [X] T022 Create missing UseCases for ViewModel operations - Address ViewModel layer violations where repositories are called directly instead of through UseCase layer
+### Phase 5: UI Layer Cleanup [US3]
+**Story Goal**: Break down monolithic UI components that violate single responsibility principle
+**Independent Test Criteria**: No UI files exceed 400 lines, each component has single clear responsibility
+**Tests**: UI tests verify component behavior after refactoring
 
-### UI Component Quality Improvements [P]
-- [X] T023 Add state preservation in `app/src/main/java/com/vjaykrsna/nanoai/feature/chat/ui/ChatScreen.kt` - Implement rememberSaveable for scroll position and composer text
-- [X] T024 Implement proper error boundaries in `app/src/main/java/com/vjaykrsna/nanoai/ui/navigation/NavigationScaffold.kt` - Add error handling for navigation failures
-- [X] T025 Optimize LazyColumn performance in `app/src/main/java/com/vjaykrsna/nanoai/feature/library/ui/ModelLibraryScreen.kt` - Add contentType and proper key parameters
-- [X] T026 Add loading states and skeletons in `app/src/main/java/com/vjaykrsna/nanoai/feature/settings/ui/SettingsScreen.kt` - Implement progressive loading UI patterns
-- [X] T027 Refactor monolithic `NanoShellScaffold.kt` - Break down into smaller, focused composables (currently 500+ lines)
-- [X] T028 Validate Material3 component spacing in `app/src/main/java/com/vjaykrsna/nanoai/ui/theme/` - Audit spacing tokens against Material3 guidelines
-- [X] T029 Standardize elevation usage across UI components - Ensure consistent Card elevation values and shadow hierarchy
-- [X] T030 Implement high contrast theme option in `app/src/main/java/com/vjaykrsna/nanoai/ui/theme/Theme.kt` - Add accessibility-focused color scheme
-- [X] T031 Add skip links for keyboard navigation in `app/src/main/java/com/vjaykrsna/nanoai/ui/navigation/NavigationScaffold.kt` - Implement accessibility navigation shortcuts
+- [ ] T023 Refactor `NanoShellScaffold.kt` (750 lines) into smaller focused composables by feature/responsibility boundaries
+- [ ] T024 Refactor `ShellViewModel.kt` (433 lines) by splitting into focused ViewModels (NavigationViewModel, ConnectivityViewModel, etc.)
+- [ ] T025 Update Hilt modules for new ViewModel structure and dependencies
+- [ ] T026 Update UI tests for refactored components and ViewModels
 
-## Phase 3: Cross-Cutting Concerns
-- [X] T032 Implement UI testing utilities in `app/src/androidTest/java/com/vjaykrsna/nanoai/testing/` - Create accessibility and UI quality test helpers
-- [X] T033 Add UI performance monitoring in `app/src/main/java/com/vjaykrsna/nanoai/telemetry/` - Implement JankStats and frame drop tracking
-- [X] T034 Create UI quality lint rules in `config/detekt/` - Add custom rules for hardcoded strings and accessibility violations
-- [X] T035 Update architecture documentation in `docs/ARCHITECTURE.md` - Document ViewModel splitting strategy and UI quality standards
-- [X] T036 Create component usage documentation in `docs/` - Document UI component patterns and Material3 compliance standards
+### Phase 6: ViewModel Integration Updates [US4]
+**Story Goal**: Update ViewModels to use new UseCase and repository abstractions
+**Independent Test Criteria**: ViewModels only call UseCases, never repositories directly
+**Tests**: ViewModel tests verify proper UseCase injection and state management
+
+- [ ] T027 Update `ModelLibraryViewModel` to use `ModelCatalogUseCase` instead of calling repository directly
+- [ ] T028 Update `HuggingFaceLibraryViewModel` to use `HuggingFaceCatalogUseCase` instead of calling repository directly
+- [ ] T029 Update `SettingsViewModel` to use `ApiProviderConfigUseCase` instead of calling repository directly
+- [ ] T030 Update `ImageGalleryViewModel` to use `ImageGalleryUseCase` instead of calling repository directly
+- [ ] T031 Update `ChatViewModel` to use `ConversationUseCase` instead of calling repository directly
+- [ ] T032 Update `ImageGenerationViewModel` to use `ImageGalleryUseCase` instead of calling repository directly
+- [ ] T033 Update Hilt dependency injection modules for new UseCases and repository interfaces
+- [ ] T034 Update ViewModel unit tests to mock new UseCase dependencies
+- [ ] T035 Update instrumentation tests for ViewModel behavior changes
+
+### Phase 7: Cross-Layer Error Handling [US5]
+**Story Goal**: Implement consistent error handling patterns across all architectural layers
+**Independent Test Criteria**: All errors propagate through sealed result types with proper user messaging
+**Tests**: Integration tests verify error propagation from data to UI layers
+
+- [ ] T036 Implement consistent offline error handling in network repositories
+- [ ] T037 Update error telemetry to work with standardized `NanoAIResult<T>` types
+- [ ] T038 Add user-friendly error messages for all error scenarios
+- [ ] T039 Update error boundaries at architectural layer transitions
+
+### Phase 8: Polish & Validation
+**Story Goal**: Final cleanup and validation of architectural changes
+**Independent Test Criteria**: All detekt/ktlint checks pass, coverage maintained, no regressions
+
+- [ ] T040 Run full test suite to ensure no regressions from architectural changes
+- [ ] T041 Update documentation to reflect new architectural structure
+- [ ] T042 Run detekt and ktlint to validate code quality improvements
+- [ ] T043 Generate coverage reports to ensure targets maintained
+- [ ] T044 Update findings.md with corrected issues and new architectural violations found
+- [ ] T045 Create summary of architectural improvements and impact analysis
 
 ## Dependencies
-- String extraction tasks (T004-T011) can execute in parallel [P] as they modify independent files
-- Accessibility tasks (T012-T016) depend on string extraction completion
-- ViewModel refactoring (T017-T022) must complete before UI component improvements (T023-T031)
-- Cross-cutting tasks (T032-T036) depend on all implementation tasks
+
+- T003 depends on T001 (need to audit current usage)
+- T006-T015 depend on T003 (standardized result types needed first)
+- T016-T022 depend on T004-T005 (repository interfaces needed first)
+- T023-T026 depend on T016 (ShellStateRepository split needed for UI refactoring)
+- T027-T035 depend on T006-T022 (new abstractions needed first)
+- T036-T039 depend on T003, T014, T022 (consistent error types needed)
+- T040-T045 depend on all implementation tasks (T006-T039)
+
+
+## Implementation Strategy
+
+**MVP Scope**: Complete Phase 3 (UseCase cleanup) as the minimum viable architectural improvement. This addresses the most critical single responsibility violations and missing abstractions.
+
+**Incremental Delivery**: Execute phases in order (3→4→5→6→7→8) to maintain system stability. Each phase delivers independently testable architectural improvements.
+
+**Risk Mitigation**: Create backup branch before starting. Run full test suite after each phase. Maintain coverage targets throughout.
+
+**Success Criteria**:
+- All UseCases follow single responsibility principle
+- ViewModels only call UseCases, never repositories directly
+- Consistent result types (`NanoAIResult<T>`) across domain layer
+- Repositories contain only data access logic with injected dispatchers
+- No UI files exceed 400 lines
+- All detekt blocking rules pass
 
 ## Parallel Execution Examples
 
-### Phase 2 Sprint 1: String Extraction
-```
-T004 (DisclaimerDialog) + T005 (OfflineBanner) + T006 (PrimaryActionCard) + T007 (SidebarContent)
-```
-*All modify strings.xml independently*
-
-### Phase 2 Sprint 2: Accessibility
-```
-T012 (Touch targets) + T013 (ChatScreen semantics) + T014 (ModelLibrary semantics) + T015 (Settings keyboard)
-```
-*Sequential within components, parallel between features*
-
-### Phase 2 Sprint 3: ViewModel Refactoring
-```
-T017 (Navigation) → T018 (Connectivity) → T019 (Progress) → T020 (Theme) → T021 (Shell refactor)
-```
-*Sequential dependencies due to shared ShellViewModel*
-
-## Implementation Strategy
-**MVP Scope**: Complete string extraction (T001-T011) + basic accessibility (T012-T016) for immediate user impact
-**Incremental Delivery**: ViewModel refactoring can be phased over multiple releases to avoid regression risk
-**Testing Priority**: UI quality tasks require manual testing + accessibility validation before merge
-
-## Quality Gates
-- `./gradlew spotlessCheck` - All code formatting passes
-- `./gradlew detekt` - No new violations in UI layer
-- `./gradlew :app:lintDebug` - Accessibility and UI quality checks pass
-- Manual accessibility testing with TalkBack enabled
-- Color contrast validation with automated tools
-
-## Summary
-**Total Tasks**: 36 (T001-T036)
-**Parallel Opportunities**: 8 tasks marked [P] for concurrent execution
-**User Story Coverage**: Complete UI layer architecture fixes with accessibility compliance, clean architecture restoration, and Material Design 3 adherence
-**Scope Coverage**: All findings.md UI-related issues + ViewModel layer violations that impact UI architecture
-**Quality Gates**: All UI layer violations from audit addressed with comprehensive testing and documentation
-
----
-*Generated following speckit.tasks.prompt.md methodology - Tasks organized by user story with clear dependencies and parallel execution opportunities*
+- Run result type standardization in parallel:
+  - `taskctl run --parallel T003 T004 T005`
+- Execute UseCase creation in parallel after foundational work:
+  - `taskctl run --parallel T009 T010 T011 T012 T013`
+- Run repository cleanup in parallel:
+  - `taskctl run --parallel T016 T017 T018 T019 T020 T021`
+- Execute UI layer refactoring in parallel:
+  - `taskctl run --parallel T023 T024`
+- Run ViewModel updates in parallel:
+  - `taskctl run --parallel T027 T028 T029 T030 T031 T032`
+- Run final validation in parallel:
+  - `taskctl run --parallel T040 T041 T042 T043 T044 T045`

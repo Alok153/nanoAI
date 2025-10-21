@@ -3,6 +3,7 @@ package com.vjaykrsna.nanoai.feature.library.presentation
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.vjaykrsna.nanoai.core.common.onFailure
 import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
@@ -242,10 +243,9 @@ constructor(
 
     viewModelScope.launch {
       try {
-        val result =
-          runCatching { refreshModelCatalogUseCase() }.getOrElse { error -> Result.failure(error) }
-
-        result.onFailure { error -> handleRefreshFailure(error) }
+        refreshModelCatalogUseCase().onFailure { error ->
+          handleRefreshFailure(error.cause ?: Exception(error.message))
+        }
       } finally {
         _isRefreshing.value = false
       }

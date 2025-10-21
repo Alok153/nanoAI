@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai.testing
 
+import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.feature.library.domain.ModelDownloadsAndExportUseCaseInterface
 import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
@@ -22,6 +23,7 @@ class FakeModelDownloadsAndExportUseCase : ModelDownloadsAndExportUseCaseInterfa
   var shouldFailOnExport = false
 
   var lastDownloadedModelId: String? = null
+  var lastDownloadTaskId: UUID? = null
   var lastDeletedModelId: String? = null
   var lastExportPath: String? = null
 
@@ -48,14 +50,15 @@ class FakeModelDownloadsAndExportUseCase : ModelDownloadsAndExportUseCaseInterfa
     shouldFailOnDelete = false
     shouldFailOnExport = false
     lastDownloadedModelId = null
+    lastDownloadTaskId = null
     lastDeletedModelId = null
     lastExportPath = null
   }
 
-  override suspend fun downloadModel(modelId: String): Result<UUID> {
+  override suspend fun downloadModel(modelId: String): NanoAIResult<UUID> {
     lastDownloadedModelId = modelId
     return if (shouldFailOnDownload) {
-      Result.failure(Exception("Download failed"))
+      NanoAIResult.recoverable(message = "Download failed")
     } else {
       val taskId = UUID.randomUUID()
       val task =
@@ -67,16 +70,17 @@ class FakeModelDownloadsAndExportUseCase : ModelDownloadsAndExportUseCaseInterfa
           errorMessage = null,
         )
       addDownloadTask(task)
-      Result.success(taskId)
+      lastDownloadTaskId = taskId
+      NanoAIResult.success(taskId)
     }
   }
 
-  override suspend fun deleteModel(modelId: String): Result<Unit> {
+  override suspend fun deleteModel(modelId: String): NanoAIResult<Unit> {
     lastDeletedModelId = modelId
     return if (shouldFailOnDelete) {
-      Result.failure(Exception("Delete failed"))
+      NanoAIResult.recoverable(message = "Delete failed")
     } else {
-      Result.success(Unit)
+      NanoAIResult.success(Unit)
     }
   }
 
@@ -95,17 +99,17 @@ class FakeModelDownloadsAndExportUseCase : ModelDownloadsAndExportUseCaseInterfa
   override suspend fun exportBackup(
     destinationPath: String,
     includeChatHistory: Boolean,
-  ): Result<String> {
+  ): NanoAIResult<String> {
     lastExportPath = destinationPath
     return if (shouldFailOnExport) {
-      Result.failure(Exception("Export failed"))
+      NanoAIResult.recoverable(message = "Export failed")
     } else {
-      Result.success(destinationPath)
+      NanoAIResult.success(destinationPath)
     }
   }
 
-  override suspend fun verifyDownloadChecksum(modelId: String): Result<Boolean> {
-    return Result.success(true)
+  override suspend fun verifyDownloadChecksum(modelId: String): NanoAIResult<Boolean> {
+    return NanoAIResult.success(true)
   }
 
   override suspend fun pauseDownload(taskId: UUID) {
