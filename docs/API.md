@@ -262,7 +262,7 @@ Models are distributed with a `model-manifest.json` file:
 
 ### Example Models
 
-#### Gemini Nano (2B params)
+Models are described with capabilities, size, and provider-specific metadata:
 
 ```json
 {
@@ -280,41 +280,7 @@ Models are distributed with a `model-manifest.json` file:
 }
 ```
 
-#### Gemma 7B Instruct
-
-```json
-{
-  "id": "gemma-7b-instruct",
-  "name": "Gemma 7B Instruct",
-  "version": "1.1.0",
-  "provider": "MEDIA_PIPE",
-  "capabilities": ["TEXT_GENERATION"],
-  "sizeBytes": 7516192768,
-  "metadata": {
-    "parameters": "7B",
-    "quantization": "FP16",
-    "contextLength": 8192
-  }
-}
-```
-
-#### Stable Diffusion Turbo
-
-```json
-{
-  "id": "sd-turbo-512",
-  "name": "Stable Diffusion Turbo",
-  "version": "1.0.0",
-  "provider": "ONNX_RUNTIME",
-  "capabilities": ["IMAGE_GENERATION"],
-  "sizeBytes": 5368709120,
-  "metadata": {
-    "resolution": "512x512",
-    "steps": "1-4",
-    "quantization": "FP16"
-  }
-}
-```
+Other examples include Gemma 7B (7.5GB, FP16), Stable Diffusion Turbo (5GB, ONNX), and various quantization levels based on device capabilities.
 
 ---
 
@@ -400,7 +366,7 @@ interface Model {
 }
 ```
 
-### Example Export
+### Example Export Structure
 
 ```json
 {
@@ -409,27 +375,19 @@ interface Model {
   "device": "Pixel 7 (Android 14)",
   "conversations": [
     {
-      "id": "550e8400-e29b-41d4-a716-446655440010",
-      "title": "Recipe Ideas",
-      "personaId": "550e8400-e29b-41d4-a716-446655440020",
+      "id": "uuid",
+      "title": "Chat Title",
+      "personaId": "uuid",
       "createdAt": "2025-09-28T10:00:00Z",
       "updatedAt": "2025-09-28T10:15:00Z",
       "isArchived": false,
       "messages": [
         {
-          "id": "550e8400-e29b-41d4-a716-446655440100",
+          "id": "uuid",
           "role": "user",
-          "content": "Suggest a quick dinner recipe",
+          "content": "User message",
           "timestamp": "2025-09-28T10:00:00Z",
           "latencyMs": null,
-          "errorCode": null
-        },
-        {
-          "id": "550e8400-e29b-41d4-a716-446655440101",
-          "role": "assistant",
-          "content": "Here's a 15-minute pasta primavera recipe...",
-          "timestamp": "2025-09-28T10:00:05Z",
-          "latencyMs": 150,
           "errorCode": null
         }
       ],
@@ -438,18 +396,18 @@ interface Model {
   ],
   "personas": [
     {
-      "id": "550e8400-e29b-41d4-a716-446655440020",
-      "name": "Chef Assistant",
-      "systemPrompt": "You are a helpful cooking assistant...",
+      "id": "uuid",
+      "name": "Persona Name",
+      "systemPrompt": "System prompt...",
       "temperature": 0.7,
       "topP": 0.9,
-      "modelPreference": "gemini-nano-2b",
+      "modelPreference": "model-id",
       "createdAt": "2025-09-25T08:00:00Z"
     }
   ],
   "apiProviders": [
     {
-      "providerId": "550e8400-e29b-41d4-a716-446655440000",
+      "providerId": "uuid",
       "providerName": "OpenAI GPT-4",
       "baseUrl": "https://api.openai.com/v1",
       "apiKey": "REDACTED",
@@ -466,11 +424,11 @@ interface Model {
   },
   "modelCatalog": [
     {
-      "id": "gemini-nano-2b",
-      "name": "Gemini Nano 2B",
+      "id": "model-id",
+      "name": "Model Name",
       "version": "1.0.0",
       "provider": "MEDIA_PIPE",
-      "localPath": "/data/user/0/com.vjaykrsna.nanoai/cache/models/gemini-nano-2b.tflite"
+      "localPath": "/path/to/model"
     }
   ]
 }

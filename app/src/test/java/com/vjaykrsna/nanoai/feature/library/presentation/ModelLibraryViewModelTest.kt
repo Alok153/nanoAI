@@ -72,7 +72,6 @@ class ModelLibraryViewModelTest {
         modelConverter,
         huggingFaceCatalogRepository,
         compatibilityChecker,
-        modelConverter,
       )
   }
 

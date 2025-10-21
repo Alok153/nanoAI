@@ -1,462 +1,184 @@
-# nanoAI Architecture Diagram
+# nanoAI Architecture
 
 ## System Overview
 
-```
-┌───────────────────────────────────────────────────────────────────────┐
-│                          Android Application                          │
-└───────────────────────────────────────────────────────────────────────┘
-                                    │
-                ┌───────────────────┼───────────────────┐
-                │                   │                   │
-                ▼                   ▼                   ▼
-┌───────────────────────┐ ┌──────────────────┐ ┌──────────────────┐
-│   UI Layer (Compose)  │ │  Feature Modules │ │  Navigation      │
-│  - ChatScreen         │ │  - chat/         │ │  - Scaffold      │
-│  - ModelLibraryScreen │ │  - library/      │ │  - Drawer        │
-│  - SettingsScreen     │ │  - settings/     │ │  - BottomNav     │
-│  - NavigationScaffold │ │  - sidebar/      │ │  - Screen Routes │
-└───────────────────────┘ └──────────────────┘ └──────────────────┘
-                │                   │                   │
-                └───────────────────┼───────────────────┘
-                                    │
-                                    ▼
-                        ┌───────────────────────┐
-                        │   Presentation Layer  │
-                        │   (ViewModels)        │
-                        └───────────────────────┘
-                                    │
-        ┌───────────────────────────┼───────────────────────────┐
-        │                           │                           │
-        ▼                           ▼                           ▼
-┌──────────────────┐    ┌──────────────────────┐    ┌──────────────────┐
-│  ChatViewModel   │    │ ModelLibraryViewModel│    │ SettingsViewModel│
-│  - messages      │    │ - allModels          │    │ - apiProviders   │
-│  - sendMessage   │    │ - downloadModel      │    │ - exportBackup   │
-│  - switchPersona │    │ - pauseDownload      │    │ - privacy prefs  │
-└──────────────────┘    └──────────────────────┘    └──────────────────┘
-        │                           │                           │
-        └───────────────────────────┼───────────────────────────┘
-                                    │
-                                    ▼
-                        ┌───────────────────────┐
-                        │    Domain Layer       │
-                        │    (Use Cases)        │
-                        └───────────────────────┘
-                                    │
-        ┌───────────────────────────┼───────────────────────────┐
-        │                           │                           │
-        ▼                           ▼                           ▼
-┌──────────────────────┐  ┌────────────────────────┐  ┌──────────────────┐
-│SendPromptAndPersona  │  │ModelDownloadsAndExport │  │InferenceOrchestra│
-│UseCase               │  │UseCase                 │  │tor               │
-│- sendPrompt()        │  │- downloadModel()       │  │- route inference │
-│- switchPersona()     │  │- exportBackup()        │  │- local vs cloud  │
-└──────────────────────┘  └────────────────────────┘  └──────────────────┘
-        │                           │                           │
-        └───────────────────────────┼───────────────────────────┘
-                                    │
-                                    ▼
-                        ┌───────────────────────┐
-                        │    Data Layer         │
-                        │    (Repositories)     │
-                        └───────────────────────┘
-                                    │
-    ┌───────────────┬───────────────┼───────────────┬───────────────┐
-    │               │               │               │               │
-    ▼               ▼               ▼               ▼               ▼
-┌─────────┐  ┌──────────┐  ┌──────────────┐  ┌───────────┐  ┌──────────┐
-│Conversa-│  │Persona   │  │ModelCatalog  │  │ApiProvider│  │Download  │
-│tion Repo│  │Repo      │  │Repo          │  │ConfigRepo │  │Manager   │
-└─────────┘  └──────────┘  └──────────────┘  └───────────┘  └──────────┘
-    │               │               │               │               │
-    └───────────────┴───────────────┼───────────────┴───────────────┘
-                                    │
-                                    ▼
-                        ┌───────────────────────┐
-                        │   Data Sources        │
-                        └───────────────────────┘
-                                    │
-        ┌───────────────────────────┼───────────────────────────────┐
-        │                           │                               │
-        ▼                           ▼                               ▼
-┌──────────────┐        ┌────────────────────┐          ┌──────────────────┐
-│  Room DB     │        │  DataStore         │          │  WorkManager     │
-│  (SQLite)    │        │  (Preferences)     │          │  (Background)    │
-└──────────────┘        └────────────────────┘          └──────────────────┘
-        │                           │                             │
-        ▼                           ▼                             ▼
-┌───────────────┐        ┌────────────────────┐          ┌───────────────────┐
-│  8 DAOs       │        │ PrivacyPreference  │          │ModelDownloadWorker│
-│  - ChatThread │        │ Store              │          │ - progress track  │
-│  - Message    │        │ - telemetry opt-in │          │ - checksum verify │
-│  - Persona    │        │ - retention policy │          │ - queue mgmt      │
-│  - Model      │        │ - consent timestamp│          │                   │
-│  - Download   │        └────────────────────┘          └───────────────────┘
-│  - ApiConfig  │
-│  - HuggingFace│
-│     Cache     │
-└───────────────┘
-        │
-        ▼
-┌───────────────────────────────────────────────────────────────┐
-│              External Systems & Services                      │
-├───────────────────────────────────────────────────────────────┤
-│  📱 MediaPipe (Local Inference)                               │
-│     - LiteRT runtime                                          │
-│     - On-device model execution                               │
-│     - LoRA adapter support                                    │
-│                                                               │
-│  🤗 Hugging Face Hub (Model Catalog)                          │
-│     - Model metadata API (cardData, config, siblings)         │
-│     - Intelligent caching (6hr TTL, offline-first)            │
-│     - Size bucketing (Tiny/Small/Medium/Large)                │
-│     - Gated model access management                           │
-│                                                               │
-│  ☁️  Cloud APIs (Optional Fallback)                           │
-│     - OpenAI (GPT models)                                     │
-│     - Google Gemini                                           │
-│     - Custom endpoints                                        │
-│                                                               │
-│  💾 Device Storage                                            │
-│     - App private storage (Room DB)                           │
-│     - Cache directory (downloaded models)                     │
-│     - Downloads folder (exports)                              │
-└───────────────────────────────────────────────────────────────┘
-```
-
-## Data Flow: Send Message
+nanoAI follows clean architecture with unidirectional data flow from UI → Domain → Data layers.
 
 ```
-1. User types message
-   └─► ChatScreen (UI)
-       └─► ChatViewModel.sendMessage()
-           └─► SendPromptAndPersonaUseCase.execute()
-               ├─► ConversationRepository.saveMessage()
-               │   └─► MessageDao.insert()
-               │       └─► Room Database
-               │
-               └─► InferenceOrchestrator.generate()
-                   ├─► [Local] MediaPipeLocalModelRuntime
-                   │   └─► On-device inference
-                   │
-                   └─► [Cloud] CloudGatewayClient
-                       └─► Retrofit → API call
+UI Layer (Compose)
+├── ChatScreen, ModelLibraryScreen, SettingsScreen
+├── NavigationScaffold, BottomNav, Drawer
+└── hiltViewModel() injection
+
+Presentation Layer (ViewModels)
+├── ChatViewModel - messages, sendMessage, switchPersona
+├── ModelLibraryViewModel - models, downloads, pause/resume
+├── SettingsViewModel - apiProviders, export, privacy prefs
+└── ShellViewModel - aggregates child ViewModels
+
+Domain Layer (Use Cases)
+├── SendPromptAndPersonaUseCase - prompt execution
+├── ModelDownloadsAndExportUseCase - download management
+└── InferenceOrchestrator - local vs cloud routing
+
+Data Layer (Repositories)
+├── ConversationRepository - threads/messages
+├── PersonaRepository - profiles/switches
+├── ModelCatalogRepository - available models
+├── ApiProviderConfigRepository - cloud endpoints
+└── DownloadManager - background downloads
+
+Data Sources
+├── Room DB (8 DAOs: ChatThread, Message, Persona, Model, Download, ApiConfig, etc.)
+├── DataStore (preferences, privacy settings)
+└── WorkManager (ModelDownloadWorker, background tasks)
+
+External Systems
+├── MediaPipe (on-device inference, LoRA support)
+├── Hugging Face Hub (model catalog, 6hr caching)
+├── Cloud APIs (OpenAI, Gemini, custom endpoints)
+└── Device Storage (private DB, cache, downloads)
 ```
 
-## Data Flow: Download Model
+## Key Data Flows
 
+### Message Generation
 ```
-1. User taps download
-   └─► ModelLibraryScreen (UI)
-       └─► ModelLibraryViewModel.downloadModel()
-           └─► ModelDownloadsAndExportUseCase.queueDownload()
-               ├─► DownloadManager.enqueue()
-               │   ├─► DownloadTaskDao.insert()
-               │   │   └─► Room Database
-               │   │
-               │   └─► WorkManager.enqueue()
-               │       └─► ModelDownloadWorker
-               │           ├─► HTTP download (OkHttp)
-               │           ├─► Progress updates
-               │           ├─► Checksum validation
-               │           └─► File storage
-               │
-               └─► ModelCatalogRepository.updateModel()
-                   └─► ModelPackageDao.update()
-                       └─► Room Database
+User Input → ChatScreen → ChatViewModel → SendPromptAndPersonaUseCase
+    ├── Save to Room DB (ConversationRepository)
+    └── Route via InferenceOrchestrator
+        ├── Local: MediaPipe runtime
+        └── Cloud: Retrofit API calls
 ```
 
-## Data Flow: UI/UX Profile Hydration
-
+### Model Download
 ```
-1. App launch
-   └─► `NavigationScaffold`
-       ├─► `AppViewModel` (global theme/offline state)
-       └─► `ShellViewModel` (builds home hub state)
-           └─► `ObserveUserProfileUseCase`
-               ├─► `UserProfileRepository.observe()`
-               │   ├─► `UserProfileLocalDataSource`
-               │   │   ├─► `UserProfileDao.observe()` *(Room cached snapshot)*
-               │   │   └─► `UiPreferencesStore.read()` *(DataStore theme + density prefs)*
-               │   └─► `UserProfileRemoteDataSource.fetch()` *(Retrofit GET /user/profile)*
-               └─► Merge flows → `UserProfile` domain model
-                   └─► Emit `HomeUiState`
+Download Tap → ModelLibraryScreen → ModelLibraryViewModel → ModelDownloadsAndExportUseCase
+    ├── Queue in Room DB (DownloadManager)
+    ├── Background download (WorkManager/ModelDownloadWorker)
+    │   ├── Progress updates + checksum validation
+    │   └── File storage to cache directory
+    └── Update model status (ModelCatalogRepository)
 ```
 
+### Profile Synchronization
 ```
-2. User toggles theme or compact mode
-   └─► UI events (ThemeToggle, Settings)
-       └─► `UpdateThemePreferenceUseCase` / `ToggleCompactModeUseCase`
-           ├─► `UiPreferencesStore.update()` *(writes to encrypted DataStore)*
-           ├─► `UserProfileRepository.syncLocal()` *(Room transaction for Layout/UI state)*
-           └─► `SyncUiStateWorker.enqueue()` *(WorkManager for remote reconciliation when online)*
-```
+App Launch → NavigationScaffold → ShellViewModel → ObserveUserProfileUseCase
+    ├── Local: Room DB + DataStore (encrypted preferences)
+    └── Remote: /user/profile API (when online)
+        └── Merge flows → offline-first UI state
 
-```
-3. Offline session recovery
-   └─► `SyncUiStateWorker` detects connectivity restored
-       ├─► Flush queued actions from Room (UIStateSnapshot + LayoutSnapshot)
-       └─► Retry `/user/profile` via `UserProfileRemoteDataSource`
-           └─► Merge remote changes → `UserProfileRepository`
-               └─► Emits refreshed Flow → ViewModels update Compose UI
+Theme Changes → UpdateThemePreferenceUseCase
+    ├── Encrypted DataStore writes
+    ├── Room transaction for UI state
+    └── Background sync when online (WorkManager)
 ```
 
-### UI/UX Caching & Privacy Guardrails
+### Privacy & Offline Support
+- **Encrypted Storage**: Sensitive preferences in DataStore, telemetry redacted
+- **Offline Continuity**: Room caches enable full functionality without network
+- **Consent Gates**: All data sharing requires explicit user opt-in
+- **Background Sync**: WorkManager handles reconciliation when connectivity returns
 
-- **Room** stores `UserProfileEntity`, `LayoutSnapshotEntity`, and `UIStateSnapshotEntity` with encrypted pinned tools and tooltip dismissals.
-- **DataStore** keeps lightweight preferences: theme, density, and dismissed tips (legacy onboarding flag retained for analytics gating only). Writes occur on background dispatcher.
-- **WorkManager** batches sync to avoid exposing UI metadata when the user has opted out of telemetry.
-- **Privacy Hooks**: `UserProfileRepository` redacts display names and pinned tool identifiers before telemetry, and `UiPreferencesStore` enforces consent gates prior to sharing personalization metadata.
+## Dependency Injection
 
-## Dependency Injection (Hilt)
+Hilt provides clean separation with module-based configuration:
 
-```
-┌────────────────────────────────────────┐
-│         @HiltAndroidApp                │
-│         NanoAIApplication              │
-└────────────────────────────────────────┘
-                  │
-    ┌─────────────┴─────────────┐
-    │                           │
-    ▼                           ▼
-┌─────────────────┐   ┌─────────────────┐
-│ DatabaseModule  │   │ NetworkModule   │
-│ @InstallIn      │   │ @InstallIn      │
-│ SingletonComp.  │   │ SingletonComp.  │
-├─────────────────┤   ├─────────────────┤
-│ @Provides       │   │ @Provides       │
-│ - NanoAIDatabase│   │ - Retrofit      │
-│ - All DAOs      │   │ - OkHttpClient  │
-│ - TypeConverters│   │ - CloudGateway  │
-└─────────────────┘   └─────────────────┘
-    │                           │
-    └─────────────┬─────────────┘
-                  │
-                  ▼
-        ┌─────────────────────┐
-        │  RepositoryModule   │
-        │  @InstallIn         │
-        │  SingletonComp.     │
-        ├─────────────────────┤
-        │  @Binds             │
-        │  - All Repositories │
-        └─────────────────────┘
-                  │
-                  ▼
-        ┌─────────────────────┐
-        │    Use Cases        │
-        │    @Inject          │
-        │    constructor      │
-        └─────────────────────┘
-                  │
-                  ▼
-        ┌─────────────────────┐
-        │    ViewModels       │
-        │    @HiltViewModel   │
-        │    @Inject          │
-        │    constructor      │
-        └─────────────────────┘
-                  │
-                  ▼
-        ┌─────────────────────┐
-        │    Composables      │
-        │    hiltViewModel()  │
-        └─────────────────────┘
-```
+- **DatabaseModule**: NanoAIDatabase, 8 DAOs, type converters
+- **NetworkModule**: Retrofit, OkHttpClient, CloudGateway
+- **RepositoryModule**: All repository implementations
+- **Use Cases**: Constructor-injected business logic
+- **ViewModels**: @HiltViewModel with injected dependencies
+- **UI**: hiltViewModel() for Compose injection
 
-## Database Schema (Room)
+## Database Schema
 
-```
-┌──────────────────────────────────────────────────────────────┐
-│                    NanoAIDatabase v1                         │
-└──────────────────────────────────────────────────────────────┘
-    │
-    ├─► ChatThread
-    │   ├─ threadId: String (PK, UUID)
-    │   ├─ title: String?
-    │   ├─ personaId: String? (FK → PersonaProfile)
-    │   ├─ activeModelId: String
-    │   ├─ createdAt: Instant
-    │   ├─ updatedAt: Instant
-    │   └─ isArchived: Boolean
-    │
-    ├─► Message
-    │   ├─ messageId: String (PK, UUID)
-    │   ├─ threadId: String (FK → ChatThread, CASCADE)
-    │   ├─ role: Role (USER/ASSISTANT/SYSTEM)
-    │   ├─ text: String?
-    │   ├─ audioUri: String?
-    │   ├─ imageUri: String?
-    │   ├─ source: MessageSource (LOCAL_MODEL/CLOUD_API)
-    │   ├─ latencyMs: Long?
-    │   ├─ createdAt: Instant
-    │   ├─ errorCode: String?
-    │   └─ INDEX(threadId, createdAt)
-    │
-    ├─► PersonaProfile
-    │   ├─ personaId: String (PK, UUID)
-    │   ├─ name: String
-    │   ├─ description: String
-    │   ├─ systemPrompt: String
-    │   ├─ defaultModelPreference: String?
-    │   ├─ temperature: Float
-    │   ├─ topP: Float
-    │   ├─ defaultVoice: String?
-    │   ├─ defaultImageStyle: String?
-    │   ├─ createdAt: Instant
-    │   └─ updatedAt: Instant
-    │
-    ├─► PersonaSwitchLog
-    │   ├─ logId: String (PK, UUID)
-    │   ├─ threadId: String (FK → ChatThread, CASCADE)
-    │   ├─ previousPersonaId: String?
-    │   ├─ newPersonaId: String
-    │   ├─ actionTaken: PersonaSwitchAction (CONTINUE/START_NEW)
-    │   └─ createdAt: Instant
-    │
-    ├─► ModelPackage
-    │   ├─ modelId: String
-    │   ├─ displayName: String
-    │   ├─ version: String
-    │   ├─ providerType: ProviderType
-    │   ├─ deliveryType: DeliveryType
-    │   ├─ minAppVersion: Int
-    │   ├─ sizeBytes: Long
-    │   ├─ capabilities: Set<String>
-    │   ├─ installState: InstallState
-    │   ├─ downloadTaskId: UUID?
-    │   ├─ manifestUrl: String
-    │   ├─ checksumSha256: String?
-    │   ├─ signature: String?
-    │   ├─ createdAt: Instant
-    │   └─ updatedAt: Instant
-    │
-    ├─► DownloadTask
-    │   ├─ taskId: UUID
-    │   ├─ modelId: String
-    │   ├─ progress: Float
-    │   ├─ status: DownloadStatus
-    │   ├─ bytesDownloaded: Long
-    │   ├─ startedAt: Instant?
-    │   ├─ finishedAt: Instant?
-    │   └─ errorMessage: String?
-    │
-    └─► ApiProviderConfig
-        ├─ providerId: String (PK)
-        ├─ providerName: String
-        ├─ baseUrl: String
-        ├─ apiKey: String
-        ├─ apiType: APIType
-        ├─ isEnabled: Boolean
-        ├─ quotaResetAt: Instant?
-        └─ lastStatus: ProviderStatus
-```
+Room database with 8 entities supporting offline-first functionality:
 
-## State Management (Reactive Flows)
+- **ChatThread**: Conversation threads with persona/model associations
+- **Message**: Individual messages with role, content, and metadata
+- **PersonaProfile**: AI personality configurations and preferences
+- **PersonaSwitchLog**: Conversation persona change history
+- **ModelPackage**: Downloadable AI models with metadata and install state
+- **DownloadTask**: Background download progress and status tracking
+- **ApiProviderConfig**: Cloud API endpoint configurations
+- **UserProfile/UIState**: Cached personalization and layout preferences
 
-```
-ViewModel Layer:
-  ┌──────────────────────────────────────────┐
-  │  StateFlow<T>        (Hot, Stateful)     │
-  │  - UI state representation               │
-  │  - Always has current value              │
-  │  - Survives config changes               │
-  │  - Example: messages, isLoading          │
-  └──────────────────────────────────────────┘
-           ▲
-           │ .stateIn(viewModelScope)
-           │
-  ┌──────────────────────────────────────────┐
-  │  Flow<T>             (Cold, Stateless)   │
-  │  - Repository/DAO emissions              │
-  │  - Lazy evaluation                       │
-  │  - Example: getAllThreadsFlow()          │
-  └──────────────────────────────────────────┘
+All entities include proper foreign key relationships and indexing for performance.
 
-  ┌──────────────────────────────────────────┐
-  │  SharedFlow<T>       (Hot, Events)       │
-  │  - One-time events                       │
-  │  - No initial value                      │
-  │  - Example: errorEvents, navigation      │
-  └──────────────────────────────────────────┘
+## ViewModel Architecture
 
-UI Layer:
-  ┌──────────────────────────────────────────┐
-  │  .collectAsState()                       │
-  │  - Converts Flow to Compose State        │
-  │  - Triggers recomposition                │
-  │  - Lifecycle-aware collection            │
-  └──────────────────────────────────────────┘
-           │
-           ▼
-  ┌──────────────────────────────────────────┐
-  │  @Composable UI                          │
-  │  - Renders current state                 │
-  │  - Calls ViewModel methods on events     │
-  └──────────────────────────────────────────┘
-```
+Focused responsibility pattern ensures clean separation and testability:
 
-### Accessibility Semantics
+### Core ViewModels
+- **ChatViewModel**: Message state, sending prompts, persona switching
+- **ModelLibraryViewModel**: Model catalog, download management, progress tracking
+- **SettingsViewModel**: API configurations, export/import, privacy preferences
 
-- **Progress Center Panel** exposes `stateDescription` and `RangeInfo` so TalkBack announces queue position, percent complete, and retry status for each job.
-- **Home Hub Sections** mark headings with semantic roles and provide concise hints describing active quick actions, chip selections, and recent activity timestamps.
-- **Connectivity Banner** announces offline/online transitions with status copy that references queued uploads or sync work to keep screen reader users oriented.
-- **Sidebar Navigation** designates drawers and panels as landmarks, ensuring focus order is predictable when opening the model selector or settings stacks.
+### Shell Architecture
+**ShellViewModel** orchestrates focused child ViewModels:
+- **NavigationViewModel**: Screen routing and drawer state
+- **ConnectivityViewModel**: Network status and offline banners
+- **ProgressViewModel**: Background job tracking and queues
+- **ThemeViewModel**: Appearance settings and Material 3 theming
 
-## Thread Safety
+### Benefits
+- **Isolation**: Each ViewModel testable in isolation (≥75% coverage)
+- **Performance**: Smaller memory footprint, faster cold starts
+- **Maintainability**: Single responsibility, safer changes
+- **Clean Architecture**: Proper UI-domain separation
 
-All data operations are thread-safe:
+## Quality Standards
 
-- **Room**: All DAO operations are main-safe (use coroutines internally)
-- **DataStore**: All reads/writes are main-safe (backed by Dispatchers.IO)
-- **ViewModels**: Use `viewModelScope` for coroutine lifecycle management
-- **Repositories**: Expose Flow/suspend functions only
-- **WorkManager**: Executes on background threads automatically
+### UI & Accessibility
+- **Accessibility**: WCAG AA compliance with 48dp touch targets, proper contrast ratios, semantic markup
+- **Material Design 3**: Consistent theming, spacing, typography, and elevation
+- **Performance**: <1.5s cold start, <5% frame drops, <500ms queue operations
 
-## Testing Strategy
+### Code Quality
+- **Linting**: Spotless formatting, Detekt static analysis, Android accessibility lint
+- **Testing**: ≥75% ViewModel, ≥65% UI, ≥70% Data layer coverage
+- **Manual Testing**: TalkBack accessibility validation
 
-```
-┌──────────────────────────────────────────────────────-------───┐
-│  Unit Tests (JVM)           126+ tests                         │
-├──────────────────────────────────────────────────────-------───┤
-│  - Contract validation (OpenAPI schemas)                       │
-│  - DAO tests (in-memory Room)                                  │
-│  - Use case tests (with fakes)                                 │
-│  - ViewModel tests (with TestDispatcher)                       │
-│  - Baseline profile smoke (`:app:testBaselineProfileUnitTest`) │
-└────────────────────────────────────────────────────-------─────┘
+*See `docs/UI_COMPONENTS.md` for detailed UI implementation guidelines.*
 
+## State Management
 
-## Performance Monitoring
+Reactive flows ensure unidirectional data flow and lifecycle awareness:
 
-- **MainActivity** wires `JankStats` so every frame hitch over 32 ms is logged under the `NanoAI-Jank` tag with surface name and duration to aid regression triage.
-- **NavigationScaffold** publishes a `PerformanceMetricsState` containing the active shell mode and queued job counts, enabling Compose to surface lightweight perf overlays when developer options are enabled.
-- **Baseline Profiles** live in `app/src/main/baseline-prof.txt` and include hot startup and navigation routes (Home Hub, model library, progress drawer) to keep launch times consistent across releases.
-┌─────────────────────────────────────────────────────────┐
-│  Instrumented Tests (Device)                            │
-├─────────────────────────────────────────────────────────┤
-│  - Compose UI tests (semantics + interactions)          │
-│  - Full user flow validation                            │
-│  - Real Room database operations                        │
-│  - WorkManager integration tests                        │
-└─────────────────────────────────────────────────────────┘
+- **StateFlow**: UI state (messages, loading states) - survives config changes
+- **Flow**: Repository data streams - lazy, cold observables
+- **SharedFlow**: One-time events (errors, navigation) - hot, no initial value
 
-┌─────────────────────────────────────────────────────────┐
-│  Benchmark Tests (Macrobenchmark)                       │
-├─────────────────────────────────────────────────────────┤
-│  - Cold start measurement (<1.5s target)                │
-│  - Scroll jank detection                                │
-│  - Baseline profile generation                          │
-└─────────────────────────────────────────────────────────┘
-```
+UI collects flows via `.collectAsState()` for automatic recomposition and lifecycle management.
+
+## Technical Foundations
+
+### Thread Safety
+All operations are main-thread safe:
+- **Room**: Coroutine-based DAO operations
+- **DataStore**: IO dispatcher for reads/writes
+- **ViewModels**: viewModelScope lifecycle management
+- **WorkManager**: Background thread execution
+
+### Testing Strategy
+Comprehensive test coverage across layers:
+- **Unit Tests**: 126+ JVM tests (DAO, UseCase, ViewModel logic)
+- **Instrumentation**: Device tests (Compose UI, Room operations, WorkManager)
+- **Macrobenchmarks**: Performance validation (cold start <1.5s, frame drops <5%)
+
+### Performance Monitoring
+- **JankStats**: Frame hitch detection (>32ms logged for regression triage)
+- **Baseline Profiles**: Optimized startup and navigation paths
+- **Metrics State**: Lightweight performance overlays in debug builds
+
+### Accessibility
+Semantic markup ensures screen reader compatibility:
+- Progress panels with state descriptions and range info
+- Landmark navigation and heading hierarchy
+- Status announcements for connectivity changes
+- Predictive focus order for complex UIs
 
 ---
 
-**Legend**:
-- `└─►` Data flow
-- `├─►` Alternative path
-- `│` Dependency relationship
-- `(PK)` Primary Key
-- `(FK)` Foreign Key
-- `CASCADE` Delete cascade
+**Data Flow Legend**: `└─►` Primary flow, `├─►` Alternative path, `│` Dependencies

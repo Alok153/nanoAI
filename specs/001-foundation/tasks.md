@@ -63,11 +63,11 @@
 - [X] T031 Add skip links for keyboard navigation in `app/src/main/java/com/vjaykrsna/nanoai/ui/navigation/NavigationScaffold.kt` - Implement accessibility navigation shortcuts
 
 ## Phase 3: Cross-Cutting Concerns
-- [ ] T032 Implement UI testing utilities in `app/src/androidTest/java/com/vjaykrsna/nanoai/testing/` - Create accessibility and UI quality test helpers
-- [ ] T033 Add UI performance monitoring in `app/src/main/java/com/vjaykrsna/nanoai/telemetry/` - Implement JankStats and frame drop tracking
-- [ ] T034 Create UI quality lint rules in `config/detekt/` - Add custom rules for hardcoded strings and accessibility violations
-- [ ] T035 Update architecture documentation in `docs/ARCHITECTURE.md` - Document ViewModel splitting strategy and UI quality standards
-- [ ] T036 Create component usage documentation in `docs/` - Document UI component patterns and Material3 compliance standards
+- [X] T032 Implement UI testing utilities in `app/src/androidTest/java/com/vjaykrsna/nanoai/testing/` - Create accessibility and UI quality test helpers
+- [X] T033 Add UI performance monitoring in `app/src/main/java/com/vjaykrsna/nanoai/telemetry/` - Implement JankStats and frame drop tracking
+- [X] T034 Create UI quality lint rules in `config/detekt/` - Add custom rules for hardcoded strings and accessibility violations
+- [X] T035 Update architecture documentation in `docs/ARCHITECTURE.md` - Document ViewModel splitting strategy and UI quality standards
+- [X] T036 Create component usage documentation in `docs/` - Document UI component patterns and Material3 compliance standards
 
 ## Dependencies
 - String extraction tasks (T004-T011) can execute in parallel [P] as they modify independent files
