@@ -1,5 +1,10 @@
 package com.vjaykrsna.nanoai
 
+import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -25,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.metrics.performance.JankStats
@@ -51,6 +57,13 @@ class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     enableEdgeToEdge()
+
+    // Create notification channels
+    createNotificationChannels()
+
+    // Request notification permission on Android 13+
+    requestNotificationPermissionIfNeeded()
+
     backPressedCallback =
       object : OnBackPressedCallback(true) {
         override fun handleOnBackPressed() {
@@ -121,9 +134,60 @@ class MainActivity : ComponentActivity() {
     super.onDestroy()
   }
 
+  override fun onRequestPermissionsResult(
+    requestCode: Int,
+    permissions: Array<String>,
+    grantResults: IntArray,
+  ) {
+    super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+    when (requestCode) {
+      NOTIFICATION_PERMISSION_REQUEST_CODE -> {
+        val granted =
+          grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
+        Log.d("MainActivity", "Notification permission ${if (granted) "granted" else "denied"}")
+      }
+    }
+  }
+
+  private fun createNotificationChannels() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      val channel =
+        NotificationChannel(
+            WORK_MANAGER_NOTIFICATION_CHANNEL_ID,
+            WORK_MANAGER_NOTIFICATION_CHANNEL_NAME,
+            NotificationManager.IMPORTANCE_DEFAULT,
+          )
+          .apply { description = "Notifications for background tasks like model downloads" }
+
+      val notificationManager = getSystemService(NotificationManager::class.java)
+      notificationManager.createNotificationChannel(channel)
+    }
+  }
+
+  private fun requestNotificationPermissionIfNeeded() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+      when (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)) {
+        PackageManager.PERMISSION_GRANTED -> {
+          // Permission already granted
+          Log.d("MainActivity", "Notification permission already granted")
+        }
+        else -> {
+          // Request permission
+          requestPermissions(
+            arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+            NOTIFICATION_PERMISSION_REQUEST_CODE,
+          )
+        }
+      }
+    }
+  }
+
   private companion object {
     const val JANK_TAG = "NanoAI-Jank"
     const val NANOS_PER_MILLISECOND = 1_000_000f
+    const val NOTIFICATION_PERMISSION_REQUEST_CODE = 1001
+    const val WORK_MANAGER_NOTIFICATION_CHANNEL_ID = "work_manager_channel"
+    const val WORK_MANAGER_NOTIFICATION_CHANNEL_NAME = "Background Tasks"
   }
 }
 

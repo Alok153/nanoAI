@@ -195,6 +195,8 @@ internal fun HuggingFaceLibraryContent(
   models: List<HuggingFaceModelSummary>,
   isLoading: Boolean,
   modifier: Modifier = Modifier,
+  onDownloadModel: ((HuggingFaceModelSummary) -> Unit)? = null,
+  downloadableModelIds: Set<String> = emptySet(),
 ) {
   val rootModifier = modifier.fillMaxWidth()
   when {
@@ -219,7 +221,17 @@ internal fun HuggingFaceLibraryContent(
       ) {
         items(items = models, key = { it.modelId }, contentType = { "huggingface_model_item" }) {
           model ->
-          HuggingFaceModelCard(model)
+          val isDownloadable = model.modelId in downloadableModelIds
+          HuggingFaceModelCard(
+            model = model,
+            isDownloadable = isDownloadable,
+            onDownload =
+              if (onDownloadModel != null) {
+                { onDownloadModel(model) }
+              } else {
+                null
+              },
+          )
         }
       }
     }

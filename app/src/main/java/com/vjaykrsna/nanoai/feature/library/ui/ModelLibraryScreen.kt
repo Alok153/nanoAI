@@ -61,6 +61,7 @@ fun ModelLibraryScreen(
   val localSections by viewModel.localSections.collectAsState()
   val curatedSections by viewModel.curatedSections.collectAsState()
   val huggingFaceModels by viewModel.huggingFaceModels.collectAsState()
+  val huggingFaceDownloadableModelIds by viewModel.huggingFaceDownloadableModelIds.collectAsState()
   val pipelineOptions by viewModel.pipelineOptions.collectAsState()
   val huggingFaceLibraryOptions by viewModel.huggingFaceLibraryOptions.collectAsState()
   val providerOptions by viewModel.providerOptions.collectAsState()
@@ -201,6 +202,8 @@ fun ModelLibraryScreen(
             modifier = Modifier.weight(1f),
             models = huggingFaceModels,
             isLoading = isHuggingFaceLoading,
+            onDownloadModel = viewModel::downloadHuggingFaceModel,
+            downloadableModelIds = huggingFaceDownloadableModelIds,
           )
         }
       }

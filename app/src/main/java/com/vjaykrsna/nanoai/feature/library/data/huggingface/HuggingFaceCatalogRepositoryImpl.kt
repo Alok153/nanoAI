@@ -32,10 +32,25 @@ constructor(
     query: HuggingFaceCatalogQuery
   ): Result<List<HuggingFaceModelSummary>> = runCatching {
     val cacheExpiry = clock.now().minus(DEFAULT_CACHE_TTL)
-    val cachedResults =
-      cacheDataSource.getFreshModels(limit = query.limit, offset = query.offset, ttl = cacheExpiry)
-    if (cachedResults.isNotEmpty()) {
-      return@runCatching cachedResults
+
+    // Skip cache when search or filter parameters are present to ensure fresh results
+    val hasActiveFilters =
+      query.search?.isNotBlank() == true ||
+        query.pipelineTag?.isNotBlank() == true ||
+        query.library?.isNotBlank() == true ||
+        query.includePrivate == true ||
+        query.sortField != null
+
+    if (!hasActiveFilters) {
+      val cachedResults =
+        cacheDataSource.getFreshModels(
+          limit = query.limit,
+          offset = query.offset,
+          ttl = cacheExpiry,
+        )
+      if (cachedResults.isNotEmpty()) {
+        return@runCatching cachedResults
+      }
     }
 
     service
@@ -48,7 +63,22 @@ constructor(
         pipelineTag = query.pipelineTag?.takeIf { it.isNotBlank() },
         library = query.library?.takeIf { it.isNotBlank() },
         includePrivate = query.includePrivate.takeIf { it },
-        expand = DEFAULT_EXPANSIONS,
+        expandAuthor = "author",
+        expandDownloads = "downloads",
+        expandLikes = "likes",
+        expandPipelineTag = "pipeline_tag",
+        expandTags = "tags",
+        expandLibraryName = "library_name",
+        expandCreatedAt = "createdAt",
+        expandLastModified = "lastModified",
+        expandTrendingScore = "trendingScore",
+        expandPrivate = "private",
+        expandGated = "gated",
+        expandDisabled = "disabled",
+        expandCardData = "cardData",
+        expandConfig = "config",
+        expandBaseModels = "baseModels",
+        expandSiblings = "siblings",
       )
       .map { it.toDomain() }
       .also { models ->
@@ -80,7 +110,7 @@ constructor(
       architectures = normalizedConfig?.architectures ?: emptyList(),
       modelType = normalizedConfig?.modelType,
       baseModelRelations = normalizedBaseModels,
-      hasGatedAccess = gated ?: false,
+      hasGatedAccess = isGated,
       isDisabled = disabled ?: false,
       totalSizeBytes = totalSize,
       summary = normalizedCard?.summary,

@@ -3,6 +3,7 @@ package com.vjaykrsna.nanoai.feature.library.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.feature.library.data.huggingface.HuggingFaceCatalogRepository
+import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceModelCompatibilityChecker
 import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceModelSummary
 import com.vjaykrsna.nanoai.feature.library.presentation.model.HuggingFaceFilterState
 import com.vjaykrsna.nanoai.feature.library.presentation.model.HuggingFaceSortOption
@@ -25,7 +26,10 @@ private const val HUGGING_FACE_SEARCH_DEBOUNCE_MS = 350L
 
 class HuggingFaceLibraryViewModel
 @Inject
-constructor(private val huggingFaceCatalogRepository: HuggingFaceCatalogRepository) : ViewModel() {
+constructor(
+  private val huggingFaceCatalogRepository: HuggingFaceCatalogRepository,
+  private val compatibilityChecker: HuggingFaceModelCompatibilityChecker,
+) : ViewModel() {
 
   private val _models = MutableStateFlow<List<HuggingFaceModelSummary>>(emptyList())
   val models: StateFlow<List<HuggingFaceModelSummary>> = _models.asStateFlow()
@@ -53,17 +57,32 @@ constructor(private val huggingFaceCatalogRepository: HuggingFaceCatalogReposito
       }
       .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
+  val downloadableModelIds: StateFlow<Set<String>> =
+    models
+      .map { models ->
+        models
+          .filter { compatibilityChecker.checkCompatibility(it) != null }
+          .map { it.modelId }
+          .toSet()
+      }
+      .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
+
   private val _isLoading = MutableStateFlow(false)
   val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
   private val _errorEvents = MutableSharedFlow<LibraryError>()
   val errorEvents = _errorEvents.asSharedFlow()
 
+  private val _downloadRequests = MutableSharedFlow<HuggingFaceModelSummary>()
+  val downloadRequests = _downloadRequests.asSharedFlow()
+
   private var initialized = false
   private var lastFilters: HuggingFaceFilterState? = null
 
   init {
     observeFilterChanges()
+    // Trigger initial load
+    fetchModels(HuggingFaceFilterState(), force = true)
   }
 
   private fun observeFilterChanges() {
@@ -121,6 +140,10 @@ constructor(private val huggingFaceCatalogRepository: HuggingFaceCatalogReposito
 
   fun clearFilters() {
     _filters.value = HuggingFaceFilterState()
+  }
+
+  fun requestDownload(model: HuggingFaceModelSummary) {
+    viewModelScope.launch { _downloadRequests.emit(model) }
   }
 
   private fun applyTagVisibilityRules(rawTags: Collection<String>): List<String> {

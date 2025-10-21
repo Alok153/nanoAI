@@ -3,6 +3,9 @@ package com.vjaykrsna.nanoai.model.huggingface.network.dto
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.jsonPrimitive
 
 /** Minimal representation of a model returned by the Hugging Face listing API. */
 @Serializable
@@ -15,7 +18,7 @@ data class HuggingFaceModelListingDto(
   @SerialName("tags") val tags: List<String?> = emptyList(),
   @SerialName("likes") val likes: Long? = null,
   @SerialName("downloads") val downloads: Long? = null,
-  @SerialName("gated") val gated: Boolean? = null,
+  @SerialName("gated") val gated: JsonElement? = null,
   @SerialName("disabled") val disabled: Boolean? = null,
   @SerialName("cardData") val cardData: ModelCardDataDto? = null,
   @SerialName("config") val config: ModelConfigDto? = null,
@@ -25,7 +28,17 @@ data class HuggingFaceModelListingDto(
   @SerialName("createdAt") val createdAt: String? = null,
   @SerialName("lastModified") val lastModified: String? = null,
   @SerialName("private") val isPrivate: Boolean? = null,
-)
+) {
+  /** Returns true if the model has gated access (either boolean true or string "manual"). */
+  val isGated: Boolean
+    get() =
+      when (gated) {
+        is JsonPrimitive -> {
+          gated.jsonPrimitive.booleanOrNull ?: (gated.jsonPrimitive.content == "manual")
+        }
+        else -> false
+      }
+}
 
 @Serializable
 data class ModelCardDataDto(

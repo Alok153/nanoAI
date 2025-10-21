@@ -61,7 +61,32 @@ class HuggingFaceCatalogRepositoryImplTest {
       Instant.parse("2024-01-01T07:00:00Z") // 7 hours later (past TTL)
     coEvery { cacheDataSource.getFreshModels(10, 0, expiryTime) } returns emptyList()
     coEvery {
-      service.listModels(any(), any(), any(), any(), any(), any(), any(), any(), any())
+      service.listModels(
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+      )
     } returns networkModels
     coEvery { cacheDataSource.storeModels(any()) } returns Unit
     coEvery { cacheDataSource.pruneOlderThan(any()) } returns Unit
@@ -85,7 +110,7 @@ class HuggingFaceCatalogRepositoryImplTest {
         tags = listOf("tag1", "tag2"),
         likes = 100,
         downloads = 1000,
-        gated = false,
+        gated = JsonPrimitive(false),
         disabled = false,
         cardData =
           ModelCardDataDto(
@@ -114,7 +139,32 @@ class HuggingFaceCatalogRepositoryImplTest {
     coEvery { fixedClock.now() } returns Instant.parse("2024-01-01T07:00:00Z") // Past TTL
     coEvery { cacheDataSource.getFreshModels(10, 0, expiryTime) } returns emptyList()
     coEvery {
-      service.listModels(any(), any(), any(), any(), any(), any(), any(), any(), any())
+      service.listModels(
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+      )
     } returns listOf(networkDto)
     coEvery { cacheDataSource.storeModels(any()) } returns Unit
     coEvery { cacheDataSource.pruneOlderThan(any()) } returns Unit
@@ -165,6 +215,105 @@ class HuggingFaceCatalogRepositoryImplTest {
       lastModified = null,
       isPrivate = false,
     )
+
+  @Test
+  fun `listModels skips cache when search query is present`() = runTest {
+    val queryWithSearch = HuggingFaceCatalogQuery(search = "bert", limit = 10, offset = 0)
+    val cachedModels = listOf(createTestModel("cached-model"))
+    val networkModels = listOf(createTestDto("network-model"))
+    val expiryTime = Instant.parse("2024-01-01T00:00:00Z")
+
+    coEvery { fixedClock.now() } returns Instant.parse("2024-01-01T05:00:00Z") // 5 hours later
+    coEvery { cacheDataSource.getFreshModels(10, 0, expiryTime) } returns cachedModels
+    coEvery {
+      service.listModels(
+        search = "bert",
+        sort = any(),
+        direction = any(),
+        limit = any(),
+        skip = any(),
+        pipelineTag = any(),
+        library = any(),
+        includePrivate = any(),
+        expandAuthor = any(),
+        expandDownloads = any(),
+        expandLikes = any(),
+        expandPipelineTag = any(),
+        expandTags = any(),
+        expandLibraryName = any(),
+        expandCreatedAt = any(),
+        expandLastModified = any(),
+        expandTrendingScore = any(),
+        expandPrivate = any(),
+        expandGated = any(),
+        expandDisabled = any(),
+        expandCardData = any(),
+        expandConfig = any(),
+        expandBaseModels = any(),
+        expandSiblings = any(),
+      )
+    } returns networkModels
+    coEvery { cacheDataSource.storeModels(any()) } returns Unit
+    coEvery { cacheDataSource.pruneOlderThan(any()) } returns Unit
+
+    val result = repository.listModels(queryWithSearch)
+
+    assertThat(result.isSuccess).isTrue()
+    val models = result.getOrNull()!!
+    assertThat(models).hasSize(1)
+    assertThat(models[0].modelId)
+      .isEqualTo("network-model") // Should return network results, not cached
+  }
+
+  @Test
+  fun `listModels skips cache when pipeline filter is present`() = runTest {
+    val queryWithPipeline =
+      HuggingFaceCatalogQuery(pipelineTag = "text-generation", limit = 10, offset = 0)
+    val cachedModels = listOf(createTestModel("cached-model"))
+    val networkModels = listOf(createTestDto("network-model"))
+    val expiryTime = Instant.parse("2024-01-01T00:00:00Z")
+
+    coEvery { fixedClock.now() } returns Instant.parse("2024-01-01T05:00:00Z") // 5 hours later
+    coEvery { cacheDataSource.getFreshModels(10, 0, expiryTime) } returns cachedModels
+    coEvery {
+      service.listModels(
+        search = any(),
+        sort = any(),
+        direction = any(),
+        limit = any(),
+        skip = any(),
+        pipelineTag = "text-generation",
+        library = any(),
+        includePrivate = any(),
+        expandAuthor = any(),
+        expandDownloads = any(),
+        expandLikes = any(),
+        expandPipelineTag = any(),
+        expandTags = any(),
+        expandLibraryName = any(),
+        expandCreatedAt = any(),
+        expandLastModified = any(),
+        expandTrendingScore = any(),
+        expandPrivate = any(),
+        expandGated = any(),
+        expandDisabled = any(),
+        expandCardData = any(),
+        expandConfig = any(),
+        expandBaseModels = any(),
+        expandSiblings = any(),
+      )
+    } returns networkModels
+    coEvery { cacheDataSource.storeModels(any()) } returns Unit
+    coEvery { cacheDataSource.pruneOlderThan(any()) } returns Unit
+
+    val result = repository.listModels(queryWithPipeline)
+
+    assertThat(result.isSuccess).isTrue()
+    val models = result.getOrNull()!!
+    assertThat(models).hasSize(1)
+    assertThat(models[0].modelId)
+      .isEqualTo("network-model") // Should return network results, not cached
+  }
 
   private fun createTestDto(modelId: String) =
     HuggingFaceModelListingDto(modelId = modelId, likes = 0, downloads = 0, isPrivate = false)

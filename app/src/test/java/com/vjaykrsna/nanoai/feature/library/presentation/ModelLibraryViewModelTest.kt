@@ -4,6 +4,9 @@ package com.vjaykrsna.nanoai.feature.library.presentation
 
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
+import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceModelCompatibilityChecker
+import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceToModelPackageConverter
+import com.vjaykrsna.nanoai.feature.library.domain.ModelDownloadsAndExportUseCase
 import com.vjaykrsna.nanoai.feature.library.domain.ModelDownloadsAndExportUseCaseInterface
 import com.vjaykrsna.nanoai.feature.library.domain.RefreshModelCatalogUseCase
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
@@ -41,6 +44,9 @@ class ModelLibraryViewModelTest {
   private lateinit var downloadsUseCase: ModelDownloadsAndExportUseCaseInterface
   private lateinit var refreshUseCase: RefreshModelCatalogUseCase
   private lateinit var huggingFaceCatalogRepository: FakeHuggingFaceCatalogRepository
+  private lateinit var compatibilityChecker: HuggingFaceModelCompatibilityChecker
+  private lateinit var modelConverter: HuggingFaceToModelPackageConverter
+  private lateinit var downloadUseCase: ModelDownloadsAndExportUseCase
   private lateinit var viewModel: ModelLibraryViewModel
 
   @BeforeEach
@@ -49,7 +55,9 @@ class ModelLibraryViewModelTest {
     downloadsUseCase = spyk(FakeModelDownloadsAndExportUseCase())
     refreshUseCase = mockk(relaxed = true)
     huggingFaceCatalogRepository = FakeHuggingFaceCatalogRepository()
-    val huggingFaceLibraryViewModel = HuggingFaceLibraryViewModel(huggingFaceCatalogRepository)
+    compatibilityChecker = mockk(relaxed = true)
+    modelConverter = mockk(relaxed = true)
+    downloadUseCase = mockk(relaxed = true)
     val downloadManager = DownloadManager(downloadsUseCase)
 
     // Setup default behaviors
@@ -59,8 +67,12 @@ class ModelLibraryViewModelTest {
       ModelLibraryViewModel(
         modelCatalogRepository,
         refreshUseCase,
-        huggingFaceLibraryViewModel,
         downloadManager,
+        downloadUseCase,
+        modelConverter,
+        huggingFaceCatalogRepository,
+        compatibilityChecker,
+        modelConverter,
       )
   }
 

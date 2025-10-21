@@ -6,6 +6,10 @@ import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
+import com.vjaykrsna.nanoai.feature.library.data.huggingface.HuggingFaceCatalogRepository
+import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceModelCompatibilityChecker
+import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceToModelPackageConverter
+import com.vjaykrsna.nanoai.feature.library.domain.ModelDownloadsAndExportUseCase
 import com.vjaykrsna.nanoai.feature.library.domain.RefreshModelCatalogUseCase
 import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
@@ -44,15 +48,25 @@ private const val DOWNLOAD_PRIORITY_FAILED = 3
 private const val DOWNLOAD_PRIORITY_COMPLETED = 4
 private const val DOWNLOAD_PRIORITY_CANCELLED = 5
 
+@Suppress(
+  "LargeClass"
+) // ViewModel handles complex state management for entire model library feature
 @HiltViewModel
 class ModelLibraryViewModel
 @Inject
 constructor(
   private val modelCatalogRepository: ModelCatalogRepository,
   private val refreshModelCatalogUseCase: RefreshModelCatalogUseCase,
-  private val huggingFaceLibraryViewModel: HuggingFaceLibraryViewModel,
   private val downloadManager: DownloadManager,
+  private val downloadUseCase: ModelDownloadsAndExportUseCase,
+  private val hfToModelConverter: HuggingFaceToModelPackageConverter,
+  private val huggingFaceCatalogRepository: HuggingFaceCatalogRepository,
+  private val compatibilityChecker: HuggingFaceModelCompatibilityChecker,
 ) : ViewModel() {
+
+  // Create HuggingFace ViewModel manually since Hilt doesn't allow injecting ViewModels
+  private val huggingFaceLibraryViewModel =
+    HuggingFaceLibraryViewModel(huggingFaceCatalogRepository, compatibilityChecker)
 
   private val _isRefreshing = MutableStateFlow(false)
   val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
@@ -107,6 +121,7 @@ constructor(
   val huggingFacePipelineOptions = huggingFaceLibraryViewModel.pipelineOptions
   val huggingFaceLibraryOptions = huggingFaceLibraryViewModel.libraryOptions
   val isHuggingFaceLoading = huggingFaceLibraryViewModel.isLoading
+  val huggingFaceDownloadableModelIds = huggingFaceLibraryViewModel.downloadableModelIds
 
   // Pipeline options from HuggingFace (used across tabs)
   val pipelineOptions = huggingFaceLibraryViewModel.pipelineOptions
@@ -211,6 +226,13 @@ constructor(
     viewModelScope.launch {
       downloadManager.errorEvents.collect { error -> _errorEvents.emit(error) }
     }
+
+    // Handle Hugging Face download requests
+    viewModelScope.launch {
+      huggingFaceLibraryViewModel.downloadRequests.collect { hfModel ->
+        handleHuggingFaceDownload(hfModel)
+      }
+    }
   }
 
   fun refreshCatalog() {
@@ -294,7 +316,12 @@ constructor(
       if (state.tab == tab) {
         state
       } else {
-        state.copy(tab = tab)
+        val newState = state.copy(tab = tab)
+        // When switching to Hugging Face tab, sync the search query
+        if (tab == ModelLibraryTab.HUGGING_FACE) {
+          huggingFaceLibraryViewModel.updateSearchQuery(newState.huggingFaceSearchQuery)
+        }
+        newState
       }
     }
   }
@@ -318,6 +345,12 @@ constructor(
   // Download functions delegated to DownloadManager
   fun downloadModel(modelId: String) {
     downloadManager.downloadModel(modelId)
+  }
+
+  fun downloadHuggingFaceModel(
+    hfModel: com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceModelSummary
+  ) {
+    huggingFaceLibraryViewModel.requestDownload(hfModel)
   }
 
   fun pauseDownload(taskId: java.util.UUID) {
@@ -371,6 +404,57 @@ constructor(
       DownloadStatus.COMPLETED -> DOWNLOAD_PRIORITY_COMPLETED
       DownloadStatus.CANCELLED -> DOWNLOAD_PRIORITY_CANCELLED
     }
+
+  private suspend fun handleHuggingFaceDownload(
+    hfModel: com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceModelSummary
+  ) {
+    try {
+      // Convert HF model to ModelPackage
+      val modelPackage = hfToModelConverter.convertIfCompatible(hfModel)
+      if (modelPackage == null) {
+        _errorEvents.emit(
+          LibraryError.DownloadFailed(
+            modelId = hfModel.modelId,
+            message = "Model is not compatible with local runtimes",
+          )
+        )
+        return
+      }
+
+      // Check if already exists
+      val existingModel = modelCatalogRepository.getModel(modelPackage.modelId)
+      if (existingModel != null) {
+        _errorEvents.emit(
+          LibraryError.DownloadFailed(
+            modelId = modelPackage.modelId,
+            message = "Model already exists in catalog",
+          )
+        )
+        return
+      }
+
+      // Add to catalog first
+      modelCatalogRepository.upsertModel(modelPackage)
+
+      // Start download
+      val result = downloadUseCase.downloadModel(modelPackage.modelId)
+      result.onFailure { error ->
+        _errorEvents.emit(
+          LibraryError.DownloadFailed(
+            modelId = modelPackage.modelId,
+            message = error.message ?: "Failed to start download",
+          )
+        )
+      }
+    } catch (e: Exception) {
+      _errorEvents.emit(
+        LibraryError.DownloadFailed(
+          modelId = hfModel.modelId,
+          message = "Unexpected error: ${e.message}",
+        )
+      )
+    }
+  }
 
   private fun DownloadStatus.isActiveDownload(): Boolean =
     this == DownloadStatus.DOWNLOADING ||

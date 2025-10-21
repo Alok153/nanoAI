@@ -224,7 +224,11 @@ internal fun ModelManagementCard(
 }
 
 @Composable
-internal fun HuggingFaceModelCard(model: HuggingFaceModelSummary) {
+internal fun HuggingFaceModelCard(
+  model: HuggingFaceModelSummary,
+  isDownloadable: Boolean = false,
+  onDownload: (() -> Unit)? = null,
+) {
   Card(
     modifier = Modifier.fillMaxWidth(),
     elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
@@ -306,6 +310,26 @@ internal fun HuggingFaceModelCard(model: HuggingFaceModelSummary) {
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+      }
+
+      // Download button - enabled for compatible models, disabled for incompatible ones
+      OutlinedButton(
+        onClick =
+          if (isDownloadable && onDownload != null) onDownload
+          else {
+            {}
+          },
+        enabled = isDownloadable && onDownload != null,
+        modifier =
+          Modifier.semantics {
+            contentDescription =
+              if (isDownloadable) "Download ${model.displayName}"
+              else "Model ${model.displayName} is not supported on this device"
+          },
+      ) {
+        Icon(Icons.Filled.Download, contentDescription = null)
+        Spacer(modifier = Modifier.size(8.dp))
+        Text(if (isDownloadable) "Download" else "Unsupported")
       }
     }
   }

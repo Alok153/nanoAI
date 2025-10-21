@@ -4,7 +4,6 @@ import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.vjaykrsna.nanoai.feature.library.domain.RefreshModelCatalogUseCase
 import com.vjaykrsna.nanoai.feature.library.presentation.DownloadManager
-import com.vjaykrsna.nanoai.feature.library.presentation.HuggingFaceLibraryViewModel
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryViewModel
 import com.vjaykrsna.nanoai.testing.FakeHuggingFaceCatalogRepository
 import com.vjaykrsna.nanoai.testing.FakeModelCatalogRepository
@@ -32,7 +31,9 @@ abstract class BaseModelLibraryScreenTest {
     downloadsUseCase = FakeModelDownloadsAndExportUseCase()
     refreshUseCase = mockk(relaxed = true)
     huggingFaceCatalogRepository = FakeHuggingFaceCatalogRepository()
-    val huggingFaceLibraryViewModel = HuggingFaceLibraryViewModel(huggingFaceCatalogRepository)
+    val compatibilityChecker = mockk<HuggingFaceModelCompatibilityChecker>(relaxed = true)
+    val modelConverter = mockk<HuggingFaceToModelPackageConverter>(relaxed = true)
+    val downloadUseCase = mockk<ModelDownloadsAndExportUseCase>(relaxed = true)
     val downloadManager = DownloadManager(downloadsUseCase)
 
     coEvery { refreshUseCase.invoke() } returns Result.success(Unit)
@@ -41,8 +42,12 @@ abstract class BaseModelLibraryScreenTest {
       ModelLibraryViewModel(
         catalogRepository,
         refreshUseCase,
-        huggingFaceLibraryViewModel,
         downloadManager,
+        downloadUseCase,
+        modelConverter,
+        huggingFaceCatalogRepository,
+        compatibilityChecker,
+        modelConverter,
       )
   }
 
