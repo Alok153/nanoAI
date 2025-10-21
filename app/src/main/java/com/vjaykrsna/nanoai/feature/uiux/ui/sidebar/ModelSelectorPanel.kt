@@ -29,6 +29,7 @@ import com.vjaykrsna.nanoai.R
 import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityStatus
 import com.vjaykrsna.nanoai.feature.uiux.state.ModeCard
 import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
+import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoElevation
 
 @Composable
 internal fun ModelSelectorPanel(
@@ -102,7 +103,7 @@ internal fun ModelSelectorPanel(
 
 @Composable
 private fun InfoCard(message: String) {
-  Surface(tonalElevation = 1.dp, shape = MaterialTheme.shapes.medium) {
+  Surface(tonalElevation = NanoElevation.level1, shape = MaterialTheme.shapes.medium) {
     Text(
       text = message,
       style = MaterialTheme.typography.bodySmall,
@@ -140,7 +141,7 @@ private fun ModelOptionCard(
 ) {
   val isAvailable = option.availableOffline || connectivity == ConnectivityStatus.ONLINE
   Surface(
-    tonalElevation = 1.dp,
+    tonalElevation = NanoElevation.level1,
     shape = MaterialTheme.shapes.medium,
     modifier = Modifier.fillMaxWidth(),
   ) {

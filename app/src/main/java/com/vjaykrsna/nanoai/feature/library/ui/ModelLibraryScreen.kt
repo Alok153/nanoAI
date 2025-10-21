@@ -37,6 +37,19 @@ import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryUiEvent
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.LOADING_INDICATOR_TAG
 import kotlinx.coroutines.flow.collectLatest
 
+/**
+ * Model library screen for browsing, downloading, and managing AI models.
+ *
+ * Features:
+ * - Tabbed interface for local vs remote models
+ * - Search and filtering capabilities
+ * - Download progress tracking
+ * - Model management (delete, retry downloads)
+ * - Pull-to-refresh functionality
+ *
+ * @param modifier Modifier to apply to the screen
+ * @param viewModel ModelLibraryViewModel for managing library state and operations
+ */
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun ModelLibraryScreen(

@@ -31,7 +31,7 @@ class UpdateThemePreferenceUseCaseTest {
     val dispatcher = StandardTestDispatcher(testScheduler)
     val useCase =
       instantiateUseCase(
-        className = "com.vjaykrsna.nanoai.feature.uiux.domain.UpdateThemePreferenceUseCase",
+        className = "com.vjaykrsna.nanoai.feature.uiux.domain.SettingsOperationsUseCase",
         repository = spy.asProxy(),
         dispatcher = dispatcher,
       )
@@ -89,15 +89,17 @@ class UpdateThemePreferenceUseCaseTest {
     val method =
       instance.javaClass.methods.firstOrNull { method ->
         method.name == "updateTheme" &&
-          method.parameterCount == 1 &&
-          method.parameterTypes[0].name.contains("ThemePreference")
+          method.parameterCount == 2 &&
+          method.parameterTypes[0].name.contains("ThemePreference") &&
+          method.parameterTypes[1].name == "java.lang.String"
       }
         ?: instance.javaClass.methods.firstOrNull { method ->
-          method.parameterCount >= 1 &&
+          method.name == "updateTheme" &&
+            method.parameterCount >= 1 &&
             method.parameterTypes[0].name.contains("ThemePreference") &&
             method.parameterTypes.none { it.name.contains("Continuation") }
         }
         ?: fail("Expected non-suspend theme update method on ${instance.javaClass.name}")
-    method.invoke(instance, theme)
+    method.invoke(instance, theme, "nanoai-user-primary")
   }
 }

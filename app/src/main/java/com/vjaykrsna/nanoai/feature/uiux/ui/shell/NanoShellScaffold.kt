@@ -91,6 +91,7 @@ import com.vjaykrsna.nanoai.feature.uiux.state.toModeIdOrNull
 import com.vjaykrsna.nanoai.feature.uiux.ui.HomeScreen
 import com.vjaykrsna.nanoai.feature.uiux.ui.commandpalette.CommandPaletteSheet
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.ConnectivityBanner
+import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoElevation
 import com.vjaykrsna.nanoai.feature.uiux.ui.sidebar.RightSidebarPanels
 import java.util.Locale
 import java.util.UUID
@@ -383,7 +384,7 @@ private fun DrawerSheetContent(
   ) {
     // Search/Command palette at the top
     Surface(
-      tonalElevation = 1.dp,
+      tonalElevation = NanoElevation.level1,
       shape = RoundedCornerShape(12.dp),
       onClick = {
         onOpenCommandPalette()
@@ -466,7 +467,7 @@ private fun DrawerNavigationItem(
 ) {
   Surface(
     onClick = onClick,
-    tonalElevation = if (selected) 6.dp else 0.dp,
+    tonalElevation = if (selected) NanoElevation.level3 else NanoElevation.level0,
     shape = RoundedCornerShape(12.dp),
     modifier = Modifier.fillMaxWidth().testTag("drawer_nav_${title.lowercase()}"),
   ) {
@@ -506,7 +507,7 @@ private fun ShellRightRailHost(
       )
 
       Surface(
-        tonalElevation = 3.dp,
+        tonalElevation = NanoElevation.level2,
         modifier = Modifier.fillMaxHeight().width(320.dp).testTag("right_sidebar_permanent"),
       ) {
         RightSidebarPanels(state = state, onEvent = onEvent, modifier = Modifier.fillMaxSize())
@@ -543,7 +544,7 @@ private fun ShellRightRailHost(
             },
         ) {
           Surface(
-            tonalElevation = 6.dp,
+            tonalElevation = NanoElevation.level3,
             modifier =
               Modifier.align(Alignment.TopEnd)
                 .fillMaxHeight()

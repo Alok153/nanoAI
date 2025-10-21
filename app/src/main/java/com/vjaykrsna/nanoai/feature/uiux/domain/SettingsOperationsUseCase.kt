@@ -3,6 +3,7 @@ package com.vjaykrsna.nanoai.feature.uiux.domain
 import com.vjaykrsna.nanoai.core.common.IoDispatcher
 import com.vjaykrsna.nanoai.core.data.repository.UserProfileRepository
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
+import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -10,8 +11,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
-/** Persists theme preference updates while notifying observers for immediate UI feedback. */
-class UpdateThemePreferenceUseCase
+/** Consolidated settings operations for theme and UI preferences management. */
+class SettingsOperationsUseCase
 @Inject
 constructor(
   private val repository: UserProfileRepository,
@@ -19,11 +20,13 @@ constructor(
 ) {
   private val scope = CoroutineScope(SupervisorJob() + dispatcher)
 
-  fun updateTheme(themePreference: ThemePreference) {
-    updateThemeForUser(UIUX_DEFAULT_USER_ID, themePreference)
+  /** Updates theme preference for the active user. */
+  fun updateTheme(themePreference: ThemePreference, userId: String = UIUX_DEFAULT_USER_ID) {
+    scope.launch { repository.updateThemePreference(userId, themePreference.name) }
   }
 
-  fun updateThemeForUser(userId: String, themePreference: ThemePreference) {
-    scope.launch { repository.updateThemePreference(userId, themePreference.name) }
+  /** Updates visual density preference for the active user. */
+  fun updateVisualDensity(density: VisualDensity, userId: String = UIUX_DEFAULT_USER_ID) {
+    scope.launch { repository.updateVisualDensity(userId, density.name) }
   }
 }

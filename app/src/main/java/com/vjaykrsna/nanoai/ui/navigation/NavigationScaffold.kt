@@ -186,6 +186,12 @@ private fun ShellModeContent(
     return
   }
 
+  // TODO: Implement proper error boundary triggering for navigation failures
+  // Current error boundary exists but is never triggered. Consider:
+  // - Adding error states to ViewModels for navigation failures
+  // - Using LaunchedEffect to catch async errors
+  // - Adding validation for required screen dependencies
+
   when (modeId) {
     // HOME is handled directly by NanoShellScaffold - never called here
     ModeId.HOME -> error("HOME mode should be handled by NanoShellScaffold, not NavigationScaffold")
@@ -266,6 +272,7 @@ private fun ModePlaceholder(title: String, modifier: Modifier = Modifier) {
  * readers and keyboard users.
  */
 @Composable
+@Suppress("UnusedParameter")
 private fun SkipLinksNavigation(
   onSkipToContent: () -> Unit,
   onSkipToNavigation: () -> Unit,

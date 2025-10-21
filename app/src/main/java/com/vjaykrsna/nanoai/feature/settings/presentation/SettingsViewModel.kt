@@ -19,8 +19,8 @@ import com.vjaykrsna.nanoai.feature.settings.domain.huggingface.HuggingFaceAuthS
 import com.vjaykrsna.nanoai.feature.settings.domain.huggingface.HuggingFaceDeviceAuthState
 import com.vjaykrsna.nanoai.feature.settings.domain.huggingface.HuggingFaceOAuthConfig
 import com.vjaykrsna.nanoai.feature.uiux.domain.ObserveUserProfileUseCase
+import com.vjaykrsna.nanoai.feature.uiux.domain.SettingsOperationsUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.ToggleCompactModeUseCase
-import com.vjaykrsna.nanoai.feature.uiux.domain.UpdateThemePreferenceUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlin.jvm.JvmName
@@ -48,7 +48,7 @@ constructor(
   private val privacyPreferenceStore: PrivacyPreferenceStore,
   private val importService: ImportService,
   private val observeUserProfileUseCase: ObserveUserProfileUseCase,
-  private val updateThemePreferenceUseCase: UpdateThemePreferenceUseCase,
+  private val settingsOperationsUseCase: SettingsOperationsUseCase,
   private val toggleCompactModeUseCase: ToggleCompactModeUseCase,
   private val huggingFaceAuthCoordinator: HuggingFaceAuthCoordinator,
   private val huggingFaceOAuthConfig: HuggingFaceOAuthConfig,
@@ -258,7 +258,7 @@ constructor(
         statusMessage = "Theme updated",
       )
     }
-    viewModelScope.launch { updateThemePreferenceUseCase.updateTheme(themePreference) }
+    settingsOperationsUseCase.updateTheme(themePreference)
   }
 
   fun applyDensityPreference(compactModeEnabled: Boolean) {
@@ -283,7 +283,7 @@ constructor(
     _uiUxState.value = previous.copy(undoAvailable = false, statusMessage = "Preferences restored")
     previousUiUxState = null
     viewModelScope.launch {
-      updateThemePreferenceUseCase.updateTheme(previous.themePreference)
+      settingsOperationsUseCase.updateTheme(previous.themePreference)
       toggleCompactModeUseCase.toggle(previous.compactModeEnabled)
     }
   }

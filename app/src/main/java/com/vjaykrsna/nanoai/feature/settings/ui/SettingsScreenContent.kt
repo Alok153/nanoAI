@@ -163,7 +163,7 @@ private fun SettingsCategoryContent(
 ) {
   if (state.isLoading) {
     Box(
-      modifier = modifier.fillMaxSize().semantics { contentDescription = "Loading settings" },
+      modifier = Modifier.fillMaxSize().semantics { contentDescription = "Loading settings" },
       contentAlignment = Alignment.Center,
     ) {
       Column(

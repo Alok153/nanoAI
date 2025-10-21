@@ -112,7 +112,7 @@ private val AmoledColorScheme =
     inversePrimary = DarkInversePrimary,
   )
 
-// High contrast light scheme - WCAG AAA compliant
+// NOTE: High contrast light scheme - WCAG AAA compliant for accessibility
 private val HighContrastLightColorScheme =
   lightColorScheme(
     primary = HighContrastLightPrimary,

@@ -34,6 +34,7 @@ import com.vjaykrsna.nanoai.feature.uiux.state.JobStatus
 import com.vjaykrsna.nanoai.feature.uiux.state.JobType
 import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
 import com.vjaykrsna.nanoai.feature.uiux.state.label
+import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoElevation
 
 private val PROGRESS_PANEL_HORIZONTAL_PADDING = 20.dp
 private val PROGRESS_PANEL_VERTICAL_PADDING = 16.dp
@@ -63,7 +64,7 @@ fun ProgressCenterPanel(
 ) {
   Surface(
     modifier = modifier.testTag("progress_center_panel"),
-    tonalElevation = 3.dp,
+    tonalElevation = NanoElevation.level2,
     shape =
       RoundedCornerShape(
         topStart = PROGRESS_PANEL_CORNER_RADIUS,
@@ -131,7 +132,7 @@ private fun ProgressJobItem(
           append(" percent complete")
         }
       },
-    tonalElevation = 1.dp,
+    tonalElevation = NanoElevation.level1,
     shape = RoundedCornerShape(PROGRESS_ITEM_CORNER_RADIUS),
   ) {
     Column(

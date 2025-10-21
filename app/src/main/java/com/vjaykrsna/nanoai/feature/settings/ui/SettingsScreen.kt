@@ -15,6 +15,19 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsViewModel
 
+/**
+ * Settings screen for configuring app preferences and API providers.
+ *
+ * Features:
+ * - Tabbed interface for different settings categories
+ * - API provider management
+ * - Privacy and security settings
+ * - Theme and UI customization
+ * - Backup and sync options
+ *
+ * @param modifier Modifier to apply to the screen
+ * @param viewModel SettingsViewModel for managing settings state and operations
+ */
 @Composable
 fun SettingsScreen(modifier: Modifier = Modifier, viewModel: SettingsViewModel = hiltViewModel()) {
   val coordinator = rememberSettingsScreenState(viewModel)

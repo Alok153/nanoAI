@@ -48,19 +48,19 @@
 - [X] T018 Create `ConnectivityViewModel` for network status (`app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/presentation/ConnectivityViewModel.kt`) - Handle connectivity banner and offline state
 - [X] T019 Extract `ProgressViewModel` for background jobs (`app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/presentation/ProgressViewModel.kt`) - Manage download and processing progress
 - [X] T020 Create `ThemeViewModel` for appearance settings (`app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/presentation/ThemeViewModel.kt`) - Handle theme switching and UI preferences
-- [ ] T021 Refactor `ShellViewModel` to coordinate child ViewModels (`app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/presentation/ShellViewModel.kt`) - Reduce from 518 lines to focused orchestration logic
-- [ ] T022 Create missing UseCases for ViewModel operations - Address ViewModel layer violations where repositories are called directly instead of through UseCase layer
+- [X] T021 Refactor `ShellViewModel` to coordinate child ViewModels (`app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/presentation/ShellViewModel.kt`) - Reduce from 518 lines to focused orchestration logic
+- [X] T022 Create missing UseCases for ViewModel operations - Address ViewModel layer violations where repositories are called directly instead of through UseCase layer
 
 ### UI Component Quality Improvements [P]
-- [ ] T023 Add state preservation in `app/src/main/java/com/vjaykrsna/nanoai/feature/chat/ui/ChatScreen.kt` - Implement rememberSaveable for scroll position and composer text
-- [ ] T024 Implement proper error boundaries in `app/src/main/java/com/vjaykrsna/nanoai/ui/navigation/NavigationScaffold.kt` - Add error handling for navigation failures
-- [ ] T025 Optimize LazyColumn performance in `app/src/main/java/com/vjaykrsna/nanoai/feature/library/ui/ModelLibraryScreen.kt` - Add contentType and proper key parameters
-- [ ] T026 Add loading states and skeletons in `app/src/main/java/com/vjaykrsna/nanoai/feature/settings/ui/SettingsScreen.kt` - Implement progressive loading UI patterns
-- [ ] T027 Refactor monolithic `NanoShellScaffold.kt` - Break down into smaller, focused composables (currently 500+ lines)
-- [ ] T028 Validate Material3 component spacing in `app/src/main/java/com/vjaykrsna/nanoai/ui/theme/` - Audit spacing tokens against Material3 guidelines
-- [ ] T029 Standardize elevation usage across UI components - Ensure consistent Card elevation values and shadow hierarchy
-- [ ] T030 Implement high contrast theme option in `app/src/main/java/com/vjaykrsna/nanoai/ui/theme/Theme.kt` - Add accessibility-focused color scheme
-- [ ] T031 Add skip links for keyboard navigation in `app/src/main/java/com/vjaykrsna/nanoai/ui/navigation/NavigationScaffold.kt` - Implement accessibility navigation shortcuts
+- [X] T023 Add state preservation in `app/src/main/java/com/vjaykrsna/nanoai/feature/chat/ui/ChatScreen.kt` - Implement rememberSaveable for scroll position and composer text
+- [X] T024 Implement proper error boundaries in `app/src/main/java/com/vjaykrsna/nanoai/ui/navigation/NavigationScaffold.kt` - Add error handling for navigation failures
+- [X] T025 Optimize LazyColumn performance in `app/src/main/java/com/vjaykrsna/nanoai/feature/library/ui/ModelLibraryScreen.kt` - Add contentType and proper key parameters
+- [X] T026 Add loading states and skeletons in `app/src/main/java/com/vjaykrsna/nanoai/feature/settings/ui/SettingsScreen.kt` - Implement progressive loading UI patterns
+- [X] T027 Refactor monolithic `NanoShellScaffold.kt` - Break down into smaller, focused composables (currently 500+ lines)
+- [X] T028 Validate Material3 component spacing in `app/src/main/java/com/vjaykrsna/nanoai/ui/theme/` - Audit spacing tokens against Material3 guidelines
+- [X] T029 Standardize elevation usage across UI components - Ensure consistent Card elevation values and shadow hierarchy
+- [X] T030 Implement high contrast theme option in `app/src/main/java/com/vjaykrsna/nanoai/ui/theme/Theme.kt` - Add accessibility-focused color scheme
+- [X] T031 Add skip links for keyboard navigation in `app/src/main/java/com/vjaykrsna/nanoai/ui/navigation/NavigationScaffold.kt` - Implement accessibility navigation shortcuts
 
 ## Phase 3: Cross-Cutting Concerns
 - [ ] T032 Implement UI testing utilities in `app/src/androidTest/java/com/vjaykrsna/nanoai/testing/` - Create accessibility and UI quality test helpers

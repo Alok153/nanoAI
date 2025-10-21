@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
 import com.vjaykrsna.nanoai.feature.uiux.data.ShellStateRepository
+import com.vjaykrsna.nanoai.feature.uiux.domain.NavigationOperationsUseCase
 import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
 import com.vjaykrsna.nanoai.feature.uiux.state.PaletteDismissReason
 import com.vjaykrsna.nanoai.feature.uiux.state.PaletteSource
@@ -19,7 +20,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 
 /** ViewModel responsible for navigation state management within the shell. */
 @HiltViewModel
@@ -27,7 +27,10 @@ class NavigationViewModel
 @Inject
 constructor(
   private val repository: ShellStateRepository,
-  @MainImmediateDispatcher private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
+  private val navigationOperationsUseCase: NavigationOperationsUseCase,
+  @Suppress("UnusedPrivateProperty")
+  @MainImmediateDispatcher
+  private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
 ) : ViewModel() {
 
   /** Navigation-specific state derived from shell layout state. */
@@ -51,37 +54,37 @@ constructor(
 
   /** Opens a specific mode, closing drawers and hiding the command palette. */
   fun openMode(modeId: ModeId) {
-    viewModelScope.launch(dispatcher) { repository.openMode(modeId) }
+    navigationOperationsUseCase.openMode(modeId)
   }
 
   /** Toggles the left navigation drawer. */
   fun toggleLeftDrawer() {
-    viewModelScope.launch(dispatcher) { repository.toggleLeftDrawer() }
+    navigationOperationsUseCase.toggleLeftDrawer()
   }
 
   /** Sets the left drawer to a specific open/closed state. */
   fun setLeftDrawer(open: Boolean) {
-    viewModelScope.launch(dispatcher) { repository.setLeftDrawer(open) }
+    navigationOperationsUseCase.setLeftDrawer(open)
   }
 
   /** Toggles the right contextual drawer for a specific panel. */
   fun toggleRightDrawer(panel: RightPanel) {
-    viewModelScope.launch(dispatcher) { repository.toggleRightDrawer(panel) }
+    navigationOperationsUseCase.toggleRightDrawer(panel)
   }
 
   /** Shows the command palette overlay from a specific source. */
   fun showCommandPalette(source: PaletteSource) {
-    viewModelScope.launch(dispatcher) { repository.showCommandPalette(source) }
+    navigationOperationsUseCase.showCommandPalette(source)
   }
 
   /** Hides the command palette overlay. */
   fun hideCommandPalette(@Suppress("UNUSED_PARAMETER") reason: PaletteDismissReason) {
-    viewModelScope.launch(dispatcher) { repository.hideCommandPalette() }
+    navigationOperationsUseCase.hideCommandPalette()
   }
 
   /** Updates the current window size class so adaptive layouts respond to device changes. */
   fun updateWindowSizeClass(sizeClass: WindowSizeClass) {
-    viewModelScope.launch(dispatcher) { repository.updateWindowSizeClass(sizeClass) }
+    navigationOperationsUseCase.updateWindowSizeClass(sizeClass)
   }
 }
 

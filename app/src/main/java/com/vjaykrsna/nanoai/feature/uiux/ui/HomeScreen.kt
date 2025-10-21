@@ -39,6 +39,7 @@ import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
 import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
 import com.vjaykrsna.nanoai.feature.uiux.state.RecentActivityItem
 import com.vjaykrsna.nanoai.feature.uiux.state.ShellLayoutState
+import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoElevation
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoSpacing
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.layout.NanoScreen
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.layout.NanoSection
@@ -124,7 +125,7 @@ fun HomeScreen(
     recentConfirmation?.let { title ->
       Surface(
         modifier = Modifier.fillMaxWidth().testTag("home_recent_action_confirmation"),
-        tonalElevation = 1.dp,
+        tonalElevation = NanoElevation.level1,
         shape = MaterialTheme.shapes.large,
       ) {
         Text(
@@ -149,7 +150,7 @@ private fun QuickActionsPanel(
   Surface(
     modifier = modifier.fillMaxWidth(),
     shape = MaterialTheme.shapes.large,
-    tonalElevation = 1.dp,
+    tonalElevation = NanoElevation.level1,
   ) {
     Column(
       modifier = Modifier.padding(NanoSpacing.md),
@@ -190,7 +191,7 @@ private fun QuickActionsPanel(
       } else {
         Surface(
           modifier = Modifier.fillMaxWidth().testTag("home_tools_panel_collapsed"),
-          tonalElevation = 0.dp,
+          tonalElevation = NanoElevation.level0,
           color = MaterialTheme.colorScheme.surfaceVariant,
           shape = MaterialTheme.shapes.medium,
         ) {
@@ -288,7 +289,7 @@ private fun RecentActivityContent(
   if (recentActivity.isEmpty()) {
     Surface(
       shape = MaterialTheme.shapes.large,
-      tonalElevation = 1.dp,
+      tonalElevation = NanoElevation.level1,
       modifier = Modifier.testTag("recent_activity_list"),
     ) {
       Box(

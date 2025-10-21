@@ -21,8 +21,8 @@ import com.vjaykrsna.nanoai.feature.settings.domain.huggingface.HuggingFaceAuthS
 import com.vjaykrsna.nanoai.feature.settings.domain.huggingface.HuggingFaceDeviceAuthState
 import com.vjaykrsna.nanoai.feature.settings.domain.huggingface.HuggingFaceOAuthConfig
 import com.vjaykrsna.nanoai.feature.uiux.domain.ObserveUserProfileUseCase
+import com.vjaykrsna.nanoai.feature.uiux.domain.SettingsOperationsUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.ToggleCompactModeUseCase
-import com.vjaykrsna.nanoai.feature.uiux.domain.UpdateThemePreferenceUseCase
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -51,7 +51,7 @@ class SettingsViewModelTest {
   private lateinit var privacyPreferenceStore: PrivacyPreferenceStore
   private lateinit var importService: ImportService
   private lateinit var observeUserProfileUseCase: ObserveUserProfileUseCase
-  private lateinit var updateThemeUseCase: UpdateThemePreferenceUseCase
+  private lateinit var settingsOperationsUseCase: SettingsOperationsUseCase
   private lateinit var toggleCompactModeUseCase: ToggleCompactModeUseCase
   private lateinit var huggingFaceAuthCoordinator: HuggingFaceAuthCoordinator
   private lateinit var huggingFaceOAuthConfig: HuggingFaceOAuthConfig
@@ -65,7 +65,7 @@ class SettingsViewModelTest {
     privacyPreferenceStore = mockk(relaxed = true)
     importService = mockk(relaxed = true)
     observeUserProfileUseCase = mockk(relaxed = true)
-    updateThemeUseCase = mockk(relaxed = true)
+    settingsOperationsUseCase = mockk(relaxed = true)
     toggleCompactModeUseCase = mockk(relaxed = true)
     huggingFaceAuthCoordinator = mockk(relaxed = true)
     huggingFaceOAuthConfig = HuggingFaceOAuthConfig(clientId = "test-client", scope = "all")
@@ -114,7 +114,7 @@ class SettingsViewModelTest {
         privacyPreferenceStore,
         importService,
         observeUserProfileUseCase,
-        updateThemeUseCase,
+        settingsOperationsUseCase,
         toggleCompactModeUseCase,
         huggingFaceAuthCoordinator,
         huggingFaceOAuthConfig,
@@ -180,7 +180,7 @@ class SettingsViewModelTest {
 
   @Test
   fun `setThemePreference updates UI state and calls use case`() = runTest {
-    coEvery { updateThemeUseCase.updateTheme(ThemePreference.DARK) } returns Unit
+    coEvery { settingsOperationsUseCase.updateTheme(ThemePreference.DARK) } returns Unit
 
     viewModel.setThemePreference(ThemePreference.DARK)
     advanceUntilIdle()
@@ -192,7 +192,7 @@ class SettingsViewModelTest {
       assertThat(state.statusMessage).isEqualTo("Theme updated")
     }
 
-    coVerify { updateThemeUseCase.updateTheme(ThemePreference.DARK) }
+    coVerify { settingsOperationsUseCase.updateTheme(ThemePreference.DARK) }
   }
 
   @Test
@@ -214,7 +214,7 @@ class SettingsViewModelTest {
 
   @Test
   fun `undoUiPreferenceChange restores previous state`() = runTest {
-    coEvery { updateThemeUseCase.updateTheme(any()) } returns Unit
+    coEvery { settingsOperationsUseCase.updateTheme(any()) } returns Unit
     coEvery { toggleCompactModeUseCase.toggle(any()) } returns Unit
 
     // Make a change to enable undo
@@ -395,7 +395,7 @@ class SettingsViewModelTest {
         privacyPreferenceStore,
         importService,
         observeUserProfileUseCase,
-        updateThemeUseCase,
+        settingsOperationsUseCase,
         toggleCompactModeUseCase,
         huggingFaceAuthCoordinator,
         huggingFaceOAuthConfig,
@@ -428,7 +428,7 @@ class SettingsViewModelTest {
         privacyPreferenceStore,
         importService,
         observeUserProfileUseCase,
-        updateThemeUseCase,
+        settingsOperationsUseCase,
         toggleCompactModeUseCase,
         huggingFaceAuthCoordinator,
         huggingFaceOAuthConfig,

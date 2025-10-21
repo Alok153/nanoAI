@@ -51,6 +51,20 @@ import kotlinx.datetime.toLocalDateTime
 
 private const val MESSAGE_BUBBLE_WIDTH_FRACTION = 0.85f
 
+/**
+ * Main chat interface screen that displays conversation history and provides message input.
+ *
+ * Features:
+ * - Real-time message display with user/assistant differentiation
+ * - Persistent composer text across configuration changes
+ * - Scroll position preservation
+ * - Loading states and error handling
+ * - Accessibility support with proper content descriptions
+ *
+ * @param modifier Modifier to apply to the screen
+ * @param viewModel ChatViewModel for managing chat state and operations
+ * @param onUpdateChatState Callback to notify parent about chat state changes (optional)
+ */
 @Composable
 fun ChatScreen(
   modifier: Modifier = Modifier,

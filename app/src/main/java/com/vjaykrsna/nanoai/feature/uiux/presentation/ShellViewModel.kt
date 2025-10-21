@@ -25,7 +25,13 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
 import com.vjaykrsna.nanoai.feature.uiux.data.ShellStateRepository
 import com.vjaykrsna.nanoai.feature.uiux.domain.CommandPaletteActionProvider
+import com.vjaykrsna.nanoai.feature.uiux.domain.ConnectivityOperationsUseCase
+import com.vjaykrsna.nanoai.feature.uiux.domain.JobOperationsUseCase
+import com.vjaykrsna.nanoai.feature.uiux.domain.NavigationOperationsUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.ProgressCenterCoordinator
+import com.vjaykrsna.nanoai.feature.uiux.domain.QueueJobUseCase
+import com.vjaykrsna.nanoai.feature.uiux.domain.SettingsOperationsUseCase
+import com.vjaykrsna.nanoai.feature.uiux.domain.UndoActionUseCase
 import com.vjaykrsna.nanoai.feature.uiux.state.CommandAction
 import com.vjaykrsna.nanoai.feature.uiux.state.CommandCategory
 import com.vjaykrsna.nanoai.feature.uiux.state.CommandDestination
@@ -33,8 +39,6 @@ import com.vjaykrsna.nanoai.feature.uiux.state.CommandInvocationSource
 import com.vjaykrsna.nanoai.feature.uiux.state.CommandPaletteState
 import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityBannerState
 import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityStatus
-import com.vjaykrsna.nanoai.feature.uiux.state.JobStatus
-import com.vjaykrsna.nanoai.feature.uiux.state.JobType
 import com.vjaykrsna.nanoai.feature.uiux.state.ModeCard
 import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
 import com.vjaykrsna.nanoai.feature.uiux.state.PaletteDismissReason
@@ -54,9 +58,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 
 /** ViewModel coordinating shell layout state and user intents. */
 private const val LAYOUT_INDEX = 0
@@ -161,8 +163,17 @@ constructor(
   private val repository: ShellStateRepository,
   private val actionProvider: CommandPaletteActionProvider,
   private val progressCoordinator: ProgressCenterCoordinator,
+  // Consolidated UseCases for domain operations
+  private val navigationOperationsUseCase: NavigationOperationsUseCase,
+  private val connectivityOperationsUseCase: ConnectivityOperationsUseCase,
+  private val queueJobUseCase: QueueJobUseCase,
+  private val jobOperationsUseCase: JobOperationsUseCase,
+  private val undoActionUseCase: UndoActionUseCase,
+  private val settingsOperationsUseCase: SettingsOperationsUseCase,
   // private val telemetry: ShellTelemetry,
-  @MainImmediateDispatcher private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
+  @Suppress("UnusedPrivateProperty")
+  @MainImmediateDispatcher
+  private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
 ) : ViewModel() {
 
   private val _chatState = MutableStateFlow<ChatState?>(null)
@@ -240,138 +251,68 @@ constructor(
 
   /** Opens a specific mode, closing drawers and hiding the command palette. */
   fun openMode(modeId: ModeId) {
-    viewModelScope.launch(dispatcher) { repository.openMode(modeId) }
+    navigationOperationsUseCase.openMode(modeId)
   }
 
   /** Toggles the left navigation drawer. */
   fun toggleLeftDrawer() {
-    val layout = uiState.value.layout
-    setLeftDrawer(!layout.isLeftDrawerOpen)
+    navigationOperationsUseCase.toggleLeftDrawer()
   }
 
   /** Sets the left drawer to a specific open/closed state. */
   fun setLeftDrawer(open: Boolean) {
-    val layout = uiState.value.layout
-    if (layout.isLeftDrawerOpen == open) return
-    viewModelScope.launch(dispatcher) {
-      repository.setLeftDrawer(open)
-      /*
-      // // telemetry.trackDrawerToggle(
-        side = DrawerSide.LEFT,
-        isOpen = open,
-        panel = null,
-        activeMode = layout.activeMode,
-      )
-      */
-    }
+    navigationOperationsUseCase.setLeftDrawer(open)
   }
 
   /** Toggles the right contextual drawer for a specific panel. */
   fun toggleRightDrawer(panel: RightPanel) {
-    val layout = uiState.value.layout
-    viewModelScope.launch(dispatcher) {
-      repository.toggleRightDrawer(panel)
-      /*
-      // // telemetry.trackDrawerToggle(
-        side = DrawerSide.RIGHT,
-        isOpen = newOpen,
-        panel = panelForTelemetry,
-        activeMode = layout.activeMode,
-      )
-      */
-    }
+    navigationOperationsUseCase.toggleRightDrawer(panel)
   }
 
   /** Shows the command palette overlay from a specific source. */
   fun showCommandPalette(source: PaletteSource) {
-    val activeMode = uiState.value.layout.activeMode
-    viewModelScope.launch(dispatcher) {
-      repository.showCommandPalette(source)
-      // // telemetry.trackCommandPaletteOpened(source, activeMode)
-    }
+    navigationOperationsUseCase.showCommandPalette(source)
   }
 
   /** Hides the command palette overlay. */
+  @Suppress("UnusedParameter")
   fun hideCommandPalette(reason: PaletteDismissReason) {
-    val activeMode = uiState.value.layout.activeMode
-    viewModelScope.launch(dispatcher) {
-      repository.hideCommandPalette()
-      if (reason != PaletteDismissReason.EXECUTED) {
-        // // telemetry.trackCommandPaletteDismissed(reason, activeMode)
-      }
-    }
+    navigationOperationsUseCase.hideCommandPalette()
   }
 
   /** Queues a generation job (e.g., when offline or model busy). */
   fun queueGeneration(job: ProgressJob) {
-    viewModelScope.launch(dispatcher) {
-      val layout = repository.shellLayoutState.first()
-      repository.queueJob(job)
-      repository.recordUndoPayload(
-        UndoPayload(
-          actionId = "queue-${job.jobId}",
-          metadata =
-            mapOf(
-              "message" to
-                buildQueuedJobMessage(job, layout.connectivity != ConnectivityStatus.ONLINE),
-              "jobId" to job.jobId.toString(),
-            ),
-        )
-      )
-      /*
-      // // telemetry.trackProgressJobQueued(
-        job,
-        layout.connectivity != ConnectivityStatus.ONLINE,
-        layout.activeMode,
-      )
-      */
-    }
+    queueJobUseCase.execute(job)
   }
 
   /** Completes a job, removing it from the progress center. */
   fun completeJob(jobId: UUID) {
-    viewModelScope.launch(dispatcher) {
-      repository.completeJob(jobId)
-      repository.recordUndoPayload(null)
-    }
+    jobOperationsUseCase.completeJob(jobId)
   }
 
   /** Attempts to retry a failed job via the progress coordinator. */
   fun retryJob(job: ProgressJob) {
-    viewModelScope.launch(dispatcher) { progressCoordinator.retryJob(job.jobId) }
+    jobOperationsUseCase.retryJob(job.jobId)
   }
 
   /** Executes an undo action based on the provided payload. */
   fun undoAction(payload: UndoPayload) {
-    viewModelScope.launch(dispatcher) {
-      // Parse the action ID to determine what to undo
-      when {
-        payload.actionId.startsWith("queue-") -> {
-          val jobIdString = payload.actionId.removePrefix("queue-")
-          val jobId = runCatching { UUID.fromString(jobIdString) }.getOrNull()
-          if (jobId != null) {
-            repository.completeJob(jobId)
-          }
-        }
-      // Add more undo action types as needed
-      }
-      repository.recordUndoPayload(null)
-    }
+    undoActionUseCase.execute(payload)
   }
 
   /** Updates connectivity status and handles online/offline transitions. */
   fun updateConnectivity(status: ConnectivityStatus) {
-    viewModelScope.launch(dispatcher) { repository.updateConnectivity(status) }
+    connectivityOperationsUseCase.updateConnectivity(status)
   }
 
   /** Updates persisted theme preference for the active user. */
   fun updateThemePreference(theme: ThemePreference) {
-    viewModelScope.launch(dispatcher) { repository.updateThemePreference(theme) }
+    settingsOperationsUseCase.updateTheme(theme)
   }
 
   /** Updates persisted density preference for the active user. */
   fun updateVisualDensity(density: VisualDensity) {
-    viewModelScope.launch(dispatcher) { repository.updateVisualDensity(density) }
+    settingsOperationsUseCase.updateVisualDensity(density)
   }
 
   /** Records telemetry for command invocations to understand palette usage. */
@@ -463,29 +404,9 @@ constructor(
     )
   }
 
-  private fun buildQueuedJobMessage(job: ProgressJob, isOffline: Boolean): String {
-    val label = jobLabel(job)
-    return when {
-      job.status == JobStatus.FAILED && job.canRetry -> "$label retry scheduled"
-      isOffline -> "$label queued for reconnect"
-      job.status == JobStatus.PENDING -> "$label queued"
-      else -> "$label updated"
-    }
-  }
-
-  private fun jobLabel(job: ProgressJob): String =
-    when (job.type) {
-      JobType.IMAGE_GENERATION -> "Image generation"
-      JobType.AUDIO_RECORDING -> "Audio recording"
-      JobType.MODEL_DOWNLOAD -> "Model download"
-      JobType.TEXT_GENERATION -> "Text generation"
-      JobType.TRANSLATION -> "Translation"
-      JobType.OTHER -> "Background task"
-    }
-
   /** Updates the current window size class so adaptive layouts respond to device changes. */
   fun updateWindowSizeClass(sizeClass: WindowSizeClass) {
-    viewModelScope.launch(dispatcher) { repository.updateWindowSizeClass(sizeClass) }
+    navigationOperationsUseCase.updateWindowSizeClass(sizeClass)
   }
 
   /** Updates the chat-specific state for contextual UI. */
