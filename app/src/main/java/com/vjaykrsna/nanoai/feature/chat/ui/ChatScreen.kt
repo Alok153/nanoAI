@@ -17,10 +17,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -40,6 +43,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.vjaykrsna.nanoai.core.domain.model.Message
 import com.vjaykrsna.nanoai.feature.chat.presentation.ChatError
 import com.vjaykrsna.nanoai.feature.chat.presentation.ChatViewModel
+import com.vjaykrsna.nanoai.feature.chat.ui.components.ModelPicker
 import com.vjaykrsna.nanoai.feature.uiux.state.NanoError
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.composer.NanoComposerBar
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.feedback.NanoErrorHandler
@@ -65,16 +69,21 @@ private const val MESSAGE_BUBBLE_WIDTH_FRACTION = 0.85f
  * @param viewModel ChatViewModel for managing chat state and operations
  * @param onUpdateChatState Callback to notify parent about chat state changes (optional)
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
   modifier: Modifier = Modifier,
   viewModel: ChatViewModel = hiltViewModel(),
   onUpdateChatState: ((com.vjaykrsna.nanoai.feature.uiux.presentation.ChatState?) -> Unit)? = null,
+  onNavigate: (com.vjaykrsna.nanoai.feature.uiux.state.ModeId) -> Unit,
 ) {
   val messages by viewModel.messages.collectAsState()
   val currentThread by viewModel.currentThread.collectAsState()
   val availablePersonas by viewModel.availablePersonas.collectAsState()
   val isLoading by viewModel.isLoading.collectAsState()
+  val showModelPicker by viewModel.showModelPicker.collectAsState()
+  val models by viewModel.models.collectAsState()
+  val sheetState = rememberModalBottomSheetState()
 
   val snackbarHostState = remember { SnackbarHostState() }
   var composerText by rememberSaveable { mutableStateOf("") }
@@ -91,6 +100,14 @@ fun ChatScreen(
 
   LaunchedEffect(Unit) {
     viewModel.errorEvents.collectLatest { error -> activeError = error.toNanoError() }
+  }
+
+  LaunchedEffect(snackbarHostState) {
+    viewModel.events.collectLatest { event ->
+      if (event is com.vjaykrsna.nanoai.feature.chat.presentation.ChatViewEvent.ModelSelected) {
+        snackbarHostState.showSnackbar("Switched to ${event.modelName}")
+      }
+    }
   }
 
   Box(
@@ -152,6 +169,24 @@ fun ChatScreen(
           .padding(horizontal = 16.dp, vertical = 24.dp)
           .semantics { contentDescription = "Chat notifications and messages" },
     )
+
+    if (showModelPicker) {
+      ModalBottomSheet(
+        onDismissRequest = { viewModel.dismissModelPicker() },
+        sheetState = sheetState,
+      ) {
+        ModelPicker(
+          models = models,
+          selectedModelId = currentThread?.activeModelId,
+          onModelSelect = { viewModel.selectModel(it) },
+          onManageModelsClick = {
+            viewModel.dismissModelPicker()
+            onNavigate(com.vjaykrsna.nanoai.feature.uiux.state.ModeId.LIBRARY)
+          },
+          modifier = Modifier.fillMaxWidth(),
+        )
+      }
+    }
   }
 }
 

@@ -4,6 +4,8 @@ import com.vjaykrsna.nanoai.core.data.repository.ConversationRepository
 import com.vjaykrsna.nanoai.core.domain.model.ChatThread
 import com.vjaykrsna.nanoai.core.domain.model.Message
 import java.util.UUID
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -12,9 +14,10 @@ import kotlinx.coroutines.flow.map
  * Fake implementation of [ConversationRepository] for testing. Maintains in-memory state for
  * threads and messages.
  */
-class FakeConversationRepository : ConversationRepository {
+@Singleton
+class FakeConversationRepository @Inject constructor() : ConversationRepository {
   private val _threads = MutableStateFlow<List<ChatThread>>(emptyList())
-  private val _messages = MutableStateFlow<Map<UUID, List<Message>>>(emptyMap())
+  private val _messages = MutableStateFlow<Map<java.util.UUID, List<Message>>>(emptyMap())
 
   var shouldFailOnCreateThread = false
   var shouldFailOnSaveMessage = false

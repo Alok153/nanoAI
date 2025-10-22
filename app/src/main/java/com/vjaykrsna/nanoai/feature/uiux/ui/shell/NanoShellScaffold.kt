@@ -9,6 +9,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -333,6 +334,8 @@ sealed interface ShellUiEvent {
     val personaId: java.util.UUID,
     val action: com.vjaykrsna.nanoai.core.model.PersonaSwitchAction,
   ) : ShellUiEvent
+
+  data object ChatTitleClicked : ShellUiEvent
 }
 
 private enum class DrawerVariant {
@@ -577,9 +580,7 @@ private fun ShellMainSurface(
         state = state,
         onToggleLeftDrawer = { originalOnEvent(ShellUiEvent.ToggleLeftDrawer) },
         onToggleRightDrawer = { panel -> originalOnEvent(ShellUiEvent.ToggleRightDrawer(panel)) },
-        onShowCommandPalette = { source ->
-          originalOnEvent(ShellUiEvent.ShowCommandPalette(source))
-        },
+        onEvent = onEvent,
       )
     },
     snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
@@ -645,7 +646,7 @@ private fun ShellTopAppBar(
   state: ShellUiState,
   onToggleLeftDrawer: () -> Unit,
   onToggleRightDrawer: (RightPanel) -> Unit,
-  onShowCommandPalette: (PaletteSource) -> Unit,
+  onEvent: (ShellUiEvent) -> Unit,
 ) {
   val layout = state.layout
   // var expanded by remember { mutableStateOf(false) }
@@ -662,7 +663,17 @@ private fun ShellTopAppBar(
             it.titlecase(Locale.ROOT)
           }
         }
-      Text(text = titleText, maxLines = 1, overflow = TextOverflow.Ellipsis)
+      Text(
+        text = titleText,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        modifier =
+          Modifier.clickable {
+            if (layout.activeMode == ModeId.CHAT) {
+              onEvent(ShellUiEvent.ChatTitleClicked)
+            }
+          },
+      )
     },
     navigationIcon = {
       IconButton(onClick = onToggleLeftDrawer, modifier = Modifier.testTag("topbar_nav_icon")) {
@@ -670,12 +681,6 @@ private fun ShellTopAppBar(
       }
     },
     actions = {
-      IconButton(
-        onClick = { onShowCommandPalette(PaletteSource.TOP_APP_BAR) },
-        modifier = Modifier.testTag("topbar_command_palette"),
-      ) {
-        Icon(Icons.Outlined.Search, contentDescription = "Open command palette")
-      }
       IconButton(
         onClick = { onToggleRightDrawer(RightPanel.MODEL_SELECTOR) },
         modifier = Modifier.testTag("topbar_model_selector"),

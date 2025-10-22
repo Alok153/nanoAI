@@ -3,13 +3,16 @@ package com.vjaykrsna.nanoai.testing
 import com.vjaykrsna.nanoai.core.data.repository.PersonaRepository
 import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
 import java.util.UUID
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
  * Fake implementation of [PersonaRepository] for testing. Maintains in-memory state for personas.
  */
-class FakePersonaRepository : PersonaRepository {
+@Singleton
+class FakePersonaRepository @Inject constructor() : PersonaRepository {
   private val _personas = MutableStateFlow<List<PersonaProfile>>(emptyList())
 
   var shouldFailOnCreate = false

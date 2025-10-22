@@ -13,6 +13,9 @@ import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
 import com.vjaykrsna.nanoai.core.model.PersonaSwitchAction
 import com.vjaykrsna.nanoai.feature.chat.domain.SendPromptUseCase
 import com.vjaykrsna.nanoai.feature.chat.domain.SwitchPersonaUseCase
+import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
+import com.vjaykrsna.nanoai.feature.library.domain.model.Model
+import com.vjaykrsna.nanoai.feature.library.domain.model.toModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.UUID
 import javax.inject.Inject
@@ -26,6 +29,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -37,6 +41,7 @@ constructor(
   private val switchPersonaUseCase: SwitchPersonaUseCase,
   private val conversationRepository: ConversationRepository,
   private val personaRepository: PersonaRepository,
+  private val modelCatalogRepository: ModelCatalogRepository,
   @MainImmediateDispatcher private val dispatcher: CoroutineDispatcher,
 ) : ViewModel() {
   private val flowSharingStarted: SharingStarted = SharingStarted.Eagerly
@@ -48,6 +53,9 @@ constructor(
 
   private val _errorEvents = MutableSharedFlow<ChatError>()
   val errorEvents = _errorEvents.asSharedFlow()
+
+  private val _events = MutableSharedFlow<ChatViewEvent>()
+  val events = _events.asSharedFlow()
 
   private val threads: StateFlow<List<ChatThread>> =
     conversationRepository
@@ -69,6 +77,38 @@ constructor(
 
   val availablePersonas: StateFlow<List<PersonaProfile>> =
     personaRepository.observeAllPersonas().stateIn(viewModelScope, flowSharingStarted, emptyList())
+
+  val models: StateFlow<List<Model>> =
+    modelCatalogRepository
+      .observeInstalledModels()
+      .map { list: List<com.vjaykrsna.nanoai.core.domain.model.ModelPackage> ->
+        list.map { it.toModel() }
+      }
+      .stateIn(viewModelScope, flowSharingStarted, emptyList())
+
+  private val _showModelPicker = MutableStateFlow(false)
+  val showModelPicker: StateFlow<Boolean> = _showModelPicker.asStateFlow()
+
+  fun showModelPicker() {
+    _showModelPicker.value = true
+  }
+
+  fun dismissModelPicker() {
+    _showModelPicker.value = false
+  }
+
+  fun selectModel(model: com.vjaykrsna.nanoai.feature.library.domain.model.Model) {
+    val thread = currentThread.value
+    if (thread == null) {
+      // TODO: Handle the case where there is no active thread
+      return
+    }
+    viewModelScope.launch(dispatcher) {
+      conversationRepository.updateThread(thread.copy(activeModelId = model.modelId))
+      _showModelPicker.value = false
+      _events.emit(ChatViewEvent.ModelSelected(model.displayName))
+    }
+  }
 
   fun selectThread(threadId: UUID) {
     _currentThreadId.value = threadId
@@ -190,4 +230,8 @@ sealed class ChatError {
   data class ThreadDeletionFailed(val message: String) : ChatError()
 
   data class UnexpectedError(val message: String) : ChatError()
+}
+
+sealed class ChatViewEvent {
+  data class ModelSelected(val modelName: String) : ChatViewEvent()
 }

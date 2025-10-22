@@ -10,6 +10,7 @@ import com.vjaykrsna.nanoai.feature.chat.domain.SendPromptUseCase
 import com.vjaykrsna.nanoai.feature.chat.domain.SwitchPersonaUseCase
 import com.vjaykrsna.nanoai.testing.DomainTestBuilders
 import com.vjaykrsna.nanoai.testing.FakeConversationRepository
+import com.vjaykrsna.nanoai.testing.FakeModelCatalogRepository
 import com.vjaykrsna.nanoai.testing.FakePersonaRepository
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import io.mockk.coEvery
@@ -34,6 +35,7 @@ class ChatViewModelTest {
 
   private lateinit var conversationRepository: FakeConversationRepository
   private lateinit var personaRepository: FakePersonaRepository
+  private lateinit var modelCatalogRepository: FakeModelCatalogRepository
   private lateinit var sendPromptUseCase: SendPromptUseCase
   private lateinit var switchPersonaUseCase: SwitchPersonaUseCase
   private lateinit var viewModel: ChatViewModel
@@ -42,6 +44,7 @@ class ChatViewModelTest {
   fun setup() {
     conversationRepository = FakeConversationRepository()
     personaRepository = FakePersonaRepository()
+    modelCatalogRepository = FakeModelCatalogRepository()
     sendPromptUseCase = mockk(relaxed = true)
     switchPersonaUseCase = mockk(relaxed = true)
 
@@ -56,6 +59,7 @@ class ChatViewModelTest {
         switchPersonaUseCase,
         conversationRepository,
         personaRepository,
+        modelCatalogRepository,
         dispatcher = mainDispatcherExtension.dispatcher,
       )
   }
