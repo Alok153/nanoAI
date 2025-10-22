@@ -413,6 +413,9 @@ dependencies {
   // MediaPipe
   implementation(libs.mediapipe.tasks.genai)
 
+  // Leap
+  implementation(libs.leap.sdk)
+
   // Networking
   implementation(libs.retrofit)
   implementation(libs.retrofit.kotlin.serialization)

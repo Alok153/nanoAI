@@ -2,7 +2,6 @@ package com.vjaykrsna.nanoai.core.runtime
 
 import android.content.Context
 import com.google.mediapipe.tasks.genai.llminference.LlmInference
-import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import java.io.FileNotFoundException
@@ -24,22 +23,15 @@ private const val DEFAULT_TEMPERATURE = 0.7f
  * once the converted model artifacts are available (see TODO(NANO-421)).
  */
 @Singleton
-class MediaPipeLocalModelRuntime
+class MediaPipeInferenceService
 @Inject
-constructor(@ApplicationContext private val context: Context) : LocalModelRuntime {
+constructor(@ApplicationContext private val context: Context) : InferenceService {
   private val modelDirectory: File by lazy { File(context.filesDir, "models") }
 
   private var llmInference: LlmInference? = null
 
   override suspend fun isModelReady(modelId: String): Boolean =
     withContext(Dispatchers.IO) { modelFile(modelId).exists() }
-
-  override suspend fun hasReadyModel(models: List<ModelPackage>): Boolean {
-    if (models.isEmpty()) return false
-    return models.any { model ->
-      model.providerType.name != "CLOUD_API" && isModelReady(model.modelId)
-    }
-  }
 
   @OptIn(ExperimentalTime::class)
   override suspend fun generate(request: LocalGenerationRequest): Result<LocalGenerationResult> {

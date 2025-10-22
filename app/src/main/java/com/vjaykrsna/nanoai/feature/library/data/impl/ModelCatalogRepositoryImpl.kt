@@ -11,6 +11,7 @@ import com.vjaykrsna.nanoai.feature.library.data.daos.ModelPackageReadDao
 import com.vjaykrsna.nanoai.feature.library.data.daos.ModelPackageWriteDao
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
 import com.vjaykrsna.nanoai.model.catalog.ModelPackageEntity
+import com.vjaykrsna.nanoai.model.leap.LeapModelRemoteDataSource
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import java.util.UUID
@@ -32,6 +33,7 @@ constructor(
   private val modelPackageReadDao: ModelPackageReadDao,
   private val modelPackageWriteDao: ModelPackageWriteDao,
   private val chatThreadDao: ChatThreadDao,
+  private val leapModelRemoteDataSource: LeapModelRemoteDataSource,
   @ApplicationContext private val context: Context,
   private val clock: Clock,
 ) : ModelCatalogRepository {
@@ -49,12 +51,13 @@ constructor(
       .map { models -> models.map { it.toDomain() } }
       .distinctUntilChanged()
 
-  override fun observeAllModels(): Flow<List<ModelPackage>> = allModelsFlow
+  override fun observeAllModels(): Flow<List<ModelPackage>> =
+    allModelsFlow.map { it + leapModelRemoteDataSource.getModels() }
 
   override fun observeInstalledModels(): Flow<List<ModelPackage>> = installedModelsFlow
 
   override suspend fun getAllModels(): List<ModelPackage> =
-    modelPackageReadDao.getAll().map { it.toDomain() }
+    modelPackageReadDao.getAll().map { it.toDomain() } + leapModelRemoteDataSource.getModels()
 
   override suspend fun getModel(modelId: String): ModelPackage? =
     modelPackageReadDao.getById(modelId)?.toDomain()
