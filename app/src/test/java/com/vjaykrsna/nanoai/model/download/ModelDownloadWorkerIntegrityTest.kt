@@ -3,11 +3,11 @@ package com.vjaykrsna.nanoai.model.download
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.device.DeviceIdentityProvider
+import com.vjaykrsna.nanoai.feature.library.domain.ModelManifestUseCase
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
 import com.vjaykrsna.nanoai.model.catalog.DownloadManifestDao
 import com.vjaykrsna.nanoai.model.catalog.DownloadManifestEntity
 import com.vjaykrsna.nanoai.model.catalog.ModelCatalogLocalDataSource
-import com.vjaykrsna.nanoai.model.catalog.ModelManifestRepositoryImpl
 import com.vjaykrsna.nanoai.model.catalog.ModelPackageEntity
 import com.vjaykrsna.nanoai.model.catalog.ModelPackageRelationsDao
 import com.vjaykrsna.nanoai.model.catalog.ModelPackageWithManifests
@@ -55,7 +55,7 @@ class ModelDownloadWorkerIntegrityTest {
   private val telemetryReporter = mockk<TelemetryReporter>(relaxed = true)
   private val huggingFaceManifestFetcher = mockk<HuggingFaceManifestFetcher>(relaxed = true)
   private val repository =
-    ModelManifestRepositoryImpl(
+    ModelManifestUseCase(
       service = fakeService,
       localDataSource = localDataSource,
       json = json,

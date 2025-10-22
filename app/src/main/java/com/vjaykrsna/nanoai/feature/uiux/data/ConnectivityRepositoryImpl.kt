@@ -36,7 +36,7 @@ constructor(
     userProfileRepository
       .observePreferences()
       .stateIn(
-        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + ioDispatcher),
+        ioDispatcher,
         SharingStarted.Eagerly,
         DomainUiPreferencesSnapshot(),
       )
@@ -53,7 +53,7 @@ constructor(
         )
       }
       .stateIn(
-        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + ioDispatcher),
+        ioDispatcher,
         SharingStarted.Eagerly,
         ConnectivityBannerState(status = connectivity.value),
       )

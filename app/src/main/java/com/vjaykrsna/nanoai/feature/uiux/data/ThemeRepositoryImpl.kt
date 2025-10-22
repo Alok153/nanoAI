@@ -11,6 +11,8 @@ import com.vjaykrsna.nanoai.feature.uiux.state.UiPreferenceSnapshot
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
@@ -31,7 +33,7 @@ constructor(
     userProfileRepository
       .observePreferences()
       .stateIn(
-        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + ioDispatcher),
+        ioDispatcher,
         SharingStarted.Eagerly,
         DomainUiPreferencesSnapshot(),
       )
@@ -40,7 +42,7 @@ constructor(
     preferences
       .map { snapshot -> snapshot.toUiPreferenceSnapshot() }
       .stateIn(
-        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + ioDispatcher),
+        ioDispatcher,
         SharingStarted.Eagerly,
         UiPreferenceSnapshot(),
       )

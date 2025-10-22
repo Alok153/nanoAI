@@ -36,8 +36,8 @@
 **Tests**: Unit tests verify repository interfaces and data operations
 
 - [x] T016 Split `ShellStateRepository` (343 lines) into focused repositories: `NavigationRepository`, `ConnectivityRepository`, `ThemeRepository`, `ProgressRepository` in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/data/`
-- [ ] T017 Move business logic from `ModelManifestRepositoryImpl` (complex manifest validation, resolution strategies, caching, telemetry) to appropriate UseCases
-- [ ] T018 Remove custom CoroutineScope creation from repositories and use injected dispatchers
+- [x] T017 Move business logic from `ModelManifestRepositoryImpl` (complex manifest validation, resolution strategies, caching, telemetry) to appropriate UseCases
+- [x] T018 Remove custom CoroutineScope creation from repositories and use injected dispatchers
 - [ ] T019 Implement consistent offline error handling across all network repositories (HuggingFaceCatalogRepositoryImpl, ModelManifestRepositoryImpl)
 - [ ] T020 Create repository interface contracts for all repository implementations where missing
 - [ ] T021 Add UseCase interfaces for consistency (currently only ModelDownloadsAndExportUseCase has an interface)
