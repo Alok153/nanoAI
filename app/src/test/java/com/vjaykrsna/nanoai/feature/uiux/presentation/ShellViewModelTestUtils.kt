@@ -12,12 +12,9 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferencesSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UserProfile
 import com.vjaykrsna.nanoai.feature.library.data.DownloadManager
 import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
-import com.vjaykrsna.nanoai.feature.uiux.data.ShellStateRepository
 import com.vjaykrsna.nanoai.feature.uiux.domain.CommandPaletteActionProvider
 import com.vjaykrsna.nanoai.feature.uiux.domain.ProgressCenterCoordinator
-import com.vjaykrsna.nanoai.feature.uiux.state.CommandAction
 import com.vjaykrsna.nanoai.feature.uiux.state.CommandCategory
-import com.vjaykrsna.nanoai.feature.uiux.state.CommandDestination
 import com.vjaykrsna.nanoai.feature.uiux.state.CommandPaletteState
 import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityBannerState
 import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityStatus
@@ -26,154 +23,14 @@ import com.vjaykrsna.nanoai.feature.uiux.state.PaletteSource
 import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
 import com.vjaykrsna.nanoai.feature.uiux.state.RecentActivityItem
 import com.vjaykrsna.nanoai.feature.uiux.state.RightPanel
-import com.vjaykrsna.nanoai.feature.uiux.state.ShellLayoutState
 import com.vjaykrsna.nanoai.feature.uiux.state.UiPreferenceSnapshot
 import com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload
+import com.vjaykrsna.nanoai.ui.navigation.Screen
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.datetime.Instant as KtxInstant
-
-internal class FakeShellStateRepository(
-  initialMode: ModeId = ModeId.HOME,
-  initialConnectivity: ConnectivityStatus = ConnectivityStatus.ONLINE,
-  initialJobs: List<ProgressJob> = emptyList(),
-) : ShellStateRepository(NoopUserProfileRepository()) {
-  @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
-  private val testWindowSizeClass: WindowSizeClass =
-    WindowSizeClass.calculateFromSize(DpSize(width = 600.dp, height = 800.dp))
-  private val initialLayout =
-    ShellLayoutState(
-      windowSizeClass = testWindowSizeClass,
-      isLeftDrawerOpen = true,
-      isRightDrawerOpen = false,
-      activeRightPanel = null,
-      activeMode = initialMode,
-      showCommandPalette = true,
-      connectivity = initialConnectivity,
-      pendingUndoAction = null,
-      progressJobs = initialJobs,
-      recentActivity = emptyList(),
-    )
-  private val initialPaletteState =
-    CommandPaletteState(
-      query = "",
-      results = emptyList(),
-      recentCommands = emptyList(),
-      selectedIndex = -1,
-      surfaceTarget = CommandCategory.MODES,
-    )
-  private val initialBanner =
-    ConnectivityBannerState(
-      status = initialConnectivity,
-      queuedActionCount = initialJobs.size,
-      cta =
-        CommandAction(
-          id = "open-progress",
-          title = "View queue",
-          category = CommandCategory.JOBS,
-          destination = CommandDestination.OpenRightPanel(RightPanel.MODEL_SELECTOR),
-        ),
-    )
-  private val initialPreferences = UiPreferenceSnapshot()
-
-  private val _layout = MutableStateFlow(initialLayout)
-  override val shellLayoutState: StateFlow<ShellLayoutState> = _layout
-  private val _palette = MutableStateFlow(initialPaletteState)
-  override val commandPaletteState: StateFlow<CommandPaletteState> = _palette
-  private val _banner = MutableStateFlow(initialBanner)
-  override val connectivityBannerState: StateFlow<ConnectivityBannerState> = _banner
-  private val _preferences = MutableStateFlow(initialPreferences)
-  override val uiPreferenceSnapshot: StateFlow<UiPreferenceSnapshot> = _preferences
-  private val _recent = MutableStateFlow<List<RecentActivityItem>>(emptyList())
-  override val recentActivity: StateFlow<List<RecentActivityItem>> = _recent
-
-  val openModeCalls = mutableListOf<ModeId>()
-  val rightDrawerToggles = mutableListOf<RightPanel>()
-  val queuedJobs = mutableListOf<ProgressJob>()
-  val completedJobs = mutableListOf<UUID>()
-  val connectivityUpdates = mutableListOf<ConnectivityStatus>()
-
-  val layoutSnapshot: ShellLayoutState
-    get() = _layout.value
-
-  override suspend fun openMode(modeId: ModeId) {
-    openModeCalls += modeId
-    _layout.value =
-      _layout.value.copy(activeMode = modeId, isLeftDrawerOpen = false, showCommandPalette = false)
-  }
-
-  override suspend fun toggleLeftDrawer() {
-    _layout.value =
-      _layout.value.copy(
-        isLeftDrawerOpen = !_layout.value.isLeftDrawerOpen,
-        showCommandPalette = false,
-      )
-  }
-
-  override suspend fun toggleRightDrawer(panel: RightPanel) {
-    rightDrawerToggles += panel
-    val currentlyOpen = _layout.value.isRightDrawerOpen && _layout.value.activeRightPanel == panel
-    _layout.value =
-      _layout.value.copy(
-        isRightDrawerOpen = !currentlyOpen,
-        activeRightPanel = if (currentlyOpen) null else panel,
-      )
-  }
-
-  override suspend fun showCommandPalette(source: PaletteSource) {
-    _palette.value =
-      _palette.value.copy(
-        surfaceTarget =
-          when (source) {
-            PaletteSource.KEYBOARD_SHORTCUT -> CommandCategory.MODES
-            PaletteSource.TOP_APP_BAR -> CommandCategory.SETTINGS
-            PaletteSource.QUICK_ACTION -> CommandCategory.JOBS
-            PaletteSource.UNKNOWN -> CommandCategory.MODES
-          }
-      )
-    _layout.value = _layout.value.copy(showCommandPalette = true, isLeftDrawerOpen = false)
-  }
-
-  override suspend fun hideCommandPalette() {
-    _layout.value = _layout.value.copy(showCommandPalette = false)
-  }
-
-  override suspend fun queueJob(job: ProgressJob) {
-    queuedJobs += job
-    _layout.value = _layout.value.copy(progressJobs = _layout.value.progressJobs + job)
-    _layout.value =
-      _layout.value.copy(pendingUndoAction = UndoPayload(actionId = "queue-${job.jobId}"))
-    _banner.value =
-      _banner.value.copy(
-        queuedActionCount = _layout.value.progressJobs.size,
-        status = ConnectivityStatus.OFFLINE,
-      )
-  }
-
-  override suspend fun completeJob(jobId: UUID) {
-    completedJobs += jobId
-    _layout.value =
-      _layout.value.copy(
-        progressJobs = _layout.value.progressJobs.filterNot { it.jobId == jobId },
-        pendingUndoAction = null,
-      )
-    _banner.value = _banner.value.copy(queuedActionCount = _layout.value.progressJobs.size)
-  }
-
-  override suspend fun updateConnectivity(status: ConnectivityStatus) {
-    connectivityUpdates += status
-    _layout.value = _layout.value.copy(connectivity = status)
-    _banner.value =
-      _banner.value.copy(status = status, queuedActionCount = _layout.value.progressJobs.size)
-  }
-
-  override suspend fun recordUndoPayload(payload: UndoPayload?) {
-    _layout.value = _layout.value.copy(pendingUndoAction = payload)
-  }
-}
 
 internal class NoopUserProfileRepository : UserProfileRepository {
   private val profileFlow = MutableStateFlow<UserProfile?>(null)
@@ -204,13 +61,53 @@ internal class NoopUserProfileRepository : UserProfileRepository {
 
   override fun observeUIStateSnapshot(userId: String): Flow<UIStateSnapshot?> = uiStateFlow
 
-  override suspend fun updateLeftDrawerOpen(userId: String, open: Boolean) = Unit
+  override suspend fun updateLeftDrawerOpen(userId: String, open: Boolean) {
+    val current =
+      uiStateFlow.value
+        ?: UIStateSnapshot(
+          userId = userId,
+          expandedPanels = emptyList(),
+          recentActions = emptyList(),
+          isSidebarCollapsed = false,
+        )
+    uiStateFlow.value = current.copy(isLeftDrawerOpen = open)
+  }
 
-  override suspend fun updateRightDrawerState(userId: String, open: Boolean, panel: String?) = Unit
+  override suspend fun updateRightDrawerState(userId: String, open: Boolean, panel: String?) {
+    val current =
+      uiStateFlow.value
+        ?: UIStateSnapshot(
+          userId = userId,
+          expandedPanels = emptyList(),
+          recentActions = emptyList(),
+          isSidebarCollapsed = false,
+        )
+    uiStateFlow.value = current.copy(isRightDrawerOpen = open, activeRightPanel = panel)
+  }
 
-  override suspend fun updateActiveModeRoute(userId: String, route: String) = Unit
+  override suspend fun updateActiveModeRoute(userId: String, route: String) {
+    val current =
+      uiStateFlow.value
+        ?: UIStateSnapshot(
+          userId = userId,
+          expandedPanels = emptyList(),
+          recentActions = emptyList(),
+          isSidebarCollapsed = false,
+        )
+    uiStateFlow.value = current.copy(activeModeRoute = route)
+  }
 
-  override suspend fun updateCommandPaletteVisibility(userId: String, visible: Boolean) = Unit
+  override suspend fun updateCommandPaletteVisibility(userId: String, visible: Boolean) {
+    val current =
+      uiStateFlow.value
+        ?: UIStateSnapshot(
+          userId = userId,
+          expandedPanels = emptyList(),
+          recentActions = emptyList(),
+          isSidebarCollapsed = false,
+        )
+    uiStateFlow.value = current.copy(isCommandPaletteVisible = visible)
+  }
 
   override suspend fun recordCommandPaletteRecent(commandId: String) = Unit
 
@@ -220,6 +117,130 @@ internal class NoopUserProfileRepository : UserProfileRepository {
 
   override suspend fun setOfflineOverride(isOffline: Boolean) {
     offlineFlow.value = isOffline
+  }
+}
+
+internal class FakeNavigationRepository(
+  private val userProfileRepository: com.vjaykrsna.nanoai.core.data.repository.UserProfileRepository
+) : com.vjaykrsna.nanoai.core.data.repository.NavigationRepository {
+  override val ioDispatcher: kotlinx.coroutines.CoroutineDispatcher =
+    kotlinx.coroutines.Dispatchers.Unconfined
+
+  private val commandPaletteStateFlow =
+    kotlinx.coroutines.flow.MutableStateFlow(CommandPaletteState())
+  override val commandPaletteState: kotlinx.coroutines.flow.Flow<CommandPaletteState> =
+    commandPaletteStateFlow
+
+  private val recentActivityFlow =
+    kotlinx.coroutines.flow.MutableStateFlow<List<RecentActivityItem>>(emptyList())
+  override val recentActivity: kotlinx.coroutines.flow.Flow<List<RecentActivityItem>> =
+    recentActivityFlow
+
+  @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
+  private val windowSizeClassFlow =
+    kotlinx.coroutines.flow.MutableStateFlow(
+      WindowSizeClass.calculateFromSize(DpSize(800.dp, 600.dp))
+    )
+  override val windowSizeClass: kotlinx.coroutines.flow.Flow<WindowSizeClass> = windowSizeClassFlow
+
+  internal val undoPayloadFlow =
+    kotlinx.coroutines.flow.MutableStateFlow<com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload?>(
+      null
+    )
+  override val undoPayload:
+    kotlinx.coroutines.flow.Flow<com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload?> =
+    undoPayloadFlow
+
+  override fun updateWindowSizeClass(sizeClass: WindowSizeClass) {
+    windowSizeClassFlow.value = sizeClass
+  }
+
+  override suspend fun openMode(modeId: ModeId) {
+    val route = Screen.fromModeId(modeId).route
+    userProfileRepository.updateActiveModeRoute("default", route)
+    userProfileRepository.updateLeftDrawerOpen("default", false)
+    userProfileRepository.updateCommandPaletteVisibility("default", false)
+  }
+
+  override suspend fun toggleLeftDrawer() = Unit
+
+  override suspend fun setLeftDrawer(open: Boolean) = Unit
+
+  override suspend fun toggleRightDrawer(panel: RightPanel) {
+    userProfileRepository.updateRightDrawerState("default", true, panel.name)
+  }
+
+  override suspend fun showCommandPalette(
+    source: com.vjaykrsna.nanoai.feature.uiux.state.PaletteSource
+  ) {
+    commandPaletteStateFlow.value = CommandPaletteState(surfaceTarget = CommandCategory.MODES)
+  }
+
+  override suspend fun hideCommandPalette() {
+    commandPaletteStateFlow.value = CommandPaletteState()
+  }
+
+  override suspend fun recordUndoPayload(
+    payload: com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload?
+  ) {
+    undoPayloadFlow.value = payload
+  }
+}
+
+internal class FakeConnectivityRepository :
+  com.vjaykrsna.nanoai.core.data.repository.ConnectivityRepository {
+  override val ioDispatcher: kotlinx.coroutines.CoroutineDispatcher =
+    kotlinx.coroutines.Dispatchers.Unconfined
+
+  private val connectivityBannerStateFlow =
+    kotlinx.coroutines.flow.MutableStateFlow(
+      ConnectivityBannerState(status = ConnectivityStatus.ONLINE)
+    )
+  override val connectivityBannerState: kotlinx.coroutines.flow.Flow<ConnectivityBannerState> =
+    connectivityBannerStateFlow
+
+  override suspend fun updateConnectivity(status: ConnectivityStatus) {
+    connectivityBannerStateFlow.value = ConnectivityBannerState(status = status)
+  }
+}
+
+internal class FakeThemeRepository : com.vjaykrsna.nanoai.core.data.repository.ThemeRepository {
+  override val ioDispatcher: kotlinx.coroutines.CoroutineDispatcher =
+    kotlinx.coroutines.Dispatchers.Unconfined
+
+  private val uiPreferenceSnapshotFlow =
+    kotlinx.coroutines.flow.MutableStateFlow(UiPreferenceSnapshot())
+  override val uiPreferenceSnapshot: kotlinx.coroutines.flow.Flow<UiPreferenceSnapshot> =
+    uiPreferenceSnapshotFlow
+
+  override suspend fun updateThemePreference(
+    theme: com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
+  ) {
+    uiPreferenceSnapshotFlow.value = uiPreferenceSnapshotFlow.value.copy(theme = theme)
+  }
+
+  override suspend fun updateVisualDensity(
+    density: com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
+  ) {
+    uiPreferenceSnapshotFlow.value = uiPreferenceSnapshotFlow.value.copy(density = density)
+  }
+}
+
+internal class FakeProgressRepository :
+  com.vjaykrsna.nanoai.core.data.repository.ProgressRepository {
+  override val ioDispatcher: kotlinx.coroutines.CoroutineDispatcher =
+    kotlinx.coroutines.Dispatchers.Unconfined
+
+  private val progressJobsFlow =
+    kotlinx.coroutines.flow.MutableStateFlow<List<ProgressJob>>(emptyList())
+  override val progressJobs: kotlinx.coroutines.flow.Flow<List<ProgressJob>> = progressJobsFlow
+
+  override suspend fun queueJob(job: ProgressJob) {
+    progressJobsFlow.value = progressJobsFlow.value + job
+  }
+
+  override suspend fun completeJob(jobId: java.util.UUID) {
+    progressJobsFlow.value = progressJobsFlow.value.filterNot { it.jobId == jobId }
   }
 }
 
@@ -268,3 +289,22 @@ internal class FakeDownloadManager : DownloadManager {
 
   override suspend fun deletePartialFiles(modelId: String) = Unit
 }
+
+internal fun createFakeRepositories(): FakeRepositories {
+  val userProfileRepository = NoopUserProfileRepository()
+  return FakeRepositories(
+    navigationRepository = FakeNavigationRepository(userProfileRepository),
+    connectivityRepository = FakeConnectivityRepository(),
+    themeRepository = FakeThemeRepository(),
+    progressRepository = FakeProgressRepository(),
+    userProfileRepository = userProfileRepository,
+  )
+}
+
+internal data class FakeRepositories(
+  val navigationRepository: com.vjaykrsna.nanoai.core.data.repository.NavigationRepository,
+  val connectivityRepository: com.vjaykrsna.nanoai.core.data.repository.ConnectivityRepository,
+  val themeRepository: com.vjaykrsna.nanoai.core.data.repository.ThemeRepository,
+  val progressRepository: com.vjaykrsna.nanoai.core.data.repository.ProgressRepository,
+  val userProfileRepository: com.vjaykrsna.nanoai.core.data.repository.UserProfileRepository,
+)

@@ -1,7 +1,9 @@
 package com.vjaykrsna.nanoai.feature.uiux.domain
 
 import com.vjaykrsna.nanoai.core.common.IoDispatcher
-import com.vjaykrsna.nanoai.feature.uiux.data.ShellStateRepository
+import com.vjaykrsna.nanoai.core.data.repository.ConnectivityRepository
+import com.vjaykrsna.nanoai.core.data.repository.NavigationRepository
+import com.vjaykrsna.nanoai.core.data.repository.ProgressRepository
 import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityStatus
 import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
 import com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload
@@ -17,22 +19,24 @@ import kotlinx.coroutines.launch
 class QueueJobUseCase
 @Inject
 constructor(
-  private val repository: ShellStateRepository,
+  private val progressRepository: ProgressRepository,
+  private val connectivityRepository: ConnectivityRepository,
+  private val navigationRepository: NavigationRepository,
   @IoDispatcher private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
   private val scope = CoroutineScope(SupervisorJob() + dispatcher)
 
   fun execute(job: ProgressJob) {
     scope.launch {
-      val layout = repository.shellLayoutState.first()
-      repository.queueJob(job)
-      repository.recordUndoPayload(
+      val connectivityStatus = connectivityRepository.connectivityBannerState.first().status
+      progressRepository.queueJob(job)
+      navigationRepository.recordUndoPayload(
         UndoPayload(
           actionId = "queue-${job.jobId}",
           metadata =
             mapOf(
               "message" to
-                buildQueuedJobMessage(job, layout.connectivity != ConnectivityStatus.ONLINE),
+                buildQueuedJobMessage(job, connectivityStatus != ConnectivityStatus.ONLINE),
               "jobId" to job.jobId.toString(),
             ),
         )

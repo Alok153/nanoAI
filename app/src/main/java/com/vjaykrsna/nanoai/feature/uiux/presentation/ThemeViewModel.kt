@@ -3,9 +3,9 @@ package com.vjaykrsna.nanoai.feature.uiux.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
+import com.vjaykrsna.nanoai.core.data.repository.ThemeRepository
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
-import com.vjaykrsna.nanoai.feature.uiux.data.ShellStateRepository
 import com.vjaykrsna.nanoai.feature.uiux.domain.SettingsOperationsUseCase
 import com.vjaykrsna.nanoai.feature.uiux.state.UiPreferenceSnapshot
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
 class ThemeViewModel
 @Inject
 constructor(
-  private val repository: ShellStateRepository,
+  private val themeRepository: ThemeRepository,
   private val settingsOperationsUseCase: SettingsOperationsUseCase,
   @Suppress("UnusedPrivateProperty")
   @MainImmediateDispatcher
@@ -30,7 +30,7 @@ constructor(
 ) : ViewModel() {
   /** Current UI preferences including theme, density, and other display settings. */
   val uiPreferences: StateFlow<UiPreferenceSnapshot> =
-    repository.uiPreferenceSnapshot.stateIn(
+    themeRepository.uiPreferenceSnapshot.stateIn(
       scope = viewModelScope,
       started = SharingStarted.Eagerly,
       initialValue = UiPreferenceSnapshot(),

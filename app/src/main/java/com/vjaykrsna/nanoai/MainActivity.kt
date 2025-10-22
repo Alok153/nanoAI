@@ -11,6 +11,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -52,6 +54,11 @@ class MainActivity : ComponentActivity() {
   private var jankStats: JankStats? = null
   private val shellViewModel: ShellViewModel by viewModels()
   private lateinit var backPressedCallback: OnBackPressedCallback
+
+  private val notificationPermissionLauncher: ActivityResultLauncher<String> =
+    registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+      Log.d("MainActivity", "Notification permission ${if (granted) "granted" else "denied"}")
+    }
 
   @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -134,21 +141,6 @@ class MainActivity : ComponentActivity() {
     super.onDestroy()
   }
 
-  override fun onRequestPermissionsResult(
-    requestCode: Int,
-    permissions: Array<String>,
-    grantResults: IntArray,
-  ) {
-    super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-    when (requestCode) {
-      NOTIFICATION_PERMISSION_REQUEST_CODE -> {
-        val granted =
-          grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
-        Log.d("MainActivity", "Notification permission ${if (granted) "granted" else "denied"}")
-      }
-    }
-  }
-
   private fun createNotificationChannels() {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
       val channel =
@@ -172,11 +164,8 @@ class MainActivity : ComponentActivity() {
           Log.d("MainActivity", "Notification permission already granted")
         }
         else -> {
-          // Request permission
-          requestPermissions(
-            arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-            NOTIFICATION_PERMISSION_REQUEST_CODE,
-          )
+          // Request permission using Activity Result API
+          notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
       }
     }
@@ -185,7 +174,6 @@ class MainActivity : ComponentActivity() {
   private companion object {
     const val JANK_TAG = "NanoAI-Jank"
     const val NANOS_PER_MILLISECOND = 1_000_000f
-    const val NOTIFICATION_PERMISSION_REQUEST_CODE = 1001
     const val WORK_MANAGER_NOTIFICATION_CHANNEL_ID = "work_manager_channel"
     const val WORK_MANAGER_NOTIFICATION_CHANNEL_NAME = "Background Tasks"
   }

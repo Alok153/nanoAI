@@ -1,7 +1,8 @@
 package com.vjaykrsna.nanoai.feature.uiux.domain
 
 import com.vjaykrsna.nanoai.core.common.IoDispatcher
-import com.vjaykrsna.nanoai.feature.uiux.data.ShellStateRepository
+import com.vjaykrsna.nanoai.core.data.repository.NavigationRepository
+import com.vjaykrsna.nanoai.core.data.repository.ProgressRepository
 import com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload
 import java.util.UUID
 import javax.inject.Inject
@@ -15,7 +16,8 @@ import kotlinx.coroutines.launch
 class UndoActionUseCase
 @Inject
 constructor(
-  private val repository: ShellStateRepository,
+  private val progressRepository: ProgressRepository,
+  private val navigationRepository: NavigationRepository,
   @IoDispatcher private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
   private val scope = CoroutineScope(SupervisorJob() + dispatcher)
@@ -28,12 +30,12 @@ constructor(
           val jobIdString = payload.actionId.removePrefix("queue-")
           val jobId = runCatching { UUID.fromString(jobIdString) }.getOrNull()
           if (jobId != null) {
-            repository.completeJob(jobId)
+            progressRepository.completeJob(jobId)
           }
         }
       // Add more undo action types as needed
       }
-      repository.recordUndoPayload(null)
+      navigationRepository.recordUndoPayload(null)
     }
   }
 }

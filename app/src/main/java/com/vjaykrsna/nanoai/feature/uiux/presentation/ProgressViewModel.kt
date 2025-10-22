@@ -3,7 +3,6 @@ package com.vjaykrsna.nanoai.feature.uiux.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
-import com.vjaykrsna.nanoai.feature.uiux.data.ShellStateRepository
 import com.vjaykrsna.nanoai.feature.uiux.domain.JobOperationsUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.ProgressCenterCoordinator
 import com.vjaykrsna.nanoai.feature.uiux.domain.QueueJobUseCase
@@ -25,7 +24,6 @@ import kotlinx.coroutines.launch
 class ProgressViewModel
 @Inject
 constructor(
-  @Suppress("UnusedPrivateProperty") private val repository: ShellStateRepository,
   private val progressCoordinator: ProgressCenterCoordinator,
   private val queueJobUseCase: QueueJobUseCase,
   private val jobOperationsUseCase: JobOperationsUseCase,

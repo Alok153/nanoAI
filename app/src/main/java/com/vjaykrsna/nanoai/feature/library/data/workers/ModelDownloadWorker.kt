@@ -10,10 +10,10 @@ import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.feature.library.data.daos.DownloadTaskDao
 import com.vjaykrsna.nanoai.feature.library.data.daos.ModelPackageReadDao
 import com.vjaykrsna.nanoai.feature.library.data.daos.ModelPackageWriteDao
+import com.vjaykrsna.nanoai.feature.library.domain.ModelManifestUseCase
 import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
 import com.vjaykrsna.nanoai.model.catalog.DownloadManifest
-import com.vjaykrsna.nanoai.model.catalog.ModelManifestRepository
 import com.vjaykrsna.nanoai.model.catalog.VerificationOutcome
 import com.vjaykrsna.nanoai.telemetry.TelemetryReporter
 import dagger.assisted.Assisted
@@ -63,7 +63,7 @@ constructor(
   val modelPackageReadDao: ModelPackageReadDao,
   val modelPackageWriteDao: ModelPackageWriteDao,
   val okHttpClient: OkHttpClient,
-  val modelManifestRepository: ModelManifestRepository,
+  val modelManifestUseCase: ModelManifestUseCase,
   val telemetryReporter: TelemetryReporter,
 )
 
@@ -80,8 +80,7 @@ constructor(
   private val modelPackageReadDao: ModelPackageReadDao = dependencies.modelPackageReadDao
   private val modelPackageWriteDao: ModelPackageWriteDao = dependencies.modelPackageWriteDao
   private val okHttpClient: OkHttpClient = dependencies.okHttpClient
-  private val modelManifestRepository: ModelManifestRepository =
-    dependencies.modelManifestRepository
+  private val modelManifestUseCase: ModelManifestUseCase = dependencies.modelManifestUseCase
   private val telemetryReporter: TelemetryReporter = dependencies.telemetryReporter
 
   override suspend fun doWork(): WorkResult = withContext(Dispatchers.IO) { executeWork() }
@@ -104,8 +103,7 @@ constructor(
         )
 
         when (
-          val manifestResult =
-            modelManifestRepository.refreshManifest(modelId, modelPackage.version)
+          val manifestResult = modelManifestUseCase.refreshManifest(modelId, modelPackage.version)
         ) {
           is NanoAIResult.Success -> processManifest(taskId, modelId, manifestResult.value)
           is NanoAIResult.RecoverableError -> handleRecoverable(taskId, modelId, manifestResult)
@@ -450,7 +448,7 @@ constructor(
   ) {
     when (
       val result =
-        modelManifestRepository.reportVerification(
+        modelManifestUseCase.reportVerification(
           modelId = modelId,
           version = manifest.version,
           checksumSha256 = manifest.checksumSha256,

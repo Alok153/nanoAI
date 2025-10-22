@@ -8,6 +8,8 @@ import com.vjaykrsna.nanoai.model.catalog.DeliveryType
 import com.vjaykrsna.nanoai.model.catalog.ModelPackageEntity
 import com.vjaykrsna.nanoai.model.catalog.ModelPackageReadDao
 import com.vjaykrsna.nanoai.model.catalog.ModelPackageWriteDao
+import com.vjaykrsna.nanoai.model.leap.LeapModelRemoteDataSource
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import java.io.File
@@ -20,6 +22,7 @@ internal data class ModelCatalogRepositoryTestFixture(
   val modelPackageReadDao: ModelPackageReadDao,
   val modelPackageWriteDao: ModelPackageWriteDao,
   val chatThreadDao: ChatThreadDao,
+  val leapModelRemoteDataSource: LeapModelRemoteDataSource,
   val context: Context,
   val clock: MutableClock,
   val repository: ModelCatalogRepositoryImpl,
@@ -62,6 +65,8 @@ internal fun createModelCatalogRepositoryFixture(
     }
   val writeDao = mockk<ModelPackageWriteDao>(relaxed = true)
   val chatThreadDao = mockk<ChatThreadDao>(relaxed = true)
+  val leapModelRemoteDataSource =
+    mockk<LeapModelRemoteDataSource>(relaxed = true) { coEvery { getModels() } returns emptyList() }
   val context = mockk<Context>()
   val clock = MutableClock(Instant.parse("2025-10-10T00:00:00Z"))
   every { context.filesDir } returns tempDir
@@ -71,6 +76,7 @@ internal fun createModelCatalogRepositoryFixture(
       modelPackageReadDao = readDao,
       modelPackageWriteDao = writeDao,
       chatThreadDao = chatThreadDao,
+      leapModelRemoteDataSource = leapModelRemoteDataSource,
       context = context,
       clock = clock,
     )
@@ -79,6 +85,7 @@ internal fun createModelCatalogRepositoryFixture(
     modelPackageReadDao = readDao,
     modelPackageWriteDao = writeDao,
     chatThreadDao = chatThreadDao,
+    leapModelRemoteDataSource = leapModelRemoteDataSource,
     context = context,
     clock = clock,
     repository = repository,
