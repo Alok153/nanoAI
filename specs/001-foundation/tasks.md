@@ -28,7 +28,7 @@
 - [x] T012 Create `ImageGalleryUseCase` for image gallery operations in `app/src/main/java/com/vjaykrsna/nanoai/feature/image/domain/`
 - [x] T013 Create `ConversationUseCase` for ChatViewModel conversation operations in `app/src/main/java/com/vjaykrsna/nanoai/feature/chat/domain/`
 - [x] T014 Update all UseCase result types to use `NanoAIResult<T>` consistently
-- [ ] T015 Update UseCase unit tests to verify new split responsibilities and result types
+- [x] T015 Update UseCase unit tests to verify new split responsibilities and result types
 
 ### Phase 4: Repository Layer Cleanup [US2]
 **Story Goal**: Fix repository violations by moving business logic to UseCases and implementing proper abstractions

@@ -493,7 +493,7 @@ class ModelLibraryViewModelTest {
   @Test
   fun `pauseDownload_updatesStateImmediately`() = runTest {
     val taskId = UUID.randomUUID()
-    coEvery { downloadModelUseCase.pauseDownload(taskId) } returns Unit
+    coEvery { downloadModelUseCase.pauseDownload(taskId) } returns NanoAIResult.success(Unit)
 
     viewModel.pauseDownload(taskId)
     advanceUntilIdle()
@@ -504,7 +504,7 @@ class ModelLibraryViewModelTest {
   @Test
   fun `resumeDownload_continuesFromLastState`() = runTest {
     val taskId = UUID.randomUUID()
-    coEvery { downloadModelUseCase.resumeDownload(taskId) } returns Unit
+    coEvery { downloadModelUseCase.resumeDownload(taskId) } returns NanoAIResult.success(Unit)
 
     viewModel.resumeDownload(taskId)
     advanceUntilIdle()
@@ -515,7 +515,7 @@ class ModelLibraryViewModelTest {
   @Test
   fun `cancelDownload_cleansUpResources`() = runTest {
     val taskId = UUID.randomUUID()
-    coEvery { downloadModelUseCase.cancelDownload(taskId) } returns Unit
+    coEvery { downloadModelUseCase.cancelDownload(taskId) } returns NanoAIResult.success(Unit)
 
     viewModel.cancelDownload(taskId)
     advanceUntilIdle()
