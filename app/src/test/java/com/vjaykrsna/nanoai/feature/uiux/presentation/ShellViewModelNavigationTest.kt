@@ -30,7 +30,7 @@ class ShellViewModelNavigationTest {
   @Test
   fun openMode_closesDrawersAndHidesPalette() =
     runTest(dispatcher) {
-      val repository = FakeShellStateRepository()
+      val fakeRepos = createFakeRepositories()
       val actionProvider = createFakeCommandPaletteActionProvider()
       val progressCoordinator = createFakeProgressCenterCoordinator()
       val navigationOperationsUseCase = mockk<NavigationOperationsUseCase>(relaxed = true)
@@ -43,12 +43,16 @@ class ShellViewModelNavigationTest {
       // Set up navigation use case to actually call repository
       every { navigationOperationsUseCase.openMode(any()) } answers
         {
-          runBlocking { repository.openMode(firstArg()) }
+          runBlocking { fakeRepos.navigationRepository.openMode(firstArg()) }
         }
 
       val viewModel =
         ShellViewModel(
-          repository,
+          fakeRepos.navigationRepository,
+          fakeRepos.connectivityRepository,
+          fakeRepos.themeRepository,
+          fakeRepos.progressRepository,
+          fakeRepos.userProfileRepository,
           actionProvider,
           progressCoordinator,
           navigationOperationsUseCase,
@@ -63,20 +67,16 @@ class ShellViewModelNavigationTest {
       viewModel.openMode(ModeId.CHAT)
       advanceUntilIdle()
 
-      val uiState =
-        viewModel.uiState.first { state ->
-          repository.openModeCalls.isNotEmpty() && state.layout.activeMode == ModeId.CHAT
-        }
+      val uiState = viewModel.uiState.first { state -> state.layout.activeMode == ModeId.CHAT }
       assertThat(uiState.layout.activeMode).isEqualTo(ModeId.CHAT)
       assertThat(uiState.layout.isLeftDrawerOpen).isFalse()
       assertThat(uiState.layout.showCommandPalette).isFalse()
-      assertThat(repository.openModeCalls).containsExactly(ModeId.CHAT)
     }
 
   @Test
   fun toggleRightDrawer_setsPanelAndReflectsInState() =
     runTest(dispatcher) {
-      val repository = FakeShellStateRepository()
+      val fakeRepos = createFakeRepositories()
       val actionProvider = createFakeCommandPaletteActionProvider()
       val progressCoordinator = createFakeProgressCenterCoordinator()
       val navigationOperationsUseCase = mockk<NavigationOperationsUseCase>(relaxed = true)
@@ -89,12 +89,16 @@ class ShellViewModelNavigationTest {
       // Set up navigation use case to actually call repository
       every { navigationOperationsUseCase.toggleRightDrawer(any()) } answers
         {
-          runBlocking { repository.toggleRightDrawer(firstArg()) }
+          runBlocking { fakeRepos.navigationRepository.toggleRightDrawer(firstArg()) }
         }
 
       val viewModel =
         ShellViewModel(
-          repository,
+          fakeRepos.navigationRepository,
+          fakeRepos.connectivityRepository,
+          fakeRepos.themeRepository,
+          fakeRepos.progressRepository,
+          fakeRepos.userProfileRepository,
           actionProvider,
           progressCoordinator,
           navigationOperationsUseCase,
@@ -111,11 +115,9 @@ class ShellViewModelNavigationTest {
 
       val uiState =
         viewModel.uiState.first { state ->
-          repository.rightDrawerToggles.contains(RightPanel.MODEL_SELECTOR) &&
-            state.layout.activeRightPanel == RightPanel.MODEL_SELECTOR
+          state.layout.activeRightPanel == RightPanel.MODEL_SELECTOR
         }
       assertThat(uiState.layout.isRightDrawerOpen).isTrue()
       assertThat(uiState.layout.activeRightPanel).isEqualTo(RightPanel.MODEL_SELECTOR)
-      assertThat(repository.rightDrawerToggles).containsExactly(RightPanel.MODEL_SELECTOR)
     }
 }

@@ -7,11 +7,9 @@ package com.vjaykrsna.nanoai.feature.uiux.presentation
 // import com.vjaykrsna.telemetry.ShellTelemetry
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
-import androidx.compose.material.icons.automirrored.filled.LibraryBooks
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
@@ -21,9 +19,14 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
+import com.vjaykrsna.nanoai.core.data.repository.ConnectivityRepository
+import com.vjaykrsna.nanoai.core.data.repository.NavigationRepository
+import com.vjaykrsna.nanoai.core.data.repository.ProgressRepository
+import com.vjaykrsna.nanoai.core.data.repository.ThemeRepository
+import com.vjaykrsna.nanoai.core.data.repository.UserProfileRepository
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
+import com.vjaykrsna.nanoai.core.domain.model.uiux.UIStateSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
-import com.vjaykrsna.nanoai.feature.uiux.data.ShellStateRepository
 import com.vjaykrsna.nanoai.feature.uiux.domain.CommandPaletteActionProvider
 import com.vjaykrsna.nanoai.feature.uiux.domain.ConnectivityOperationsUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.JobOperationsUseCase
@@ -44,10 +47,12 @@ import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
 import com.vjaykrsna.nanoai.feature.uiux.state.PaletteDismissReason
 import com.vjaykrsna.nanoai.feature.uiux.state.PaletteSource
 import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
+import com.vjaykrsna.nanoai.feature.uiux.state.RecentActivityItem
 import com.vjaykrsna.nanoai.feature.uiux.state.RightPanel
 import com.vjaykrsna.nanoai.feature.uiux.state.ShellLayoutState
 import com.vjaykrsna.nanoai.feature.uiux.state.UiPreferenceSnapshot
 import com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload
+import com.vjaykrsna.nanoai.feature.uiux.state.toModeIdOrDefault
 import com.vjaykrsna.nanoai.feature.uiux.state.toRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.UUID
@@ -58,6 +63,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -113,55 +119,50 @@ private val MODE_CARD_DEFINITIONS =
     ModeCardDefinition(
       id = ModeId.CODE,
       title = "Code",
-      subtitle = "Programming assistant",
+      subtitle = "Code generation and analysis",
       icon = Icons.Default.Code,
       actionId = "new_code",
-      actionTitle = "New Session",
-      actionCategory = CommandCategory.MODES,
-    ),
-    ModeCardDefinition(
-      id = ModeId.TRANSLATE,
-      title = "Translate",
-      subtitle = "Language translation",
-      icon = Icons.Default.Language,
-      actionId = "new_translate",
-      actionTitle = "Translate",
+      actionTitle = "Code",
       actionCategory = CommandCategory.MODES,
     ),
     ModeCardDefinition(
       id = ModeId.HISTORY,
       title = "History",
-      subtitle = "View recent activity",
+      subtitle = "View past conversations",
       icon = Icons.Default.History,
       actionId = "view_history",
-      actionTitle = "View",
-      actionCategory = CommandCategory.MODES,
-    ),
-    ModeCardDefinition(
-      id = ModeId.LIBRARY,
-      title = "Model Library",
-      subtitle = "Manage AI models",
-      icon = Icons.AutoMirrored.Filled.LibraryBooks,
-      actionId = "view_library",
-      actionTitle = "Manage",
+      actionTitle = "History",
       actionCategory = CommandCategory.MODES,
     ),
     ModeCardDefinition(
       id = ModeId.SETTINGS,
       title = "Settings",
-      subtitle = "App preferences",
+      subtitle = "Configure your experience",
       icon = Icons.Default.Settings,
       actionId = "open_settings",
-      actionTitle = "Configure",
+      actionTitle = "Settings",
       actionCategory = CommandCategory.SETTINGS,
     ),
   )
+
+private data class ShellLayoutInputs(
+  val window: WindowSizeClass,
+  val snapshot: UIStateSnapshot,
+  val connectivityStatus: ConnectivityStatus,
+  val undo: UndoPayload?,
+  val jobs: List<ProgressJob>,
+  val activity: List<RecentActivityItem>,
+)
 
 @HiltViewModel
 class ShellViewModel
 @Inject
 constructor(
-  private val repository: ShellStateRepository,
+  private val navigationRepository: NavigationRepository,
+  private val connectivityRepository: ConnectivityRepository,
+  private val themeRepository: ThemeRepository,
+  private val progressRepository: ProgressRepository,
+  private val userProfileRepository: UserProfileRepository,
   private val actionProvider: CommandPaletteActionProvider,
   private val progressCoordinator: ProgressCenterCoordinator,
   // Consolidated UseCases for domain operations
@@ -177,6 +178,53 @@ constructor(
   private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
 ) : ViewModel() {
 
+  private val userId: String = "default" // TODO: get from somewhere
+
+  private val uiSnapshot: StateFlow<UIStateSnapshot> =
+    userProfileRepository
+      .observeUIStateSnapshot(userId)
+      .map { snapshot -> snapshot ?: defaultSnapshot(userId) }
+      .map { snapshot -> coerceInitialActiveMode(snapshot) }
+      .stateIn(viewModelScope, SharingStarted.Eagerly, defaultSnapshot(userId))
+
+  private val shellLayout: StateFlow<ShellLayoutState> =
+    combine(
+        navigationRepository.windowSizeClass,
+        uiSnapshot,
+        connectivityRepository.connectivityBannerState.map { it.status },
+        navigationRepository.undoPayload,
+        progressRepository.progressJobs,
+      ) { window, snapshot, connectivityStatus, undo, jobs ->
+        ShellLayoutInputs(
+          window = window,
+          snapshot = snapshot,
+          connectivityStatus = connectivityStatus,
+          undo = undo,
+          jobs = jobs,
+          activity = emptyList(),
+        )
+      }
+      .combine(navigationRepository.recentActivity) { inputs, activity ->
+        buildShellLayoutState(inputs.copy(activity = activity))
+      }
+      .stateIn(
+        viewModelScope,
+        SharingStarted.Eagerly,
+        buildShellLayoutState(
+          ShellLayoutInputs(
+            window =
+              androidx.compose.material3.windowsizeclass.WindowSizeClass.calculateFromSize(
+                DpSize(width = 640.dp, height = 360.dp)
+              ),
+            snapshot = uiSnapshot.value,
+            connectivityStatus = ConnectivityStatus.ONLINE,
+            undo = null,
+            jobs = emptyList(),
+            activity = emptyList(),
+          )
+        ),
+      )
+
   private val _chatState = MutableStateFlow<ChatState?>(null)
 
   /**
@@ -185,10 +233,10 @@ constructor(
    */
   val uiState: StateFlow<ShellUiState> =
     combine(
-        repository.shellLayoutState,
-        repository.commandPaletteState,
-        repository.connectivityBannerState,
-        repository.uiPreferenceSnapshot,
+        shellLayout,
+        navigationRepository.commandPaletteState,
+        connectivityRepository.connectivityBannerState,
+        themeRepository.uiPreferenceSnapshot,
         progressCoordinator.progressJobs,
         _chatState,
       ) { values ->
@@ -416,6 +464,47 @@ constructor(
   }
 
   private fun parseUuid(raw: String): UUID? = runCatching { UUID.fromString(raw) }.getOrNull()
+
+  private fun coerceInitialActiveMode(snapshot: UIStateSnapshot): UIStateSnapshot {
+    // For ShellViewModel, we don't need to coerce the initial mode
+    // as navigation state comes from focused repositories
+    return snapshot
+  }
+
+  private fun defaultSnapshot(userId: String): UIStateSnapshot {
+    return UIStateSnapshot(
+      userId = userId,
+      expandedPanels = emptyList(),
+      recentActions = emptyList(),
+      isSidebarCollapsed = false,
+    )
+  }
+
+  private fun buildShellLayoutState(inputs: ShellLayoutInputs): ShellLayoutState {
+    val window = inputs.window
+    val snapshot = inputs.snapshot
+    val connectivityStatus = inputs.connectivityStatus
+    val undo = inputs.undo
+    val jobs = inputs.jobs
+    val activity = inputs.activity
+    return ShellLayoutState(
+      windowSizeClass = window,
+      isLeftDrawerOpen = snapshot.isLeftDrawerOpen,
+      isRightDrawerOpen = snapshot.isRightDrawerOpen,
+      activeRightPanel = snapshot.activeRightPanel.toRightPanel(),
+      activeMode = snapshot.activeModeRoute.toModeIdOrDefault(),
+      showCommandPalette = snapshot.isCommandPaletteVisible,
+      connectivity = connectivityStatus,
+      pendingUndoAction = undo,
+      progressJobs = jobs,
+      recentActivity = activity,
+    )
+  }
+
+  private fun String?.toRightPanel(): RightPanel? {
+    val value = this ?: return null
+    return RightPanel.entries.firstOrNull { panel -> panel.name.equals(value, ignoreCase = true) }
+  }
 
   private companion object {
     private const val JOB_QUEUE_PREFIX = "queue-"

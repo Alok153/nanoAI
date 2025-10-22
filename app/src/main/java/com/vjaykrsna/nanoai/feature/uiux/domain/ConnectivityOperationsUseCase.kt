@@ -1,7 +1,7 @@
 package com.vjaykrsna.nanoai.feature.uiux.domain
 
 import com.vjaykrsna.nanoai.core.common.IoDispatcher
-import com.vjaykrsna.nanoai.feature.uiux.data.ShellStateRepository
+import com.vjaykrsna.nanoai.core.data.repository.ConnectivityRepository
 import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityStatus
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 class ConnectivityOperationsUseCase
 @Inject
 constructor(
-  private val repository: ShellStateRepository,
+  private val repository: ConnectivityRepository,
   @IoDispatcher private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
   private val scope = CoroutineScope(SupervisorJob() + dispatcher)

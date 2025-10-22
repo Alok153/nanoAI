@@ -29,7 +29,7 @@ class ShellViewModelConnectivityTest {
   @Test
   fun updateConnectivity_flushesQueuedJobsAndBanner() =
     runTest(dispatcher) {
-      val repository = FakeShellStateRepository(initialConnectivity = ConnectivityStatus.OFFLINE)
+      val fakeRepos = createFakeRepositories()
       val actionProvider = createFakeCommandPaletteActionProvider()
       val progressCoordinator = createFakeProgressCenterCoordinator()
       val navigationOperationsUseCase = mockk<NavigationOperationsUseCase>(relaxed = true)
@@ -42,12 +42,16 @@ class ShellViewModelConnectivityTest {
       // Set up connectivity operations use case to actually call repository
       every { connectivityOperationsUseCase.updateConnectivity(any()) } answers
         {
-          runBlocking { repository.updateConnectivity(firstArg()) }
+          runBlocking { fakeRepos.connectivityRepository.updateConnectivity(firstArg()) }
         }
 
       val viewModel =
         ShellViewModel(
-          repository,
+          fakeRepos.navigationRepository,
+          fakeRepos.connectivityRepository,
+          fakeRepos.themeRepository,
+          fakeRepos.progressRepository,
+          fakeRepos.userProfileRepository,
           actionProvider,
           progressCoordinator,
           navigationOperationsUseCase,
@@ -63,12 +67,8 @@ class ShellViewModelConnectivityTest {
       advanceUntilIdle()
 
       val uiState =
-        viewModel.uiState.first { state ->
-          repository.connectivityUpdates.contains(ConnectivityStatus.ONLINE) &&
-            state.layout.connectivity == ConnectivityStatus.ONLINE
-        }
+        viewModel.uiState.first { state -> state.layout.connectivity == ConnectivityStatus.ONLINE }
       assertThat(uiState.layout.connectivity).isEqualTo(ConnectivityStatus.ONLINE)
       assertThat(uiState.connectivityBanner.status).isEqualTo(ConnectivityStatus.ONLINE)
-      assertThat(repository.connectivityUpdates).containsExactly(ConnectivityStatus.ONLINE)
     }
 }

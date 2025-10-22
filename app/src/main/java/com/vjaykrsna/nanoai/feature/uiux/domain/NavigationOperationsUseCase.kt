@@ -3,7 +3,7 @@ package com.vjaykrsna.nanoai.feature.uiux.domain
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import com.vjaykrsna.nanoai.core.common.IoDispatcher
-import com.vjaykrsna.nanoai.feature.uiux.data.ShellStateRepository
+import com.vjaykrsna.nanoai.core.data.repository.NavigationRepository
 import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
 import com.vjaykrsna.nanoai.feature.uiux.state.PaletteSource
 import com.vjaykrsna.nanoai.feature.uiux.state.RightPanel
@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 class NavigationOperationsUseCase
 @Inject
 constructor(
-  private val repository: ShellStateRepository,
+  private val repository: NavigationRepository,
   @IoDispatcher private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
   private val scope = CoroutineScope(SupervisorJob() + dispatcher)

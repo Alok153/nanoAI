@@ -23,7 +23,10 @@ import com.vjaykrsna.nanoai.feature.library.data.impl.ModelCatalogRepositoryImpl
 import com.vjaykrsna.nanoai.feature.library.domain.ExportService
 import com.vjaykrsna.nanoai.feature.settings.data.backup.ImportServiceImpl
 import com.vjaykrsna.nanoai.feature.settings.domain.ImportService
-import com.vjaykrsna.nanoai.feature.uiux.data.ShellStateRepository
+import com.vjaykrsna.nanoai.feature.uiux.data.ConnectivityRepositoryImpl
+import com.vjaykrsna.nanoai.feature.uiux.data.NavigationRepositoryImpl
+import com.vjaykrsna.nanoai.feature.uiux.data.ProgressRepositoryImpl
+import com.vjaykrsna.nanoai.feature.uiux.data.ThemeRepositoryImpl
 import com.vjaykrsna.nanoai.feature.uiux.domain.ProgressCenterCoordinator
 import com.vjaykrsna.nanoai.model.catalog.ModelManifestRepository
 import com.vjaykrsna.nanoai.model.catalog.ModelManifestRepositoryImpl
@@ -96,14 +99,31 @@ abstract class RepositoryModule {
   @Singleton
   abstract fun bindUserProfileRepository(impl: UserProfileRepositoryImpl): UserProfileRepository
 
-  companion object {
-    @Provides
-    @Singleton
-    fun provideShellStateRepository(
-      userProfileRepository: UserProfileRepository,
-      @IoDispatcher ioDispatcher: CoroutineDispatcher,
-    ): ShellStateRepository = ShellStateRepository(userProfileRepository, ioDispatcher)
+  @Binds
+  @Singleton
+  abstract fun bindNavigationRepository(
+    impl: NavigationRepositoryImpl
+  ): com.vjaykrsna.nanoai.core.data.repository.NavigationRepository
 
+  @Binds
+  @Singleton
+  abstract fun bindConnectivityRepository(
+    impl: ConnectivityRepositoryImpl
+  ): com.vjaykrsna.nanoai.core.data.repository.ConnectivityRepository
+
+  @Binds
+  @Singleton
+  abstract fun bindThemeRepository(
+    impl: ThemeRepositoryImpl
+  ): com.vjaykrsna.nanoai.core.data.repository.ThemeRepository
+
+  @Binds
+  @Singleton
+  abstract fun bindProgressRepository(
+    impl: ProgressRepositoryImpl
+  ): com.vjaykrsna.nanoai.core.data.repository.ProgressRepository
+
+  companion object {
     @Provides
     @Singleton
     fun provideProgressCenterCoordinator(

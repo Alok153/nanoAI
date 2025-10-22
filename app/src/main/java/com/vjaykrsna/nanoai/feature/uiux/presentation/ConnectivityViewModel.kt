@@ -3,7 +3,7 @@ package com.vjaykrsna.nanoai.feature.uiux.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
-import com.vjaykrsna.nanoai.feature.uiux.data.ShellStateRepository
+import com.vjaykrsna.nanoai.core.data.repository.ConnectivityRepository
 import com.vjaykrsna.nanoai.feature.uiux.domain.ConnectivityOperationsUseCase
 import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityBannerState
 import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityStatus
@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.stateIn
 class ConnectivityViewModel
 @Inject
 constructor(
-  private val repository: ShellStateRepository,
+  private val connectivityRepository: ConnectivityRepository,
   private val updateConnectivityUseCase: ConnectivityOperationsUseCase,
   @Suppress("UnusedPrivateProperty")
   @MainImmediateDispatcher
@@ -29,7 +29,7 @@ constructor(
 
   /** Connectivity banner state for displaying offline/online status and actions. */
   val connectivityBannerState: StateFlow<ConnectivityBannerState> =
-    repository.connectivityBannerState.stateIn(
+    connectivityRepository.connectivityBannerState.stateIn(
       scope = viewModelScope,
       started = SharingStarted.Eagerly,
       initialValue = ConnectivityBannerState(status = ConnectivityStatus.ONLINE),
