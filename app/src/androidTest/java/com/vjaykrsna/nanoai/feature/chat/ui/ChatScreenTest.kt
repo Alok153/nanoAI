@@ -6,7 +6,8 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.vjaykrsna.nanoai.feature.chat.domain.SendPromptAndPersonaUseCase
+import com.vjaykrsna.nanoai.feature.chat.domain.SendPromptUseCase
+import com.vjaykrsna.nanoai.feature.chat.domain.SwitchPersonaUseCase
 import com.vjaykrsna.nanoai.feature.chat.presentation.ChatViewModel
 import com.vjaykrsna.nanoai.testing.ComposeTestHarness
 import com.vjaykrsna.nanoai.testing.DomainTestBuilders
@@ -36,7 +37,8 @@ class ChatScreenTest {
 
   private lateinit var conversationRepository: FakeConversationRepository
   private lateinit var personaRepository: FakePersonaRepository
-  private lateinit var sendPromptUseCase: SendPromptAndPersonaUseCase
+  private lateinit var sendPromptUseCase: SendPromptUseCase
+  private lateinit var switchPersonaUseCase: SwitchPersonaUseCase
   private lateinit var viewModel: ChatViewModel
   private lateinit var harness: ComposeTestHarness
   private val testDispatcher = StandardTestDispatcher()
@@ -46,12 +48,20 @@ class ChatScreenTest {
     conversationRepository = FakeConversationRepository()
     personaRepository = FakePersonaRepository()
     sendPromptUseCase = mockk(relaxed = true)
+    switchPersonaUseCase = mockk(relaxed = true)
 
-    coEvery { sendPromptUseCase.sendPrompt(any(), any(), any()) } returns Result.success(Unit)
-    coEvery { sendPromptUseCase.switchPersona(any(), any(), any()) } returns UUID.randomUUID()
+    coEvery { sendPromptUseCase(any(), any(), any()) } returns NanoAIResult.success(Unit)
+    coEvery { switchPersonaUseCase(any(), any(), any()) } returns
+      NanoAIResult.success(UUID.randomUUID())
 
     viewModel =
-      ChatViewModel(sendPromptUseCase, conversationRepository, personaRepository, testDispatcher)
+      ChatViewModel(
+        sendPromptUseCase,
+        switchPersonaUseCase,
+        conversationRepository,
+        personaRepository,
+        testDispatcher,
+      )
     harness = ComposeTestHarness(composeTestRule)
   }
 

@@ -181,7 +181,8 @@ class SettingsViewModelTest {
 
   @Test
   fun `setThemePreference updates UI state and calls use case`() = runTest {
-    coEvery { settingsOperationsUseCase.updateTheme(ThemePreference.DARK) } returns Unit
+    coEvery { settingsOperationsUseCase.updateTheme(ThemePreference.DARK) } returns
+      NanoAIResult.success(Unit)
 
     viewModel.setThemePreference(ThemePreference.DARK)
     advanceUntilIdle()
@@ -215,7 +216,7 @@ class SettingsViewModelTest {
 
   @Test
   fun `undoUiPreferenceChange restores previous state`() = runTest {
-    coEvery { settingsOperationsUseCase.updateTheme(any()) } returns Unit
+    coEvery { settingsOperationsUseCase.updateTheme(any()) } returns NanoAIResult.success(Unit)
     coEvery { toggleCompactModeUseCase.toggle(any()) } returns Unit
 
     // Make a change to enable undo

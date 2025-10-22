@@ -11,7 +11,8 @@ import com.vjaykrsna.nanoai.core.domain.model.ChatThread
 import com.vjaykrsna.nanoai.core.domain.model.Message
 import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
 import com.vjaykrsna.nanoai.core.model.PersonaSwitchAction
-import com.vjaykrsna.nanoai.feature.chat.domain.SendPromptAndPersonaUseCase
+import com.vjaykrsna.nanoai.feature.chat.domain.SendPromptUseCase
+import com.vjaykrsna.nanoai.feature.chat.domain.SwitchPersonaUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.UUID
 import javax.inject.Inject
@@ -32,7 +33,8 @@ import kotlinx.coroutines.launch
 class ChatViewModel
 @Inject
 constructor(
-  private val sendPromptAndPersonaUseCase: SendPromptAndPersonaUseCase,
+  private val sendPromptUseCase: SendPromptUseCase,
+  private val switchPersonaUseCase: SwitchPersonaUseCase,
   private val conversationRepository: ConversationRepository,
   private val personaRepository: PersonaRepository,
   @MainImmediateDispatcher private val dispatcher: CoroutineDispatcher,
@@ -101,7 +103,7 @@ constructor(
           return@launch
         }
 
-      sendPromptAndPersonaUseCase.sendPrompt(threadId, text, personaId).onFailure { error ->
+      sendPromptUseCase(threadId, text, personaId).onFailure { error ->
         _errorEvents.emit(ChatError.InferenceFailed(error.message ?: "Unknown error"))
       }
 
@@ -112,8 +114,7 @@ constructor(
   fun switchPersona(newPersonaId: UUID, action: PersonaSwitchAction) {
     val threadId = _currentThreadId.value ?: return
     viewModelScope.launch(dispatcher) {
-      sendPromptAndPersonaUseCase
-        .switchPersona(threadId, newPersonaId, action)
+      switchPersonaUseCase(threadId, newPersonaId, action)
         .onSuccess { newThreadId ->
           if (action == PersonaSwitchAction.START_NEW_THREAD) {
             _currentThreadId.value = newThreadId

@@ -8,9 +8,9 @@ import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
 import com.vjaykrsna.nanoai.feature.library.data.huggingface.HuggingFaceCatalogRepository
+import com.vjaykrsna.nanoai.feature.library.domain.DownloadModelUseCase
 import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceModelCompatibilityChecker
 import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceToModelPackageConverter
-import com.vjaykrsna.nanoai.feature.library.domain.ModelDownloadsAndExportUseCase
 import com.vjaykrsna.nanoai.feature.library.domain.RefreshModelCatalogUseCase
 import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
@@ -59,7 +59,7 @@ constructor(
   private val modelCatalogRepository: ModelCatalogRepository,
   private val refreshModelCatalogUseCase: RefreshModelCatalogUseCase,
   private val downloadManager: DownloadManager,
-  private val downloadUseCase: ModelDownloadsAndExportUseCase,
+  private val downloadModelUseCase: DownloadModelUseCase,
   private val hfToModelConverter: HuggingFaceToModelPackageConverter,
   private val huggingFaceCatalogRepository: HuggingFaceCatalogRepository,
   private val compatibilityChecker: HuggingFaceModelCompatibilityChecker,
@@ -342,9 +342,18 @@ constructor(
     }
   }
 
-  // Download functions delegated to DownloadManager
+  // Download functions using UseCases
   fun downloadModel(modelId: String) {
-    downloadManager.downloadModel(modelId)
+    viewModelScope.launch {
+      downloadModelUseCase.downloadModel(modelId).onFailure { error ->
+        _errorEvents.emit(
+          LibraryError.DownloadFailed(
+            modelId = modelId,
+            message = error.message ?: "Failed to start download",
+          )
+        )
+      }
+    }
   }
 
   fun downloadHuggingFaceModel(
@@ -354,19 +363,19 @@ constructor(
   }
 
   fun pauseDownload(taskId: java.util.UUID) {
-    downloadManager.pauseDownload(taskId)
+    viewModelScope.launch { downloadModelUseCase.pauseDownload(taskId) }
   }
 
   fun resumeDownload(taskId: java.util.UUID) {
-    downloadManager.resumeDownload(taskId)
+    viewModelScope.launch { downloadModelUseCase.resumeDownload(taskId) }
   }
 
   fun cancelDownload(taskId: java.util.UUID) {
-    downloadManager.cancelDownload(taskId)
+    viewModelScope.launch { downloadModelUseCase.cancelDownload(taskId) }
   }
 
   fun retryDownload(taskId: java.util.UUID) {
-    downloadManager.retryDownload(taskId)
+    viewModelScope.launch { downloadModelUseCase.retryFailedDownload(taskId) }
   }
 
   fun deleteModel(modelId: String) {
@@ -374,7 +383,9 @@ constructor(
   }
 
   fun observeDownloadProgress(taskId: java.util.UUID): StateFlow<Float> =
-    downloadManager.observeDownloadProgress(taskId)
+    downloadModelUseCase
+      .getDownloadProgress(taskId)
+      .stateIn(viewModelScope, SharingStarted.Eagerly, 0f)
 
   private suspend fun handleRefreshFailure(error: Throwable) {
     if (error is CancellationException) throw error
@@ -437,7 +448,7 @@ constructor(
       modelCatalogRepository.upsertModel(modelPackage)
 
       // Start download
-      val result = downloadUseCase.downloadModel(modelPackage.modelId)
+      val result = downloadModelUseCase.downloadModel(modelPackage.modelId)
       result.onFailure { error ->
         _errorEvents.emit(
           LibraryError.DownloadFailed(

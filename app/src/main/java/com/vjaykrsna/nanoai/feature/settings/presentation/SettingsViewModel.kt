@@ -251,7 +251,7 @@ constructor(
         statusMessage = "Theme updated",
       )
     }
-    settingsOperationsUseCase.updateTheme(themePreference)
+    viewModelScope.launch { settingsOperationsUseCase.updateTheme(themePreference) }
   }
 
   fun applyDensityPreference(compactModeEnabled: Boolean) {

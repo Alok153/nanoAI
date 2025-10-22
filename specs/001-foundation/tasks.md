@@ -19,9 +19,9 @@
 **Independent Test Criteria**: Each UseCase handles exactly one business operation with clear boundaries
 **Tests**: Unit tests verify single responsibility and proper result type usage
 
-- [ ] T006 Split `SendPromptAndPersonaUseCase` into separate UseCases for prompt execution and persona switching in `app/src/main/java/com/vjaykrsna/nanoai/feature/chat/domain/`
-- [ ] T007 Split `ModelDownloadsAndExportUseCase` into focused UseCases for downloads, verification, and export operations in `app/src/main/java/com/vjaykrsna/nanoai/feature/library/domain/`
-- [ ] T008 Fix `SettingsOperationsUseCase` - remove custom CoroutineScope and inject dispatcher instead in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/domain/SettingsOperationsUseCase.kt`
+- [x] T006 Split `SendPromptAndPersonaUseCase` into focused UseCases (`SendPromptUseCase`, `SwitchPersonaUseCase`) in `app/src/main/java/com/vjaykrsna/nanoai/feature/chat/domain/`
+- [x] T007 Split `ModelDownloadsAndExportUseCase` into focused UseCases for downloads, verification, and export operations in `app/src/main/java/com/vjaykrsna/nanoai/feature/library/domain/`
+- [x] T008 Fix `SettingsOperationsUseCase` - remove custom CoroutineScope and inject dispatcher instead in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/domain/SettingsOperationsUseCase.kt`
 - [ ] T009 Create `ModelCatalogUseCase` for ModelLibraryViewModel operations (getAllModels, recordOfflineFallback, getModel, upsertModel) in `app/src/main/java/com/vjaykrsna/nanoai/feature/library/domain/`
 - [ ] T010 Create `HuggingFaceCatalogUseCase` for HuggingFaceLibraryViewModel listModels operation in `app/src/main/java/com/vjaykrsna/nanoai/feature/library/domain/`
 - [ ] T011 Create `ApiProviderConfigUseCase` for SettingsViewModel CRUD operations in `app/src/main/java/com/vjaykrsna/nanoai/feature/settings/domain/`
@@ -47,7 +47,7 @@
 **Story Goal**: Break down monolithic UI components that violate single responsibility principle
 **Independent Test Criteria**: No UI files exceed 400 lines, each component has single clear responsibility
 **Tests**: UI tests verify component behavior after refactoring
-
+./
 - [ ] T023 Refactor `NanoShellScaffold.kt` (750 lines) into smaller focused composables by feature/responsibility boundaries
 - [ ] T024 Refactor `ShellViewModel.kt` (433 lines) by splitting into focused ViewModels (NavigationViewModel, ConnectivityViewModel, etc.)
 - [ ] T025 Update Hilt modules for new ViewModel structure and dependencies
