@@ -75,6 +75,21 @@ class FakeModelDownloadsAndExportUseCase : ModelDownloadsAndExportUseCaseInterfa
     }
   }
 
+  override suspend fun pauseDownload(taskId: UUID): NanoAIResult<Unit> {
+    updateDownloadStatus(taskId, DownloadStatus.PAUSED)
+    return NanoAIResult.success(Unit)
+  }
+
+  override suspend fun resumeDownload(taskId: UUID): NanoAIResult<Unit> {
+    updateDownloadStatus(taskId, DownloadStatus.DOWNLOADING)
+    return NanoAIResult.success(Unit)
+  }
+
+  override suspend fun cancelDownload(taskId: UUID): NanoAIResult<Unit> {
+    updateDownloadStatus(taskId, DownloadStatus.CANCELLED)
+    return NanoAIResult.success(Unit)
+  }
+
   override suspend fun deleteModel(modelId: String): NanoAIResult<Unit> {
     lastDeletedModelId = modelId
     return if (shouldFailOnDelete) {
@@ -92,8 +107,9 @@ class FakeModelDownloadsAndExportUseCase : ModelDownloadsAndExportUseCaseInterfa
 
   override fun observeDownloadTasks(): Flow<List<DownloadTask>> = _queuedDownloads
 
-  override suspend fun retryFailedDownload(taskId: UUID) {
+  override suspend fun retryFailedDownload(taskId: UUID): NanoAIResult<Unit> {
     updateDownloadStatus(taskId, DownloadStatus.QUEUED)
+    return NanoAIResult.success(Unit)
   }
 
   override suspend fun exportBackup(
@@ -110,20 +126,6 @@ class FakeModelDownloadsAndExportUseCase : ModelDownloadsAndExportUseCaseInterfa
 
   override suspend fun verifyDownloadChecksum(modelId: String): NanoAIResult<Boolean> {
     return NanoAIResult.success(true)
-  }
-
-  override suspend fun pauseDownload(taskId: UUID) {
-    updateDownloadStatus(taskId, DownloadStatus.PAUSED)
-  }
-
-  override suspend fun resumeDownload(taskId: UUID) {
-    updateDownloadStatus(taskId, DownloadStatus.DOWNLOADING)
-  }
-
-  override suspend fun cancelDownload(taskId: UUID) {
-    val task = _downloadTasks[taskId]?.value ?: return
-    _downloadTasks[taskId]?.value = task.copy(status = DownloadStatus.CANCELLED)
-    _queuedDownloads.value = _queuedDownloads.value.filter { it.taskId != taskId }
   }
 
   private fun updateTrackedTask(taskId: UUID, transform: (DownloadTask) -> DownloadTask) {

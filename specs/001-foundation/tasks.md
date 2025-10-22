@@ -22,12 +22,12 @@
 - [x] T006 Split `SendPromptAndPersonaUseCase` into focused UseCases (`SendPromptUseCase`, `SwitchPersonaUseCase`) in `app/src/main/java/com/vjaykrsna/nanoai/feature/chat/domain/`
 - [x] T007 Split `ModelDownloadsAndExportUseCase` into focused UseCases for downloads, verification, and export operations in `app/src/main/java/com/vjaykrsna/nanoai/feature/library/domain/`
 - [x] T008 Fix `SettingsOperationsUseCase` - remove custom CoroutineScope and inject dispatcher instead in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/domain/SettingsOperationsUseCase.kt`
-- [ ] T009 Create `ModelCatalogUseCase` for ModelLibraryViewModel operations (getAllModels, recordOfflineFallback, getModel, upsertModel) in `app/src/main/java/com/vjaykrsna/nanoai/feature/library/domain/`
-- [ ] T010 Create `HuggingFaceCatalogUseCase` for HuggingFaceLibraryViewModel listModels operation in `app/src/main/java/com/vjaykrsna/nanoai/feature/library/domain/`
-- [ ] T011 Create `ApiProviderConfigUseCase` for SettingsViewModel CRUD operations in `app/src/main/java/com/vjaykrsna/nanoai/feature/settings/domain/`
-- [ ] T012 Create `ImageGalleryUseCase` for image gallery operations in `app/src/main/java/com/vjaykrsna/nanoai/feature/image/domain/`
-- [ ] T013 Create `ConversationUseCase` for ChatViewModel conversation operations in `app/src/main/java/com/vjaykrsna/nanoai/feature/chat/domain/`
-- [ ] T014 Update all UseCase result types to use `NanoAIResult<T>` consistently
+- [x] T009 Create `ModelCatalogUseCase` for ModelLibraryViewModel operations (getAllModels, recordOfflineFallback, getModel, upsertModel) in `app/src/main/java/com/vjaykrsna/nanoai/feature/library/domain/`
+- [x] T010 Create `HuggingFaceCatalogUseCase` for HuggingFaceLibraryViewModel listModels operation in `app/src/main/java/com/vjaykrsna/nanoai/feature/library/domain/`
+- [x] T011 Create `ApiProviderConfigUseCase` for SettingsViewModel CRUD operations in `app/src/main/java/com/vjaykrsna/nanoai/feature/settings/domain/`
+- [x] T012 Create `ImageGalleryUseCase` for image gallery operations in `app/src/main/java/com/vjaykrsna/nanoai/feature/image/domain/`
+- [x] T013 Create `ConversationUseCase` for ChatViewModel conversation operations in `app/src/main/java/com/vjaykrsna/nanoai/feature/chat/domain/`
+- [x] T014 Update all UseCase result types to use `NanoAIResult<T>` consistently
 - [ ] T015 Update UseCase unit tests to verify new split responsibilities and result types
 
 ### Phase 4: Repository Layer Cleanup [US2]

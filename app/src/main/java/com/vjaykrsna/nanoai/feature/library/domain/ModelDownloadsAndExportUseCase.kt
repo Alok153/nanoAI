@@ -99,28 +99,64 @@ constructor(
   }
 
   /** Pause a download task and persist status. */
-  override suspend fun pauseDownload(taskId: UUID) {
-    downloadManager.pauseDownload(taskId)
-    downloadManager.updateTaskStatus(taskId, DownloadStatus.PAUSED)
+  override suspend fun pauseDownload(taskId: UUID): NanoAIResult<Unit> {
+    return try {
+      downloadManager.pauseDownload(taskId)
+      downloadManager.updateTaskStatus(taskId, DownloadStatus.PAUSED)
+      NanoAIResult.success(Unit)
+    } catch (e: Exception) {
+      NanoAIResult.recoverable(
+        message = "Failed to pause download $taskId",
+        cause = e,
+        context = mapOf("taskId" to taskId.toString()),
+      )
+    }
   }
 
   /** Resume a paused download. */
-  override suspend fun resumeDownload(taskId: UUID) {
-    val task = downloadManager.getTaskById(taskId).first() ?: return
-    if (task.status != DownloadStatus.PAUSED) return
+  override suspend fun resumeDownload(taskId: UUID): NanoAIResult<Unit> {
+    return try {
+      val task =
+        downloadManager.getTaskById(taskId).first()
+          ?: return NanoAIResult.recoverable(
+            message = "Download task $taskId not found",
+            context = mapOf("taskId" to taskId.toString()),
+          )
+      if (task.status != DownloadStatus.PAUSED)
+        return NanoAIResult.recoverable(
+          message = "Download task $taskId is not paused",
+          context = mapOf("taskId" to taskId.toString(), "status" to task.status.toString()),
+        )
 
-    downloadManager.resumeDownload(taskId)
-    downloadManager.updateTaskStatus(taskId, DownloadStatus.DOWNLOADING)
+      downloadManager.resumeDownload(taskId)
+      downloadManager.updateTaskStatus(taskId, DownloadStatus.DOWNLOADING)
+      NanoAIResult.success(Unit)
+    } catch (e: Exception) {
+      NanoAIResult.recoverable(
+        message = "Failed to resume download $taskId",
+        cause = e,
+        context = mapOf("taskId" to taskId.toString()),
+      )
+    }
   }
 
   /** Cancel a download and cleanup associated files. */
-  override suspend fun cancelDownload(taskId: UUID) {
-    val modelId = downloadManager.getModelIdForTask(taskId)
-    downloadManager.cancelDownload(taskId)
-    modelId?.let {
-      downloadManager.deletePartialFiles(it)
-      modelCatalogRepository.updateInstallState(it, InstallState.NOT_INSTALLED)
-      modelCatalogRepository.updateDownloadTaskId(it, null)
+  override suspend fun cancelDownload(taskId: UUID): NanoAIResult<Unit> {
+    return try {
+      val modelId = downloadManager.getModelIdForTask(taskId)
+      downloadManager.cancelDownload(taskId)
+      modelId?.let {
+        downloadManager.deletePartialFiles(it)
+        modelCatalogRepository.updateInstallState(it, InstallState.NOT_INSTALLED)
+        modelCatalogRepository.updateDownloadTaskId(it, null)
+      }
+      NanoAIResult.success(Unit)
+    } catch (e: Exception) {
+      NanoAIResult.recoverable(
+        message = "Failed to cancel download $taskId",
+        cause = e,
+        context = mapOf("taskId" to taskId.toString()),
+      )
     }
   }
 
@@ -188,14 +224,37 @@ constructor(
     downloadManager.observeManagedDownloads()
 
   /** Retry a failed download task. */
-  override suspend fun retryFailedDownload(taskId: UUID) {
-    val task = downloadManager.getTaskById(taskId).first() ?: return
-    if (task.status != DownloadStatus.FAILED) return
-    val modelId = downloadManager.getModelIdForTask(taskId) ?: return
+  override suspend fun retryFailedDownload(taskId: UUID): NanoAIResult<Unit> {
+    return try {
+      val task =
+        downloadManager.getTaskById(taskId).first()
+          ?: return NanoAIResult.recoverable(
+            message = "Download task $taskId not found",
+            context = mapOf("taskId" to taskId.toString()),
+          )
+      if (task.status != DownloadStatus.FAILED)
+        return NanoAIResult.recoverable(
+          message = "Download task $taskId is not failed",
+          context = mapOf("taskId" to taskId.toString(), "status" to task.status.toString()),
+        )
+      val modelId =
+        downloadManager.getModelIdForTask(taskId)
+          ?: return NanoAIResult.recoverable(
+            message = "Model ID not found for task $taskId",
+            context = mapOf("taskId" to taskId.toString()),
+          )
 
-    downloadManager.resetTask(taskId)
-    downloadManager.startDownload(modelId)
-    modelCatalogRepository.updateInstallState(modelId, InstallState.DOWNLOADING)
-    modelCatalogRepository.updateDownloadTaskId(modelId, taskId)
+      downloadManager.resetTask(taskId)
+      downloadManager.startDownload(modelId)
+      modelCatalogRepository.updateInstallState(modelId, InstallState.DOWNLOADING)
+      modelCatalogRepository.updateDownloadTaskId(modelId, taskId)
+      NanoAIResult.success(Unit)
+    } catch (e: Exception) {
+      NanoAIResult.recoverable(
+        message = "Failed to retry download $taskId",
+        cause = e,
+        context = mapOf("taskId" to taskId.toString()),
+      )
+    }
   }
 }

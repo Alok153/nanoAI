@@ -9,6 +9,7 @@ import com.vjaykrsna.nanoai.feature.library.domain.DownloadModelUseCase
 import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceModelCompatibilityChecker
 import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceToModelPackageConverter
 import com.vjaykrsna.nanoai.feature.library.domain.ManageModelUseCase
+import com.vjaykrsna.nanoai.feature.library.domain.ModelCatalogUseCase
 import com.vjaykrsna.nanoai.feature.library.domain.RefreshModelCatalogUseCase
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
 import com.vjaykrsna.nanoai.feature.library.model.ProviderType
@@ -40,6 +41,7 @@ class ModelLibraryViewModelTest {
   @JvmField @RegisterExtension val mainDispatcherExtension = MainDispatcherExtension()
 
   private lateinit var modelCatalogRepository: FakeModelCatalogRepository
+  private lateinit var modelCatalogUseCase: ModelCatalogUseCase
   private lateinit var refreshUseCase: RefreshModelCatalogUseCase
   private lateinit var huggingFaceCatalogRepository: FakeHuggingFaceCatalogRepository
   private lateinit var compatibilityChecker: HuggingFaceModelCompatibilityChecker
@@ -52,6 +54,7 @@ class ModelLibraryViewModelTest {
   @BeforeEach
   fun setup() {
     modelCatalogRepository = FakeModelCatalogRepository()
+    modelCatalogUseCase = mockk(relaxed = true)
     refreshUseCase = mockk(relaxed = true)
     huggingFaceCatalogRepository = FakeHuggingFaceCatalogRepository()
     compatibilityChecker = mockk(relaxed = true)
@@ -63,9 +66,30 @@ class ModelLibraryViewModelTest {
     // Setup default behaviors
     coEvery { refreshUseCase.invoke() } returns NanoAIResult.success(Unit)
 
+    // Setup ModelCatalogUseCase to delegate to repository
+    coEvery { modelCatalogUseCase.getAllModels() } coAnswers
+      {
+        NanoAIResult.success(modelCatalogRepository.getAllModels())
+      }
+    coEvery { modelCatalogUseCase.getModel(any()) } coAnswers
+      {
+        NanoAIResult.success(modelCatalogRepository.getModel(firstArg()))
+      }
+    coEvery { modelCatalogUseCase.upsertModel(any()) } coAnswers
+      {
+        modelCatalogRepository.upsertModel(firstArg())
+        NanoAIResult.success(Unit)
+      }
+    coEvery { modelCatalogUseCase.recordOfflineFallback(any(), any(), any()) } coAnswers
+      {
+        modelCatalogRepository.recordOfflineFallback(firstArg(), secondArg(), thirdArg())
+        NanoAIResult.success(Unit)
+      }
+
     viewModel =
       ModelLibraryViewModel(
         modelCatalogRepository,
+        modelCatalogUseCase,
         refreshUseCase,
         downloadManager,
         downloadModelUseCase,

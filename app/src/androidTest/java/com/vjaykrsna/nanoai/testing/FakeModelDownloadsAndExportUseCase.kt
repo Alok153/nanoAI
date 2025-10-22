@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai.testing
 
+import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.feature.library.domain.ModelDownloadsAndExportUseCaseInterface
 import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
@@ -52,10 +53,10 @@ class FakeModelDownloadsAndExportUseCase : ModelDownloadsAndExportUseCaseInterfa
     lastExportPath = null
   }
 
-  override suspend fun downloadModel(modelId: String): Result<UUID> {
+  override suspend fun downloadModel(modelId: String): NanoAIResult<UUID> {
     lastDownloadedModelId = modelId
     return if (shouldFailOnDownload) {
-      Result.failure(Exception("Download failed"))
+      NanoAIResult.recoverable(message = "Download failed")
     } else {
       val taskId = UUID.randomUUID()
       val task =
@@ -67,16 +68,35 @@ class FakeModelDownloadsAndExportUseCase : ModelDownloadsAndExportUseCaseInterfa
           errorMessage = null,
         )
       addDownloadTask(task)
-      Result.success(taskId)
+      NanoAIResult.success(taskId)
     }
   }
 
-  override suspend fun deleteModel(modelId: String): Result<Unit> {
+  override suspend fun verifyDownloadChecksum(modelId: String): NanoAIResult<Boolean> {
+    return NanoAIResult.success(true)
+  }
+
+  override suspend fun pauseDownload(taskId: UUID): NanoAIResult<Unit> {
+    updateDownloadStatus(taskId, DownloadStatus.PAUSED)
+    return NanoAIResult.success(Unit)
+  }
+
+  override suspend fun resumeDownload(taskId: UUID): NanoAIResult<Unit> {
+    updateDownloadStatus(taskId, DownloadStatus.DOWNLOADING)
+    return NanoAIResult.success(Unit)
+  }
+
+  override suspend fun cancelDownload(taskId: UUID): NanoAIResult<Unit> {
+    updateDownloadStatus(taskId, DownloadStatus.CANCELLED)
+    return NanoAIResult.success(Unit)
+  }
+
+  override suspend fun deleteModel(modelId: String): NanoAIResult<Unit> {
     lastDeletedModelId = modelId
     return if (shouldFailOnDelete) {
-      Result.failure(Exception("Delete failed"))
+      NanoAIResult.recoverable(message = "Delete failed")
     } else {
-      Result.success(Unit)
+      NanoAIResult.success(Unit)
     }
   }
 
@@ -88,37 +108,20 @@ class FakeModelDownloadsAndExportUseCase : ModelDownloadsAndExportUseCaseInterfa
 
   override fun observeDownloadTasks(): Flow<List<DownloadTask>> = _queuedDownloads
 
-  override suspend fun retryFailedDownload(taskId: UUID) {
+  override suspend fun retryFailedDownload(taskId: UUID): NanoAIResult<Unit> {
     updateDownloadStatus(taskId, DownloadStatus.QUEUED)
+    return NanoAIResult.success(Unit)
   }
 
   override suspend fun exportBackup(
     destinationPath: String,
     includeChatHistory: Boolean,
-  ): Result<String> {
+  ): NanoAIResult<String> {
     lastExportPath = destinationPath
     return if (shouldFailOnExport) {
-      Result.failure(Exception("Export failed"))
+      NanoAIResult.recoverable(message = "Export failed")
     } else {
-      Result.success(destinationPath)
+      NanoAIResult.success(destinationPath)
     }
-  }
-
-  override suspend fun verifyDownloadChecksum(modelId: String): Result<Boolean> {
-    return Result.success(true)
-  }
-
-  override suspend fun pauseDownload(taskId: UUID) {
-    updateDownloadStatus(taskId, DownloadStatus.PAUSED)
-  }
-
-  override suspend fun resumeDownload(taskId: UUID) {
-    updateDownloadStatus(taskId, DownloadStatus.DOWNLOADING)
-  }
-
-  override suspend fun cancelDownload(taskId: UUID) {
-    val task = _downloadTasks[taskId]?.value ?: return
-    _downloadTasks[taskId]?.value = task.copy(status = DownloadStatus.CANCELLED)
-    _queuedDownloads.value = _queuedDownloads.value.filter { it.taskId != taskId }
   }
 }

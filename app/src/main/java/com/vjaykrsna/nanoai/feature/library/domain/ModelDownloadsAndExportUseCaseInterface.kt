@@ -11,11 +11,11 @@ interface ModelDownloadsAndExportUseCaseInterface {
 
   suspend fun verifyDownloadChecksum(modelId: String): NanoAIResult<Boolean>
 
-  suspend fun pauseDownload(taskId: UUID)
+  suspend fun pauseDownload(taskId: UUID): NanoAIResult<Unit>
 
-  suspend fun resumeDownload(taskId: UUID)
+  suspend fun resumeDownload(taskId: UUID): NanoAIResult<Unit>
 
-  suspend fun cancelDownload(taskId: UUID)
+  suspend fun cancelDownload(taskId: UUID): NanoAIResult<Unit>
 
   suspend fun deleteModel(modelId: String): NanoAIResult<Unit>
 
@@ -30,5 +30,5 @@ interface ModelDownloadsAndExportUseCaseInterface {
 
   fun observeDownloadTasks(): Flow<List<DownloadTask>>
 
-  suspend fun retryFailedDownload(taskId: UUID)
+  suspend fun retryFailedDownload(taskId: UUID): NanoAIResult<Unit>
 }
