@@ -3,7 +3,7 @@ package com.vjaykrsna.nanoai.core.di
 import com.vjaykrsna.nanoai.core.device.AndroidDeviceIdentityProvider
 import com.vjaykrsna.nanoai.core.device.DeviceIdentityProvider
 import com.vjaykrsna.nanoai.core.runtime.LocalModelRuntime
-import com.vjaykrsna.nanoai.core.runtime.MediaPipeLocalModelRuntime
+import com.vjaykrsna.nanoai.core.runtime.LocalModelRuntimeImpl
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -18,7 +18,7 @@ import kotlinx.datetime.Clock
 abstract class RuntimeModule {
   @Binds
   @Singleton
-  abstract fun bindLocalModelRuntime(impl: MediaPipeLocalModelRuntime): LocalModelRuntime
+  abstract fun bindLocalModelRuntime(impl: LocalModelRuntimeImpl): LocalModelRuntime
 
   @Binds
   @Singleton

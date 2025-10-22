@@ -2,8 +2,11 @@ package com.vjaykrsna.nanoai.feature.library.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.vjaykrsna.nanoai.core.common.onFailure
+import com.vjaykrsna.nanoai.core.common.onSuccess
 import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
-import com.vjaykrsna.nanoai.feature.library.domain.ModelDownloadsAndExportUseCaseInterface
+import com.vjaykrsna.nanoai.feature.library.domain.DownloadModelUseCase
+import com.vjaykrsna.nanoai.feature.library.domain.ManageModelUseCase
 import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
 import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryError
 import java.util.UUID
@@ -22,8 +25,10 @@ import kotlinx.coroutines.launch
 @Suppress("TooManyFunctions")
 class DownloadManager
 @Inject
-constructor(private val modelDownloadsAndExportUseCase: ModelDownloadsAndExportUseCaseInterface) :
-  ViewModel() {
+constructor(
+  private val downloadModelUseCase: DownloadModelUseCase,
+  private val manageModelUseCase: ManageModelUseCase,
+) : ViewModel() {
 
   private val downloadObservers = mutableMapOf<UUID, Job>()
   private val activeOperations = AtomicInteger(0)
@@ -39,7 +44,7 @@ constructor(private val modelDownloadsAndExportUseCase: ModelDownloadsAndExportU
 
     viewModelScope.launch {
       try {
-        val result = modelDownloadsAndExportUseCase.downloadModel(modelId)
+        val result = downloadModelUseCase.downloadModel(modelId)
         result
           .onSuccess { taskId -> monitorDownloadTask(taskId, modelId) }
           .onFailure { error ->
@@ -59,7 +64,7 @@ constructor(private val modelDownloadsAndExportUseCase: ModelDownloadsAndExportU
 
   fun pauseDownload(taskId: UUID) {
     viewModelScope.launch {
-      runCatching { modelDownloadsAndExportUseCase.pauseDownload(taskId) }
+      runCatching { downloadModelUseCase.pauseDownload(taskId) }
         .onFailure { error ->
           _errorEvents.emit(
             LibraryError.PauseFailed(taskId.toString(), error.message ?: "Failed to pause")
@@ -70,7 +75,7 @@ constructor(private val modelDownloadsAndExportUseCase: ModelDownloadsAndExportU
 
   fun resumeDownload(taskId: UUID) {
     viewModelScope.launch {
-      runCatching { modelDownloadsAndExportUseCase.resumeDownload(taskId) }
+      runCatching { downloadModelUseCase.resumeDownload(taskId) }
         .onFailure { error ->
           _errorEvents.emit(
             LibraryError.ResumeFailed(taskId.toString(), error.message ?: "Failed to resume")
@@ -81,7 +86,7 @@ constructor(private val modelDownloadsAndExportUseCase: ModelDownloadsAndExportU
 
   fun cancelDownload(taskId: UUID) {
     viewModelScope.launch {
-      runCatching { modelDownloadsAndExportUseCase.cancelDownload(taskId) }
+      runCatching { downloadModelUseCase.cancelDownload(taskId) }
         .onFailure { error ->
           _errorEvents.emit(
             LibraryError.CancelFailed(taskId.toString(), error.message ?: "Failed to cancel")
@@ -92,7 +97,7 @@ constructor(private val modelDownloadsAndExportUseCase: ModelDownloadsAndExportU
 
   fun retryDownload(taskId: UUID) {
     viewModelScope.launch {
-      runCatching { modelDownloadsAndExportUseCase.retryFailedDownload(taskId) }
+      runCatching { downloadModelUseCase.retryFailedDownload(taskId) }
         .onFailure { error ->
           _errorEvents.emit(
             LibraryError.RetryFailed(taskId.toString(), error.message ?: "Failed to retry")
@@ -106,7 +111,7 @@ constructor(private val modelDownloadsAndExportUseCase: ModelDownloadsAndExportU
 
     viewModelScope.launch {
       try {
-        val result = modelDownloadsAndExportUseCase.deleteModel(modelId)
+        val result = manageModelUseCase.deleteModel(modelId)
         result.onFailure { error ->
           _errorEvents.emit(LibraryError.DeleteFailed(modelId, error.message ?: "Unknown error"))
         }
@@ -121,12 +126,12 @@ constructor(private val modelDownloadsAndExportUseCase: ModelDownloadsAndExportU
   }
 
   fun observeDownloadProgress(taskId: UUID): StateFlow<Float> =
-    modelDownloadsAndExportUseCase
+    downloadModelUseCase
       .getDownloadProgress(taskId)
       .stateIn(viewModelScope, SharingStarted.Eagerly, 0f)
 
   fun observeDownloadTasks(): StateFlow<List<DownloadTask>> =
-    modelDownloadsAndExportUseCase
+    downloadModelUseCase
       .observeDownloadTasks()
       .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
@@ -134,7 +139,7 @@ constructor(private val modelDownloadsAndExportUseCase: ModelDownloadsAndExportU
     downloadObservers[taskId]?.cancel()
     val job =
       viewModelScope.launch launch@{
-        val taskFlow = modelDownloadsAndExportUseCase.observeDownloadTask(taskId)
+        val taskFlow = downloadModelUseCase.observeDownloadTask(taskId)
         taskFlow.collect { task ->
           when (task?.status) {
             DownloadStatus.FAILED -> {

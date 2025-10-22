@@ -14,6 +14,9 @@ import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
 import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
 import com.vjaykrsna.nanoai.model.catalog.DeliveryType
+import com.vjaykrsna.nanoai.testing.assertIsSuccess
+import com.vjaykrsna.nanoai.testing.assertRecoverableError
+import com.vjaykrsna.nanoai.testing.assertSuccess
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -57,7 +60,7 @@ class ModelDownloadsAndExportUseCaseTest {
 
     val result = useCase.downloadModel("gemini-2.0-flash-lite")
 
-    assertThat(result.isSuccess).isTrue()
+    result.assertSuccess()
     coVerify { downloadManager.queueDownload("gemini-2.0-flash-lite") }
     coVerify(exactly = 0) { downloadManager.startDownload("gemini-2.0-flash-lite") }
     coVerify {
@@ -73,7 +76,7 @@ class ModelDownloadsAndExportUseCaseTest {
 
     val result = useCase.downloadModel("phi-3-mini-4k")
 
-    assertThat(result.isSuccess).isTrue()
+    result.assertSuccess()
     coVerify { downloadManager.startDownload("phi-3-mini-4k") }
   }
 
@@ -87,8 +90,8 @@ class ModelDownloadsAndExportUseCaseTest {
 
     val result = useCase.verifyDownloadChecksum(modelId)
 
-    assertThat(result.isSuccess).isTrue()
-    assertThat(result.getOrNull()).isTrue()
+    val value = result.assertSuccess()
+    assertThat(value).isTrue()
     coVerify { modelCatalogRepository.updateInstallState(modelId, InstallState.INSTALLED) }
   }
 
@@ -101,8 +104,8 @@ class ModelDownloadsAndExportUseCaseTest {
 
     val result = useCase.verifyDownloadChecksum(modelId)
 
-    assertThat(result.isSuccess).isTrue()
-    assertThat(result.getOrNull()).isFalse()
+    val value = result.assertSuccess()
+    assertThat(value).isFalse()
     coVerify { modelCatalogRepository.updateInstallState(modelId, InstallState.ERROR) }
   }
 
@@ -147,8 +150,7 @@ class ModelDownloadsAndExportUseCaseTest {
 
     val result = useCase.deleteModel(modelId)
 
-    assertThat(result.isFailure).isTrue()
-    assertThat(result.exceptionOrNull()).isInstanceOf(ModelInUseException::class.java)
+    result.assertRecoverableError()
     coVerify(exactly = 0) { modelCatalogRepository.deleteModelFiles(modelId) }
   }
 
@@ -159,7 +161,7 @@ class ModelDownloadsAndExportUseCaseTest {
 
     val result = useCase.deleteModel(modelId)
 
-    assertThat(result.isSuccess).isTrue()
+    result.assertIsSuccess()
     coVerify { modelCatalogRepository.deleteModelFiles(modelId) }
     coVerify { modelCatalogRepository.updateInstallState(modelId, InstallState.NOT_INSTALLED) }
   }
@@ -178,8 +180,8 @@ class ModelDownloadsAndExportUseCaseTest {
 
     val result = useCase.exportBackup(exportPath)
 
-    assertThat(result.isSuccess).isTrue()
-    assertThat(result.getOrNull()).isEqualTo(exportPath)
+    val exportedPath = result.assertSuccess()
+    assertThat(exportedPath).isEqualTo(exportPath)
     coVerify { exportService.createExportBundle(personas, providers, exportPath, emptyList()) }
     coVerify { exportService.notifyUnencryptedExport(exportPath) }
   }
@@ -207,7 +209,7 @@ class ModelDownloadsAndExportUseCaseTest {
 
     val result = useCase.exportBackup(exportPath, includeChatHistory = true)
 
-    assertThat(result.isSuccess).isTrue()
+    result.assertIsSuccess()
     coVerify { exportService.gatherChatHistory() }
     coVerify { exportService.createExportBundle(emptyList(), emptyList(), exportPath, chats) }
   }

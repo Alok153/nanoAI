@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai.core.data.repository.impl
 
+import com.vjaykrsna.nanoai.core.common.IoDispatcher
 import com.vjaykrsna.nanoai.core.data.db.daos.ApiProviderConfigDao
 import com.vjaykrsna.nanoai.core.data.repository.ApiProviderConfigRepository
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
@@ -7,6 +8,8 @@ import com.vjaykrsna.nanoai.core.domain.model.toDomain
 import com.vjaykrsna.nanoai.core.domain.model.toEntity
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -16,9 +19,13 @@ import kotlinx.coroutines.flow.map
  * Wraps ApiProviderConfigDao, converting between entities and domain models.
  */
 @Singleton
+@Suppress("UnusedPrivateProperty") // Will be used for future IO operations
 class ApiProviderConfigRepositoryImpl
 @Inject
-constructor(private val apiProviderConfigDao: ApiProviderConfigDao) : ApiProviderConfigRepository {
+constructor(
+  private val apiProviderConfigDao: ApiProviderConfigDao,
+  @IoDispatcher private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+) : ApiProviderConfigRepository {
   override suspend fun getAllProviders(): List<APIProviderConfig> =
     apiProviderConfigDao.getAll().map { it.toDomain() }
 

@@ -413,6 +413,9 @@ dependencies {
   // MediaPipe
   implementation(libs.mediapipe.tasks.genai)
 
+  // Leap
+  implementation(libs.leap.sdk)
+
   // Networking
   implementation(libs.retrofit)
   implementation(libs.retrofit.kotlin.serialization)
@@ -451,6 +454,7 @@ dependencies {
   implementation(libs.hilt.work)
   ksp(libs.hilt.compiler)
   ksp(libs.androidx.hilt.compiler)
+  kspTest(libs.hilt.compiler)
 
   // Image Loading
   implementation(libs.coil.compose)
@@ -476,6 +480,7 @@ dependencies {
   testImplementation(libs.androidx.junit)
   testImplementation(libs.androidx.test.core)
   testImplementation(libs.androidx.navigation.testing)
+  testImplementation(libs.hilt.android.testing)
   testRuntimeOnly(libs.junit.jupiter.engine)
   testRuntimeOnly(libs.junit.platform.launcher)
 
@@ -494,4 +499,5 @@ dependencies {
   androidTestImplementation(libs.androidx.work.testing)
   androidTestImplementation(libs.mockwebserver)
   androidTestImplementation(libs.androidx.navigation.testing)
+  kspAndroidTest(libs.hilt.compiler)
 }

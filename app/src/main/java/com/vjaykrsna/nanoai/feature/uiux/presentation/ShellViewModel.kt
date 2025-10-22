@@ -59,6 +59,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 /** ViewModel coordinating shell layout state and user intents. */
 private const val LAYOUT_INDEX = 0
@@ -307,12 +308,12 @@ constructor(
 
   /** Updates persisted theme preference for the active user. */
   fun updateThemePreference(theme: ThemePreference) {
-    settingsOperationsUseCase.updateTheme(theme)
+    viewModelScope.launch { settingsOperationsUseCase.updateTheme(theme) }
   }
 
   /** Updates persisted density preference for the active user. */
   fun updateVisualDensity(density: VisualDensity) {
-    settingsOperationsUseCase.updateVisualDensity(density)
+    viewModelScope.launch { settingsOperationsUseCase.updateVisualDensity(density) }
   }
 
   /** Records telemetry for command invocations to understand palette usage. */

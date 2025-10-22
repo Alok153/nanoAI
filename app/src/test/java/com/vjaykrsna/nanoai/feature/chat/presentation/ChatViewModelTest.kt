@@ -4,10 +4,13 @@ package com.vjaykrsna.nanoai.feature.chat.presentation
 
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
+import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.model.PersonaSwitchAction
-import com.vjaykrsna.nanoai.feature.chat.domain.SendPromptAndPersonaUseCase
+import com.vjaykrsna.nanoai.feature.chat.domain.SendPromptUseCase
+import com.vjaykrsna.nanoai.feature.chat.domain.SwitchPersonaUseCase
 import com.vjaykrsna.nanoai.testing.DomainTestBuilders
 import com.vjaykrsna.nanoai.testing.FakeConversationRepository
+import com.vjaykrsna.nanoai.testing.FakeModelCatalogRepository
 import com.vjaykrsna.nanoai.testing.FakePersonaRepository
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import io.mockk.coEvery
@@ -32,24 +35,31 @@ class ChatViewModelTest {
 
   private lateinit var conversationRepository: FakeConversationRepository
   private lateinit var personaRepository: FakePersonaRepository
-  private lateinit var sendPromptUseCase: SendPromptAndPersonaUseCase
+  private lateinit var modelCatalogRepository: FakeModelCatalogRepository
+  private lateinit var sendPromptUseCase: SendPromptUseCase
+  private lateinit var switchPersonaUseCase: SwitchPersonaUseCase
   private lateinit var viewModel: ChatViewModel
 
   @BeforeEach
   fun setup() {
     conversationRepository = FakeConversationRepository()
     personaRepository = FakePersonaRepository()
+    modelCatalogRepository = FakeModelCatalogRepository()
     sendPromptUseCase = mockk(relaxed = true)
+    switchPersonaUseCase = mockk(relaxed = true)
 
     // Setup default behaviors
-    coEvery { sendPromptUseCase.sendPrompt(any(), any(), any()) } returns Result.success(Unit)
-    coEvery { sendPromptUseCase.switchPersona(any(), any(), any()) } returns UUID.randomUUID()
+    coEvery { sendPromptUseCase(any(), any(), any()) } returns NanoAIResult.success(Unit)
+    coEvery { switchPersonaUseCase(any(), any(), any()) } returns
+      NanoAIResult.success(UUID.randomUUID())
 
     viewModel =
       ChatViewModel(
         sendPromptUseCase,
+        switchPersonaUseCase,
         conversationRepository,
         personaRepository,
+        modelCatalogRepository,
         dispatcher = mainDispatcherExtension.dispatcher,
       )
   }
@@ -99,7 +109,7 @@ class ChatViewModelTest {
       cancelAndIgnoreRemainingEvents()
     }
 
-    coVerify(exactly = 0) { sendPromptUseCase.sendPrompt(any(), any(), any()) }
+    coVerify(exactly = 0) { sendPromptUseCase(any(), any(), any()) }
     assertThat(viewModel.isLoading.value).isFalse()
   }
 
@@ -122,7 +132,7 @@ class ChatViewModelTest {
     assertThat(messages.first().text).isEqualTo("Test prompt")
 
     // Verify use case was called
-    coVerify { sendPromptUseCase.sendPrompt(threadId, "Test prompt", personaId) }
+    coVerify { sendPromptUseCase(threadId, "Test prompt", personaId) }
   }
 
   @Test
@@ -151,8 +161,8 @@ class ChatViewModelTest {
     val personaId = UUID.randomUUID()
     val thread = DomainTestBuilders.buildChatThread(threadId = threadId, personaId = personaId)
     conversationRepository.addThread(thread)
-    coEvery { sendPromptUseCase.sendPrompt(any(), any(), any()) } returns
-      Result.failure(Exception("Failed"))
+    coEvery { sendPromptUseCase(any(), any(), any()) } returns
+      NanoAIResult.recoverable(message = "Failed")
 
     viewModel.selectThread(threadId)
     advanceUntilIdle()
@@ -196,7 +206,7 @@ class ChatViewModelTest {
     conversationRepository.addThread(thread)
 
     // Mock the use case to return a new thread ID
-    coEvery { sendPromptUseCase.switchPersona(any(), any(), any()) } returns newThreadId
+    coEvery { switchPersonaUseCase(any(), any(), any()) } returns NanoAIResult.success(newThreadId)
 
     viewModel.selectThread(threadId)
     advanceUntilIdle()
@@ -204,9 +214,7 @@ class ChatViewModelTest {
     viewModel.switchPersona(newPersonaId, PersonaSwitchAction.START_NEW_THREAD)
     advanceUntilIdle()
 
-    coVerify {
-      sendPromptUseCase.switchPersona(any(), newPersonaId, PersonaSwitchAction.START_NEW_THREAD)
-    }
+    coVerify { switchPersonaUseCase(any(), newPersonaId, PersonaSwitchAction.START_NEW_THREAD) }
   }
 
   @Test
@@ -224,9 +232,7 @@ class ChatViewModelTest {
     advanceUntilIdle()
 
     assertThat(viewModel.currentThreadId.value).isEqualTo(threadId)
-    coVerify {
-      sendPromptUseCase.switchPersona(any(), newPersonaId, PersonaSwitchAction.CONTINUE_THREAD)
-    }
+    coVerify { switchPersonaUseCase(any(), newPersonaId, PersonaSwitchAction.CONTINUE_THREAD) }
   }
 
   @Test
@@ -236,8 +242,8 @@ class ChatViewModelTest {
     val newPersonaId = UUID.randomUUID()
     val thread = DomainTestBuilders.buildChatThread(threadId = threadId, personaId = personaId)
     conversationRepository.addThread(thread)
-    coEvery { sendPromptUseCase.switchPersona(any(), any(), any()) } throws
-      IllegalStateException("Switch failed")
+    coEvery { switchPersonaUseCase(any(), any(), any()) } returns
+      NanoAIResult.recoverable(message = "Switch failed")
 
     viewModel.selectThread(threadId)
     advanceUntilIdle()
@@ -435,7 +441,7 @@ class ChatViewModelTest {
     advanceUntilIdle()
 
     // Verify the message was attempted to be sent (the current behavior)
-    coVerify { sendPromptUseCase.sendPrompt(threadId, "", personaId) }
+    coVerify { sendPromptUseCase(threadId, "", personaId) }
   }
 
   @Test
@@ -453,7 +459,7 @@ class ChatViewModelTest {
     advanceUntilIdle()
 
     // Verify the message was sent
-    coVerify { sendPromptUseCase.sendPrompt(threadId, "Test message", personaId) }
+    coVerify { sendPromptUseCase(threadId, "Test message", personaId) }
   }
 
   @Test
@@ -467,8 +473,8 @@ class ChatViewModelTest {
     advanceUntilIdle()
 
     // Simulate network failure
-    coEvery { sendPromptUseCase.sendPrompt(any(), any(), any()) } returns
-      Result.failure(Exception("Network error"))
+    coEvery { sendPromptUseCase(any(), any(), any()) } returns
+      NanoAIResult.recoverable(message = "Network error")
 
     viewModel.errorEvents.test {
       viewModel.sendMessage("Test message", personaId)
@@ -498,7 +504,7 @@ class ChatViewModelTest {
     advanceUntilIdle()
 
     // Verify that the message sending process can be cancelled appropriately
-    coVerify { sendPromptUseCase.sendPrompt(threadId, "Test message", personaId) }
+    coVerify { sendPromptUseCase(threadId, "Test message", personaId) }
   }
 
   @Test
@@ -524,9 +530,7 @@ class ChatViewModelTest {
     // Verify the thread context is maintained
     assertThat(viewModel.currentThreadId.value).isEqualTo(threadId)
     // The persona should have been switched, but the thread remains the same
-    coVerify {
-      sendPromptUseCase.switchPersona(threadId, newPersonaId, PersonaSwitchAction.CONTINUE_THREAD)
-    }
+    coVerify { switchPersonaUseCase(threadId, newPersonaId, PersonaSwitchAction.CONTINUE_THREAD) }
   }
 
   @Test

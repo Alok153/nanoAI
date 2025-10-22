@@ -5,13 +5,17 @@ import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRefreshStatus
 import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
 import java.util.UUID
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 
 /** Fake implementation of [ModelCatalogRepository] for testing. */
-class FakeModelCatalogRepository : ModelCatalogRepository {
-  private val _models = MutableStateFlow<List<ModelPackage>>(emptyList())
+@Singleton
+class FakeModelCatalogRepository @Inject constructor() : ModelCatalogRepository {
+  private val _models =
+    MutableStateFlow<List<com.vjaykrsna.nanoai.core.domain.model.ModelPackage>>(emptyList())
   private val _refreshStatus = MutableStateFlow(ModelCatalogRefreshStatus())
 
   var shouldFailOnReplaceCatalog = false

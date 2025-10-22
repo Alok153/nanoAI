@@ -16,4 +16,7 @@ enum class ProviderType {
 
   /** Cloud-based API (not a local model). */
   CLOUD_API,
+
+  /** Leap AI for local model inference. */
+  LEAP,
 }

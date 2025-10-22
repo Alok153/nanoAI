@@ -6,19 +6,26 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.vjaykrsna.nanoai.core.common.IoDispatcher
 import com.vjaykrsna.nanoai.core.data.repository.InferencePreferenceRepository
 import com.vjaykrsna.nanoai.core.domain.model.InferencePreference
 import com.vjaykrsna.nanoai.core.model.InferenceMode
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 @Singleton
+@Suppress("UnusedPrivateProperty") // Will be used for future IO operations
 class InferencePreferenceRepositoryImpl
 @Inject
-constructor(@ApplicationContext private val context: Context) : InferencePreferenceRepository {
+constructor(
+  @ApplicationContext private val context: Context,
+  @IoDispatcher private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+) : InferencePreferenceRepository {
   override fun observeInferencePreference(): Flow<InferencePreference> =
     context.dataStore.data.map { preferences ->
       val modeName = preferences[KEY_INFERENCE_MODE]

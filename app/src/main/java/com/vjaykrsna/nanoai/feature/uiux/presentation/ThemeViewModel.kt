@@ -15,6 +15,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 /** ViewModel responsible for theme and UI preference management. */
 @HiltViewModel
@@ -37,11 +38,11 @@ constructor(
 
   /** Updates the theme preference for the active user. */
   fun updateThemePreference(theme: ThemePreference) {
-    settingsOperationsUseCase.updateTheme(theme)
+    viewModelScope.launch { settingsOperationsUseCase.updateTheme(theme) }
   }
 
   /** Updates the visual density preference for the active user. */
   fun updateVisualDensity(density: VisualDensity) {
-    settingsOperationsUseCase.updateVisualDensity(density)
+    viewModelScope.launch { settingsOperationsUseCase.updateVisualDensity(density) }
   }
 }

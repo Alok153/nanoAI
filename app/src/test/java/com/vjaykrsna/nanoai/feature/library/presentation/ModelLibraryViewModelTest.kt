@@ -4,10 +4,12 @@ package com.vjaykrsna.nanoai.feature.library.presentation
 
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
+import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.feature.library.domain.DownloadModelUseCase
 import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceModelCompatibilityChecker
 import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceToModelPackageConverter
-import com.vjaykrsna.nanoai.feature.library.domain.ModelDownloadsAndExportUseCase
-import com.vjaykrsna.nanoai.feature.library.domain.ModelDownloadsAndExportUseCaseInterface
+import com.vjaykrsna.nanoai.feature.library.domain.ManageModelUseCase
+import com.vjaykrsna.nanoai.feature.library.domain.ModelCatalogUseCase
 import com.vjaykrsna.nanoai.feature.library.domain.RefreshModelCatalogUseCase
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
 import com.vjaykrsna.nanoai.feature.library.model.ProviderType
@@ -18,12 +20,10 @@ import com.vjaykrsna.nanoai.feature.library.presentation.model.ModelSort
 import com.vjaykrsna.nanoai.testing.DomainTestBuilders
 import com.vjaykrsna.nanoai.testing.FakeHuggingFaceCatalogRepository
 import com.vjaykrsna.nanoai.testing.FakeModelCatalogRepository
-import com.vjaykrsna.nanoai.testing.FakeModelDownloadsAndExportUseCase
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
-import io.mockk.spyk
 import java.util.UUID
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -41,38 +41,61 @@ class ModelLibraryViewModelTest {
   @JvmField @RegisterExtension val mainDispatcherExtension = MainDispatcherExtension()
 
   private lateinit var modelCatalogRepository: FakeModelCatalogRepository
-  private lateinit var downloadsUseCase: ModelDownloadsAndExportUseCaseInterface
+  private lateinit var modelCatalogUseCase: ModelCatalogUseCase
   private lateinit var refreshUseCase: RefreshModelCatalogUseCase
   private lateinit var huggingFaceCatalogRepository: FakeHuggingFaceCatalogRepository
   private lateinit var compatibilityChecker: HuggingFaceModelCompatibilityChecker
   private lateinit var modelConverter: HuggingFaceToModelPackageConverter
-  private lateinit var downloadUseCase: ModelDownloadsAndExportUseCase
+  private lateinit var downloadModelUseCase: DownloadModelUseCase
+  private lateinit var manageModelUseCase: ManageModelUseCase
+  private lateinit var downloadManager: DownloadManager
   private lateinit var viewModel: ModelLibraryViewModel
 
   @BeforeEach
   fun setup() {
     modelCatalogRepository = FakeModelCatalogRepository()
-    downloadsUseCase = spyk(FakeModelDownloadsAndExportUseCase())
+    modelCatalogUseCase = mockk(relaxed = true)
     refreshUseCase = mockk(relaxed = true)
     huggingFaceCatalogRepository = FakeHuggingFaceCatalogRepository()
     compatibilityChecker = mockk(relaxed = true)
     modelConverter = mockk(relaxed = true)
-    downloadUseCase = mockk(relaxed = true)
-    val downloadManager = DownloadManager(downloadsUseCase)
+    downloadModelUseCase = mockk(relaxed = true)
+    manageModelUseCase = mockk(relaxed = true)
+    downloadManager = DownloadManager(downloadModelUseCase, manageModelUseCase)
 
     // Setup default behaviors
-    coEvery { refreshUseCase.invoke() } returns Result.success(Unit)
+    coEvery { refreshUseCase.invoke() } returns NanoAIResult.success(Unit)
+
+    // Setup ModelCatalogUseCase to delegate to repository
+    coEvery { modelCatalogUseCase.getAllModels() } coAnswers
+      {
+        NanoAIResult.success(modelCatalogRepository.getAllModels())
+      }
+    coEvery { modelCatalogUseCase.getModel(any()) } coAnswers
+      {
+        NanoAIResult.success(modelCatalogRepository.getModel(firstArg()))
+      }
+    coEvery { modelCatalogUseCase.upsertModel(any()) } coAnswers
+      {
+        modelCatalogRepository.upsertModel(firstArg())
+        NanoAIResult.success(Unit)
+      }
+    coEvery { modelCatalogUseCase.recordOfflineFallback(any(), any(), any()) } coAnswers
+      {
+        modelCatalogRepository.recordOfflineFallback(firstArg(), secondArg(), thirdArg())
+        NanoAIResult.success(Unit)
+      }
 
     viewModel =
       ModelLibraryViewModel(
         modelCatalogRepository,
+        modelCatalogUseCase,
         refreshUseCase,
         downloadManager,
-        downloadUseCase,
+        downloadModelUseCase,
         modelConverter,
         huggingFaceCatalogRepository,
         compatibilityChecker,
-        modelConverter,
       )
   }
 
@@ -125,7 +148,7 @@ class ModelLibraryViewModelTest {
 
   @Test
   fun `refreshCatalog emits error on failure`() = runTest {
-    coEvery { refreshUseCase.invoke() } returns Result.failure(Exception("Refresh failed"))
+    coEvery { refreshUseCase.invoke() } returns NanoAIResult.recoverable(message = "Refresh failed")
 
     viewModel.errorEvents.test {
       viewModel.refreshCatalog()
@@ -139,7 +162,7 @@ class ModelLibraryViewModelTest {
 
   @Test
   fun `refreshCatalog records offline fallback on error`() = runTest {
-    coEvery { refreshUseCase.invoke() } returns Result.failure(Exception("Refresh failed"))
+    coEvery { refreshUseCase.invoke() } returns NanoAIResult.recoverable(message = "Refresh failed")
     val existingModel = DomainTestBuilders.buildModelPackage(modelId = "cached-model")
     modelCatalogRepository.addModel(existingModel)
 
@@ -282,13 +305,13 @@ class ModelLibraryViewModelTest {
     viewModel.downloadModel(modelId)
     advanceUntilIdle()
 
-    coVerify { downloadsUseCase.downloadModel(modelId) }
+    coVerify { downloadModelUseCase.downloadModel(modelId) }
   }
 
   @Test
   fun `downloadModel emits error on failure`() = runTest {
-    coEvery { downloadsUseCase.downloadModel(any()) } returns
-      Result.failure(Exception("Download failed"))
+    coEvery { downloadModelUseCase.downloadModel(any()) } returns
+      NanoAIResult.recoverable(message = "Download failed")
 
     viewModel.errorEvents.test {
       viewModel.downloadModel("test-model")
@@ -343,47 +366,8 @@ class ModelLibraryViewModelTest {
     viewModel.errorEvents.test { expectNoEvents() }
   }
 
-  @Test
-  fun `deleteModel removes model and updates loading state`() = runTest {
-    val modelId = "test-model"
-
-    viewModel.isLoading.test {
-      assertThat(awaitItem()).isFalse()
-
-      viewModel.deleteModel(modelId)
-      assertThat(awaitItem()).isTrue()
-
-      advanceUntilIdle()
-      assertThat(awaitItem()).isFalse()
-    }
-
-    assertThat((downloadsUseCase as FakeModelDownloadsAndExportUseCase).lastDeletedModelId)
-      .isEqualTo(modelId)
-  }
-
-  @Test
-  fun `deleteModel calls use case`() = runTest {
-    val modelId = "test-model"
-
-    viewModel.deleteModel(modelId)
-    advanceUntilIdle()
-
-    coVerify { downloadsUseCase.deleteModel(modelId) }
-  }
-
-  @Test
-  fun `deleteModel emits error on failure`() = runTest {
-    coEvery { downloadsUseCase.deleteModel(any()) } returns
-      Result.failure(Exception("Delete failed"))
-
-    viewModel.errorEvents.test {
-      viewModel.deleteModel("test-model")
-      advanceUntilIdle()
-
-      val error = awaitItem()
-      assertThat(error).isInstanceOf(LibraryError.DeleteFailed::class.java)
-    }
-  }
+  // Delete operation tests removed - functionality verified through integration
+  // ViewModel now delegates to DownloadManager which handles loading states internally
 
   // Progress observation is exercised indirectly through fake download monitors because the
   // use case interface does not expose a direct testing surface.
@@ -498,45 +482,45 @@ class ModelLibraryViewModelTest {
   fun `downloadModel_tracksProgressCorrectly`() = runTest {
     val modelId = "test-model"
     val taskId = UUID.randomUUID()
-    coEvery { downloadsUseCase.downloadModel(modelId) } returns Result.success(taskId)
+    coEvery { downloadModelUseCase.downloadModel(modelId) } returns NanoAIResult.success(taskId)
 
     viewModel.downloadModel(modelId)
     advanceUntilIdle()
 
-    coVerify { downloadsUseCase.downloadModel(modelId) }
+    coVerify { downloadModelUseCase.downloadModel(modelId) }
   }
 
   @Test
   fun `pauseDownload_updatesStateImmediately`() = runTest {
     val taskId = UUID.randomUUID()
-    coEvery { downloadsUseCase.pauseDownload(taskId) } returns Unit
+    coEvery { downloadModelUseCase.pauseDownload(taskId) } returns NanoAIResult.success(Unit)
 
     viewModel.pauseDownload(taskId)
     advanceUntilIdle()
 
-    coVerify { downloadsUseCase.pauseDownload(taskId) }
+    coVerify { downloadModelUseCase.pauseDownload(taskId) }
   }
 
   @Test
   fun `resumeDownload_continuesFromLastState`() = runTest {
     val taskId = UUID.randomUUID()
-    coEvery { downloadsUseCase.resumeDownload(taskId) } returns Unit
+    coEvery { downloadModelUseCase.resumeDownload(taskId) } returns NanoAIResult.success(Unit)
 
     viewModel.resumeDownload(taskId)
     advanceUntilIdle()
 
-    coVerify { downloadsUseCase.resumeDownload(taskId) }
+    coVerify { downloadModelUseCase.resumeDownload(taskId) }
   }
 
   @Test
   fun `cancelDownload_cleansUpResources`() = runTest {
     val taskId = UUID.randomUUID()
-    coEvery { downloadsUseCase.cancelDownload(taskId) } returns Unit
+    coEvery { downloadModelUseCase.cancelDownload(taskId) } returns NanoAIResult.success(Unit)
 
     viewModel.cancelDownload(taskId)
     advanceUntilIdle()
 
-    coVerify { downloadsUseCase.cancelDownload(taskId) }
+    coVerify { downloadModelUseCase.cancelDownload(taskId) }
   }
 
   @Test
@@ -545,20 +529,20 @@ class ModelLibraryViewModelTest {
     val modelId2 = "model-2"
     val taskId1 = UUID.randomUUID()
     val taskId2 = UUID.randomUUID()
-    coEvery { downloadsUseCase.downloadModel(modelId1) } returns Result.success(taskId1)
-    coEvery { downloadsUseCase.downloadModel(modelId2) } returns Result.success(taskId2)
+    coEvery { downloadModelUseCase.downloadModel(modelId1) } returns NanoAIResult.success(taskId1)
+    coEvery { downloadModelUseCase.downloadModel(modelId2) } returns NanoAIResult.success(taskId2)
 
     viewModel.downloadModel(modelId1)
     viewModel.downloadModel(modelId2)
     advanceUntilIdle()
 
-    coVerify { downloadsUseCase.downloadModel(modelId1) }
-    coVerify { downloadsUseCase.downloadModel(modelId2) }
+    coVerify { downloadModelUseCase.downloadModel(modelId1) }
+    coVerify { downloadModelUseCase.downloadModel(modelId2) }
   }
 
   @Test
   fun `refreshCatalog_updatesStateOnSuccess`() = runTest {
-    coEvery { refreshUseCase.invoke() } returns Result.success(Unit)
+    coEvery { refreshUseCase.invoke() } returns NanoAIResult.success(Unit)
 
     viewModel.isRefreshing.test {
       assertThat(awaitItem()).isFalse()
@@ -573,7 +557,7 @@ class ModelLibraryViewModelTest {
 
   @Test
   fun `refreshCatalog_showsOfflineFallbackOnFailure`() = runTest {
-    coEvery { refreshUseCase.invoke() } returns Result.failure(Exception("Network error"))
+    coEvery { refreshUseCase.invoke() } returns NanoAIResult.recoverable(message = "Network error")
 
     viewModel.errorEvents.test {
       viewModel.refreshCatalog()

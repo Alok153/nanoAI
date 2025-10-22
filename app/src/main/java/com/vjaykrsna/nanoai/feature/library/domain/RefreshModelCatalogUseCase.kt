@@ -1,6 +1,7 @@
 package com.vjaykrsna.nanoai.feature.library.domain
 
 import android.util.Log
+import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
 import com.vjaykrsna.nanoai.feature.library.data.catalog.ModelCatalogSource
 import javax.inject.Inject
@@ -14,7 +15,7 @@ constructor(
   private val modelCatalogSource: ModelCatalogSource,
   private val modelCatalogRepository: ModelCatalogRepository,
 ) {
-  suspend operator fun invoke(): Result<Unit> {
+  suspend operator fun invoke(): NanoAIResult<Unit> {
     val context = mutableMapOf<String, String>()
     val models =
       try {
@@ -34,18 +35,22 @@ constructor(
         source = context["source"] ?: modelCatalogSource.javaClass.simpleName,
         modelCount = models.size,
       )
-      Result.success(Unit)
+      NanoAIResult.success(Unit)
     } catch (error: Throwable) {
       val wrapped = IllegalStateException("Failed to replace model catalog", error)
       Log.e(TAG, "catalogRefresh failure context=${context.toLog()}", wrapped)
-      Result.failure(wrapped)
+      NanoAIResult.recoverable(
+        message = "Failed to replace model catalog",
+        cause = wrapped,
+        context = context,
+      )
     }
   }
 
   private suspend fun handleFetchFailure(
     context: MutableMap<String, String>,
     error: Throwable,
-  ): Result<Unit> {
+  ): NanoAIResult<Unit> {
     context["errorType"] = error.javaClass.simpleName
     error.message?.takeIf { it.isNotBlank() }?.let { message -> context["errorMessage"] = message }
     context["fallback"] = "cached"
@@ -58,7 +63,8 @@ constructor(
       cachedCount = cachedModels.size,
       message = error.message,
     )
-    return Result.success(Unit)
+    // Even though fetch failed, we're falling back to cached data, so this is still a success
+    return NanoAIResult.success(Unit)
   }
 
   private fun Map<String, String>.toLog(): String = buildString {

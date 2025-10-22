@@ -102,7 +102,12 @@ fun NavigationScaffold(
       onEvent = shellEventHandler,
       modifier = Modifier.fillMaxSize(),
       modeContent = { modeId ->
-        ShellModeContent(modeId, Modifier.fillMaxSize(), shellViewModel::updateChatState)
+        ShellModeContent(
+          modeId = modeId,
+          modifier = Modifier.fillMaxSize(),
+          onUpdateChatState = shellViewModel::updateChatState,
+          onNavigate = shellViewModel::openMode,
+        )
       },
     )
 
@@ -160,6 +165,7 @@ private fun rememberShellEventHandler(
         is ShellUiEvent.UpdateDensity -> shellViewModel.updateVisualDensity(event.density)
         is ShellUiEvent.ChatPersonaSelected ->
           chatViewModel.switchPersona(event.personaId, event.action)
+        is ShellUiEvent.ChatTitleClicked -> chatViewModel.showModelPicker()
       }
     }
   }
@@ -169,6 +175,7 @@ private fun ShellModeContent(
   modeId: ModeId,
   modifier: Modifier = Modifier,
   onUpdateChatState: (com.vjaykrsna.nanoai.feature.uiux.presentation.ChatState?) -> Unit,
+  onNavigate: (ModeId) -> Unit,
 ) {
   var hasError by rememberSaveable { mutableStateOf(false) }
   var errorMessage by rememberSaveable { mutableStateOf("") }
@@ -195,7 +202,12 @@ private fun ShellModeContent(
   when (modeId) {
     // HOME is handled directly by NanoShellScaffold - never called here
     ModeId.HOME -> error("HOME mode should be handled by NanoShellScaffold, not NavigationScaffold")
-    ModeId.CHAT -> ChatScreen(modifier = modifier, onUpdateChatState = onUpdateChatState)
+    ModeId.CHAT ->
+      ChatScreen(
+        modifier = modifier,
+        onUpdateChatState = onUpdateChatState,
+        onNavigate = onNavigate,
+      )
     ModeId.LIBRARY -> ModelLibraryScreen(modifier = modifier)
     ModeId.SETTINGS -> SettingsScreen(modifier = modifier)
     ModeId.IMAGE -> ImageFeatureContainer(modifier = modifier)

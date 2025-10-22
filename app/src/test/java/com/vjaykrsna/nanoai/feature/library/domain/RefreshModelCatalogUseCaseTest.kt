@@ -7,6 +7,8 @@ import com.vjaykrsna.nanoai.feature.library.data.catalog.ModelCatalogSource
 import com.vjaykrsna.nanoai.feature.library.model.InstallState
 import com.vjaykrsna.nanoai.feature.library.model.ProviderType
 import com.vjaykrsna.nanoai.model.catalog.DeliveryType
+import com.vjaykrsna.nanoai.testing.assertIsSuccess
+import com.vjaykrsna.nanoai.testing.assertRecoverableError
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -29,7 +31,7 @@ class RefreshModelCatalogUseCaseTest {
 
     val result = useCase()
 
-    assertThat(result.isSuccess).isTrue()
+    result.assertIsSuccess()
     coVerify(exactly = 1) { repository.replaceCatalog(models) }
     coVerify(exactly = 1) { repository.recordRefreshSuccess(any(), models.size) }
   }
@@ -43,11 +45,11 @@ class RefreshModelCatalogUseCaseTest {
 
     val result = useCase()
 
-    assertThat(result.isFailure).isTrue()
-    val failure = result.exceptionOrNull()
-    assertThat(failure).isNotNull()
-    assertThat(failure).hasMessageThat().contains("Failed to replace model catalog")
-    assertThat(failure?.cause).isEqualTo(underlying)
+    val error = result.assertRecoverableError()
+    assertThat(error.message).isEqualTo("Failed to replace model catalog")
+    assertThat(error.cause).isInstanceOf(IllegalStateException::class.java)
+    assertThat(error.cause?.message).isEqualTo("Failed to replace model catalog")
+    assertThat(error.cause?.cause).isEqualTo(underlying)
     coVerify(exactly = 0) { repository.recordRefreshSuccess(any(), any()) }
   }
 
@@ -57,7 +59,7 @@ class RefreshModelCatalogUseCaseTest {
 
     val result = useCase()
 
-    assertThat(result.isSuccess).isTrue()
+    result.assertIsSuccess()
     coVerify(exactly = 1) { repository.recordOfflineFallback("IOException", 0, any()) }
   }
 

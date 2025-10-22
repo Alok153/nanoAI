@@ -1,27 +1,28 @@
 package com.vjaykrsna.nanoai.feature.library.domain
 
+import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 
 /** Interface for model download and export operations. */
 interface ModelDownloadsAndExportUseCaseInterface {
-  suspend fun downloadModel(modelId: String): Result<UUID>
+  suspend fun downloadModel(modelId: String): NanoAIResult<UUID>
 
-  suspend fun verifyDownloadChecksum(modelId: String): Result<Boolean>
+  suspend fun verifyDownloadChecksum(modelId: String): NanoAIResult<Boolean>
 
-  suspend fun pauseDownload(taskId: UUID)
+  suspend fun pauseDownload(taskId: UUID): NanoAIResult<Unit>
 
-  suspend fun resumeDownload(taskId: UUID)
+  suspend fun resumeDownload(taskId: UUID): NanoAIResult<Unit>
 
-  suspend fun cancelDownload(taskId: UUID)
+  suspend fun cancelDownload(taskId: UUID): NanoAIResult<Unit>
 
-  suspend fun deleteModel(modelId: String): Result<Unit>
+  suspend fun deleteModel(modelId: String): NanoAIResult<Unit>
 
   suspend fun exportBackup(
     destinationPath: String,
     includeChatHistory: Boolean = false,
-  ): Result<String>
+  ): NanoAIResult<String>
 
   fun getDownloadProgress(taskId: UUID): Flow<Float>
 
@@ -29,5 +30,5 @@ interface ModelDownloadsAndExportUseCaseInterface {
 
   fun observeDownloadTasks(): Flow<List<DownloadTask>>
 
-  suspend fun retryFailedDownload(taskId: UUID)
+  suspend fun retryFailedDownload(taskId: UUID): NanoAIResult<Unit>
 }

@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai.core.data.repository.impl
 
+import com.vjaykrsna.nanoai.core.common.IoDispatcher
 import com.vjaykrsna.nanoai.core.data.db.daos.PersonaProfileDao
 import com.vjaykrsna.nanoai.core.data.repository.PersonaRepository
 import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
@@ -8,6 +9,8 @@ import com.vjaykrsna.nanoai.core.domain.model.toEntity
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -17,8 +20,13 @@ import kotlinx.coroutines.flow.map
  * Wraps PersonaProfileDao, converting between entities and domain models.
  */
 @Singleton
-class PersonaRepositoryImpl @Inject constructor(private val personaProfileDao: PersonaProfileDao) :
-  PersonaRepository {
+@Suppress("UnusedPrivateProperty") // Will be used for future IO operations
+class PersonaRepositoryImpl
+@Inject
+constructor(
+  private val personaProfileDao: PersonaProfileDao,
+  @IoDispatcher private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+) : PersonaRepository {
   override suspend fun getAllPersonas(): List<PersonaProfile> =
     personaProfileDao.getAll().map { it.toDomain() }
 

@@ -92,3 +92,13 @@ Compose:
   active: true
   ComposableParamOrder:
     active: false
+
+# TODO: Enable custom UI quality rules after proper build integration
+# UIQuality: // **IT IS NOT PLANNED RIGHT NOW**
+#   active: true
+#   HardcodedStringInComposable:
+#     active: true
+#   MissingContentDescription:
+#     active: true
+#   NonMaterialSpacing:
+#     active: true
