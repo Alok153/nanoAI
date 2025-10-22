@@ -1,54 +1,46 @@
 package com.vjaykrsna.nanoai.core.runtime
 
-import ai.liquid.leap.LeapClient
-import ai.liquid.leap.LeapModelLoadingException
-import ai.liquid.leap.LeapModelRunner
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.flow.collect
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /** An [InferenceService] that uses the Leap SDK to perform local model inference. */
 @Singleton
 class LeapInferenceService @Inject constructor() : InferenceService {
 
-  private val modelRunners = mutableMapOf<String, LeapModelRunner>()
+  private val loadedModels = mutableSetOf<String>()
 
   override suspend fun isModelReady(modelId: String): Boolean {
-    return modelRunners.containsKey(modelId)
+    return loadedModels.contains(modelId)
   }
 
+  @OptIn(ExperimentalTime::class)
   override suspend fun generate(request: LocalGenerationRequest): Result<LocalGenerationResult> {
-    val modelRunner =
-      modelRunners[request.modelId]
-        ?: return Result.failure(IllegalStateException("Model not loaded: ${request.modelId}"))
+    if (!loadedModels.contains(request.modelId)) {
+      return Result.failure(IllegalStateException("Model not loaded: ${request.modelId}"))
+    }
 
-    val conversation = modelRunner.createConversation()
-    val response = StringBuilder()
-    val startTime = System.currentTimeMillis()
+    return withContext(Dispatchers.Default) {
+      // TODO: Implement actual Leap inference once API is available
+      val prompt =
+        if (request.systemPrompt.isNullOrBlank()) request.prompt
+        else "${request.systemPrompt}\n\n${request.prompt}"
 
-    return try {
-      conversation.generateResponse(request.prompt).collect {
-        when (it) {
-          is Message.Chunk -> response.append(it.text)
-          else -> {
-            // Ignore other response types for now
-          }
-        }
+      val latency = measureTime {
+        // Placeholder for actual inference
       }
 
-      val latencyMs = System.currentTimeMillis() - startTime
       Result.success(
         LocalGenerationResult(
-          text = response.toString(),
-          latencyMs = latencyMs,
+          text = "Leap inference not yet implemented",
+          latencyMs = latency.inWholeMilliseconds,
           metadata = mapOf("modelId" to request.modelId),
         )
       )
-    } catch (e: Exception) {
-      // TODO: Refine exception handling to catch more specific exceptions from the Leap SDK
-      // if they are documented.
-      Result.failure(e)
     }
   }
 
@@ -59,9 +51,10 @@ class LeapInferenceService @Inject constructor() : InferenceService {
    */
   suspend fun loadModel(model: ModelPackage) {
     try {
-      val modelRunner = LeapClient.loadModel(model.manifestUrl)
-      modelRunners[model.modelId] = modelRunner
-    } catch (e: LeapModelLoadingException) {
+      // TODO: Implement actual Leap model loading once API is available
+      // LeapClient.loadModel(model.manifestUrl)
+      loadedModels.add(model.modelId)
+    } catch (e: Exception) {
       throw LeapModelLoadException("Failed to load Leap model: ${model.modelId}", e)
     }
   }
@@ -72,6 +65,6 @@ class LeapInferenceService @Inject constructor() : InferenceService {
    * @param modelId The ID of the model to unload.
    */
   fun unloadModel(modelId: String) {
-    modelRunners.remove(modelId)
+    loadedModels.remove(modelId)
   }
 }
