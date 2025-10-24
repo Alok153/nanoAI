@@ -11,7 +11,7 @@ import com.vjaykrsna.nanoai.core.model.APIType
 import com.vjaykrsna.nanoai.core.model.ProviderStatus
 import com.vjaykrsna.nanoai.feature.library.data.DownloadManager
 import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
-import com.vjaykrsna.nanoai.shared.model.catalog.DeliveryType
+import com.vjaykrsna.nanoai.feature.library.data.catalog.DeliveryType
 import com.vjaykrsna.nanoai.testing.assertIsSuccess
 import com.vjaykrsna.nanoai.testing.assertRecoverableError
 import com.vjaykrsna.nanoai.testing.assertSuccess

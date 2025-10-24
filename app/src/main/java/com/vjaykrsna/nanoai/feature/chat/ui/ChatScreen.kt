@@ -1,6 +1,5 @@
 package com.vjaykrsna.nanoai.feature.chat.ui
 
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
 import android.net.Uri
@@ -105,13 +104,14 @@ fun ChatScreen(
       ->
       uri?.let {
         try {
-          val bitmap = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
-            ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, it))
-          } else {
-            context.contentResolver.openInputStream(it)?.use { stream ->
-              BitmapFactory.decodeStream(stream)
+          val bitmap =
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+              ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, it))
+            } else {
+              context.contentResolver.openInputStream(it)?.use { stream ->
+                BitmapFactory.decodeStream(stream)
+              }
             }
-          }
           bitmap?.let { viewModel.onImageSelected(it) }
         } catch (e: Exception) {
           // Log the error for debugging

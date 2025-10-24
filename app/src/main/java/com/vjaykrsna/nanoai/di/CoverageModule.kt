@@ -2,6 +2,7 @@ package com.vjaykrsna.nanoai.di
 
 import android.content.Context
 import com.vjaykrsna.nanoai.coverage.data.CoverageDashboardRepository
+import com.vjaykrsna.nanoai.coverage.data.CoverageDashboardRepositoryImpl
 import com.vjaykrsna.nanoai.coverage.domain.usecase.GetCoverageReportUseCase
 import dagger.Module
 import dagger.Provides
@@ -20,7 +21,7 @@ object CoverageModule {
   fun provideCoverageDashboardRepository(
     @ApplicationContext context: Context,
     json: Json,
-  ): CoverageDashboardRepository = CoverageDashboardRepository(context, json)
+  ): CoverageDashboardRepository = CoverageDashboardRepositoryImpl(context, json)
 
   @Provides
   @Singleton

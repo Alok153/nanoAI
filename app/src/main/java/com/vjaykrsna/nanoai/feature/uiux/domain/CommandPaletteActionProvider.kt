@@ -8,8 +8,8 @@ import com.vjaykrsna.nanoai.feature.uiux.presentation.JobType
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ModeId
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ProgressJob
 import com.vjaykrsna.nanoai.feature.uiux.presentation.RecentActivityItem
+import com.vjaykrsna.nanoai.feature.uiux.presentation.navigation.Screen
 import com.vjaykrsna.nanoai.feature.uiux.presentation.toRoute
-import com.vjaykrsna.nanoai.shared.ui.navigation.Screen
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow

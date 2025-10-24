@@ -11,8 +11,8 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * Contract guard rails for the import/export backup format defined in
- * test resources contracts/import-export-openapi.yaml.
+ * Contract guard rails for the import/export backup format defined in test resources
+ * contracts/import-export-openapi.yaml.
  *
  * These tests purposefully assert on the documented schema details before the implementation has
  * been aligned. They are expected to fail until the export bundle and sample payload include the

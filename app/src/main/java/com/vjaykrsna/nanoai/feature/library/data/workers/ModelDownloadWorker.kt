@@ -7,14 +7,14 @@ import androidx.work.ListenableWorker.Result as WorkResult
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.feature.library.data.catalog.DownloadManifest
+import com.vjaykrsna.nanoai.feature.library.data.catalog.VerificationOutcome
 import com.vjaykrsna.nanoai.feature.library.data.daos.DownloadTaskDao
 import com.vjaykrsna.nanoai.feature.library.data.daos.ModelPackageReadDao
 import com.vjaykrsna.nanoai.feature.library.data.daos.ModelPackageWriteDao
 import com.vjaykrsna.nanoai.feature.library.domain.DownloadStatus
 import com.vjaykrsna.nanoai.feature.library.domain.InstallState
 import com.vjaykrsna.nanoai.feature.library.domain.ModelManifestUseCase
-import com.vjaykrsna.nanoai.shared.model.catalog.DownloadManifest
-import com.vjaykrsna.nanoai.shared.model.catalog.VerificationOutcome
 import com.vjaykrsna.nanoai.telemetry.TelemetryReporter
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject

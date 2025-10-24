@@ -1,7 +1,7 @@
 package com.vjaykrsna.nanoai.feature.library.domain
 
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
-import com.vjaykrsna.nanoai.shared.model.catalog.DeliveryType
+import com.vjaykrsna.nanoai.feature.library.data.catalog.DeliveryType
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.datetime.Clock

@@ -1,8 +1,8 @@
 package com.vjaykrsna.nanoai.feature.library.domain
 
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
-import com.vjaykrsna.nanoai.shared.model.catalog.DownloadManifest
-import com.vjaykrsna.nanoai.shared.model.catalog.VerificationOutcome
+import com.vjaykrsna.nanoai.feature.library.data.catalog.DownloadManifest
+import com.vjaykrsna.nanoai.feature.library.data.catalog.VerificationOutcome
 
 /**
  * Interface for model manifest operations including fetching, validation, and verification
