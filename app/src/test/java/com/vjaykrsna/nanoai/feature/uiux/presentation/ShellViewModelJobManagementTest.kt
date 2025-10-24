@@ -7,10 +7,10 @@ import com.vjaykrsna.nanoai.feature.uiux.domain.NavigationOperationsUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.QueueJobUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.SettingsOperationsUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.UndoActionUseCase
-import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityStatus
-import com.vjaykrsna.nanoai.feature.uiux.state.JobStatus
-import com.vjaykrsna.nanoai.feature.uiux.state.JobType
-import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
+import com.vjaykrsna.nanoai.feature.uiux.presentation.ConnectivityStatus
+import com.vjaykrsna.nanoai.feature.uiux.presentation.JobStatus
+import com.vjaykrsna.nanoai.feature.uiux.presentation.JobType
+import com.vjaykrsna.nanoai.feature.uiux.presentation.ProgressJob
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import io.mockk.*
 import java.time.Duration
@@ -71,7 +71,7 @@ class ShellViewModelJobManagementTest {
               else -> "${jobLabel(job)} updated"
             }
           fakeRepos.navigationRepository.recordUndoPayload(
-            com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload(
+            com.vjaykrsna.nanoai.feature.uiux.presentation.UndoPayload(
               actionId = "queue-${job.jobId}",
               metadata = mapOf("message" to message, "jobId" to job.jobId.toString()),
             )
@@ -146,7 +146,7 @@ class ShellViewModelJobManagementTest {
               else -> "${jobLabel(job)} updated"
             }
           fakeRepos.navigationRepository.recordUndoPayload(
-            com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload(
+            com.vjaykrsna.nanoai.feature.uiux.presentation.UndoPayload(
               actionId = "queue-${job.jobId}",
               metadata = mapOf("message" to message, "jobId" to job.jobId.toString()),
             )
@@ -215,7 +215,7 @@ class ShellViewModelJobManagementTest {
               else -> "${jobLabel(job)} updated"
             }
           fakeRepos.navigationRepository.recordUndoPayload(
-            com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload(
+            com.vjaykrsna.nanoai.feature.uiux.presentation.UndoPayload(
               actionId = "queue-${job.jobId}",
               metadata = mapOf("message" to message, "jobId" to job.jobId.toString()),
             )
@@ -225,7 +225,7 @@ class ShellViewModelJobManagementTest {
       val undoActionUseCase = mockk<UndoActionUseCase>()
       coEvery { undoActionUseCase.execute(any()) } coAnswers
         {
-          val payload = firstArg<com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload>()
+          val payload = firstArg<com.vjaykrsna.nanoai.feature.uiux.presentation.UndoPayload>()
           if (payload.actionId.startsWith("queue-")) {
             val jobIdString = payload.metadata["jobId"] as String
             val jobId = UUID.fromString(jobIdString)

@@ -3,7 +3,7 @@ package com.vjaykrsna.nanoai.testing
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.feature.library.domain.ModelDownloadsAndExportUseCaseInterface
-import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
+import com.vjaykrsna.nanoai.feature.library.domain.DownloadStatus
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow

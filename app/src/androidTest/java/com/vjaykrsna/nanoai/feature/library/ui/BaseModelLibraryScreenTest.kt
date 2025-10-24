@@ -26,7 +26,7 @@ abstract class BaseModelLibraryScreenTest {
   protected lateinit var catalogRepository: FakeModelCatalogRepository
   protected lateinit var modelCatalogUseCase: ModelCatalogUseCase
   protected lateinit var refreshUseCase: RefreshModelCatalogUseCase
-  protected lateinit var huggingFaceCatalogRepository: FakeHuggingFaceCatalogRepository
+  protected lateinit var listHuggingFaceModelsUseCase: ListHuggingFaceModelsUseCase
   protected lateinit var viewModel: ModelLibraryViewModel
   protected lateinit var downloadManager: DownloadManager
   protected lateinit var downloadModelUseCase: DownloadModelUseCase
@@ -38,7 +38,7 @@ abstract class BaseModelLibraryScreenTest {
     catalogRepository = FakeModelCatalogRepository()
     modelCatalogUseCase = mockk(relaxed = true)
     refreshUseCase = mockk(relaxed = true)
-    huggingFaceCatalogRepository = FakeHuggingFaceCatalogRepository()
+    listHuggingFaceModelsUseCase = mockk(relaxed = true)
     downloadManager = mockk(relaxed = true)
     downloadModelUseCase = mockk(relaxed = true)
     hfToModelConverter = mockk(relaxed = true)
@@ -54,7 +54,7 @@ abstract class BaseModelLibraryScreenTest {
         downloadManager = downloadManager,
         downloadModelUseCase = downloadModelUseCase,
         hfToModelConverter = hfToModelConverter,
-        huggingFaceCatalogRepository = huggingFaceCatalogRepository,
+        listHuggingFaceModelsUseCase = listHuggingFaceModelsUseCase,
         compatibilityChecker = compatibilityChecker,
       )
   }

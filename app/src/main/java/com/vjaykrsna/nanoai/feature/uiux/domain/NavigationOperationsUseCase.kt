@@ -4,9 +4,9 @@ import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSiz
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import com.vjaykrsna.nanoai.core.common.IoDispatcher
 import com.vjaykrsna.nanoai.core.data.repository.NavigationRepository
-import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
-import com.vjaykrsna.nanoai.feature.uiux.state.PaletteSource
-import com.vjaykrsna.nanoai.feature.uiux.state.RightPanel
+import com.vjaykrsna.nanoai.feature.uiux.presentation.ModeId
+import com.vjaykrsna.nanoai.feature.uiux.presentation.PaletteSource
+import com.vjaykrsna.nanoai.feature.uiux.presentation.RightPanel
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope

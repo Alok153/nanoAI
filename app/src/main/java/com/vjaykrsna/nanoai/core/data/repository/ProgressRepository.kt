@@ -1,6 +1,6 @@
 package com.vjaykrsna.nanoai.core.data.repository
 
-import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
+import com.vjaykrsna.nanoai.feature.uiux.presentation.ProgressJob
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 

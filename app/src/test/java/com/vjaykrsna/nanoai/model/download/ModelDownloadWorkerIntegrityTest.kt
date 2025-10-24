@@ -5,7 +5,7 @@ import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.device.DeviceIdentityProvider
 import com.vjaykrsna.nanoai.core.network.ConnectivityStatusProvider
 import com.vjaykrsna.nanoai.feature.library.domain.ModelManifestUseCase
-import com.vjaykrsna.nanoai.feature.library.model.InstallState
+import com.vjaykrsna.nanoai.feature.library.domain.InstallState
 import com.vjaykrsna.nanoai.model.catalog.DownloadManifestDao
 import com.vjaykrsna.nanoai.model.catalog.DownloadManifestEntity
 import com.vjaykrsna.nanoai.model.catalog.ModelCatalogLocalDataSource

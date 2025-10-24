@@ -4,9 +4,11 @@ import com.vjaykrsna.nanoai.core.common.IoDispatcher
 import com.vjaykrsna.nanoai.core.data.repository.ConnectivityRepository
 import com.vjaykrsna.nanoai.core.data.repository.NavigationRepository
 import com.vjaykrsna.nanoai.core.data.repository.ProgressRepository
-import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityStatus
-import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
-import com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload
+import com.vjaykrsna.nanoai.feature.uiux.presentation.ConnectivityStatus
+import com.vjaykrsna.nanoai.feature.uiux.presentation.JobStatus
+import com.vjaykrsna.nanoai.feature.uiux.presentation.JobType
+import com.vjaykrsna.nanoai.feature.uiux.presentation.ProgressJob
+import com.vjaykrsna.nanoai.feature.uiux.presentation.UndoPayload
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -47,21 +49,21 @@ constructor(
   private fun buildQueuedJobMessage(job: ProgressJob, isOffline: Boolean): String {
     val label = jobLabel(job)
     return when {
-      job.status == com.vjaykrsna.nanoai.feature.uiux.state.JobStatus.FAILED && job.canRetry ->
+      job.status == JobStatus.FAILED && job.canRetry ->
         "$label retry scheduled"
       isOffline -> "$label queued for reconnect"
-      job.status == com.vjaykrsna.nanoai.feature.uiux.state.JobStatus.PENDING -> "$label queued"
+      job.status == JobStatus.PENDING -> "$label queued"
       else -> "$label updated"
     }
   }
 
   private fun jobLabel(job: ProgressJob): String =
     when (job.type) {
-      com.vjaykrsna.nanoai.feature.uiux.state.JobType.IMAGE_GENERATION -> "Image generation"
-      com.vjaykrsna.nanoai.feature.uiux.state.JobType.AUDIO_RECORDING -> "Audio recording"
-      com.vjaykrsna.nanoai.feature.uiux.state.JobType.MODEL_DOWNLOAD -> "Model download"
-      com.vjaykrsna.nanoai.feature.uiux.state.JobType.TEXT_GENERATION -> "Text generation"
-      com.vjaykrsna.nanoai.feature.uiux.state.JobType.TRANSLATION -> "Translation"
-      com.vjaykrsna.nanoai.feature.uiux.state.JobType.OTHER -> "Background task"
+      JobType.IMAGE_GENERATION -> "Image generation"
+      JobType.AUDIO_RECORDING -> "Audio recording"
+      JobType.MODEL_DOWNLOAD -> "Model download"
+      JobType.TEXT_GENERATION -> "Text generation"
+      JobType.TRANSLATION -> "Translation"
+      JobType.OTHER -> "Background task"
     }
 }

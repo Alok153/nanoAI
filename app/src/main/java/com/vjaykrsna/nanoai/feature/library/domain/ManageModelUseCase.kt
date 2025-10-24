@@ -2,7 +2,7 @@ package com.vjaykrsna.nanoai.feature.library.domain
 
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
-import com.vjaykrsna.nanoai.feature.library.model.InstallState
+import com.vjaykrsna.nanoai.feature.library.domain.InstallState
 import javax.inject.Inject
 import javax.inject.Singleton
 

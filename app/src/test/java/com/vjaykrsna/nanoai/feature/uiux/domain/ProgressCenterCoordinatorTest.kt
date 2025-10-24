@@ -3,9 +3,9 @@ package com.vjaykrsna.nanoai.feature.uiux.domain
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.feature.library.data.DownloadManager
-import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
-import com.vjaykrsna.nanoai.feature.uiux.state.JobStatus
-import com.vjaykrsna.nanoai.feature.uiux.state.JobType
+import com.vjaykrsna.nanoai.feature.library.domain.DownloadStatus
+import com.vjaykrsna.nanoai.feature.uiux.presentation.JobStatus
+import com.vjaykrsna.nanoai.feature.uiux.presentation.JobType
 import java.time.Instant
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow

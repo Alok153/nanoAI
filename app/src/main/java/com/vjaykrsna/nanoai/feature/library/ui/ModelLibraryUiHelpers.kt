@@ -1,8 +1,8 @@
 package com.vjaykrsna.nanoai.feature.library.ui
 
 import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
-import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
-import com.vjaykrsna.nanoai.feature.library.model.ProviderType
+import com.vjaykrsna.nanoai.feature.library.domain.DownloadStatus
+import com.vjaykrsna.nanoai.feature.library.domain.ProviderType
 import com.vjaykrsna.nanoai.feature.library.presentation.model.ModelSort
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter

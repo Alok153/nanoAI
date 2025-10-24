@@ -1,8 +1,8 @@
 package com.vjaykrsna.nanoai.feature.library.data.catalog
 
 import com.google.common.truth.Truth.assertThat
-import com.vjaykrsna.nanoai.feature.library.model.InstallState
-import com.vjaykrsna.nanoai.feature.library.model.ProviderType
+import com.vjaykrsna.nanoai.feature.library.domain.InstallState
+import com.vjaykrsna.nanoai.feature.library.domain.ProviderType
 import com.vjaykrsna.nanoai.model.catalog.DeliveryType
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant

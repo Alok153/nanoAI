@@ -4,7 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.data.repository.ConnectivityRepository
 import com.vjaykrsna.nanoai.core.data.repository.UserProfileRepository
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferencesSnapshot
-import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityStatus
+import com.vjaykrsna.nanoai.feature.uiux.presentation.ConnectivityStatus
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import io.mockk.coEvery
 import io.mockk.coVerify

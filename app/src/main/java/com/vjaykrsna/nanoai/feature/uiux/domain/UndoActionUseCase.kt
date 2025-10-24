@@ -3,7 +3,7 @@ package com.vjaykrsna.nanoai.feature.uiux.domain
 import com.vjaykrsna.nanoai.core.common.IoDispatcher
 import com.vjaykrsna.nanoai.core.data.repository.NavigationRepository
 import com.vjaykrsna.nanoai.core.data.repository.ProgressRepository
-import com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload
+import com.vjaykrsna.nanoai.feature.uiux.presentation.UndoPayload
 import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher

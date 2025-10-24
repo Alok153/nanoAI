@@ -51,7 +51,7 @@ import com.vjaykrsna.nanoai.core.domain.model.Message
 import com.vjaykrsna.nanoai.feature.chat.presentation.ChatError
 import com.vjaykrsna.nanoai.feature.chat.presentation.ChatViewModel
 import com.vjaykrsna.nanoai.feature.chat.ui.components.ModelPicker
-import com.vjaykrsna.nanoai.feature.uiux.state.NanoError
+import com.vjaykrsna.nanoai.feature.uiux.presentation.NanoError
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.composer.NanoComposerBar
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.feedback.NanoErrorHandler
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoRadii
@@ -82,7 +82,7 @@ fun ChatScreen(
   modifier: Modifier = Modifier,
   viewModel: ChatViewModel = hiltViewModel(),
   onUpdateChatState: ((com.vjaykrsna.nanoai.feature.uiux.presentation.ChatState?) -> Unit)? = null,
-  onNavigate: (com.vjaykrsna.nanoai.feature.uiux.state.ModeId) -> Unit,
+  onNavigate: (com.vjaykrsna.nanoai.feature.uiux.presentation.ModeId) -> Unit,
 ) {
   val messages by viewModel.messages.collectAsState()
   val currentThread by viewModel.currentThread.collectAsState()
@@ -209,7 +209,7 @@ fun ChatScreen(
           onModelSelect = { viewModel.selectModel(it) },
           onManageModelsClick = {
             viewModel.dismissModelPicker()
-            onNavigate(com.vjaykrsna.nanoai.feature.uiux.state.ModeId.LIBRARY)
+            onNavigate(com.vjaykrsna.nanoai.feature.uiux.presentation.ModeId.LIBRARY)
           },
           modifier = Modifier.fillMaxWidth(),
         )

@@ -1,14 +1,14 @@
 package com.vjaykrsna.nanoai.feature.uiux.domain
 
-import com.vjaykrsna.nanoai.feature.uiux.state.CommandAction
-import com.vjaykrsna.nanoai.feature.uiux.state.CommandCategory
-import com.vjaykrsna.nanoai.feature.uiux.state.CommandDestination
-import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityStatus
-import com.vjaykrsna.nanoai.feature.uiux.state.JobType
-import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
-import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
-import com.vjaykrsna.nanoai.feature.uiux.state.RecentActivityItem
-import com.vjaykrsna.nanoai.feature.uiux.state.toRoute
+import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandAction
+import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandCategory
+import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandDestination
+import com.vjaykrsna.nanoai.feature.uiux.presentation.ConnectivityStatus
+import com.vjaykrsna.nanoai.feature.uiux.presentation.JobType
+import com.vjaykrsna.nanoai.feature.uiux.presentation.ModeId
+import com.vjaykrsna.nanoai.feature.uiux.presentation.ProgressJob
+import com.vjaykrsna.nanoai.feature.uiux.presentation.RecentActivityItem
+import com.vjaykrsna.nanoai.feature.uiux.presentation.toRoute
 import com.vjaykrsna.nanoai.ui.navigation.Screen
 import javax.inject.Inject
 import javax.inject.Singleton

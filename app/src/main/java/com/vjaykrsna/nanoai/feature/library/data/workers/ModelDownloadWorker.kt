@@ -11,8 +11,8 @@ import com.vjaykrsna.nanoai.feature.library.data.daos.DownloadTaskDao
 import com.vjaykrsna.nanoai.feature.library.data.daos.ModelPackageReadDao
 import com.vjaykrsna.nanoai.feature.library.data.daos.ModelPackageWriteDao
 import com.vjaykrsna.nanoai.feature.library.domain.ModelManifestUseCase
-import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
-import com.vjaykrsna.nanoai.feature.library.model.InstallState
+import com.vjaykrsna.nanoai.feature.library.domain.DownloadStatus
+import com.vjaykrsna.nanoai.feature.library.domain.InstallState
 import com.vjaykrsna.nanoai.model.catalog.DownloadManifest
 import com.vjaykrsna.nanoai.model.catalog.VerificationOutcome
 import com.vjaykrsna.nanoai.telemetry.TelemetryReporter

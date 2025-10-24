@@ -6,8 +6,8 @@ import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
 import com.vjaykrsna.nanoai.core.model.MessageSource
 import com.vjaykrsna.nanoai.core.model.Role
-import com.vjaykrsna.nanoai.feature.library.model.InstallState
-import com.vjaykrsna.nanoai.feature.library.model.ProviderType
+import com.vjaykrsna.nanoai.feature.library.domain.InstallState
+import com.vjaykrsna.nanoai.feature.library.domain.ProviderType
 import com.vjaykrsna.nanoai.model.catalog.DeliveryType
 import java.util.UUID
 import kotlinx.datetime.Clock

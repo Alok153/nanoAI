@@ -2,8 +2,8 @@ package com.vjaykrsna.nanoai.feature.library.domain
 
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
-import com.vjaykrsna.nanoai.feature.library.model.InstallState
-import com.vjaykrsna.nanoai.feature.library.model.ProviderType
+import com.vjaykrsna.nanoai.feature.library.domain.InstallState
+import com.vjaykrsna.nanoai.feature.library.domain.ProviderType
 import com.vjaykrsna.nanoai.model.catalog.DeliveryType
 import com.vjaykrsna.nanoai.testing.assertRecoverableError
 import com.vjaykrsna.nanoai.testing.assertSuccess

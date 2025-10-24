@@ -9,7 +9,7 @@ import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRefreshStatus
 import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
 import com.vjaykrsna.nanoai.feature.library.data.daos.ModelPackageReadDao
 import com.vjaykrsna.nanoai.feature.library.data.daos.ModelPackageWriteDao
-import com.vjaykrsna.nanoai.feature.library.model.InstallState
+import com.vjaykrsna.nanoai.feature.library.domain.InstallState
 import com.vjaykrsna.nanoai.model.catalog.ModelPackageEntity
 import com.vjaykrsna.nanoai.model.leap.LeapModelRemoteDataSource
 import dagger.hilt.android.qualifiers.ApplicationContext

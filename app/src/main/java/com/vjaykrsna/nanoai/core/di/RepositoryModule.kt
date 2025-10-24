@@ -13,6 +13,8 @@ import com.vjaykrsna.nanoai.core.data.repository.impl.InferencePreferenceReposit
 import com.vjaykrsna.nanoai.core.data.repository.impl.PersonaRepositoryImpl
 import com.vjaykrsna.nanoai.core.data.repository.impl.PersonaSwitchLogRepositoryImpl
 import com.vjaykrsna.nanoai.core.data.repository.impl.UserProfileRepositoryImpl
+import com.vjaykrsna.nanoai.feature.audio.data.AudioRepository
+import com.vjaykrsna.nanoai.feature.audio.data.AudioRepositoryImpl
 import com.vjaykrsna.nanoai.feature.library.data.DownloadManager
 import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
 import com.vjaykrsna.nanoai.feature.library.data.export.ExportServiceImpl
@@ -122,6 +124,10 @@ abstract class RepositoryModule {
   abstract fun bindProgressRepository(
     impl: ProgressRepositoryImpl
   ): com.vjaykrsna.nanoai.core.data.repository.ProgressRepository
+
+  @Binds
+  @Singleton
+  abstract fun bindAudioRepository(impl: AudioRepositoryImpl): AudioRepository
 
   companion object {
     @Provides

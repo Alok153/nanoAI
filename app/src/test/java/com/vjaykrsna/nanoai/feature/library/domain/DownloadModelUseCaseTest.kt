@@ -2,8 +2,8 @@ package com.vjaykrsna.nanoai.feature.library.domain
 
 import com.vjaykrsna.nanoai.feature.library.data.DownloadManager
 import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
-import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
-import com.vjaykrsna.nanoai.feature.library.model.InstallState
+import com.vjaykrsna.nanoai.feature.library.domain.DownloadStatus
+import com.vjaykrsna.nanoai.feature.library.domain.InstallState
 import com.vjaykrsna.nanoai.testing.assertRecoverableError
 import com.vjaykrsna.nanoai.testing.assertSuccess
 import io.mockk.coEvery

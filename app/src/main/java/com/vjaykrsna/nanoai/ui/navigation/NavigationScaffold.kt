@@ -41,8 +41,8 @@ import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryScreen
 import com.vjaykrsna.nanoai.feature.settings.ui.SettingsScreen
 import com.vjaykrsna.nanoai.feature.uiux.presentation.AppUiState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellViewModel
-import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityStatus
-import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
+import com.vjaykrsna.nanoai.feature.uiux.presentation.ConnectivityStatus
+import com.vjaykrsna.nanoai.feature.uiux.presentation.ModeId
 import com.vjaykrsna.nanoai.feature.uiux.ui.shell.NanoShellScaffold
 import com.vjaykrsna.nanoai.feature.uiux.ui.shell.ShellUiEvent
 import com.vjaykrsna.nanoai.ui.components.DisclaimerDialog

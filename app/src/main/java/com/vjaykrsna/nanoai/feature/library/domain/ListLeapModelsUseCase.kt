@@ -2,7 +2,7 @@ package com.vjaykrsna.nanoai.feature.library.domain
 
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
-import com.vjaykrsna.nanoai.feature.library.model.ProviderType
+import com.vjaykrsna.nanoai.feature.library.domain.ProviderType
 import javax.inject.Inject
 
 /** A use case that lists all available Leap models. */

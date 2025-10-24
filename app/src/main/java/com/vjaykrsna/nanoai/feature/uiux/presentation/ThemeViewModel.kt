@@ -7,7 +7,7 @@ import com.vjaykrsna.nanoai.core.data.repository.ThemeRepository
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
 import com.vjaykrsna.nanoai.feature.uiux.domain.SettingsOperationsUseCase
-import com.vjaykrsna.nanoai.feature.uiux.state.UiPreferenceSnapshot
+import com.vjaykrsna.nanoai.feature.uiux.presentation.UiPreferenceSnapshot
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher

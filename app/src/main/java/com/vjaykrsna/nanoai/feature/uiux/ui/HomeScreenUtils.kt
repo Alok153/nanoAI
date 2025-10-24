@@ -1,8 +1,8 @@
 package com.vjaykrsna.nanoai.feature.uiux.ui
 
-import com.vjaykrsna.nanoai.feature.uiux.state.BadgeInfo
-import com.vjaykrsna.nanoai.feature.uiux.state.BadgeType
-import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
+import com.vjaykrsna.nanoai.feature.uiux.presentation.BadgeInfo
+import com.vjaykrsna.nanoai.feature.uiux.presentation.BadgeType
+import com.vjaykrsna.nanoai.feature.uiux.presentation.ModeId
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId

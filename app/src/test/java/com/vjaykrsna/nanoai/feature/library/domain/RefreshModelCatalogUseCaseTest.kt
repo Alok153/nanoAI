@@ -4,8 +4,8 @@ import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
 import com.vjaykrsna.nanoai.feature.library.data.catalog.ModelCatalogSource
-import com.vjaykrsna.nanoai.feature.library.model.InstallState
-import com.vjaykrsna.nanoai.feature.library.model.ProviderType
+import com.vjaykrsna.nanoai.feature.library.domain.InstallState
+import com.vjaykrsna.nanoai.feature.library.domain.ProviderType
 import com.vjaykrsna.nanoai.model.catalog.DeliveryType
 import com.vjaykrsna.nanoai.testing.assertIsSuccess
 import com.vjaykrsna.nanoai.testing.assertRecoverableError

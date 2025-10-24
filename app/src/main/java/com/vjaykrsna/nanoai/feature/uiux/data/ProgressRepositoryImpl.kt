@@ -2,7 +2,7 @@ package com.vjaykrsna.nanoai.feature.uiux.data
 
 import com.vjaykrsna.nanoai.core.common.IoDispatcher
 import com.vjaykrsna.nanoai.core.data.repository.ProgressRepository
-import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
+import com.vjaykrsna.nanoai.feature.uiux.presentation.ProgressJob
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton

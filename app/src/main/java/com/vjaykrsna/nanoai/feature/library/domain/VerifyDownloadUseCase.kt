@@ -4,7 +4,7 @@ import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.feature.library.data.DownloadManager
 import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
-import com.vjaykrsna.nanoai.feature.library.model.InstallState
+import com.vjaykrsna.nanoai.feature.library.domain.InstallState
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.first
@@ -85,7 +85,7 @@ constructor(
       model.downloadTaskId?.let {
         downloadManager.updateTaskStatus(
           it,
-          com.vjaykrsna.nanoai.feature.library.model.DownloadStatus.COMPLETED,
+          DownloadStatus.COMPLETED,
         )
       }
     } else {

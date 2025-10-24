@@ -1,6 +1,6 @@
 package com.vjaykrsna.nanoai.ui.navigation
 
-import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
+import com.vjaykrsna.nanoai.feature.uiux.presentation.ModeId
 
 /**
  * Central registry of navigation destinations for the unified shell.

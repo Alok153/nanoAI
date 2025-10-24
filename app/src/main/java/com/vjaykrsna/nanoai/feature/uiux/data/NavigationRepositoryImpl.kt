@@ -9,13 +9,13 @@ import com.vjaykrsna.nanoai.core.data.repository.NavigationRepository
 import com.vjaykrsna.nanoai.core.data.repository.UserProfileRepository
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UIStateSnapshot
 import com.vjaykrsna.nanoai.feature.uiux.domain.UIUX_DEFAULT_USER_ID
-import com.vjaykrsna.nanoai.feature.uiux.state.CommandCategory
-import com.vjaykrsna.nanoai.feature.uiux.state.CommandPaletteState
-import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
-import com.vjaykrsna.nanoai.feature.uiux.state.PaletteSource
-import com.vjaykrsna.nanoai.feature.uiux.state.RecentActivityItem
-import com.vjaykrsna.nanoai.feature.uiux.state.RightPanel
-import com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload
+import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandCategory
+import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandPaletteState
+import com.vjaykrsna.nanoai.feature.uiux.presentation.ModeId
+import com.vjaykrsna.nanoai.feature.uiux.presentation.PaletteSource
+import com.vjaykrsna.nanoai.feature.uiux.presentation.RecentActivityItem
+import com.vjaykrsna.nanoai.feature.uiux.presentation.RightPanel
+import com.vjaykrsna.nanoai.feature.uiux.presentation.UndoPayload
 import com.vjaykrsna.nanoai.ui.navigation.Screen
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
@@ -97,7 +97,7 @@ constructor(
   }
 
   override suspend fun toggleRightDrawer(
-    panel: com.vjaykrsna.nanoai.feature.uiux.state.RightPanel
+    panel: com.vjaykrsna.nanoai.feature.uiux.presentation.RightPanel
   ) {
     val snapshot = uiSnapshot.value
     val activePanel = snapshot.activeRightPanel.toRightPanel()
@@ -168,12 +168,12 @@ constructor(
     return snapshot
   }
 
-  private fun String?.toRightPanel(): com.vjaykrsna.nanoai.feature.uiux.state.RightPanel? {
+  private fun String?.toRightPanel(): com.vjaykrsna.nanoai.feature.uiux.presentation.RightPanel? {
     val value = this ?: return null
     return RightPanel.entries.firstOrNull { panel -> panel.name.equals(value, ignoreCase = true) }
   }
 
-  private fun com.vjaykrsna.nanoai.feature.uiux.state.RightPanel.toStorageValue(): String =
+  private fun com.vjaykrsna.nanoai.feature.uiux.presentation.RightPanel.toStorageValue(): String =
     name.lowercase()
 
   private fun PaletteSource.toCategory(): CommandCategory =

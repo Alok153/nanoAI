@@ -4,7 +4,7 @@ import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceSortDirection
 import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceSortField
-import com.vjaykrsna.nanoai.feature.library.model.ProviderType
+import com.vjaykrsna.nanoai.feature.library.domain.ProviderType
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryTab
 
 data class LibraryDownloadItem(val task: DownloadTask, val model: ModelPackage?)

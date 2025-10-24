@@ -7,9 +7,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.data.db.NanoAIDatabase
 import com.vjaykrsna.nanoai.feature.library.data.entities.DownloadTaskEntity
-import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
-import com.vjaykrsna.nanoai.feature.library.model.InstallState
-import com.vjaykrsna.nanoai.feature.library.model.ProviderType
+import com.vjaykrsna.nanoai.feature.library.domain.DownloadStatus
+import com.vjaykrsna.nanoai.feature.library.domain.InstallState
+import com.vjaykrsna.nanoai.feature.library.domain.ProviderType
 import com.vjaykrsna.nanoai.model.catalog.DeliveryType
 import com.vjaykrsna.nanoai.model.catalog.ModelPackageEntity
 import com.vjaykrsna.nanoai.model.catalog.ModelPackageWriteDao
