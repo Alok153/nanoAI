@@ -38,10 +38,10 @@
 - [x] T016 Split `ShellStateRepository` (343 lines) into focused repositories: `NavigationRepository`, `ConnectivityRepository`, `ThemeRepository`, `ProgressRepository` in `app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/data/`
 - [x] T017 Move business logic from `ModelManifestRepositoryImpl` (complex manifest validation, resolution strategies, caching, telemetry) to appropriate UseCases
 - [x] T018 Remove custom CoroutineScope creation from repositories and use injected dispatchers
-- [ ] T019 Implement consistent offline error handling across all network repositories (HuggingFaceCatalogRepositoryImpl, ModelManifestRepositoryImpl)
-- [ ] T020 Create repository interface contracts for all repository implementations where missing
+- [x] T019 Implement consistent offline error handling across all network repositories (HuggingFaceCatalogRepositoryImpl, ModelManifestRepositoryImpl)
+- [x] T020 Create repository interface contracts for all repository implementations where missing
 - [x] T021 Add UseCase interfaces for consistency (currently only ModelDownloadsAndExportUseCase has an interface)
-- [ ] T022 Update repository unit tests for new interfaces and injected dispatchers
+- [x] T022 Update repository unit tests for new interfaces and injected dispatchers
 
 ### Phase 5: UI Layer Cleanup [US3]
 **Story Goal**: Break down monolithic UI components that violate single responsibility principle

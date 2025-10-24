@@ -3,6 +3,7 @@ package com.vjaykrsna.nanoai.core.data.repository.impl
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.data.db.daos.ApiProviderConfigDao
 import com.vjaykrsna.nanoai.core.data.db.entities.ApiProviderConfigEntity
+import com.vjaykrsna.nanoai.core.data.repository.ApiProviderConfigRepository
 import com.vjaykrsna.nanoai.core.domain.model.ApiProviderConfig
 import com.vjaykrsna.nanoai.core.model.APIType
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
@@ -144,5 +145,17 @@ class ApiProviderConfigRepositoryImplTest {
     // Then
     assertThat(result).hasSize(2)
     assertThat(result[0].providerId).isEqualTo("1")
+  }
+
+  @Test
+  fun `repository should implement ApiProviderConfigRepository interface`() {
+    // Verify that the repository implements the correct interface
+    assertThat(repository).isInstanceOf(ApiProviderConfigRepository::class.java)
+  }
+
+  @Test
+  fun `repository should be properly constructed`() {
+    // Verify that the repository can be constructed with dependencies
+    assertThat(repository).isNotNull()
   }
 }

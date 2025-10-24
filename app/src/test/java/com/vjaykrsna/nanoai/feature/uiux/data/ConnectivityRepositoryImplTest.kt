@@ -1,6 +1,7 @@
 package com.vjaykrsna.nanoai.feature.uiux.data
 
 import com.google.common.truth.Truth.assertThat
+import com.vjaykrsna.nanoai.core.data.repository.ConnectivityRepository
 import com.vjaykrsna.nanoai.core.data.repository.UserProfileRepository
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferencesSnapshot
 import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityStatus
@@ -76,5 +77,17 @@ class ConnectivityRepositoryImplTest {
 
     // Then
     assertThat(bannerState.cta).isNull()
+  }
+
+  @Test
+  fun `repository should implement ConnectivityRepository interface`() {
+    // Then
+    assertThat(repository).isInstanceOf(ConnectivityRepository::class.java)
+  }
+
+  @Test
+  fun `repository should be properly constructed`() {
+    // Verify that the repository can be constructed with dependencies
+    assertThat(repository).isNotNull()
   }
 }

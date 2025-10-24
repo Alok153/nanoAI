@@ -1,6 +1,7 @@
 package com.vjaykrsna.nanoai.feature.library.data.huggingface
 
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.network.ConnectivityStatusProvider
 import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceCatalogQuery
 import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceModelSummary
 import com.vjaykrsna.nanoai.model.huggingface.network.HuggingFaceService
@@ -28,25 +29,41 @@ class HuggingFaceCatalogRepositoryImpl
 constructor(
   private val service: HuggingFaceService,
   private val cacheDataSource: HuggingFaceModelCacheDataSource,
+  private val connectivityStatusProvider: ConnectivityStatusProvider,
   private val clock: Clock = Clock.System,
 ) : HuggingFaceCatalogRepository {
+  @Suppress("ReturnCount")
   override suspend fun listModels(
     query: HuggingFaceCatalogQuery
   ): NanoAIResult<List<HuggingFaceModelSummary>> {
+    if (!connectivityStatusProvider.isOnline()) {
+      return NanoAIResult.recoverable(
+        message =
+          "Unable to fetch models from Hugging Face. Please check your internet connection.",
+        retryAfterSeconds = 60L,
+        telemetryId = null,
+        cause = null,
+        context = mapOf("query" to query.toString()),
+      )
+    }
+
     return try {
       val cacheExpiry = clock.now().minus(DEFAULT_CACHE_TTL)
       val cachedModels = getCachedModelsIfApplicable(query, cacheExpiry)
-      cachedModels?.let {
-        return NanoAIResult.success(it)
+      if (cachedModels != null) {
+        NanoAIResult.success(cachedModels)
+      } else {
+        val models = fetchModelsFromNetwork(query, cacheExpiry)
+        NanoAIResult.success(models)
       }
-
-      val models = fetchModelsFromNetwork(query, cacheExpiry)
-      NanoAIResult.success(models)
     } catch (e: IOException) {
       NanoAIResult.recoverable(
         message =
           "Unable to fetch models from Hugging Face. Please check your internet connection.",
+        retryAfterSeconds = 60L,
+        telemetryId = null,
         cause = e,
+        context = mapOf("query" to query.toString()),
       )
     } catch (e: Exception) {
       NanoAIResult.fatal(

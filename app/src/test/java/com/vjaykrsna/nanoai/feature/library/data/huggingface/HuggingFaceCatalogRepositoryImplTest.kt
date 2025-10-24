@@ -2,6 +2,7 @@ package com.vjaykrsna.nanoai.feature.library.data.huggingface
 
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.network.ConnectivityStatusProvider
 import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceCatalogQuery
 import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceModelSummary
 import com.vjaykrsna.nanoai.model.huggingface.network.HuggingFaceService
@@ -27,14 +28,25 @@ class HuggingFaceCatalogRepositoryImplTest {
   private lateinit var service: HuggingFaceService
   private lateinit var cacheDataSource: HuggingFaceModelCacheDataSource
   private lateinit var repository: HuggingFaceCatalogRepositoryImpl
+  private lateinit var connectivityStatusProvider: ConnectivityStatusProvider
   private lateinit var fixedClock: Clock
 
   @Before
   fun setup() {
     service = mockk()
     cacheDataSource = mockk(relaxed = true)
+    connectivityStatusProvider = mockk()
     fixedClock = mockk()
-    repository = HuggingFaceCatalogRepositoryImpl(service, cacheDataSource, fixedClock)
+    repository =
+      HuggingFaceCatalogRepositoryImpl(
+        service,
+        cacheDataSource,
+        connectivityStatusProvider,
+        fixedClock,
+      )
+
+    // Mock online connectivity for most tests
+    coEvery { connectivityStatusProvider.isOnline() } returns true
   }
 
   @Test

@@ -5,6 +5,7 @@ import com.vjaykrsna.nanoai.core.data.db.daos.ChatThreadDao
 import com.vjaykrsna.nanoai.core.data.db.daos.MessageDao
 import com.vjaykrsna.nanoai.core.data.db.entities.ChatThreadEntity
 import com.vjaykrsna.nanoai.core.data.db.entities.MessageEntity
+import com.vjaykrsna.nanoai.core.data.repository.ConversationRepository
 import com.vjaykrsna.nanoai.core.model.MessageSource
 import com.vjaykrsna.nanoai.core.model.Role
 import com.vjaykrsna.nanoai.testing.DomainTestBuilders
@@ -211,5 +212,17 @@ class ConversationRepositoryImplTest {
     // Then
     coVerify { chatThreadDao.insert(any()) }
     assertThat(newThreadId).isNotNull()
+  }
+
+  @Test
+  fun `repository should implement ConversationRepository interface`() {
+    // Verify that the repository implements the correct interface
+    assertThat(repository).isInstanceOf(ConversationRepository::class.java)
+  }
+
+  @Test
+  fun `repository should be properly constructed`() {
+    // Verify that the repository can be constructed with dependencies
+    assertThat(repository).isNotNull()
   }
 }

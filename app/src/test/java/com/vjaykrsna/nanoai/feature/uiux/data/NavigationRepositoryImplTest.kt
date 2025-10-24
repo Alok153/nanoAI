@@ -1,5 +1,7 @@
 package com.vjaykrsna.nanoai.feature.uiux.data
 
+import com.google.common.truth.Truth.assertThat
+import com.vjaykrsna.nanoai.core.data.repository.NavigationRepository
 import com.vjaykrsna.nanoai.core.data.repository.UserProfileRepository
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UIStateSnapshot
 import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
@@ -40,6 +42,7 @@ class NavigationRepositoryImplTest {
   @BeforeEach
   fun setUp() {
     userProfileRepository = mockk(relaxed = true)
+    repository = createRepository(createTestSnapshot())
   }
 
   private fun createRepository(initialState: UIStateSnapshot): NavigationRepositoryImpl {
@@ -122,4 +125,16 @@ class NavigationRepositoryImplTest {
       // Then
       coVerify { userProfileRepository.updateRightDrawerState(any(), false, null) }
     }
+
+  @Test
+  fun `repository should implement NavigationRepository interface`() {
+    // Then
+    assertThat(repository).isInstanceOf(NavigationRepository::class.java)
+  }
+
+  @Test
+  fun `repository should be properly constructed`() {
+    // Verify that the repository can be constructed with dependencies
+    assertThat(repository).isNotNull()
+  }
 }

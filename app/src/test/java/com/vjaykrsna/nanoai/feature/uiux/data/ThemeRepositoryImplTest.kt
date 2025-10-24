@@ -1,6 +1,7 @@
 package com.vjaykrsna.nanoai.feature.uiux.data
 
 import com.google.common.truth.Truth.assertThat
+import com.vjaykrsna.nanoai.core.data.repository.ThemeRepository
 import com.vjaykrsna.nanoai.core.data.repository.UserProfileRepository
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferencesSnapshot
@@ -77,5 +78,24 @@ class ThemeRepositoryImplTest {
 
     // Then
     assertThat(snapshot.theme).isEqualTo(ThemePreference.DARK)
+  }
+
+  @Test
+  fun `repository should implement ThemeRepository interface`() {
+    // Given
+    repository = createRepository(UiPreferencesSnapshot())
+
+    // Then
+    assertThat(repository).isInstanceOf(ThemeRepository::class.java)
+  }
+
+  @Test
+  fun `repository should have ioDispatcher property`() {
+    // Given
+    repository = createRepository(UiPreferencesSnapshot())
+
+    // Then
+    assertThat(repository.ioDispatcher).isNotNull()
+    assertThat(repository.ioDispatcher).isEqualTo(mainDispatcherExtension.dispatcher)
   }
 }

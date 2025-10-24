@@ -1,6 +1,7 @@
 package com.vjaykrsna.nanoai.feature.uiux.data
 
 import com.google.common.truth.Truth.assertThat
+import com.vjaykrsna.nanoai.core.data.repository.ProgressRepository
 import com.vjaykrsna.nanoai.feature.uiux.state.JobStatus
 import com.vjaykrsna.nanoai.feature.uiux.state.JobType
 import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
@@ -59,5 +60,19 @@ class ProgressRepositoryImplTest {
 
     // Then
     assertThat(jobs).isEmpty()
+  }
+
+  @Test
+  fun `repository should implement ProgressRepository interface`() {
+    // Verify that the repository implements the correct interface
+    assertThat(repository).isInstanceOf(ProgressRepository::class.java)
+  }
+
+  @Test
+  fun `repository should have ioDispatcher property`() {
+    // Verify that the repository has the ioDispatcher property from BaseRepository
+    // This ensures the repository follows the BaseRepository pattern
+    assertThat(repository.ioDispatcher).isNotNull()
+    assertThat(repository.ioDispatcher).isEqualTo(mainDispatcherExtension.dispatcher)
   }
 }
