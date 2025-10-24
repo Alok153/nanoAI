@@ -28,7 +28,6 @@ constructor(
 ) : ThemeRepository {
 
   private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
-
   private val userId = UIUX_DEFAULT_USER_ID
 
   private val preferences =

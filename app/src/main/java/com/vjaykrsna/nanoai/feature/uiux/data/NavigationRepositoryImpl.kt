@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Singleton
@@ -41,15 +42,13 @@ constructor(
 ) : NavigationRepository {
 
   private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
-
   private val userId: String = UIUX_DEFAULT_USER_ID
   private val hasAppliedHomeStartup = AtomicBoolean(false)
 
   private val uiSnapshot: StateFlow<UIStateSnapshot> =
     userProfileRepository
       .observeUIStateSnapshot(userId)
-      .map { snapshot -> snapshot ?: defaultSnapshot(userId) }
-      .map { snapshot -> coerceInitialActiveMode(snapshot) }
+      .map { snapshot -> coerceInitialActiveMode(snapshot ?: defaultSnapshot(userId)) }
       .stateIn(scope, SharingStarted.Eagerly, defaultSnapshot(userId))
 
   private val _windowSizeClass = MutableStateFlow(defaultWindowSizeClass())
@@ -141,27 +140,27 @@ constructor(
       val resetSnapshot =
         snapshot
           .updateActiveMode(UIStateSnapshot.DEFAULT_MODE_ROUTE)
-          .toggleLeftDrawer(open = false)
-          .toggleRightDrawer(open = false, panelId = null)
           .updatePaletteVisibility(visible = false)
 
-      // TODO: Persist the reset state asynchronously if needed
-      // withContext(ioDispatcher) {
-      //   if (!snapshot.activeModeRoute.equals(UIStateSnapshot.DEFAULT_MODE_ROUTE, ignoreCase =
-      // true)) {
-      //     userProfileRepository.updateActiveModeRoute(userId,
-      // Screen.fromModeId(ModeId.HOME).route)
-      //   }
-      //   if (snapshot.isLeftDrawerOpen) {
-      //     userProfileRepository.updateLeftDrawerOpen(userId, false)
-      //   }
-      //   if (snapshot.isRightDrawerOpen || snapshot.activeRightPanel != null) {
-      //     userProfileRepository.updateRightDrawerState(userId, false, null)
-      //   }
-      //   if (snapshot.isCommandPaletteVisible) {
-      //     userProfileRepository.updateCommandPaletteVisibility(userId, false)
-      //   }
-      // }
+      // Persist the reset state asynchronously
+      scope.launch {
+        withContext(ioDispatcher) {
+          if (
+            !resetSnapshot.activeModeRoute.equals(
+              UIStateSnapshot.DEFAULT_MODE_ROUTE,
+              ignoreCase = true,
+            )
+          ) {
+            userProfileRepository.updateActiveModeRoute(
+              userId,
+              Screen.fromModeId(ModeId.HOME).route,
+            )
+          }
+          if (resetSnapshot.isCommandPaletteVisible) {
+            userProfileRepository.updateCommandPaletteVisibility(userId, false)
+          }
+        }
+      }
 
       return resetSnapshot
     }
