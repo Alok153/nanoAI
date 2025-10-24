@@ -10,9 +10,10 @@ import javax.inject.Singleton
 @Singleton
 class ApiProviderConfigUseCase
 @Inject
-constructor(private val apiProviderConfigRepository: ApiProviderConfigRepository) {
+constructor(private val apiProviderConfigRepository: ApiProviderConfigRepository) :
+  ApiProviderConfigUseCaseInterface {
   /** Get all API providers. */
-  suspend fun getAllProviders(): NanoAIResult<List<APIProviderConfig>> {
+  override suspend fun getAllProviders(): NanoAIResult<List<APIProviderConfig>> {
     return try {
       val providers = apiProviderConfigRepository.getAllProviders()
       NanoAIResult.success(providers)
@@ -22,7 +23,7 @@ constructor(private val apiProviderConfigRepository: ApiProviderConfigRepository
   }
 
   /** Get a specific provider by ID. */
-  suspend fun getProvider(providerId: String): NanoAIResult<APIProviderConfig?> {
+  override suspend fun getProvider(providerId: String): NanoAIResult<APIProviderConfig?> {
     return try {
       val provider = apiProviderConfigRepository.getProvider(providerId)
       NanoAIResult.success(provider)
@@ -36,7 +37,7 @@ constructor(private val apiProviderConfigRepository: ApiProviderConfigRepository
   }
 
   /** Add a new API provider. */
-  suspend fun addProvider(config: APIProviderConfig): NanoAIResult<Unit> {
+  override suspend fun addProvider(config: APIProviderConfig): NanoAIResult<Unit> {
     return try {
       apiProviderConfigRepository.addProvider(config)
       NanoAIResult.success(Unit)
@@ -50,7 +51,7 @@ constructor(private val apiProviderConfigRepository: ApiProviderConfigRepository
   }
 
   /** Update an existing API provider. */
-  suspend fun updateProvider(config: APIProviderConfig): NanoAIResult<Unit> {
+  override suspend fun updateProvider(config: APIProviderConfig): NanoAIResult<Unit> {
     return try {
       apiProviderConfigRepository.updateProvider(config)
       NanoAIResult.success(Unit)
@@ -64,7 +65,7 @@ constructor(private val apiProviderConfigRepository: ApiProviderConfigRepository
   }
 
   /** Delete an API provider. */
-  suspend fun deleteProvider(providerId: String): NanoAIResult<Unit> {
+  override suspend fun deleteProvider(providerId: String): NanoAIResult<Unit> {
     return try {
       apiProviderConfigRepository.deleteProvider(providerId)
       NanoAIResult.success(Unit)

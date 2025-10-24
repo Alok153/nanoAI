@@ -7,10 +7,10 @@ import com.vjaykrsna.nanoai.core.common.*
 import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
-import com.vjaykrsna.nanoai.feature.library.data.huggingface.HuggingFaceCatalogRepository
 import com.vjaykrsna.nanoai.feature.library.domain.DownloadModelUseCase
 import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceModelCompatibilityChecker
 import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceToModelPackageConverter
+import com.vjaykrsna.nanoai.feature.library.domain.ListHuggingFaceModelsUseCase
 import com.vjaykrsna.nanoai.feature.library.domain.ModelCatalogUseCase
 import com.vjaykrsna.nanoai.feature.library.domain.RefreshModelCatalogUseCase
 import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
@@ -63,13 +63,13 @@ constructor(
   private val downloadManager: DownloadManager,
   private val downloadModelUseCase: DownloadModelUseCase,
   private val hfToModelConverter: HuggingFaceToModelPackageConverter,
-  private val huggingFaceCatalogRepository: HuggingFaceCatalogRepository,
+  private val listHuggingFaceModelsUseCase: ListHuggingFaceModelsUseCase,
   private val compatibilityChecker: HuggingFaceModelCompatibilityChecker,
 ) : ViewModel() {
 
   // Create HuggingFace ViewModel manually since Hilt doesn't allow injecting ViewModels
   private val huggingFaceLibraryViewModel =
-    HuggingFaceLibraryViewModel(huggingFaceCatalogRepository, compatibilityChecker)
+    HuggingFaceLibraryViewModel(listHuggingFaceModelsUseCase, compatibilityChecker)
 
   private val _isRefreshing = MutableStateFlow(false)
   val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()

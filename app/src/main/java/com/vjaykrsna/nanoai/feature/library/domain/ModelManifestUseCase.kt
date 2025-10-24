@@ -42,9 +42,12 @@ constructor(
   private val telemetryReporter: TelemetryReporter,
   private val huggingFaceManifestFetcher: HuggingFaceManifestFetcher,
   private val clock: Clock = Clock.System,
-) {
+) : ModelManifestUseCaseInterface {
   /** Fetches the latest manifest for a model/version and caches it locally. */
-  suspend fun refreshManifest(modelId: String, version: String): NanoAIResult<DownloadManifest> {
+  override suspend fun refreshManifest(
+    modelId: String,
+    version: String,
+  ): NanoAIResult<DownloadManifest> {
     val modelRecord = localDataSource.getModel(modelId)?.model
     val locator = modelRecord?.let { ModelManifestLocator.parse(it.manifestUrl) }
 
@@ -98,12 +101,12 @@ constructor(
   }
 
   /** Reports verification result back to the catalog service. */
-  suspend fun reportVerification(
+  override suspend fun reportVerification(
     modelId: String,
     version: String,
     checksumSha256: String,
     status: VerificationOutcome,
-    failureReason: String? = null,
+    failureReason: String?,
   ): NanoAIResult<Unit> {
     val locator =
       localDataSource.getModel(modelId)?.model?.let { ModelManifestLocator.parse(it.manifestUrl) }

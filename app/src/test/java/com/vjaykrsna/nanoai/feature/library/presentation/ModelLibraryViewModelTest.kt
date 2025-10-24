@@ -8,6 +8,7 @@ import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.feature.library.domain.DownloadModelUseCase
 import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceModelCompatibilityChecker
 import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceToModelPackageConverter
+import com.vjaykrsna.nanoai.feature.library.domain.ListHuggingFaceModelsUseCase
 import com.vjaykrsna.nanoai.feature.library.domain.ManageModelUseCase
 import com.vjaykrsna.nanoai.feature.library.domain.ModelCatalogUseCase
 import com.vjaykrsna.nanoai.feature.library.domain.RefreshModelCatalogUseCase
@@ -18,7 +19,6 @@ import com.vjaykrsna.nanoai.feature.library.presentation.model.HuggingFaceSortOp
 import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryError
 import com.vjaykrsna.nanoai.feature.library.presentation.model.ModelSort
 import com.vjaykrsna.nanoai.testing.DomainTestBuilders
-import com.vjaykrsna.nanoai.testing.FakeHuggingFaceCatalogRepository
 import com.vjaykrsna.nanoai.testing.FakeModelCatalogRepository
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import io.mockk.coEvery
@@ -43,7 +43,7 @@ class ModelLibraryViewModelTest {
   private lateinit var modelCatalogRepository: FakeModelCatalogRepository
   private lateinit var modelCatalogUseCase: ModelCatalogUseCase
   private lateinit var refreshUseCase: RefreshModelCatalogUseCase
-  private lateinit var huggingFaceCatalogRepository: FakeHuggingFaceCatalogRepository
+  private lateinit var listHuggingFaceModelsUseCase: ListHuggingFaceModelsUseCase
   private lateinit var compatibilityChecker: HuggingFaceModelCompatibilityChecker
   private lateinit var modelConverter: HuggingFaceToModelPackageConverter
   private lateinit var downloadModelUseCase: DownloadModelUseCase
@@ -56,7 +56,7 @@ class ModelLibraryViewModelTest {
     modelCatalogRepository = FakeModelCatalogRepository()
     modelCatalogUseCase = mockk(relaxed = true)
     refreshUseCase = mockk(relaxed = true)
-    huggingFaceCatalogRepository = FakeHuggingFaceCatalogRepository()
+    listHuggingFaceModelsUseCase = mockk(relaxed = true)
     compatibilityChecker = mockk(relaxed = true)
     modelConverter = mockk(relaxed = true)
     downloadModelUseCase = mockk(relaxed = true)
@@ -94,7 +94,7 @@ class ModelLibraryViewModelTest {
         downloadManager,
         downloadModelUseCase,
         modelConverter,
-        huggingFaceCatalogRepository,
+        listHuggingFaceModelsUseCase,
         compatibilityChecker,
       )
   }

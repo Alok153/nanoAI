@@ -13,19 +13,20 @@ import kotlinx.coroutines.flow.Flow
 @Singleton
 class ConversationUseCase
 @Inject
-constructor(private val conversationRepository: ConversationRepository) {
+constructor(private val conversationRepository: ConversationRepository) :
+  ConversationUseCaseInterface {
   /** Observe all threads (reactive stream - not wrapped in NanoAIResult). */
-  fun getAllThreadsFlow(): Flow<List<ChatThread>> {
+  override fun getAllThreadsFlow(): Flow<List<ChatThread>> {
     return conversationRepository.getAllThreadsFlow()
   }
 
   /** Observe messages for a specific thread (reactive stream - not wrapped in NanoAIResult). */
-  fun getMessagesFlow(threadId: UUID): Flow<List<Message>> {
+  override fun getMessagesFlow(threadId: UUID): Flow<List<Message>> {
     return conversationRepository.getMessagesFlow(threadId)
   }
 
   /** Create a new thread. */
-  suspend fun createNewThread(personaId: UUID, title: String? = null): NanoAIResult<UUID> {
+  override suspend fun createNewThread(personaId: UUID, title: String?): NanoAIResult<UUID> {
     return try {
       val threadId = conversationRepository.createNewThread(personaId, title)
       NanoAIResult.success(threadId)
@@ -39,7 +40,7 @@ constructor(private val conversationRepository: ConversationRepository) {
   }
 
   /** Archive a thread. */
-  suspend fun archiveThread(threadId: UUID): NanoAIResult<Unit> {
+  override suspend fun archiveThread(threadId: UUID): NanoAIResult<Unit> {
     return try {
       conversationRepository.archiveThread(threadId)
       NanoAIResult.success(Unit)
@@ -53,7 +54,7 @@ constructor(private val conversationRepository: ConversationRepository) {
   }
 
   /** Delete a thread. */
-  suspend fun deleteThread(threadId: UUID): NanoAIResult<Unit> {
+  override suspend fun deleteThread(threadId: UUID): NanoAIResult<Unit> {
     return try {
       conversationRepository.deleteThread(threadId)
       NanoAIResult.success(Unit)
@@ -67,7 +68,7 @@ constructor(private val conversationRepository: ConversationRepository) {
   }
 
   /** Save a message. */
-  suspend fun saveMessage(message: Message): NanoAIResult<Unit> {
+  override suspend fun saveMessage(message: Message): NanoAIResult<Unit> {
     return try {
       conversationRepository.saveMessage(message)
       NanoAIResult.success(Unit)
@@ -86,7 +87,7 @@ constructor(private val conversationRepository: ConversationRepository) {
   }
 
   /** Get the current persona for a thread. */
-  suspend fun getCurrentPersonaForThread(threadId: UUID): NanoAIResult<UUID?> {
+  override suspend fun getCurrentPersonaForThread(threadId: UUID): NanoAIResult<UUID?> {
     return try {
       val personaId = conversationRepository.getCurrentPersonaForThread(threadId)
       NanoAIResult.success(personaId)
@@ -100,7 +101,7 @@ constructor(private val conversationRepository: ConversationRepository) {
   }
 
   /** Update the persona for a thread. */
-  suspend fun updateThreadPersona(threadId: UUID, personaId: UUID?): NanoAIResult<Unit> {
+  override suspend fun updateThreadPersona(threadId: UUID, personaId: UUID?): NanoAIResult<Unit> {
     return try {
       conversationRepository.updateThreadPersona(threadId, personaId)
       NanoAIResult.success(Unit)

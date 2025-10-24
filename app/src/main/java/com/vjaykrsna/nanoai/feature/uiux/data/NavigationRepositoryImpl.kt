@@ -21,6 +21,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -28,7 +30,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Singleton
@@ -39,6 +40,8 @@ constructor(
   @IoDispatcher override val ioDispatcher: CoroutineDispatcher,
 ) : NavigationRepository {
 
+  private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
+
   private val userId: String = UIUX_DEFAULT_USER_ID
   private val hasAppliedHomeStartup = AtomicBoolean(false)
 
@@ -47,7 +50,7 @@ constructor(
       .observeUIStateSnapshot(userId)
       .map { snapshot -> snapshot ?: defaultSnapshot(userId) }
       .map { snapshot -> coerceInitialActiveMode(snapshot) }
-      .stateIn(ioDispatcher, SharingStarted.Eagerly, defaultSnapshot(userId))
+      .stateIn(scope, SharingStarted.Eagerly, defaultSnapshot(userId))
 
   private val _windowSizeClass = MutableStateFlow(defaultWindowSizeClass())
   private val _undoPayload = MutableStateFlow<UndoPayload?>(null)
@@ -142,22 +145,23 @@ constructor(
           .toggleRightDrawer(open = false, panelId = null)
           .updatePaletteVisibility(visible = false)
 
-      withContext(ioDispatcher) {
-        if (
-          !snapshot.activeModeRoute.equals(UIStateSnapshot.DEFAULT_MODE_ROUTE, ignoreCase = true)
-        ) {
-          userProfileRepository.updateActiveModeRoute(userId, Screen.fromModeId(ModeId.HOME).route)
-        }
-        if (snapshot.isLeftDrawerOpen) {
-          userProfileRepository.updateLeftDrawerOpen(userId, false)
-        }
-        if (snapshot.isRightDrawerOpen || snapshot.activeRightPanel != null) {
-          userProfileRepository.updateRightDrawerState(userId, false, null)
-        }
-        if (snapshot.isCommandPaletteVisible) {
-          userProfileRepository.updateCommandPaletteVisibility(userId, false)
-        }
-      }
+      // TODO: Persist the reset state asynchronously if needed
+      // withContext(ioDispatcher) {
+      //   if (!snapshot.activeModeRoute.equals(UIStateSnapshot.DEFAULT_MODE_ROUTE, ignoreCase =
+      // true)) {
+      //     userProfileRepository.updateActiveModeRoute(userId,
+      // Screen.fromModeId(ModeId.HOME).route)
+      //   }
+      //   if (snapshot.isLeftDrawerOpen) {
+      //     userProfileRepository.updateLeftDrawerOpen(userId, false)
+      //   }
+      //   if (snapshot.isRightDrawerOpen || snapshot.activeRightPanel != null) {
+      //     userProfileRepository.updateRightDrawerState(userId, false, null)
+      //   }
+      //   if (snapshot.isCommandPaletteVisible) {
+      //     userProfileRepository.updateCommandPaletteVisibility(userId, false)
+      //   }
+      // }
 
       return resetSnapshot
     }

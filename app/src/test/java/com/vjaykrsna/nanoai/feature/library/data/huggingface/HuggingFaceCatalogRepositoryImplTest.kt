@@ -1,6 +1,7 @@
 package com.vjaykrsna.nanoai.feature.library.data.huggingface
 
 import com.google.common.truth.Truth.assertThat
+import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceCatalogQuery
 import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceModelSummary
 import com.vjaykrsna.nanoai.model.huggingface.network.HuggingFaceService
@@ -47,8 +48,8 @@ class HuggingFaceCatalogRepositoryImplTest {
 
     val result = repository.listModels(query)
 
-    assertThat(result.isSuccess).isTrue()
-    assertThat(result.getOrNull()).isEqualTo(cachedModels)
+    assertThat(result).isInstanceOf(NanoAIResult.Success::class.java)
+    assertThat((result as NanoAIResult.Success).value).isEqualTo(cachedModels)
   }
 
   @Test
@@ -93,8 +94,8 @@ class HuggingFaceCatalogRepositoryImplTest {
 
     val result = repository.listModels(query)
 
-    assertThat(result.isSuccess).isTrue()
-    val models = result.getOrNull()!!
+    assertThat(result).isInstanceOf(NanoAIResult.Success::class.java)
+    val models = (result as NanoAIResult.Success).value
     assertThat(models).hasSize(1)
     assertThat(models[0].modelId).isEqualTo("network-model")
   }
@@ -171,8 +172,8 @@ class HuggingFaceCatalogRepositoryImplTest {
 
     val result = repository.listModels(query)
 
-    assertTrue(result.isSuccess)
-    val models = result.getOrNull()!!
+    assertTrue(result is NanoAIResult.Success)
+    val models = (result as NanoAIResult.Success).value
     assertEquals(1, models.size)
     val model = models[0]
 
@@ -258,8 +259,8 @@ class HuggingFaceCatalogRepositoryImplTest {
 
     val result = repository.listModels(queryWithSearch)
 
-    assertThat(result.isSuccess).isTrue()
-    val models = result.getOrNull()!!
+    assertThat(result).isInstanceOf(NanoAIResult.Success::class.java)
+    val models = (result as NanoAIResult.Success).value
     assertThat(models).hasSize(1)
     assertThat(models[0].modelId)
       .isEqualTo("network-model") // Should return network results, not cached
@@ -308,8 +309,8 @@ class HuggingFaceCatalogRepositoryImplTest {
 
     val result = repository.listModels(queryWithPipeline)
 
-    assertThat(result.isSuccess).isTrue()
-    val models = result.getOrNull()!!
+    assertThat(result).isInstanceOf(NanoAIResult.Success::class.java)
+    val models = (result as NanoAIResult.Success).value
     assertThat(models).hasSize(1)
     assertThat(models[0].modelId)
       .isEqualTo("network-model") // Should return network results, not cached

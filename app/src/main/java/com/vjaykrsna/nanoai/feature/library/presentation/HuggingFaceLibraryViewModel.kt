@@ -2,8 +2,9 @@ package com.vjaykrsna.nanoai.feature.library.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.vjaykrsna.nanoai.feature.library.data.huggingface.HuggingFaceCatalogRepository
+import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceModelCompatibilityChecker
+import com.vjaykrsna.nanoai.feature.library.domain.ListHuggingFaceModelsUseCase
 import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceModelSummary
 import com.vjaykrsna.nanoai.feature.library.presentation.model.HuggingFaceFilterState
 import com.vjaykrsna.nanoai.feature.library.presentation.model.HuggingFaceSortOption
@@ -27,7 +28,7 @@ private const val HUGGING_FACE_SEARCH_DEBOUNCE_MS = 350L
 class HuggingFaceLibraryViewModel
 @Inject
 constructor(
-  private val huggingFaceCatalogRepository: HuggingFaceCatalogRepository,
+  private val listHuggingFaceModelsUseCase: ListHuggingFaceModelsUseCase,
   private val compatibilityChecker: HuggingFaceModelCompatibilityChecker,
 ) : ViewModel() {
 
@@ -102,17 +103,19 @@ constructor(
     viewModelScope.launch {
       _isLoading.value = true
       val query = filters.toQuery()
-      val result = huggingFaceCatalogRepository.listModels(query)
-      result
-        .onSuccess { models ->
+      val result = listHuggingFaceModelsUseCase(query)
+      when (result) {
+        is NanoAIResult.Success -> {
           _models.value =
-            models.map { model -> model.copy(tags = applyTagVisibilityRules(model.tags)) }
+            result.value.map { model -> model.copy(tags = applyTagVisibilityRules(model.tags)) }
         }
-        .onFailure { error ->
-          _errorEvents.emit(
-            LibraryError.HuggingFaceLoadFailed(error.message ?: "Failed to load Hugging Face")
-          )
+        is NanoAIResult.RecoverableError -> {
+          _errorEvents.emit(LibraryError.HuggingFaceLoadFailed(result.message))
         }
+        is NanoAIResult.FatalError -> {
+          _errorEvents.emit(LibraryError.HuggingFaceLoadFailed(result.message))
+        }
+      }
       _isLoading.value = false
     }
   }

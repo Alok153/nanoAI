@@ -40,7 +40,7 @@
 - [x] T018 Remove custom CoroutineScope creation from repositories and use injected dispatchers
 - [ ] T019 Implement consistent offline error handling across all network repositories (HuggingFaceCatalogRepositoryImpl, ModelManifestRepositoryImpl)
 - [ ] T020 Create repository interface contracts for all repository implementations where missing
-- [ ] T021 Add UseCase interfaces for consistency (currently only ModelDownloadsAndExportUseCase has an interface)
+- [x] T021 Add UseCase interfaces for consistency (currently only ModelDownloadsAndExportUseCase has an interface)
 - [ ] T022 Update repository unit tests for new interfaces and injected dispatchers
 
 ### Phase 5: UI Layer Cleanup [US3]

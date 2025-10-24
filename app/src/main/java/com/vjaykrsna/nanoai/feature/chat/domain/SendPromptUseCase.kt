@@ -25,8 +25,12 @@ constructor(
   private val personaRepository: PersonaRepository,
   private val inferenceOrchestrator: InferenceOrchestrator,
   private val inferencePreferenceRepository: InferencePreferenceRepository,
-) {
-  suspend operator fun invoke(threadId: UUID, prompt: String, personaId: UUID): NanoAIResult<Unit> {
+) : SendPromptUseCaseInterface {
+  override suspend operator fun invoke(
+    threadId: UUID,
+    prompt: String,
+    personaId: UUID,
+  ): NanoAIResult<Unit> {
     val availability = checkInferenceAvailability(threadId, personaId)
     if (availability is NanoAIResult.RecoverableError) return availability
 
