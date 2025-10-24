@@ -1,5 +1,11 @@
 package com.vjaykrsna.nanoai.feature.chat.ui
 
+import android.graphics.Bitmap
+import android.net.Uri
+import android.provider.MediaStore
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,6 +40,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
@@ -84,10 +92,21 @@ fun ChatScreen(
   val showModelPicker by viewModel.showModelPicker.collectAsState()
   val models by viewModel.models.collectAsState()
   val sheetState = rememberModalBottomSheetState()
+  val selectedImage by viewModel.selectedImage.collectAsState()
 
   val snackbarHostState = remember { SnackbarHostState() }
   var composerText by rememberSaveable { mutableStateOf("") }
   var activeError by remember { mutableStateOf<NanoError?>(null) }
+  val context = LocalContext.current
+
+  val imagePickerLauncher = rememberLauncherForActivityResult(
+    contract = ActivityResultContracts.GetContent()
+  ) { uri: Uri? ->
+    uri?.let {
+      val bitmap = MediaStore.Images.Media.getBitmap(context.contentResolver, it)
+      viewModel.onImageSelected(bitmap)
+    }
+  }
 
   LaunchedEffect(availablePersonas, currentThread) {
     onUpdateChatState?.invoke(
@@ -134,6 +153,14 @@ fun ChatScreen(
         onDismiss = { activeError = null },
       )
 
+      selectedImage?.let {
+        Image(
+          bitmap = it.asImageBitmap(),
+          contentDescription = "Selected image",
+          modifier = Modifier.size(128.dp)
+        )
+      }
+
       NanoComposerBar(
         value = composerText,
         onValueChange = { composerText = it },
@@ -159,6 +186,8 @@ fun ChatScreen(
         },
         sendEnabled = composerText.isNotBlank() && currentThread != null && !isLoading,
         isSending = isLoading,
+        onImageSelected = { imagePickerLauncher.launch("image/*") },
+        onAudioRecorded = { /* TODO: Implement audio recording */ }
       )
     }
 

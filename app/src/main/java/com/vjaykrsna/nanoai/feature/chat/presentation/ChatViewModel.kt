@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai.feature.chat.presentation
 
+import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
@@ -56,6 +57,12 @@ constructor(
 
   private val _events = MutableSharedFlow<ChatViewEvent>()
   val events = _events.asSharedFlow()
+
+  private val _selectedImage = MutableStateFlow<Bitmap?>(null)
+  val selectedImage: StateFlow<Bitmap?> = _selectedImage.asStateFlow()
+
+  private val _recordedAudio = MutableStateFlow<ByteArray?>(null)
+  val recordedAudio: StateFlow<ByteArray?> = _recordedAudio.asStateFlow()
 
   private val threads: StateFlow<List<ChatThread>> =
     conversationRepository
@@ -114,6 +121,14 @@ constructor(
     _currentThreadId.value = threadId
   }
 
+  fun onImageSelected(bitmap: Bitmap) {
+    _selectedImage.value = bitmap
+  }
+
+  fun onAudioRecorded(audioData: ByteArray) {
+    _recordedAudio.value = audioData
+  }
+
   fun sendMessage(text: String, personaId: UUID) {
     val threadId = _currentThreadId.value
     if (threadId == null) {
@@ -143,10 +158,12 @@ constructor(
           return@launch
         }
 
-      sendPromptUseCase(threadId, text, personaId).onFailure { error ->
+      sendPromptUseCase(threadId, text, personaId, _selectedImage.value, _recordedAudio.value).onFailure { error ->
         _errorEvents.emit(ChatError.InferenceFailed(error.message ?: "Unknown error"))
       }
 
+      _selectedImage.value = null
+      _recordedAudio.value = null
       _isLoading.value = false
     }
   }

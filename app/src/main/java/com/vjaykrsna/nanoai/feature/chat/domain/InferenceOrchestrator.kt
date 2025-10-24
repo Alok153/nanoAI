@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai.feature.chat.domain
 
+import android.graphics.Bitmap
 import com.vjaykrsna.nanoai.core.data.repository.ApiProviderConfigRepository
 import com.vjaykrsna.nanoai.core.data.repository.InferencePreferenceRepository
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
@@ -54,6 +55,8 @@ constructor(
     prompt: String,
     personaId: UUID?,
     options: GenerationOptions = GenerationOptions(),
+    image: Bitmap? = null,
+    audio: ByteArray? = null,
   ): InferenceResult {
     val installedModels = modelCatalogRepository.getInstalledModels()
     val localCandidates = installedModels.filterNot { it.providerType == ProviderType.CLOUD_API }
@@ -66,7 +69,7 @@ constructor(
     var lastLocalError: InferenceResult.Error? = null
 
     if (preferLocal && preferredLocalModel != null) {
-      val localResult = runLocalInference(preferredLocalModel, prompt, options)
+      val localResult = runLocalInference(preferredLocalModel, prompt, options, image, audio)
       if (localResult is InferenceResult.Success) {
         return localResult.withPersona(personaId)
       }
@@ -82,7 +85,7 @@ constructor(
         when (cloudResult) {
           is InferenceResult.Success -> cloudResult
           is InferenceResult.Error ->
-            fallbackToLocal(preferLocal, preferredLocalModel, prompt, options) ?: cloudResult
+            fallbackToLocal(preferLocal, preferredLocalModel, prompt, options, image, audio) ?: cloudResult
         }
       }
 
@@ -104,6 +107,8 @@ constructor(
     model: ModelPackage,
     prompt: String,
     options: GenerationOptions,
+    image: Bitmap? = null,
+    audio: ByteArray? = null,
   ): InferenceResult {
     if (!localModelRuntime.isModelReady(model.modelId)) {
       return InferenceResult.Error(
@@ -120,6 +125,8 @@ constructor(
         temperature = options.temperature,
         topP = options.topP,
         maxOutputTokens = options.maxOutputTokens,
+        image = image,
+        audio = audio,
       )
 
     return localModelRuntime
@@ -168,9 +175,11 @@ constructor(
     preferredLocalModel: ModelPackage?,
     prompt: String,
     options: GenerationOptions,
+    image: Bitmap? = null,
+    audio: ByteArray? = null,
   ): InferenceResult? {
     if (preferLocal || preferredLocalModel == null) return null
-    return runLocalInference(preferredLocalModel, prompt, options)
+    return runLocalInference(preferredLocalModel, prompt, options, image, audio)
   }
 
   private suspend fun selectCloudProvider(): APIProviderConfig? {

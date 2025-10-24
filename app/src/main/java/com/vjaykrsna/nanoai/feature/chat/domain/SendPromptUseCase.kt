@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai.feature.chat.domain
 
+import android.graphics.Bitmap
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.data.repository.ConversationRepository
 import com.vjaykrsna.nanoai.core.data.repository.InferencePreferenceRepository
@@ -26,12 +27,18 @@ constructor(
   private val inferenceOrchestrator: InferenceOrchestrator,
   private val inferencePreferenceRepository: InferencePreferenceRepository,
 ) {
-  suspend operator fun invoke(threadId: UUID, prompt: String, personaId: UUID): NanoAIResult<Unit> {
+  suspend operator fun invoke(
+    threadId: UUID,
+    prompt: String,
+    personaId: UUID,
+    image: Bitmap? = null,
+    audio: ByteArray? = null
+  ): NanoAIResult<Unit> {
     val availability = checkInferenceAvailability(threadId, personaId)
     if (availability is NanoAIResult.RecoverableError) return availability
 
     val options = prepareGenerationOptions(personaId)
-    val inferenceResult = performInference(prompt, personaId, options)
+    val inferenceResult = performInference(prompt, personaId, options, image, audio)
 
     return handleInferenceResult(inferenceResult, threadId, personaId, options.preferLocal)
   }
@@ -78,11 +85,15 @@ constructor(
     prompt: String,
     personaId: UUID,
     options: GenerationOptionsData,
+    image: Bitmap? = null,
+    audio: ByteArray? = null
   ): InferenceResult =
     inferenceOrchestrator.generateResponse(
       prompt = prompt,
       personaId = personaId,
       options = options.options,
+      image = image,
+      audio = audio,
     )
 
   private suspend fun handleInferenceResult(
