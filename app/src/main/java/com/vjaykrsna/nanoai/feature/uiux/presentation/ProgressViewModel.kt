@@ -7,8 +7,6 @@ import com.vjaykrsna.nanoai.feature.uiux.domain.JobOperationsUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.ProgressCenterCoordinator
 import com.vjaykrsna.nanoai.feature.uiux.domain.QueueJobUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.UndoActionUseCase
-import com.vjaykrsna.nanoai.feature.uiux.presentation.ProgressJob
-import com.vjaykrsna.nanoai.feature.uiux.presentation.UndoPayload
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.UUID
 import javax.inject.Inject

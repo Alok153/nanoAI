@@ -1,0 +1,81 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://nanoai.app/schemas/model-manifest.json",
+    "title": "Local Model Manifest",
+    "description": "Defines metadata for downloadable on-device model packages",
+    "type": "object",
+    "required": [
+        "model_id",
+        "version",
+        "runtime",
+        "artifact_url",
+        "size_bytes",
+        "capabilities"
+    ],
+    "properties": {
+        "model_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9_.-]+$"
+        },
+        "display_name": {
+            "type": "string"
+        },
+        "version": {
+            "type": "string"
+        },
+        "runtime": {
+            "type": "string",
+            "enum": [
+                "MEDIA_PIPE",
+                "TFLITE",
+                "MLC_LLM",
+                "ONNX_RUNTIME"
+            ]
+        },
+        "artifact_url": {
+            "type": "string",
+            "format": "uri"
+        },
+        "size_bytes": {
+            "type": "integer",
+            "minimum": 1
+        },
+        "checksum": {
+            "type": "object",
+            "properties": {
+                "algorithm": {
+                    "type": "string",
+                    "enum": [ "SHA256", "SHA3-256" ]
+                },
+                "value": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                }
+            },
+            "required": [ "algorithm", "value" ]
+        },
+        "capabilities": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "enum": [
+                    "TEXT_GEN",
+                    "CODE_GEN",
+                    "IMAGE_GEN",
+                    "AUDIO_IN",
+                    "AUDIO_OUT"
+                ]
+            }
+        },
+        "min_ram_mb": {
+            "type": "integer",
+            "minimum": 1024
+        },
+        "notes": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        }
+    }
+}

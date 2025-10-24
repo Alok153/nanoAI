@@ -1,6 +1,6 @@
 @file:Suppress("MagicNumber")
 
-package com.vjaykrsna.nanoai.uiux
+package com.vjaykrsna.nanoai.feature.uiux
 
 import android.os.SystemClock
 import android.util.Log

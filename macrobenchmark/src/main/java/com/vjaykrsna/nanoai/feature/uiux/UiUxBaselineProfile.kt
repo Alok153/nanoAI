@@ -1,6 +1,6 @@
 @file:Suppress("MagicNumber")
 
-package com.vjaykrsna.nanoai.uiux
+package com.vjaykrsna.nanoai.feature.uiux
 
 import androidx.benchmark.macro.junit4.BaselineProfileRule
 import androidx.test.ext.junit.runners.AndroidJUnit4

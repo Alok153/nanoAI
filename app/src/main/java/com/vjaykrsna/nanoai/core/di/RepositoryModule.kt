@@ -30,8 +30,8 @@ import com.vjaykrsna.nanoai.feature.uiux.data.NavigationRepositoryImpl
 import com.vjaykrsna.nanoai.feature.uiux.data.ProgressRepositoryImpl
 import com.vjaykrsna.nanoai.feature.uiux.data.ThemeRepositoryImpl
 import com.vjaykrsna.nanoai.feature.uiux.domain.ProgressCenterCoordinator
-import com.vjaykrsna.nanoai.model.catalog.ModelManifestRepository
-import com.vjaykrsna.nanoai.model.catalog.ModelManifestRepositoryImpl
+import com.vjaykrsna.nanoai.shared.model.catalog.ModelManifestRepository
+import com.vjaykrsna.nanoai.shared.model.catalog.ModelManifestRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -125,9 +125,7 @@ abstract class RepositoryModule {
     impl: ProgressRepositoryImpl
   ): com.vjaykrsna.nanoai.core.data.repository.ProgressRepository
 
-  @Binds
-  @Singleton
-  abstract fun bindAudioRepository(impl: AudioRepositoryImpl): AudioRepository
+  @Binds @Singleton abstract fun bindAudioRepository(impl: AudioRepositoryImpl): AudioRepository
 
   companion object {
     @Provides

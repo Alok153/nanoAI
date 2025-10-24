@@ -77,7 +77,6 @@ import androidx.compose.ui.unit.dp
 import com.vjaykrsna.nanoai.R
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
-import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellUiState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandAction
 import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandDestination
 import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandInvocationSource
@@ -87,6 +86,7 @@ import com.vjaykrsna.nanoai.feature.uiux.presentation.PaletteDismissReason
 import com.vjaykrsna.nanoai.feature.uiux.presentation.PaletteSource
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ProgressJob
 import com.vjaykrsna.nanoai.feature.uiux.presentation.RightPanel
+import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellUiState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.UndoPayload
 import com.vjaykrsna.nanoai.feature.uiux.presentation.toModeIdOrNull
 import com.vjaykrsna.nanoai.feature.uiux.ui.HomeScreen

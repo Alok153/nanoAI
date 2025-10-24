@@ -21,9 +21,9 @@ import androidx.test.filters.LargeTest
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
+import com.vjaykrsna.nanoai.shared.ui.components.ThemeToggle
+import com.vjaykrsna.nanoai.shared.ui.theme.NanoAITheme
 import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
-import com.vjaykrsna.nanoai.ui.components.ThemeToggle
-import com.vjaykrsna.nanoai.ui.theme.NanoAITheme
 import java.io.File
 import java.io.FileOutputStream
 import java.time.LocalDateTime

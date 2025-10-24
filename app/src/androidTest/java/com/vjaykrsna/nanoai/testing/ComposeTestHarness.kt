@@ -8,7 +8,7 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.ComposeTestRule
-import com.vjaykrsna.nanoai.ui.theme.NanoAITheme
+import com.vjaykrsna.nanoai.shared.ui.theme.NanoAITheme
 
 /**
  * Compose test harness providing reusable accessibility matchers and test helpers.

@@ -98,7 +98,13 @@ class CoverageReportSchemaTest {
 
   companion object {
     private val SCHEMA_RELATIVE_PATH =
-      Path.of("specs", "005-improve-test-coverage", "contracts", "coverage-report.schema.json")
+      Path.of(
+        "specs",
+        "maintenance",
+        "005-improve-test-coverage",
+        "contracts",
+        "coverage-report.schema.json",
+      )
   }
 
   private fun sampleSummary(): CoverageSummary =

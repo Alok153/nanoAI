@@ -2,12 +2,12 @@ package com.vjaykrsna.nanoai.feature.library.data.huggingface
 
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.network.ConnectivityStatusProvider
-import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceCatalogQuery
-import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceModelSummary
-import com.vjaykrsna.nanoai.model.huggingface.network.HuggingFaceService
-import com.vjaykrsna.nanoai.model.huggingface.network.dto.HuggingFaceModelListingDto
-import com.vjaykrsna.nanoai.model.huggingface.network.dto.ModelCardDataDto
-import com.vjaykrsna.nanoai.model.huggingface.network.dto.ModelConfigDto
+import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceCatalogQuery
+import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceModelSummary
+import com.vjaykrsna.nanoai.shared.model.huggingface.network.HuggingFaceService
+import com.vjaykrsna.nanoai.shared.model.huggingface.network.dto.HuggingFaceModelListingDto
+import com.vjaykrsna.nanoai.shared.model.huggingface.network.dto.ModelCardDataDto
+import com.vjaykrsna.nanoai.shared.model.huggingface.network.dto.ModelConfigDto
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton

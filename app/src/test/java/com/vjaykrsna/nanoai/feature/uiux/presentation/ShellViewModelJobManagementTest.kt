@@ -7,10 +7,6 @@ import com.vjaykrsna.nanoai.feature.uiux.domain.NavigationOperationsUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.QueueJobUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.SettingsOperationsUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.UndoActionUseCase
-import com.vjaykrsna.nanoai.feature.uiux.presentation.ConnectivityStatus
-import com.vjaykrsna.nanoai.feature.uiux.presentation.JobStatus
-import com.vjaykrsna.nanoai.feature.uiux.presentation.JobType
-import com.vjaykrsna.nanoai.feature.uiux.presentation.ProgressJob
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import io.mockk.*
 import java.time.Duration

@@ -11,12 +11,6 @@ import com.vjaykrsna.nanoai.core.data.repository.UserProfileRepository
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UIStateSnapshot
 import com.vjaykrsna.nanoai.feature.uiux.domain.NavigationOperationsUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.UIUX_DEFAULT_USER_ID
-import com.vjaykrsna.nanoai.feature.uiux.presentation.ModeId
-import com.vjaykrsna.nanoai.feature.uiux.presentation.PaletteDismissReason
-import com.vjaykrsna.nanoai.feature.uiux.presentation.PaletteSource
-import com.vjaykrsna.nanoai.feature.uiux.presentation.RightPanel
-import com.vjaykrsna.nanoai.feature.uiux.presentation.toModeIdOrDefault
-import com.vjaykrsna.nanoai.feature.uiux.presentation.toRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject

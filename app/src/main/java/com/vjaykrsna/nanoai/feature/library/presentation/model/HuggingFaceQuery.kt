@@ -1,6 +1,6 @@
 package com.vjaykrsna.nanoai.feature.library.presentation.model
 
-import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceCatalogQuery
+import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceCatalogQuery
 
 internal fun HuggingFaceFilterState.toQuery(): HuggingFaceCatalogQuery {
   val normalizedSearch = searchQuery.trim().takeIf { it.isNotEmpty() }

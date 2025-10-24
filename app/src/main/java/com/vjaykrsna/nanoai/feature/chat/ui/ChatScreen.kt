@@ -1,7 +1,9 @@
 package com.vjaykrsna.nanoai.feature.chat.ui
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.ImageDecoder
 import android.net.Uri
-import android.provider.MediaStore
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -102,8 +104,19 @@ fun ChatScreen(
     rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { uri: Uri?
       ->
       uri?.let {
-        val bitmap = MediaStore.Images.Media.getBitmap(context.contentResolver, it)
-        viewModel.onImageSelected(bitmap)
+        try {
+          val bitmap = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+            ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, it))
+          } else {
+            context.contentResolver.openInputStream(it)?.use { stream ->
+              BitmapFactory.decodeStream(stream)
+            }
+          }
+          bitmap?.let { viewModel.onImageSelected(it) }
+        } catch (e: Exception) {
+          // Log the error for debugging
+          android.util.Log.e("ChatScreen", "Failed to load image", e)
+        }
       }
     }
 

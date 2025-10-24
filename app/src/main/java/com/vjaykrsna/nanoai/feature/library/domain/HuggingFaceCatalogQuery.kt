@@ -1,4 +1,4 @@
-package com.vjaykrsna.nanoai.feature.library.domain.model
+package com.vjaykrsna.nanoai.feature.library.domain
 
 /** Parameters controlling Hugging Face Hub listing queries. */
 data class HuggingFaceCatalogQuery(

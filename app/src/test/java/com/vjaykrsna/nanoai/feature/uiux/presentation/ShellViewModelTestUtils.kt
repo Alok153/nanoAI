@@ -14,18 +14,7 @@ import com.vjaykrsna.nanoai.feature.library.data.DownloadManager
 import com.vjaykrsna.nanoai.feature.library.domain.DownloadStatus
 import com.vjaykrsna.nanoai.feature.uiux.domain.CommandPaletteActionProvider
 import com.vjaykrsna.nanoai.feature.uiux.domain.ProgressCenterCoordinator
-import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandCategory
-import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandPaletteState
-import com.vjaykrsna.nanoai.feature.uiux.presentation.ConnectivityBannerState
-import com.vjaykrsna.nanoai.feature.uiux.presentation.ConnectivityStatus
-import com.vjaykrsna.nanoai.feature.uiux.presentation.ModeId
-import com.vjaykrsna.nanoai.feature.uiux.presentation.PaletteSource
-import com.vjaykrsna.nanoai.feature.uiux.presentation.ProgressJob
-import com.vjaykrsna.nanoai.feature.uiux.presentation.RecentActivityItem
-import com.vjaykrsna.nanoai.feature.uiux.presentation.RightPanel
-import com.vjaykrsna.nanoai.feature.uiux.presentation.UiPreferenceSnapshot
-import com.vjaykrsna.nanoai.feature.uiux.presentation.UndoPayload
-import com.vjaykrsna.nanoai.ui.navigation.Screen
+import com.vjaykrsna.nanoai.shared.ui.navigation.Screen
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -144,7 +133,9 @@ internal class FakeNavigationRepository(
   override val windowSizeClass: kotlinx.coroutines.flow.Flow<WindowSizeClass> = windowSizeClassFlow
 
   internal val undoPayloadFlow =
-    kotlinx.coroutines.flow.MutableStateFlow<com.vjaykrsna.nanoai.feature.uiux.presentation.UndoPayload?>(
+    kotlinx.coroutines.flow.MutableStateFlow<
+      com.vjaykrsna.nanoai.feature.uiux.presentation.UndoPayload?
+    >(
       null
     )
   override val undoPayload:

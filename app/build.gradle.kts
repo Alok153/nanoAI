@@ -276,13 +276,15 @@ tasks.register<JacocoReport>("jacocoUnitReport") {
 }
 
 val coverageReportXml = layout.buildDirectory.file("reports/jacoco/full/jacocoFullReport.xml")
-val layerMapFile = rootProject.layout.projectDirectory.file("config/coverage/layer-map.json")
-val coverageGateMarkdown = layout.buildDirectory.file("coverage/thresholds.md")
-val coverageGateJson = layout.buildDirectory.file("coverage/thresholds.json")
+val layerMapFile =
+  rootProject.layout.projectDirectory.file("config/testing/coverage/layer-map.json")
+val coverageGateMarkdown = file("build/coverage/thresholds.md")
+val coverageGateJson = file("build/coverage/thresholds.json")
 
 tasks.register<JavaExec>("verifyCoverageThresholds") {
   group = "verification"
   description = "Verifies merged coverage meets minimum layer thresholds."
+  notCompatibleWithConfigurationCache("Uses Gradle script objects")
 
   dependsOn(tasks.named("compileDebugKotlin"))
   dependsOn(tasks.named("jacocoFullReport"))
@@ -295,17 +297,13 @@ tasks.register<JavaExec>("verifyCoverageThresholds") {
   mainClass.set("com.vjaykrsna.nanoai.coverage.tasks.VerifyCoverageThresholdsTask")
 
   classpath(
-    files(
-      layout.buildDirectory.dir("tmp/kotlin-classes/debug"),
-      layout.buildDirectory.dir("intermediates/javac/debug/classes"),
-    ),
+    files(file("build/tmp/kotlin-classes/debug"), file("build/intermediates/javac/debug/classes")),
     configurations.getByName("debugRuntimeClasspath"),
-    android.bootClasspath,
   )
 
   doFirst {
-    coverageGateMarkdown.get().asFile.parentFile.mkdirs()
-    coverageGateJson.get().asFile.parentFile.mkdirs()
+    coverageGateMarkdown.parentFile.mkdirs()
+    coverageGateJson.parentFile.mkdirs()
   }
 
   args(
@@ -314,11 +312,11 @@ tasks.register<JavaExec>("verifyCoverageThresholds") {
     "--layer-map",
     layerMapFile.asFile.absolutePath,
     "--markdown",
-    coverageGateMarkdown.get().asFile.absolutePath,
+    coverageGateMarkdown.absolutePath,
     "--build-id",
     "jacocoFullReport",
     "--json",
-    coverageGateJson.get().asFile.absolutePath,
+    coverageGateJson.absolutePath,
   )
 }
 
@@ -349,7 +347,7 @@ tasks.register<Exec>("coverageMarkdownSummary") {
   dependsOn(tasks.named("jacocoFullReport"))
 
   val xmlReport = layout.buildDirectory.file("reports/jacoco/full/jacocoFullReport.xml")
-  val layerMap = rootProject.layout.projectDirectory.file("config/coverage/layer-map.json")
+  val layerMap = rootProject.layout.projectDirectory.file("config/testing/coverage/layer-map.json")
 
   inputs.file(xmlReport)
   inputs.file(layerMap)

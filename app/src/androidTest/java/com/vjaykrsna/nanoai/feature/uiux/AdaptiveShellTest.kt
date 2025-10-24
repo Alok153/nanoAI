@@ -17,7 +17,6 @@ import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellUiState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandAction
 import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandCategory
 import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandDestination
@@ -27,6 +26,7 @@ import com.vjaykrsna.nanoai.feature.uiux.presentation.ConnectivityStatus
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ModeId
 import com.vjaykrsna.nanoai.feature.uiux.presentation.RightPanel
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellLayoutState
+import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellUiState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.UiPreferenceSnapshot
 import com.vjaykrsna.nanoai.feature.uiux.presentation.UndoPayload
 import com.vjaykrsna.nanoai.feature.uiux.ui.shell.NanoShellScaffold

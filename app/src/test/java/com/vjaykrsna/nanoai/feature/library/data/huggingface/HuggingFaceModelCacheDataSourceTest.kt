@@ -3,7 +3,7 @@ package com.vjaykrsna.nanoai.feature.library.data.huggingface
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.feature.library.data.huggingface.dao.HuggingFaceModelCacheDao
 import com.vjaykrsna.nanoai.feature.library.data.huggingface.entities.HuggingFaceModelCacheEntity
-import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceModelSummary
+import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceModelSummary
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk

@@ -4,11 +4,11 @@ import android.content.Context
 import com.vjaykrsna.nanoai.core.data.db.daos.ChatThreadDao
 import com.vjaykrsna.nanoai.feature.library.domain.InstallState
 import com.vjaykrsna.nanoai.feature.library.domain.ProviderType
-import com.vjaykrsna.nanoai.model.catalog.DeliveryType
-import com.vjaykrsna.nanoai.model.catalog.ModelPackageEntity
-import com.vjaykrsna.nanoai.model.catalog.ModelPackageReadDao
-import com.vjaykrsna.nanoai.model.catalog.ModelPackageWriteDao
-import com.vjaykrsna.nanoai.model.leap.LeapModelRemoteDataSource
+import com.vjaykrsna.nanoai.shared.model.catalog.DeliveryType
+import com.vjaykrsna.nanoai.shared.model.catalog.ModelPackageEntity
+import com.vjaykrsna.nanoai.shared.model.catalog.ModelPackageReadDao
+import com.vjaykrsna.nanoai.shared.model.catalog.ModelPackageWriteDao
+import com.vjaykrsna.nanoai.shared.model.leap.LeapModelRemoteDataSource
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk

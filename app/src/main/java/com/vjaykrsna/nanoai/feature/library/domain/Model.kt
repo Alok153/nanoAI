@@ -1,4 +1,4 @@
-package com.vjaykrsna.nanoai.feature.library.domain.model
+package com.vjaykrsna.nanoai.feature.library.domain
 
 data class Model(
   val modelId: String,

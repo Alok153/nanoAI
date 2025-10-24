@@ -27,7 +27,9 @@ interface NavigationRepository : BaseRepository {
 
   suspend fun toggleRightDrawer(panel: RightPanel)
 
-  suspend fun showCommandPalette(source: com.vjaykrsna.nanoai.feature.uiux.presentation.PaletteSource)
+  suspend fun showCommandPalette(
+    source: com.vjaykrsna.nanoai.feature.uiux.presentation.PaletteSource
+  )
 
   suspend fun hideCommandPalette()
 

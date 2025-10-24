@@ -10,7 +10,7 @@ import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandDestination
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ConnectivityBannerState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ConnectivityStatus
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ModeId
-import com.vjaykrsna.nanoai.ui.navigation.Screen
+import com.vjaykrsna.nanoai.shared.ui.navigation.Screen
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher

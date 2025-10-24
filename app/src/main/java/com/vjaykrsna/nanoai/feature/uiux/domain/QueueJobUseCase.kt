@@ -49,8 +49,7 @@ constructor(
   private fun buildQueuedJobMessage(job: ProgressJob, isOffline: Boolean): String {
     val label = jobLabel(job)
     return when {
-      job.status == JobStatus.FAILED && job.canRetry ->
-        "$label retry scheduled"
+      job.status == JobStatus.FAILED && job.canRetry -> "$label retry scheduled"
       isOffline -> "$label queued for reconnect"
       job.status == JobStatus.PENDING -> "$label queued"
       else -> "$label updated"

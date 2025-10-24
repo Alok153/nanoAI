@@ -28,7 +28,6 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
-import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellUiState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandAction
 import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandCategory
 import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandDestination
@@ -43,12 +42,13 @@ import com.vjaykrsna.nanoai.feature.uiux.presentation.RecentActivityItem
 import com.vjaykrsna.nanoai.feature.uiux.presentation.RecentStatus
 import com.vjaykrsna.nanoai.feature.uiux.presentation.RightPanel
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellLayoutState
+import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellUiState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.UiPreferenceSnapshot
 import com.vjaykrsna.nanoai.feature.uiux.presentation.UndoPayload
 import com.vjaykrsna.nanoai.feature.uiux.ui.shell.NanoShellScaffold
 import com.vjaykrsna.nanoai.feature.uiux.ui.shell.ShellUiEvent
+import com.vjaykrsna.nanoai.shared.ui.theme.NanoAITheme
 import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
-import com.vjaykrsna.nanoai.ui.theme.NanoAITheme
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID

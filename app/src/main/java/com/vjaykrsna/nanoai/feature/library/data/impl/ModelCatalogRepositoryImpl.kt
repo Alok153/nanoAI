@@ -10,8 +10,8 @@ import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
 import com.vjaykrsna.nanoai.feature.library.data.daos.ModelPackageReadDao
 import com.vjaykrsna.nanoai.feature.library.data.daos.ModelPackageWriteDao
 import com.vjaykrsna.nanoai.feature.library.domain.InstallState
-import com.vjaykrsna.nanoai.model.catalog.ModelPackageEntity
-import com.vjaykrsna.nanoai.model.leap.LeapModelRemoteDataSource
+import com.vjaykrsna.nanoai.shared.model.catalog.ModelPackageEntity
+import com.vjaykrsna.nanoai.shared.model.leap.LeapModelRemoteDataSource
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import java.util.UUID

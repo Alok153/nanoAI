@@ -4,7 +4,6 @@ import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.feature.library.data.DownloadManager
 import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
-import com.vjaykrsna.nanoai.feature.library.domain.InstallState
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.first
@@ -82,12 +81,7 @@ constructor(
     if (matches) {
       modelCatalogRepository.updateInstallState(modelId, InstallState.INSTALLED)
       modelCatalogRepository.updateChecksum(modelId, model.checksumSha256!!)
-      model.downloadTaskId?.let {
-        downloadManager.updateTaskStatus(
-          it,
-          DownloadStatus.COMPLETED,
-        )
-      }
+      model.downloadTaskId?.let { downloadManager.updateTaskStatus(it, DownloadStatus.COMPLETED) }
     } else {
       modelCatalogRepository.updateInstallState(modelId, InstallState.ERROR)
     }

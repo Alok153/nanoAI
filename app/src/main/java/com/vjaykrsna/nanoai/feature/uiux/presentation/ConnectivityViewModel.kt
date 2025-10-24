@@ -5,8 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
 import com.vjaykrsna.nanoai.core.data.repository.ConnectivityRepository
 import com.vjaykrsna.nanoai.feature.uiux.domain.ConnectivityOperationsUseCase
-import com.vjaykrsna.nanoai.feature.uiux.presentation.ConnectivityBannerState
-import com.vjaykrsna.nanoai.feature.uiux.presentation.ConnectivityStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher

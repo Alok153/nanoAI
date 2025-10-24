@@ -2,7 +2,7 @@ package com.vjaykrsna.nanoai.feature.library.data.huggingface.cache
 
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.feature.library.data.huggingface.entities.HuggingFaceModelCacheEntity
-import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceModelSummary
+import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceModelSummary
 import kotlinx.datetime.Instant
 import org.junit.Test
 

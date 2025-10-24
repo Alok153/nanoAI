@@ -15,8 +15,8 @@ import com.vjaykrsna.nanoai.core.model.PersonaSwitchAction
 import com.vjaykrsna.nanoai.feature.chat.domain.SendPromptUseCase
 import com.vjaykrsna.nanoai.feature.chat.domain.SwitchPersonaUseCase
 import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
-import com.vjaykrsna.nanoai.feature.library.domain.model.Model
-import com.vjaykrsna.nanoai.feature.library.domain.model.toModel
+import com.vjaykrsna.nanoai.feature.library.domain.Model
+import com.vjaykrsna.nanoai.feature.library.domain.toModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.UUID
 import javax.inject.Inject
@@ -104,7 +104,7 @@ constructor(
     _showModelPicker.value = false
   }
 
-  fun selectModel(model: com.vjaykrsna.nanoai.feature.library.domain.model.Model) {
+  fun selectModel(model: Model) {
     val thread = currentThread.value
     if (thread == null) {
       // TODO: Handle the case where there is no active thread

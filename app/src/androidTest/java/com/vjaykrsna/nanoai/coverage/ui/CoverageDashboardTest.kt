@@ -11,8 +11,8 @@ import com.vjaykrsna.nanoai.coverage.model.CoverageMetric
 import com.vjaykrsna.nanoai.coverage.model.TestLayer
 import com.vjaykrsna.nanoai.coverage.ui.CoverageDashboardBanner.OFFLINE_ANNOUNCEMENT
 import com.vjaykrsna.nanoai.coverage.ui.CoverageDashboardBanner.offline
+import com.vjaykrsna.nanoai.shared.ui.theme.NanoAITheme
 import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
-import com.vjaykrsna.nanoai.ui.theme.NanoAITheme
 import java.io.IOException
 import org.junit.Rule
 import org.junit.Test

@@ -10,8 +10,8 @@ import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.feature.library.data.impl.ModelCatalogRepositoryImpl
 import com.vjaykrsna.nanoai.feature.library.domain.InstallState
 import com.vjaykrsna.nanoai.feature.library.domain.ProviderType
-import com.vjaykrsna.nanoai.model.catalog.DeliveryType
-import com.vjaykrsna.nanoai.model.leap.LeapModelRemoteDataSource
+import com.vjaykrsna.nanoai.shared.model.catalog.DeliveryType
+import com.vjaykrsna.nanoai.shared.model.leap.LeapModelRemoteDataSource
 import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
 import io.mockk.mockk
 import java.io.File

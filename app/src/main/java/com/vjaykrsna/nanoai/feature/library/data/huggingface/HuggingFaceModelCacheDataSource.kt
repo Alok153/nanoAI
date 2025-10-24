@@ -2,7 +2,7 @@ package com.vjaykrsna.nanoai.feature.library.data.huggingface
 
 import com.vjaykrsna.nanoai.feature.library.data.huggingface.cache.HuggingFaceModelCacheMapper
 import com.vjaykrsna.nanoai.feature.library.data.huggingface.dao.HuggingFaceModelCacheDao
-import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceModelSummary
+import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceModelSummary
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.datetime.Clock

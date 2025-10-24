@@ -37,11 +37,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.metrics.performance.JankStats
 import com.vjaykrsna.nanoai.feature.uiux.presentation.AppViewModel
-import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellViewModel
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ModeId
 import com.vjaykrsna.nanoai.feature.uiux.presentation.RightPanel
-import com.vjaykrsna.nanoai.ui.navigation.NavigationScaffold
-import com.vjaykrsna.nanoai.ui.theme.NanoAITheme
+import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellViewModel
+import com.vjaykrsna.nanoai.shared.ui.navigation.NavigationScaffold
+import com.vjaykrsna.nanoai.shared.ui.theme.NanoAITheme
 import dagger.hilt.android.AndroidEntryPoint
 
 /**

@@ -1,4 +1,4 @@
-package com.vjaykrsna.nanoai.feature.library.domain.model
+package com.vjaykrsna.nanoai.feature.library.domain
 
 import kotlinx.datetime.Instant
 

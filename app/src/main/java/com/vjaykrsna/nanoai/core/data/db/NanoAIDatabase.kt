@@ -29,12 +29,12 @@ import com.vjaykrsna.nanoai.feature.library.data.daos.DownloadTaskDao
 import com.vjaykrsna.nanoai.feature.library.data.entities.DownloadTaskEntity
 import com.vjaykrsna.nanoai.feature.library.data.huggingface.dao.HuggingFaceModelCacheDao
 import com.vjaykrsna.nanoai.feature.library.data.huggingface.entities.HuggingFaceModelCacheEntity
-import com.vjaykrsna.nanoai.model.catalog.DownloadManifestDao
-import com.vjaykrsna.nanoai.model.catalog.DownloadManifestEntity
-import com.vjaykrsna.nanoai.model.catalog.ModelPackageEntity
-import com.vjaykrsna.nanoai.model.catalog.ModelPackageReadDao
-import com.vjaykrsna.nanoai.model.catalog.ModelPackageRelationsDao
-import com.vjaykrsna.nanoai.model.catalog.ModelPackageWriteDao
+import com.vjaykrsna.nanoai.shared.model.catalog.DownloadManifestDao
+import com.vjaykrsna.nanoai.shared.model.catalog.DownloadManifestEntity
+import com.vjaykrsna.nanoai.shared.model.catalog.ModelPackageEntity
+import com.vjaykrsna.nanoai.shared.model.catalog.ModelPackageReadDao
+import com.vjaykrsna.nanoai.shared.model.catalog.ModelPackageRelationsDao
+import com.vjaykrsna.nanoai.shared.model.catalog.ModelPackageWriteDao
 
 /**
  * Room database for nanoAI application.

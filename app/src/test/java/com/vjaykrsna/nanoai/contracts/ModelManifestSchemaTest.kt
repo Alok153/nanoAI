@@ -20,9 +20,10 @@ class ModelManifestSchemaTest {
 
   @Before
   fun setup() {
-    // Schema is in specs/001-foundation/contracts/model-manifest.json
-    val projectRoot = File(requireNotNull(System.getProperty("user.dir"))).parentFile
-    schemaFile = File(projectRoot, "specs/001-foundation/contracts/model-manifest.json")
+    // Schema is in test resources
+    val schemaUrl = javaClass.classLoader.getResource("contracts/model-manifest.json")
+    assertThat(schemaUrl).isNotNull()
+    schemaFile = File(schemaUrl!!.file)
 
     // Verify schema file exists (will fail if not found - expected in TDD)
     assertThat(schemaFile.exists()).isTrue()

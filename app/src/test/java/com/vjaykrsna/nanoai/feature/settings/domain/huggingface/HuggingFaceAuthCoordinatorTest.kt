@@ -1,14 +1,14 @@
 package com.vjaykrsna.nanoai.feature.settings.domain.huggingface
 
 import com.google.common.truth.Truth.assertThat
-import com.vjaykrsna.nanoai.model.huggingface.network.HuggingFaceAccountService
-import com.vjaykrsna.nanoai.model.huggingface.network.HuggingFaceOAuthService
-import com.vjaykrsna.nanoai.model.huggingface.network.dto.HuggingFaceDeviceCodeResponse
-import com.vjaykrsna.nanoai.model.huggingface.network.dto.HuggingFaceTokenResponse
-import com.vjaykrsna.nanoai.model.huggingface.network.dto.HuggingFaceUserDto
 import com.vjaykrsna.nanoai.security.HuggingFaceCredentialRepository
 import com.vjaykrsna.nanoai.security.model.CredentialScope
 import com.vjaykrsna.nanoai.security.model.SecretCredential
+import com.vjaykrsna.nanoai.shared.model.huggingface.network.HuggingFaceAccountService
+import com.vjaykrsna.nanoai.shared.model.huggingface.network.HuggingFaceOAuthService
+import com.vjaykrsna.nanoai.shared.model.huggingface.network.dto.HuggingFaceDeviceCodeResponse
+import com.vjaykrsna.nanoai.shared.model.huggingface.network.dto.HuggingFaceTokenResponse
+import com.vjaykrsna.nanoai.shared.model.huggingface.network.dto.HuggingFaceUserDto
 import io.mockk.every
 import io.mockk.mockk
 import java.io.IOException
