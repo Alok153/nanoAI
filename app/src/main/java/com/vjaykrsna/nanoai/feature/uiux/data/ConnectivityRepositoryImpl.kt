@@ -32,7 +32,7 @@ constructor(
   @IoDispatcher override val ioDispatcher: CoroutineDispatcher,
 ) : ConnectivityRepository {
 
-  private val scope = CoroutineScope(ioDispatcher + SupervisorJob())
+  private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
 
   private val connectivity = MutableStateFlow(ConnectivityStatus.ONLINE)
 

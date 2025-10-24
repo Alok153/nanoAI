@@ -15,17 +15,6 @@ constructor(private val repository: HuggingFaceCatalogRepository) {
   suspend operator fun invoke(
     query: HuggingFaceCatalogQuery = HuggingFaceCatalogQuery()
   ): NanoAIResult<List<HuggingFaceModelSummary>> {
-    return repository
-      .listModels(query)
-      .fold(
-        onSuccess = { models -> NanoAIResult.success(models) },
-        onFailure = { error ->
-          NanoAIResult.recoverable(
-            message = "Failed to list Hugging Face models",
-            cause = error,
-            context = mapOf("query" to query.toString()),
-          )
-        },
-      )
+    return repository.listModels(query)
   }
 }

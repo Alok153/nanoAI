@@ -41,15 +41,14 @@ constructor(
   @IoDispatcher override val ioDispatcher: CoroutineDispatcher,
 ) : NavigationRepository {
 
-  private val scope = CoroutineScope(ioDispatcher + SupervisorJob())
+  private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
   private val userId: String = UIUX_DEFAULT_USER_ID
   private val hasAppliedHomeStartup = AtomicBoolean(false)
 
   private val uiSnapshot: StateFlow<UIStateSnapshot> =
     userProfileRepository
       .observeUIStateSnapshot(userId)
-      .map { snapshot -> snapshot ?: defaultSnapshot(userId) }
-      .map { snapshot -> coerceInitialActiveMode(snapshot) }
+      .map { snapshot -> coerceInitialActiveMode(snapshot ?: defaultSnapshot(userId)) }
       .stateIn(scope, SharingStarted.Eagerly, defaultSnapshot(userId))
 
   private val _windowSizeClass = MutableStateFlow(defaultWindowSizeClass())
@@ -141,24 +140,25 @@ constructor(
       val resetSnapshot =
         snapshot
           .updateActiveMode(UIStateSnapshot.DEFAULT_MODE_ROUTE)
-          .toggleLeftDrawer(open = false)
-          .toggleRightDrawer(open = false, panelId = null)
           .updatePaletteVisibility(visible = false)
 
+      // Persist the reset state asynchronously
       scope.launch {
-        if (
-          !snapshot.activeModeRoute.equals(UIStateSnapshot.DEFAULT_MODE_ROUTE, ignoreCase = true)
-        ) {
-          userProfileRepository.updateActiveModeRoute(userId, Screen.fromModeId(ModeId.HOME).route)
-        }
-        if (snapshot.isLeftDrawerOpen) {
-          userProfileRepository.updateLeftDrawerOpen(userId, false)
-        }
-        if (snapshot.isRightDrawerOpen || snapshot.activeRightPanel != null) {
-          userProfileRepository.updateRightDrawerState(userId, false, null)
-        }
-        if (snapshot.isCommandPaletteVisible) {
-          userProfileRepository.updateCommandPaletteVisibility(userId, false)
+        withContext(ioDispatcher) {
+          if (
+            !resetSnapshot.activeModeRoute.equals(
+              UIStateSnapshot.DEFAULT_MODE_ROUTE,
+              ignoreCase = true,
+            )
+          ) {
+            userProfileRepository.updateActiveModeRoute(
+              userId,
+              Screen.fromModeId(ModeId.HOME).route,
+            )
+          }
+          if (resetSnapshot.isCommandPaletteVisible) {
+            userProfileRepository.updateCommandPaletteVisibility(userId, false)
+          }
         }
       }
 

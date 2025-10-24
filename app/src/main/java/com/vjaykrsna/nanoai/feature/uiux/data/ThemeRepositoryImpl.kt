@@ -27,7 +27,7 @@ constructor(
   @IoDispatcher override val ioDispatcher: CoroutineDispatcher,
 ) : ThemeRepository {
 
-  private val scope = CoroutineScope(ioDispatcher + SupervisorJob())
+  private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
   private val userId = UIUX_DEFAULT_USER_ID
 
   private val preferences =

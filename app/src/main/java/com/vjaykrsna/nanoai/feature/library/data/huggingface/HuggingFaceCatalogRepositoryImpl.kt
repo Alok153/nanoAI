@@ -1,11 +1,14 @@
 package com.vjaykrsna.nanoai.feature.library.data.huggingface
 
+import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.network.ConnectivityStatusProvider
 import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceCatalogQuery
 import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceModelSummary
 import com.vjaykrsna.nanoai.model.huggingface.network.HuggingFaceService
 import com.vjaykrsna.nanoai.model.huggingface.network.dto.HuggingFaceModelListingDto
 import com.vjaykrsna.nanoai.model.huggingface.network.dto.ModelCardDataDto
 import com.vjaykrsna.nanoai.model.huggingface.network.dto.ModelConfigDto
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.time.Duration
@@ -26,33 +29,74 @@ class HuggingFaceCatalogRepositoryImpl
 constructor(
   private val service: HuggingFaceService,
   private val cacheDataSource: HuggingFaceModelCacheDataSource,
+  private val connectivityStatusProvider: ConnectivityStatusProvider,
   private val clock: Clock = Clock.System,
 ) : HuggingFaceCatalogRepository {
+  @Suppress("ReturnCount")
   override suspend fun listModels(
     query: HuggingFaceCatalogQuery
-  ): Result<List<HuggingFaceModelSummary>> = runCatching {
-    val cacheExpiry = clock.now().minus(DEFAULT_CACHE_TTL)
-
-    // Skip cache when search or filter parameters are present to ensure fresh results
-    val hasActiveFilters =
-      query.search?.isNotBlank() == true ||
-        query.pipelineTag?.isNotBlank() == true ||
-        query.library?.isNotBlank() == true ||
-        query.includePrivate == true ||
-        query.sortField != null
-
-    if (!hasActiveFilters) {
-      val cachedResults =
-        cacheDataSource.getFreshModels(
-          limit = query.limit,
-          offset = query.offset,
-          ttl = cacheExpiry,
-        )
-      if (cachedResults.isNotEmpty()) {
-        return@runCatching cachedResults
-      }
+  ): NanoAIResult<List<HuggingFaceModelSummary>> {
+    if (!connectivityStatusProvider.isOnline()) {
+      return NanoAIResult.recoverable(
+        message =
+          "Unable to fetch models from Hugging Face. Please check your internet connection.",
+        retryAfterSeconds = 60L,
+        telemetryId = null,
+        cause = null,
+        context = mapOf("query" to query.toString()),
+      )
     }
 
+    return try {
+      val cacheExpiry = clock.now().minus(DEFAULT_CACHE_TTL)
+      val cachedModels = getCachedModelsIfApplicable(query, cacheExpiry)
+      if (cachedModels != null) {
+        NanoAIResult.success(cachedModels)
+      } else {
+        val models = fetchModelsFromNetwork(query, cacheExpiry)
+        NanoAIResult.success(models)
+      }
+    } catch (e: IOException) {
+      NanoAIResult.recoverable(
+        message =
+          "Unable to fetch models from Hugging Face. Please check your internet connection.",
+        retryAfterSeconds = 60L,
+        telemetryId = null,
+        cause = e,
+        context = mapOf("query" to query.toString()),
+      )
+    } catch (e: Exception) {
+      NanoAIResult.fatal(
+        message = "An unexpected error occurred while fetching models.",
+        supportContact = null,
+        cause = e,
+      )
+    }
+  }
+
+  private suspend fun getCachedModelsIfApplicable(
+    query: HuggingFaceCatalogQuery,
+    cacheExpiry: Instant,
+  ): List<HuggingFaceModelSummary>? {
+    if (hasActiveFilters(query)) {
+      return null
+    }
+    val cachedResults =
+      cacheDataSource.getFreshModels(limit = query.limit, offset = query.offset, ttl = cacheExpiry)
+    return cachedResults.takeIf { it.isNotEmpty() }
+  }
+
+  private fun hasActiveFilters(query: HuggingFaceCatalogQuery): Boolean =
+    query.search?.isNotBlank() == true ||
+      query.pipelineTag?.takeIf { it.isNotBlank() } != null ||
+      query.library?.takeIf { it.isNotBlank() } != null ||
+      query.includePrivate ||
+      query.sortField != null
+
+  private suspend fun fetchModelsFromNetwork(
+    query: HuggingFaceCatalogQuery,
+    cacheExpiry: Instant,
+  ): List<HuggingFaceModelSummary> =
     service
       .listModels(
         search = query.search?.takeIf { it.isNotBlank() },
@@ -85,7 +129,6 @@ constructor(
         cacheDataSource.storeModels(models)
         cacheDataSource.pruneOlderThan(cacheExpiry)
       }
-  }
 
   private fun HuggingFaceModelListingDto.toDomain(): HuggingFaceModelSummary {
     val resolvedId = resolveModelId()

@@ -19,97 +19,96 @@ import org.junit.jupiter.api.extension.RegisterExtension
 
 class UserProfileLocalDataSourceTest {
 
-    @JvmField
-    @RegisterExtension
-    val mainDispatcherExtension = MainDispatcherExtension()
+  @JvmField @RegisterExtension val mainDispatcherExtension = MainDispatcherExtension()
 
-    private lateinit var userProfileDao: UserProfileDao
-    private lateinit var layoutSnapshotDao: LayoutSnapshotDao
-    private lateinit var uiStateSnapshotDao: UIStateSnapshotDao
-    private lateinit var uiPreferencesStore: UiPreferencesStore
-    private lateinit var dataSource: UserProfileLocalDataSource
+  private lateinit var userProfileDao: UserProfileDao
+  private lateinit var layoutSnapshotDao: LayoutSnapshotDao
+  private lateinit var uiStateSnapshotDao: UIStateSnapshotDao
+  private lateinit var uiPreferencesStore: UiPreferencesStore
+  private lateinit var dataSource: UserProfileLocalDataSource
 
-    @BeforeEach
-    fun setUp() {
-        userProfileDao = mockk(relaxed = true)
-        layoutSnapshotDao = mockk(relaxed = true)
-        uiStateSnapshotDao = mockk(relaxed = true)
-        uiPreferencesStore = mockk(relaxed = true)
-        dataSource = UserProfileLocalDataSource(
-            userProfileDao = userProfileDao,
-            layoutSnapshotDao = layoutSnapshotDao,
-            uiStateSnapshotDao = uiStateSnapshotDao,
-            uiPreferencesStore = uiPreferencesStore
-        )
-    }
+  @BeforeEach
+  fun setUp() {
+    userProfileDao = mockk(relaxed = true)
+    layoutSnapshotDao = mockk(relaxed = true)
+    uiStateSnapshotDao = mockk(relaxed = true)
+    uiPreferencesStore = mockk(relaxed = true)
+    dataSource =
+      UserProfileLocalDataSource(
+        userProfileDao = userProfileDao,
+        layoutSnapshotDao = layoutSnapshotDao,
+        uiStateSnapshotDao = uiStateSnapshotDao,
+        uiPreferencesStore = uiPreferencesStore,
+      )
+  }
 
-    @Test
-    fun `saveUserProfile should insert both the profile and layout snapshots`() = runTest {
-        // Given
-        val profile = UserProfile.fromPreferences("testUser", UiPreferencesSnapshot())
+  @Test
+  fun `saveUserProfile should insert both the profile and layout snapshots`() = runTest {
+    // Given
+    val profile = UserProfile.fromPreferences("testUser", UiPreferencesSnapshot())
 
-        // When
-        dataSource.saveUserProfile(profile)
+    // When
+    dataSource.saveUserProfile(profile)
 
-        // Then
-        coVerify { userProfileDao.insert(any()) }
-        coVerify { layoutSnapshotDao.insertAll(any()) }
-    }
+    // Then
+    coVerify { userProfileDao.insert(any()) }
+    coVerify { layoutSnapshotDao.insertAll(any()) }
+  }
 
-    @Test
-    fun `updateThemePreference should update both the store and the dao`() = runTest {
-        // Given
-        val userId = "testUser"
-        val theme = ThemePreference.DARK
+  @Test
+  fun `updateThemePreference should update both the store and the dao`() = runTest {
+    // Given
+    val userId = "testUser"
+    val theme = ThemePreference.DARK
 
-        // When
-        dataSource.updateThemePreference(userId, theme)
+    // When
+    dataSource.updateThemePreference(userId, theme)
 
-        // Then
-        coVerify { uiPreferencesStore.setThemePreference(theme) }
-        coVerify { userProfileDao.updateThemePreference(userId, theme) }
-    }
+    // Then
+    coVerify { uiPreferencesStore.setThemePreference(theme) }
+    coVerify { userProfileDao.updateThemePreference(userId, theme) }
+  }
 
-    @Test
-    fun `updateVisualDensity should update both the store and the dao`() = runTest {
-        // Given
-        val userId = "testUser"
-        val density = VisualDensity.COMPACT
+  @Test
+  fun `updateVisualDensity should update both the store and the dao`() = runTest {
+    // Given
+    val userId = "testUser"
+    val density = VisualDensity.COMPACT
 
-        // When
-        dataSource.updateVisualDensity(userId, density)
+    // When
+    dataSource.updateVisualDensity(userId, density)
 
-        // Then
-        coVerify { uiPreferencesStore.setVisualDensity(density) }
-        coVerify { userProfileDao.updateVisualDensity(userId, density) }
-    }
+    // Then
+    coVerify { uiPreferencesStore.setVisualDensity(density) }
+    coVerify { userProfileDao.updateVisualDensity(userId, density) }
+  }
 
-    @Test
-    fun `updatePinnedTools should update both the store and the dao`() = runTest {
-        // Given
-        val userId = "testUser"
-        val pinnedTools = listOf("tool1", "tool2")
+  @Test
+  fun `updatePinnedTools should update both the store and the dao`() = runTest {
+    // Given
+    val userId = "testUser"
+    val pinnedTools = listOf("tool1", "tool2")
 
-        // When
-        dataSource.updatePinnedTools(userId, pinnedTools)
+    // When
+    dataSource.updatePinnedTools(userId, pinnedTools)
 
-        // Then
-        coVerify { uiPreferencesStore.setPinnedToolIds(pinnedTools) }
-        coVerify { userProfileDao.updatePinnedTools(userId, pinnedTools) }
-    }
+    // Then
+    coVerify { uiPreferencesStore.setPinnedToolIds(pinnedTools) }
+    coVerify { userProfileDao.updatePinnedTools(userId, pinnedTools) }
+  }
 
-    @Test
-    fun `setLeftDrawerOpen should ensure snapshot and update the dao`() = runTest {
-        // Given
-        val userId = "testUser"
-        val open = true
-        coEvery { uiStateSnapshotDao.getByUserId(userId) } returns null
+  @Test
+  fun `setLeftDrawerOpen should ensure snapshot and update the dao`() = runTest {
+    // Given
+    val userId = "testUser"
+    val open = true
+    coEvery { uiStateSnapshotDao.getByUserId(userId) } returns null
 
-        // When
-        dataSource.setLeftDrawerOpen(userId, open)
+    // When
+    dataSource.setLeftDrawerOpen(userId, open)
 
-        // Then
-        coVerify { uiStateSnapshotDao.insert(any()) }
-        coVerify { uiStateSnapshotDao.updateLeftDrawerOpen(userId, open) }
-    }
+    // Then
+    coVerify { uiStateSnapshotDao.insert(any()) }
+    coVerify { uiStateSnapshotDao.updateLeftDrawerOpen(userId, open) }
+  }
 }

@@ -1,11 +1,12 @@
 package com.vjaykrsna.nanoai.feature.uiux.data
 
+import com.google.common.truth.Truth.assertThat
+import com.vjaykrsna.nanoai.core.data.repository.ThemeRepository
 import com.vjaykrsna.nanoai.core.data.repository.UserProfileRepository
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferencesSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
-import com.google.common.truth.Truth.assertThat
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -19,65 +20,82 @@ import org.junit.jupiter.api.extension.RegisterExtension
 
 class ThemeRepositoryImplTest {
 
-    @JvmField
-    @RegisterExtension
-    val mainDispatcherExtension = MainDispatcherExtension()
+  @JvmField @RegisterExtension val mainDispatcherExtension = MainDispatcherExtension()
 
-    private lateinit var userProfileRepository: UserProfileRepository
-    private lateinit var repository: ThemeRepositoryImpl
+  private lateinit var userProfileRepository: UserProfileRepository
+  private lateinit var repository: ThemeRepositoryImpl
 
-    @BeforeEach
-    fun setUp() {
-        userProfileRepository = mockk(relaxed = true)
-    }
+  @BeforeEach
+  fun setUp() {
+    userProfileRepository = mockk(relaxed = true)
+  }
 
-    private fun createRepository(initialState: UiPreferencesSnapshot): ThemeRepositoryImpl {
-        coEvery { userProfileRepository.observePreferences() } returns flowOf(initialState)
-        return ThemeRepositoryImpl(
-            userProfileRepository = userProfileRepository,
-            ioDispatcher = mainDispatcherExtension.dispatcher
-        )
-    }
+  private fun createRepository(initialState: UiPreferencesSnapshot): ThemeRepositoryImpl {
+    coEvery { userProfileRepository.observePreferences() } returns flowOf(initialState)
+    return ThemeRepositoryImpl(
+      userProfileRepository = userProfileRepository,
+      ioDispatcher = mainDispatcherExtension.dispatcher,
+    )
+  }
 
-    @Test
-    fun `updateThemePreference should call user profile repository`() = runTest {
-        // Given
-        repository = createRepository(UiPreferencesSnapshot())
-        val theme = ThemePreference.DARK
+  @Test
+  fun `updateThemePreference should call user profile repository`() = runTest {
+    // Given
+    repository = createRepository(UiPreferencesSnapshot())
+    val theme = ThemePreference.DARK
 
-        // When
-        repository.updateThemePreference(theme)
-        advanceUntilIdle()
+    // When
+    repository.updateThemePreference(theme)
+    advanceUntilIdle()
 
-        // Then
-        coVerify { userProfileRepository.updateThemePreference(any(), theme.name) }
-    }
+    // Then
+    coVerify { userProfileRepository.updateThemePreference(any(), theme.name) }
+  }
 
-    @Test
-    fun `updateVisualDensity should call user profile repository`() = runTest {
-        // Given
-        repository = createRepository(UiPreferencesSnapshot())
-        val density = VisualDensity.COMPACT
+  @Test
+  fun `updateVisualDensity should call user profile repository`() = runTest {
+    // Given
+    repository = createRepository(UiPreferencesSnapshot())
+    val density = VisualDensity.COMPACT
 
-        // When
-        repository.updateVisualDensity(density)
-        advanceUntilIdle()
+    // When
+    repository.updateVisualDensity(density)
+    advanceUntilIdle()
 
-        // Then
-        coVerify { userProfileRepository.updateVisualDensity(any(), density.name) }
-    }
+    // Then
+    coVerify { userProfileRepository.updateVisualDensity(any(), density.name) }
+  }
 
-    @Test
-    fun `uiPreferenceSnapshot should reflect the latest preferences`() = runTest {
-        // Given
-        val preferences = UiPreferencesSnapshot(themePreference = ThemePreference.DARK)
-        repository = createRepository(preferences)
+  @Test
+  fun `uiPreferenceSnapshot should reflect the latest preferences`() = runTest {
+    // Given
+    val preferences = UiPreferencesSnapshot(themePreference = ThemePreference.DARK)
+    repository = createRepository(preferences)
 
-        // When
-        advanceUntilIdle()
-        val snapshot = repository.uiPreferenceSnapshot.first()
+    // When
+    advanceUntilIdle()
+    val snapshot = repository.uiPreferenceSnapshot.first()
 
-        // Then
-        assertThat(snapshot.theme).isEqualTo(ThemePreference.DARK)
-    }
+    // Then
+    assertThat(snapshot.theme).isEqualTo(ThemePreference.DARK)
+  }
+
+  @Test
+  fun `repository should implement ThemeRepository interface`() {
+    // Given
+    repository = createRepository(UiPreferencesSnapshot())
+
+    // Then
+    assertThat(repository).isInstanceOf(ThemeRepository::class.java)
+  }
+
+  @Test
+  fun `repository should have ioDispatcher property`() {
+    // Given
+    repository = createRepository(UiPreferencesSnapshot())
+
+    // Then
+    assertThat(repository.ioDispatcher).isNotNull()
+    assertThat(repository.ioDispatcher).isEqualTo(mainDispatcherExtension.dispatcher)
+  }
 }

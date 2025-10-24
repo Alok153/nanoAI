@@ -2,6 +2,7 @@ package com.vjaykrsna.nanoai.feature.library.domain
 
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.device.DeviceIdentityProvider
+import com.vjaykrsna.nanoai.core.network.ConnectivityStatusProvider
 import com.vjaykrsna.nanoai.model.catalog.*
 import com.vjaykrsna.nanoai.model.catalog.network.ModelCatalogService
 import com.vjaykrsna.nanoai.model.catalog.network.dto.ErrorEnvelopeDto
@@ -41,75 +42,116 @@ constructor(
   private val deviceIdentityProvider: DeviceIdentityProvider,
   private val telemetryReporter: TelemetryReporter,
   private val huggingFaceManifestFetcher: HuggingFaceManifestFetcher,
+  private val connectivityStatusProvider: ConnectivityStatusProvider,
   private val clock: Clock = Clock.System,
-) {
+) : ModelManifestUseCaseInterface {
   /** Fetches the latest manifest for a model/version and caches it locally. */
-  suspend fun refreshManifest(modelId: String, version: String): NanoAIResult<DownloadManifest> {
+  override suspend fun refreshManifest(
+    modelId: String,
+    version: String,
+  ): NanoAIResult<DownloadManifest> {
+    if (!connectivityStatusProvider.isOnline()) {
+      return NanoAIResult.recoverable(
+        message = "Unable to fetch model manifest. Please check your internet connection.",
+        retryAfterSeconds = 60L,
+        telemetryId = null,
+        cause = null,
+        context = mapOf("modelId" to modelId, "version" to version),
+      )
+    }
+
     val modelRecord = localDataSource.getModel(modelId)?.model
     val locator = modelRecord?.let { ModelManifestLocator.parse(it.manifestUrl) }
 
     return when (locator) {
       is ModelManifestLocator.HuggingFace -> resolveHuggingFaceManifest(modelId, version, locator)
-      else ->
-        runCatching { service.getModelManifest(modelId, version) }
-          .mapCatching { dto -> validateManifest(dto) }
-          .mapCatching { dto ->
-            DownloadManifest(
-              modelId = dto.modelId,
-              version = dto.version,
-              checksumSha256 = dto.checksumSha256,
-              sizeBytes = dto.sizeBytes,
-              downloadUrl = dto.downloadUrl,
-              signature = dto.signature,
-              publicKeyUrl = dto.publicKeyUrl,
-              expiresAt =
-                dto.expiresAt?.let {
-                  runCatching { kotlinx.datetime.Instant.parse(it) }.getOrNull()
-                },
-              fetchedAt = clock.now(),
-            )
-          }
-          .fold(
-            onSuccess = { manifest ->
-              localDataSource.cacheManifest(
-                com.vjaykrsna.nanoai.model.catalog.DownloadManifestEntity(
-                  modelId = manifest.modelId,
-                  version = manifest.version,
-                  checksumSha256 = manifest.checksumSha256,
-                  sizeBytes = manifest.sizeBytes,
-                  downloadUrl = manifest.downloadUrl,
-                  signature = manifest.signature,
-                  publicKeyUrl = manifest.publicKeyUrl,
-                  expiresAt = manifest.expiresAt,
-                  fetchedAt = manifest.fetchedAt,
-                  releaseNotes = null,
-                )
-              )
-              localDataSource.updateIntegrityMetadata(
-                modelId = manifest.modelId,
-                checksum = manifest.checksumSha256,
-                signature = manifest.signature,
-              )
-              NanoAIResult.success(manifest)
-            },
-            onFailure = { error -> failure("Failed to fetch manifest", modelId, error) },
-          )
+      else -> fetchAndCacheManifest(modelId, version)
     }
   }
 
+  private suspend fun fetchAndCacheManifest(
+    modelId: String,
+    version: String,
+  ): NanoAIResult<DownloadManifest> =
+    runCatching { service.getModelManifest(modelId, version) }
+      .mapCatching { dto -> validateManifest(dto) }
+      .mapCatching { dto -> createDownloadManifest(dto) }
+      .fold(
+        onSuccess = { manifest ->
+          cacheManifestAndMetadata(manifest)
+          NanoAIResult.success(manifest)
+        },
+        onFailure = { error -> failure("Failed to fetch manifest", modelId, error) },
+      )
+
+  private fun createDownloadManifest(dto: ModelManifestDto): DownloadManifest =
+    DownloadManifest(
+      modelId = dto.modelId,
+      version = dto.version,
+      checksumSha256 = dto.checksumSha256,
+      sizeBytes = dto.sizeBytes,
+      downloadUrl = dto.downloadUrl,
+      signature = dto.signature,
+      publicKeyUrl = dto.publicKeyUrl,
+      expiresAt =
+        dto.expiresAt?.let { runCatching { kotlinx.datetime.Instant.parse(it) }.getOrNull() },
+      fetchedAt = clock.now(),
+    )
+
+  private suspend fun cacheManifestAndMetadata(manifest: DownloadManifest) {
+    localDataSource.cacheManifest(
+      com.vjaykrsna.nanoai.model.catalog.DownloadManifestEntity(
+        modelId = manifest.modelId,
+        version = manifest.version,
+        checksumSha256 = manifest.checksumSha256,
+        sizeBytes = manifest.sizeBytes,
+        downloadUrl = manifest.downloadUrl,
+        signature = manifest.signature,
+        publicKeyUrl = manifest.publicKeyUrl,
+        expiresAt = manifest.expiresAt,
+        fetchedAt = manifest.fetchedAt,
+        releaseNotes = null,
+      )
+    )
+    localDataSource.updateIntegrityMetadata(
+      modelId = manifest.modelId,
+      checksum = manifest.checksumSha256,
+      signature = manifest.signature,
+    )
+  }
+
   /** Reports verification result back to the catalog service. */
-  suspend fun reportVerification(
+  override suspend fun reportVerification(
     modelId: String,
     version: String,
     checksumSha256: String,
     status: VerificationOutcome,
-    failureReason: String? = null,
+    failureReason: String?,
   ): NanoAIResult<Unit> {
     val locator =
       localDataSource.getModel(modelId)?.model?.let { ModelManifestLocator.parse(it.manifestUrl) }
-    if (locator is ModelManifestLocator.HuggingFace) {
-      return NanoAIResult.success(Unit)
+
+    return when {
+      locator is ModelManifestLocator.HuggingFace -> NanoAIResult.success(Unit)
+      !connectivityStatusProvider.isOnline() ->
+        NanoAIResult.recoverable(
+          message = "Unable to report verification. Please check your internet connection.",
+          retryAfterSeconds = 60L,
+          telemetryId = null,
+          cause = null,
+          context = mapOf("modelId" to modelId, "version" to version),
+        )
+      else -> performVerificationRequest(modelId, version, checksumSha256, status, failureReason)
     }
+  }
+
+  private suspend fun performVerificationRequest(
+    modelId: String,
+    version: String,
+    checksumSha256: String,
+    status: VerificationOutcome,
+    failureReason: String?,
+  ): NanoAIResult<Unit> {
     val request =
       ManifestVerificationRequestDto(
         version = version,

@@ -11,27 +11,12 @@ import javax.inject.Singleton
 @Singleton
 class HuggingFaceCatalogUseCase
 @Inject
-constructor(private val huggingFaceCatalogRepository: HuggingFaceCatalogRepository) {
+constructor(private val huggingFaceCatalogRepository: HuggingFaceCatalogRepository) :
+  HuggingFaceCatalogUseCaseInterface {
   /** List models from Hugging Face catalog. */
-  suspend fun listModels(
+  override suspend fun listModels(
     query: HuggingFaceCatalogQuery
   ): NanoAIResult<List<HuggingFaceModelSummary>> {
-    return try {
-      val models = huggingFaceCatalogRepository.listModels(query).getOrThrow()
-      NanoAIResult.success(models)
-    } catch (e: Exception) {
-      NanoAIResult.recoverable(
-        message = "Failed to list Hugging Face models",
-        cause = e,
-        context =
-          mapOf(
-            "search" to (query.search ?: ""),
-            "pipelineTag" to (query.pipelineTag ?: ""),
-            "library" to (query.library ?: ""),
-            "limit" to query.limit.toString(),
-            "offset" to query.offset.toString(),
-          ),
-      )
-    }
+    return huggingFaceCatalogRepository.listModels(query)
   }
 }

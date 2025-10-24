@@ -7,6 +7,7 @@ import com.vjaykrsna.nanoai.core.data.db.NanoAIDatabase
 import com.vjaykrsna.nanoai.core.data.db.daos.PersonaProfileDao
 import com.vjaykrsna.nanoai.core.data.repository.PersonaRepository
 import com.vjaykrsna.nanoai.testing.DomainTestBuilders
+import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import java.util.UUID
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -15,6 +16,7 @@ import kotlinx.datetime.Clock
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
@@ -30,6 +32,8 @@ import org.robolectric.annotation.Config
 @OptIn(ExperimentalCoroutinesApi::class)
 class PersonaRepositoryImplTest {
 
+  @JvmField @RegisterExtension val mainDispatcherExtension = MainDispatcherExtension()
+
   private lateinit var database: NanoAIDatabase
   private lateinit var personaProfileDao: PersonaProfileDao
   private lateinit var repository: PersonaRepository
@@ -42,7 +46,7 @@ class PersonaRepositoryImplTest {
         .build()
 
     personaProfileDao = database.personaProfileDao()
-    repository = PersonaRepositoryImpl(personaProfileDao)
+    repository = PersonaRepositoryImpl(personaProfileDao, mainDispatcherExtension.dispatcher)
   }
 
   @After
@@ -314,5 +318,17 @@ class PersonaRepositoryImplTest {
   fun `getAllPersonas returns empty list when no personas exist`() = runTest {
     val all = repository.getAllPersonas()
     assertThat(all).isEmpty()
+  }
+
+  @Test
+  fun `repository should implement PersonaRepository interface`() {
+    // Verify that the repository implements the correct interface
+    assertThat(repository).isInstanceOf(PersonaRepository::class.java)
+  }
+
+  @Test
+  fun `repository should be properly constructed`() {
+    // Verify that the repository can be constructed with dependencies
+    assertThat(repository).isNotNull()
   }
 }

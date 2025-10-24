@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai.feature.library.domain
 
+import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.feature.library.data.huggingface.HuggingFaceCatalogRepository
 import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceCatalogQuery
 import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceModelSummary
@@ -42,7 +43,7 @@ class HuggingFaceCatalogUseCaseTest {
           isPrivate = false,
         )
       )
-    coEvery { huggingFaceCatalogRepository.listModels(query) } returns Result.success(models)
+    coEvery { huggingFaceCatalogRepository.listModels(query) } returns NanoAIResult.success(models)
 
     val result = useCase.listModels(query)
 
@@ -54,7 +55,8 @@ class HuggingFaceCatalogUseCaseTest {
   fun `listModels returns recoverable error when repository fails`() = runTest {
     val query = HuggingFaceCatalogQuery(search = "bert", limit = 10)
     val exception = RuntimeException("API error")
-    coEvery { huggingFaceCatalogRepository.listModels(query) } returns Result.failure(exception)
+    coEvery { huggingFaceCatalogRepository.listModels(query) } returns
+      NanoAIResult.recoverable(message = "API error", cause = exception)
 
     val result = useCase.listModels(query)
 

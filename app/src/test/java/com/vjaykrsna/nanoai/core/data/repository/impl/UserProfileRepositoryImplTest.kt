@@ -9,104 +9,107 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.junit.jupiter.api.extension.ExtendWith
 
 @RunWith(RobolectricTestRunner::class)
 @ExtendWith(MainDispatcherExtension::class)
 class UserProfileRepositoryImplTest {
 
-    private lateinit var localDataSource: UserProfileLocalDataSource
-    private lateinit var repository: UserProfileRepositoryImpl
-    private val testDispatcher = MainDispatcherExtension().dispatcher
-    private val testScope = TestScope(testDispatcher)
+  private lateinit var localDataSource: UserProfileLocalDataSource
+  private lateinit var repository: UserProfileRepositoryImpl
+  private val testDispatcher = MainDispatcherExtension().dispatcher
+  private val testScope = TestScope(testDispatcher)
 
-    @Before
-    fun setUp() {
-        localDataSource = mockk(relaxed = true)
-        repository = UserProfileRepositoryImpl(
-            local = localDataSource,
-            ioDispatcher = testDispatcher
-        )
+  @Before
+  fun setUp() {
+    localDataSource = mockk(relaxed = true)
+    repository = UserProfileRepositoryImpl(local = localDataSource, ioDispatcher = testDispatcher)
+  }
+
+  @Test
+  fun `updateThemePreference should call local data source`() =
+    testScope.runTest {
+      // Given
+      val userId = "testUser"
+      val themeName = "DARK"
+
+      // When
+      repository.updateThemePreference(userId, themeName)
+
+      // Then
+      coVerify { localDataSource.updateThemePreference(userId, ThemePreference.DARK) }
     }
 
-    @Test
-    fun `updateThemePreference should call local data source`() = testScope.runTest {
-        // Given
-        val userId = "testUser"
-        val themeName = "DARK"
+  @Test
+  fun `updateCompactMode should call local data source`() =
+    testScope.runTest {
+      // Given
+      val userId = "testUser"
+      val enabled = true
 
-        // When
-        repository.updateThemePreference(userId, themeName)
+      // When
+      repository.updateCompactMode(userId, enabled)
 
-        // Then
-        coVerify { localDataSource.updateThemePreference(userId, ThemePreference.DARK) }
+      // Then
+      coVerify { localDataSource.updateCompactMode(userId, enabled) }
     }
 
-    @Test
-    fun `updateCompactMode should call local data source`() = testScope.runTest {
-        // Given
-        val userId = "testUser"
-        val enabled = true
+  @Test
+  fun `updatePinnedTools should call local data source`() =
+    testScope.runTest {
+      // Given
+      val userId = "testUser"
+      val pinnedTools = listOf("tool1", "tool2")
 
-        // When
-        repository.updateCompactMode(userId, enabled)
+      // When
+      repository.updatePinnedTools(userId, pinnedTools)
 
-        // Then
-        coVerify { localDataSource.updateCompactMode(userId, enabled) }
+      // Then
+      coVerify { localDataSource.updatePinnedTools(userId, pinnedTools) }
     }
 
-    @Test
-    fun `updatePinnedTools should call local data source`() = testScope.runTest {
-        // Given
-        val userId = "testUser"
-        val pinnedTools = listOf("tool1", "tool2")
+  @Test
+  fun `updateLeftDrawerOpen should call local data source`() =
+    testScope.runTest {
+      // Given
+      val userId = "testUser"
+      val open = true
 
-        // When
-        repository.updatePinnedTools(userId, pinnedTools)
+      // When
+      repository.updateLeftDrawerOpen(userId, open)
 
-        // Then
-        coVerify { localDataSource.updatePinnedTools(userId, pinnedTools) }
+      // Then
+      coVerify { localDataSource.setLeftDrawerOpen(userId, open) }
     }
 
-    @Test
-    fun `updateLeftDrawerOpen should call local data source`() = testScope.runTest {
-        // Given
-        val userId = "testUser"
-        val open = true
+  @Test
+  fun `updateRightDrawerState should call local data source`() =
+    testScope.runTest {
+      // Given
+      val userId = "testUser"
+      val open = true
+      val panel = "testPanel"
 
-        // When
-        repository.updateLeftDrawerOpen(userId, open)
+      // When
+      repository.updateRightDrawerState(userId, open, panel)
 
-        // Then
-        coVerify { localDataSource.setLeftDrawerOpen(userId, open) }
+      // Then
+      coVerify { localDataSource.setRightDrawerState(userId, open, panel) }
     }
 
-    @Test
-    fun `updateRightDrawerState should call local data source`() = testScope.runTest {
-        // Given
-        val userId = "testUser"
-        val open = true
-        val panel = "testPanel"
+  @Test
+  fun `updateActiveModeRoute should call local data source`() =
+    testScope.runTest {
+      // Given
+      val userId = "testUser"
+      val route = "testRoute"
 
-        // When
-        repository.updateRightDrawerState(userId, open, panel)
+      // When
+      repository.updateActiveModeRoute(userId, route)
 
-        // Then
-        coVerify { localDataSource.setRightDrawerState(userId, open, panel) }
-    }
-
-    @Test
-    fun `updateActiveModeRoute should call local data source`() = testScope.runTest {
-        // Given
-        val userId = "testUser"
-        val route = "testRoute"
-
-        // When
-        repository.updateActiveModeRoute(userId, route)
-
-        // Then
-        coVerify { localDataSource.setActiveModeRoute(userId, route) }
+      // Then
+      coVerify { localDataSource.setActiveModeRoute(userId, route) }
     }
 }
