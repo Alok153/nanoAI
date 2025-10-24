@@ -1,128 +1,106 @@
 package com.vjaykrsna.nanoai.feature.uiux.ui.components.composer
 
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.AddAPhoto
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
-import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoElevation
-import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoRadii
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoSpacing
-import com.vjaykrsna.nanoai.feature.uiux.ui.components.primitives.NanoInputField
 
 @Composable
 fun NanoComposerBar(
   value: String,
   onValueChange: (String) -> Unit,
-  placeholder: String,
+  onSend: () -> Unit,
   modifier: Modifier = Modifier,
+  placeholder: String = "Type a message",
   enabled: Boolean = true,
-  minLines: Int = 1,
-  maxLines: Int = 6,
-  leadingActions: (@Composable RowScope.() -> Unit)? = null,
-  trailingActions: (@Composable RowScope.() -> Unit)? = null,
-  onSend: (() -> Unit)? = null,
-  sendEnabled: Boolean = value.isNotBlank() && enabled,
-  sendIcon: ImageVector = Icons.AutoMirrored.Filled.Send,
-  sendButtonContentDescription: String = "Send message",
+  sendEnabled: Boolean = true,
   isSending: Boolean = false,
-  keyboardOptions: KeyboardOptions =
-    KeyboardOptions.Default.copy(
-      imeAction = if (onSend != null) ImeAction.Send else KeyboardOptions.Default.imeAction
-    ),
-  keyboardActions: KeyboardActions =
-    if (onSend != null) {
-      KeyboardActions(onSend = { if (sendEnabled && !isSending) onSend() })
-    } else {
-      KeyboardActions.Default
-    },
+  onImageSelect: () -> Unit = {},
+  onAudioRecord: () -> Unit = {},
 ) {
-  Surface(
-    modifier = modifier.semantics { contentDescription = "Composer bar" },
-    shape = RoundedCornerShape(NanoRadii.extraLarge),
-    tonalElevation = NanoElevation.level1,
-    color = MaterialTheme.colorScheme.surfaceContainerLow,
+  Row(
+    verticalAlignment = Alignment.CenterVertically,
+    modifier = modifier.padding(vertical = NanoSpacing.sm),
   ) {
-    Row(
-      modifier =
-        Modifier.padding(horizontal = NanoSpacing.md, vertical = NanoSpacing.sm)
-          .heightIn(min = 56.dp),
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.spacedBy(NanoSpacing.sm),
+    IconButton(
+      onClick = onImageSelect,
+      enabled = enabled,
+      modifier = Modifier.semantics { contentDescription = "Attach an image" },
     ) {
-      leadingActions?.let { actions ->
-        Row(
-          verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.spacedBy(NanoSpacing.xs),
-          content = actions,
-        )
-        Spacer(modifier = Modifier.width(NanoSpacing.sm))
-      }
-
-      val resolvedPlaceholder = placeholder.ifBlank { "Type a message" }
-
-      val trailingIconContent: @Composable (() -> Unit)? =
-        if (trailingActions != null || onSend != null) {
-          {
-            Row(
-              verticalAlignment = Alignment.CenterVertically,
-              horizontalArrangement = Arrangement.spacedBy(NanoSpacing.xs),
-            ) {
-              trailingActions?.invoke(this)
-
-              if (onSend != null) {
-                if (isSending) {
-                  CircularProgressIndicator(
-                    modifier =
-                      Modifier.size(18.dp).semantics { contentDescription = "Sending message" },
-                    strokeWidth = 2.dp,
-                  )
-                } else {
-                  IconButton(onClick = { if (sendEnabled) onSend() }, enabled = sendEnabled) {
-                    Icon(imageVector = sendIcon, contentDescription = sendButtonContentDescription)
-                  }
-                }
-              }
-            }
-          }
-        } else {
-          null
-        }
-
-      NanoInputField(
-        value = value,
-        onValueChange = onValueChange,
-        modifier = Modifier.weight(1f),
-        placeholder = resolvedPlaceholder,
-        enabled = enabled && !isSending,
-        singleLine = false,
-        minLines = minLines,
-        maxLines = maxLines,
-        keyboardOptions = keyboardOptions,
-        keyboardActions = keyboardActions,
-        trailingIcon = trailingIconContent,
+      Icon(
+        imageVector = Icons.Default.AddAPhoto,
+        contentDescription = "Attach image",
+        tint = MaterialTheme.colorScheme.onSurfaceVariant,
       )
+    }
+    IconButton(
+      onClick = onAudioRecord,
+      enabled = enabled,
+      modifier = Modifier.semantics { contentDescription = "Record audio" },
+    ) {
+      Icon(
+        imageVector = Icons.Default.Mic,
+        contentDescription = "Record audio",
+        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+    }
+    OutlinedTextField(
+      value = value,
+      onValueChange = onValueChange,
+      modifier = Modifier.weight(1f),
+      placeholder = { Text(text = placeholder) },
+      enabled = enabled,
+      keyboardOptions =
+        KeyboardOptions(
+          capitalization = KeyboardCapitalization.Sentences,
+          imeAction = ImeAction.Send,
+        ),
+    )
+
+    Spacer(modifier = Modifier.width(NanoSpacing.sm))
+
+    AnimatedVisibility(visible = isSending, enter = fadeIn(), exit = fadeOut()) {
+      CircularProgressIndicator(modifier = Modifier.size(24.dp))
+    }
+
+    AnimatedVisibility(visible = !isSending, enter = fadeIn(), exit = fadeOut()) {
+      IconButton(
+        onClick = onSend,
+        enabled = sendEnabled,
+        modifier = Modifier.semantics { contentDescription = "Send message" },
+      ) {
+        Icon(
+          imageVector = Icons.AutoMirrored.Filled.Send,
+          contentDescription = "Send",
+          tint =
+            if (sendEnabled) MaterialTheme.colorScheme.primary
+            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+        )
+      }
     }
   }
 }

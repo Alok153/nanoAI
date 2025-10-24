@@ -163,6 +163,7 @@ android {
   sourceSets {
     getByName("test") {
       java.srcDir("src/test/contract")
+      java.srcDir("src/test/java")
       resources.srcDir("$rootDir/config")
     }
   }
@@ -413,6 +414,7 @@ dependencies {
 
   // MediaPipe
   implementation(libs.mediapipe.tasks.genai)
+  implementation(libs.mediapipe.tasks.vision)
 
   // Leap
   implementation(libs.leap.sdk)
