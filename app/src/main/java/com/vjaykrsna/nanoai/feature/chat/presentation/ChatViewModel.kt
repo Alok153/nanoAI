@@ -11,6 +11,7 @@ import com.vjaykrsna.nanoai.core.data.repository.PersonaRepository
 import com.vjaykrsna.nanoai.core.domain.model.ChatThread
 import com.vjaykrsna.nanoai.core.domain.model.Message
 import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
+import com.vjaykrsna.nanoai.core.model.MessageRole
 import com.vjaykrsna.nanoai.core.model.PersonaSwitchAction
 import com.vjaykrsna.nanoai.feature.chat.domain.SendPromptUseCase
 import com.vjaykrsna.nanoai.feature.chat.domain.SwitchPersonaUseCase
@@ -144,7 +145,7 @@ constructor(
             Message(
               messageId = UUID.randomUUID(),
               threadId = threadId,
-              role = com.vjaykrsna.nanoai.core.model.Role.USER,
+              role = MessageRole.USER,
               text = text,
               source = com.vjaykrsna.nanoai.core.model.MessageSource.LOCAL_MODEL,
               latencyMs = null,

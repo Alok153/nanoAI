@@ -1,4 +1,4 @@
-package com.vjaykrsna.nanoai.feature.library.data.download
+package com.vjaykrsna.nanoai.feature.library.data.workers
 
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.common.NanoAIResult

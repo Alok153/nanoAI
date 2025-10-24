@@ -49,6 +49,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.vjaykrsna.nanoai.core.domain.model.Message
+import com.vjaykrsna.nanoai.core.model.MessageRole
 import com.vjaykrsna.nanoai.feature.chat.presentation.ChatError
 import com.vjaykrsna.nanoai.feature.chat.presentation.ChatViewModel
 import com.vjaykrsna.nanoai.feature.chat.ui.components.ModelPicker
@@ -276,7 +277,7 @@ private fun MessagesList(
 
 @Composable
 private fun MessageBubble(message: Message, modifier: Modifier = Modifier) {
-  val isUser = message.role == com.vjaykrsna.nanoai.core.model.Role.USER
+  val isUser = message.role == MessageRole.USER
   val backgroundColor =
     if (isUser) {
       MaterialTheme.colorScheme.primaryContainer

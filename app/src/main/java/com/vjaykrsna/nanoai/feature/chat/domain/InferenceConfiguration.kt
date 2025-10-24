@@ -2,8 +2,8 @@ package com.vjaykrsna.nanoai.feature.chat.domain
 
 import kotlinx.serialization.json.JsonObject
 
-/** Optional persona/model tuning parameters supplied to the orchestrator. */
-data class GenerationOptions(
+/** Configuration parameters for AI model inference and text generation. */
+data class InferenceConfiguration(
   val systemPrompt: String? = null,
   val temperature: Float? = null,
   val topP: Float? = null,

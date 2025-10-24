@@ -7,8 +7,8 @@ import com.vjaykrsna.nanoai.core.data.db.daos.ChatThreadDao
 import com.vjaykrsna.nanoai.core.data.db.daos.MessageDao
 import com.vjaykrsna.nanoai.core.data.db.entities.ChatThreadEntity
 import com.vjaykrsna.nanoai.core.data.db.entities.MessageEntity
+import com.vjaykrsna.nanoai.core.model.MessageRole
 import com.vjaykrsna.nanoai.core.model.MessageSource
-import com.vjaykrsna.nanoai.core.model.Role
 import java.util.UUID
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -127,14 +127,14 @@ class ChatMessageDaoTest {
     val base = Clock.System.now()
     messageDao.insert(buildMessage(threadId, base.minus(1.seconds), text = "ok"))
     messageDao.insert(
-      buildMessage(threadId, base, text = null, role = Role.ASSISTANT, errorCode = "NETWORK")
+      buildMessage(threadId, base, text = null, role = MessageRole.ASSISTANT, errorCode = "NETWORK")
     )
     messageDao.insert(
       buildMessage(
         threadId,
         base.plus(1.seconds),
         text = null,
-        role = Role.ASSISTANT,
+        role = MessageRole.ASSISTANT,
         errorCode = "TIMEOUT",
       )
     )
@@ -150,13 +150,13 @@ class ChatMessageDaoTest {
     val threadId = UUID.randomUUID().toString()
     chatThreadDao.insert(buildThread(threadId))
     messageDao.insert(
-      buildMessage(threadId, Clock.System.now(), role = Role.ASSISTANT, latencyMs = 1000L)
+      buildMessage(threadId, Clock.System.now(), role = MessageRole.ASSISTANT, latencyMs = 1000L)
     )
     messageDao.insert(
       buildMessage(
         threadId,
         Clock.System.now().plus(1.seconds),
-        role = Role.ASSISTANT,
+        role = MessageRole.ASSISTANT,
         latencyMs = 500L,
       )
     )
@@ -170,7 +170,7 @@ class ChatMessageDaoTest {
   fun getAverageLatency_returnsNullWhenNoLatencySamples() = runTest {
     val threadId = UUID.randomUUID().toString()
     chatThreadDao.insert(buildThread(threadId))
-    messageDao.insert(buildMessage(threadId, Clock.System.now(), role = Role.ASSISTANT))
+    messageDao.insert(buildMessage(threadId, Clock.System.now(), role = MessageRole.ASSISTANT))
 
     val average = messageDao.getAverageLatency(threadId)
 
@@ -195,7 +195,7 @@ class ChatMessageDaoTest {
     threadId: String,
     createdAt: Instant,
     text: String? = "message",
-    role: Role = Role.USER,
+    role: MessageRole = MessageRole.USER,
     source: MessageSource = MessageSource.LOCAL_MODEL,
     latencyMs: Long? = null,
     errorCode: String? = null,

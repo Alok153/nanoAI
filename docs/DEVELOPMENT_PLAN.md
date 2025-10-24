@@ -11,140 +11,26 @@ The nanoAI project has established a solid foundation with:
 - **Shared Modules**: Proper separation between cross-cutting concerns and feature-specific code
 - **Test Organization**: Aligned test and androidTest directories with main code structure
 - **Build Quality**: All deprecated APIs resolved, Detekt violations fixed, configuration cache compatible
+- **Phase 2 Complete**: Naming convention optimization implemented (descriptive naming, enum standardization, consistent abbreviations)
+- **Build Optimization**: Gradle JVM args and daemon configuration optimized, advanced build caching strategies implemented, build variants for different feature sets created, parallel task execution and resource allocation optimized, Kotlin and Compose compiler settings fine-tuned. Results: Clean build time improved from ~4m to ~1m 28s (62% faster), incremental builds maintained at ~4s, added feature-based product flavors (full, minimal, chatOnly, mediaOnly), enhanced Gradle configuration with parallel execution and caching
 
 ## Next Priorities
 
-### Phase 2: Naming Convention Optimization
-**Priority: MEDIUM** - Improves code readability and consistency
+### Phase 3: Architecture Evolution
 
-#### 2.1 Standardized Abbreviations
-```
-Approved Abbreviations:
-- API (Application Programming Interface)
-- UI (User Interface)
-- ID (Identifier) - use `Id` in compound words
-- URL (Uniform Resource Locator)
-- HTTP (HyperText Transfer Protocol)
-- JSON (JavaScript Object Notation)
-- XML (eXtensible Markup Language)
-
-Compound Word Examples:
-- `userId` not `userID`
-- `apiKey` not `APIKey`
-- `urlString` not `URLString`
-```
-
-#### 2.2 Descriptive Naming Guidelines
-```
-Classes/Types:
-- Use nouns or noun phrases
-- Be specific about the concept
-- Examples:
-  - `MessageRole` instead of `Role`
-  - `InferenceConfiguration` instead of `GenerationOptions`
-  - `ProviderAuthenticationStatus` instead of `ProviderStatus`
-
-Functions/Methods:
-- Start with imperative verbs
-- Be specific about what they do
-- Examples:
-  - `sendMessage()` not `send()`
-  - `validateInput()` not `check()`
-  - `calculateTotalSize()` not `getSize()`
-
-Variables/Properties:
-- Use nouns for data
-- Use descriptive names
-- Examples:
-  - `selectedModelId` not `modelId`
-  - `isLoading` not `loading`
-  - `availableProviders` not `providers`
-```
-
-#### 2.3 Enum and Constant Naming
-```
-Enums:
-- Use PascalCase for enum names
-- Use UPPER_SNAKE_CASE for enum values
-- Be descriptive and consistent
-- Examples:
-  - `enum class MessageRole { USER, ASSISTANT, SYSTEM }`
-  - `enum class ProviderStatus { AVAILABLE, UNAUTHORIZED, RATE_LIMITED }`
-
-Constants:
-- Use UPPER_SNAKE_CASE
-- Include context in name
-- Examples:
-  - `MAX_RETRY_ATTEMPTS` not `MAX_RETRIES`
-  - `DEFAULT_TIMEOUT_SECONDS` not `TIMEOUT`
-```
-
-#### 2.4 Package and File Naming
-```
-Packages:
-- Use lowercase
-- Use singular nouns
-- Reflect the domain concept
-- Examples:
-  - `domain.model` not `domain.models`
-  - `data.repository` not `data.repositories`
-
-Files:
-- Match the primary class/interface name
-- Use PascalCase for class files
-- Use descriptive names
-- Examples:
-  - `SendMessageUseCase.kt`
-  - `ConversationRepository.kt`
-  - `MessageFormatter.kt`
-```
-
-## Implementation Strategy for Phase 2
-
-### Step 1: Audit Current Naming Patterns
-- Review all classes, functions, and variables for consistency
-- Identify abbreviations that should be standardized
-- Flag ambiguous or unclear names
-- Document violations with specific examples
-
-### Step 2: Implement Naming Standards
-- Apply approved abbreviation rules systematically
-- Improve descriptive naming for classes and functions
-- Update enum values to UPPER_SNAKE_CASE
-- Standardize constant naming
-
-### Step 3: Update Tests and Documentation
-- Ensure test names follow new conventions
-- Update any documentation references
-- Validate all changes compile and tests pass
-
-### Step 4: Validation and Testing
-- Run full test suite after each major change
-- Verify static analysis (Detekt) still passes
-- Ensure code formatting (Spotless) compliance
-- Test affected UI flows manually
-
-## Future Considerations
-
-### Modularization
+#### Modularization
 **Priority: LOW** - Consider when features grow large
 - Convert features to separate Gradle modules
 - Benefits: Faster incremental builds, better isolation
 - Criteria: When feature exceeds 10K lines or has complex dependencies
 
-### Shared Libraries
+#### Shared Libraries
 **Priority: LOW** - Extract common functionality when needed
 - Identify truly cross-cutting concerns
 - Create separate libraries for reusable components
 - Avoid premature abstraction
 
-### Build Optimization
-**Priority: MEDIUM** - Performance improvements
-- Use build variants for different feature sets
-- Implement build caching strategies
-- Optimize Gradle configuration for faster builds
-
-### Documentation Automation
+#### Documentation Automation
 **Priority: LOW** - Developer experience enhancement
 - Generate architecture diagrams from code
 - Auto-document API endpoints
@@ -156,79 +42,84 @@ Files:
 - [ ] All builds pass without errors
 - [ ] All tests execute successfully
 - [ ] Application functionality preserved
-- [ ] No broken imports after naming changes
+- [ ] Performance targets met (cold start <1.5s, jank <5%)
 
 ### Quality Requirements
-- [ ] Consistent naming patterns across codebase
-- [ ] Descriptive and unambiguous names
-- [ ] Proper abbreviation usage
-- [ ] Enum and constant naming standards followed
+- [ ] Clean architecture principles maintained
+- [ ] Code coverage targets achieved (ViewModel ≥75%, UI ≥65%, Data ≥70%)
+- [ ] Static analysis passes (Detekt, Spotless)
+- [ ] Security standards maintained (encrypted sensitive data)
 
 ### Process Requirements
-- [ ] Comprehensive testing after each naming change
+- [ ] Comprehensive testing after architectural changes
 - [ ] Incremental commits for manageable review
-- [ ] Documentation updated to reflect new names
-- [ ] Team alignment on naming conventions
+- [ ] Documentation updated to reflect new architecture
+- [ ] Team alignment on architectural decisions
 
 ## Risk Mitigation
 
 ### Technical Risks
-1. **Refactoring Complexity**:
-   - Use IDE refactoring tools to update all references
-   - Test compilation after each change
-   - Commit changes incrementally
+1. **Architecture Complexity**:
+   - Maintain clean architecture principles
+   - Test thoroughly before and after changes
+   - Monitor performance impact
 
 2. **Breaking Changes**:
-   - Audit all public APIs before renaming
+   - Audit all public APIs before architectural changes
    - Update tests immediately after changes
-   - Consider backward compatibility where needed
+   - Consider migration strategies for breaking changes
 
-3. **Scope Creep**:
-   - Focus on high-impact naming improvements first
-   - Defer controversial changes for team discussion
-   - Set clear completion criteria
+3. **Performance Regression**:
+   - Establish performance baselines
+   - Monitor key metrics during changes
+   - Rollback if targets not met
 
 ### Process Risks
-1. **Inconsistent Application**:
-   - Establish clear guidelines for edge cases
-   - Review changes as a team
-   - Document exceptions to standards
+1. **Scope Creep**:
+   - Focus on high-impact architectural improvements
+   - Defer non-essential changes
+   - Set clear completion criteria
 
 2. **Testing Gaps**:
-   - Run full test suite after each batch of changes
-   - Pay attention to integration tests
-   - Manual testing of affected features
+   - Run full test suite after architectural changes
+   - Include performance and integration tests
+   - Manual testing of affected user flows
 
-## Decision Framework: What to Rename
+## Decision Framework: When to Evolve Architecture
 
-**Rename when:**
-- Name is ambiguous or misleading
-- Inconsistent with established patterns
-- Uses non-standard abbreviations
-- Violates case conventions
+**Consider architectural changes when:**
+- Performance targets are not being met
+- Feature complexity exceeds maintainability thresholds
+- Code duplication becomes significant
+- New requirements challenge current architecture
 
-**Don't rename when:**
-- Name is clear and follows conventions
-- Change would break external APIs
-- Name is part of established domain terminology
-- Change provides minimal benefit
+**Don't change architecture when:**
+- Current architecture adequately serves requirements
+- Change would introduce unnecessary complexity
+- Benefits don't outweigh migration costs
+- Team lacks experience with proposed architecture
 
 ## Benefits
 
+### Performance & Scalability
+- **Faster Builds**: Modular architecture enables incremental compilation
+- **Better Performance**: Optimized architecture meets user experience targets
+- **Scalable Codebase**: Architecture supports feature growth and team expansion
+
 ### Developer Experience
-- **Predictability**: Consistent patterns reduce cognitive load
-- **Productivity**: Standardized naming reduces decision fatigue
-- **Onboarding**: New developers understand conventions quickly
+- **Maintainability**: Clean architecture reduces complexity
+- **Productivity**: Well-structured code is easier to modify and extend
+- **Onboarding**: Clear architectural patterns help new developers
 
 ### Code Quality
-- **Readability**: Descriptive names improve comprehension
-- **Maintainability**: Consistent patterns ease refactoring
-- **Reliability**: Clear naming reduces bugs from misunderstandings
+- **Reliability**: Proper architecture reduces bugs and improves stability
+- **Testability**: Clean separation enables comprehensive testing
+- **Security**: Architecture supports security best practices
 
 ### Long-term Value
-- **Scalability**: Standards support codebase growth
-- **Evolution**: Well-named code is easier to modify
-- **Collaboration**: Shared conventions improve team efficiency
+- **Evolution**: Flexible architecture adapts to changing requirements
+- **Collaboration**: Shared patterns improve team efficiency
+- **Sustainability**: Architecture supports long-term maintenance
 
 ---
 

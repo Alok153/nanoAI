@@ -26,7 +26,9 @@ class ImportExportContractTest {
   @Before
   fun setup() {
     // Contract files are in test resources
-    val sampleUrl = javaClass.classLoader.getResource("contracts/sample-backup.json")
+    val classLoader = javaClass.classLoader
+    assertThat(classLoader).isNotNull()
+    val sampleUrl = classLoader!!.getResource("contracts/sample-backup.json")
     assertThat(sampleUrl).isNotNull()
     val sampleFile = File(sampleUrl!!.file)
     assertThat(sampleFile.exists()).isTrue()

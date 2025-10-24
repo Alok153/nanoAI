@@ -1,8 +1,8 @@
 package com.vjaykrsna.nanoai.core.domain.model
 
 import com.vjaykrsna.nanoai.core.data.db.entities.MessageEntity
+import com.vjaykrsna.nanoai.core.model.MessageRole
 import com.vjaykrsna.nanoai.core.model.MessageSource
-import com.vjaykrsna.nanoai.core.model.Role
 import java.util.UUID
 import kotlinx.datetime.Instant
 
@@ -15,7 +15,7 @@ import kotlinx.datetime.Instant
 data class Message(
   val messageId: UUID,
   val threadId: UUID,
-  val role: Role,
+  val role: MessageRole,
   val text: String?,
   val audioUri: String? = null,
   val imageUri: String? = null,

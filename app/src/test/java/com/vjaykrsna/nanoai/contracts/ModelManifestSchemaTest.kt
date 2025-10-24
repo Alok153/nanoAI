@@ -21,7 +21,9 @@ class ModelManifestSchemaTest {
   @Before
   fun setup() {
     // Schema is in test resources
-    val schemaUrl = javaClass.classLoader.getResource("contracts/model-manifest.json")
+    val classLoader = javaClass.classLoader
+    assertThat(classLoader).isNotNull()
+    val schemaUrl = classLoader!!.getResource("contracts/model-manifest.json")
     assertThat(schemaUrl).isNotNull()
     schemaFile = File(schemaUrl!!.file)
 

@@ -4,8 +4,8 @@ import com.vjaykrsna.nanoai.core.domain.model.ChatThread
 import com.vjaykrsna.nanoai.core.domain.model.Message
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
+import com.vjaykrsna.nanoai.core.model.MessageRole
 import com.vjaykrsna.nanoai.core.model.MessageSource
-import com.vjaykrsna.nanoai.core.model.Role
 import com.vjaykrsna.nanoai.feature.library.data.catalog.DeliveryType
 import com.vjaykrsna.nanoai.feature.library.domain.InstallState
 import com.vjaykrsna.nanoai.feature.library.domain.ProviderType
@@ -68,7 +68,7 @@ object DomainTestBuilders {
   fun buildMessage(
     messageId: UUID = UUID.randomUUID(),
     threadId: UUID = UUID.randomUUID(),
-    role: Role = Role.USER,
+    role: MessageRole = MessageRole.USER,
     text: String? = "Test message",
     audioUri: String? = null,
     imageUri: String? = null,
@@ -99,7 +99,7 @@ object DomainTestBuilders {
     buildMessage(
       messageId = messageId,
       threadId = threadId,
-      role = Role.USER,
+      role = MessageRole.USER,
       text = text,
       source = MessageSource.LOCAL_MODEL,
     )
@@ -114,7 +114,7 @@ object DomainTestBuilders {
     buildMessage(
       messageId = messageId,
       threadId = threadId,
-      role = Role.ASSISTANT,
+      role = MessageRole.ASSISTANT,
       text = text,
       source = MessageSource.LOCAL_MODEL,
       latencyMs = latencyMs,
