@@ -7,6 +7,7 @@ import com.vjaykrsna.nanoai.feature.uiux.domain.NavigationOperationsUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.QueueJobUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.SettingsOperationsUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.UndoActionUseCase
+import com.vjaykrsna.nanoai.feature.uiux.ui.shell.ShellUiEvent
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import io.mockk.*
 import java.time.Duration
@@ -53,6 +54,12 @@ class ShellViewModelJobManagementTest {
       val undoActionUseCase = mockk<UndoActionUseCase>(relaxed = true)
       val settingsOperationsUseCase = mockk<SettingsOperationsUseCase>(relaxed = true)
 
+      // Mock sub-ViewModels
+      val navigationViewModel = mockk<NavigationViewModel>(relaxed = true)
+      val connectivityViewModel = mockk<ConnectivityViewModel>(relaxed = true)
+      val progressViewModel = mockk<ProgressViewModel>(relaxed = true)
+      val themeViewModel = mockk<ThemeViewModel>(relaxed = true)
+
       // Set up queue job use case to actually call repository
       coEvery { queueJobUseCase.execute(any()) } coAnswers
         {
@@ -89,6 +96,10 @@ class ShellViewModelJobManagementTest {
           jobOperationsUseCase,
           undoActionUseCase,
           settingsOperationsUseCase,
+          navigationViewModel,
+          connectivityViewModel,
+          progressViewModel,
+          themeViewModel,
           dispatcher,
         )
 
@@ -104,7 +115,7 @@ class ShellViewModelJobManagementTest {
           queuedAt = Instant.parse("2025-10-06T00:00:00Z"),
         )
 
-      viewModel.queueGeneration(job)
+      viewModel.onEvent(ShellUiEvent.QueueJob(job))
       advanceUntilIdle()
 
       val progressJobs = fakeRepos.progressRepository.progressJobs.first()
@@ -128,6 +139,12 @@ class ShellViewModelJobManagementTest {
       val undoActionUseCase = mockk<UndoActionUseCase>(relaxed = true)
       val settingsOperationsUseCase = mockk<SettingsOperationsUseCase>(relaxed = true)
 
+      // Mock sub-ViewModels
+      val navigationViewModel = mockk<NavigationViewModel>(relaxed = true)
+      val connectivityViewModel = mockk<ConnectivityViewModel>(relaxed = true)
+      val progressViewModel = mockk<ProgressViewModel>(relaxed = true)
+      val themeViewModel = mockk<ThemeViewModel>(relaxed = true)
+
       // Set up queue job use case to actually call repository
       coEvery { queueJobUseCase.execute(any()) } coAnswers
         {
@@ -164,6 +181,10 @@ class ShellViewModelJobManagementTest {
           jobOperationsUseCase,
           undoActionUseCase,
           settingsOperationsUseCase,
+          navigationViewModel,
+          connectivityViewModel,
+          progressViewModel,
+          themeViewModel,
           dispatcher,
         )
 
@@ -179,7 +200,7 @@ class ShellViewModelJobManagementTest {
           queuedAt = Instant.parse("2025-10-06T01:00:00Z"),
         )
 
-      viewModel.queueGeneration(job)
+      viewModel.onEvent(ShellUiEvent.QueueJob(job))
       advanceUntilIdle()
 
       val progressJobs = fakeRepos.progressRepository.progressJobs.first()
@@ -230,6 +251,13 @@ class ShellViewModelJobManagementTest {
           fakeRepos.navigationRepository.recordUndoPayload(null)
         }
       val settingsOperationsUseCase = mockk<SettingsOperationsUseCase>(relaxed = true)
+
+      // Mock sub-ViewModels
+      val navigationViewModel = mockk<NavigationViewModel>(relaxed = true)
+      val connectivityViewModel = mockk<ConnectivityViewModel>(relaxed = true)
+      val progressViewModel = mockk<ProgressViewModel>(relaxed = true)
+      val themeViewModel = mockk<ThemeViewModel>(relaxed = true)
+
       val viewModel =
         ShellViewModel(
           fakeRepos.navigationRepository,
@@ -245,6 +273,10 @@ class ShellViewModelJobManagementTest {
           jobOperationsUseCase,
           undoActionUseCase,
           settingsOperationsUseCase,
+          navigationViewModel,
+          connectivityViewModel,
+          progressViewModel,
+          themeViewModel,
           dispatcher,
         )
 
@@ -260,7 +292,7 @@ class ShellViewModelJobManagementTest {
           queuedAt = Instant.parse("2025-10-06T02:00:00Z"),
         )
 
-      viewModel.queueGeneration(job)
+      viewModel.onEvent(ShellUiEvent.QueueJob(job))
       advanceUntilIdle()
 
       val progressJobs = fakeRepos.progressRepository.progressJobs.first()
@@ -269,7 +301,7 @@ class ShellViewModelJobManagementTest {
           (fakeRepos.navigationRepository as FakeNavigationRepository).undoPayloadFlow.value
         )
 
-      viewModel.undoAction(payload)
+      viewModel.onEvent(ShellUiEvent.Undo(payload))
       advanceUntilIdle()
 
       val clearedProgressJobs = fakeRepos.progressRepository.progressJobs.first()
@@ -307,6 +339,12 @@ class ShellViewModelJobManagementTest {
       val undoActionUseCase = mockk<UndoActionUseCase>(relaxed = true)
       val settingsOperationsUseCase = mockk<SettingsOperationsUseCase>(relaxed = true)
 
+      // Mock sub-ViewModels
+      val navigationViewModel = mockk<NavigationViewModel>(relaxed = true)
+      val connectivityViewModel = mockk<ConnectivityViewModel>(relaxed = true)
+      val progressViewModel = mockk<ProgressViewModel>(relaxed = true)
+      val themeViewModel = mockk<ThemeViewModel>(relaxed = true)
+
       // Set up job operations use case to actually call repository
       every { jobOperationsUseCase.completeJob(any()) } answers
         {
@@ -328,10 +366,14 @@ class ShellViewModelJobManagementTest {
           jobOperationsUseCase,
           undoActionUseCase,
           settingsOperationsUseCase,
+          navigationViewModel,
+          connectivityViewModel,
+          progressViewModel,
+          themeViewModel,
           dispatcher,
         )
 
-      viewModel.completeJob(jobId)
+      viewModel.onEvent(ShellUiEvent.CompleteJob(jobId))
       advanceUntilIdle()
 
       val progressJobs = fakeRepos.progressRepository.progressJobs.first()

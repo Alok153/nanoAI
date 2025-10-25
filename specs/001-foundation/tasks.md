@@ -48,10 +48,10 @@
 **Independent Test Criteria**: No UI files exceed 400 lines, each component has single clear responsibility
 **Tests**: UI tests verify component behavior after refactoring
 ./
-- [ ] T023 Refactor `NanoShellScaffold.kt` (750 lines) into smaller focused composables by feature/responsibility boundaries
-- [ ] T024 Refactor `ShellViewModel.kt` (433 lines) by splitting into focused ViewModels (NavigationViewModel, ConnectivityViewModel, etc.)
-- [ ] T025 Update Hilt modules for new ViewModel structure and dependencies
-- [ ] T026 Update UI tests for refactored components and ViewModels
+- [x] T023 Refactor `NanoShellScaffold.kt` (750 lines) into smaller focused composables by feature/responsibility boundaries
+- [x] T024 Refactor `ShellViewModel.kt` (433 lines) by splitting into focused ViewModels (NavigationViewModel, ConnectivityViewModel, etc.)
+- [x] T025 Update Hilt modules for new ViewModel structure and dependencies
+- [x] T026 Update UI tests for refactored components and ViewModels
 
 ### Phase 6: ViewModel Integration Updates [US4]
 **Story Goal**: Update ViewModels to use new UseCase and repository abstractions

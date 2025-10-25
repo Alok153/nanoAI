@@ -24,9 +24,6 @@ import com.vjaykrsna.nanoai.core.data.repository.NavigationRepository
 import com.vjaykrsna.nanoai.core.data.repository.ProgressRepository
 import com.vjaykrsna.nanoai.core.data.repository.ThemeRepository
 import com.vjaykrsna.nanoai.core.data.repository.UserProfileRepository
-import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
-import com.vjaykrsna.nanoai.core.domain.model.uiux.UIStateSnapshot
-import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
 import com.vjaykrsna.nanoai.feature.uiux.domain.CommandPaletteActionProvider
 import com.vjaykrsna.nanoai.feature.uiux.domain.ConnectivityOperationsUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.JobOperationsUseCase
@@ -35,8 +32,8 @@ import com.vjaykrsna.nanoai.feature.uiux.domain.ProgressCenterCoordinator
 import com.vjaykrsna.nanoai.feature.uiux.domain.QueueJobUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.SettingsOperationsUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.UndoActionUseCase
+import com.vjaykrsna.nanoai.feature.uiux.ui.shell.ShellUiEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
-import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -46,15 +43,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 
 /** ViewModel coordinating shell layout state and user intents. */
 private const val LAYOUT_INDEX = 0
 private const val PALETTE_INDEX = 1
 private const val BANNER_INDEX = 2
 private const val PREFS_INDEX = 3
-private const val JOBS_INDEX = 4
-private const val CHAT_STATE_INDEX = 5
+private const val CHAT_STATE_INDEX = 4
 
 private data class ModeCardDefinition(
   val id: ModeId,
@@ -126,15 +121,7 @@ private val MODE_CARD_DEFINITIONS =
     ),
   )
 
-private data class ShellLayoutInputs(
-  val window: WindowSizeClass,
-  val snapshot: UIStateSnapshot,
-  val connectivityStatus: ConnectivityStatus,
-  val undo: UndoPayload?,
-  val jobs: List<ProgressJob>,
-  val activity: List<RecentActivityItem>,
-)
-
+@Suppress("LargeClass")
 @HiltViewModel
 class ShellViewModel
 @Inject
@@ -153,104 +140,110 @@ constructor(
   private val jobOperationsUseCase: JobOperationsUseCase,
   private val undoActionUseCase: UndoActionUseCase,
   private val settingsOperationsUseCase: SettingsOperationsUseCase,
+  // Sub-ViewModels for focused responsibilities
+  private val navigationViewModel: NavigationViewModel,
+  private val connectivityViewModel: ConnectivityViewModel,
+  private val progressViewModel: ProgressViewModel,
+  private val themeViewModel: ThemeViewModel,
   // private val telemetry: ShellTelemetry,
   @Suppress("UnusedPrivateProperty")
   @MainImmediateDispatcher
   private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
 ) : ViewModel() {
 
-  private val userId: String = "default" // TODO: get from somewhere
-
-  private val uiSnapshot: StateFlow<UIStateSnapshot> =
-    userProfileRepository
-      .observeUIStateSnapshot(userId)
-      .map { snapshot -> snapshot ?: defaultSnapshot(userId) }
-      .map { snapshot -> coerceInitialActiveMode(snapshot) }
-      .stateIn(viewModelScope, SharingStarted.Eagerly, defaultSnapshot(userId))
-
-  private val shellLayout: StateFlow<ShellLayoutState> =
-    combine(
-        navigationRepository.windowSizeClass,
-        uiSnapshot,
-        connectivityRepository.connectivityBannerState.map { it.status },
-        navigationRepository.undoPayload,
-        progressRepository.progressJobs,
-      ) { window, snapshot, connectivityStatus, undo, jobs ->
-        ShellLayoutInputs(
-          window = window,
-          snapshot = snapshot,
-          connectivityStatus = connectivityStatus,
-          undo = undo,
-          jobs = jobs,
-          activity = emptyList(),
-        )
-      }
-      .combine(navigationRepository.recentActivity) { inputs, activity ->
-        buildShellLayoutState(inputs.copy(activity = activity))
-      }
-      .stateIn(
-        viewModelScope,
-        SharingStarted.Eagerly,
-        buildShellLayoutState(
-          ShellLayoutInputs(
-            window =
-              androidx.compose.material3.windowsizeclass.WindowSizeClass.calculateFromSize(
-                DpSize(width = 640.dp, height = 360.dp)
-              ),
-            snapshot = uiSnapshot.value,
-            connectivityStatus = ConnectivityStatus.ONLINE,
-            undo = null,
-            jobs = emptyList(),
-            activity = emptyList(),
-          )
-        ),
-      )
+  private val _activeMode = MutableStateFlow(ModeId.HOME)
+  private val _isLeftDrawerOpen = MutableStateFlow(false)
+  private val _isRightDrawerOpen = MutableStateFlow(false)
+  private val _activeRightPanel = MutableStateFlow<RightPanel?>(null)
 
   private val _chatState = MutableStateFlow<ChatState?>(null)
 
-  /**
-   * Combined UI state exposing shell layout, command palette, connectivity banner, preferences,
-   * mode cards, and quick actions.
-   */
+  @Suppress("CyclomaticComplexMethod")
+  fun onEvent(event: ShellUiEvent) {
+    when (event) {
+      is ShellUiEvent.ModeSelected -> {
+        navigationViewModel.openMode(event.modeId)
+        _activeMode.value = event.modeId
+      }
+      is ShellUiEvent.ToggleLeftDrawer -> {
+        navigationViewModel.toggleLeftDrawer()
+        _isLeftDrawerOpen.value = !_isLeftDrawerOpen.value
+      }
+      is ShellUiEvent.SetLeftDrawer -> {
+        navigationViewModel.setLeftDrawer(event.open)
+        _isLeftDrawerOpen.value = event.open
+      }
+      is ShellUiEvent.ToggleRightDrawer -> {
+        navigationViewModel.toggleRightDrawer(event.panel)
+        _isRightDrawerOpen.value = !_isRightDrawerOpen.value
+        _activeRightPanel.value = if (_isRightDrawerOpen.value) event.panel else null
+      }
+      is ShellUiEvent.ShowCommandPalette -> navigationViewModel.showCommandPalette(event.source)
+      is ShellUiEvent.HideCommandPalette -> navigationViewModel.hideCommandPalette()
+      is ShellUiEvent.CommandInvoked -> onCommandInvoked(event.action, event.source)
+      is ShellUiEvent.QueueJob -> progressViewModel.queueGeneration(event.job)
+      is ShellUiEvent.RetryJob -> progressViewModel.retryJob(event.job)
+      is ShellUiEvent.CompleteJob -> progressViewModel.completeJob(event.jobId)
+      is ShellUiEvent.Undo -> progressViewModel.undoAction(event.payload)
+      is ShellUiEvent.ConnectivityChanged -> connectivityViewModel.updateConnectivity(event.status)
+      is ShellUiEvent.UpdateTheme -> themeViewModel.updateThemePreference(event.theme)
+      is ShellUiEvent.UpdateDensity -> themeViewModel.updateVisualDensity(event.density)
+      else -> Unit
+    }
+  }
+
   val uiState: StateFlow<ShellUiState> =
     combine(
-        shellLayout,
+        navigationRepository.windowSizeClass,
+        _activeMode,
+        _isLeftDrawerOpen,
+        _isRightDrawerOpen,
+        _activeRightPanel,
+        navigationRepository.recentActivity,
+        navigationRepository.undoPayload,
         navigationRepository.commandPaletteState,
-        connectivityRepository.connectivityBannerState,
-        themeRepository.uiPreferenceSnapshot,
-        progressCoordinator.progressJobs,
+        progressViewModel.progressJobs,
         _chatState,
       ) { values ->
-        val layout = values[LAYOUT_INDEX] as ShellLayoutState
-        val palette = values[PALETTE_INDEX] as CommandPaletteState
-        val banner = values[BANNER_INDEX] as ConnectivityBannerState
-        val prefs = values[PREFS_INDEX] as UiPreferenceSnapshot
-        @Suppress("UNCHECKED_CAST") val jobs = values[JOBS_INDEX] as List<ProgressJob>
-        val chatState = values[CHAT_STATE_INDEX] as ChatState?
+        val windowSizeClass = values[0] as WindowSizeClass
+        val activeMode = values[1] as ModeId
+        val isLeftDrawerOpen = values[2] as Boolean
+        val isRightDrawerOpen = values[3] as Boolean
+        val activeRightPanel = values[4] as RightPanel?
+        val recentActivity = values[5] as List<RecentActivityItem>
+        val undoPayload = values[6] as UndoPayload?
+        val commandPaletteState = values[7] as CommandPaletteState
+        val jobs = values[8] as List<ProgressJob>
+        val chatState = values[9] as ChatState?
 
-        val mergedJobs = mergeProgressJobs(layout.progressJobs, jobs)
-        val sanitizedUndo = sanitizeUndoPayload(layout.pendingUndoAction, mergedJobs)
         val normalizedLayout =
-          layout.copy(progressJobs = mergedJobs, pendingUndoAction = sanitizedUndo)
-        val normalizedBanner =
-          banner.copy(
-            status = normalizedLayout.connectivity,
-            queuedActionCount = mergedJobs.count { it.isPending || it.isActive },
+          ShellLayoutState(
+            windowSizeClass = windowSizeClass,
+            isLeftDrawerOpen = isLeftDrawerOpen,
+            isRightDrawerOpen = isRightDrawerOpen,
+            activeRightPanel = activeRightPanel,
+            activeMode = activeMode,
+            showCommandPalette = commandPaletteState.results.isNotEmpty(),
+            connectivity = ConnectivityStatus.ONLINE, // TODO: from connectivity
+            pendingUndoAction = undoPayload,
+            progressJobs = jobs,
+            recentActivity = recentActivity,
           )
+        val normalizedBanner = ConnectivityBannerState(status = ConnectivityStatus.ONLINE) // TODO
 
         ShellUiState(
           layout = normalizedLayout,
-          commandPalette = palette,
+          commandPalette = commandPaletteState,
           connectivityBanner = normalizedBanner,
-          preferences = prefs,
-          modeCards = buildModeCards(normalizedLayout.connectivity),
-          quickActions = buildQuickActions(normalizedLayout.connectivity),
+          preferences = UiPreferenceSnapshot(), // TODO
+          modeCards = buildModeCards(activeMode, true), // TODO
+          quickActions = buildQuickActions(activeMode),
           chatState = chatState,
         )
       }
       .stateIn(
         scope = viewModelScope,
-        started = SharingStarted.Eagerly,
+        started = SharingStarted.WhileSubscribed(5_000),
         initialValue = buildInitialState(),
       )
 
@@ -279,72 +272,6 @@ constructor(
     )
   }
 
-  /** Opens a specific mode, closing drawers and hiding the command palette. */
-  fun openMode(modeId: ModeId) {
-    navigationOperationsUseCase.openMode(modeId)
-  }
-
-  /** Toggles the left navigation drawer. */
-  fun toggleLeftDrawer() {
-    navigationOperationsUseCase.toggleLeftDrawer()
-  }
-
-  /** Sets the left drawer to a specific open/closed state. */
-  fun setLeftDrawer(open: Boolean) {
-    navigationOperationsUseCase.setLeftDrawer(open)
-  }
-
-  /** Toggles the right contextual drawer for a specific panel. */
-  fun toggleRightDrawer(panel: RightPanel) {
-    navigationOperationsUseCase.toggleRightDrawer(panel)
-  }
-
-  /** Shows the command palette overlay from a specific source. */
-  fun showCommandPalette(source: PaletteSource) {
-    navigationOperationsUseCase.showCommandPalette(source)
-  }
-
-  /** Hides the command palette overlay. */
-  @Suppress("UnusedParameter")
-  fun hideCommandPalette(reason: PaletteDismissReason) {
-    navigationOperationsUseCase.hideCommandPalette()
-  }
-
-  /** Queues a generation job (e.g., when offline or model busy). */
-  fun queueGeneration(job: ProgressJob) {
-    queueJobUseCase.execute(job)
-  }
-
-  /** Completes a job, removing it from the progress center. */
-  fun completeJob(jobId: UUID) {
-    jobOperationsUseCase.completeJob(jobId)
-  }
-
-  /** Attempts to retry a failed job via the progress coordinator. */
-  fun retryJob(job: ProgressJob) {
-    jobOperationsUseCase.retryJob(job.jobId)
-  }
-
-  /** Executes an undo action based on the provided payload. */
-  fun undoAction(payload: UndoPayload) {
-    undoActionUseCase.execute(payload)
-  }
-
-  /** Updates connectivity status and handles online/offline transitions. */
-  fun updateConnectivity(status: ConnectivityStatus) {
-    connectivityOperationsUseCase.updateConnectivity(status)
-  }
-
-  /** Updates persisted theme preference for the active user. */
-  fun updateThemePreference(theme: ThemePreference) {
-    viewModelScope.launch { settingsOperationsUseCase.updateTheme(theme) }
-  }
-
-  /** Updates persisted density preference for the active user. */
-  fun updateVisualDensity(density: VisualDensity) {
-    viewModelScope.launch { settingsOperationsUseCase.updateVisualDensity(density) }
-  }
-
   /** Records telemetry for command invocations to understand palette usage. */
   @Suppress("UnusedParameter")
   fun onCommandInvoked(action: CommandAction, source: CommandInvocationSource) {
@@ -357,86 +284,9 @@ constructor(
     */
   }
 
-  private fun mergeProgressJobs(
-    repositoryJobs: List<ProgressJob>,
-    coordinatorJobs: List<ProgressJob>,
-  ): List<ProgressJob> {
-    if (coordinatorJobs.isEmpty() || repositoryJobs.isEmpty()) {
-      return when {
-        coordinatorJobs.isEmpty() -> repositoryJobs
-        repositoryJobs.isEmpty() -> coordinatorJobs
-        else -> emptyList()
-      }
-    }
-
-    val merged = linkedMapOf<UUID, ProgressJob>()
-    repositoryJobs.forEach { job -> merged[job.jobId] = job }
-    coordinatorJobs.forEach { job -> merged[job.jobId] = job }
-    return merged.values.sortedBy(ProgressJob::queuedAt)
-  }
-
-  private fun sanitizeUndoPayload(payload: UndoPayload?, jobs: List<ProgressJob>): UndoPayload? {
-    val currentPayload = payload ?: return null
-    val jobId = currentPayload.extractJobId()
-    val activeJob = jobId?.let { id -> jobs.firstOrNull { it.jobId == id } }
-    return when {
-      jobId == null -> currentPayload
-      activeJob == null -> null
-      activeJob.isTerminal -> null
-      else -> currentPayload
-    }
-  }
-
-  private fun UndoPayload.extractJobId(): UUID? {
-    val metadataId = metadata["jobId"] as? String
-    val metadataUuid = metadataId?.let(::parseUuid)
-    val actionUuid =
-      if (actionId.startsWith(JOB_QUEUE_PREFIX)) {
-        parseUuid(actionId.removePrefix(JOB_QUEUE_PREFIX))
-      } else {
-        null
-      }
-    return metadataUuid ?: actionUuid
-  }
-
-  /** Builds the list of mode cards for the home hub grid. */
-  private fun buildModeCards(connectivity: ConnectivityStatus): List<ModeCard> {
-    val isOnline = connectivity == ConnectivityStatus.ONLINE
-    return MODE_CARD_DEFINITIONS.filter {
-        it.id != ModeId.SETTINGS
-      } // Exclude settings from home page
-      .map { definition ->
-        val enabled = if (definition.requiresOnline) isOnline else true
-        ModeCard(
-          id = definition.id,
-          title = definition.title,
-          subtitle = definition.subtitle,
-          icon = definition.icon,
-          enabled = enabled,
-          primaryAction =
-            CommandAction(
-              id = definition.actionId,
-              title = definition.actionTitle,
-              category = definition.actionCategory,
-              destination = CommandDestination.Navigate(definition.id.toRoute()),
-            ),
-        )
-      }
-  }
-
-  /** Builds quick action commands shown on the home screen. */
-  private fun buildQuickActions(connectivity: ConnectivityStatus): List<CommandAction> {
-    val modeActionsById = actionProvider.provideModeActions(connectivity).associateBy { it.id }
-    return listOfNotNull(
-      modeActionsById["mode_chat"]?.copy(id = "quick_new_chat"),
-      modeActionsById["mode_image"]?.copy(id = "quick_generate_image"),
-      modeActionsById["mode_audio"]?.copy(id = "quick_voice", title = "Voice Session"),
-    )
-  }
-
   /** Updates the current window size class so adaptive layouts respond to device changes. */
   fun updateWindowSizeClass(sizeClass: WindowSizeClass) {
-    navigationOperationsUseCase.updateWindowSizeClass(sizeClass)
+    navigationViewModel.updateWindowSizeClass(sizeClass)
   }
 
   /** Updates the chat-specific state for contextual UI. */
@@ -444,52 +294,66 @@ constructor(
     _chatState.value = chatState
   }
 
-  private fun parseUuid(raw: String): UUID? = runCatching { UUID.fromString(raw) }.getOrNull()
+  private fun buildModeCards(activeMode: ModeId, isOnline: Boolean): List<ModeCard> =
+    MODE_CARD_DEFINITIONS.filter { !it.requiresOnline || isOnline }
+      .map { definition ->
+        ModeCard(
+          id = definition.id,
+          title = definition.title,
+          subtitle = definition.subtitle,
+          icon = definition.icon,
+          primaryAction =
+            CommandAction(
+              id = definition.actionId,
+              title = definition.actionTitle,
+              category = definition.actionCategory,
+            ),
+          enabled = true,
+        )
+      }
 
-  private fun coerceInitialActiveMode(snapshot: UIStateSnapshot): UIStateSnapshot {
-    // For ShellViewModel, we don't need to coerce the initial mode
-    // as navigation state comes from focused repositories
-    return snapshot
-  }
-
-  private fun defaultSnapshot(userId: String): UIStateSnapshot {
-    return UIStateSnapshot(
-      userId = userId,
-      expandedPanels = emptyList(),
-      recentActions = emptyList(),
-      isSidebarCollapsed = false,
-    )
-  }
-
-  private fun buildShellLayoutState(inputs: ShellLayoutInputs): ShellLayoutState {
-    val window = inputs.window
-    val snapshot = inputs.snapshot
-    val connectivityStatus = inputs.connectivityStatus
-    val undo = inputs.undo
-    val jobs = inputs.jobs
-    val activity = inputs.activity
-    return ShellLayoutState(
-      windowSizeClass = window,
-      isLeftDrawerOpen = snapshot.isLeftDrawerOpen,
-      isRightDrawerOpen = snapshot.isRightDrawerOpen,
-      activeRightPanel = snapshot.activeRightPanel.toRightPanel(),
-      activeMode = snapshot.activeModeRoute.toModeIdOrDefault(),
-      showCommandPalette = snapshot.isCommandPaletteVisible,
-      connectivity = connectivityStatus,
-      pendingUndoAction = undo,
-      progressJobs = jobs,
-      recentActivity = activity,
-    )
-  }
-
-  private fun String?.toRightPanel(): RightPanel? {
-    val value = this ?: return null
-    return RightPanel.entries.firstOrNull { panel -> panel.name.equals(value, ignoreCase = true) }
-  }
-
-  private companion object {
-    private const val JOB_QUEUE_PREFIX = "queue-"
-  }
+  private fun buildQuickActions(activeMode: ModeId): List<CommandAction> =
+    when (activeMode) {
+      ModeId.CHAT ->
+        listOf(
+          CommandAction(id = "new_chat", title = "New Chat", category = CommandCategory.MODES),
+          CommandAction(id = "clear_chat", title = "Clear Chat", category = CommandCategory.MODES),
+        )
+      ModeId.IMAGE ->
+        listOf(
+          CommandAction(
+            id = "generate_image",
+            title = "Generate",
+            category = CommandCategory.MODES,
+          ),
+          CommandAction(id = "edit_image", title = "Edit", category = CommandCategory.MODES),
+        )
+      ModeId.AUDIO ->
+        listOf(
+          CommandAction(id = "record_audio", title = "Record", category = CommandCategory.MODES),
+          CommandAction(
+            id = "transcribe_audio",
+            title = "Transcribe",
+            category = CommandCategory.MODES,
+          ),
+        )
+      ModeId.CODE ->
+        listOf(
+          CommandAction(id = "generate_code", title = "Generate", category = CommandCategory.MODES),
+          CommandAction(id = "analyze_code", title = "Analyze", category = CommandCategory.MODES),
+        )
+      ModeId.HISTORY ->
+        listOf(
+          CommandAction(id = "view_history", title = "View All", category = CommandCategory.MODES),
+          CommandAction(id = "search_history", title = "Search", category = CommandCategory.MODES),
+        )
+      ModeId.SETTINGS ->
+        listOf(
+          CommandAction(id = "open_settings", title = "Open", category = CommandCategory.SETTINGS)
+        )
+      else ->
+        listOf(CommandAction(id = "new_chat", title = "New Chat", category = CommandCategory.MODES))
+    }
 }
 
 /** Aggregated UI state exposed by [ShellViewModel]. */

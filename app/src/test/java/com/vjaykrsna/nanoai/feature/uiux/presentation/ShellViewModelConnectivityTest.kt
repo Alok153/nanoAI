@@ -7,6 +7,7 @@ import com.vjaykrsna.nanoai.feature.uiux.domain.NavigationOperationsUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.QueueJobUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.SettingsOperationsUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.UndoActionUseCase
+import com.vjaykrsna.nanoai.feature.uiux.ui.shell.ShellUiEvent
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import io.mockk.every
 import io.mockk.mockk
@@ -38,6 +39,12 @@ class ShellViewModelConnectivityTest {
       val undoActionUseCase = mockk<UndoActionUseCase>(relaxed = true)
       val settingsOperationsUseCase = mockk<SettingsOperationsUseCase>(relaxed = true)
 
+      // Mock sub-ViewModels
+      val navigationViewModel = mockk<NavigationViewModel>(relaxed = true)
+      val connectivityViewModel = mockk<ConnectivityViewModel>(relaxed = true)
+      val progressViewModel = mockk<ProgressViewModel>(relaxed = true)
+      val themeViewModel = mockk<ThemeViewModel>(relaxed = true)
+
       // Set up connectivity operations use case to actually call repository
       every { connectivityOperationsUseCase.updateConnectivity(any()) } answers
         {
@@ -59,10 +66,14 @@ class ShellViewModelConnectivityTest {
           jobOperationsUseCase,
           undoActionUseCase,
           settingsOperationsUseCase,
+          navigationViewModel,
+          connectivityViewModel,
+          progressViewModel,
+          themeViewModel,
           dispatcher,
         )
 
-      viewModel.updateConnectivity(ConnectivityStatus.ONLINE)
+      viewModel.onEvent(ShellUiEvent.ConnectivityChanged(ConnectivityStatus.ONLINE))
       advanceUntilIdle()
 
       val uiState =
