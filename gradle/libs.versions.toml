@@ -1,6 +1,6 @@
 [versions]
-agp = "8.12.0"
-kotlin = "2.2.0"
+agp = "8.13.0"
+kotlin = "2.2.21"
 ksp = "2.2.20-2.0.4"
 coreKtx = "1.17.0"
 junitJupiter = "5.11.3"
@@ -11,7 +11,7 @@ appcompat = "1.7.1"
 material = "1.13.0"
 
 # Compose
-composeBom = "2025.08.00"
+composeBom = "2025.10.01"
 activityCompose = "1.11.0"
 navigationCompose = "2.8.8"
 lifecycleRuntimeCompose = "2.8.6"
@@ -30,7 +30,7 @@ kotlinxSerialization = "1.9.0"
 okhttp = "4.12.0"
 
 # Database
-room = "2.8.2"
+room = "2.7.2"
 
 # Coroutines
 coroutines = "1.10.2"
@@ -46,7 +46,7 @@ securityCrypto = "1.1.0-alpha06"
 datastore = "1.1.1"
 
 # Hilt
-hilt = "2.57"
+hilt = "2.56.2"
 hiltNavigationCompose = "1.2.0"
 hiltWork = "1.2.0"
 
