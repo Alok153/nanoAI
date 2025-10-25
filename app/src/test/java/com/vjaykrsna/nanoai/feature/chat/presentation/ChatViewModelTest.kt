@@ -5,8 +5,6 @@ package com.vjaykrsna.nanoai.feature.chat.presentation
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
-import com.vjaykrsna.nanoai.core.domain.usecase.GetDefaultPersonaUseCase
-import com.vjaykrsna.nanoai.core.domain.usecase.ObservePersonasUseCase
 import com.vjaykrsna.nanoai.core.model.PersonaSwitchAction
 import com.vjaykrsna.nanoai.feature.chat.domain.ConversationUseCase
 import com.vjaykrsna.nanoai.feature.chat.domain.SendPromptUseCase
@@ -18,7 +16,6 @@ import com.vjaykrsna.nanoai.testing.FakePersonaRepository
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.mockk
 import java.util.UUID
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -40,8 +37,6 @@ class ChatViewModelTest {
   private lateinit var conversationUseCase: ConversationUseCase
   private lateinit var conversationRepository: FakeConversationRepository
   private lateinit var personaRepository: FakePersonaRepository
-  private lateinit var observePersonasUseCase: ObservePersonasUseCase
-  private lateinit var getDefaultPersonaUseCase: GetDefaultPersonaUseCase
   private lateinit var modelCatalogUseCase: ModelCatalogUseCase
   private lateinit var sendPromptUseCase: SendPromptUseCase
   private lateinit var switchPersonaUseCase: SwitchPersonaUseCase
@@ -52,8 +47,6 @@ class ChatViewModelTest {
     conversationRepository = FakeConversationRepository()
     conversationUseCase = ConversationUseCase(conversationRepository)
     personaRepository = FakePersonaRepository()
-    observePersonasUseCase = mockk(relaxed = true)
-    getDefaultPersonaUseCase = mockk(relaxed = true)
     modelCatalogUseCase = mockk(relaxed = true)
     sendPromptUseCase = mockk(relaxed = true)
     switchPersonaUseCase = mockk(relaxed = true)
@@ -62,16 +55,13 @@ class ChatViewModelTest {
     coEvery { sendPromptUseCase(any(), any(), any()) } returns NanoAIResult.success(Unit)
     coEvery { switchPersonaUseCase(any(), any(), any()) } returns
       NanoAIResult.success(UUID.randomUUID())
-    every { observePersonasUseCase() } returns personaRepository.observeAllPersonas()
-    coEvery { getDefaultPersonaUseCase.invoke() } returns DomainTestBuilders.buildPersona()
 
     viewModel =
       ChatViewModel(
         sendPromptUseCase,
         switchPersonaUseCase,
         conversationUseCase,
-        observePersonasUseCase,
-        getDefaultPersonaUseCase,
+        personaRepository,
         modelCatalogUseCase,
         dispatcher = mainDispatcherExtension.dispatcher,
       )

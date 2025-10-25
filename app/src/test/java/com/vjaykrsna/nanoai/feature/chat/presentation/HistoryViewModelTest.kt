@@ -4,13 +4,9 @@ package com.vjaykrsna.nanoai.feature.chat.presentation
 
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
-import com.vjaykrsna.nanoai.core.common.NanoAIResult
-import com.vjaykrsna.nanoai.core.domain.usecase.GetConversationHistoryUseCase
-import com.vjaykrsna.nanoai.feature.chat.domain.ConversationUseCase
 import com.vjaykrsna.nanoai.testing.DomainTestBuilders
+import com.vjaykrsna.nanoai.testing.FakeConversationRepository
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
-import io.mockk.coEvery
-import io.mockk.mockk
 import java.util.UUID
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
@@ -26,27 +22,20 @@ class HistoryViewModelTest {
 
   @JvmField @RegisterExtension val mainDispatcherExtension = MainDispatcherExtension()
 
-  private lateinit var getConversationHistoryUseCase: GetConversationHistoryUseCase
-  private lateinit var conversationUseCase: ConversationUseCase
+  private lateinit var conversationRepository: FakeConversationRepository
   private lateinit var viewModel: HistoryViewModel
 
   @BeforeEach
   fun setup() {
-    getConversationHistoryUseCase = mockk(relaxed = true)
-    conversationUseCase = mockk(relaxed = true)
-    viewModel =
-      HistoryViewModel(
-        getConversationHistoryUseCase,
-        conversationUseCase,
-        mainDispatcherExtension.dispatcher,
-      )
+    conversationRepository = FakeConversationRepository()
+    viewModel = HistoryViewModel(conversationRepository, mainDispatcherExtension.dispatcher)
   }
 
   @Test
   fun `init loads threads automatically`() = runTest {
     val thread =
       DomainTestBuilders.buildChatThread(threadId = UUID.randomUUID(), title = "Test Thread")
-    coEvery { getConversationHistoryUseCase() } returns NanoAIResult.success(listOf(thread))
+    conversationRepository.addThread(thread)
 
     // Wait for init to complete
     viewModel.threads.test {
@@ -71,7 +60,7 @@ class HistoryViewModelTest {
   fun `loadThreads updates threads on success`() = runTest {
     val thread =
       DomainTestBuilders.buildChatThread(threadId = UUID.randomUUID(), title = "Loaded Thread")
-    coEvery { getConversationHistoryUseCase() } returns NanoAIResult.success(listOf(thread))
+    conversationRepository.addThread(thread)
 
     viewModel.loadThreads()
 
@@ -84,8 +73,7 @@ class HistoryViewModelTest {
 
   @Test
   fun `loadThreads emits LoadFailed error on failure`() = runTest {
-    coEvery { getConversationHistoryUseCase() } returns
-      NanoAIResult.recoverable(message = "Failed to load")
+    conversationRepository.shouldFailOnGetAllThreads = true
 
     viewModel.errors.test {
       viewModel.loadThreads()
@@ -99,14 +87,13 @@ class HistoryViewModelTest {
   @Test
   fun `archiveThread reloads threads on success`() = runTest {
     val threadId = UUID.randomUUID()
-    val archivedThread =
+    val thread =
       DomainTestBuilders.buildChatThread(
         threadId = threadId,
         title = "To Archive",
-        isArchived = true,
+        isArchived = false,
       )
-    coEvery { getConversationHistoryUseCase() } returns NanoAIResult.success(listOf(archivedThread))
-    coEvery { conversationUseCase.archiveThread(threadId) } returns NanoAIResult.success(Unit)
+    conversationRepository.addThread(thread)
 
     viewModel.archiveThread(threadId)
 
@@ -122,8 +109,7 @@ class HistoryViewModelTest {
   @Test
   fun `archiveThread emits ArchiveFailed error on failure`() = runTest {
     val threadId = UUID.randomUUID()
-    coEvery { conversationUseCase.archiveThread(threadId) } returns
-      NanoAIResult.recoverable(message = "Failed")
+    conversationRepository.shouldFailOnArchiveThread = true
 
     viewModel.errors.test {
       viewModel.archiveThread(threadId)
@@ -137,8 +123,13 @@ class HistoryViewModelTest {
   @Test
   fun `deleteThread reloads threads on success`() = runTest {
     val threadId = UUID.randomUUID()
-    coEvery { getConversationHistoryUseCase() } returns NanoAIResult.success(emptyList())
-    coEvery { conversationUseCase.deleteThread(threadId) } returns NanoAIResult.success(Unit)
+    val thread =
+      DomainTestBuilders.buildChatThread(
+        threadId = threadId,
+        title = "To Delete",
+        isArchived = false,
+      )
+    conversationRepository.addThread(thread)
 
     viewModel.deleteThread(threadId)
 
@@ -151,8 +142,7 @@ class HistoryViewModelTest {
   @Test
   fun `deleteThread emits DeleteFailed error on failure`() = runTest {
     val threadId = UUID.randomUUID()
-    coEvery { conversationUseCase.deleteThread(threadId) } returns
-      NanoAIResult.recoverable(message = "Failed")
+    conversationRepository.shouldFailOnDeleteThread = true
 
     viewModel.errors.test {
       viewModel.deleteThread(threadId)
