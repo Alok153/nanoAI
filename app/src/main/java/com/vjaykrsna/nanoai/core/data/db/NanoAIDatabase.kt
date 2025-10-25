@@ -25,16 +25,16 @@ import com.vjaykrsna.nanoai.core.maintenance.db.RepoMaintenanceTaskDao
 import com.vjaykrsna.nanoai.core.maintenance.db.RepoMaintenanceTaskEntity
 import com.vjaykrsna.nanoai.feature.image.data.db.GeneratedImageDao
 import com.vjaykrsna.nanoai.feature.image.data.db.GeneratedImageEntity
+import com.vjaykrsna.nanoai.feature.library.data.catalog.DownloadManifestDao
+import com.vjaykrsna.nanoai.feature.library.data.catalog.DownloadManifestEntity
+import com.vjaykrsna.nanoai.feature.library.data.catalog.ModelPackageEntity
+import com.vjaykrsna.nanoai.feature.library.data.catalog.ModelPackageReadDao
+import com.vjaykrsna.nanoai.feature.library.data.catalog.ModelPackageRelationsDao
+import com.vjaykrsna.nanoai.feature.library.data.catalog.ModelPackageWriteDao
 import com.vjaykrsna.nanoai.feature.library.data.daos.DownloadTaskDao
 import com.vjaykrsna.nanoai.feature.library.data.entities.DownloadTaskEntity
 import com.vjaykrsna.nanoai.feature.library.data.huggingface.dao.HuggingFaceModelCacheDao
 import com.vjaykrsna.nanoai.feature.library.data.huggingface.entities.HuggingFaceModelCacheEntity
-import com.vjaykrsna.nanoai.model.catalog.DownloadManifestDao
-import com.vjaykrsna.nanoai.model.catalog.DownloadManifestEntity
-import com.vjaykrsna.nanoai.model.catalog.ModelPackageEntity
-import com.vjaykrsna.nanoai.model.catalog.ModelPackageReadDao
-import com.vjaykrsna.nanoai.model.catalog.ModelPackageRelationsDao
-import com.vjaykrsna.nanoai.model.catalog.ModelPackageWriteDao
 
 /**
  * Room database for nanoAI application.

@@ -30,10 +30,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.vjaykrsna.nanoai.R
-import com.vjaykrsna.nanoai.feature.uiux.state.JobStatus
-import com.vjaykrsna.nanoai.feature.uiux.state.JobType
-import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
-import com.vjaykrsna.nanoai.feature.uiux.state.label
+import com.vjaykrsna.nanoai.feature.uiux.presentation.JobStatus
+import com.vjaykrsna.nanoai.feature.uiux.presentation.JobType
+import com.vjaykrsna.nanoai.feature.uiux.presentation.ProgressJob
+import com.vjaykrsna.nanoai.feature.uiux.presentation.label
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoElevation
 
 private val PROGRESS_PANEL_HORIZONTAL_PADDING = 20.dp

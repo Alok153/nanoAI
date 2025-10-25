@@ -13,8 +13,8 @@ plugins {
 detekt {
     buildUponDefaultConfig = true
     allRules = false
-    config.setFrom("${rootProject.projectDir}/config/detekt/detekt.yml")
-    baseline = file("${rootProject.projectDir}/config/detekt/baseline.xml")
+    config.setFrom("${rootProject.projectDir}/config/quality/detekt/detekt.yml")
+    baseline = file("${rootProject.projectDir}/config/quality/detekt/baseline.xml")
     source.setFrom(
         "app/src/main/java",
         "app/src/test/java",

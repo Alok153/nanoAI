@@ -8,14 +8,14 @@ import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
 import com.vjaykrsna.nanoai.feature.library.domain.DownloadModelUseCase
+import com.vjaykrsna.nanoai.feature.library.domain.DownloadStatus
 import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceModelCompatibilityChecker
 import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceToModelPackageConverter
+import com.vjaykrsna.nanoai.feature.library.domain.InstallState
 import com.vjaykrsna.nanoai.feature.library.domain.ListHuggingFaceModelsUseCase
 import com.vjaykrsna.nanoai.feature.library.domain.ModelCatalogUseCase
+import com.vjaykrsna.nanoai.feature.library.domain.ProviderType
 import com.vjaykrsna.nanoai.feature.library.domain.RefreshModelCatalogUseCase
-import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
-import com.vjaykrsna.nanoai.feature.library.model.InstallState
-import com.vjaykrsna.nanoai.feature.library.model.ProviderType
 import com.vjaykrsna.nanoai.feature.library.presentation.model.HuggingFaceSortOption
 import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryDownloadItem
 import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryError
@@ -359,7 +359,7 @@ constructor(
   }
 
   fun downloadHuggingFaceModel(
-    hfModel: com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceModelSummary
+    hfModel: com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceModelSummary
   ) {
     huggingFaceLibraryViewModel.requestDownload(hfModel)
   }
@@ -421,7 +421,7 @@ constructor(
 
   @Suppress("ReturnCount")
   private suspend fun handleHuggingFaceDownload(
-    hfModel: com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceModelSummary
+    hfModel: com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceModelSummary
   ) {
     try {
       // Convert HF model to ModelPackage

@@ -11,8 +11,8 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * Contract guard rails for the import/export backup format defined in
- * specs/002-disclaimer-and-fixes/contracts/import-export-openapi.yaml.
+ * Contract guard rails for the import/export backup format defined in test resources
+ * contracts/import-export-openapi.yaml.
  *
  * These tests purposefully assert on the documented schema details before the implementation has
  * been aligned. They are expected to fail until the export bundle and sample payload include the
@@ -25,13 +25,15 @@ class ImportExportContractTest {
 
   @Before
   fun setup() {
-    val projectRoot = File(requireNotNull(System.getProperty("user.dir"))).parentFile
-    contractsDir = File(projectRoot, "specs/002-disclaimer-and-fixes/contracts")
-    assertThat(contractsDir.exists()).isTrue()
-
-    val sampleFile = File(contractsDir, "sample-backup.json")
+    // Contract files are in test resources
+    val classLoader = javaClass.classLoader
+    assertThat(classLoader).isNotNull()
+    val sampleUrl = classLoader!!.getResource("contracts/sample-backup.json")
+    assertThat(sampleUrl).isNotNull()
+    val sampleFile = File(sampleUrl!!.file)
     assertThat(sampleFile.exists()).isTrue()
     sampleBackup = json.parseToJsonElement(sampleFile.readText()).jsonObject
+    contractsDir = sampleFile.parentFile
   }
 
   @Test

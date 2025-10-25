@@ -1,11 +1,11 @@
 package com.vjaykrsna.nanoai.core.data.repository
 
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
-import com.vjaykrsna.nanoai.feature.uiux.state.CommandPaletteState
-import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
-import com.vjaykrsna.nanoai.feature.uiux.state.RecentActivityItem
-import com.vjaykrsna.nanoai.feature.uiux.state.RightPanel
-import com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload
+import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandPaletteState
+import com.vjaykrsna.nanoai.feature.uiux.presentation.ModeId
+import com.vjaykrsna.nanoai.feature.uiux.presentation.RecentActivityItem
+import com.vjaykrsna.nanoai.feature.uiux.presentation.RightPanel
+import com.vjaykrsna.nanoai.feature.uiux.presentation.UndoPayload
 import kotlinx.coroutines.flow.Flow
 
 interface NavigationRepository : BaseRepository {
@@ -27,7 +27,9 @@ interface NavigationRepository : BaseRepository {
 
   suspend fun toggleRightDrawer(panel: RightPanel)
 
-  suspend fun showCommandPalette(source: com.vjaykrsna.nanoai.feature.uiux.state.PaletteSource)
+  suspend fun showCommandPalette(
+    source: com.vjaykrsna.nanoai.feature.uiux.presentation.PaletteSource
+  )
 
   suspend fun hideCommandPalette()
 

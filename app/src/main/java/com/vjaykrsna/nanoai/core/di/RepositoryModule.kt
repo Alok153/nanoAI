@@ -13,8 +13,12 @@ import com.vjaykrsna.nanoai.core.data.repository.impl.InferencePreferenceReposit
 import com.vjaykrsna.nanoai.core.data.repository.impl.PersonaRepositoryImpl
 import com.vjaykrsna.nanoai.core.data.repository.impl.PersonaSwitchLogRepositoryImpl
 import com.vjaykrsna.nanoai.core.data.repository.impl.UserProfileRepositoryImpl
+import com.vjaykrsna.nanoai.feature.audio.data.AudioRepository
+import com.vjaykrsna.nanoai.feature.audio.data.AudioRepositoryImpl
 import com.vjaykrsna.nanoai.feature.library.data.DownloadManager
 import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
+import com.vjaykrsna.nanoai.feature.library.data.catalog.ModelManifestRepository
+import com.vjaykrsna.nanoai.feature.library.data.catalog.ModelManifestRepositoryImpl
 import com.vjaykrsna.nanoai.feature.library.data.export.ExportServiceImpl
 import com.vjaykrsna.nanoai.feature.library.data.huggingface.HuggingFaceCatalogRepository
 import com.vjaykrsna.nanoai.feature.library.data.huggingface.HuggingFaceCatalogRepositoryImpl
@@ -28,8 +32,6 @@ import com.vjaykrsna.nanoai.feature.uiux.data.NavigationRepositoryImpl
 import com.vjaykrsna.nanoai.feature.uiux.data.ProgressRepositoryImpl
 import com.vjaykrsna.nanoai.feature.uiux.data.ThemeRepositoryImpl
 import com.vjaykrsna.nanoai.feature.uiux.domain.ProgressCenterCoordinator
-import com.vjaykrsna.nanoai.model.catalog.ModelManifestRepository
-import com.vjaykrsna.nanoai.model.catalog.ModelManifestRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -122,6 +124,8 @@ abstract class RepositoryModule {
   abstract fun bindProgressRepository(
     impl: ProgressRepositoryImpl
   ): com.vjaykrsna.nanoai.core.data.repository.ProgressRepository
+
+  @Binds @Singleton abstract fun bindAudioRepository(impl: AudioRepositoryImpl): AudioRepository
 
   companion object {
     @Provides

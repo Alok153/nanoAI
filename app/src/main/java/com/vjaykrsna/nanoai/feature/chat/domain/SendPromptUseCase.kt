@@ -7,15 +7,18 @@ import com.vjaykrsna.nanoai.core.data.repository.InferencePreferenceRepository
 import com.vjaykrsna.nanoai.core.data.repository.PersonaRepository
 import com.vjaykrsna.nanoai.core.domain.model.Message
 import com.vjaykrsna.nanoai.core.model.InferenceMode
+import com.vjaykrsna.nanoai.core.model.MessageRole
 import com.vjaykrsna.nanoai.core.model.MessageSource
-import com.vjaykrsna.nanoai.core.model.Role
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.Clock
 
-private data class GenerationOptionsData(val options: GenerationOptions, val preferLocal: Boolean)
+private data class InferenceConfigurationData(
+  val options: InferenceConfiguration,
+  val preferLocal: Boolean,
+)
 
 /** Use case for sending prompts and generating AI responses. */
 @Singleton
@@ -37,7 +40,7 @@ constructor(
     val availability = checkInferenceAvailability(threadId, personaId)
     if (availability is NanoAIResult.RecoverableError) return availability
 
-    val options = prepareGenerationOptions(personaId)
+    val options = prepareInferenceConfiguration(personaId)
     val inferenceResult = performInference(prompt, personaId, options, image, audio)
 
     return handleInferenceResult(inferenceResult, threadId, personaId, options.preferLocal)
@@ -60,17 +63,17 @@ constructor(
     }
   }
 
-  private suspend fun prepareGenerationOptions(personaId: UUID): GenerationOptionsData {
+  private suspend fun prepareInferenceConfiguration(personaId: UUID): InferenceConfigurationData {
     val persona = runCatching { personaRepository.getPersonaById(personaId).first() }.getOrNull()
-    val generationOptions =
+    val inferenceConfiguration =
       persona?.let {
-        GenerationOptions(
+        InferenceConfiguration(
           systemPrompt = it.systemPrompt,
           temperature = it.temperature,
           topP = it.topP,
           localModelPreference = it.defaultModelPreference,
         )
-      } ?: GenerationOptions()
+      } ?: InferenceConfiguration()
 
     val userPreference = inferencePreferenceRepository.observeInferencePreference().first()
     val isOnline = inferenceOrchestrator.isOnline()
@@ -78,13 +81,13 @@ constructor(
     val preferLocal =
       shouldPreferLocal(hasLocalModel, isOnline, userPreference.mode == InferenceMode.LOCAL_FIRST)
 
-    return GenerationOptionsData(generationOptions, preferLocal)
+    return InferenceConfigurationData(inferenceConfiguration, preferLocal)
   }
 
   private suspend fun performInference(
     prompt: String,
     personaId: UUID,
-    options: GenerationOptionsData,
+    options: InferenceConfigurationData,
     image: Bitmap? = null,
     audio: ByteArray? = null,
   ): InferenceResult =
@@ -115,7 +118,7 @@ constructor(
       Message(
         messageId = UUID.randomUUID(),
         threadId = threadId,
-        role = Role.ASSISTANT,
+        role = MessageRole.ASSISTANT,
         text = result.text,
         source = result.source,
         latencyMs = result.latencyMs,
@@ -135,7 +138,7 @@ constructor(
       Message(
         messageId = UUID.randomUUID(),
         threadId = threadId,
-        role = Role.ASSISTANT,
+        role = MessageRole.ASSISTANT,
         text = null,
         source = if (preferLocal) MessageSource.LOCAL_MODEL else MessageSource.CLOUD_API,
         latencyMs = null,

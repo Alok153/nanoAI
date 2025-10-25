@@ -1,7 +1,7 @@
 package com.vjaykrsna.nanoai.core.data.repository
 
-import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityBannerState
-import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityStatus
+import com.vjaykrsna.nanoai.feature.uiux.presentation.ConnectivityBannerState
+import com.vjaykrsna.nanoai.feature.uiux.presentation.ConnectivityStatus
 import kotlinx.coroutines.flow.Flow
 
 interface ConnectivityRepository : BaseRepository {

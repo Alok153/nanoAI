@@ -3,15 +3,15 @@ package com.vjaykrsna.nanoai.feature.library.domain
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.device.DeviceIdentityProvider
 import com.vjaykrsna.nanoai.core.network.ConnectivityStatusProvider
-import com.vjaykrsna.nanoai.model.catalog.*
-import com.vjaykrsna.nanoai.model.catalog.network.ModelCatalogService
-import com.vjaykrsna.nanoai.model.catalog.network.dto.ErrorEnvelopeDto
-import com.vjaykrsna.nanoai.model.catalog.network.dto.ManifestVerificationRequestDto
-import com.vjaykrsna.nanoai.model.catalog.network.dto.ManifestVerificationResponseStatusDto
-import com.vjaykrsna.nanoai.model.catalog.network.dto.ManifestVerificationStatusDto
-import com.vjaykrsna.nanoai.model.catalog.network.dto.ModelManifestDto
-import com.vjaykrsna.nanoai.model.huggingface.HuggingFaceManifestFetcher
-import com.vjaykrsna.nanoai.model.huggingface.HuggingFaceManifestRequest
+import com.vjaykrsna.nanoai.feature.library.data.catalog.*
+import com.vjaykrsna.nanoai.feature.library.data.catalog.network.ModelCatalogService
+import com.vjaykrsna.nanoai.feature.library.data.catalog.network.dto.ErrorEnvelopeDto
+import com.vjaykrsna.nanoai.feature.library.data.catalog.network.dto.ManifestVerificationRequestDto
+import com.vjaykrsna.nanoai.feature.library.data.catalog.network.dto.ManifestVerificationResponseStatusDto
+import com.vjaykrsna.nanoai.feature.library.data.catalog.network.dto.ManifestVerificationStatusDto
+import com.vjaykrsna.nanoai.feature.library.data.catalog.network.dto.ModelManifestDto
+import com.vjaykrsna.nanoai.feature.library.data.huggingface.HuggingFaceManifestFetcher
+import com.vjaykrsna.nanoai.feature.library.data.huggingface.HuggingFaceManifestRequest
 import com.vjaykrsna.nanoai.telemetry.TelemetryReporter
 import java.net.HttpURLConnection.HTTP_BAD_REQUEST
 import java.util.UUID
@@ -100,7 +100,7 @@ constructor(
 
   private suspend fun cacheManifestAndMetadata(manifest: DownloadManifest) {
     localDataSource.cacheManifest(
-      com.vjaykrsna.nanoai.model.catalog.DownloadManifestEntity(
+      com.vjaykrsna.nanoai.feature.library.data.catalog.DownloadManifestEntity(
         modelId = manifest.modelId,
         version = manifest.version,
         checksumSha256 = manifest.checksumSha256,
@@ -308,7 +308,7 @@ constructor(
       .fold(
         onSuccess = { manifest ->
           localDataSource.cacheManifest(
-            com.vjaykrsna.nanoai.model.catalog.DownloadManifestEntity(
+            com.vjaykrsna.nanoai.feature.library.data.catalog.DownloadManifestEntity(
               modelId = manifest.modelId,
               version = manifest.version,
               checksumSha256 = manifest.checksumSha256,

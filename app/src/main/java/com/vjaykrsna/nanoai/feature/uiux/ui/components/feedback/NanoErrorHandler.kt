@@ -26,7 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import com.vjaykrsna.nanoai.feature.uiux.state.NanoError
+import com.vjaykrsna.nanoai.feature.uiux.presentation.NanoError
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.ConnectivityBanner
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoElevation
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoRadii

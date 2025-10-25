@@ -11,12 +11,13 @@ import com.vjaykrsna.nanoai.core.data.repository.PersonaRepository
 import com.vjaykrsna.nanoai.core.domain.model.ChatThread
 import com.vjaykrsna.nanoai.core.domain.model.Message
 import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
+import com.vjaykrsna.nanoai.core.model.MessageRole
 import com.vjaykrsna.nanoai.core.model.PersonaSwitchAction
 import com.vjaykrsna.nanoai.feature.chat.domain.SendPromptUseCase
 import com.vjaykrsna.nanoai.feature.chat.domain.SwitchPersonaUseCase
 import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
-import com.vjaykrsna.nanoai.feature.library.domain.model.Model
-import com.vjaykrsna.nanoai.feature.library.domain.model.toModel
+import com.vjaykrsna.nanoai.feature.library.domain.Model
+import com.vjaykrsna.nanoai.feature.library.domain.toModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.UUID
 import javax.inject.Inject
@@ -104,7 +105,7 @@ constructor(
     _showModelPicker.value = false
   }
 
-  fun selectModel(model: com.vjaykrsna.nanoai.feature.library.domain.model.Model) {
+  fun selectModel(model: Model) {
     val thread = currentThread.value
     if (thread == null) {
       // TODO: Handle the case where there is no active thread
@@ -144,7 +145,7 @@ constructor(
             Message(
               messageId = UUID.randomUUID(),
               threadId = threadId,
-              role = com.vjaykrsna.nanoai.core.model.Role.USER,
+              role = MessageRole.USER,
               text = text,
               source = com.vjaykrsna.nanoai.core.model.MessageSource.LOCAL_MODEL,
               latencyMs = null,

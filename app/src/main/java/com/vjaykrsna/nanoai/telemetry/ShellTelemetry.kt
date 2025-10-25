@@ -1,14 +1,14 @@
 package com.vjaykrsna.nanoai.telemetry
 
-import com.vjaykrsna.nanoai.feature.uiux.state.CommandAction
-import com.vjaykrsna.nanoai.feature.uiux.state.CommandDestination
-import com.vjaykrsna.nanoai.feature.uiux.state.CommandInvocationSource
-import com.vjaykrsna.nanoai.feature.uiux.state.DrawerSide
-import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
-import com.vjaykrsna.nanoai.feature.uiux.state.PaletteDismissReason
-import com.vjaykrsna.nanoai.feature.uiux.state.PaletteSource
-import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
-import com.vjaykrsna.nanoai.feature.uiux.state.RightPanel
+import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandAction
+import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandDestination
+import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandInvocationSource
+import com.vjaykrsna.nanoai.feature.uiux.presentation.DrawerSide
+import com.vjaykrsna.nanoai.feature.uiux.presentation.ModeId
+import com.vjaykrsna.nanoai.feature.uiux.presentation.PaletteDismissReason
+import com.vjaykrsna.nanoai.feature.uiux.presentation.PaletteSource
+import com.vjaykrsna.nanoai.feature.uiux.presentation.ProgressJob
+import com.vjaykrsna.nanoai.feature.uiux.presentation.RightPanel
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton

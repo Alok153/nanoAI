@@ -26,8 +26,8 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityBannerState
-import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityStatus
+import com.vjaykrsna.nanoai.feature.uiux.presentation.ConnectivityBannerState
+import com.vjaykrsna.nanoai.feature.uiux.presentation.ConnectivityStatus
 
 /** Elevated banner communicating connectivity state and queued actions. */
 @Composable

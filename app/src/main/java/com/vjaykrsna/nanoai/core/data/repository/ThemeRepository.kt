@@ -2,7 +2,7 @@ package com.vjaykrsna.nanoai.core.data.repository
 
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
-import com.vjaykrsna.nanoai.feature.uiux.state.UiPreferenceSnapshot
+import com.vjaykrsna.nanoai.feature.uiux.presentation.UiPreferenceSnapshot
 import kotlinx.coroutines.flow.Flow
 
 interface ThemeRepository : BaseRepository {

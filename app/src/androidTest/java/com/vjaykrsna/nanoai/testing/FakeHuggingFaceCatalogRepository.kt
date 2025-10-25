@@ -1,8 +1,9 @@
 package com.vjaykrsna.nanoai.testing
 
+import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.feature.library.data.huggingface.HuggingFaceCatalogRepository
-import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceCatalogQuery
-import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceModelSummary
+import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceCatalogQuery
+import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceModelSummary
 
 /** Fake implementation of [HuggingFaceCatalogRepository] for testing. */
 class FakeHuggingFaceCatalogRepository : HuggingFaceCatalogRepository {
@@ -24,10 +25,13 @@ class FakeHuggingFaceCatalogRepository : HuggingFaceCatalogRepository {
 
   override suspend fun listModels(
     query: HuggingFaceCatalogQuery
-  ): Result<List<HuggingFaceModelSummary>> {
+  ): NanoAIResult<List<HuggingFaceModelSummary>> {
     if (shouldFail) {
-      return Result.failure(failureException)
+      return NanoAIResult.recoverable(
+        failureException.message ?: "Test failure",
+        cause = failureException,
+      )
     }
-    return Result.success(models)
+    return NanoAIResult.success(models)
   }
 }
