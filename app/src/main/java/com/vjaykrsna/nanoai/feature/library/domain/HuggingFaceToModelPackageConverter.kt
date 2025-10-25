@@ -1,9 +1,7 @@
 package com.vjaykrsna.nanoai.feature.library.domain
 
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
-import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceModelSummary
-import com.vjaykrsna.nanoai.feature.library.model.ProviderType
-import com.vjaykrsna.nanoai.model.catalog.DeliveryType
+import com.vjaykrsna.nanoai.feature.library.data.catalog.DeliveryType
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.datetime.Clock
@@ -38,7 +36,7 @@ constructor(
       minAppVersion = 1, // Assume compatible with current version
       sizeBytes = hfModel.totalSizeBytes ?: 0L,
       capabilities = determineCapabilities(hfModel),
-      installState = com.vjaykrsna.nanoai.feature.library.model.InstallState.NOT_INSTALLED,
+      installState = InstallState.NOT_INSTALLED,
       manifestUrl = buildManifestUrl(hfModel, providerType),
       createdAt = hfModel.createdAt ?: clock.now(),
       updatedAt = hfModel.lastModified ?: clock.now(),

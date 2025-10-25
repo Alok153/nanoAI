@@ -11,25 +11,41 @@ interface HuggingFaceTokenProvider {
   fun accessToken(): String?
 }
 
+/** Repository interface for Hugging Face credential management. */
+interface HuggingFaceCredentialRepository : HuggingFaceTokenProvider {
+  fun credential(): SecretCredential?
+
+  fun saveAccessToken(token: String, rotatesAfter: Instant?, metadata: Map<String, String>)
+
+  fun clearAccessToken()
+
+  fun hasAccessToken(): Boolean
+
+  companion object {
+    const val PROVIDER_ID = "huggingface"
+  }
+}
+
 /** Persistent storage for Hugging Face credentials backed by [EncryptedSecretStore]. */
 @Singleton
-class HuggingFaceCredentialRepository
+class HuggingFaceCredentialRepositoryImpl
 @Inject
-constructor(private val secretStore: EncryptedSecretStore) : HuggingFaceTokenProvider {
+constructor(private val secretStore: EncryptedSecretStore) : HuggingFaceCredentialRepository {
 
   override fun accessToken(): String? = credential()?.encryptedValue?.takeIf { it.isNotBlank() }
 
-  fun credential(): SecretCredential? = secretStore.getCredential(PROVIDER_ID)
+  override fun credential(): SecretCredential? =
+    secretStore.getCredential(HuggingFaceCredentialRepository.PROVIDER_ID)
 
-  fun saveAccessToken(
+  override fun saveAccessToken(
     token: String,
-    rotatesAfter: Instant? = null,
-    metadata: Map<String, String> = emptyMap(),
+    rotatesAfter: Instant?,
+    metadata: Map<String, String>,
   ) {
     val mergedMetadata = DEFAULT_METADATA + metadata
 
     secretStore.saveCredential(
-      providerId = PROVIDER_ID,
+      providerId = HuggingFaceCredentialRepository.PROVIDER_ID,
       encryptedValue = token,
       scope = CredentialScope.TEXT_INFERENCE,
       rotatesAfter = rotatesAfter,
@@ -37,15 +53,13 @@ constructor(private val secretStore: EncryptedSecretStore) : HuggingFaceTokenPro
     )
   }
 
-  fun clearAccessToken() {
-    secretStore.deleteCredential(PROVIDER_ID)
+  override fun clearAccessToken() {
+    secretStore.deleteCredential(HuggingFaceCredentialRepository.PROVIDER_ID)
   }
 
-  fun hasAccessToken(): Boolean = !accessToken().isNullOrBlank()
+  override fun hasAccessToken(): Boolean = !accessToken().isNullOrBlank()
 
   companion object {
-    const val PROVIDER_ID = "huggingface"
-
     private val DEFAULT_METADATA = mapOf("issuer" to "huggingface")
   }
 }

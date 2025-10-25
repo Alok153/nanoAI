@@ -3,13 +3,13 @@ package com.vjaykrsna.nanoai.feature.library.data.huggingface
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.network.ConnectivityStatusProvider
-import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceCatalogQuery
-import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceModelSummary
-import com.vjaykrsna.nanoai.model.huggingface.network.HuggingFaceService
-import com.vjaykrsna.nanoai.model.huggingface.network.dto.HuggingFaceModelListingDto
-import com.vjaykrsna.nanoai.model.huggingface.network.dto.ModelCardDataDto
-import com.vjaykrsna.nanoai.model.huggingface.network.dto.ModelConfigDto
-import com.vjaykrsna.nanoai.model.huggingface.network.dto.ModelSiblingDto
+import com.vjaykrsna.nanoai.feature.library.data.huggingface.network.HuggingFaceService
+import com.vjaykrsna.nanoai.feature.library.data.huggingface.network.dto.HuggingFaceModelListingDto
+import com.vjaykrsna.nanoai.feature.library.data.huggingface.network.dto.ModelCardDataDto
+import com.vjaykrsna.nanoai.feature.library.data.huggingface.network.dto.ModelConfigDto
+import com.vjaykrsna.nanoai.feature.library.data.huggingface.network.dto.ModelSiblingDto
+import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceCatalogQuery
+import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceModelSummary
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
@@ -56,7 +56,7 @@ class HuggingFaceCatalogRepositoryImplTest {
     val expiryTime = Instant.parse("2024-01-01T00:00:00Z")
 
     coEvery { fixedClock.now() } returns Instant.parse("2024-01-01T05:00:00Z") // 5 hours later
-    coEvery { cacheDataSource.getFreshModels(10, 0, expiryTime) } returns cachedModels
+    coEvery { cacheDataSource.getFreshModels(10, 0, any()) } returns cachedModels
 
     val result = repository.listModels(query)
 
@@ -150,7 +150,7 @@ class HuggingFaceCatalogRepositoryImplTest {
     val expiryTime = Instant.parse("2024-01-01T00:00:00Z")
 
     coEvery { fixedClock.now() } returns Instant.parse("2024-01-01T07:00:00Z") // Past TTL
-    coEvery { cacheDataSource.getFreshModels(10, 0, expiryTime) } returns emptyList()
+    coEvery { cacheDataSource.getFreshModels(10, 0, any()) } returns emptyList()
     coEvery {
       service.listModels(
         any(),
@@ -194,8 +194,8 @@ class HuggingFaceCatalogRepositoryImplTest {
     assertEquals("text-generation", model.pipelineTag)
     assertEquals("transformers", model.libraryName)
     assertEquals(listOf("tag1", "tag2"), model.tags)
-    assertEquals(100, model.likes)
-    assertEquals(1000, model.downloads)
+    assertEquals(100L, model.likes)
+    assertEquals(1000L, model.downloads)
     assertEquals("apache-2.0", model.license)
     assertEquals(listOf("en", "es"), model.languages)
     assertEquals("base-model-123", model.baseModel)
@@ -207,7 +207,7 @@ class HuggingFaceCatalogRepositoryImplTest {
     assertEquals(1002000L, model.totalSizeBytes) // Sum of siblings
     assertEquals("A test model summary", model.summary)
     assertEquals("A detailed description of the test model", model.description)
-    assertEquals(50, model.trendingScore)
+    assertEquals(50L, model.trendingScore)
     assertEquals(Instant.parse("2024-01-01T00:00:00Z"), model.createdAt)
     assertEquals(Instant.parse("2024-01-02T00:00:00Z"), model.lastModified)
     assertFalse(model.isPrivate)

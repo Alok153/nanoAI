@@ -1,7 +1,8 @@
 package com.vjaykrsna.nanoai.feature.chat.ui
 
+import android.graphics.BitmapFactory
+import android.graphics.ImageDecoder
 import android.net.Uri
-import android.provider.MediaStore
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -48,10 +49,11 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.vjaykrsna.nanoai.core.domain.model.Message
+import com.vjaykrsna.nanoai.core.model.MessageRole
 import com.vjaykrsna.nanoai.feature.chat.presentation.ChatError
 import com.vjaykrsna.nanoai.feature.chat.presentation.ChatViewModel
 import com.vjaykrsna.nanoai.feature.chat.ui.components.ModelPicker
-import com.vjaykrsna.nanoai.feature.uiux.state.NanoError
+import com.vjaykrsna.nanoai.feature.uiux.presentation.NanoError
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.composer.NanoComposerBar
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.feedback.NanoErrorHandler
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoRadii
@@ -82,7 +84,7 @@ fun ChatScreen(
   modifier: Modifier = Modifier,
   viewModel: ChatViewModel = hiltViewModel(),
   onUpdateChatState: ((com.vjaykrsna.nanoai.feature.uiux.presentation.ChatState?) -> Unit)? = null,
-  onNavigate: (com.vjaykrsna.nanoai.feature.uiux.state.ModeId) -> Unit,
+  onNavigate: (com.vjaykrsna.nanoai.feature.uiux.presentation.ModeId) -> Unit,
 ) {
   val messages by viewModel.messages.collectAsState()
   val currentThread by viewModel.currentThread.collectAsState()
@@ -102,8 +104,20 @@ fun ChatScreen(
     rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { uri: Uri?
       ->
       uri?.let {
-        val bitmap = MediaStore.Images.Media.getBitmap(context.contentResolver, it)
-        viewModel.onImageSelected(bitmap)
+        try {
+          val bitmap =
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+              ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, it))
+            } else {
+              context.contentResolver.openInputStream(it)?.use { stream ->
+                BitmapFactory.decodeStream(stream)
+              }
+            }
+          bitmap?.let { viewModel.onImageSelected(it) }
+        } catch (e: Exception) {
+          // Log the error for debugging
+          android.util.Log.e("ChatScreen", "Failed to load image", e)
+        }
       }
     }
 
@@ -209,7 +223,7 @@ fun ChatScreen(
           onModelSelect = { viewModel.selectModel(it) },
           onManageModelsClick = {
             viewModel.dismissModelPicker()
-            onNavigate(com.vjaykrsna.nanoai.feature.uiux.state.ModeId.LIBRARY)
+            onNavigate(com.vjaykrsna.nanoai.feature.uiux.presentation.ModeId.LIBRARY)
           },
           modifier = Modifier.fillMaxWidth(),
         )
@@ -263,7 +277,7 @@ private fun MessagesList(
 
 @Composable
 private fun MessageBubble(message: Message, modifier: Modifier = Modifier) {
-  val isUser = message.role == com.vjaykrsna.nanoai.core.model.Role.USER
+  val isUser = message.role == MessageRole.USER
   val backgroundColor =
     if (isUser) {
       MaterialTheme.colorScheme.primaryContainer

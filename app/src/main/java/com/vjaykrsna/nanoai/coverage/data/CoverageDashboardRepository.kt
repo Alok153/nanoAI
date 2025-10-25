@@ -9,15 +9,20 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 
+/** Repository interface for coverage dashboard data. */
+interface CoverageDashboardRepository {
+  suspend fun loadSnapshot(): CoverageDashboardPayload
+}
+
 /** Reads coverage dashboard snapshots from bundled assets to power the offline presenter. */
-class CoverageDashboardRepository
+class CoverageDashboardRepositoryImpl
 @Inject
 constructor(
   @ApplicationContext private val context: Context,
   private val json: Json = Json { ignoreUnknownKeys = true },
-) {
+) : CoverageDashboardRepository {
 
-  suspend fun loadSnapshot(): CoverageDashboardPayload =
+  override suspend fun loadSnapshot(): CoverageDashboardPayload =
     withContext(Dispatchers.IO) {
       val payload =
         context.assets.open(SNAPSHOT_ASSET_PATH).bufferedReader().use { reader ->

@@ -11,21 +11,10 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.UIStateSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferencesSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UserProfile
 import com.vjaykrsna.nanoai.feature.library.data.DownloadManager
-import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
+import com.vjaykrsna.nanoai.feature.library.domain.DownloadStatus
 import com.vjaykrsna.nanoai.feature.uiux.domain.CommandPaletteActionProvider
 import com.vjaykrsna.nanoai.feature.uiux.domain.ProgressCenterCoordinator
-import com.vjaykrsna.nanoai.feature.uiux.state.CommandCategory
-import com.vjaykrsna.nanoai.feature.uiux.state.CommandPaletteState
-import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityBannerState
-import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityStatus
-import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
-import com.vjaykrsna.nanoai.feature.uiux.state.PaletteSource
-import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
-import com.vjaykrsna.nanoai.feature.uiux.state.RecentActivityItem
-import com.vjaykrsna.nanoai.feature.uiux.state.RightPanel
-import com.vjaykrsna.nanoai.feature.uiux.state.UiPreferenceSnapshot
-import com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload
-import com.vjaykrsna.nanoai.ui.navigation.Screen
+import com.vjaykrsna.nanoai.feature.uiux.presentation.navigation.Screen
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -144,11 +133,13 @@ internal class FakeNavigationRepository(
   override val windowSizeClass: kotlinx.coroutines.flow.Flow<WindowSizeClass> = windowSizeClassFlow
 
   internal val undoPayloadFlow =
-    kotlinx.coroutines.flow.MutableStateFlow<com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload?>(
+    kotlinx.coroutines.flow.MutableStateFlow<
+      com.vjaykrsna.nanoai.feature.uiux.presentation.UndoPayload?
+    >(
       null
     )
   override val undoPayload:
-    kotlinx.coroutines.flow.Flow<com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload?> =
+    kotlinx.coroutines.flow.Flow<com.vjaykrsna.nanoai.feature.uiux.presentation.UndoPayload?> =
     undoPayloadFlow
 
   override fun updateWindowSizeClass(sizeClass: WindowSizeClass) {
@@ -171,7 +162,7 @@ internal class FakeNavigationRepository(
   }
 
   override suspend fun showCommandPalette(
-    source: com.vjaykrsna.nanoai.feature.uiux.state.PaletteSource
+    source: com.vjaykrsna.nanoai.feature.uiux.presentation.PaletteSource
   ) {
     commandPaletteStateFlow.value = CommandPaletteState(surfaceTarget = CommandCategory.MODES)
   }
@@ -181,7 +172,7 @@ internal class FakeNavigationRepository(
   }
 
   override suspend fun recordUndoPayload(
-    payload: com.vjaykrsna.nanoai.feature.uiux.state.UndoPayload?
+    payload: com.vjaykrsna.nanoai.feature.uiux.presentation.UndoPayload?
   ) {
     undoPayloadFlow.value = payload
   }

@@ -1,7 +1,7 @@
 package com.vjaykrsna.nanoai.feature.library.data.impl
 
 import com.google.common.truth.Truth.assertThat
-import com.vjaykrsna.nanoai.feature.library.model.InstallState
+import com.vjaykrsna.nanoai.feature.library.domain.InstallState
 import io.mockk.coEvery
 import io.mockk.every
 import java.io.File

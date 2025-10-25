@@ -1,7 +1,7 @@
 package com.vjaykrsna.nanoai.feature.uiux.ui.shell
 
-import com.vjaykrsna.nanoai.feature.uiux.state.RightPanel
-import com.vjaykrsna.nanoai.feature.uiux.state.ShellLayoutState
+import com.vjaykrsna.nanoai.feature.uiux.presentation.RightPanel
+import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellLayoutState
 
 internal fun ShellLayoutState.closeRightDrawerIfNeeded(onEvent: (ShellUiEvent) -> Unit) {
   if (isRightDrawerOpen) {

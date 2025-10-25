@@ -2,12 +2,12 @@ package com.vjaykrsna.nanoai.feature.library.data.huggingface
 
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.network.ConnectivityStatusProvider
-import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceCatalogQuery
-import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceModelSummary
-import com.vjaykrsna.nanoai.model.huggingface.network.HuggingFaceService
-import com.vjaykrsna.nanoai.model.huggingface.network.dto.HuggingFaceModelListingDto
-import com.vjaykrsna.nanoai.model.huggingface.network.dto.ModelCardDataDto
-import com.vjaykrsna.nanoai.model.huggingface.network.dto.ModelConfigDto
+import com.vjaykrsna.nanoai.feature.library.data.huggingface.network.HuggingFaceService
+import com.vjaykrsna.nanoai.feature.library.data.huggingface.network.dto.HuggingFaceModelListingDto
+import com.vjaykrsna.nanoai.feature.library.data.huggingface.network.dto.ModelCardDataDto
+import com.vjaykrsna.nanoai.feature.library.data.huggingface.network.dto.ModelConfigDto
+import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceCatalogQuery
+import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceModelSummary
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -130,12 +130,44 @@ constructor(
         cacheDataSource.pruneOlderThan(cacheExpiry)
       }
 
+  internal fun JsonElement?.asStringList(): List<String> {
+    return when (this) {
+      null -> emptyList()
+      is JsonPrimitive ->
+        jsonPrimitive.contentOrNull?.trim()?.takeIf { it.isNotEmpty() }?.let(::listOf)
+          ?: emptyList()
+      is JsonArray ->
+        mapNotNull { element ->
+          element.jsonPrimitive.contentOrNull?.trim()?.takeIf { it.isNotEmpty() }
+        }
+      else -> emptyList()
+    }
+  }
+
+  internal fun JsonElement?.asString(): String? {
+    return when (this) {
+      null -> null
+      is JsonPrimitive -> jsonPrimitive.contentOrNull?.trim()?.takeIf { it.isNotEmpty() }
+      is JsonArray ->
+        firstOrNull()?.jsonPrimitive?.contentOrNull?.trim()?.takeIf { it.isNotEmpty() }
+      else -> null
+    }
+  }
+
+  internal fun JsonElement.asBoolean(): Boolean? {
+    return when (this) {
+      is JsonPrimitive -> jsonPrimitive.contentOrNull?.toBoolean()
+      else -> null
+    }
+  }
+
   private fun HuggingFaceModelListingDto.toDomain(): HuggingFaceModelSummary {
     val resolvedId = resolveModelId()
     val normalizedCard = cardData?.toNormalizedCardData()
     val normalizedConfig = config?.toNormalizedConfigData()
     val normalizedBaseModels = normalizeBaseModels()
     val totalSize = calculateTotalSize()
+    val isGated = gated?.asBoolean() ?: false
 
     return HuggingFaceModelSummary(
       modelId = resolvedId,
@@ -196,30 +228,6 @@ constructor(
 
   private fun ModelConfigDto.toNormalizedConfigData(): NormalizedConfigData =
     NormalizedConfigData(architectures = architectures.orEmpty(), modelType = modelType)
-
-  private fun JsonElement?.asStringList(): List<String> {
-    return when (this) {
-      null -> emptyList()
-      is JsonPrimitive ->
-        jsonPrimitive.contentOrNull?.trim()?.takeIf { it.isNotEmpty() }?.let(::listOf)
-          ?: emptyList()
-      is JsonArray ->
-        mapNotNull { element ->
-          element.jsonPrimitive.contentOrNull?.trim()?.takeIf { it.isNotEmpty() }
-        }
-      else -> emptyList()
-    }
-  }
-
-  private fun JsonElement?.asString(): String? {
-    return when (this) {
-      null -> null
-      is JsonPrimitive -> jsonPrimitive.contentOrNull?.trim()?.takeIf { it.isNotEmpty() }
-      is JsonArray ->
-        firstOrNull()?.jsonPrimitive?.contentOrNull?.trim()?.takeIf { it.isNotEmpty() }
-      else -> null
-    }
-  }
 
   private companion object {
     val DEFAULT_CACHE_TTL: Duration = 6.hours

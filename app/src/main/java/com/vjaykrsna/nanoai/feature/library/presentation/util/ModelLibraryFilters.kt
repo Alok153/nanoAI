@@ -1,8 +1,8 @@
 package com.vjaykrsna.nanoai.feature.library.presentation.util
 
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
-import com.vjaykrsna.nanoai.feature.library.model.InstallState
-import com.vjaykrsna.nanoai.feature.library.model.ProviderType
+import com.vjaykrsna.nanoai.feature.library.domain.InstallState
+import com.vjaykrsna.nanoai.feature.library.domain.ProviderType
 import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryFilterState
 import com.vjaykrsna.nanoai.feature.library.presentation.model.ModelSort
 import java.util.Locale

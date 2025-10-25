@@ -17,7 +17,7 @@ import com.vjaykrsna.nanoai.core.network.dto.CompletionRole
 import com.vjaykrsna.nanoai.core.runtime.LocalGenerationRequest
 import com.vjaykrsna.nanoai.core.runtime.LocalModelRuntime
 import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
-import com.vjaykrsna.nanoai.feature.library.model.ProviderType
+import com.vjaykrsna.nanoai.feature.library.domain.ProviderType
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -54,7 +54,7 @@ constructor(
   suspend fun generateResponse(
     prompt: String,
     personaId: UUID?,
-    options: GenerationOptions = GenerationOptions(),
+    options: InferenceConfiguration = InferenceConfiguration(),
     image: Bitmap? = null,
     audio: ByteArray? = null,
   ): InferenceResult {
@@ -107,7 +107,7 @@ constructor(
   private suspend fun runLocalInference(
     model: ModelPackage,
     prompt: String,
-    options: GenerationOptions,
+    options: InferenceConfiguration,
     image: Bitmap? = null,
     audio: ByteArray? = null,
   ): InferenceResult {
@@ -156,7 +156,7 @@ constructor(
 
   private suspend fun runCloudInference(
     prompt: String,
-    options: GenerationOptions,
+    options: InferenceConfiguration,
   ): InferenceResult {
     val provider = selectCloudProvider()
     val cloudModelId = resolveCloudModel(options.cloudModel)
@@ -175,7 +175,7 @@ constructor(
     preferLocal: Boolean,
     preferredLocalModel: ModelPackage?,
     prompt: String,
-    options: GenerationOptions,
+    options: InferenceConfiguration,
     image: Bitmap? = null,
     audio: ByteArray? = null,
   ): InferenceResult? {
@@ -202,7 +202,7 @@ constructor(
 
   private fun buildCloudMessages(
     prompt: String,
-    options: GenerationOptions,
+    options: InferenceConfiguration,
   ): List<CompletionMessageDto> {
     val messages = mutableListOf<CompletionMessageDto>()
     options.systemPrompt
@@ -217,7 +217,7 @@ constructor(
   private fun buildCompletionRequest(
     cloudModelId: String,
     messages: List<CompletionMessageDto>,
-    options: GenerationOptions,
+    options: InferenceConfiguration,
   ): CompletionRequestDto =
     CompletionRequestDto(
       model = cloudModelId,

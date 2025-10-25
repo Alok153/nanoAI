@@ -2,9 +2,9 @@ package com.vjaykrsna.nanoai.feature.uiux.data
 
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.data.repository.ProgressRepository
-import com.vjaykrsna.nanoai.feature.uiux.state.JobStatus
-import com.vjaykrsna.nanoai.feature.uiux.state.JobType
-import com.vjaykrsna.nanoai.feature.uiux.state.ProgressJob
+import com.vjaykrsna.nanoai.feature.uiux.presentation.JobStatus
+import com.vjaykrsna.nanoai.feature.uiux.presentation.JobType
+import com.vjaykrsna.nanoai.feature.uiux.presentation.ProgressJob
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import java.time.Instant
 import java.util.UUID

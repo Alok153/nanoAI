@@ -35,7 +35,7 @@ import org.w3c.dom.Element
  */
 object VerifyCoverageThresholdsTask {
 
-  private const val DEFAULT_LAYER_MAP = "config/coverage/layer-map.json"
+  private const val DEFAULT_LAYER_MAP = "config/testing/coverage/layer-map.json"
   private const val EXIT_HELP = 0
   private const val EXIT_USAGE_ERROR = 64
   private const val EXIT_DATA_ERROR = 66

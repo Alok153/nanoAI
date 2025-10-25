@@ -2,10 +2,10 @@ package com.vjaykrsna.nanoai.core.di
 
 import com.vjaykrsna.nanoai.core.network.AndroidConnectivityStatusProvider
 import com.vjaykrsna.nanoai.core.network.ConnectivityStatusProvider
-import com.vjaykrsna.nanoai.model.catalog.network.ModelCatalogService
-import com.vjaykrsna.nanoai.model.huggingface.network.HuggingFaceAccountService
-import com.vjaykrsna.nanoai.model.huggingface.network.HuggingFaceOAuthService
-import com.vjaykrsna.nanoai.model.huggingface.network.HuggingFaceService
+import com.vjaykrsna.nanoai.feature.library.data.catalog.network.ModelCatalogService
+import com.vjaykrsna.nanoai.feature.library.data.huggingface.network.HuggingFaceAccountService
+import com.vjaykrsna.nanoai.feature.library.data.huggingface.network.HuggingFaceOAuthService
+import com.vjaykrsna.nanoai.feature.library.data.huggingface.network.HuggingFaceService
 import dagger.Binds
 import dagger.Module
 import dagger.Provides

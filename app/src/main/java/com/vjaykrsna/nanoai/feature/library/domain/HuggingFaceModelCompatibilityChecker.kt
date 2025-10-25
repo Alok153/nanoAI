@@ -1,7 +1,5 @@
 package com.vjaykrsna.nanoai.feature.library.domain
 
-import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceModelSummary
-import com.vjaykrsna.nanoai.feature.library.model.ProviderType
 import javax.inject.Inject
 import javax.inject.Singleton
 

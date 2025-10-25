@@ -6,7 +6,7 @@ import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
 import com.vjaykrsna.nanoai.feature.library.data.daos.DownloadTaskDao
 import com.vjaykrsna.nanoai.feature.library.data.entities.DownloadTaskEntity
-import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
+import com.vjaykrsna.nanoai.feature.library.domain.DownloadStatus
 import io.mockk.MockKAnnotations
 import io.mockk.clearAllMocks
 import io.mockk.coEvery

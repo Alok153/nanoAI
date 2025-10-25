@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceModelCompatibilityChecker
+import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceModelSummary
 import com.vjaykrsna.nanoai.feature.library.domain.ListHuggingFaceModelsUseCase
-import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceModelSummary
 import com.vjaykrsna.nanoai.feature.library.presentation.model.HuggingFaceFilterState
 import com.vjaykrsna.nanoai.feature.library.presentation.model.HuggingFaceSortOption
 import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryError

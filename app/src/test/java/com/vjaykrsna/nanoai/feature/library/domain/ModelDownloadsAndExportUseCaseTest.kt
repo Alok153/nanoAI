@@ -11,9 +11,7 @@ import com.vjaykrsna.nanoai.core.model.APIType
 import com.vjaykrsna.nanoai.core.model.ProviderStatus
 import com.vjaykrsna.nanoai.feature.library.data.DownloadManager
 import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
-import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
-import com.vjaykrsna.nanoai.feature.library.model.InstallState
-import com.vjaykrsna.nanoai.model.catalog.DeliveryType
+import com.vjaykrsna.nanoai.feature.library.data.catalog.DeliveryType
 import com.vjaykrsna.nanoai.testing.assertIsSuccess
 import com.vjaykrsna.nanoai.testing.assertRecoverableError
 import com.vjaykrsna.nanoai.testing.assertSuccess
@@ -261,7 +259,7 @@ class ModelDownloadsAndExportUseCaseTest {
       modelId = modelId,
       displayName = "Model $modelId",
       version = "1.0.0",
-      providerType = com.vjaykrsna.nanoai.feature.library.model.ProviderType.MEDIA_PIPE,
+      providerType = com.vjaykrsna.nanoai.feature.library.domain.ProviderType.MEDIA_PIPE,
       deliveryType = DeliveryType.LOCAL_ARCHIVE,
       minAppVersion = 1,
       sizeBytes = 1_000_000_000L,

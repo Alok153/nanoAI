@@ -5,8 +5,8 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.vjaykrsna.nanoai.core.model.MessageRole
 import com.vjaykrsna.nanoai.core.model.MessageSource
-import com.vjaykrsna.nanoai.core.model.Role
 import kotlinx.datetime.Instant
 
 /**
@@ -42,7 +42,7 @@ import kotlinx.datetime.Instant
 data class MessageEntity(
   @PrimaryKey @ColumnInfo(name = "message_id") val messageId: String,
   @ColumnInfo(name = "thread_id") val threadId: String,
-  @ColumnInfo(name = "role") val role: Role,
+  @ColumnInfo(name = "role") val role: MessageRole,
   @ColumnInfo(name = "text") val text: String?,
   @ColumnInfo(name = "audio_uri") val audioUri: String? = null,
   @ColumnInfo(name = "image_uri") val imageUri: String? = null,

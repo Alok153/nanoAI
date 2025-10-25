@@ -7,8 +7,6 @@ import com.vjaykrsna.nanoai.feature.uiux.domain.NavigationOperationsUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.QueueJobUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.SettingsOperationsUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.UndoActionUseCase
-import com.vjaykrsna.nanoai.feature.uiux.state.ModeId
-import com.vjaykrsna.nanoai.feature.uiux.state.RightPanel
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import io.mockk.coEvery
 import io.mockk.mockk

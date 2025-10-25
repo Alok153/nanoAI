@@ -23,11 +23,24 @@ import kotlinx.coroutines.flow.map
 class InferencePreferenceRepositoryImpl
 @Inject
 constructor(
-  @ApplicationContext private val context: Context,
+  @ApplicationContext private val context: Context?,
   @IoDispatcher private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : InferencePreferenceRepository {
+
+  // For testing
+  constructor(
+    dataStore: DataStore<Preferences>
+  ) : this(context = null, ioDispatcher = Dispatchers.IO) {
+    this.dataStoreOverride = dataStore
+  }
+
+  private var dataStoreOverride: DataStore<Preferences>? = null
+
+  private val dataStore: DataStore<Preferences>
+    get() = dataStoreOverride ?: context?.dataStore ?: error("No DataStore available")
+
   override fun observeInferencePreference(): Flow<InferencePreference> =
-    context.dataStore.data.map { preferences ->
+    dataStore.data.map { preferences ->
       val modeName = preferences[KEY_INFERENCE_MODE]
       val mode =
         modeName?.let { runCatching { InferenceMode.valueOf(it) }.getOrNull() }
@@ -36,7 +49,7 @@ constructor(
     }
 
   override suspend fun setInferenceMode(mode: InferenceMode) {
-    context.dataStore.edit { preferences -> preferences[KEY_INFERENCE_MODE] = mode.name }
+    dataStore.edit { preferences -> preferences[KEY_INFERENCE_MODE] = mode.name }
   }
 
   private companion object {

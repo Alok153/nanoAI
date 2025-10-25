@@ -2,13 +2,13 @@ package com.vjaykrsna.nanoai.feature.library.data.impl
 
 import android.content.Context
 import com.vjaykrsna.nanoai.core.data.db.daos.ChatThreadDao
-import com.vjaykrsna.nanoai.feature.library.model.InstallState
-import com.vjaykrsna.nanoai.feature.library.model.ProviderType
-import com.vjaykrsna.nanoai.model.catalog.DeliveryType
-import com.vjaykrsna.nanoai.model.catalog.ModelPackageEntity
-import com.vjaykrsna.nanoai.model.catalog.ModelPackageReadDao
-import com.vjaykrsna.nanoai.model.catalog.ModelPackageWriteDao
-import com.vjaykrsna.nanoai.model.leap.LeapModelRemoteDataSource
+import com.vjaykrsna.nanoai.feature.library.data.catalog.DeliveryType
+import com.vjaykrsna.nanoai.feature.library.data.catalog.ModelPackageEntity
+import com.vjaykrsna.nanoai.feature.library.data.catalog.ModelPackageReadDao
+import com.vjaykrsna.nanoai.feature.library.data.catalog.ModelPackageWriteDao
+import com.vjaykrsna.nanoai.feature.library.data.leap.LeapModelRemoteDataSource
+import com.vjaykrsna.nanoai.feature.library.domain.InstallState
+import com.vjaykrsna.nanoai.feature.library.domain.ProviderType
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk

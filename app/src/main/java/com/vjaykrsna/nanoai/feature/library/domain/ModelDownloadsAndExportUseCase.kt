@@ -7,8 +7,6 @@ import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.feature.library.data.DownloadManager
 import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
-import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
-import com.vjaykrsna.nanoai.feature.library.model.InstallState
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton

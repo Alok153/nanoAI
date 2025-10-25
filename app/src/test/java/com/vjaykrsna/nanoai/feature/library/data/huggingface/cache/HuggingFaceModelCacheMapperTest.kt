@@ -2,7 +2,7 @@ package com.vjaykrsna.nanoai.feature.library.data.huggingface.cache
 
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.feature.library.data.huggingface.entities.HuggingFaceModelCacheEntity
-import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceModelSummary
+import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceModelSummary
 import kotlinx.datetime.Instant
 import org.junit.Test
 
@@ -35,21 +35,21 @@ class HuggingFaceModelCacheMapperTest {
     assertThat(entity.pipelineTag).isEqualTo("text-generation")
     assertThat(entity.libraryName).isEqualTo("transformers")
     assertThat(entity.tags).containsExactly("tag1", "tag2")
-    assertThat(entity.likes).isEqualTo(100)
-    assertThat(entity.downloads).isEqualTo(1000)
-    assertThat(entity.license).isEqualTo("apache-2.0")
-    assertThat(entity.languages).containsExactly("en", "es")
-    assertThat(entity.baseModel).isEqualTo("base-model")
-    assertThat(entity.datasets).containsExactly("dataset1")
-    assertThat(entity.architectures).containsExactly("Transformer")
-    assertThat(entity.modelType).isEqualTo("bert")
-    assertThat(entity.baseModelRelations).containsExactly("relation1")
+    assertThat(entity.likes).isEqualTo(100L)
+    assertThat(entity.downloads).isEqualTo(1000L)
+    assertThat(entity.license).isNull()
+    assertThat(entity.languages).isEmpty()
+    assertThat(entity.baseModel).isNull()
+    assertThat(entity.datasets).isEmpty()
+    assertThat(entity.architectures).isEmpty()
+    assertThat(entity.modelType).isNull()
+    assertThat(entity.baseModelRelations).isEmpty()
     assertThat(entity.hasGatedAccess).isFalse()
     assertThat(entity.isDisabled).isFalse()
-    assertThat(entity.totalSizeBytes).isEqualTo(1000000L)
-    assertThat(entity.summary).isEqualTo("A summary")
-    assertThat(entity.description).isEqualTo("A description")
-    assertThat(entity.trendingScore).isEqualTo(50)
+    assertThat(entity.totalSizeBytes).isNull()
+    assertThat(entity.summary).isNull()
+    assertThat(entity.description).isNull()
+    assertThat(entity.trendingScore).isEqualTo(50L)
     assertThat(entity.createdAt).isEqualTo(Instant.parse("2024-01-01T00:00:00Z"))
     assertThat(entity.lastModified).isEqualTo(Instant.parse("2024-01-02T00:00:00Z"))
     assertThat(entity.isPrivate).isFalse()

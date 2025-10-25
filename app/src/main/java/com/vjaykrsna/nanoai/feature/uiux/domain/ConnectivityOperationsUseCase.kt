@@ -2,7 +2,7 @@ package com.vjaykrsna.nanoai.feature.uiux.domain
 
 import com.vjaykrsna.nanoai.core.common.IoDispatcher
 import com.vjaykrsna.nanoai.core.data.repository.ConnectivityRepository
-import com.vjaykrsna.nanoai.feature.uiux.state.ConnectivityStatus
+import com.vjaykrsna.nanoai.feature.uiux.presentation.ConnectivityStatus
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope

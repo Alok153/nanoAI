@@ -7,7 +7,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.vjaykrsna.nanoai.core.data.db.entities.MessageEntity
-import com.vjaykrsna.nanoai.core.model.Role
+import com.vjaykrsna.nanoai.core.model.MessageRole
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -62,7 +62,7 @@ interface MessageDao {
   @Query(
     "SELECT * FROM messages WHERE thread_id = :threadId AND role = :role ORDER BY created_at ASC"
   )
-  suspend fun getByRole(threadId: String, role: Role): List<MessageEntity>
+  suspend fun getByRole(threadId: String, role: MessageRole): List<MessageEntity>
 
   /** Get the last message in a thread. */
   @Query(

@@ -10,7 +10,7 @@ import androidx.compose.ui.input.pointer.consumePositionChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
-import com.vjaykrsna.nanoai.feature.uiux.state.ShellLayoutState
+import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellLayoutState
 
 private enum class DrawerSwipeAction {
   OpenLeft,

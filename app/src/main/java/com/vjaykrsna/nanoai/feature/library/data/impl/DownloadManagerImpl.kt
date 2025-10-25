@@ -13,7 +13,7 @@ import com.vjaykrsna.nanoai.core.domain.model.toEntity
 import com.vjaykrsna.nanoai.feature.library.data.DownloadManager
 import com.vjaykrsna.nanoai.feature.library.data.daos.DownloadTaskDao
 import com.vjaykrsna.nanoai.feature.library.data.workers.ModelDownloadWorker
-import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
+import com.vjaykrsna.nanoai.feature.library.domain.DownloadStatus
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import java.io.FileInputStream

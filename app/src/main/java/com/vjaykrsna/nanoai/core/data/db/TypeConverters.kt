@@ -8,7 +8,7 @@ import com.vjaykrsna.nanoai.core.maintenance.model.MaintenanceCategory
 import com.vjaykrsna.nanoai.core.maintenance.model.MaintenanceStatus
 import com.vjaykrsna.nanoai.core.maintenance.model.PriorityLevel
 import com.vjaykrsna.nanoai.core.maintenance.model.SeverityLevel
-import com.vjaykrsna.nanoai.model.catalog.DeliveryType
+import com.vjaykrsna.nanoai.feature.library.data.catalog.DeliveryType
 import kotlinx.datetime.Instant
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.MapSerializer

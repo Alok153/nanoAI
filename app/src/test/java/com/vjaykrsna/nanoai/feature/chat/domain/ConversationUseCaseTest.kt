@@ -3,8 +3,8 @@ package com.vjaykrsna.nanoai.feature.chat.domain
 import com.vjaykrsna.nanoai.core.data.repository.ConversationRepository
 import com.vjaykrsna.nanoai.core.domain.model.ChatThread
 import com.vjaykrsna.nanoai.core.domain.model.Message
+import com.vjaykrsna.nanoai.core.model.MessageRole
 import com.vjaykrsna.nanoai.core.model.MessageSource
-import com.vjaykrsna.nanoai.core.model.Role
 import com.vjaykrsna.nanoai.testing.assertRecoverableError
 import com.vjaykrsna.nanoai.testing.assertSuccess
 import io.mockk.coEvery
@@ -58,7 +58,7 @@ class ConversationUseCaseTest {
         Message(
           messageId = UUID.randomUUID(),
           threadId = threadId,
-          role = Role.USER,
+          role = MessageRole.USER,
           text = "Hello",
           source = MessageSource.CLOUD_API,
           createdAt = Instant.parse("2024-01-01T12:00:00Z"),
@@ -145,7 +145,7 @@ class ConversationUseCaseTest {
       Message(
         messageId = UUID.randomUUID(),
         threadId = UUID.randomUUID(),
-        role = Role.ASSISTANT,
+        role = MessageRole.ASSISTANT,
         text = "Hello, how can I help you?",
         source = MessageSource.LOCAL_MODEL,
         latencyMs = 1500,
@@ -164,7 +164,7 @@ class ConversationUseCaseTest {
       Message(
         messageId = UUID.randomUUID(),
         threadId = UUID.randomUUID(),
-        role = Role.ASSISTANT,
+        role = MessageRole.ASSISTANT,
         text = "Hello, how can I help you?",
         source = MessageSource.LOCAL_MODEL,
         createdAt = Instant.parse("2024-01-01T12:00:00Z"),

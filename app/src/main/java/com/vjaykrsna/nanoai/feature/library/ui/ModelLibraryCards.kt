@@ -41,8 +41,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
-import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceModelSummary
-import com.vjaykrsna.nanoai.feature.library.model.InstallState
+import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceModelSummary
+import com.vjaykrsna.nanoai.feature.library.domain.InstallState
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.COUNT_DECIMAL_THRESHOLD
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.COUNT_FORMAT_THRESHOLD_LONG
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.COUNT_INTEGER_CHECK

@@ -19,8 +19,8 @@ import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsUiUxState
 import com.vjaykrsna.nanoai.feature.settings.ui.SettingsContentState
 import com.vjaykrsna.nanoai.feature.settings.ui.SettingsScreenActions
 import com.vjaykrsna.nanoai.feature.settings.ui.SettingsScreenContent
+import com.vjaykrsna.nanoai.shared.ui.theme.NanoAITheme
 import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
-import com.vjaykrsna.nanoai.ui.theme.NanoAITheme
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test

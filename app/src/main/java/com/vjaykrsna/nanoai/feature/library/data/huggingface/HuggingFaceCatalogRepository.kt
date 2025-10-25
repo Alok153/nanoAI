@@ -1,8 +1,8 @@
 package com.vjaykrsna.nanoai.feature.library.data.huggingface
 
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
-import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceCatalogQuery
-import com.vjaykrsna.nanoai.feature.library.domain.model.HuggingFaceModelSummary
+import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceCatalogQuery
+import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceModelSummary
 
 /** Repository exposing curated listings from the Hugging Face Hub. */
 interface HuggingFaceCatalogRepository {

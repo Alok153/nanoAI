@@ -1,7 +1,7 @@
 package com.vjaykrsna.nanoai.core.domain.model
 
 import com.vjaykrsna.nanoai.feature.library.data.entities.DownloadTaskEntity
-import com.vjaykrsna.nanoai.feature.library.model.DownloadStatus
+import com.vjaykrsna.nanoai.feature.library.domain.DownloadStatus
 import java.util.UUID
 import kotlinx.datetime.Instant
 
