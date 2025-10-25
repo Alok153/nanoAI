@@ -10,7 +10,6 @@ import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.model.InferenceMode
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
@@ -24,38 +23,33 @@ class InferencePreferenceRepositoryImplTest {
 
   private lateinit var dataStore: DataStore<Preferences>
   private lateinit var repository: InferencePreferenceRepositoryImpl
-  private val testDispatcher = MainDispatcherExtension().dispatcher
-  private val testScope = TestScope(testDispatcher)
 
   @Before
   fun setUp() {
     val context: Context = ApplicationProvider.getApplicationContext()
     dataStore =
       PreferenceDataStoreFactory.create(
-        scope = testScope,
-        produceFile = { context.preferencesDataStoreFile("test_inference_preferences") },
+        produceFile = { context.preferencesDataStoreFile("test_inference_preferences") }
       )
-    repository = InferencePreferenceRepositoryImpl(context, testDispatcher)
+    repository = InferencePreferenceRepositoryImpl(dataStore)
   }
 
   @Test
-  fun `observeInferencePreference should return default when no value is set`() =
-    testScope.runTest {
-      // When
-      val preference = repository.observeInferencePreference().first()
+  fun `observeInferencePreference should return default when no value is set`() = runTest {
+    // When
+    val preference = repository.observeInferencePreference().first()
 
-      // Then
-      assertThat(preference.mode).isEqualTo(InferenceMode.LOCAL_FIRST)
-    }
+    // Then
+    assertThat(preference.mode).isEqualTo(InferenceMode.LOCAL_FIRST)
+  }
 
   @Test
-  fun `setInferenceMode should update the value in DataStore`() =
-    testScope.runTest {
-      // When
-      repository.setInferenceMode(InferenceMode.CLOUD_FIRST)
-      val preference = repository.observeInferencePreference().first()
+  fun `setInferenceMode should update the value in DataStore`() = runTest {
+    // When
+    repository.setInferenceMode(InferenceMode.CLOUD_FIRST)
+    val preference = repository.observeInferencePreference().first()
 
-      // Then
-      assertThat(preference.mode).isEqualTo(InferenceMode.CLOUD_FIRST)
-    }
+    // Then
+    assertThat(preference.mode).isEqualTo(InferenceMode.CLOUD_FIRST)
+  }
 }

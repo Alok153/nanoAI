@@ -2,42 +2,51 @@
 
 ## System Overview
 
-nanoAI follows clean architecture with unidirectional data flow from UI → Domain → Data layers.
+nanoAI follows clean architecture with unidirectional data flow from UI → Domain → Data layers. The codebase uses a primary app module with feature-based organization and performance benchmarking.
 
 ```
-UI Layer (Compose)
-├── ChatScreen, ModelLibraryScreen, SettingsScreen
-├── NavigationScaffold, BottomNav, Drawer
-└── hiltViewModel() injection
+🎯 Application Module (:app)
+├── MainActivity - single activity architecture
+├── Feature orchestration (chat, library, settings, etc.)
+└── Core systems integration
 
-Presentation Layer (ViewModels)
-├── ChatViewModel - messages, sendMessage, switchPersona
-├── ModelLibraryViewModel - models, downloads, pause/resume
-├── SettingsViewModel - apiProviders, export, privacy prefs
-└── ShellViewModel - aggregates child ViewModels
+⚡ Benchmark Module (:macrobenchmark)
+├── Performance testing for :app
+├── Cold start measurements
+├── Frame rate analysis & Jank detection
+└── Memory profiling & baseline validation
 
-Domain Layer (Use Cases)
-├── SendPromptAndPersonaUseCase - prompt execution
-├── ModelDownloadsAndExportUseCase - download management
-└── InferenceOrchestrator - local vs cloud routing
+Feature Organization (:app/feature/*)
+├── 6 active features with clean architecture layers
+├── data/ - repositories, DAOs, service interactions
+├── domain/ - use cases, business models, validation
+├── presentation/ - ViewModels, UI state, state holders
+└── ui/ - Compose screens, components, theming
 
-Data Layer (Repositories)
-├── ConversationRepository - threads/messages
-├── PersonaRepository - profiles/switches
-├── ModelCatalogRepository - available models
-├── ApiProviderConfigRepository - cloud endpoints
-└── DownloadManager - background downloads
+Core Infrastructure (:app/core/*)
+├── common/ - shared utilities and extensions
+├── data/ - persistence, network, configuration
+├── device/ - hardware access, camera, sensors
+├── di/ - dependency injection bindings
+├── domain/ - cross-feature business logic
+├── maintenance/ - migrations, cleanup operations
+├── model/ - shared enums, types, constants
+├── network/ - HTTP clients, interceptors, gateways
+├── runtime/ - ML runtime management & backends
+├── security/ - encryption, key management
+└── telemetry/ - analytics, error reporting
 
 Data Sources
 ├── Room DB (8 DAOs: ChatThread, Message, Persona, Model, Download, ApiConfig, etc.)
-├── DataStore (preferences, privacy settings)
-└── WorkManager (ModelDownloadWorker, background tasks)
+├── DataStore (preferences, privacy settings, UI state)
+├── WorkManager (ModelDownloadWorker, background tasks)
+└── File System (caches, downloads, persistent storage)
 
 External Systems
 ├── MediaPipe (on-device inference, LoRA support)
-├── Hugging Face Hub (model catalog, 6hr caching)
+├── Hugging Face Hub (model catalog, metadata)
 ├── Cloud APIs (OpenAI, Gemini, custom endpoints)
-└── Device Storage (private DB, cache, downloads)
+└── Device APIs (storage, networking, hardware)
 ```
 
 ## Key Data Flows
@@ -63,12 +72,12 @@ Download Tap → ModelLibraryScreen → ModelLibraryViewModel → ModelDownloads
 
 ### Profile Synchronization
 ```
-App Launch → NavigationScaffold → ShellViewModel → ObserveUserProfileUseCase
+App Launch → NavigationScaffold → ThemeViewModel + UIStateViewModel → ObserveUserProfileUseCase
     ├── Local: Room DB + DataStore (encrypted preferences)
     └── Remote: /user/profile API (when online)
         └── Merge flows → offline-first UI state
 
-Theme Changes → UpdateThemePreferenceUseCase
+Theme Changes → ThemeViewModel → UpdateThemePreferenceUseCase
     ├── Encrypted DataStore writes
     ├── Room transaction for UI state
     └── Background sync when online (WorkManager)
@@ -108,25 +117,26 @@ All entities include proper foreign key relationships and indexing for performan
 
 ## ViewModel Architecture
 
-Focused responsibility pattern ensures clean separation and testability:
+Distributed responsibility pattern ensures clean separation and testability across feature modules:
 
-### Core ViewModels
-- **ChatViewModel**: Message state, sending prompts, persona switching
-- **ModelLibraryViewModel**: Model catalog, download management, progress tracking
-- **SettingsViewModel**: API configurations, export/import, privacy preferences
+### Core Feature ViewModels
+- **ChatViewModel**: Message state, sending prompts, persona switching, conversation management
+- **ModelLibraryViewModel**: Model catalog browse, download management, progress tracking, Hugging Face integration
+- **SettingsViewModel**: API configurations, export/import, privacy preferences, backup management
 
-### Shell Architecture
-**ShellViewModel** orchestrates focused child ViewModels:
-- **NavigationViewModel**: Screen routing and drawer state
-- **ConnectivityViewModel**: Network status and offline banners
-- **ProgressViewModel**: Background job tracking and queues
-- **ThemeViewModel**: Appearance settings and Material 3 theming
+### Navigation & State ViewModels (Distributed)
+- **NavigationScaffoldViewModel**: Route coordination between screens, drawer state, back stack management
+- **ConnectivityViewModel**: Network reachability monitoring, offline banner display, sync status
+- **ProgressViewModel**: Background operation tracking (downloads, exports), queue status, cancellation
+- **ThemeViewModel**: Theme preferences, Material 3 theming, accessibility settings
+- **UIStateViewModel**: Screen-specific preferences, layout caching, user personalization
 
-### Benefits
-- **Isolation**: Each ViewModel testable in isolation (≥75% coverage)
-- **Performance**: Smaller memory footprint, faster cold starts
-- **Maintainability**: Single responsibility, safer changes
-- **Clean Architecture**: Proper UI-domain separation
+### Architecture Benefits
+- **Horizontal Scaling**: Feature ViewModels can evolve independently without merge conflicts
+- **Test Isolation**: Each ViewModel testable in isolation (≥75% coverage)
+- **Performance**: Smaller memory footprint, faster cold starts, on-demand loading
+- **Maintainability**: Single responsibility pattern, safer refactoring, simpler debugging
+- **Clean Architecture**: Clear separation between UI coordination and business logic
 
 ## Quality Standards
 

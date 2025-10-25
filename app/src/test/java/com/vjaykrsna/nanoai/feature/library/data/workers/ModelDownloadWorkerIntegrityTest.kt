@@ -20,6 +20,7 @@ import com.vjaykrsna.nanoai.feature.library.data.huggingface.HuggingFaceManifest
 import com.vjaykrsna.nanoai.feature.library.domain.InstallState
 import com.vjaykrsna.nanoai.feature.library.domain.ModelManifestUseCase
 import com.vjaykrsna.nanoai.telemetry.TelemetryReporter
+import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
@@ -67,6 +68,10 @@ class ModelDownloadWorkerIntegrityTest {
       connectivityStatusProvider = connectivityStatusProvider,
       clock = clock,
     )
+
+  init {
+    coEvery { connectivityStatusProvider.isOnline() } returns true
+  }
 
   @Test
   fun `refreshManifest rejects non-hex checksum`() = runBlocking {

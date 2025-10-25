@@ -73,9 +73,12 @@ class HuggingFaceModelCacheDataSourceTest {
             entities[0].modelId == "test-model" &&
             entities[0].displayName == "Test Model" &&
             entities[0].author == "test-author" &&
-            entities[0].license == "apache-2.0" &&
-            entities[0].languages == listOf("en", "es") &&
-            entities[0].totalSizeBytes == 1000000L &&
+            entities[0].pipelineTag == "text-generation" &&
+            entities[0].libraryName == "transformers" &&
+            entities[0].tags == listOf("tag1", "tag2") &&
+            entities[0].likes == 100L &&
+            entities[0].downloads == 1000L &&
+            entities[0].trendingScore == 50L &&
             entities[0].fetchedAt == now
         }
       )
@@ -115,8 +118,7 @@ class HuggingFaceModelCacheDataSourceTest {
     dataSource.replaceAll(models)
 
     coVerify {
-      dao.clear()
-      dao.upsertAll(
+      dao.replaceAll(
         match { entities ->
           entities.size == 1 && entities[0].modelId == "new-model" && entities[0].fetchedAt == now
         }

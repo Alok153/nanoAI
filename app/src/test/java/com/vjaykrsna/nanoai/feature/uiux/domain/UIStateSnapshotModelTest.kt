@@ -4,10 +4,8 @@ import android.os.Build
 import com.vjaykrsna.nanoai.feature.uiux.domain.UiUxDomainTestHelper.loadClass
 import com.vjaykrsna.nanoai.feature.uiux.domain.UiUxDomainTestHelper.primaryConstructor
 import java.lang.reflect.InvocationTargetException
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
-import kotlin.test.assertTrue
+import org.junit.Assert
+import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -27,11 +25,11 @@ class UIStateSnapshotModelTest {
     val instance = ctor.newInstance(*args)
     val recent = getListProperty(instance, "getRecentActions")
 
-    assertEquals(5, recent.size, "Recent actions should retain only the last five entries")
-    assertEquals(
+    Assert.assertEquals("Recent actions should retain only the last five entries", 5, recent.size)
+    Assert.assertEquals(
+      "Recent actions should drop the oldest entry when exceeding five",
       listOf("action-1", "action-2", "action-3", "action-4", "action-5"),
       recent,
-      "Recent actions should drop the oldest entry when exceeding five",
     )
   }
 
@@ -44,7 +42,7 @@ class UIStateSnapshotModelTest {
     val instance = ctor.newInstance(*args)
     val expanded = getListProperty(instance, "getExpandedPanels")
 
-    assertEquals(listOf("panel-1", "panel-2"), expanded)
+    Assert.assertEquals(listOf("panel-1", "panel-2"), expanded)
   }
 
   @Test
@@ -56,7 +54,7 @@ class UIStateSnapshotModelTest {
     val sidebarCollapsed =
       instance.javaClass.getMethod("isSidebarCollapsed").invoke(instance) as Boolean
 
-    assertTrue(sidebarCollapsed)
+    Assert.assertTrue(sidebarCollapsed)
   }
 
   @Test
@@ -64,12 +62,14 @@ class UIStateSnapshotModelTest {
     val ctor = uiStateSnapshotConstructor()
     val args = defaultUiStateSnapshotArgs().apply { this[0] = "" }
 
-    val exception = assertFailsWith<InvocationTargetException> { ctor.newInstance(*args) }
-
-    assertTrue(
-      exception.cause is IllegalArgumentException,
-      "Expected IllegalArgumentException when userId is blank",
-    )
+    try {
+      ctor.newInstance(*args)
+      Assert.fail("Expected InvocationTargetException")
+    } catch (exception: InvocationTargetException) {
+      if (!(exception.cause is IllegalArgumentException)) {
+        Assert.fail("Expected IllegalArgumentException when userId is blank")
+      }
+    }
   }
 
   private fun uiStateSnapshotConstructor() =

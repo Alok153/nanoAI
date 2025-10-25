@@ -1,39 +1,58 @@
 `# nanoAI Development Guidelines
 
-Auto-generated from all feature plans and agent rules. Last updated: 2025-10-19
+Auto-generated from all feature plans and agent rules. Last updated: 2025-10-25
+
+*Updated project structure to reflect actual codebase: verified active modules (:app, :macrobenchmark), confirmed 6 feature modules with 4-layer architecture (data/domain/presentation/ui), documented correct core module organization (9 modules), and aligned with real code structure.*
 
 ## Active Technologies (main)
-- Kotlin 1.9.x (JDK 17 baseline), Jetpack Compose Material 3, Hilt, WorkManager, Room (SQLite database), DataStore (preferences), Retrofit + Kotlin Serialization, OkHttp, MediaPipe Generative (LiteRT), Coil, Kotlin Coroutines, Junit5
+- Kotlin 2.2.0 (JDK 17 baseline), Jetpack Compose Material 3, Hilt, WorkManager, Room (SQLite database), DataStore (preferences), Retrofit + Kotlin Serialization, OkHttp, MediaPipe Generative (LiteRT), Coil, Kotlin Coroutines, Junit5
 
 See `gradle/libs.versions.toml` for version details and updates.
 
 ## Project Structure
 ```
 nanoAI/
-├── app/                           # Main application module
-│   ├── src/main/java/com/vjaykrsna/nanoai/
-│   │   ├── core/                  # Core utilities and base classes
-│   │   ├── di/                    # Dependency injection modules
-│   │   ├── feature/               # Feature modules (chat, uiux, etc.)
-│   │   ├── model/                 # Data models
-│   │   ├── security/              # Security-related utilities
-│   │   ├── telemetry/             # Analytics and logging
-│   │   └── ui/                    # UI components and navigation
-│   ├── src/test/java/com/vjaykrsna/nanoai/  # Unit tests (JVM)
-│   │   ├── core/
-│   │   ├── coverage/
-│   │   └── feature/
-│   └── src/androidTest/java/com/vjaykrsna/nanoai/  # Instrumentation tests
-│       ├── testing/               # Test utilities and fakes
-│       └── coverage/              # Coverage-specific UI tests
-├── docs/                          # Documentation
-├── specs/                         # Feature specifications
-├── config/                        # Configuration files (detekt, coverage)
-├── scripts/                       # Build and utility scripts
-├── macrobenchmark/                # Performance benchmarks
-├── build.gradle.kts               # Root build configuration
-├── settings.gradle.kts            # Project settings
-└── gradle/libs.versions.toml      # Approved dependency versions
+├── app/                           # 📱 Main Android application (:app)
+│   ├── src/main/java/com/vjaykrsna.nanoai/
+│   │   ├── MainActivity.kt        # Single activity architecture
+│   │   ├── NanoAIApplication.kt   # Application class
+│   │   ├── core/                  # Core infrastructure (9 modules)
+│   │   │   ├── common/            # Shared utilities & extensions
+│   │   │   ├── data/              # Database, network, repositories
+│   │   │   ├── device/            # Camera, storage, hardware access
+│   │   │   ├── di/                # Hilt dependency injection
+│   │   │   ├── domain/            # Business logic & use cases
+│   │   │   ├── maintenance/       # DB migrations & cleanup
+│   │   │   ├── model/             # Core enums & type definitions
+│   │   │   ├── network/           # HTTP clients & gateways
+│   │   │   ├── runtime/           # ML runtime management
+│   │   │   ├── security/          # Encryption & hashing
+│   │   │   └── telemetry/         # Analytics & error reporting
+│   │   ├── feature/               # Feature modules (6 active)
+│   │   │   ├── audio/            # Audio processing
+│   │   │   ├── chat/             # Chat interface & messaging
+│   │   │   ├── image/            # Image operations
+│   │   │   ├── library/          # Model catalog & downloads
+│   │   │   ├── settings/         # Configuration & privacy
+│   │   │   └── uiux/             # Shared UI components
+│   │   └── shared/               # Cross-feature utilities
+│   ├── src/test/java/             # Unit tests (JVM)
+│   ├── src/androidTest/java/      # Instrumentation tests (device)
+│   └── srcs/                      # App-specific shared utilities
+├── macrobenchmark/                # ⚡ Performance testing (:macrobenchmark)
+├── docs/                          # 📚 Documentation & guides
+├── specs/                         # 🎯 Feature specifications
+├── config/                        # ⚙️ Quality gates & configurations
+│   ├── quality/                   # Detekt, accessibility, UI quality
+│   ├── testing/                   # Coverage metrics & schemas
+│   └── build/                     # Build conventions
+├── scripts/                       # 🛠️ Dev tools & automation
+├── gradle/                        # 🔨 Build system
+│   ├── libs.versions.toml         # Single source of truth for deps
+│   └── wrapper/                   # Gradle wrapper
+├── build.gradle.kts              # Root build script
+├── settings.gradle.kts           # Active modules (:app, :macrobenchmark)
+└── README.md                     # Project overview
 ```
 
 ## Commands
@@ -144,11 +163,11 @@ nanoAI/
 
 ## 📚 Essential References
 
-- `docs/ARCHITECTURE.md` - System design and data flows
-- `docs/testing.md` - Coverage requirements and test strategy
+- `docs/architecture/ARCHITECTURE.md` - System design and data flows
+- `docs/development/TESTING.md` - Coverage requirements and test strategy
 - `specs/` - Feature specifications with acceptance criteria
 - `gradle/libs.versions.toml` - Approved dependency versions
-- `config/coverage/layer-map.json` - Coverage classification rules
+- `config/testing/coverage/layer-map.json` - Coverage classification rules
 
 ## 🛠️ Development Tools & Resources
 

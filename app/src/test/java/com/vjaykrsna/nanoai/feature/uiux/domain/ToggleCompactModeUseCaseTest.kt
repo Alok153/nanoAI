@@ -4,13 +4,13 @@ package com.vjaykrsna.nanoai.feature.uiux.domain
 
 import android.os.Build
 import com.google.common.truth.Truth.assertThat
-import kotlin.test.Test
 import kotlin.test.fail
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -97,7 +97,7 @@ class ToggleCompactModeUseCaseTest {
         return constructor.newInstance(*args.toTypedArray())
       }
     }
-    fail("Unable to instantiate $className with repository/dispatcher test doubles")
+    throw AssertionError("Unable to instantiate $className with repository/dispatcher test doubles")
   }
 
   private fun invokeToggle(instance: Any, enabled: Boolean) {

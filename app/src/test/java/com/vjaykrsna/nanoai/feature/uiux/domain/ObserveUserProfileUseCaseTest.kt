@@ -4,7 +4,6 @@ package com.vjaykrsna.nanoai.feature.uiux.domain
 
 import android.os.Build
 import com.google.common.truth.Truth.assertThat
-import kotlin.test.Test
 import kotlin.test.fail
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
@@ -15,6 +14,7 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -64,7 +64,7 @@ class ObserveUserProfileUseCaseTest {
 
     advanceUntilIdle()
 
-    val first = emissions.firstOrNull() ?: fail("Expected cached emission")
+    val first = emissions.firstOrNull() ?: throw AssertionError("Expected cached emission")
     assertCachedEmission(first)
 
     val remoteLayout =
@@ -126,7 +126,7 @@ class ObserveUserProfileUseCaseTest {
     val recentActionsAny =
       UiUxDomainReflection.getProperty(uiState, "recentActions") as? List<*>
         ?: fail("Missing recentActions on uiState")
-    assertThat(recentActionsAny).containsExactly("cache-action")
+    assertThat(recentActionsAny).isEqualTo(listOf("cache-action"))
 
     val hydratedFromCache = getBoolean(result, "hydratedFromCache", "fromCache")
     assertThat(hydratedFromCache).isTrue()
@@ -146,7 +146,7 @@ class ObserveUserProfileUseCaseTest {
     val pinnedToolsAny =
       UiUxDomainReflection.getProperty(profile, "pinnedTools") as? List<*>
         ?: fail("Missing pinnedTools on profile")
-    assertThat(pinnedToolsAny).contains("tool-remote")
+    assertThat(pinnedToolsAny).isEqualTo(listOf("tool-remote"))
 
     val layoutSnapshots = getReference(result, "layoutSnapshots", "layouts") as? List<*>
     val firstLayout = layoutSnapshots?.firstOrNull() ?: fail("Missing synced layout snapshot")
@@ -164,7 +164,7 @@ class ObserveUserProfileUseCaseTest {
     val recentActionsAny =
       UiUxDomainReflection.getProperty(uiState, "recentActions") as? List<*>
         ?: fail("Missing recentActions on uiState")
-    assertThat(recentActionsAny).containsExactly("remote-action")
+    assertThat(recentActionsAny).isEqualTo(listOf("remote-action"))
   }
 
   private fun extractResultFlow(instance: Any): Flow<*> {
@@ -174,8 +174,7 @@ class ObserveUserProfileUseCaseTest {
         method.parameterCount == 0 && flowClass.isAssignableFrom(method.returnType)
       } ?: fail("Expected zero-argument Flow source on ${instance.javaClass.name}")
     val result = method.invoke(instance)
-    return result as? Flow<*>
-      ?: fail("Expected Flow return from method on ${instance.javaClass.name}")
+    return result as Flow<*>
   }
 
   private fun instantiateUseCase(
@@ -203,7 +202,7 @@ class ObserveUserProfileUseCaseTest {
         return constructor.newInstance(*args.toTypedArray())
       }
     }
-    fail("Unable to instantiate $className with repository/dispatcher test doubles")
+    throw AssertionError("Unable to instantiate $className with repository/dispatcher test doubles")
   }
 
   private fun getReference(result: Any, vararg propertyCandidates: String): Any? {
@@ -224,7 +223,7 @@ class ObserveUserProfileUseCaseTest {
       val value = runCatching { UiUxDomainReflection.getProperty(result, name) }.getOrNull()
       if (value is Boolean) return value
     }
-    fail(
+    throw AssertionError(
       "Result ${result.javaClass.name} missing boolean properties " +
         "${propertyCandidates.joinToString()}"
     )

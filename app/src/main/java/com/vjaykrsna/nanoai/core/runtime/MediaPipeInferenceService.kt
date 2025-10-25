@@ -36,29 +36,37 @@ constructor(@ApplicationContext private val context: Context) : InferenceService
   @OptIn(ExperimentalTime::class)
   override suspend fun generate(request: LocalGenerationRequest): Result<LocalGenerationResult> {
     return withContext(Dispatchers.Default) {
-      val file = modelFile(request.modelId)
-      if (!file.exists()) {
-        return@withContext Result.failure(
-          FileNotFoundException("Local model ${request.modelId} is not installed")
+      try {
+        val file = modelFile(request.modelId)
+        if (!file.exists()) {
+          return@withContext Result.failure(
+            FileNotFoundException("Local model ${request.modelId} is not installed")
+          )
+        }
+
+        initializeInference(request)
+        val prompt = buildPrompt(request)
+        val resultText = generateWithSession(request, prompt)
+
+        Result.success(
+          LocalGenerationResult(
+            text = resultText.first,
+            latencyMs = resultText.second,
+            metadata =
+              mapOf(
+                "modelId" to request.modelId,
+                "temperature" to request.temperature,
+                "topP" to request.topP,
+              ),
+          )
         )
+      } catch (e: RuntimeException) {
+        if (e.message?.contains("MediaPipe") == true) {
+          Result.failure(e)
+        } else {
+          throw e
+        }
       }
-
-      initializeInference(request)
-      val prompt = buildPrompt(request)
-      val resultText = generateWithSession(request, prompt)
-
-      Result.success(
-        LocalGenerationResult(
-          text = resultText.first,
-          latencyMs = resultText.second,
-          metadata =
-            mapOf(
-              "modelId" to request.modelId,
-              "temperature" to request.temperature,
-              "topP" to request.topP,
-            ),
-        )
-      )
     }
   }
 
@@ -119,21 +127,27 @@ constructor(@ApplicationContext private val context: Context) : InferenceService
     if (llmInference == null || lastModelId != request.modelId) {
       llmInference?.close()
 
-      val optionsBuilder =
-        LlmInference.LlmInferenceOptions.builder()
-          .setModelPath(modelFile(request.modelId).absolutePath)
-          .setMaxTokens(request.maxOutputTokens ?: DEFAULT_MAX_TOKENS)
+      try {
+        val optionsBuilder =
+          LlmInference.LlmInferenceOptions.builder()
+            .setModelPath(modelFile(request.modelId).absolutePath)
+            .setMaxTokens(request.maxOutputTokens ?: DEFAULT_MAX_TOKENS)
 
-      if (request.audio != null) {
-        optionsBuilder.setAudioModelOptions(AudioModelOptions.builder().build())
+        if (request.audio != null) {
+          optionsBuilder.setAudioModelOptions(AudioModelOptions.builder().build())
+        }
+
+        if (request.image != null) {
+          optionsBuilder.setMaxNumImages(1)
+        }
+
+        llmInference = LlmInference.createFromOptions(context, optionsBuilder.build())
+        lastModelId = request.modelId
+      } catch (e: UnsatisfiedLinkError) {
+        throw IllegalStateException("MediaPipe native libraries not available", e)
+      } catch (e: NoClassDefFoundError) {
+        throw IllegalStateException("MediaPipe classes not available", e)
       }
-
-      if (request.image != null) {
-        optionsBuilder.setMaxNumImages(1)
-      }
-
-      llmInference = LlmInference.createFromOptions(context, optionsBuilder.build())
-      lastModelId = request.modelId
     }
   }
 }

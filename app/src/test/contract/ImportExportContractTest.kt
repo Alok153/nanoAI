@@ -33,6 +33,7 @@ class ImportExportContractTest {
     val sampleFile = File(sampleUrl!!.file)
     assertThat(sampleFile.exists()).isTrue()
     sampleBackup = json.parseToJsonElement(sampleFile.readText()).jsonObject
+    contractsDir = sampleFile.parentFile
   }
 
   @Test

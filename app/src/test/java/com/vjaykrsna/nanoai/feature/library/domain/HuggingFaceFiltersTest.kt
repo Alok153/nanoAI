@@ -68,6 +68,7 @@ class HuggingFaceFiltersTest {
         tags = emptyList(),
         likes = 0,
         downloads = 0,
+        totalSizeBytes = 2L * 1024 * 1024 * 1024, // 2 GB
         trendingScore = null,
         createdAt = null,
         lastModified = null,
@@ -84,6 +85,7 @@ class HuggingFaceFiltersTest {
         tags = emptyList(),
         likes = 0,
         downloads = 0,
+        totalSizeBytes = 15L * 1024 * 1024 * 1024, // 15 GB
         trendingScore = null,
         createdAt = null,
         lastModified = null,
