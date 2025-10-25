@@ -2,12 +2,12 @@ package com.vjaykrsna.nanoai.feature.uiux.presentation
 
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.feature.uiux.domain.JobOperationsUseCase
-import com.vjaykrsna.nanoai.feature.uiux.domain.ProgressCenterCoordinator
 import com.vjaykrsna.nanoai.feature.uiux.domain.QueueJobUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.UndoActionUseCase
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import io.mockk.coEvery
 import io.mockk.mockk
+import java.util.UUID
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -16,7 +16,6 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
-import java.util.UUID
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProgressViewModelTest {
@@ -52,15 +51,16 @@ class ProgressViewModelTest {
           dispatcher,
         )
 
-      val job = ProgressJob(
-        jobId = UUID.randomUUID(),
-        type = JobType.IMAGE_GENERATION,
-        status = JobStatus.PENDING,
-        progress = 0f,
-        canRetry = true,
-        queuedAt = java.time.Instant.now(),
-        subtitle = "Test job",
-      )
+      val job =
+        ProgressJob(
+          jobId = UUID.randomUUID(),
+          type = JobType.IMAGE_GENERATION,
+          status = JobStatus.PENDING,
+          progress = 0f,
+          canRetry = true,
+          queuedAt = java.time.Instant.now(),
+          subtitle = "Test job",
+        )
 
       viewModel.queueGeneration(job)
       advanceUntilIdle()

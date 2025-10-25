@@ -58,15 +58,15 @@
 **Independent Test Criteria**: ViewModels only call UseCases, never repositories directly
 **Tests**: ViewModel tests verify proper UseCase injection and state management
 
-- [ ] T027 Update `ModelLibraryViewModel` to use `ModelCatalogUseCase` instead of calling repository directly
-- [ ] T028 Update `HuggingFaceLibraryViewModel` to use `HuggingFaceCatalogUseCase` instead of calling repository directly
-- [ ] T029 Update `SettingsViewModel` to use `ApiProviderConfigUseCase` instead of calling repository directly
-- [ ] T030 Update `ImageGalleryViewModel` to use `ImageGalleryUseCase` instead of calling repository directly
-- [ ] T031 Update `ChatViewModel` to use `ConversationUseCase` instead of calling repository directly
-- [ ] T032 Update `ImageGenerationViewModel` to use `ImageGalleryUseCase` instead of calling repository directly
-- [ ] T033 Update Hilt dependency injection modules for new UseCases and repository interfaces
-- [ ] T034 Update ViewModel unit tests to mock new UseCase dependencies
-- [ ] T035 Update instrumentation tests for ViewModel behavior changes
+- [x] T027 Update `ModelLibraryViewModel` to use `ModelCatalogUseCase` instead of calling repository directly
+- [x] T028 Update `HuggingFaceLibraryViewModel` to use `HuggingFaceCatalogUseCase` instead of calling repository directly
+- [x] T029 Update `SettingsViewModel` to use `ApiProviderConfigUseCase` instead of calling repository directly
+- [x] T030 Update `ImageGalleryViewModel` to use `ImageGalleryUseCase` instead of calling repository directly
+- [x] T031 Update `ChatViewModel` to use `ConversationUseCase` instead of calling repository directly
+- [x] T032 Update `ImageGenerationViewModel` to use `ImageGalleryUseCase` instead of calling repository directly
+- [x] T033 Update Hilt dependency injection modules for new UseCases and repository interfaces
+- [x] T034 Update ViewModel unit tests to mock new UseCase dependencies
+- [x] T035 Update instrumentation tests for ViewModel behavior changes
 
 ### Phase 7: Cross-Layer Error Handling [US5]
 **Story Goal**: Implement consistent error handling patterns across all architectural layers

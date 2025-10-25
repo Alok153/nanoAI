@@ -70,6 +70,7 @@ class SettingsScreenContractTest {
       onDismissMigrationSuccess = {},
       onThemePreferenceChange = {},
       onVisualDensityChange = {},
+      onHighContrastChange = {},
       onHuggingFaceLoginClick = {},
       onHuggingFaceApiKeyClick = {},
       onHuggingFaceDisconnectClick = {},
@@ -95,12 +96,11 @@ class SettingsScreenContractTest {
     composeRule.onNodeWithText("Appearance").assertIsDisplayed()
     composeRule.onNodeWithText("Appearance").assertHasClickAction()
     composeRule.onNodeWithText("Appearance").performClick()
-    composeRule.waitUntilExactlyOneExists(
-      hasText("Switch between light, dark, or follow the system theme.")
-    )
-    composeRule
-      .onNodeWithText("Switch between light, dark, or follow the system theme.")
-      .assertIsDisplayed()
+    composeRule.waitUntilExactlyOneExists(hasText("System"))
+    composeRule.onNodeWithText("System").assertIsDisplayed()
+    composeRule.onNodeWithText("Light").assertIsDisplayed()
+    composeRule.onNodeWithText("Dark").assertIsDisplayed()
+    composeRule.onNodeWithText("AMOLED").assertIsDisplayed()
   }
 
   @Test

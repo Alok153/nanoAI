@@ -42,4 +42,9 @@ constructor(
   fun updateVisualDensity(density: VisualDensity) {
     viewModelScope.launch { settingsOperationsUseCase.updateVisualDensity(density) }
   }
+
+  /** Updates the high contrast enabled preference for the active user. */
+  fun updateHighContrastEnabled(enabled: Boolean) {
+    viewModelScope.launch { themeRepository.updateHighContrastEnabled(enabled) }
+  }
 }

@@ -19,19 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
-import com.vjaykrsna.nanoai.core.data.repository.ConnectivityRepository
 import com.vjaykrsna.nanoai.core.data.repository.NavigationRepository
-import com.vjaykrsna.nanoai.core.data.repository.ProgressRepository
-import com.vjaykrsna.nanoai.core.data.repository.ThemeRepository
-import com.vjaykrsna.nanoai.core.data.repository.UserProfileRepository
-import com.vjaykrsna.nanoai.feature.uiux.domain.CommandPaletteActionProvider
-import com.vjaykrsna.nanoai.feature.uiux.domain.ConnectivityOperationsUseCase
-import com.vjaykrsna.nanoai.feature.uiux.domain.JobOperationsUseCase
-import com.vjaykrsna.nanoai.feature.uiux.domain.NavigationOperationsUseCase
-import com.vjaykrsna.nanoai.feature.uiux.domain.ProgressCenterCoordinator
-import com.vjaykrsna.nanoai.feature.uiux.domain.QueueJobUseCase
-import com.vjaykrsna.nanoai.feature.uiux.domain.SettingsOperationsUseCase
-import com.vjaykrsna.nanoai.feature.uiux.domain.UndoActionUseCase
 import com.vjaykrsna.nanoai.feature.uiux.ui.shell.ShellUiEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -45,11 +33,21 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 /** ViewModel coordinating shell layout state and user intents. */
-private const val LAYOUT_INDEX = 0
-private const val PALETTE_INDEX = 1
-private const val BANNER_INDEX = 2
-private const val PREFS_INDEX = 3
-private const val CHAT_STATE_INDEX = 4
+
+// Constants for UI state combine lambda array indices
+private const val WINDOW_SIZE_CLASS_INDEX = 0
+private const val ACTIVE_MODE_INDEX = 1
+private const val LEFT_DRAWER_OPEN_INDEX = 2
+private const val RIGHT_DRAWER_OPEN_INDEX = 3
+private const val ACTIVE_RIGHT_PANEL_INDEX = 4
+private const val RECENT_ACTIVITY_INDEX = 5
+private const val UNDO_PAYLOAD_INDEX = 6
+private const val COMMAND_PALETTE_STATE_INDEX = 7
+private const val PROGRESS_JOBS_INDEX = 8
+private const val CHAT_STATE_INDEX = 9
+
+// Constants for flow sharing
+private const val UI_STATE_SUBSCRIPTION_TIMEOUT_MS = 5000L
 
 private data class ModeCardDefinition(
   val id: ModeId,
@@ -127,19 +125,6 @@ class ShellViewModel
 @Inject
 constructor(
   private val navigationRepository: NavigationRepository,
-  private val connectivityRepository: ConnectivityRepository,
-  private val themeRepository: ThemeRepository,
-  private val progressRepository: ProgressRepository,
-  private val userProfileRepository: UserProfileRepository,
-  private val actionProvider: CommandPaletteActionProvider,
-  private val progressCoordinator: ProgressCenterCoordinator,
-  // Consolidated UseCases for domain operations
-  private val navigationOperationsUseCase: NavigationOperationsUseCase,
-  private val connectivityOperationsUseCase: ConnectivityOperationsUseCase,
-  private val queueJobUseCase: QueueJobUseCase,
-  private val jobOperationsUseCase: JobOperationsUseCase,
-  private val undoActionUseCase: UndoActionUseCase,
-  private val settingsOperationsUseCase: SettingsOperationsUseCase,
   // Sub-ViewModels for focused responsibilities
   private val navigationViewModel: NavigationViewModel,
   private val connectivityViewModel: ConnectivityViewModel,
@@ -205,16 +190,16 @@ constructor(
         progressViewModel.progressJobs,
         _chatState,
       ) { values ->
-        val windowSizeClass = values[0] as WindowSizeClass
-        val activeMode = values[1] as ModeId
-        val isLeftDrawerOpen = values[2] as Boolean
-        val isRightDrawerOpen = values[3] as Boolean
-        val activeRightPanel = values[4] as RightPanel?
-        val recentActivity = values[5] as List<RecentActivityItem>
-        val undoPayload = values[6] as UndoPayload?
-        val commandPaletteState = values[7] as CommandPaletteState
-        val jobs = values[8] as List<ProgressJob>
-        val chatState = values[9] as ChatState?
+        val windowSizeClass = values[WINDOW_SIZE_CLASS_INDEX] as WindowSizeClass
+        val activeMode = values[ACTIVE_MODE_INDEX] as ModeId
+        val isLeftDrawerOpen = values[LEFT_DRAWER_OPEN_INDEX] as Boolean
+        val isRightDrawerOpen = values[RIGHT_DRAWER_OPEN_INDEX] as Boolean
+        val activeRightPanel = values[ACTIVE_RIGHT_PANEL_INDEX] as RightPanel?
+        val recentActivity = values[RECENT_ACTIVITY_INDEX] as List<RecentActivityItem>
+        val undoPayload = values[UNDO_PAYLOAD_INDEX] as UndoPayload?
+        val commandPaletteState = values[COMMAND_PALETTE_STATE_INDEX] as CommandPaletteState
+        val jobs = values[PROGRESS_JOBS_INDEX] as List<ProgressJob>
+        val chatState = values[CHAT_STATE_INDEX] as ChatState?
 
         val normalizedLayout =
           ShellLayoutState(
@@ -236,14 +221,14 @@ constructor(
           commandPalette = commandPaletteState,
           connectivityBanner = normalizedBanner,
           preferences = UiPreferenceSnapshot(), // TODO
-          modeCards = buildModeCards(activeMode, true), // TODO
+          modeCards = buildModeCards(true), // TODO
           quickActions = buildQuickActions(activeMode),
           chatState = chatState,
         )
       }
       .stateIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
+        started = SharingStarted.WhileSubscribed(UI_STATE_SUBSCRIPTION_TIMEOUT_MS),
         initialValue = buildInitialState(),
       )
 
@@ -294,7 +279,7 @@ constructor(
     _chatState.value = chatState
   }
 
-  private fun buildModeCards(activeMode: ModeId, isOnline: Boolean): List<ModeCard> =
+  private fun buildModeCards(isOnline: Boolean): List<ModeCard> =
     MODE_CARD_DEFINITIONS.filter { !it.requiresOnline || isOnline }
       .map { definition ->
         ModeCard(

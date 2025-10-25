@@ -32,10 +32,7 @@ class NavigationViewModelTest {
         }
 
       val viewModel =
-        NavigationViewModel(
-          fakeRepos.navigationRepository,
-          navigationOperationsUseCase,
-        )
+        NavigationViewModel(fakeRepos.navigationRepository, navigationOperationsUseCase)
 
       viewModel.openMode(ModeId.CHAT)
       advanceUntilIdle()
@@ -58,10 +55,7 @@ class NavigationViewModelTest {
         }
 
       val viewModel =
-        NavigationViewModel(
-          fakeRepos.navigationRepository,
-          navigationOperationsUseCase,
-        )
+        NavigationViewModel(fakeRepos.navigationRepository, navigationOperationsUseCase)
 
       viewModel.toggleRightDrawer(RightPanel.MODEL_SELECTOR)
       advanceUntilIdle()

@@ -18,6 +18,14 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 
 /** ViewModel handling navigation state and operations. */
+private const val WINDOW_STATE_INDEX = 0
+private const val ACTIVE_MODE_INDEX = 1
+private const val LEFT_DRAWER_INDEX = 2
+private const val RIGHT_DRAWER_INDEX = 3
+private const val ACTIVE_PANEL_INDEX = 4
+private const val UNDO_STATE_INDEX = 5
+private const val COMMAND_PALETTE_INDEX = 6
+
 class NavigationViewModel
 @Inject
 constructor(
@@ -41,13 +49,13 @@ constructor(
         _undoState,
         navigationRepository.commandPaletteState,
       ) { values ->
-        val windowState = values[0] as WindowSizeClass
-        val activeMode = values[1] as ModeId
-        val leftDrawerState = values[2] as DrawerState
-        val rightDrawerState = values[3] as DrawerState
-        val activeRightPanel = values[4] as RightPanel?
-        val undoState = values[5] as UndoState
-        val commandPalette = values[6] as CommandPaletteState
+        val windowState = values[WINDOW_STATE_INDEX] as WindowSizeClass
+        val activeMode = values[ACTIVE_MODE_INDEX] as ModeId
+        val leftDrawerState = values[LEFT_DRAWER_INDEX] as DrawerState
+        val rightDrawerState = values[RIGHT_DRAWER_INDEX] as DrawerState
+        val activeRightPanel = values[ACTIVE_PANEL_INDEX] as RightPanel?
+        val undoState = values[UNDO_STATE_INDEX] as UndoState
+        val commandPalette = values[COMMAND_PALETTE_INDEX] as CommandPaletteState
 
         NavigationState(
           windowState = windowState,

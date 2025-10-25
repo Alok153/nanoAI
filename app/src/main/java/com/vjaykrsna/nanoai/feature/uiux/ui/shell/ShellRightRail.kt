@@ -1,3 +1,5 @@
+@file:Suppress("MatchingDeclarationName")
+
 package com.vjaykrsna.nanoai.feature.uiux.ui.shell
 
 import androidx.compose.animation.AnimatedVisibility
