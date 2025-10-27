@@ -9,9 +9,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.test.filters.LargeTest
 import com.vjaykrsna.nanoai.MainActivity
-import com.vjaykrsna.nanoai.shared.testing.TestEnvironmentRule
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
+import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
@@ -26,15 +24,13 @@ import org.junit.Test
  * - Retry CTA enqueues WorkManager job again (`model_integrity_retry_button`).
  */
 @LargeTest
-@HiltAndroidTest
 @Ignore(
   "Model integrity workflow not implemented yet; see specs/005-improve-test-coverage/tasks.md"
 )
 class ModelDownloadScenarioTest {
 
-  @JvmField @Rule(order = 0) val hiltRule = HiltAndroidRule(this)
-  @JvmField @Rule(order = 1) val environmentRule = TestEnvironmentRule()
-  @JvmField @Rule(order = 2) val composeRule = createAndroidComposeRule<MainActivity>()
+  @JvmField @Rule val environmentRule = TestEnvironmentRule()
+  @JvmField @Rule val composeRule = createAndroidComposeRule<MainActivity>()
 
   @Test
   fun corruptDownload_surfacesActionableError_and_allowsRetry() {

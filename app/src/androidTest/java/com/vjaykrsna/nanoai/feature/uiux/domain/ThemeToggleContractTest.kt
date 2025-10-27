@@ -1,4 +1,4 @@
-package com.vjaykrsna.nanoai.feature.uiux.domain
+package com.vjaykrsna.nanoai.feature.uiux.contracts
 
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
@@ -8,9 +8,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.test.filters.LargeTest
 import com.vjaykrsna.nanoai.MainActivity
-import com.vjaykrsna.nanoai.shared.testing.TestEnvironmentRule
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
+import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
@@ -20,13 +18,11 @@ import org.junit.Test
  * signal.
  */
 @LargeTest
-@HiltAndroidTest
 @Ignore("Theme toggle contract pending retained preferences storage; see specs/003-UI-UX/plan.md")
 class ThemeToggleContractTest {
 
-  @JvmField @Rule(order = 0) val hiltRule = HiltAndroidRule(this)
-  @JvmField @Rule(order = 1) val environmentRule = TestEnvironmentRule()
-  @JvmField @Rule(order = 2) val composeRule = createAndroidComposeRule<MainActivity>()
+  @JvmField @Rule val environmentRule = TestEnvironmentRule()
+  @JvmField @Rule val composeRule = createAndroidComposeRule<MainActivity>()
 
   @Test
   fun themeToggle_switchPresent_andInteractive() {

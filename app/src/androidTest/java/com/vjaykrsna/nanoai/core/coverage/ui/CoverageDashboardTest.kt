@@ -1,26 +1,22 @@
-package com.vjaykrsna.nanoai.core.coverage.ui
+package com.vjaykrsna.nanoai.coverage.ui
 
-import androidx.activity.ComponentActivity
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertTextContains
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.vjaykrsna.nanoai.core.coverage.model.CoverageMetric
-import com.vjaykrsna.nanoai.core.coverage.model.TestLayer
-import com.vjaykrsna.nanoai.core.coverage.ui.CoverageDashboardBanner.OFFLINE_ANNOUNCEMENT
-import com.vjaykrsna.nanoai.core.coverage.ui.CoverageDashboardBanner.offline
+import com.vjaykrsna.nanoai.coverage.model.CoverageMetric
+import com.vjaykrsna.nanoai.coverage.model.TestLayer
+import com.vjaykrsna.nanoai.coverage.ui.CoverageDashboardBanner.OFFLINE_ANNOUNCEMENT
+import com.vjaykrsna.nanoai.coverage.ui.CoverageDashboardBanner.offline
+import com.vjaykrsna.nanoai.shared.ui.theme.NanoAITheme
 import java.io.IOException
 import org.junit.Test
-import org.junit.runner.RunWith
 
-@RunWith(AndroidJUnit4::class)
 class CoverageDashboardTest {
 
-  val composeRule = createAndroidComposeRule<ComponentActivity>()
+  val composeRule = createComposeRule()
 
   @Test
   fun coverageLayersDisplayPercentagesAndTargets() {
@@ -46,7 +42,7 @@ class CoverageDashboardTest {
       )
 
     composeRule.setContent {
-      MaterialTheme {
+      NanoAITheme(dynamicColor = false) {
         CoverageDashboardScreen(
           state = state,
           onRefresh = {},
@@ -99,7 +95,7 @@ class CoverageDashboardTest {
       )
 
     composeRule.setContent {
-      MaterialTheme {
+      NanoAITheme(dynamicColor = false) {
         CoverageDashboardScreen(
           state = state,
           onRefresh = {},
@@ -145,7 +141,7 @@ class CoverageDashboardTest {
       )
 
     composeRule.setContent {
-      MaterialTheme {
+      NanoAITheme(dynamicColor = false) {
         CoverageDashboardScreen(
           state = state,
           onRefresh = {},

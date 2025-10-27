@@ -11,7 +11,7 @@ import com.vjaykrsna.nanoai.feature.library.domain.ModelCatalogUseCase
 import com.vjaykrsna.nanoai.feature.library.domain.RefreshModelCatalogUseCase
 import com.vjaykrsna.nanoai.feature.library.presentation.DownloadManager
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryViewModel
-import com.vjaykrsna.nanoai.shared.testing.FakeModelCatalogRepository
+import com.vjaykrsna.nanoai.testing.FakeModelCatalogRepository
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk

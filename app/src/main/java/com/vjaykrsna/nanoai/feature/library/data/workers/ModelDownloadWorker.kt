@@ -10,7 +10,6 @@ import androidx.work.workDataOf
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.common.NotificationHelper
 import com.vjaykrsna.nanoai.core.common.NotificationHelper.Companion.NOTIFICATION_ID_DOWNLOAD_PROGRESS
-import com.vjaykrsna.nanoai.core.telemetry.TelemetryReporter
 import com.vjaykrsna.nanoai.feature.library.data.catalog.DownloadManifest
 import com.vjaykrsna.nanoai.feature.library.data.catalog.VerificationOutcome
 import com.vjaykrsna.nanoai.feature.library.data.daos.DownloadTaskDao
@@ -19,6 +18,7 @@ import com.vjaykrsna.nanoai.feature.library.data.daos.ModelPackageWriteDao
 import com.vjaykrsna.nanoai.feature.library.domain.DownloadStatus
 import com.vjaykrsna.nanoai.feature.library.domain.InstallState
 import com.vjaykrsna.nanoai.feature.library.domain.ModelManifestUseCase
+import com.vjaykrsna.nanoai.telemetry.TelemetryReporter
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import java.io.File

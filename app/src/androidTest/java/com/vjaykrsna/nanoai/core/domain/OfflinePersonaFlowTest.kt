@@ -1,4 +1,4 @@
-package com.vjaykrsna.nanoai.core.domain
+package com.vjaykrsna.nanoai.persona
 
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
@@ -8,10 +8,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.test.filters.LargeTest
 import com.vjaykrsna.nanoai.MainActivity
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Ignore
-import org.junit.Rule
 import org.junit.Test
 
 /**
@@ -24,11 +21,11 @@ import org.junit.Test
  *   (`offline_persona_retry`).
  */
 @LargeTest
-@HiltAndroidTest
 @Ignore("Persona offline queue flow pending feature work; see specs/003-UI-UX/plan.md")
 class OfflinePersonaFlowTest {
-  @JvmField @Rule(order = 0) val hiltRule = HiltAndroidRule(this)
-  @JvmField @Rule(order = 1) val composeRule = createAndroidComposeRule<MainActivity>()
+  @org.junit.jupiter.api.extension.RegisterExtension
+  @JvmField
+  val composeRule = createAndroidComposeRule<MainActivity>()
 
   @Test
   fun offlinePersonaQueue_replaysActions_afterNetworkRestored() {

@@ -6,10 +6,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.vjaykrsna.nanoai.core.domain.model.ApiProviderConfig
 import com.vjaykrsna.nanoai.core.model.APIType
-import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Test
 
-@HiltAndroidTest
 class SettingsScreenProviderManagementTest : BaseSettingsScreenTest() {
 
   @Test

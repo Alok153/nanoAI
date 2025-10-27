@@ -1,4 +1,4 @@
-package com.vjaykrsna.nanoai.feature.uiux.domain
+package com.vjaykrsna.nanoai.feature.uiux.contracts
 
 import androidx.compose.ui.semantics.CollectionInfo
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -13,9 +13,7 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.test.filters.LargeTest
 import com.vjaykrsna.nanoai.MainActivity
-import com.vjaykrsna.nanoai.shared.testing.TestEnvironmentRule
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
+import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
@@ -25,12 +23,10 @@ import org.junit.Test
  * collapsible tools rail behavior. Assertions currently fail until the new UI exists.
  */
 @LargeTest
-@HiltAndroidTest
 @Ignore("Pending home hub production data wiring; see specs/003-UI-UX/plan.md")
 class HomeScreenContractTest {
-  @JvmField @Rule(order = 0) val hiltRule = HiltAndroidRule(this)
-  @JvmField @Rule(order = 1) val environmentRule = TestEnvironmentRule()
-  @JvmField @Rule(order = 2) val composeRule = createAndroidComposeRule<MainActivity>()
+  @JvmField @Rule val environmentRule = TestEnvironmentRule()
+  @JvmField @Rule val composeRule = createAndroidComposeRule<MainActivity>()
 
   @Test
   fun homeScreen_modeGrid_exposesColumnMetadata() {

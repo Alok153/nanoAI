@@ -1,14 +1,17 @@
-package com.vjaykrsna.nanoai.feature.uiux.ui
+package com.vjaykrsna.nanoai.feature.uiux.scenario
 
 import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.test.filters.LargeTest
-import com.vjaykrsna.nanoai.shared.testing.BaseInstrumentationTest
+import com.vjaykrsna.nanoai.MainActivity
+import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
 import org.junit.Ignore
+import org.junit.Rule
 import org.junit.Test
 
 /**
@@ -22,7 +25,10 @@ import org.junit.Test
  */
 @LargeTest
 @Ignore("Offline scenario blocked on debug toggles; see specs/003-UI-UX/plan.md")
-class OfflineModeScenarioTest : BaseInstrumentationTest() {
+class OfflineModeScenarioTest {
+  @JvmField @Rule val environmentRule = TestEnvironmentRule()
+
+  @JvmField @Rule val composeRule = createAndroidComposeRule<MainActivity>()
 
   @Test
   fun offlineMode_displaysBanner_disablesCtas_andQueuesRetry() {

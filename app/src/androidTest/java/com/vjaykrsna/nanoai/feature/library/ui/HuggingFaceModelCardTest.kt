@@ -5,7 +5,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceModelSummary
-import com.vjaykrsna.nanoai.shared.testing.TestingTheme
+import com.vjaykrsna.nanoai.testing.TestingTheme
 import kotlinx.datetime.Instant
 import org.junit.Test
 

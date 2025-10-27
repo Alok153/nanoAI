@@ -1,4 +1,4 @@
-package com.vjaykrsna.nanoai.feature.uiux.ui
+package com.vjaykrsna.nanoai.feature.uiux
 
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
@@ -28,7 +28,7 @@ import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellLayoutState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellUiState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.UiPreferenceSnapshot
 import com.vjaykrsna.nanoai.feature.uiux.presentation.UndoPayload
-import com.vjaykrsna.nanoai.shared.ui.shell.NanoShellScaffold
+import com.vjaykrsna.nanoai.feature.uiux.ui.shell.NanoShellScaffold
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Test
 

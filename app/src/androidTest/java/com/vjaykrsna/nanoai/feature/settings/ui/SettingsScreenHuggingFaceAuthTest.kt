@@ -5,10 +5,8 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.vjaykrsna.nanoai.feature.settings.domain.huggingface.HuggingFaceAuthState
-import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Test
 
-@HiltAndroidTest
 class SettingsScreenHuggingFaceAuthTest : BaseSettingsScreenTest() {
 
   @Test
