@@ -3,10 +3,8 @@ package com.vjaykrsna.nanoai.feature.chat.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
-import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.data.repository.ConversationRepository
 import com.vjaykrsna.nanoai.core.domain.model.ChatThread
-import com.vjaykrsna.nanoai.core.domain.usecase.GetConversationHistoryUseCase
-import com.vjaykrsna.nanoai.feature.chat.domain.ConversationUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.UUID
 import javax.inject.Inject
@@ -28,8 +26,7 @@ import kotlinx.coroutines.launch
 class HistoryViewModel
 @Inject
 constructor(
-  private val getConversationHistoryUseCase: GetConversationHistoryUseCase,
-  private val conversationUseCase: ConversationUseCase,
+  private val conversationRepository: ConversationRepository,
   @Suppress("UnusedPrivateProperty")
   @MainImmediateDispatcher
   private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
@@ -51,16 +48,11 @@ constructor(
   fun loadThreads() {
     _isLoading.value = true
     viewModelScope.launch {
-      when (val result = getConversationHistoryUseCase()) {
-        is NanoAIResult.Success -> {
-          _threads.value = result.value
-        }
-        is NanoAIResult.RecoverableError -> {
-          _errors.emit(HistoryError.LoadFailed(result.message ?: "Unknown error"))
-        }
-        is NanoAIResult.FatalError -> {
-          _errors.emit(HistoryError.LoadFailed(result.message ?: "Unknown error"))
-        }
+      try {
+        val threads = conversationRepository.getAllThreads()
+        _threads.value = threads
+      } catch (e: Exception) {
+        _errors.emit(HistoryError.LoadFailed(e.message ?: "Unknown error"))
       }
       _isLoading.value = false
     }
@@ -68,32 +60,22 @@ constructor(
 
   fun archiveThread(threadId: java.util.UUID) {
     viewModelScope.launch {
-      when (conversationUseCase.archiveThread(threadId)) {
-        is NanoAIResult.Success -> {
-          loadThreads() // Reload after archive
-        }
-        is NanoAIResult.RecoverableError -> {
-          _errors.emit(HistoryError.ArchiveFailed("Failed to archive thread"))
-        }
-        is NanoAIResult.FatalError -> {
-          _errors.emit(HistoryError.ArchiveFailed("Failed to archive thread"))
-        }
+      try {
+        conversationRepository.archiveThread(threadId)
+        loadThreads() // Reload after archive
+      } catch (e: Exception) {
+        _errors.emit(HistoryError.ArchiveFailed(e.message ?: "Unknown error"))
       }
     }
   }
 
   fun deleteThread(threadId: java.util.UUID) {
     viewModelScope.launch {
-      when (conversationUseCase.deleteThread(threadId)) {
-        is NanoAIResult.Success -> {
-          loadThreads() // Reload after delete
-        }
-        is NanoAIResult.RecoverableError -> {
-          _errors.emit(HistoryError.DeleteFailed("Failed to delete thread"))
-        }
-        is NanoAIResult.FatalError -> {
-          _errors.emit(HistoryError.DeleteFailed("Failed to delete thread"))
-        }
+      try {
+        conversationRepository.deleteThread(threadId)
+        loadThreads() // Reload after delete
+      } catch (e: Exception) {
+        _errors.emit(HistoryError.DeleteFailed(e.message ?: "Unknown error"))
       }
     }
   }
