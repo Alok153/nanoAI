@@ -2,13 +2,15 @@ package com.vjaykrsna.nanoai.feature.settings.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
@@ -18,74 +20,153 @@ import com.vjaykrsna.nanoai.feature.uiux.ui.components.ThemePreferenceChips
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.VisualDensityChips
 
 @Composable
-internal fun AppearanceThemeSection(
+internal fun AppearanceThemeCard(
   uiUxState: SettingsUiUxState,
   onThemeChange: (ThemePreference) -> Unit,
+  onHighContrastChange: (Boolean) -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  SettingsSection(title = "Theme", modifier = modifier) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-      Text(
-        text = "Switch between light, dark, AMOLED (pitch black), or follow the system theme.",
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
+  SettingsInteractiveCard(
+    title = "Theme & High Contrast",
+    modifier = modifier,
+    infoContent = {
+      Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+          text =
+            "Theme options control the overall appearance and color scheme of the app interface.",
+          style = MaterialTheme.typography.bodyMedium,
+        )
+        Text(
+          text = "Available themes:",
+          style = MaterialTheme.typography.labelMedium,
+          color = MaterialTheme.colorScheme.primary,
+        )
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+          Text(
+            "• System: Matches your device's theme setting",
+            style = MaterialTheme.typography.bodySmall,
+          )
+          Text(
+            "• Light: Clean, bright interface for well-lit environments",
+            style = MaterialTheme.typography.bodySmall,
+          )
+          Text(
+            "• Dark: Easy on the eyes in low-light conditions",
+            style = MaterialTheme.typography.bodySmall,
+          )
+          Text(
+            "• AMOLED: Pure black background for OLED screens",
+            style = MaterialTheme.typography.bodySmall,
+          )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+          text =
+            "High contrast increases color differences for better accessibility. Use this if you have visual impairments or are in bright sunlight.",
+          style = MaterialTheme.typography.bodyMedium,
+        )
+      }
+    },
+  ) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
       ThemePreferenceChips(
         selected = uiUxState.themePreference,
         onSelect = onThemeChange,
         modifier = Modifier.fillMaxWidth(),
+        supportedThemes =
+          listOf(
+            ThemePreference.SYSTEM,
+            ThemePreference.LIGHT,
+            ThemePreference.DARK,
+            ThemePreference.AMOLED,
+          ),
       )
+
+      Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
+        Text(text = "High contrast", style = MaterialTheme.typography.bodyLarge)
+        Switch(checked = uiUxState.highContrastEnabled, onCheckedChange = onHighContrastChange)
+      }
     }
   }
 }
 
 @Composable
-internal fun AppearanceDensitySection(
+internal fun AppearanceDensityCard(
   uiUxState: SettingsUiUxState,
   onDensityChange: (VisualDensity) -> Unit,
   modifier: Modifier = Modifier,
 ) {
   val selectedDensity =
     if (uiUxState.compactModeEnabled) VisualDensity.COMPACT else VisualDensity.DEFAULT
-  SettingsSection(title = "Layout density", modifier = modifier) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-      Text(
-        text = "Pick how compact lists and rails should feel across the app.",
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-      VisualDensityChips(
-        selected = selectedDensity,
-        onSelect = onDensityChange,
-        modifier = Modifier.fillMaxWidth(),
-        onUnsupportedSelect = null,
-      )
-      HorizontalDivider()
-      Text(
-        text = "Spacious mode is coming soon and will enable a more relaxed layout for tablets.",
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-    }
+
+  SettingsInteractiveCard(
+    title = "Layout Density",
+    modifier = modifier,
+    infoContent = {
+      Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+          text = "Layout density controls how much space UI elements take up on screen.",
+          style = MaterialTheme.typography.bodyMedium,
+        )
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+          Text(
+            text = "Default:",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.primary,
+          )
+          Text(
+            text =
+              "Standard spacing between elements. Good balance of information density and readability.",
+            style = MaterialTheme.typography.bodySmall,
+          )
+          Text(
+            text = "Compact:",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.primary,
+          )
+          Text(
+            text =
+              "Tighter spacing for more content on screen. Better for small screens or users who want to see more information at once.",
+            style = MaterialTheme.typography.bodySmall,
+          )
+        }
+        Text(
+          text = "Spacious mode coming in future updates for tablet users.",
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
+    },
+  ) {
+    VisualDensityChips(
+      selected = selectedDensity,
+      onSelect = onDensityChange,
+      modifier = Modifier.fillMaxWidth(),
+      onUnsupportedSelect = null,
+    )
   }
 }
 
 @Composable
-internal fun AppearanceTypographyPlaceholder(modifier: Modifier = Modifier) {
-  SettingsSection(title = "Typography & spacing", modifier = modifier) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-      Text(
-        text = "Adjusting font scale and chat bubble density will land in Phase 2.",
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-      Spacer(modifier = Modifier.height(8.dp))
-      SettingsPlaceholderCard(
-        description = "Custom font scale presets and per-surface density controls.",
-        supportingText =
-          "Specs for typography tokens live in specs/003-UI-UX/plan.md " +
-            "and will be wired once shared theming surfaces are ready.",
-      )
-    }
-  }
+internal fun AppearanceTypographyCard(modifier: Modifier = Modifier) {
+  SettingsInfoCard(
+    title = "Typography & Spacing",
+    infoText =
+      "Custom font scaling and text spacing controls will be available in a future update. Currently uses system font settings and standard Material 3 typography.",
+    modifier = modifier,
+  )
+}
+
+@Composable
+internal fun AppearanceAnimationPreferencesCard(modifier: Modifier = Modifier) {
+  SettingsInfoCard(
+    title = "Animation Preferences",
+    infoText =
+      "Animation speed controls and reduced motion settings will be available in a future update. Currently uses standard Material 3 motion guidelines for optimal user experience.",
+    modifier = modifier,
+  )
 }
