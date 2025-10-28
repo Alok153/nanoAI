@@ -267,6 +267,7 @@ dependencies {
   androidTestImplementation(libs.androidx.work.testing)
   androidTestImplementation(libs.mockwebserver)
   androidTestImplementation(libs.androidx.navigation.testing)
+  androidTestImplementation(libs.hilt.android.testing)
   kspAndroidTest(libs.hilt.compiler)
 }
 
