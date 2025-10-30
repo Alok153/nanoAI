@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -26,6 +24,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import com.vjaykrsna.nanoai.R
+import com.vjaykrsna.nanoai.feature.uiux.ui.components.primitives.NanoCard
 
 @Composable
 fun PrimaryActionCard(
@@ -40,7 +39,7 @@ fun PrimaryActionCard(
 
   val haptics = LocalHapticFeedback.current
 
-  Card(
+  NanoCard(
     onClick = {
       haptics.performHapticFeedback(HapticFeedbackType.LongPress)
       onClick()
@@ -51,27 +50,27 @@ fun PrimaryActionCard(
         stateDescription = "$description"
         role = Role.Button
       },
-    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-  ) {
-    Column(modifier = Modifier.padding(16.dp)) {
-      Text(text = title, style = MaterialTheme.typography.titleMedium)
-      Text(
-        text = description,
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-      Row(
-        modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
-        horizontalArrangement = Arrangement.End,
-        verticalAlignment = Alignment.CenterVertically,
-      ) {
-        Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null)
+    content = {
+      Column(modifier = Modifier.padding(16.dp)) {
+        Text(text = title, style = MaterialTheme.typography.titleMedium)
         Text(
-          text = stringResource(R.string.primary_action_card_run),
-          style = MaterialTheme.typography.labelLarge,
-          modifier = Modifier.padding(start = 4.dp),
+          text = description,
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        Row(
+          modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+          horizontalArrangement = Arrangement.End,
+          verticalAlignment = Alignment.CenterVertically,
+        ) {
+          Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null)
+          Text(
+            text = stringResource(R.string.primary_action_card_run),
+            style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.padding(start = 4.dp),
+          )
+        }
       }
-    }
-  }
+    },
+  )
 }

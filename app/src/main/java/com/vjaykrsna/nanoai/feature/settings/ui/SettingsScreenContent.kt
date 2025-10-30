@@ -41,6 +41,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoSpacing
+import com.vjaykrsna.nanoai.feature.uiux.ui.components.primitives.NanoCard
 import kotlinx.coroutines.launch
 
 // NOTE: Tab order designed to match user workflow - frequently changed settings first
@@ -281,25 +282,14 @@ private fun SettingsCategoryContent(
 
 @Composable
 internal fun MigrationSuccessCard(onDismiss: () -> Unit, modifier: Modifier = Modifier) {
-  Card(
-    modifier = modifier.fillMaxWidth(),
-    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-  ) {
-    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-      Text(
-        text = "Migration Successful",
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold,
-      )
-      Text(
-        text =
-          "Your provider credentials have been migrated to a more secure storage. " +
-            "For enhanced security, please rotate your provider credentials.",
-        style = MaterialTheme.typography.bodyMedium,
-      )
-      TextButton(onClick = onDismiss, modifier = Modifier.align(Alignment.End)) { Text("Dismiss") }
-    }
-  }
+  NanoCard(
+    modifier = modifier,
+    title = "Migration Successful",
+    supportingText =
+      "Your provider credentials have been migrated to a more secure storage. " +
+        "For enhanced security, please rotate your provider credentials.",
+    trailingContent = { TextButton(onClick = onDismiss) { Text("Dismiss") } },
+  )
 }
 
 /**

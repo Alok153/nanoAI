@@ -6,7 +6,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -93,78 +92,83 @@ internal fun ModelManagementCard(
   ) {
     Column(
       modifier = Modifier.fillMaxWidth().padding(16.dp),
-      verticalArrangement = Arrangement.spacedBy(12.dp),
+      verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
+      // Top row: title and status
       Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Top,
       ) {
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-          Text(
-            text = model.displayName,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-          )
-          model.author
-            ?.takeIf { it.isNotBlank() }
-            ?.let { author ->
-              Text(
-                text = author,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-              )
-            }
-            ?: Text(
-              text = model.providerType.displayName(),
-              style = MaterialTheme.typography.bodySmall,
-              color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-          CapabilityRow(capabilities = model.capabilities)
-
-          // Enhanced metadata row for consistency with HuggingFace models
-          val allTags = buildList {
-            model.license?.takeIf { it.isNotBlank() }?.let { add("License: $it") }
-            if (model.architectures.isNotEmpty()) {
-              add("Arch: ${model.architectures.joinToString(", ")}")
-            }
-            model.modelType?.takeIf { it.isNotBlank() }?.let { add("Type: $it") }
-            if (model.languages.isNotEmpty()) {
-              add("Lang: ${model.languages.joinToString(", ")}")
-            }
-          }
-
-          if (allTags.isNotEmpty()) {
-            Text(
-              text = allTags.joinToString(" • "),
-              style = MaterialTheme.typography.bodySmall,
-              color = MaterialTheme.colorScheme.onSurfaceVariant,
-              maxLines = 1,
-              overflow = TextOverflow.Ellipsis,
-            )
-          }
-
-          // Summary/description when available
-          model.summary
-            ?.takeIf { it.isNotBlank() }
-            ?.let { summary ->
-              Text(
-                text = summary,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-              )
-            }
-        }
+        Text(
+          text = model.displayName,
+          style = MaterialTheme.typography.titleMedium,
+          fontWeight = FontWeight.SemiBold,
+          maxLines = 1,
+          overflow = TextOverflow.Ellipsis,
+          modifier = Modifier.weight(1f),
+        )
         StatusBadge(state = model.installState)
       }
 
-      FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+      // Author
+      model.author
+        ?.takeIf { it.isNotBlank() }
+        ?.let { author ->
+          Text(
+            text = author,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+          )
+        }
+        ?: Text(
+          text = model.providerType.displayName(),
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+
+      // Capabilities
+      CapabilityRow(capabilities = model.capabilities)
+
+      // Metadata
+      val allTags = buildList {
+        model.license?.takeIf { it.isNotBlank() }?.let { add("License: $it") }
+        if (model.architectures.isNotEmpty()) {
+          add("Arch: ${model.architectures.joinToString(", ")}")
+        }
+        model.modelType?.takeIf { it.isNotBlank() }?.let { add("Type: $it") }
+        if (model.languages.isNotEmpty()) {
+          add("Lang: ${model.languages.joinToString(", ")}")
+        }
+      }
+      if (allTags.isNotEmpty()) {
+        Text(
+          text = allTags.joinToString(" • "),
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+          maxLines = 2,
+          overflow = TextOverflow.Ellipsis,
+        )
+      }
+
+      // Summary
+      model.summary
+        ?.takeIf { it.isNotBlank() }
+        ?.let { summary ->
+          Text(
+            text = summary,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 3,
+            overflow = TextOverflow.Ellipsis,
+          )
+        }
+
+      // Bottom row: size, updated, buttons
+      Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
       ) {
         Text(
           text = formatSize(model.sizeBytes),
@@ -176,45 +180,44 @@ internal fun ModelManagementCard(
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-      }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+          FilledTonalButton(
+            onClick = onPrimaryAction,
+            modifier =
+              Modifier.semantics {
+                contentDescription = "${primaryActionLabel} ${model.displayName}".trim()
+              },
+          ) {
+            Icon(primaryActionIcon, contentDescription = null)
+            Spacer(modifier = Modifier.size(8.dp))
+            Text(primaryActionLabel)
+          }
 
-      Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        FilledTonalButton(
-          onClick = onPrimaryAction,
-          modifier =
-            Modifier.semantics {
-              contentDescription = "${primaryActionLabel} ${model.displayName}".trim()
-            },
-        ) {
-          Icon(primaryActionIcon, contentDescription = null)
-          Spacer(modifier = Modifier.size(8.dp))
-          Text(primaryActionLabel)
-        }
-
-        if (secondaryActionLabel != null && onSecondaryAction != null) {
-          if (emphasizeSecondary) {
-            OutlinedButton(
-              onClick = onSecondaryAction,
-              modifier =
-                Modifier.semantics {
-                  contentDescription = "${secondaryActionLabel} ${model.displayName}".trim()
-                },
-            ) {
-              Icon(secondaryActionIcon, contentDescription = null)
-              Spacer(modifier = Modifier.size(8.dp))
-              Text(secondaryActionLabel)
-            }
-          } else {
-            TextButton(
-              onClick = onSecondaryAction,
-              modifier =
-                Modifier.semantics {
-                  contentDescription = "${secondaryActionLabel} ${model.displayName}".trim()
-                },
-            ) {
-              Icon(secondaryActionIcon, contentDescription = null)
-              Spacer(modifier = Modifier.size(8.dp))
-              Text(secondaryActionLabel)
+          if (secondaryActionLabel != null && onSecondaryAction != null) {
+            if (emphasizeSecondary) {
+              OutlinedButton(
+                onClick = onSecondaryAction,
+                modifier =
+                  Modifier.semantics {
+                    contentDescription = "${secondaryActionLabel} ${model.displayName}".trim()
+                  },
+              ) {
+                Icon(secondaryActionIcon, contentDescription = null)
+                Spacer(modifier = Modifier.size(8.dp))
+                Text(secondaryActionLabel)
+              }
+            } else {
+              TextButton(
+                onClick = onSecondaryAction,
+                modifier =
+                  Modifier.semantics {
+                    contentDescription = "${secondaryActionLabel} ${model.displayName}".trim()
+                  },
+              ) {
+                Icon(secondaryActionIcon, contentDescription = null)
+                Spacer(modifier = Modifier.size(8.dp))
+                Text(secondaryActionLabel)
+              }
             }
           }
         }
@@ -342,8 +345,8 @@ private fun CapabilityRow(capabilities: Collection<String>) {
 
   val scrollState = rememberScrollState()
   Row(
-    modifier = Modifier.horizontalScroll(scrollState),
-    horizontalArrangement = Arrangement.spacedBy(8.dp),
+    modifier = Modifier.fillMaxWidth().horizontalScroll(scrollState),
+    horizontalArrangement = Arrangement.spacedBy(4.dp),
     verticalAlignment = Alignment.CenterVertically,
   ) {
     displayTags.take(MAX_CAPABILITY_CHIPS).forEach { capability ->
