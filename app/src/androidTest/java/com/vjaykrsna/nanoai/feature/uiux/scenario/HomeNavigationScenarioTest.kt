@@ -11,6 +11,8 @@ import androidx.compose.ui.test.performClick
 import androidx.test.filters.LargeTest
 import com.vjaykrsna.nanoai.MainActivity
 import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
@@ -21,11 +23,13 @@ import org.junit.Test
  */
 @LargeTest
 @OptIn(ExperimentalTestApi::class)
+@HiltAndroidTest
 @Ignore("Scenario blocked on home hub data feed; see specs/003-UI-UX/plan.md")
 class HomeNavigationScenarioTest {
 
-  @JvmField @Rule val environmentRule = TestEnvironmentRule()
-  @JvmField @Rule val composeRule = createAndroidComposeRule<MainActivity>()
+  @JvmField @Rule(order = 0) val hiltRule = HiltAndroidRule(this)
+  @JvmField @Rule(order = 1) val environmentRule = TestEnvironmentRule()
+  @JvmField @Rule(order = 2) val composeRule = createAndroidComposeRule<MainActivity>()
 
   @Test
   fun homeScreen_expandTools_and_triggerRecentAction() {

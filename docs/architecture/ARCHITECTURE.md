@@ -1,93 +1,189 @@
 # nanoAI Architecture
 
-## System Overview
+## Clean Architecture Overview
 
-nanoAI follows clean architecture with unidirectional data flow from UI → Domain → Data layers. The codebase uses a primary app module with feature-based organization and performance benchmarking.
+nanoAI implements **Clean Architecture** with strict separation of concerns across four distinct layers:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  UI Layer (Presentation)                                    │
+│  ├── Compose Screens & Components                           │
+│  ├── ViewModels (UI State Orchestration)                    │
+│  └── Navigation & UI State Management                       │
+├─────────────────────────────────────────────────────────────┤
+│  Domain Layer (Business Logic)                              │
+│  ├── UseCases (Single Responsibility Business Operations)   │
+│  ├── Business Models & Validation                           │
+│  └── NanoAIResult<T> (Consistent Error Handling)            │
+├─────────────────────────────────────────────────────────────┤
+│  Data Layer (Infrastructure)                                │
+│  ├── Repositories (Data Access Abstraction)                 │
+│  ├── DAOs & Network Clients                                 │
+│  └── External Service Integrations                          │
+├─────────────────────────────────────────────────────────────┤
+│  Core Layer (Cross-cutting Concerns)                        │
+│  ├── Dependency Injection (Hilt)                            │
+│  ├── Common Utilities & Extensions                          │
+│  └── Telemetry & Error Reporting                            │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Key Principles:**
+- **Dependency Rule**: Inner layers know nothing about outer layers
+- **Single Responsibility**: Each component has one reason to change
+- **Dependency Inversion**: High-level modules don't depend on low-level modules
+- **Testability**: Each layer can be tested in isolation
+
+## System Architecture
+
+### Application Structure
 
 ```
 🎯 Application Module (:app)
-├── MainActivity - single activity architecture
-├── Feature orchestration (chat, library, settings, etc.)
-└── Core systems integration
+├── MainActivity - Single activity architecture
+├── Feature Modules (6 features with clean separation)
+└── Core Infrastructure (Cross-cutting services)
 
 ⚡ Benchmark Module (:macrobenchmark)
-├── Performance testing for :app
-├── Cold start measurements
-├── Frame rate analysis & Jank detection
+├── Performance validation suite
+├── Cold start & frame rate analysis
 └── Memory profiling & baseline validation
-
-Feature Organization (:app/feature/*)
-├── 6 active features with clean architecture layers
-├── data/ - repositories, DAOs, service interactions
-├── domain/ - use cases, business models, validation
-├── presentation/ - ViewModels, UI state, state holders
-└── ui/ - Compose screens, components, theming
-
-Core Infrastructure (:app/core/*)
-├── common/ - shared utilities and extensions
-├── data/ - persistence, network, configuration
-├── device/ - hardware access, camera, sensors
-├── di/ - dependency injection bindings
-├── domain/ - cross-feature business logic
-├── maintenance/ - migrations, cleanup operations
-├── model/ - shared enums, types, constants
-├── network/ - HTTP clients, interceptors, gateways
-├── runtime/ - ML runtime management & backends
-├── security/ - encryption, key management
-└── telemetry/ - analytics, error reporting
-
-Data Sources
-├── Room DB (8 DAOs: ChatThread, Message, Persona, Model, Download, ApiConfig, etc.)
-├── DataStore (preferences, privacy settings, UI state)
-├── WorkManager (ModelDownloadWorker, background tasks)
-└── File System (caches, downloads, persistent storage)
-
-External Systems
-├── MediaPipe (on-device inference, LoRA support)
-├── Hugging Face Hub (model catalog, metadata)
-├── Cloud APIs (OpenAI, Gemini, custom endpoints)
-└── Device APIs (storage, networking, hardware)
 ```
+
+### Feature Organization
+
+Each feature follows clean architecture with strict layer separation:
+
+```
+feature/{name}/
+├── ui/ - Compose screens & components (Presentation Layer)
+├── presentation/ - ViewModels & UI state (Presentation Layer)
+├── domain/ - UseCases & business models (Domain Layer)
+└── data/ - Repositories & DAOs (Data Layer)
+```
+
+**Active Features:**
+- `chat/` - AI conversation management
+- `library/` - Model catalog & downloads
+- `settings/` - Configuration & preferences
+- `image/` - Image generation & gallery
+- `uiux/` - Shared UI components
+- `audio/` - Audio processing (future)
+
+## Domain Layer: UseCases
+
+The domain layer contains all business logic encapsulated in UseCases, each following the **Single Responsibility Principle**. UseCases handle exactly one business operation, return `NanoAIResult<T>` for consistent error handling, receive dependencies via constructor injection, and can be unit tested in isolation.
+
+### Core UseCases by Feature
+
+**Chat Domain:**
+- `SendPromptUseCase` - Handles AI prompt submission and response generation
+- `SwitchPersonaUseCase` - Manages persona switching within conversations
+- `ConversationUseCase` - Handles conversation CRUD operations
+
+**Library Domain:**
+- `ModelCatalogUseCase` - Model catalog operations and offline fallback
+- `DownloadModelUseCase` - Model download coordination and verification
+- `ExportBackupUseCase` - Data export and backup operations
+- `HuggingFaceCatalogUseCase` - Hugging Face model browsing
+
+**Settings Domain:**
+- `ApiProviderConfigUseCase` - API provider configuration management
+- `ObserveUserProfileUseCase` - User profile observation and synchronization
+
+**Image Domain:**
+- `ImageGalleryUseCase` - Image gallery operations and management
+
+### Error Handling Architecture
+
+All UseCases return `NanoAIResult<T>` with three possible outcomes:
+```kotlin
+sealed class NanoAIResult<out T> {
+    data class Success<T>(val value: T) : NanoAIResult<T>()
+    data class RecoverableError(
+        val message: String,
+        val telemetryId: String,
+        val context: Map<String, String> = emptyMap()
+    ) : NanoAIResult<Nothing>()
+    data class FatalError(
+        val message: String,
+        val supportContact: String?,
+        val telemetryId: String,
+        val cause: Throwable?
+    ) : NanoAIResult<Nothing>()
+}
+```
+
+## Data Layer: Repositories
+
+The data layer provides abstraction over data sources with interface contracts.
+
+### Repository Architecture
+- **Interface Contracts**: All repositories have interface definitions
+- **Injected Dispatchers**: Coroutine dispatchers provided via dependency injection
+- **Consistent Error Handling**: Offline errors propagated through NanoAIResult types
+- **Single Responsibility**: Repositories contain only data access logic
+
+### Repository Structure
+
+**Split Repositories (from monolithic ShellStateRepository):**
+- `NavigationRepository` - Screen navigation and routing state
+- `ConnectivityRepository` - Network connectivity monitoring
+- `ThemeRepository` - Theme preferences and Material 3 settings
+- `ProgressRepository` - Background operation progress tracking
+
+**Feature Repositories:**
+- `ConversationRepository` - Chat thread and message management
+- `ModelCatalogRepository` - Model catalog and download state
+- `ApiProviderConfigRepository` - API provider configurations
+- `UserProfileRepository` - User preferences and profile data
 
 ## Key Data Flows
 
-### Message Generation
+### AI Conversation Flow
 ```
-User Input → ChatScreen → ChatViewModel → SendPromptAndPersonaUseCase
-    ├── Save to Room DB (ConversationRepository)
-    └── Route via InferenceOrchestrator
-        ├── Local: MediaPipe runtime
-        └── Cloud: Retrofit API calls
-```
-
-### Model Download
-```
-Download Tap → ModelLibraryScreen → ModelLibraryViewModel → ModelDownloadsAndExportUseCase
-    ├── Queue in Room DB (DownloadManager)
-    ├── Background download (WorkManager/ModelDownloadWorker)
-    │   ├── Progress updates + checksum validation
-    │   └── File storage to cache directory
-    └── Update model status (ModelCatalogRepository)
+User Input
+    ↓
+ChatScreen (UI)
+    ↓
+ChatViewModel (orchestrates UI state)
+    ↓
+SendPromptUseCase + ConversationUseCase (business logic)
+    ↓
+ConversationRepository + InferenceOrchestrator (data access)
+    ↓
+Room DB + MediaPipe/Cloud APIs (persistence + external services)
 ```
 
-### Profile Synchronization
+### Model Management Flow
 ```
-App Launch → NavigationScaffold → ThemeViewModel + UIStateViewModel → ObserveUserProfileUseCase
-    ├── Local: Room DB + DataStore (encrypted preferences)
-    └── Remote: /user/profile API (when online)
-        └── Merge flows → offline-first UI state
-
-Theme Changes → ThemeViewModel → UpdateThemePreferenceUseCase
-    ├── Encrypted DataStore writes
-    ├── Room transaction for UI state
-    └── Background sync when online (WorkManager)
+Model Download Request
+    ↓
+ModelLibraryScreen (UI)
+    ↓
+ModelLibraryViewModel (state management)
+    ↓
+DownloadModelUseCase + ModelCatalogUseCase (business operations)
+    ↓
+ModelCatalogRepository + WorkManager (data coordination)
+    ↓
+Room DB + File System + Hugging Face API (storage + external)
 ```
 
-### Privacy & Offline Support
-- **Encrypted Storage**: Sensitive preferences in DataStore, telemetry redacted
-- **Offline Continuity**: Room caches enable full functionality without network
-- **Consent Gates**: All data sharing requires explicit user opt-in
-- **Background Sync**: WorkManager handles reconciliation when connectivity returns
+### User Preferences Flow
+```
+Settings Change
+    ↓
+SettingsScreen (UI)
+    ↓
+SettingsViewModel (validation & state)
+    ↓
+ApiProviderConfigUseCase + ObserveUserProfileUseCase (business rules)
+    ↓
+ApiProviderConfigRepository + UserProfileRepository (data persistence)
+    ↓
+DataStore + Room DB (encrypted storage)
+```
 
 ## Dependency Injection
 
@@ -117,38 +213,41 @@ All entities include proper foreign key relationships and indexing for performan
 
 ## ViewModel Architecture
 
-Distributed responsibility pattern ensures clean separation and testability across feature modules:
+Distributed responsibility pattern ensures clean separation and testability across feature modules. ViewModels now exclusively use UseCases for business logic, never calling repositories directly.
 
 ### Core Feature ViewModels
-- **ChatViewModel**: Message state, sending prompts, persona switching, conversation management
-- **ModelLibraryViewModel**: Model catalog browse, download management, progress tracking, Hugging Face integration
-- **SettingsViewModel**: API configurations, export/import, privacy preferences, backup management
+- **ChatViewModel**: Manages conversation state and AI interactions
+- **ModelLibraryViewModel**: Handles model catalog, downloads, and exports
+- **SettingsViewModel**: Manages API configurations and user preferences
+- **HuggingFaceLibraryViewModel**: Browses external model catalogs
+- **ImageGalleryViewModel**: Manages image operations and gallery
 
 ### Navigation & State ViewModels (Distributed)
-- **NavigationScaffoldViewModel**: Route coordination between screens, drawer state, back stack management
-- **ConnectivityViewModel**: Network reachability monitoring, offline banner display, sync status
-- **ProgressViewModel**: Background operation tracking (downloads, exports), queue status, cancellation
-- **ThemeViewModel**: Theme preferences, Material 3 theming, accessibility settings
-- **UIStateViewModel**: Screen-specific preferences, layout caching, user personalization
+- **NavigationViewModel**: Screen routing and navigation state
+- **ConnectivityViewModel**: Network monitoring and offline handling
+- **ProgressViewModel**: Background operation tracking
+- **ThemeViewModel**: Theme and accessibility preferences
+- **UIStateViewModel**: Screen-specific UI state and caching
 
 ### Architecture Benefits
-- **Horizontal Scaling**: Feature ViewModels can evolve independently without merge conflicts
-- **Test Isolation**: Each ViewModel testable in isolation (≥75% coverage)
-- **Performance**: Smaller memory footprint, faster cold starts, on-demand loading
-- **Maintainability**: Single responsibility pattern, safer refactoring, simpler debugging
-- **Clean Architecture**: Clear separation between UI coordination and business logic
+- **Clean Separation**: ViewModels orchestrate UI state, UseCases handle business logic
+- **Testability**: Each layer testable in isolation with high coverage
+- **Scalability**: Feature modules evolve independently
+- **Maintainability**: Clear boundaries enable safer refactoring
+- **Consistency**: Unified error handling across all operations
+
 
 ## Quality Standards
 
 ### UI & Accessibility
-- **Accessibility**: WCAG AA compliance with 48dp touch targets, proper contrast ratios, semantic markup
+- **Accessibility**: WCAG AA compliance with proper touch targets, contrast ratios, and semantic markup
 - **Material Design 3**: Consistent theming, spacing, typography, and elevation
-- **Performance**: <1.5s cold start, <5% frame drops, <500ms queue operations
+- **Performance**: Fast startup and smooth operation targets
 
 ### Code Quality
-- **Linting**: Spotless formatting, Detekt static analysis, Android accessibility lint
-- **Testing**: ≥75% ViewModel, ≥65% UI, ≥70% Data layer coverage
-- **Manual Testing**: TalkBack accessibility validation
+- **Linting**: Automated formatting and static analysis
+- **Testing**: High coverage across ViewModel, UI, and Data layers
+- **Manual Testing**: Accessibility validation with screen readers
 
 *See `docs/UI_COMPONENTS.md` for detailed UI implementation guidelines.*
 
@@ -173,12 +272,12 @@ All operations are main-thread safe:
 
 ### Testing Strategy
 Comprehensive test coverage across layers:
-- **Unit Tests**: 126+ JVM tests (DAO, UseCase, ViewModel logic)
-- **Instrumentation**: Device tests (Compose UI, Room operations, WorkManager)
-- **Macrobenchmarks**: Performance validation (cold start <1.5s, frame drops <5%)
+- **Unit Tests**: JVM tests for DAO, UseCase, and ViewModel logic
+- **Instrumentation**: Device tests for Compose UI, Room operations, and WorkManager
+- **Macrobenchmarks**: Performance validation and baseline monitoring
 
 ### Performance Monitoring
-- **JankStats**: Frame hitch detection (>32ms logged for regression triage)
+- **JankStats**: Frame hitch detection and regression monitoring
 - **Baseline Profiles**: Optimized startup and navigation paths
 - **Metrics State**: Lightweight performance overlays in debug builds
 
@@ -190,5 +289,3 @@ Semantic markup ensures screen reader compatibility:
 - Predictive focus order for complex UIs
 
 ---
-
-**Data Flow Legend**: `└─►` Primary flow, `├─►` Alternative path, `│` Dependencies

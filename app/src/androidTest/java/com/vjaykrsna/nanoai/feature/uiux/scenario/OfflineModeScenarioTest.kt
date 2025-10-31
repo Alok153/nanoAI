@@ -10,6 +10,8 @@ import androidx.compose.ui.test.performClick
 import androidx.test.filters.LargeTest
 import com.vjaykrsna.nanoai.MainActivity
 import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
@@ -24,11 +26,13 @@ import org.junit.Test
  * - Retry button (`offline_banner_retry`) queues actions for later
  */
 @LargeTest
+@HiltAndroidTest
 @Ignore("Offline scenario blocked on debug toggles; see specs/003-UI-UX/plan.md")
 class OfflineModeScenarioTest {
-  @JvmField @Rule val environmentRule = TestEnvironmentRule()
+  @JvmField @Rule(order = 0) val hiltRule = HiltAndroidRule(this)
+  @JvmField @Rule(order = 1) val environmentRule = TestEnvironmentRule()
 
-  @JvmField @Rule val composeRule = createAndroidComposeRule<MainActivity>()
+  @JvmField @Rule(order = 2) val composeRule = createAndroidComposeRule<MainActivity>()
 
   @Test
   fun offlineMode_displaysBanner_disablesCtas_andQueuesRetry() {

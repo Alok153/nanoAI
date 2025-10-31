@@ -3,6 +3,7 @@ package com.vjaykrsna.nanoai.feature.uiux.ui.components.primitives
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,7 +29,7 @@ import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoSpacing
 
 @Composable
 fun NanoCard(
-  title: String,
+  title: String? = null,
   modifier: Modifier = Modifier,
   subtitle: String? = null,
   supportingText: String? = null,
@@ -36,13 +37,14 @@ fun NanoCard(
   badge: String? = null,
   enabled: Boolean = true,
   onClick: (() -> Unit)? = null,
-  trailingContent: (@Composable () -> Unit)? = null,
+  trailingContent: (@Composable RowScope.() -> Unit)? = null,
   supportingContent: (@Composable () -> Unit)? = null,
   semanticsDescription: String? = null,
+  content: (@Composable () -> Unit)? = null,
 ) {
   val defaultDescription =
     listOfNotNull(
-        title.takeIf { it.isNotBlank() },
+        title?.takeIf { it.isNotBlank() },
         subtitle?.takeIf { it.isNotBlank() },
         supportingText?.takeIf { it.isNotBlank() },
       )
@@ -62,69 +64,73 @@ fun NanoCard(
     }
 
   val shape = RoundedCornerShape(NanoRadii.large)
-  val content: @Composable () -> Unit = {
-    Column(
-      modifier =
-        Modifier.fillMaxWidth().padding(horizontal = NanoSpacing.lg, vertical = NanoSpacing.md),
-      verticalArrangement = Arrangement.spacedBy(NanoSpacing.sm),
-    ) {
-      Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-      ) {
-        Row(
-          verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.spacedBy(NanoSpacing.sm),
+  val innerContent: @Composable () -> Unit =
+    content
+      ?: {
+        Column(
+          modifier =
+            Modifier.fillMaxWidth().padding(horizontal = NanoSpacing.lg, vertical = NanoSpacing.md),
+          verticalArrangement = Arrangement.spacedBy(NanoSpacing.sm),
         ) {
-          icon?.let {
-            Icon(
-              imageVector = it,
-              contentDescription = null,
-              tint = MaterialTheme.colorScheme.primary,
-            )
-          }
-          Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(
-              text = title,
-              style = MaterialTheme.typography.titleMedium,
-              fontWeight = FontWeight.SemiBold,
-              color = MaterialTheme.colorScheme.onSurface,
-            )
-            subtitle?.let { subtitleText ->
-              Text(
-                text = subtitleText,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-              )
+          Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+          ) {
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              horizontalArrangement = Arrangement.spacedBy(NanoSpacing.sm),
+            ) {
+              icon?.let {
+                Icon(
+                  imageVector = it,
+                  contentDescription = null,
+                  tint = MaterialTheme.colorScheme.primary,
+                )
+              }
+              Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                title?.let {
+                  Text(
+                    text = it,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                  )
+                }
+                subtitle?.let { subtitleText ->
+                  Text(
+                    text = subtitleText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                  )
+                }
+              }
+            }
+
+            Row(
+              horizontalArrangement = Arrangement.spacedBy(NanoSpacing.sm),
+              verticalAlignment = Alignment.CenterVertically,
+            ) {
+              badge?.let { badgeText -> Badge { Text(badgeText) } }
+              trailingContent?.let { it() }
             }
           }
-        }
 
-        Row(
-          horizontalArrangement = Arrangement.spacedBy(NanoSpacing.sm),
-          verticalAlignment = Alignment.CenterVertically,
-        ) {
-          badge?.let { badgeText -> Badge { Text(badgeText) } }
-          trailingContent?.invoke()
+          supportingText?.let {
+            Text(
+              text = it,
+              style = MaterialTheme.typography.bodySmall,
+              color = MaterialTheme.colorScheme.onSurfaceVariant,
+              maxLines = 2,
+              overflow = TextOverflow.Ellipsis,
+            )
+          }
+
+          supportingContent?.invoke()
         }
       }
-
-      supportingText?.let {
-        Text(
-          text = it,
-          style = MaterialTheme.typography.bodySmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-          maxLines = 2,
-          overflow = TextOverflow.Ellipsis,
-        )
-      }
-
-      supportingContent?.invoke()
-    }
-  }
 
   if (onClick != null) {
     Surface(
@@ -134,11 +140,11 @@ fun NanoCard(
       shape = shape,
       tonalElevation = NanoElevation.level2,
     ) {
-      content()
+      innerContent()
     }
   } else {
     Surface(modifier = semanticsModifier, shape = shape, tonalElevation = NanoElevation.level1) {
-      content()
+      innerContent()
     }
   }
 }

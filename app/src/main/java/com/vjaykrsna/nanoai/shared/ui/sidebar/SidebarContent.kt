@@ -1,7 +1,6 @@
 package com.vjaykrsna.nanoai.shared.ui.sidebar
 
 import androidx.annotation.VisibleForTesting
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -18,8 +17,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AssistChip
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,12 +35,12 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.vjaykrsna.nanoai.R
 import com.vjaykrsna.nanoai.core.domain.model.ChatThread
 import com.vjaykrsna.nanoai.core.model.InferenceMode
 import com.vjaykrsna.nanoai.feature.uiux.ui.SidebarDrawer
+import com.vjaykrsna.nanoai.feature.uiux.ui.components.primitives.NanoCard
 import java.util.UUID
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -295,56 +292,35 @@ private fun ThreadItem(
   val archiveIconDesc = stringResource(R.string.sidebar_thread_item_archive_icon)
   val deleteIconDesc = stringResource(R.string.sidebar_thread_item_delete_icon)
 
-  Card(
+  val timestamp =
+    thread.updatedAt.toLocalDateTime(TimeZone.currentSystemDefault()).let {
+      "${it.monthNumber}/${it.dayOfMonth}"
+    }
+
+  NanoCard(
     modifier =
-      modifier.fillMaxWidth().clickable(onClick = onClick).semantics {
+      modifier.semantics {
         val localDateTime = thread.updatedAt.toLocalDateTime(TimeZone.currentSystemDefault())
         val dateStr = "${localDateTime.monthNumber}/${localDateTime.dayOfMonth}"
         contentDescription =
           threadContentDescFormat.format(thread.title ?: threadUntitledText, dateStr)
       },
-    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-  ) {
-    Column(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
-      Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.Top,
+    title = thread.title ?: threadUntitledText,
+    supportingText = timestamp,
+    onClick = onClick,
+    trailingContent = {
+      IconButton(
+        onClick = onArchive,
+        modifier = Modifier.semantics { contentDescription = archiveDesc },
       ) {
-        Column(modifier = Modifier.weight(1f)) {
-          Text(
-            text = thread.title ?: threadUntitledText,
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Medium,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-          )
-          Spacer(modifier = Modifier.height(4.dp))
-          val timestamp =
-            thread.updatedAt.toLocalDateTime(TimeZone.currentSystemDefault()).let {
-              "${it.monthNumber}/${it.dayOfMonth}"
-            }
-          Text(
-            text = timestamp,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-          )
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-          IconButton(
-            onClick = onArchive,
-            modifier = Modifier.semantics { contentDescription = archiveDesc },
-          ) {
-            Icon(Icons.Default.Delete, contentDescription = archiveIconDesc)
-          }
-          IconButton(
-            onClick = onDelete,
-            modifier = Modifier.semantics { contentDescription = deleteDesc },
-          ) {
-            Icon(Icons.Default.Delete, contentDescription = deleteIconDesc)
-          }
-        }
+        Icon(Icons.Default.Delete, contentDescription = archiveIconDesc)
       }
-    }
-  }
+      IconButton(
+        onClick = onDelete,
+        modifier = Modifier.semantics { contentDescription = deleteDesc },
+      ) {
+        Icon(Icons.Default.Delete, contentDescription = deleteIconDesc)
+      }
+    },
+  )
 }
