@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai.feature.uiux.domain
 
+import com.vjaykrsna.nanoai.feature.uiux.navigation.Screen
 import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandAction
 import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandCategory
 import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandDestination
@@ -8,7 +9,6 @@ import com.vjaykrsna.nanoai.feature.uiux.presentation.JobType
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ModeId
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ProgressJob
 import com.vjaykrsna.nanoai.feature.uiux.presentation.RecentActivityItem
-import com.vjaykrsna.nanoai.feature.uiux.presentation.navigation.Screen
 import com.vjaykrsna.nanoai.feature.uiux.presentation.toRoute
 import javax.inject.Inject
 import javax.inject.Singleton

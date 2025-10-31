@@ -1,12 +1,12 @@
 package com.vjaykrsna.nanoai.feature.settings.domain.huggingface
 
 import com.vjaykrsna.nanoai.core.common.IoDispatcher
+import com.vjaykrsna.nanoai.core.security.HuggingFaceCredentialRepository
+import com.vjaykrsna.nanoai.core.security.model.SecretCredential
 import com.vjaykrsna.nanoai.feature.library.data.huggingface.network.HuggingFaceAccountService
 import com.vjaykrsna.nanoai.feature.library.data.huggingface.network.HuggingFaceOAuthService
 import com.vjaykrsna.nanoai.feature.library.data.huggingface.network.dto.HuggingFaceOAuthErrorResponse
 import com.vjaykrsna.nanoai.feature.library.data.huggingface.network.dto.HuggingFaceTokenResponse
-import com.vjaykrsna.nanoai.security.HuggingFaceCredentialRepository
-import com.vjaykrsna.nanoai.security.model.SecretCredential
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton

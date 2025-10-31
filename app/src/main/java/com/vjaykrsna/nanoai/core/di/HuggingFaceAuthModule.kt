@@ -1,10 +1,10 @@
 package com.vjaykrsna.nanoai.core.di
 
 import com.vjaykrsna.nanoai.BuildConfig
+import com.vjaykrsna.nanoai.core.security.HuggingFaceCredentialRepository
+import com.vjaykrsna.nanoai.core.security.HuggingFaceCredentialRepositoryImpl
+import com.vjaykrsna.nanoai.core.security.HuggingFaceTokenProvider
 import com.vjaykrsna.nanoai.feature.settings.domain.huggingface.HuggingFaceOAuthConfig
-import com.vjaykrsna.nanoai.security.HuggingFaceCredentialRepository
-import com.vjaykrsna.nanoai.security.HuggingFaceCredentialRepositoryImpl
-import com.vjaykrsna.nanoai.security.HuggingFaceTokenProvider
 import dagger.Binds
 import dagger.Module
 import dagger.Provides

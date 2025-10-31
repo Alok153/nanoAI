@@ -2,7 +2,7 @@ package com.vjaykrsna.nanoai.feature.uiux.presentation
 
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.feature.uiux.domain.QueueJobUseCase
-import com.vjaykrsna.nanoai.feature.uiux.ui.shell.ShellUiEvent
+import com.vjaykrsna.nanoai.shared.ui.shell.ShellUiEvent
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import io.mockk.*
 import java.time.Duration

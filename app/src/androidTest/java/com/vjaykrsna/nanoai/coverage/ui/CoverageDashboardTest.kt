@@ -9,10 +9,10 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.vjaykrsna.nanoai.coverage.model.CoverageMetric
-import com.vjaykrsna.nanoai.coverage.model.TestLayer
-import com.vjaykrsna.nanoai.coverage.ui.CoverageDashboardBanner.OFFLINE_ANNOUNCEMENT
-import com.vjaykrsna.nanoai.coverage.ui.CoverageDashboardBanner.offline
+import com.vjaykrsna.nanoai.core.coverage.model.CoverageMetric
+import com.vjaykrsna.nanoai.core.coverage.model.TestLayer
+import com.vjaykrsna.nanoai.core.coverage.ui.CoverageDashboardBanner.OFFLINE_ANNOUNCEMENT
+import com.vjaykrsna.nanoai.core.coverage.ui.CoverageDashboardBanner.offline
 import java.io.IOException
 import org.junit.Test
 import org.junit.runner.RunWith

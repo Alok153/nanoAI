@@ -14,7 +14,7 @@ import com.vjaykrsna.nanoai.feature.library.data.DownloadManager
 import com.vjaykrsna.nanoai.feature.library.domain.DownloadStatus
 import com.vjaykrsna.nanoai.feature.uiux.domain.CommandPaletteActionProvider
 import com.vjaykrsna.nanoai.feature.uiux.domain.ProgressCenterCoordinator
-import com.vjaykrsna.nanoai.feature.uiux.presentation.navigation.Screen
+import com.vjaykrsna.nanoai.feature.uiux.navigation.Screen
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow

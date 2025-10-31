@@ -41,8 +41,8 @@ import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellLayoutState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellUiState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.UiPreferenceSnapshot
 import com.vjaykrsna.nanoai.feature.uiux.presentation.UndoPayload
-import com.vjaykrsna.nanoai.feature.uiux.ui.shell.NanoShellScaffold
-import com.vjaykrsna.nanoai.feature.uiux.ui.shell.ShellUiEvent
+import com.vjaykrsna.nanoai.shared.ui.shell.NanoShellScaffold
+import com.vjaykrsna.nanoai.shared.ui.shell.ShellUiEvent
 import com.vjaykrsna.nanoai.shared.ui.theme.NanoAITheme
 import java.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi

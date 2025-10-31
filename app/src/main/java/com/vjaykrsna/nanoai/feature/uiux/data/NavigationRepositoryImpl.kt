@@ -9,6 +9,7 @@ import com.vjaykrsna.nanoai.core.data.repository.NavigationRepository
 import com.vjaykrsna.nanoai.core.data.repository.UserProfileRepository
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UIStateSnapshot
 import com.vjaykrsna.nanoai.feature.uiux.domain.UIUX_DEFAULT_USER_ID
+import com.vjaykrsna.nanoai.feature.uiux.navigation.Screen
 import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandCategory
 import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandPaletteState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ModeId
@@ -16,7 +17,6 @@ import com.vjaykrsna.nanoai.feature.uiux.presentation.PaletteSource
 import com.vjaykrsna.nanoai.feature.uiux.presentation.RecentActivityItem
 import com.vjaykrsna.nanoai.feature.uiux.presentation.RightPanel
 import com.vjaykrsna.nanoai.feature.uiux.presentation.UndoPayload
-import com.vjaykrsna.nanoai.feature.uiux.presentation.navigation.Screen
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton

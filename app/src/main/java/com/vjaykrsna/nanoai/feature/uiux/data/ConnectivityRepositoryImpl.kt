@@ -4,13 +4,13 @@ import com.vjaykrsna.nanoai.core.common.IoDispatcher
 import com.vjaykrsna.nanoai.core.data.repository.ConnectivityRepository
 import com.vjaykrsna.nanoai.core.data.repository.UserProfileRepository
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferencesSnapshot as DomainUiPreferencesSnapshot
+import com.vjaykrsna.nanoai.feature.uiux.navigation.Screen
 import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandAction
 import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandCategory
 import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandDestination
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ConnectivityBannerState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ConnectivityStatus
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ModeId
-import com.vjaykrsna.nanoai.feature.uiux.presentation.navigation.Screen
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
