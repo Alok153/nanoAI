@@ -36,6 +36,7 @@ android {
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     vectorDrawables { useSupportLibrary = true }
+    testInstrumentationRunnerArguments.put("application", "com.vjaykrsna.nanoai.testing.NanoAITestApplication")
 
     createQuotedStringBuildConfigField(this, "HF_OAUTH_CLIENT_ID", "nanoai.hf.oauth.clientId", "")
     createQuotedStringBuildConfigField(

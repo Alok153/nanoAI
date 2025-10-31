@@ -10,6 +10,8 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.test.filters.LargeTest
 import com.vjaykrsna.nanoai.MainActivity
 import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
@@ -21,11 +23,13 @@ import org.junit.Test
  * This test intentionally fails until the UI layer adds the required semantics.
  */
 @LargeTest
+@HiltAndroidTest
 @Ignore("Offline banner interactions pending telemetry integration; see specs/003-UI-UX/plan.md")
 class OfflineBannerContractTest {
 
-  @JvmField @Rule val environmentRule = TestEnvironmentRule()
-  @JvmField @Rule val composeRule = createAndroidComposeRule<MainActivity>()
+  @JvmField @Rule(order = 0) val hiltRule = HiltAndroidRule(this)
+  @JvmField @Rule(order = 1) val environmentRule = TestEnvironmentRule()
+  @JvmField @Rule(order = 1) val composeRule = createAndroidComposeRule<MainActivity>()
 
   @Test
   fun offlineBanner_displaysMessaging_andDisabledAffordance() {
