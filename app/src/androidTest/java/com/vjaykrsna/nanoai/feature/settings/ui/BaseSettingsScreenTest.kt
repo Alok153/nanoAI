@@ -27,10 +27,12 @@ import org.junit.Rule
 @OptIn(ExperimentalTestApi::class)
 abstract class BaseSettingsScreenTest {
 
-  @get:Rule(order = 0)
-  val hiltRule = HiltAndroidRule(this)
+  @get:Rule(order = 0) val hiltRule = HiltAndroidRule(this)
 
-  @JvmField @Rule val composeTestRule: AndroidComposeTestRule<*, MainActivity> = createAndroidComposeRule<MainActivity>()
+  @JvmField
+  @Rule
+  val composeTestRule: AndroidComposeTestRule<*, MainActivity> =
+    createAndroidComposeRule<MainActivity>()
   @JvmField @Rule val testEnvironmentRule = TestEnvironmentRule()
 
   protected lateinit var viewModel: SettingsViewModel

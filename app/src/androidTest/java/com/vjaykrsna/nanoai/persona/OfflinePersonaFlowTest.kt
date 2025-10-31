@@ -28,8 +28,7 @@ import org.junit.Test
 @Ignore("Persona offline queue flow pending feature work; see specs/003-UI-UX/plan.md")
 class OfflinePersonaFlowTest {
   @JvmField @Rule(order = 0) val hiltRule = HiltAndroidRule(this)
-  @JvmField @Rule(order = 1)
-  val composeRule = createAndroidComposeRule<MainActivity>()
+  @JvmField @Rule(order = 1) val composeRule = createAndroidComposeRule<MainActivity>()
 
   @Test
   fun offlinePersonaQueue_replaysActions_afterNetworkRestored() {

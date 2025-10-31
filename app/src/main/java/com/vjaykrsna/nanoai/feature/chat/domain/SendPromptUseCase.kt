@@ -106,12 +106,13 @@ constructor(
     preferLocal: Boolean,
   ): NanoAIResult<Unit> =
     when (result) {
-      is InferenceResult.Success -> saveSuccessMessage(result, threadId)
-      is InferenceResult.Error -> saveErrorMessage(result, threadId, personaId, preferLocal)
+      is NanoAIResult.Success -> saveSuccessMessage(result.value, threadId)
+      is NanoAIResult.RecoverableError -> saveErrorMessage(result, threadId, personaId, preferLocal)
+      is NanoAIResult.FatalError -> saveErrorMessage(result, threadId, personaId, preferLocal)
     }
 
   private suspend fun saveSuccessMessage(
-    result: InferenceResult.Success,
+    result: InferenceSuccessData,
     threadId: UUID,
   ): NanoAIResult<Unit> {
     val message =
@@ -129,7 +130,7 @@ constructor(
   }
 
   private suspend fun saveErrorMessage(
-    result: InferenceResult.Error,
+    result: NanoAIResult.RecoverableError,
     threadId: UUID,
     personaId: UUID,
     preferLocal: Boolean,
@@ -143,13 +144,41 @@ constructor(
         source = if (preferLocal) MessageSource.LOCAL_MODEL else MessageSource.CLOUD_API,
         latencyMs = null,
         createdAt = Clock.System.now(),
-        errorCode = result.errorCode,
+        errorCode = result.telemetryId,
       )
     conversationRepository.saveMessage(message)
     return NanoAIResult.recoverable(
-      message = result.message ?: "Inference failed with code ${result.errorCode}",
-      telemetryId = result.errorCode,
-      context = mapOf("threadId" to threadId.toString(), "personaId" to personaId.toString()),
+      message = result.message,
+      telemetryId = result.telemetryId,
+      context =
+        mapOf("threadId" to threadId.toString(), "personaId" to personaId.toString()) +
+          result.context,
+    )
+  }
+
+  private suspend fun saveErrorMessage(
+    result: NanoAIResult.FatalError,
+    threadId: UUID,
+    personaId: UUID,
+    preferLocal: Boolean,
+  ): NanoAIResult<Unit> {
+    val message =
+      Message(
+        messageId = UUID.randomUUID(),
+        threadId = threadId,
+        role = MessageRole.ASSISTANT,
+        text = null,
+        source = if (preferLocal) MessageSource.LOCAL_MODEL else MessageSource.CLOUD_API,
+        latencyMs = null,
+        createdAt = Clock.System.now(),
+        errorCode = result.telemetryId,
+      )
+    conversationRepository.saveMessage(message)
+    return NanoAIResult.fatal(
+      message = result.message,
+      supportContact = result.supportContact,
+      telemetryId = result.telemetryId,
+      cause = result.cause,
     )
   }
 

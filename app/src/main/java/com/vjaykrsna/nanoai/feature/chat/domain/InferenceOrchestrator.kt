@@ -1,6 +1,7 @@
 package com.vjaykrsna.nanoai.feature.chat.domain
 
 import android.graphics.Bitmap
+import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.data.repository.ApiProviderConfigRepository
 import com.vjaykrsna.nanoai.core.data.repository.InferencePreferenceRepository
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
@@ -66,15 +67,15 @@ constructor(
     val preferLocal = resolvePreference(localCandidates.isNotEmpty(), isOnline, userPrefersLocal)
 
     val preferredLocalModel = selectLocalModel(localCandidates, options.localModelPreference)
-    var lastLocalError: InferenceResult.Error? = null
+    var lastLocalError: NanoAIResult.RecoverableError? = null
 
     if (preferLocal && preferredLocalModel != null) {
       val localResult = runLocalInference(preferredLocalModel, prompt, options, image, audio)
-      if (localResult is InferenceResult.Success) {
+      if (localResult is NanoAIResult.Success) {
         return localResult.withPersona(personaId)
       }
       // Fallback to cloud when local failed but network is available.
-      lastLocalError = localResult as? InferenceResult.Error
+      lastLocalError = localResult as? NanoAIResult.RecoverableError
     }
 
     val finalResult =
@@ -83,10 +84,11 @@ constructor(
       } else {
         val cloudResult = runCloudInference(prompt, options)
         when (cloudResult) {
-          is InferenceResult.Success -> cloudResult
-          is InferenceResult.Error ->
+          is NanoAIResult.Success -> cloudResult
+          is NanoAIResult.RecoverableError ->
             fallbackToLocal(preferLocal, preferredLocalModel, prompt, options, image, audio)
               ?: cloudResult
+          is NanoAIResult.FatalError -> cloudResult
         }
       }
 
@@ -112,9 +114,10 @@ constructor(
     audio: ByteArray? = null,
   ): InferenceResult {
     if (!localModelRuntime.isModelReady(model.modelId)) {
-      return InferenceResult.Error(
-        errorCode = "LOCAL_MODEL_MISSING",
+      return NanoAIResult.recoverable(
         message = "Model ${model.displayName} is not installed or ready",
+        telemetryId = "LOCAL_MODEL_MISSING",
+        context = mapOf("modelId" to model.modelId),
       )
     }
 
@@ -134,21 +137,23 @@ constructor(
       .generate(request)
       .fold(
         onSuccess = { result ->
-          InferenceResult.Success(
-            text = result.text,
-            source = MessageSource.LOCAL_MODEL,
-            latencyMs = result.latencyMs,
-            metadata =
-              result.metadata +
-                mapOf("modelId" to model.modelId, "providerType" to model.providerType.name),
+          NanoAIResult.success(
+            InferenceSuccessData(
+              text = result.text,
+              source = MessageSource.LOCAL_MODEL,
+              latencyMs = result.latencyMs,
+              metadata =
+                result.metadata +
+                  mapOf("modelId" to model.modelId, "providerType" to model.providerType.name),
+            )
           )
         },
         onFailure = { throwable ->
-          InferenceResult.Error(
-            errorCode = "LOCAL_INFERENCE_ERROR",
-            message = throwable.message,
+          NanoAIResult.recoverable(
+            message = throwable.message ?: "Local inference failed",
+            telemetryId = "LOCAL_INFERENCE_ERROR",
             cause = throwable,
-            metadata = mapOf("modelId" to model.modelId),
+            context = mapOf("modelId" to model.modelId),
           )
         },
       )
@@ -253,83 +258,85 @@ constructor(
   ): InferenceResult {
     val choice =
       result.data.choices.firstOrNull()
-        ?: return InferenceResult.Error(
-          errorCode = "EMPTY_RESPONSE",
+        ?: return NanoAIResult.recoverable(
           message = "Cloud provider returned no choices",
-          metadata = mapOf("providerId" to providerId),
+          telemetryId = "EMPTY_RESPONSE",
+          context = mapOf("providerId" to providerId),
         )
-    return InferenceResult.Success(
-      text = choice.message.content,
-      source = MessageSource.CLOUD_API,
-      latencyMs = result.latencyMs,
-      metadata =
-        mapOf(
-          "providerId" to providerId,
-          "modelId" to modelId,
-          "finishReason" to choice.finishReason,
-        ),
+    return NanoAIResult.success(
+      InferenceSuccessData(
+        text = choice.message.content,
+        source = MessageSource.CLOUD_API,
+        latencyMs = result.latencyMs,
+        metadata =
+          mapOf(
+            "providerId" to providerId,
+            "modelId" to modelId,
+            "finishReason" to choice.finishReason,
+          ),
+      )
     )
   }
 
   private fun unauthorizedError(providerId: String): InferenceResult =
-    InferenceResult.Error(
-      errorCode = "UNAUTHORIZED",
+    NanoAIResult.recoverable(
       message = "Cloud credentials rejected",
-      metadata = mapOf("providerId" to providerId),
+      telemetryId = "UNAUTHORIZED",
+      context = mapOf("providerId" to providerId),
     )
 
   private fun rateLimitError(providerId: String): InferenceResult =
-    InferenceResult.Error(
-      errorCode = "RATE_LIMIT",
+    NanoAIResult.recoverable(
       message = "Cloud provider rate limit exceeded",
-      metadata = mapOf("providerId" to providerId),
+      telemetryId = "RATE_LIMIT",
+      context = mapOf("providerId" to providerId),
     )
 
   private fun httpError(result: CloudGatewayResult.HttpError, providerId: String): InferenceResult =
-    InferenceResult.Error(
-      errorCode = "HTTP_${result.statusCode}",
-      message = result.message,
-      metadata = mapOf("providerId" to providerId),
+    NanoAIResult.recoverable(
+      message = result.message ?: "HTTP error ${result.statusCode}",
+      telemetryId = "HTTP_${result.statusCode}",
+      context = mapOf("providerId" to providerId),
     )
 
   private fun networkError(
     result: CloudGatewayResult.NetworkError,
     providerId: String,
   ): InferenceResult =
-    InferenceResult.Error(
-      errorCode = "NETWORK_ERROR",
-      message = result.throwable.message,
+    NanoAIResult.recoverable(
+      message = result.throwable.message ?: "Network error occurred",
+      telemetryId = "NETWORK_ERROR",
       cause = result.throwable,
-      metadata = mapOf("providerId" to providerId),
+      context = mapOf("providerId" to providerId),
     )
 
   private fun unknownError(
     result: CloudGatewayResult.UnknownError,
     providerId: String,
   ): InferenceResult =
-    InferenceResult.Error(
-      errorCode = "UNKNOWN_ERROR",
-      message = result.throwable.message,
+    NanoAIResult.fatal(
+      message = result.throwable.message ?: "Unknown error occurred",
+      supportContact = null,
+      telemetryId = "UNKNOWN_ERROR",
       cause = result.throwable,
-      metadata = mapOf("providerId" to providerId),
     )
 
   private fun noProviderError(): InferenceResult =
-    InferenceResult.Error(
-      errorCode = "NO_CLOUD_PROVIDER",
+    NanoAIResult.recoverable(
       message = "No enabled cloud provider configured",
+      telemetryId = "NO_CLOUD_PROVIDER",
     )
 
   private fun missingModelError(): InferenceResult =
-    InferenceResult.Error(
-      errorCode = "NO_CLOUD_MODEL",
+    NanoAIResult.recoverable(
       message = "No cloud model configured for provider",
+      telemetryId = "NO_CLOUD_MODEL",
     )
 
-  private fun offlineError(): InferenceResult.Error =
-    InferenceResult.Error(
-      errorCode = "OFFLINE",
+  private fun offlineError(): InferenceResult =
+    NanoAIResult.recoverable(
       message = "Device is offline and cloud inference is unavailable",
+      telemetryId = "OFFLINE",
     )
 
   private fun selectLocalModel(
@@ -348,10 +355,14 @@ constructor(
 
   private fun InferenceResult.withPersona(personaId: UUID?): InferenceResult {
     if (personaId == null) return this
-    val extra = mapOf("personaId" to personaId)
+    val extra = mapOf("personaId" to personaId.toString())
     return when (this) {
-      is InferenceResult.Success -> copy(metadata = metadata + extra)
-      is InferenceResult.Error -> copy(metadata = metadata + extra)
+      is NanoAIResult.Success -> {
+        val updatedData = value.copy(metadata = value.metadata + extra)
+        NanoAIResult.success(updatedData)
+      }
+      is NanoAIResult.RecoverableError -> copy(context = context + extra)
+      is NanoAIResult.FatalError -> this
     }
   }
 }
