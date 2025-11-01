@@ -1,4 +1,4 @@
-package com.vjaykrsna.nanoai.persona
+package com.vjaykrsna.nanoai.core.domain
 
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed

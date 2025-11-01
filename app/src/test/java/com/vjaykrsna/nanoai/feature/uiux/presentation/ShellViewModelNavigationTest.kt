@@ -2,10 +2,9 @@ package com.vjaykrsna.nanoai.feature.uiux.presentation
 
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.feature.uiux.domain.NavigationOperationsUseCase
-import com.vjaykrsna.nanoai.feature.uiux.ui.shell.ShellUiEvent
+import com.vjaykrsna.nanoai.shared.ui.shell.ShellUiEvent
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
-import io.mockk.coEvery
-import io.mockk.mockk
+import io.mockk.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -24,7 +23,8 @@ class ShellViewModelNavigationTest {
   fun openMode_closesDrawersAndHidesPalette() =
     runTest(dispatcher) {
       val fakeRepos = createFakeRepositories()
-      val navigationOperationsUseCase = mockk<NavigationOperationsUseCase>(relaxed = true)
+      val navigationOperationsUseCase =
+        NavigationOperationsUseCase(fakeRepos.navigationRepository, dispatcher)
 
       // Mock sub-ViewModels
       val navigationViewModel = mockk<NavigationViewModel>(relaxed = true)
@@ -40,7 +40,7 @@ class ShellViewModelNavigationTest {
 
       val viewModel =
         ShellViewModel(
-          fakeRepos.navigationRepository,
+          navigationOperationsUseCase,
           navigationViewModel,
           connectivityViewModel,
           progressViewModel,
@@ -61,7 +61,8 @@ class ShellViewModelNavigationTest {
   fun toggleRightDrawer_setsPanelAndReflectsInState() =
     runTest(dispatcher) {
       val fakeRepos = createFakeRepositories()
-      val navigationOperationsUseCase = mockk<NavigationOperationsUseCase>(relaxed = true)
+      val navigationOperationsUseCase =
+        NavigationOperationsUseCase(fakeRepos.navigationRepository, dispatcher)
 
       // Mock sub-ViewModels
       val navigationViewModel = mockk<NavigationViewModel>(relaxed = true)
@@ -77,7 +78,7 @@ class ShellViewModelNavigationTest {
 
       val viewModel =
         ShellViewModel(
-          fakeRepos.navigationRepository,
+          navigationOperationsUseCase,
           navigationViewModel,
           connectivityViewModel,
           progressViewModel,

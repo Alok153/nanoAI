@@ -6,16 +6,18 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performTextInput
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.domain.usecase.GetDefaultPersonaUseCase
+import com.vjaykrsna.nanoai.core.domain.usecase.ObservePersonasUseCase
 import com.vjaykrsna.nanoai.feature.chat.domain.ConversationUseCase
 import com.vjaykrsna.nanoai.feature.chat.domain.SendPromptUseCase
 import com.vjaykrsna.nanoai.feature.chat.domain.SwitchPersonaUseCase
 import com.vjaykrsna.nanoai.feature.chat.presentation.ChatViewModel
 import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
 import com.vjaykrsna.nanoai.feature.library.domain.ModelCatalogUseCase
-import com.vjaykrsna.nanoai.testing.ComposeTestHarness
-import com.vjaykrsna.nanoai.testing.DomainTestBuilders
-import com.vjaykrsna.nanoai.testing.FakeConversationRepository
-import com.vjaykrsna.nanoai.testing.FakePersonaRepository
+import com.vjaykrsna.nanoai.shared.testing.ComposeTestHarness
+import com.vjaykrsna.nanoai.shared.testing.DomainTestBuilders
+import com.vjaykrsna.nanoai.shared.testing.FakeConversationRepository
+import com.vjaykrsna.nanoai.shared.testing.FakePersonaRepository
 import io.mockk.coEvery
 import io.mockk.mockk
 import java.util.UUID
@@ -36,6 +38,8 @@ class ChatScreenTest {
   private lateinit var modelCatalogRepository: ModelCatalogRepository
   private lateinit var conversationUseCase: ConversationUseCase
   private lateinit var modelCatalogUseCase: ModelCatalogUseCase
+  private lateinit var observePersonasUseCase: ObservePersonasUseCase
+  private lateinit var getDefaultPersonaUseCase: GetDefaultPersonaUseCase
   private lateinit var viewModel: ChatViewModel
   private lateinit var harness: ComposeTestHarness
   private val testDispatcher = StandardTestDispatcher()
@@ -49,6 +53,8 @@ class ChatScreenTest {
     modelCatalogRepository = mockk(relaxed = true)
     conversationUseCase = ConversationUseCase(conversationRepository)
     modelCatalogUseCase = ModelCatalogUseCase(modelCatalogRepository)
+    observePersonasUseCase = ObservePersonasUseCase(personaRepository)
+    getDefaultPersonaUseCase = GetDefaultPersonaUseCase(personaRepository)
 
     coEvery { sendPromptUseCase(any(), any(), any()) } returns NanoAIResult.success(Unit)
     coEvery { switchPersonaUseCase(any(), any(), any()) } returns
@@ -59,7 +65,8 @@ class ChatScreenTest {
         sendPromptUseCase,
         switchPersonaUseCase,
         conversationUseCase,
-        personaRepository,
+        observePersonasUseCase,
+        getDefaultPersonaUseCase,
         modelCatalogUseCase,
         testDispatcher,
       )

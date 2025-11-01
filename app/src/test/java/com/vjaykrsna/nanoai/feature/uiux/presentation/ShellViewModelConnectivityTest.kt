@@ -2,10 +2,10 @@ package com.vjaykrsna.nanoai.feature.uiux.presentation
 
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.feature.uiux.domain.ConnectivityOperationsUseCase
-import com.vjaykrsna.nanoai.feature.uiux.ui.shell.ShellUiEvent
+import com.vjaykrsna.nanoai.feature.uiux.domain.NavigationOperationsUseCase
+import com.vjaykrsna.nanoai.shared.ui.shell.ShellUiEvent
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
-import io.mockk.every
-import io.mockk.mockk
+import io.mockk.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -25,6 +25,7 @@ class ShellViewModelConnectivityTest {
   fun updateConnectivity_flushesQueuedJobsAndBanner() =
     runTest(dispatcher) {
       val fakeRepos = createFakeRepositories()
+      val navigationOperationsUseCase = mockk<NavigationOperationsUseCase>(relaxed = true)
       val connectivityOperationsUseCase = mockk<ConnectivityOperationsUseCase>(relaxed = true)
 
       // Mock sub-ViewModels
@@ -34,14 +35,14 @@ class ShellViewModelConnectivityTest {
       val themeViewModel = mockk<ThemeViewModel>(relaxed = true)
 
       // Set up connectivity operations use case to actually call repository
-      every { connectivityOperationsUseCase.updateConnectivity(any()) } answers
+      coEvery { connectivityOperationsUseCase.updateConnectivity(any()) } coAnswers
         {
           runBlocking { fakeRepos.connectivityRepository.updateConnectivity(firstArg()) }
         }
 
       val viewModel =
         ShellViewModel(
-          fakeRepos.navigationRepository,
+          navigationOperationsUseCase,
           navigationViewModel,
           connectivityViewModel,
           progressViewModel,

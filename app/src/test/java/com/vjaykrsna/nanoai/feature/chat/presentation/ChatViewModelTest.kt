@@ -5,6 +5,8 @@ package com.vjaykrsna.nanoai.feature.chat.presentation
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.domain.usecase.GetDefaultPersonaUseCase
+import com.vjaykrsna.nanoai.core.domain.usecase.ObservePersonasUseCase
 import com.vjaykrsna.nanoai.core.model.PersonaSwitchAction
 import com.vjaykrsna.nanoai.feature.chat.domain.ConversationUseCase
 import com.vjaykrsna.nanoai.feature.chat.domain.SendPromptUseCase
@@ -37,6 +39,8 @@ class ChatViewModelTest {
   private lateinit var conversationUseCase: ConversationUseCase
   private lateinit var conversationRepository: FakeConversationRepository
   private lateinit var personaRepository: FakePersonaRepository
+  private lateinit var observePersonasUseCase: ObservePersonasUseCase
+  private lateinit var getDefaultPersonaUseCase: GetDefaultPersonaUseCase
   private lateinit var modelCatalogUseCase: ModelCatalogUseCase
   private lateinit var sendPromptUseCase: SendPromptUseCase
   private lateinit var switchPersonaUseCase: SwitchPersonaUseCase
@@ -47,6 +51,8 @@ class ChatViewModelTest {
     conversationRepository = FakeConversationRepository()
     conversationUseCase = ConversationUseCase(conversationRepository)
     personaRepository = FakePersonaRepository()
+    observePersonasUseCase = ObservePersonasUseCase(personaRepository)
+    getDefaultPersonaUseCase = GetDefaultPersonaUseCase(personaRepository)
     modelCatalogUseCase = mockk(relaxed = true)
     sendPromptUseCase = mockk(relaxed = true)
     switchPersonaUseCase = mockk(relaxed = true)
@@ -61,7 +67,8 @@ class ChatViewModelTest {
         sendPromptUseCase,
         switchPersonaUseCase,
         conversationUseCase,
-        personaRepository,
+        observePersonasUseCase,
+        getDefaultPersonaUseCase,
         modelCatalogUseCase,
         dispatcher = mainDispatcherExtension.dispatcher,
       )

@@ -1,4 +1,4 @@
-package com.vjaykrsna.nanoai.coverage.ui
+package com.vjaykrsna.nanoai.core.coverage.ui
 
 import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertTextContains
@@ -6,10 +6,10 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import com.vjaykrsna.nanoai.coverage.model.CoverageMetric
-import com.vjaykrsna.nanoai.coverage.model.TestLayer
-import com.vjaykrsna.nanoai.coverage.ui.CoverageDashboardBanner.OFFLINE_ANNOUNCEMENT
-import com.vjaykrsna.nanoai.coverage.ui.CoverageDashboardBanner.offline
+import com.vjaykrsna.nanoai.core.coverage.model.CoverageMetric
+import com.vjaykrsna.nanoai.core.coverage.model.TestLayer
+import com.vjaykrsna.nanoai.core.coverage.ui.CoverageDashboardBanner.OFFLINE_ANNOUNCEMENT
+import com.vjaykrsna.nanoai.core.coverage.ui.CoverageDashboardBanner.offline
 import com.vjaykrsna.nanoai.shared.ui.theme.NanoAITheme
 import java.io.IOException
 import org.junit.Test

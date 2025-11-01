@@ -2,7 +2,8 @@ package com.vjaykrsna.nanoai.feature.uiux.presentation
 
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.feature.uiux.domain.JobOperationsUseCase
-import com.vjaykrsna.nanoai.feature.uiux.ui.shell.ShellUiEvent
+import com.vjaykrsna.nanoai.feature.uiux.domain.NavigationOperationsUseCase
+import com.vjaykrsna.nanoai.shared.ui.shell.ShellUiEvent
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import io.mockk.*
 import java.time.Duration
@@ -49,6 +50,8 @@ class ShellViewModelJobCompletionTest {
       val connectivityViewModel = mockk<ConnectivityViewModel>(relaxed = true)
       val progressViewModel = mockk<ProgressViewModel>(relaxed = true)
       val themeViewModel = mockk<ThemeViewModel>(relaxed = true)
+      val navigationOperationsUseCase =
+        NavigationOperationsUseCase(fakeRepos.navigationRepository, dispatcher)
 
       // Set up job operations use case to actually call repository
       coEvery { jobOperationsUseCase.completeJob(any()) } coAnswers
@@ -58,7 +61,7 @@ class ShellViewModelJobCompletionTest {
 
       val viewModel =
         ShellViewModel(
-          fakeRepos.navigationRepository,
+          navigationOperationsUseCase,
           navigationViewModel,
           connectivityViewModel,
           progressViewModel,

@@ -1,8 +1,9 @@
 package com.vjaykrsna.nanoai.feature.uiux.presentation
 
 import com.google.common.truth.Truth.assertThat
+import com.vjaykrsna.nanoai.feature.uiux.domain.NavigationOperationsUseCase
 import com.vjaykrsna.nanoai.feature.uiux.domain.QueueJobUseCase
-import com.vjaykrsna.nanoai.feature.uiux.ui.shell.ShellUiEvent
+import com.vjaykrsna.nanoai.shared.ui.shell.ShellUiEvent
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import io.mockk.*
 import java.time.Duration
@@ -34,13 +35,15 @@ class ShellViewModelJobQueueTest {
   @JvmField @RegisterExtension val mainDispatcherExtension = MainDispatcherExtension(dispatcher)
 
   @Test
-  fun queueGeneration_offline_jobQueuedWithPendingUndo() =
+  fun queueGeneration_offline_setsReconnectMessage() =
     runTest(dispatcher) {
       val fakeRepos = createFakeRepositories()
       runBlocking {
         fakeRepos.connectivityRepository.updateConnectivity(ConnectivityStatus.OFFLINE)
       }
       val queueJobUseCase = mockk<QueueJobUseCase>(relaxed = true)
+      val navigationOperationsUseCase =
+        NavigationOperationsUseCase(fakeRepos.navigationRepository, dispatcher)
 
       // Mock sub-ViewModels
       val navigationViewModel = mockk<NavigationViewModel>(relaxed = true)
@@ -71,7 +74,7 @@ class ShellViewModelJobQueueTest {
 
       val viewModel =
         ShellViewModel(
-          fakeRepos.navigationRepository,
+          navigationOperationsUseCase,
           navigationViewModel,
           connectivityViewModel,
           progressViewModel,
@@ -107,6 +110,8 @@ class ShellViewModelJobQueueTest {
     runTest(dispatcher) {
       val fakeRepos = createFakeRepositories()
       val queueJobUseCase = mockk<QueueJobUseCase>(relaxed = true)
+      val navigationOperationsUseCase =
+        NavigationOperationsUseCase(fakeRepos.navigationRepository, dispatcher)
 
       // Mock sub-ViewModels
       val navigationViewModel = mockk<NavigationViewModel>(relaxed = true)
@@ -137,7 +142,7 @@ class ShellViewModelJobQueueTest {
 
       val viewModel =
         ShellViewModel(
-          fakeRepos.navigationRepository,
+          navigationOperationsUseCase,
           navigationViewModel,
           connectivityViewModel,
           progressViewModel,

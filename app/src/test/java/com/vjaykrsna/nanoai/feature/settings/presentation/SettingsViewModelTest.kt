@@ -7,13 +7,15 @@ import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreference
-import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreferenceStore
 import com.vjaykrsna.nanoai.core.data.preferences.RetentionPolicy
-import com.vjaykrsna.nanoai.core.data.preferences.UiPreferencesStore
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ScreenType
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UserProfile
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
+import com.vjaykrsna.nanoai.core.domain.usecase.ObservePrivacyPreferencesUseCase
+import com.vjaykrsna.nanoai.core.domain.usecase.ObserveUiPreferencesUseCase
+import com.vjaykrsna.nanoai.core.domain.usecase.UpdatePrivacyPreferencesUseCase
+import com.vjaykrsna.nanoai.core.domain.usecase.UpdateUiPreferencesUseCase
 import com.vjaykrsna.nanoai.feature.library.domain.ModelDownloadsAndExportUseCase
 import com.vjaykrsna.nanoai.feature.settings.domain.ApiProviderConfigUseCase
 import com.vjaykrsna.nanoai.feature.settings.domain.ImportService
@@ -50,8 +52,10 @@ class SettingsViewModelTest {
 
   private lateinit var apiProviderConfigUseCase: ApiProviderConfigUseCase
   private lateinit var modelDownloadsAndExportUseCase: ModelDownloadsAndExportUseCase
-  private lateinit var privacyPreferenceStore: PrivacyPreferenceStore
-  private lateinit var uiPreferencesStore: UiPreferencesStore
+  private lateinit var observePrivacyPreferencesUseCase: ObservePrivacyPreferencesUseCase
+  private lateinit var observeUiPreferencesUseCase: ObserveUiPreferencesUseCase
+  private lateinit var updatePrivacyPreferencesUseCase: UpdatePrivacyPreferencesUseCase
+  private lateinit var updateUiPreferencesUseCase: UpdateUiPreferencesUseCase
   private lateinit var importService: ImportService
   private lateinit var observeUserProfileUseCase: ObserveUserProfileUseCase
   private lateinit var settingsOperationsUseCase: SettingsOperationsUseCase
@@ -70,8 +74,10 @@ class SettingsViewModelTest {
   private fun setupMocks() {
     apiProviderConfigUseCase = mockk(relaxed = true)
     modelDownloadsAndExportUseCase = mockk(relaxed = true)
-    privacyPreferenceStore = mockk(relaxed = true)
-    uiPreferencesStore = mockk(relaxed = true)
+    observePrivacyPreferencesUseCase = mockk(relaxed = true)
+    observeUiPreferencesUseCase = mockk(relaxed = true)
+    updatePrivacyPreferencesUseCase = mockk(relaxed = true)
+    updateUiPreferencesUseCase = mockk(relaxed = true)
     importService = mockk(relaxed = true)
     observeUserProfileUseCase = mockk(relaxed = true)
     settingsOperationsUseCase = mockk(relaxed = true)
@@ -83,7 +89,7 @@ class SettingsViewModelTest {
 
   private fun setupDefaultFlows() {
     every { apiProviderConfigUseCase.observeAllProviders() } returns flowOf(emptyList())
-    every { privacyPreferenceStore.privacyPreference } returns
+    every { observePrivacyPreferencesUseCase() } returns
       flowOf(
         PrivacyPreference(
           exportWarningsDismissed = false,
@@ -121,8 +127,10 @@ class SettingsViewModelTest {
       SettingsViewModel(
         apiProviderConfigUseCase,
         modelDownloadsAndExportUseCase,
-        privacyPreferenceStore,
-        uiPreferencesStore,
+        observePrivacyPreferencesUseCase,
+        observeUiPreferencesUseCase,
+        updatePrivacyPreferencesUseCase,
+        updateUiPreferencesUseCase,
         importService,
         observeUserProfileUseCase,
         settingsOperationsUseCase,
@@ -134,17 +142,18 @@ class SettingsViewModelTest {
 
   @Test
   fun `setTelemetryOptIn updates privacy preference`() = runTest {
-    coEvery { privacyPreferenceStore.setTelemetryOptIn(true) } returns Unit
+    coEvery { updatePrivacyPreferencesUseCase.setTelemetryOptIn(true) } returns Unit
 
     viewModel.setTelemetryOptIn(true)
     advanceUntilIdle()
 
-    coVerify { privacyPreferenceStore.setTelemetryOptIn(true) }
+    coVerify { updatePrivacyPreferencesUseCase.setTelemetryOptIn(true) }
   }
 
   @Test
   fun `setTelemetryOptIn emits error on failure`() = runTest {
-    coEvery { privacyPreferenceStore.setTelemetryOptIn(any()) } throws Exception("Store error")
+    coEvery { updatePrivacyPreferencesUseCase.setTelemetryOptIn(any()) } throws
+      Exception("Store error")
 
     viewModel.errorEvents.test {
       viewModel.setTelemetryOptIn(true)
@@ -157,28 +166,32 @@ class SettingsViewModelTest {
 
   @Test
   fun `acknowledgeConsent updates privacy preference with timestamp`() = runTest {
-    coEvery { privacyPreferenceStore.acknowledgeConsent(any()) } returns Unit
+    coEvery { updatePrivacyPreferencesUseCase.acknowledgeConsent(any()) } returns Unit
 
     viewModel.acknowledgeConsent()
     advanceUntilIdle()
 
-    coVerify { privacyPreferenceStore.acknowledgeConsent(any()) }
+    coVerify { updatePrivacyPreferencesUseCase.acknowledgeConsent(any()) }
   }
 
   @Test
   fun `setRetentionPolicy updates privacy preference`() = runTest {
-    coEvery { privacyPreferenceStore.setRetentionPolicy(RetentionPolicy.MANUAL_PURGE_ONLY) } returns
-      Unit
+    coEvery {
+      updatePrivacyPreferencesUseCase.setRetentionPolicy(RetentionPolicy.MANUAL_PURGE_ONLY)
+    } returns Unit
 
     viewModel.setRetentionPolicy(RetentionPolicy.MANUAL_PURGE_ONLY)
     advanceUntilIdle()
 
-    coVerify { privacyPreferenceStore.setRetentionPolicy(RetentionPolicy.MANUAL_PURGE_ONLY) }
+    coVerify {
+      updatePrivacyPreferencesUseCase.setRetentionPolicy(RetentionPolicy.MANUAL_PURGE_ONLY)
+    }
   }
 
   @Test
   fun `setRetentionPolicy emits error on failure`() = runTest {
-    coEvery { privacyPreferenceStore.setRetentionPolicy(any()) } throws Exception("Policy error")
+    coEvery { updatePrivacyPreferencesUseCase.setRetentionPolicy(any()) } throws
+      Exception("Policy error")
 
     viewModel.errorEvents.test {
       viewModel.setRetentionPolicy(RetentionPolicy.INDEFINITE)
@@ -405,8 +418,10 @@ class SettingsViewModelTest {
       SettingsViewModel(
         apiProviderConfigUseCase,
         modelDownloadsAndExportUseCase,
-        privacyPreferenceStore,
-        uiPreferencesStore,
+        observePrivacyPreferencesUseCase,
+        observeUiPreferencesUseCase,
+        updatePrivacyPreferencesUseCase,
+        updateUiPreferencesUseCase,
         importService,
         observeUserProfileUseCase,
         settingsOperationsUseCase,
@@ -433,14 +448,16 @@ class SettingsViewModelTest {
         disclaimerShownCount = 3,
         retentionPolicy = RetentionPolicy.MANUAL_PURGE_ONLY,
       )
-    every { privacyPreferenceStore.privacyPreference } returns flowOf(prefs)
+    every { observePrivacyPreferencesUseCase() } returns flowOf(prefs)
 
     val vm =
       SettingsViewModel(
         apiProviderConfigUseCase,
         modelDownloadsAndExportUseCase,
-        privacyPreferenceStore,
-        uiPreferencesStore,
+        observePrivacyPreferencesUseCase,
+        observeUiPreferencesUseCase,
+        updatePrivacyPreferencesUseCase,
+        updateUiPreferencesUseCase,
         importService,
         observeUserProfileUseCase,
         settingsOperationsUseCase,
@@ -600,12 +617,12 @@ class SettingsViewModelTest {
 
   @Test
   fun `dismissExportWarnings_clearsState`() = runTest {
-    coEvery { privacyPreferenceStore.setExportWarningsDismissed(true) } returns Unit
+    coEvery { updatePrivacyPreferencesUseCase.setExportWarningsDismissed(true) } returns Unit
 
     viewModel.dismissExportWarnings()
     advanceUntilIdle()
 
-    coVerify { privacyPreferenceStore.setExportWarningsDismissed(true) }
+    coVerify { updatePrivacyPreferencesUseCase.setExportWarningsDismissed(true) }
   }
 
   @Test

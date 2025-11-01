@@ -1,4 +1,4 @@
-package com.vjaykrsna.nanoai.disclaimer
+package com.vjaykrsna.nanoai.shared.ui.components
 
 import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertHasClickAction
@@ -12,7 +12,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.filters.LargeTest
 import com.vjaykrsna.nanoai.MainActivity
-import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
+import com.vjaykrsna.nanoai.shared.testing.TestEnvironmentRule
 import org.junit.Rule
 import org.junit.Test
 
