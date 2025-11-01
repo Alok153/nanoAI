@@ -4,14 +4,18 @@ import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSiz
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import com.vjaykrsna.nanoai.core.common.IoDispatcher
 import com.vjaykrsna.nanoai.core.data.repository.NavigationRepository
+import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandPaletteState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ModeId
 import com.vjaykrsna.nanoai.feature.uiux.presentation.PaletteSource
+import com.vjaykrsna.nanoai.feature.uiux.presentation.RecentActivityItem
 import com.vjaykrsna.nanoai.feature.uiux.presentation.RightPanel
+import com.vjaykrsna.nanoai.feature.uiux.presentation.UndoPayload
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
 /** Consolidated navigation operations for shell UI state management. */
@@ -22,6 +26,14 @@ constructor(
   @IoDispatcher private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
   private val scope = CoroutineScope(SupervisorJob() + dispatcher)
+
+  val commandPaletteState: Flow<CommandPaletteState> = repository.commandPaletteState
+
+  val recentActivity: Flow<List<RecentActivityItem>> = repository.recentActivity
+
+  val windowSizeClass: Flow<WindowSizeClass> = repository.windowSizeClass
+
+  val undoPayload: Flow<UndoPayload?> = repository.undoPayload
 
   /** Opens a specific mode, closing drawers and hiding the command palette. */
   fun openMode(modeId: ModeId) {

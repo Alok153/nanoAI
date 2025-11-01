@@ -6,6 +6,8 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performTextInput
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.domain.usecase.GetDefaultPersonaUseCase
+import com.vjaykrsna.nanoai.core.domain.usecase.ObservePersonasUseCase
 import com.vjaykrsna.nanoai.feature.chat.domain.ConversationUseCase
 import com.vjaykrsna.nanoai.feature.chat.domain.SendPromptUseCase
 import com.vjaykrsna.nanoai.feature.chat.domain.SwitchPersonaUseCase
@@ -36,6 +38,8 @@ class ChatScreenTest {
   private lateinit var modelCatalogRepository: ModelCatalogRepository
   private lateinit var conversationUseCase: ConversationUseCase
   private lateinit var modelCatalogUseCase: ModelCatalogUseCase
+  private lateinit var observePersonasUseCase: ObservePersonasUseCase
+  private lateinit var getDefaultPersonaUseCase: GetDefaultPersonaUseCase
   private lateinit var viewModel: ChatViewModel
   private lateinit var harness: ComposeTestHarness
   private val testDispatcher = StandardTestDispatcher()
@@ -49,6 +53,8 @@ class ChatScreenTest {
     modelCatalogRepository = mockk(relaxed = true)
     conversationUseCase = ConversationUseCase(conversationRepository)
     modelCatalogUseCase = ModelCatalogUseCase(modelCatalogRepository)
+    observePersonasUseCase = ObservePersonasUseCase(personaRepository)
+    getDefaultPersonaUseCase = GetDefaultPersonaUseCase(personaRepository)
 
     coEvery { sendPromptUseCase(any(), any(), any()) } returns NanoAIResult.success(Unit)
     coEvery { switchPersonaUseCase(any(), any(), any()) } returns
@@ -59,7 +65,8 @@ class ChatScreenTest {
         sendPromptUseCase,
         switchPersonaUseCase,
         conversationUseCase,
-        personaRepository,
+        observePersonasUseCase,
+        getDefaultPersonaUseCase,
         modelCatalogUseCase,
         testDispatcher,
       )

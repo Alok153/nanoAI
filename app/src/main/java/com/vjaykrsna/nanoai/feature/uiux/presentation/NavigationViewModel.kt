@@ -8,7 +8,6 @@ import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.vjaykrsna.nanoai.core.data.repository.NavigationRepository
 import com.vjaykrsna.nanoai.feature.uiux.domain.NavigationOperationsUseCase
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,10 +27,7 @@ private const val COMMAND_PALETTE_INDEX = 6
 
 class NavigationViewModel
 @Inject
-constructor(
-  private val navigationRepository: NavigationRepository,
-  private val navigationOperationsUseCase: NavigationOperationsUseCase,
-) : ViewModel() {
+constructor(private val navigationOperationsUseCase: NavigationOperationsUseCase) : ViewModel() {
 
   private val _activeMode = MutableStateFlow<ModeId>(ModeId.HOME)
   private val _leftDrawerState = MutableStateFlow<DrawerState>(DrawerState(false))
@@ -41,13 +37,13 @@ constructor(
 
   val navigationState: StateFlow<NavigationState> =
     combine(
-        navigationRepository.windowSizeClass,
+        navigationOperationsUseCase.windowSizeClass,
         _activeMode,
         _leftDrawerState,
         _rightDrawerState,
         _activeRightPanel,
         _undoState,
-        navigationRepository.commandPaletteState,
+        navigationOperationsUseCase.commandPaletteState,
       ) { values ->
         val windowState = values[WINDOW_STATE_INDEX] as WindowSizeClass
         val activeMode = values[ACTIVE_MODE_INDEX] as ModeId

@@ -1,4 +1,4 @@
-package com.vjaykrsna.nanoai.core.coverage.domain
+package com.vjaykrsna.nanoai.core.coverage.domain.service
 
 import com.vjaykrsna.nanoai.core.coverage.model.CoverageMetric
 import com.vjaykrsna.nanoai.core.coverage.model.CoverageSummary

@@ -1,3 +1,5 @@
+@file:Suppress("UnusedParameter")
+
 package com.vjaykrsna.nanoai.feature.chat.domain
 
 import android.graphics.Bitmap
@@ -33,7 +35,7 @@ constructor(
   override suspend operator fun invoke(
     threadId: UUID,
     prompt: String,
-    personaId: UUID,
+    @Suppress("UnusedParameter") personaId: UUID,
     image: Bitmap?,
     audio: ByteArray?,
   ): NanoAIResult<Unit> {

@@ -1,4 +1,4 @@
-package com.vjaykrsna.nanoai.coverage.ui
+package com.vjaykrsna.nanoai.core.coverage.ui
 
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme

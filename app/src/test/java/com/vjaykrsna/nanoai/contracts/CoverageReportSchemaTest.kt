@@ -6,7 +6,7 @@ import com.google.common.truth.Truth.assertWithMessage
 import com.networknt.schema.JsonSchemaFactory
 import com.networknt.schema.SpecVersion
 import com.networknt.schema.ValidationMessage
-import com.vjaykrsna.nanoai.core.coverage.domain.CoverageReportGenerator
+import com.vjaykrsna.nanoai.core.coverage.domain.service.CoverageReportGenerator
 import com.vjaykrsna.nanoai.core.coverage.model.CoverageMetric
 import com.vjaykrsna.nanoai.core.coverage.model.CoverageSummary
 import com.vjaykrsna.nanoai.core.coverage.model.CoverageTrendPoint

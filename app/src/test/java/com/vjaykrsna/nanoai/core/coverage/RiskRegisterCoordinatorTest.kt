@@ -1,7 +1,7 @@
 package com.vjaykrsna.nanoai.core.coverage
 
 import com.google.common.truth.Truth.assertThat
-import com.vjaykrsna.nanoai.core.coverage.domain.RiskRegisterCoordinator
+import com.vjaykrsna.nanoai.core.coverage.domain.service.RiskRegisterCoordinator
 import com.vjaykrsna.nanoai.core.coverage.model.RiskRegisterItem
 import com.vjaykrsna.nanoai.core.coverage.model.TestLayer
 import com.vjaykrsna.nanoai.core.coverage.model.TestSuiteCatalogEntry

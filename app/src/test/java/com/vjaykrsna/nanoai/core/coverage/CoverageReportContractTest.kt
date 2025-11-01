@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.common.truth.Truth.assertThat
 import com.networknt.schema.JsonSchemaFactory
 import com.networknt.schema.SpecVersion
-import com.vjaykrsna.nanoai.core.coverage.domain.CoverageReportGenerator
+import com.vjaykrsna.nanoai.core.coverage.domain.service.CoverageReportGenerator
 import com.vjaykrsna.nanoai.core.coverage.model.CoverageMetric
 import com.vjaykrsna.nanoai.core.coverage.model.CoverageSummary
 import com.vjaykrsna.nanoai.core.coverage.model.CoverageTrendPoint

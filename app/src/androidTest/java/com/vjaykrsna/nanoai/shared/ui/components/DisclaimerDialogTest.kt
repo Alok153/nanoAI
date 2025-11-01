@@ -1,4 +1,4 @@
-package com.vjaykrsna.nanoai.disclaimer
+package com.vjaykrsna.nanoai.shared.ui.components
 
 import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertHasClickAction
@@ -6,16 +6,11 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.filters.LargeTest
-import com.vjaykrsna.nanoai.MainActivity
-import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
-import org.junit.Rule
+import com.vjaykrsna.nanoai.testing.BaseInstrumentationTest
 import org.junit.Test
 
 /**
@@ -28,12 +23,7 @@ import org.junit.Test
  * - Secondary CTA dismisses with clear accessibility label (`disclaimer_decline_button`).
  */
 @LargeTest
-@HiltAndroidTest
-class DisclaimerDialogTest {
-
-  @JvmField @Rule(order = 0) val hiltRule = HiltAndroidRule(this)
-  @JvmField @Rule val environmentRule = TestEnvironmentRule()
-  @JvmField @Rule val composeRule = createAndroidComposeRule<MainActivity>()
+class DisclaimerDialogTest : BaseInstrumentationTest() {
 
   @Test
   fun disclaimerDialog_requiresAcknowledgement_and_readsWithTalkBack() {

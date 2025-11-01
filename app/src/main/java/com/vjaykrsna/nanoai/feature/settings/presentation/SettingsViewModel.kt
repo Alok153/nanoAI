@@ -7,12 +7,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.onFailure
 import com.vjaykrsna.nanoai.core.common.onSuccess
-import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreference
-import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreferenceStore
 import com.vjaykrsna.nanoai.core.data.preferences.RetentionPolicy
-import com.vjaykrsna.nanoai.core.data.preferences.UiPreferencesStore
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
+import com.vjaykrsna.nanoai.core.domain.usecase.ObservePrivacyPreferencesUseCase
+import com.vjaykrsna.nanoai.core.domain.usecase.ObserveUiPreferencesUseCase
+import com.vjaykrsna.nanoai.core.domain.usecase.UpdatePrivacyPreferencesUseCase
+import com.vjaykrsna.nanoai.core.domain.usecase.UpdateUiPreferencesUseCase
 import com.vjaykrsna.nanoai.feature.library.domain.ModelDownloadsAndExportUseCase
 import com.vjaykrsna.nanoai.feature.settings.domain.ApiProviderConfigUseCase
 import com.vjaykrsna.nanoai.feature.settings.domain.ImportService
@@ -48,8 +49,10 @@ class SettingsViewModel
 constructor(
   private val apiProviderConfigUseCase: ApiProviderConfigUseCase,
   private val modelDownloadsAndExportUseCase: ModelDownloadsAndExportUseCase,
-  private val privacyPreferenceStore: PrivacyPreferenceStore,
-  private val uiPreferencesStore: UiPreferencesStore,
+  private val observePrivacyPreferencesUseCase: ObservePrivacyPreferencesUseCase,
+  private val observeUiPreferencesUseCase: ObserveUiPreferencesUseCase,
+  private val updatePrivacyPreferencesUseCase: UpdatePrivacyPreferencesUseCase,
+  private val updateUiPreferencesUseCase: UpdateUiPreferencesUseCase,
   private val importService: ImportService,
   private val observeUserProfileUseCase: ObserveUserProfileUseCase,
   private val settingsOperationsUseCase: SettingsOperationsUseCase,
@@ -83,25 +86,27 @@ constructor(
       .observeAllProviders()
       .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
-  val privacyPreferences: StateFlow<PrivacyPreference> =
-    privacyPreferenceStore.privacyPreference.stateIn(
-      viewModelScope,
-      SharingStarted.Eagerly,
-      PrivacyPreference(
-        exportWarningsDismissed = false,
-        telemetryOptIn = false,
-        consentAcknowledgedAt = null,
-        disclaimerShownCount = 0,
-        retentionPolicy = RetentionPolicy.INDEFINITE,
-      ),
-    )
+  val privacyPreferences: StateFlow<com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreference> =
+    observePrivacyPreferencesUseCase()
+      .stateIn(
+        viewModelScope,
+        SharingStarted.Eagerly,
+        com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreference(
+          exportWarningsDismissed = false,
+          telemetryOptIn = false,
+          consentAcknowledgedAt = null,
+          disclaimerShownCount = 0,
+          retentionPolicy = RetentionPolicy.INDEFINITE,
+        ),
+      )
 
   val uiPreferences: StateFlow<com.vjaykrsna.nanoai.core.data.preferences.UiPreferences> =
-    uiPreferencesStore.uiPreferences.stateIn(
-      viewModelScope,
-      SharingStarted.Eagerly,
-      com.vjaykrsna.nanoai.core.data.preferences.UiPreferences(),
-    )
+    observeUiPreferencesUseCase()
+      .stateIn(
+        viewModelScope,
+        SharingStarted.Eagerly,
+        com.vjaykrsna.nanoai.core.data.preferences.UiPreferences(),
+      )
 
   init {
     observeUserProfileUseCase.flow
@@ -214,7 +219,7 @@ constructor(
 
   fun setTelemetryOptIn(optIn: Boolean) {
     viewModelScope.launch {
-      runCatching { privacyPreferenceStore.setTelemetryOptIn(optIn) }
+      runCatching { updatePrivacyPreferencesUseCase.setTelemetryOptIn(optIn) }
         .onFailure { error ->
           _errorEvents.emit(
             SettingsError.PreferenceUpdateFailed(error.message ?: "Failed to update preference")
@@ -225,7 +230,7 @@ constructor(
 
   fun acknowledgeConsent() {
     viewModelScope.launch {
-      runCatching { privacyPreferenceStore.acknowledgeConsent(Clock.System.now()) }
+      runCatching { updatePrivacyPreferencesUseCase.acknowledgeConsent(Clock.System.now()) }
         .onFailure { error ->
           _errorEvents.emit(
             SettingsError.PreferenceUpdateFailed(error.message ?: "Failed to acknowledge consent")
@@ -236,7 +241,7 @@ constructor(
 
   fun setRetentionPolicy(policy: RetentionPolicy) {
     viewModelScope.launch {
-      runCatching { privacyPreferenceStore.setRetentionPolicy(policy) }
+      runCatching { updatePrivacyPreferencesUseCase.setRetentionPolicy(policy) }
         .onFailure { error ->
           _errorEvents.emit(
             SettingsError.PreferenceUpdateFailed(error.message ?: "Failed to set retention policy")
@@ -247,7 +252,7 @@ constructor(
 
   fun dismissExportWarnings() {
     viewModelScope.launch {
-      runCatching { privacyPreferenceStore.setExportWarningsDismissed(true) }
+      runCatching { updatePrivacyPreferencesUseCase.setExportWarningsDismissed(true) }
         .onFailure { error ->
           _errorEvents.emit(
             SettingsError.PreferenceUpdateFailed(error.message ?: "Failed to dismiss warnings")
@@ -293,7 +298,7 @@ constructor(
         statusMessage = if (enabled) "High contrast enabled" else "High contrast disabled",
       )
     }
-    viewModelScope.launch { uiPreferencesStore.setHighContrastEnabled(enabled) }
+    viewModelScope.launch { updateUiPreferencesUseCase.setHighContrastEnabled(enabled) }
   }
 
   fun undoUiPreferenceChange() {
