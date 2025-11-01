@@ -13,6 +13,7 @@ import com.vjaykrsna.nanoai.MainActivity
 import com.vjaykrsna.nanoai.shared.testing.TestEnvironmentRule
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
+import org.junit.Before
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
@@ -29,6 +30,11 @@ class SidebarSettingsScenarioTest {
   @JvmField @Rule(order = 1) val environmentRule = TestEnvironmentRule()
 
   @JvmField @Rule(order = 2) val composeRule = createAndroidComposeRule<MainActivity>()
+
+  @Before
+  fun setUp() {
+    hiltRule.inject()
+  }
 
   @Test
   fun sidebarNavigation_reachesSettings_withUndoAffordance() {

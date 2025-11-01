@@ -46,13 +46,12 @@ import com.vjaykrsna.nanoai.shared.ui.shell.ShellUiEvent
 import com.vjaykrsna.nanoai.shared.ui.theme.NanoAITheme
 import java.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import org.junit.Rule
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalMaterial3WindowSizeClassApi::class)
 class HomeHubFlowTest {
-  @org.junit.jupiter.api.extension.RegisterExtension
-  @JvmField
-  val composeRule = createAndroidComposeRule<ComponentActivity>()
+  @get:Rule val composeRule = createAndroidComposeRule<ComponentActivity>()
 
   @Test
   fun modeCards_renderAndTriggerModeSelection() {

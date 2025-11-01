@@ -8,6 +8,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.test.filters.LargeTest
 import com.vjaykrsna.nanoai.shared.testing.BaseInstrumentationTest
+import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Ignore
 import org.junit.Test
 
@@ -21,6 +22,7 @@ import org.junit.Test
  * - Retry button (`offline_banner_retry`) queues actions for later
  */
 @LargeTest
+@HiltAndroidTest
 @Ignore("Offline scenario blocked on debug toggles; see specs/003-UI-UX/plan.md")
 class OfflineModeScenarioTest : BaseInstrumentationTest() {
 

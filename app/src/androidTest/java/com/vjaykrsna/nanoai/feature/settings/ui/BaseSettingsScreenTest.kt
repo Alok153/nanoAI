@@ -58,6 +58,7 @@ abstract class BaseSettingsScreenTest {
 
   @Before
   fun setUpBase() {
+    hiltRule.inject()
     viewModel = mockk(relaxed = true)
     every { viewModel.apiProviders } returns mockApiProviders
     every { viewModel.privacyPreferences } returns mockPrivacyPreferences

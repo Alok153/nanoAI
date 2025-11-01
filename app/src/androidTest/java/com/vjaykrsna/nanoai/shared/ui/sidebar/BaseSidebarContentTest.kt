@@ -8,10 +8,10 @@ import com.vjaykrsna.nanoai.shared.ui.theme.NanoAITheme
 import java.util.UUID
 import kotlinx.datetime.Clock
 import org.junit.Before
+import org.junit.Rule
 
 abstract class BaseSidebarContentTest {
-
-  val composeRule: ComposeContentTestRule = createComposeRule()
+  @get:Rule val composeRule: ComposeContentTestRule = createComposeRule()
 
   protected lateinit var testThreads: List<ChatThread>
   protected var newThreadClicked: Boolean = false

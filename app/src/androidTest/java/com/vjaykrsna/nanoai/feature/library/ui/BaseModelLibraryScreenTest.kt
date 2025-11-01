@@ -3,6 +3,7 @@ package com.vjaykrsna.nanoai.feature.library.ui
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.feature.library.domain.DownloadModelUseCase
 import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceCatalogUseCase
 import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceModelCompatibilityChecker
@@ -11,15 +12,19 @@ import com.vjaykrsna.nanoai.feature.library.domain.ModelCatalogUseCase
 import com.vjaykrsna.nanoai.feature.library.domain.RefreshModelCatalogUseCase
 import com.vjaykrsna.nanoai.feature.library.presentation.DownloadManager
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryViewModel
+import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryError
 import com.vjaykrsna.nanoai.shared.testing.FakeModelCatalogRepository
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.runBlocking
 import org.junit.Before
+import org.junit.Rule
 
 abstract class BaseModelLibraryScreenTest {
-
-  val composeTestRule: ComposeContentTestRule = createComposeRule()
+  @get:Rule val composeTestRule: ComposeContentTestRule = createComposeRule()
 
   protected lateinit var catalogRepository: FakeModelCatalogRepository
   protected lateinit var modelCatalogUseCase: ModelCatalogUseCase
@@ -30,6 +35,9 @@ abstract class BaseModelLibraryScreenTest {
   protected lateinit var downloadModelUseCase: DownloadModelUseCase
   protected lateinit var hfToModelConverter: HuggingFaceToModelPackageConverter
   protected lateinit var compatibilityChecker: HuggingFaceModelCompatibilityChecker
+  private val downloadLoadingFlow = MutableStateFlow(false)
+  private val downloadTasksFlow = MutableStateFlow<List<DownloadTask>>(emptyList())
+  private val downloadErrorFlow = MutableSharedFlow<LibraryError>(extraBufferCapacity = 1)
 
   @Before
   fun setUpBase() {
@@ -49,6 +57,9 @@ abstract class BaseModelLibraryScreenTest {
     every { modelCatalogUseCase.observeAllModels() } returns catalogRepository.observeAllModels()
     every { modelCatalogUseCase.observeInstalledModels() } returns
       catalogRepository.observeInstalledModels()
+    every { downloadManager.isLoading } returns downloadLoadingFlow
+    every { downloadManager.observeDownloadTasks() } returns downloadTasksFlow
+    every { downloadManager.errorEvents } returns downloadErrorFlow
 
     viewModel =
       ModelLibraryViewModel(
@@ -65,5 +76,18 @@ abstract class BaseModelLibraryScreenTest {
   protected fun renderModelLibraryScreen() {
     composeTestRule.setContent { ModelLibraryScreen(viewModel = viewModel) }
     composeTestRule.waitForIdle()
+  }
+
+  protected fun replaceCatalog(models: List<com.vjaykrsna.nanoai.core.domain.model.ModelPackage>) {
+    runBlocking { catalogRepository.replaceCatalog(models) }
+    composeTestRule.waitForIdle()
+  }
+
+  protected fun setDownloadLoading(isLoading: Boolean) {
+    downloadLoadingFlow.value = isLoading
+  }
+
+  protected fun updateDownloadTasks(tasks: List<DownloadTask>) {
+    downloadTasksFlow.value = tasks
   }
 }

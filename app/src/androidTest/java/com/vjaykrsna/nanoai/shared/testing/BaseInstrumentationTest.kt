@@ -5,6 +5,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.vjaykrsna.nanoai.MainActivity
 import dagger.hilt.android.testing.HiltAndroidRule
+import org.junit.Before
 import org.junit.Rule
 import org.junit.runner.RunWith
 
@@ -25,4 +26,9 @@ abstract class BaseInstrumentationTest {
   @get:Rule(order = 2) val composeRule = createAndroidComposeRule<MainActivity>()
 
   val composeTestRule: ComposeContentTestRule = composeRule
+
+  @Before
+  fun injectDependencies() {
+    hiltRule.inject()
+  }
 }

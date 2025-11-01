@@ -11,6 +11,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.filters.LargeTest
 import com.vjaykrsna.nanoai.shared.testing.BaseInstrumentationTest
+import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Test
 
 /**
@@ -23,6 +24,7 @@ import org.junit.Test
  * - Secondary CTA dismisses with clear accessibility label (`disclaimer_decline_button`).
  */
 @LargeTest
+@HiltAndroidTest
 class DisclaimerDialogTest : BaseInstrumentationTest() {
 
   @Test

@@ -2,21 +2,27 @@ package com.vjaykrsna.nanoai.feature.library.ui
 
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasClickAction
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.feature.library.domain.ProviderType
+import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryTab
 import com.vjaykrsna.nanoai.shared.testing.DomainTestBuilders
-import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 class ModelLibraryScreenFilteringTest : BaseModelLibraryScreenTest() {
 
   @Test
-  fun modelLibraryScreen_displaysModels() = runTest {
+  fun modelLibraryScreen_displaysModels() {
     val model1 =
       DomainTestBuilders.buildModelPackage(
         modelId = "model-1",
@@ -30,24 +36,28 @@ class ModelLibraryScreenFilteringTest : BaseModelLibraryScreenTest() {
         providerType = ProviderType.CLOUD_API,
       )
 
-    catalogRepository.replaceCatalog(listOf(model1, model2))
+    replaceCatalog(listOf(model1, model2))
 
     renderModelLibraryScreen()
+    composeTestRule.runOnIdle { viewModel.selectTab(ModelLibraryTab.CURATED) }
+    composeTestRule.waitForIdle()
 
     composeTestRule.onNodeWithText("Test Model 1", substring = true).assertExists()
     composeTestRule.onNodeWithText("Test Model 2", substring = true).assertExists()
   }
 
   @Test
-  fun modelLibraryScreen_filterBySearchQuery() = runTest {
+  fun modelLibraryScreen_filterBySearchQuery() {
     val model1 =
       DomainTestBuilders.buildModelPackage(modelId = "model-1", displayName = "Qwen Model")
     val model2 =
       DomainTestBuilders.buildModelPackage(modelId = "model-2", displayName = "Gemma Model")
 
-    catalogRepository.replaceCatalog(listOf(model1, model2))
+    replaceCatalog(listOf(model1, model2))
 
     renderModelLibraryScreen()
+    composeTestRule.runOnIdle { viewModel.selectTab(ModelLibraryTab.CURATED) }
+    composeTestRule.waitForIdle()
 
     composeTestRule.onNodeWithTag(ModelLibraryUiConstants.SEARCH_FIELD_TAG).performTextInput("Qwen")
 
@@ -63,7 +73,7 @@ class ModelLibraryScreenFilteringTest : BaseModelLibraryScreenTest() {
   }
 
   @Test
-  fun modelLibraryScreen_filterByProvider() = runTest {
+  fun modelLibraryScreen_filterByProvider() {
     val hfModel =
       DomainTestBuilders.buildModelPackage(
         modelId = "hf-model",
@@ -77,15 +87,23 @@ class ModelLibraryScreenFilteringTest : BaseModelLibraryScreenTest() {
         providerType = ProviderType.CLOUD_API,
       )
 
-    catalogRepository.replaceCatalog(listOf(hfModel, googleModel))
+    replaceCatalog(listOf(hfModel, googleModel))
 
     renderModelLibraryScreen()
+    composeTestRule.runOnIdle { viewModel.selectTab(ModelLibraryTab.CURATED) }
+    composeTestRule.waitForIdle()
 
     composeTestRule.onNodeWithText("HF Model", substring = true).assertExists()
     composeTestRule.onNodeWithText("Google Model", substring = true).assertExists()
 
+    composeTestRule.onNodeWithTag(ModelLibraryUiConstants.FILTER_TOGGLE_TAG).performClick()
+
     composeTestRule
-      .onNodeWithText("Media pipe", substring = false)
+      .onNode(
+        hasText("Media pipe", substring = false) and
+          hasClickAction() and
+          hasAnyAncestor(hasTestTag(ModelLibraryUiConstants.FILTER_PANEL_TAG))
+      )
       .assertHasClickAction()
       .performClick()
 
@@ -101,7 +119,7 @@ class ModelLibraryScreenFilteringTest : BaseModelLibraryScreenTest() {
   }
 
   @Test
-  fun modelLibraryScreen_filterByCapability() = runTest {
+  fun modelLibraryScreen_filterByCapability() {
     val chatModel =
       DomainTestBuilders.buildModelPackage(
         modelId = "chat-model",
@@ -115,9 +133,11 @@ class ModelLibraryScreenFilteringTest : BaseModelLibraryScreenTest() {
         capabilities = setOf("embeddings"),
       )
 
-    catalogRepository.replaceCatalog(listOf(chatModel, embeddingModel))
+    replaceCatalog(listOf(chatModel, embeddingModel))
 
     renderModelLibraryScreen()
+    composeTestRule.runOnIdle { viewModel.selectTab(ModelLibraryTab.CURATED) }
+    composeTestRule.waitForIdle()
 
     composeTestRule.onNodeWithText("Chat Model", substring = true).assertExists()
     composeTestRule.onNodeWithText("Embedding Model", substring = true).assertExists()
@@ -125,7 +145,14 @@ class ModelLibraryScreenFilteringTest : BaseModelLibraryScreenTest() {
     // Expand filter panel
     composeTestRule.onNodeWithTag(ModelLibraryUiConstants.FILTER_TOGGLE_TAG).performClick()
 
-    composeTestRule.onNodeWithText("Chat", substring = false).assertHasClickAction().performClick()
+    composeTestRule
+      .onNode(
+        hasText("Chat", substring = false) and
+          hasClickAction() and
+          hasAnyAncestor(hasTestTag(ModelLibraryUiConstants.FILTER_PANEL_TAG))
+      )
+      .assertHasClickAction()
+      .performClick()
 
     composeTestRule.waitUntil {
       composeTestRule
@@ -139,26 +166,28 @@ class ModelLibraryScreenFilteringTest : BaseModelLibraryScreenTest() {
   }
 
   @Test
-  fun modelLibraryScreen_clearFilters() = runTest {
+  fun modelLibraryScreen_clearFilters() {
     val model = DomainTestBuilders.buildModelPackage(modelId = "test-model")
-    catalogRepository.replaceCatalog(listOf(model))
+    replaceCatalog(listOf(model))
 
     renderModelLibraryScreen()
+    composeTestRule.runOnIdle { viewModel.selectTab(ModelLibraryTab.CURATED) }
+    composeTestRule.waitForIdle()
 
     composeTestRule.onNodeWithTag(ModelLibraryUiConstants.SEARCH_FIELD_TAG).performTextInput("Test")
 
     composeTestRule.waitUntil(timeoutMillis = 5_000) {
       composeTestRule
-        .onAllNodesWithText("Clear filters", substring = false)
+        .onAllNodesWithContentDescription("Clear search query")
         .fetchSemanticsNodes()
         .isNotEmpty()
     }
 
-    composeTestRule.onAllNodesWithText("Clear filters", substring = false)[0].performClick()
+    composeTestRule.onNodeWithContentDescription("Clear search query").performClick()
 
     composeTestRule.waitUntil(timeoutMillis = 5_000) {
       composeTestRule
-        .onAllNodesWithText("Clear filters", substring = false)
+        .onAllNodesWithContentDescription("Clear search query")
         .fetchSemanticsNodes()
         .isEmpty()
     }
@@ -167,9 +196,9 @@ class ModelLibraryScreenFilteringTest : BaseModelLibraryScreenTest() {
   }
 
   @Test
-  fun modelLibraryScreen_filterChips_haveAccessibility() = runTest {
+  fun modelLibraryScreen_filterChips_haveAccessibility() {
     val model = DomainTestBuilders.buildModelPackage(modelId = "test-model")
-    catalogRepository.replaceCatalog(listOf(model))
+    replaceCatalog(listOf(model))
 
     renderModelLibraryScreen()
 

@@ -9,6 +9,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.test.filters.LargeTest
 import com.vjaykrsna.nanoai.shared.testing.BaseInstrumentationTest
+import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Ignore
 import org.junit.Test
 
@@ -17,6 +18,7 @@ import org.junit.Test
  * intentionally fail until the Home screen exposes the expected test tags and behaviors.
  */
 @LargeTest
+@HiltAndroidTest
 @OptIn(ExperimentalTestApi::class)
 @Ignore("Scenario blocked on home hub data feed; see specs/003-UI-UX/plan.md")
 class HomeNavigationScenarioTest : BaseInstrumentationTest() {

@@ -51,6 +51,7 @@ import java.time.Duration
 import java.time.Instant
 import java.util.UUID
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import org.junit.Rule
 import org.junit.Test
 
 @OptIn(
@@ -59,9 +60,7 @@ import org.junit.Test
   ExperimentalTestApi::class,
 )
 class OfflineProgressTest {
-  @org.junit.jupiter.api.extension.RegisterExtension
-  @JvmField
-  val composeRule = createAndroidComposeRule<ComponentActivity>()
+  @get:Rule val composeRule = createAndroidComposeRule<ComponentActivity>()
 
   @Test
   fun offlineBanner_showsQueuedCount() {

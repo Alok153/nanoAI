@@ -14,13 +14,13 @@ import com.vjaykrsna.nanoai.core.coverage.model.TestLayer
 import com.vjaykrsna.nanoai.core.coverage.ui.CoverageDashboardBanner.OFFLINE_ANNOUNCEMENT
 import com.vjaykrsna.nanoai.core.coverage.ui.CoverageDashboardBanner.offline
 import java.io.IOException
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class CoverageDashboardTest {
-
-  val composeRule = createAndroidComposeRule<ComponentActivity>()
+  @get:Rule val composeRule = createAndroidComposeRule<ComponentActivity>()
 
   @Test
   fun coverageLayersDisplayPercentagesAndTargets() {

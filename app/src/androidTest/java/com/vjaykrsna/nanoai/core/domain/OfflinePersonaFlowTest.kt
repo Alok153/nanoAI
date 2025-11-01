@@ -10,6 +10,7 @@ import androidx.test.filters.LargeTest
 import com.vjaykrsna.nanoai.MainActivity
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
+import org.junit.Before
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
@@ -29,6 +30,11 @@ import org.junit.Test
 class OfflinePersonaFlowTest {
   @JvmField @Rule(order = 0) val hiltRule = HiltAndroidRule(this)
   @JvmField @Rule(order = 1) val composeRule = createAndroidComposeRule<MainActivity>()
+
+  @Before
+  fun setUp() {
+    hiltRule.inject()
+  }
 
   @Test
   fun offlinePersonaQueue_replaysActions_afterNetworkRestored() {

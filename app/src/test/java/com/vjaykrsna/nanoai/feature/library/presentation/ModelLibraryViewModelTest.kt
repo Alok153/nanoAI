@@ -106,6 +106,7 @@ class ModelLibraryViewModelTest {
         hfToModelConverter,
         huggingFaceCatalogUseCase,
         compatibilityChecker,
+        mainDispatcherExtension.dispatcher,
       )
   }
 

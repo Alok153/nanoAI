@@ -64,6 +64,7 @@ import java.time.Duration
 import java.time.Instant
 import java.util.UUID
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import org.junit.Rule
 import org.junit.Test
 
 @OptIn(
@@ -72,9 +73,7 @@ import org.junit.Test
   ExperimentalMaterial3WindowSizeClassApi::class,
 )
 class CommandPaletteComposeTest {
-  @org.junit.jupiter.api.extension.RegisterExtension
-  @JvmField
-  val composeTestRule = createAndroidComposeRule<ComponentActivity>()
+  @get:Rule val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
   @Test
   fun palette_opensWithShortcut_focusesSearchField() {
