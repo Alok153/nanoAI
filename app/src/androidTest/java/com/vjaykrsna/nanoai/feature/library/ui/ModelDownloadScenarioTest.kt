@@ -9,7 +9,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.test.filters.LargeTest
 import com.vjaykrsna.nanoai.MainActivity
-import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
+import com.vjaykrsna.nanoai.shared.testing.TestEnvironmentRule
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Ignore

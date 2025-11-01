@@ -19,8 +19,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
-import com.vjaykrsna.nanoai.core.data.repository.NavigationRepository
-import com.vjaykrsna.nanoai.feature.uiux.ui.shell.ShellUiEvent
+import com.vjaykrsna.nanoai.feature.uiux.domain.NavigationOperationsUseCase
+import com.vjaykrsna.nanoai.shared.ui.shell.ShellUiEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
@@ -124,7 +124,7 @@ private val MODE_CARD_DEFINITIONS =
 class ShellViewModel
 @Inject
 constructor(
-  private val navigationRepository: NavigationRepository,
+  private val navigationOperationsUseCase: NavigationOperationsUseCase,
   // Sub-ViewModels for focused responsibilities
   private val navigationViewModel: NavigationViewModel,
   private val connectivityViewModel: ConnectivityViewModel,
@@ -179,14 +179,14 @@ constructor(
 
   val uiState: StateFlow<ShellUiState> =
     combine(
-        navigationRepository.windowSizeClass,
+        navigationOperationsUseCase.windowSizeClass,
         _activeMode,
         _isLeftDrawerOpen,
         _isRightDrawerOpen,
         _activeRightPanel,
-        navigationRepository.recentActivity,
-        navigationRepository.undoPayload,
-        navigationRepository.commandPaletteState,
+        navigationOperationsUseCase.recentActivity,
+        navigationOperationsUseCase.undoPayload,
+        navigationOperationsUseCase.commandPaletteState,
         progressViewModel.progressJobs,
         _chatState,
       ) { values ->
@@ -277,7 +277,7 @@ constructor(
 
   /** Updates the current window size class so adaptive layouts respond to device changes. */
   fun updateWindowSizeClass(sizeClass: WindowSizeClass) {
-    navigationViewModel.updateWindowSizeClass(sizeClass)
+    navigationOperationsUseCase.updateWindowSizeClass(sizeClass)
   }
 
   /** Updates the chat-specific state for contextual UI. */

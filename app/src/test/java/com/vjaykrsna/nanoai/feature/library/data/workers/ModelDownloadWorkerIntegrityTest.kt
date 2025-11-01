@@ -4,6 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.device.DeviceIdentityProvider
 import com.vjaykrsna.nanoai.core.network.ConnectivityStatusProvider
+import com.vjaykrsna.nanoai.core.telemetry.TelemetryReporter
 import com.vjaykrsna.nanoai.feature.library.data.catalog.DownloadManifestDao
 import com.vjaykrsna.nanoai.feature.library.data.catalog.DownloadManifestEntity
 import com.vjaykrsna.nanoai.feature.library.data.catalog.ModelCatalogLocalDataSource
@@ -19,7 +20,6 @@ import com.vjaykrsna.nanoai.feature.library.data.catalog.network.dto.ModelManife
 import com.vjaykrsna.nanoai.feature.library.data.huggingface.HuggingFaceManifestFetcher
 import com.vjaykrsna.nanoai.feature.library.domain.InstallState
 import com.vjaykrsna.nanoai.feature.library.domain.ModelManifestUseCase
-import com.vjaykrsna.nanoai.telemetry.TelemetryReporter
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.flow.Flow

@@ -3,6 +3,7 @@ package com.vjaykrsna.nanoai.feature.library.domain
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.device.DeviceIdentityProvider
 import com.vjaykrsna.nanoai.core.network.ConnectivityStatusProvider
+import com.vjaykrsna.nanoai.core.telemetry.TelemetryReporter
 import com.vjaykrsna.nanoai.feature.library.data.catalog.*
 import com.vjaykrsna.nanoai.feature.library.data.catalog.network.ModelCatalogService
 import com.vjaykrsna.nanoai.feature.library.data.catalog.network.dto.ErrorEnvelopeDto
@@ -12,7 +13,6 @@ import com.vjaykrsna.nanoai.feature.library.data.catalog.network.dto.ManifestVer
 import com.vjaykrsna.nanoai.feature.library.data.catalog.network.dto.ModelManifestDto
 import com.vjaykrsna.nanoai.feature.library.data.huggingface.HuggingFaceManifestFetcher
 import com.vjaykrsna.nanoai.feature.library.data.huggingface.HuggingFaceManifestRequest
-import com.vjaykrsna.nanoai.telemetry.TelemetryReporter
 import java.net.HttpURLConnection.HTTP_BAD_REQUEST
 import java.util.UUID
 import javax.inject.Inject

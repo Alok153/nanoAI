@@ -13,7 +13,7 @@ import com.vjaykrsna.nanoai.feature.library.data.leap.LeapModelRemoteDataSource
 import com.vjaykrsna.nanoai.feature.library.domain.InstallState
 import com.vjaykrsna.nanoai.feature.library.domain.ProviderType
 import com.vjaykrsna.nanoai.feature.library.domain.RefreshModelCatalogUseCase
-import com.vjaykrsna.nanoai.testing.assertSuccess
+import com.vjaykrsna.nanoai.shared.testing.assertSuccess
 import io.mockk.mockk
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers

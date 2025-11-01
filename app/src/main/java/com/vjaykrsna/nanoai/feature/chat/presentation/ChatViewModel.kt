@@ -6,10 +6,11 @@ import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
 import com.vjaykrsna.nanoai.core.common.onFailure
 import com.vjaykrsna.nanoai.core.common.onSuccess
-import com.vjaykrsna.nanoai.core.data.repository.PersonaRepository
 import com.vjaykrsna.nanoai.core.domain.model.ChatThread
 import com.vjaykrsna.nanoai.core.domain.model.Message
 import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
+import com.vjaykrsna.nanoai.core.domain.usecase.GetDefaultPersonaUseCase
+import com.vjaykrsna.nanoai.core.domain.usecase.ObservePersonasUseCase
 import com.vjaykrsna.nanoai.core.model.MessageRole
 import com.vjaykrsna.nanoai.core.model.PersonaSwitchAction
 import com.vjaykrsna.nanoai.feature.chat.domain.ConversationUseCase
@@ -42,7 +43,8 @@ constructor(
   private val sendPromptUseCase: SendPromptUseCase,
   private val switchPersonaUseCase: SwitchPersonaUseCase,
   private val conversationUseCase: ConversationUseCase,
-  private val personaRepository: PersonaRepository,
+  private val observePersonasUseCase: ObservePersonasUseCase,
+  private val getDefaultPersonaUseCase: GetDefaultPersonaUseCase,
   private val modelCatalogUseCase: ModelCatalogUseCase,
   @MainImmediateDispatcher private val dispatcher: CoroutineDispatcher,
 ) : ViewModel() {
@@ -82,7 +84,7 @@ constructor(
       .stateIn(viewModelScope, flowSharingStarted, null)
 
   val availablePersonas: StateFlow<List<PersonaProfile>> =
-    personaRepository.observeAllPersonas().stateIn(viewModelScope, flowSharingStarted, emptyList())
+    observePersonasUseCase().stateIn(viewModelScope, flowSharingStarted, emptyList())
 
   val models: StateFlow<List<Model>> =
     modelCatalogUseCase
@@ -189,11 +191,9 @@ constructor(
 
   fun createNewThread(personaId: UUID?, title: String? = null) {
     viewModelScope.launch(dispatcher) {
+      val defaultPersonaId = personaId ?: getDefaultPersonaUseCase()?.personaId ?: UUID.randomUUID()
       conversationUseCase
-        .createNewThread(
-          personaId ?: personaRepository.getDefaultPersona()?.personaId ?: UUID.randomUUID(),
-          title,
-        )
+        .createNewThread(defaultPersonaId, title)
         .onSuccess { threadId -> _currentThreadId.value = threadId }
         .onFailure { error ->
           _errorEvents.emit(

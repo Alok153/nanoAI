@@ -34,7 +34,7 @@ import com.vjaykrsna.nanoai.feature.uiux.presentation.ModeId
 import com.vjaykrsna.nanoai.feature.uiux.presentation.PaletteSource
 import com.vjaykrsna.nanoai.feature.uiux.presentation.RightPanel
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellUiState
-import com.vjaykrsna.nanoai.feature.uiux.ui.shell.ShellUiEvent
+import com.vjaykrsna.nanoai.shared.ui.shell.ShellUiEvent
 
 /**
  * Right sidebar container rendering contextual panels such as model selector, progress center, and

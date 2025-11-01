@@ -13,7 +13,7 @@ import com.vjaykrsna.nanoai.feature.settings.domain.huggingface.HuggingFaceDevic
 import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsError
 import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsUiUxState
 import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsViewModel
-import com.vjaykrsna.nanoai.testing.TestEnvironmentRule
+import com.vjaykrsna.nanoai.shared.testing.TestEnvironmentRule
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import io.mockk.every

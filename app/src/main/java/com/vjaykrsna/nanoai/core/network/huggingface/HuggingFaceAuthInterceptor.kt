@@ -1,6 +1,6 @@
 package com.vjaykrsna.nanoai.core.network.huggingface
 
-import com.vjaykrsna.nanoai.security.HuggingFaceTokenProvider
+import com.vjaykrsna.nanoai.core.security.HuggingFaceTokenProvider
 import javax.inject.Inject
 import javax.inject.Singleton
 import okhttp3.Interceptor

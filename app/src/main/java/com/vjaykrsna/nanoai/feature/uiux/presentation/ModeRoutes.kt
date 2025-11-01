@@ -1,6 +1,6 @@
 package com.vjaykrsna.nanoai.feature.uiux.presentation
 
-import com.vjaykrsna.nanoai.feature.uiux.presentation.navigation.Screen
+import com.vjaykrsna.nanoai.feature.uiux.navigation.Screen
 
 internal fun ModeId.toRoute(): String = Screen.fromModeId(this).route
 

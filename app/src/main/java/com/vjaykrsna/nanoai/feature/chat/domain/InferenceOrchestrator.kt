@@ -65,34 +65,33 @@ constructor(
     val userPrefersLocal = inferencePreference.mode == InferenceMode.LOCAL_FIRST
     val isOnline = isOnline()
     val preferLocal = resolvePreference(localCandidates.isNotEmpty(), isOnline, userPrefersLocal)
-
     val preferredLocalModel = selectLocalModel(localCandidates, options.localModelPreference)
-    var lastLocalError: NanoAIResult.RecoverableError? = null
 
-    if (preferLocal && preferredLocalModel != null) {
-      val localResult = runLocalInference(preferredLocalModel, prompt, options, image, audio)
-      if (localResult is NanoAIResult.Success) {
-        return localResult.withPersona(personaId)
-      }
-      // Fallback to cloud when local failed but network is available.
-      lastLocalError = localResult as? NanoAIResult.RecoverableError
-    }
-
-    val finalResult =
-      if (!isOnline) {
-        lastLocalError ?: offlineError()
+    val result =
+      if (preferLocal) {
+        val localResult = runLocalInference(preferredLocalModel!!, prompt, options, image, audio)
+        if (localResult is NanoAIResult.Success) {
+          localResult
+        } else if (!isOnline) {
+          localResult
+        } else {
+          runCloudInference(prompt, options)
+        }
       } else {
-        val cloudResult = runCloudInference(prompt, options)
-        when (cloudResult) {
-          is NanoAIResult.Success -> cloudResult
-          is NanoAIResult.RecoverableError ->
-            fallbackToLocal(preferLocal, preferredLocalModel, prompt, options, image, audio)
-              ?: cloudResult
-          is NanoAIResult.FatalError -> cloudResult
+        if (!isOnline) {
+          offlineError()
+        } else {
+          val cloudResult = runCloudInference(prompt, options)
+          if (cloudResult is NanoAIResult.Success) {
+            cloudResult
+          } else if (preferredLocalModel != null) {
+            runLocalInference(preferredLocalModel, prompt, options, image, audio)
+          } else {
+            cloudResult
+          }
         }
       }
-
-    return finalResult.withPersona(personaId)
+    return result.withPersona(personaId)
   }
 
   private fun resolvePreference(
@@ -174,18 +173,6 @@ constructor(
         executeCloudRequest(provider, cloudModelId, request)
       }
     }
-  }
-
-  private suspend fun fallbackToLocal(
-    preferLocal: Boolean,
-    preferredLocalModel: ModelPackage?,
-    prompt: String,
-    options: InferenceConfiguration,
-    image: Bitmap? = null,
-    audio: ByteArray? = null,
-  ): InferenceResult? {
-    if (preferLocal || preferredLocalModel == null) return null
-    return runLocalInference(preferredLocalModel, prompt, options, image, audio)
   }
 
   private suspend fun selectCloudProvider(): APIProviderConfig? {
@@ -312,7 +299,7 @@ constructor(
 
   private fun unknownError(
     result: CloudGatewayResult.UnknownError,
-    providerId: String,
+    @Suppress("UnusedParameter") providerId: String,
   ): InferenceResult =
     NanoAIResult.fatal(
       message = result.throwable.message ?: "Unknown error occurred",
