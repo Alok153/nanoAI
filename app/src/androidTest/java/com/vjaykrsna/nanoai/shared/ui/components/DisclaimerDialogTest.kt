@@ -10,7 +10,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.filters.LargeTest
-import com.vjaykrsna.nanoai.testing.BaseInstrumentationTest
+import com.vjaykrsna.nanoai.shared.testing.BaseInstrumentationTest
 import org.junit.Test
 
 /**

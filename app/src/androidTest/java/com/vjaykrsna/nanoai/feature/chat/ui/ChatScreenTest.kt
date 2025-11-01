@@ -14,10 +14,10 @@ import com.vjaykrsna.nanoai.feature.chat.domain.SwitchPersonaUseCase
 import com.vjaykrsna.nanoai.feature.chat.presentation.ChatViewModel
 import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
 import com.vjaykrsna.nanoai.feature.library.domain.ModelCatalogUseCase
-import com.vjaykrsna.nanoai.testing.ComposeTestHarness
-import com.vjaykrsna.nanoai.testing.DomainTestBuilders
-import com.vjaykrsna.nanoai.testing.FakeConversationRepository
-import com.vjaykrsna.nanoai.testing.FakePersonaRepository
+import com.vjaykrsna.nanoai.shared.testing.ComposeTestHarness
+import com.vjaykrsna.nanoai.shared.testing.DomainTestBuilders
+import com.vjaykrsna.nanoai.shared.testing.FakeConversationRepository
+import com.vjaykrsna.nanoai.shared.testing.FakePersonaRepository
 import io.mockk.coEvery
 import io.mockk.mockk
 import java.util.UUID

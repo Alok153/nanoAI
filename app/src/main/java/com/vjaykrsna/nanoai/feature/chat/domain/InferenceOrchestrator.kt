@@ -67,29 +67,30 @@ constructor(
     val preferLocal = resolvePreference(localCandidates.isNotEmpty(), isOnline, userPrefersLocal)
     val preferredLocalModel = selectLocalModel(localCandidates, options.localModelPreference)
 
-    val result = if (preferLocal) {
-      val localResult = runLocalInference(preferredLocalModel!!, prompt, options, image, audio)
-      if (localResult is NanoAIResult.Success) {
-        localResult
-      } else if (!isOnline) {
-        localResult
-      } else {
-        runCloudInference(prompt, options)
-      }
-    } else {
-      if (!isOnline) {
-        offlineError()
-      } else {
-        val cloudResult = runCloudInference(prompt, options)
-        if (cloudResult is NanoAIResult.Success) {
-          cloudResult
-        } else if (preferredLocalModel != null) {
-          runLocalInference(preferredLocalModel, prompt, options, image, audio)
+    val result =
+      if (preferLocal) {
+        val localResult = runLocalInference(preferredLocalModel!!, prompt, options, image, audio)
+        if (localResult is NanoAIResult.Success) {
+          localResult
+        } else if (!isOnline) {
+          localResult
         } else {
-          cloudResult
+          runCloudInference(prompt, options)
+        }
+      } else {
+        if (!isOnline) {
+          offlineError()
+        } else {
+          val cloudResult = runCloudInference(prompt, options)
+          if (cloudResult is NanoAIResult.Success) {
+            cloudResult
+          } else if (preferredLocalModel != null) {
+            runLocalInference(preferredLocalModel, prompt, options, image, audio)
+          } else {
+            cloudResult
+          }
         }
       }
-    }
     return result.withPersona(personaId)
   }
 
@@ -173,8 +174,6 @@ constructor(
       }
     }
   }
-
-
 
   private suspend fun selectCloudProvider(): APIProviderConfig? {
     val providers = apiProviderConfigRepository.getEnabledProviders()
