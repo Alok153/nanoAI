@@ -92,6 +92,7 @@ class AdaptiveShellTest {
         pendingUndoAction = UndoPayload(actionId = "none"),
         progressJobs = emptyList(),
         recentActivity = emptyList(),
+        showCoverageDashboard = false,
       )
     val palette = CommandPaletteState()
     val banner =
@@ -108,7 +109,7 @@ class AdaptiveShellTest {
       )
 
     return ShellUiState(
-      layout = layout,
+      layout = layout.copy(showCoverageDashboard = false),
       commandPalette = palette,
       connectivityBanner = banner,
       preferences = UiPreferenceSnapshot(),

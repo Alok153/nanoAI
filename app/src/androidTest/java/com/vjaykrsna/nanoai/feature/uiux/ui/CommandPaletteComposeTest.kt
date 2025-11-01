@@ -83,7 +83,7 @@ class CommandPaletteComposeTest {
     composeTestRule.setContent {
       NanoAITheme {
         NanoShellScaffold(
-          state = state.value,
+          state = state.value.copy(layout = state.value.layout.copy(showCoverageDashboard = false)),
           onEvent = { intent ->
             recorder.record(intent)
             handleIntent(state, intent)
@@ -433,6 +433,7 @@ private fun sampleState(
       pendingUndoAction = pendingUndo,
       progressJobs = progressJobs,
       recentActivity = sampleRecentActivity(),
+      showCoverageDashboard = false,
     )
   val banner =
     ConnectivityBannerState(

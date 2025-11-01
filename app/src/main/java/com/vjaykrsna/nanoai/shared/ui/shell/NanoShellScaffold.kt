@@ -6,13 +6,20 @@ import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.PermanentNavigationDrawer
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.runtime.Composable
@@ -21,9 +28,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
@@ -32,6 +41,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.dp
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
 import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandAction
@@ -257,6 +267,17 @@ fun NanoShellScaffold(
         modifier = Modifier.fillMaxSize(),
       )
     }
+
+    AnimatedVisibility(
+      visible = layout.showCoverageDashboard,
+      enter = fadeIn(animationSpec = tween(durationMillis = 120, easing = FastOutLinearInEasing)),
+      exit = fadeOut(animationSpec = tween(durationMillis = 100, easing = LinearOutSlowInEasing)),
+    ) {
+      CoverageDashboardOverlay(
+        onDismiss = { dispatchEvent(ShellUiEvent.HideCoverageDashboard) },
+        modifier = Modifier.fillMaxSize(),
+      )
+    }
   }
 }
 
@@ -297,6 +318,10 @@ sealed interface ShellUiEvent {
   ) : ShellUiEvent
 
   data object ChatTitleClicked : ShellUiEvent
+
+  data object ShowCoverageDashboard : ShellUiEvent
+
+  data object HideCoverageDashboard : ShellUiEvent
 }
 
 internal enum class DrawerVariant {
@@ -341,5 +366,34 @@ private fun handleShellShortcuts(
       true
     }
     else -> false
+  }
+}
+
+@Composable
+private fun CoverageDashboardOverlay(onDismiss: () -> Unit, modifier: Modifier = Modifier) {
+  // TODO: Implement proper coverage dashboard overlay with ViewModel
+  // For now, show a placeholder
+  androidx.compose.foundation.layout.Box(
+    modifier =
+      modifier
+        .fillMaxSize()
+        .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.5f)),
+    contentAlignment = androidx.compose.ui.Alignment.Center,
+  ) {
+    androidx.compose.material3.Card(modifier = Modifier.fillMaxWidth(0.8f), onClick = onDismiss) {
+      androidx.compose.foundation.layout.Column(
+        modifier = Modifier.padding(16.dp),
+        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+      ) {
+        androidx.compose.material3.Text(
+          text = "Coverage Dashboard",
+          style = androidx.compose.material3.MaterialTheme.typography.headlineSmall,
+        )
+        androidx.compose.material3.Text(
+          text = "This is a placeholder. Tap to dismiss.",
+          style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+        )
+      }
+    }
   }
 }

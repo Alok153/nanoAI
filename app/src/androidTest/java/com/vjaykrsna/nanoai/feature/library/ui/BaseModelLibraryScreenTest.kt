@@ -1,7 +1,8 @@
 package com.vjaykrsna.nanoai.feature.library.ui
 
+import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.feature.library.domain.DownloadModelUseCase
@@ -20,11 +21,13 @@ import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.StandardTestDispatcher
 import org.junit.Before
 import org.junit.Rule
 
 abstract class BaseModelLibraryScreenTest {
-  @get:Rule val composeTestRule: ComposeContentTestRule = createComposeRule()
+  @get:Rule
+  val composeTestRule: ComposeContentTestRule = createAndroidComposeRule<ComponentActivity>()
 
   protected lateinit var catalogRepository: FakeModelCatalogRepository
   protected lateinit var modelCatalogUseCase: ModelCatalogUseCase
@@ -35,6 +38,7 @@ abstract class BaseModelLibraryScreenTest {
   protected lateinit var downloadModelUseCase: DownloadModelUseCase
   protected lateinit var hfToModelConverter: HuggingFaceToModelPackageConverter
   protected lateinit var compatibilityChecker: HuggingFaceModelCompatibilityChecker
+  protected val testDispatcher = StandardTestDispatcher()
   private val downloadLoadingFlow = MutableStateFlow(false)
   private val downloadTasksFlow = MutableStateFlow<List<DownloadTask>>(emptyList())
   private val downloadErrorFlow = MutableSharedFlow<LibraryError>(extraBufferCapacity = 1)
@@ -70,24 +74,33 @@ abstract class BaseModelLibraryScreenTest {
         hfToModelConverter = hfToModelConverter,
         huggingFaceCatalogUseCase = huggingFaceCatalogUseCase,
         compatibilityChecker = compatibilityChecker,
+        dispatcher = testDispatcher,
       )
   }
 
   protected fun renderModelLibraryScreen() {
     composeTestRule.setContent { ModelLibraryScreen(viewModel = viewModel) }
-    composeTestRule.waitForIdle()
+    drainPendingCoroutines()
   }
 
   protected fun replaceCatalog(models: List<com.vjaykrsna.nanoai.core.domain.model.ModelPackage>) {
     runBlocking { catalogRepository.replaceCatalog(models) }
-    composeTestRule.waitForIdle()
+    drainPendingCoroutines()
   }
 
   protected fun setDownloadLoading(isLoading: Boolean) {
     downloadLoadingFlow.value = isLoading
+    drainPendingCoroutines()
   }
 
   protected fun updateDownloadTasks(tasks: List<DownloadTask>) {
     downloadTasksFlow.value = tasks
+    drainPendingCoroutines()
+  }
+
+  protected fun drainPendingCoroutines() {
+    composeTestRule.waitForIdle()
+    testDispatcher.scheduler.advanceUntilIdle()
+    composeTestRule.waitForIdle()
   }
 }

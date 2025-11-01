@@ -281,6 +281,7 @@ class OfflineProgressTest {
         pendingUndoAction = UndoPayload(actionId = "pending"),
         progressJobs = jobs,
         recentActivity = sampleRecentActivity(),
+        showCoverageDashboard = false,
       )
     val banner =
       ConnectivityBannerState(
@@ -297,7 +298,7 @@ class OfflineProgressTest {
     val palette =
       CommandPaletteState(query = "", results = emptyList(), recentCommands = emptyList())
     return ShellUiState(
-      layout = layout,
+      layout = layout.copy(showCoverageDashboard = false),
       commandPalette = palette,
       connectivityBanner = banner,
       preferences = UiPreferenceSnapshot(),

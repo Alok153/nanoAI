@@ -1,7 +1,8 @@
 package com.vjaykrsna.nanoai.shared.ui.sidebar
 
+import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import com.vjaykrsna.nanoai.core.domain.model.ChatThread
 import com.vjaykrsna.nanoai.core.model.InferenceMode
 import com.vjaykrsna.nanoai.shared.ui.theme.NanoAITheme
@@ -11,7 +12,7 @@ import org.junit.Before
 import org.junit.Rule
 
 abstract class BaseSidebarContentTest {
-  @get:Rule val composeRule: ComposeContentTestRule = createComposeRule()
+  @get:Rule val composeRule: ComposeContentTestRule = createAndroidComposeRule<ComponentActivity>()
 
   protected lateinit var testThreads: List<ChatThread>
   protected var newThreadClicked: Boolean = false

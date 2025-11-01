@@ -29,8 +29,12 @@ import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsViewModel
  * @param viewModel SettingsViewModel for managing settings state and operations
  */
 @Composable
-fun SettingsScreen(modifier: Modifier = Modifier, viewModel: SettingsViewModel = hiltViewModel()) {
-  val coordinator = rememberSettingsScreenState(viewModel)
+fun SettingsScreen(
+  modifier: Modifier = Modifier,
+  viewModel: SettingsViewModel = hiltViewModel(),
+  onNavigateToCoverageDashboard: () -> Unit = {},
+) {
+  val coordinator = rememberSettingsScreenState(viewModel, onNavigateToCoverageDashboard)
 
   SettingsScreenContent(
     state = coordinator.contentState,
@@ -58,7 +62,10 @@ fun SettingsScreen(modifier: Modifier = Modifier, viewModel: SettingsViewModel =
 }
 
 @Composable
-internal fun rememberSettingsScreenState(viewModel: SettingsViewModel): SettingsScreenCoordinator {
+internal fun rememberSettingsScreenState(
+  viewModel: SettingsViewModel,
+  onNavigateToCoverageDashboard: () -> Unit = {},
+): SettingsScreenCoordinator {
   val apiProviders by viewModel.apiProviders.collectAsState()
   val privacyPreferences by viewModel.privacyPreferences.collectAsState()
   val uiUxState by viewModel.uiUxState.collectAsState()
@@ -75,7 +82,14 @@ internal fun rememberSettingsScreenState(viewModel: SettingsViewModel): Settings
   CollectExportSuccessEvents(viewModel.exportSuccess, snackbarHostState)
   CollectImportSuccessEvents(viewModel.importSuccess, snackbarHostState)
 
-  val actions = createActions(viewModel, privacyPreferences, importBackupLauncher, dialogState)
+  val actions =
+    createActions(
+      viewModel,
+      privacyPreferences,
+      importBackupLauncher,
+      dialogState,
+      onNavigateToCoverageDashboard,
+    )
   val dialogHandlers = createDialogHandlers(viewModel, dialogState)
 
   val contentState =

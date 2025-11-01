@@ -59,7 +59,12 @@ class HomeHubFlowTest {
     val state = mutableStateOf(sampleState())
 
     composeRule.setContent {
-      NanoAITheme { NanoShellScaffold(state = state.value, onEvent = { event -> events += event }) }
+      NanoAITheme {
+        NanoShellScaffold(
+          state = state.value.copy(layout = state.value.layout.copy(showCoverageDashboard = false)),
+          onEvent = { event -> events += event },
+        )
+      }
     }
 
     composeRule.waitForIdle()
@@ -173,6 +178,7 @@ class HomeHubFlowTest {
         pendingUndoAction = UndoPayload(actionId = "none"),
         progressJobs = emptyList(),
         recentActivity = recent,
+        showCoverageDashboard = false,
       )
     val palette =
       CommandPaletteState(

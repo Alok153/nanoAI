@@ -44,7 +44,8 @@ private const val RECENT_ACTIVITY_INDEX = 5
 private const val UNDO_PAYLOAD_INDEX = 6
 private const val COMMAND_PALETTE_STATE_INDEX = 7
 private const val PROGRESS_JOBS_INDEX = 8
-private const val CHAT_STATE_INDEX = 9
+private const val SHOW_COVERAGE_DASHBOARD_INDEX = 9
+private const val CHAT_STATE_INDEX = 10
 
 // Constants for flow sharing
 private const val UI_STATE_SUBSCRIPTION_TIMEOUT_MS = 5000L
@@ -140,6 +141,7 @@ constructor(
   private val _isLeftDrawerOpen = MutableStateFlow(false)
   private val _isRightDrawerOpen = MutableStateFlow(false)
   private val _activeRightPanel = MutableStateFlow<RightPanel?>(null)
+  private val _showCoverageDashboard = MutableStateFlow(false)
 
   private val _chatState = MutableStateFlow<ChatState?>(null)
 
@@ -173,6 +175,8 @@ constructor(
       is ShellUiEvent.ConnectivityChanged -> connectivityViewModel.updateConnectivity(event.status)
       is ShellUiEvent.UpdateTheme -> themeViewModel.updateThemePreference(event.theme)
       is ShellUiEvent.UpdateDensity -> themeViewModel.updateVisualDensity(event.density)
+      ShellUiEvent.ShowCoverageDashboard -> _showCoverageDashboard.value = true
+      ShellUiEvent.HideCoverageDashboard -> _showCoverageDashboard.value = false
       else -> Unit
     }
   }
@@ -188,6 +192,7 @@ constructor(
         navigationOperationsUseCase.undoPayload,
         navigationOperationsUseCase.commandPaletteState,
         progressViewModel.progressJobs,
+        _showCoverageDashboard,
         _chatState,
       ) { values ->
         val windowSizeClass = values[WINDOW_SIZE_CLASS_INDEX] as WindowSizeClass
@@ -205,6 +210,7 @@ constructor(
         val jobs =
           values[PROGRESS_JOBS_INDEX] as? List<ProgressJob>
             ?: error("Expected List<ProgressJob> at index $PROGRESS_JOBS_INDEX")
+        val showCoverageDashboard = values[SHOW_COVERAGE_DASHBOARD_INDEX] as Boolean
         val chatState = values[CHAT_STATE_INDEX] as ChatState?
 
         val normalizedLayout =
@@ -215,6 +221,7 @@ constructor(
             activeRightPanel = activeRightPanel,
             activeMode = activeMode,
             showCommandPalette = commandPaletteState.results.isNotEmpty(),
+            showCoverageDashboard = showCoverageDashboard,
             connectivity = ConnectivityStatus.ONLINE, // TODO: from connectivity
             pendingUndoAction = undoPayload,
             progressJobs = jobs,
@@ -252,6 +259,7 @@ constructor(
           activeRightPanel = null,
           activeMode = ModeId.HOME,
           showCommandPalette = false,
+          showCoverageDashboard = false,
           connectivity = ConnectivityStatus.ONLINE,
           pendingUndoAction = null,
           progressJobs = emptyList(),
