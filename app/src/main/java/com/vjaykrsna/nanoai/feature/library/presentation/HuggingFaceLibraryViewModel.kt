@@ -82,8 +82,6 @@ constructor(
 
   init {
     observeFilterChanges()
-    // Trigger initial load
-    fetchModels(HuggingFaceFilterState(), force = true)
   }
 
   private fun observeFilterChanges() {

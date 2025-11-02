@@ -18,9 +18,9 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Instant
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import org.junit.jupiter.api.AfterEach
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ModelCatalogRepositoryImplTest {
@@ -49,7 +49,7 @@ class ModelCatalogRepositoryImplTest {
       )
   }
 
-  @AfterEach
+  @After
   fun tearDown() {
     database.close()
   }

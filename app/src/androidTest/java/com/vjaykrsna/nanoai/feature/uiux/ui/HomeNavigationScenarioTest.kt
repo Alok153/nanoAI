@@ -4,15 +4,13 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasTestTag
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.test.filters.LargeTest
-import com.vjaykrsna.nanoai.MainActivity
-import com.vjaykrsna.nanoai.shared.testing.TestEnvironmentRule
+import com.vjaykrsna.nanoai.shared.testing.BaseInstrumentationTest
+import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Ignore
-import org.junit.Rule
 import org.junit.Test
 
 /**
@@ -20,12 +18,10 @@ import org.junit.Test
  * intentionally fail until the Home screen exposes the expected test tags and behaviors.
  */
 @LargeTest
+@HiltAndroidTest
 @OptIn(ExperimentalTestApi::class)
 @Ignore("Scenario blocked on home hub data feed; see specs/003-UI-UX/plan.md")
-class HomeNavigationScenarioTest {
-
-  @JvmField @Rule val environmentRule = TestEnvironmentRule()
-  @JvmField @Rule val composeRule = createAndroidComposeRule<MainActivity>()
+class HomeNavigationScenarioTest : BaseInstrumentationTest() {
 
   @Test
   fun homeScreen_expandTools_and_triggerRecentAction() {

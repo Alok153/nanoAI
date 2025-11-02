@@ -11,7 +11,7 @@ import com.vjaykrsna.nanoai.feature.library.data.catalog.DeliveryType
 import com.vjaykrsna.nanoai.feature.library.domain.DownloadStatus
 import com.vjaykrsna.nanoai.feature.library.domain.InstallState
 import com.vjaykrsna.nanoai.feature.library.domain.ProviderType
-import com.vjaykrsna.nanoai.shared.ui.theme.NanoAITheme
+import com.vjaykrsna.nanoai.shared.testing.TestingTheme
 import java.util.UUID
 import kotlinx.datetime.Instant
 import org.junit.Rule
@@ -44,7 +44,7 @@ class ModelLibraryAccessibilityTest {
     val installedState = mutableStateOf(false)
 
     composeRule.setContent {
-      NanoAITheme {
+      TestingTheme {
         ModelCard(
           model = modelState.value,
           isInstalled = installedState.value,
@@ -76,7 +76,7 @@ class ModelLibraryAccessibilityTest {
       )
 
     composeRule.setContent {
-      NanoAITheme {
+      TestingTheme {
         DownloadTaskItem(
           download = download,
           onPause = {},

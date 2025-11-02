@@ -8,10 +8,12 @@ import com.vjaykrsna.nanoai.core.common.onFailure
 import com.vjaykrsna.nanoai.core.common.onSuccess
 import com.vjaykrsna.nanoai.core.domain.model.ChatThread
 import com.vjaykrsna.nanoai.core.domain.model.Message
+import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
 import com.vjaykrsna.nanoai.core.domain.usecase.GetDefaultPersonaUseCase
 import com.vjaykrsna.nanoai.core.domain.usecase.ObservePersonasUseCase
 import com.vjaykrsna.nanoai.core.model.MessageRole
+import com.vjaykrsna.nanoai.core.model.MessageSource
 import com.vjaykrsna.nanoai.core.model.PersonaSwitchAction
 import com.vjaykrsna.nanoai.feature.chat.domain.ConversationUseCase
 import com.vjaykrsna.nanoai.feature.chat.domain.SendPromptUseCase
@@ -89,9 +91,7 @@ constructor(
   val models: StateFlow<List<Model>> =
     modelCatalogUseCase
       .observeInstalledModels()
-      .map { list: List<com.vjaykrsna.nanoai.core.domain.model.ModelPackage> ->
-        list.map { it.toModel() }
-      }
+      .map { list: List<ModelPackage> -> list.map { it.toModel() } }
       .stateIn(viewModelScope, flowSharingStarted, emptyList())
 
   private val _showModelPicker = MutableStateFlow(false)
@@ -149,7 +149,7 @@ constructor(
               threadId = threadId,
               role = MessageRole.USER,
               text = text,
-              source = com.vjaykrsna.nanoai.core.model.MessageSource.LOCAL_MODEL,
+              source = MessageSource.LOCAL_MODEL,
               latencyMs = null,
               createdAt = kotlinx.datetime.Clock.System.now(),
             )

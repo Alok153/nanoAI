@@ -6,15 +6,17 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.vjaykrsna.nanoai.core.domain.model.ApiProviderConfig
 import com.vjaykrsna.nanoai.core.model.APIType
+import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Test
 
+@HiltAndroidTest
 class SettingsScreenProviderManagementTest : BaseSettingsScreenTest() {
 
   @Test
   fun settingsScreen_addProviderFab_visibleOnOfflineTab() {
     renderSettingsScreen()
 
-    composeTestRule.onNodeWithText("Offline & Models").performClick()
+    composeTestRule.onNodeWithText("APIs").performClick()
     composeTestRule.waitForIdle()
 
     composeTestRule.onNodeWithContentDescription("Add API provider").assertIsDisplayed()
@@ -31,7 +33,7 @@ class SettingsScreenProviderManagementTest : BaseSettingsScreenTest() {
   fun settingsScreen_clickAddProvider_opensDialog() {
     renderSettingsScreen()
 
-    composeTestRule.onNodeWithText("Offline & Models").performClick()
+    composeTestRule.onNodeWithText("APIs").performClick()
     composeTestRule.waitForIdle()
     composeTestRule.onNodeWithContentDescription("Add API provider").performClick()
     composeTestRule.waitForIdle()
@@ -54,7 +56,7 @@ class SettingsScreenProviderManagementTest : BaseSettingsScreenTest() {
 
     renderSettingsScreen()
 
-    composeTestRule.onNodeWithText("Offline & Models").performClick()
+    composeTestRule.onNodeWithText("APIs").performClick()
     composeTestRule.waitForIdle()
     composeTestRule.onNodeWithText("Google Gemini", substring = true).assertIsDisplayed()
   }
@@ -63,7 +65,7 @@ class SettingsScreenProviderManagementTest : BaseSettingsScreenTest() {
   fun settingsScreen_addProviderDialog_showsForm() {
     renderSettingsScreen()
 
-    composeTestRule.onNodeWithText("Offline & Models").performClick()
+    composeTestRule.onNodeWithText("APIs").performClick()
     composeTestRule.waitForIdle()
     // TODO: trigger add provider dialog when fields expose tags
   }
@@ -84,7 +86,7 @@ class SettingsScreenProviderManagementTest : BaseSettingsScreenTest() {
 
     renderSettingsScreen()
 
-    composeTestRule.onNodeWithText("Offline & Models").performClick()
+    composeTestRule.onNodeWithText("APIs").performClick()
     composeTestRule.waitForIdle()
     composeTestRule.onNodeWithText("Google Gemini", substring = true).performClick()
     // TODO: assert edit dialog once implementation provides test tags

@@ -3,16 +3,14 @@ package com.vjaykrsna.nanoai.feature.uiux.ui
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.filters.LargeTest
-import com.vjaykrsna.nanoai.MainActivity
-import com.vjaykrsna.nanoai.shared.testing.TestEnvironmentRule
+import com.vjaykrsna.nanoai.shared.testing.BaseInstrumentationTest
+import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Ignore
-import org.junit.Rule
 import org.junit.Test
 
 /**
@@ -26,10 +24,8 @@ import org.junit.Test
  */
 @LargeTest
 @Ignore("Theme toggle scenario awaiting UI persistence; see specs/003-UI-UX/plan.md")
-class ThemeToggleScenarioTest {
-  @JvmField @Rule val environmentRule = TestEnvironmentRule()
-
-  @JvmField @Rule val composeRule = createAndroidComposeRule<MainActivity>()
+@HiltAndroidTest
+class ThemeToggleScenarioTest : BaseInstrumentationTest() {
 
   @Test
   fun themeToggle_persistsAcrossProcessDeath_withoutLayoutJump() {

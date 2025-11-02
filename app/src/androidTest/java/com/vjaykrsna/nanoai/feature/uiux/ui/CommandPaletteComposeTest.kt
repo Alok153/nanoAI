@@ -11,10 +11,8 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.SemanticsNodeInteractionCollection
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
@@ -22,8 +20,6 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsSelectable
-import androidx.compose.ui.test.hasAnyChild
-import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -31,6 +27,7 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performTextInput
@@ -57,13 +54,14 @@ import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellLayoutState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellUiState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.UiPreferenceSnapshot
 import com.vjaykrsna.nanoai.feature.uiux.presentation.UndoPayload
+import com.vjaykrsna.nanoai.shared.testing.TestingTheme
 import com.vjaykrsna.nanoai.shared.ui.shell.NanoShellScaffold
 import com.vjaykrsna.nanoai.shared.ui.shell.ShellUiEvent
-import com.vjaykrsna.nanoai.shared.ui.theme.NanoAITheme
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import org.junit.Rule
 import org.junit.Test
 
 @OptIn(
@@ -72,9 +70,7 @@ import org.junit.Test
   ExperimentalMaterial3WindowSizeClassApi::class,
 )
 class CommandPaletteComposeTest {
-  @org.junit.jupiter.api.extension.RegisterExtension
-  @JvmField
-  val composeTestRule = createAndroidComposeRule<ComponentActivity>()
+  @get:Rule val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
   @Test
   fun palette_opensWithShortcut_focusesSearchField() {
@@ -82,9 +78,9 @@ class CommandPaletteComposeTest {
     val state = mutableStateOf(sampleState(showPalette = false))
 
     composeTestRule.setContent {
-      NanoAITheme {
+      TestingTheme {
         NanoShellScaffold(
-          state = state.value,
+          state = state.value.copy(layout = state.value.layout.copy(showCoverageDashboard = false)),
           onEvent = { intent ->
             recorder.record(intent)
             handleIntent(state, intent)
@@ -118,7 +114,7 @@ class CommandPaletteComposeTest {
       )
 
     composeTestRule.setContent {
-      NanoAITheme {
+      TestingTheme {
         NanoShellScaffold(state = state.value, onEvent = { intent -> handleIntent(state, intent) })
       }
     }
@@ -140,7 +136,7 @@ class CommandPaletteComposeTest {
       )
 
     composeTestRule.setContent {
-      NanoAITheme {
+      TestingTheme {
         NanoShellScaffold(state = state.value, onEvent = { intent -> handleIntent(state, intent) })
       }
     }
@@ -168,7 +164,7 @@ class CommandPaletteComposeTest {
       )
 
     composeTestRule.setContent {
-      NanoAITheme {
+      TestingTheme {
         NanoShellScaffold(
           state = state.value,
           onEvent = { intent ->
@@ -198,7 +194,7 @@ class CommandPaletteComposeTest {
       )
 
     composeTestRule.setContent {
-      NanoAITheme {
+      TestingTheme {
         NanoShellScaffold(state = state.value, onEvent = { intent -> handleIntent(state, intent) })
       }
     }
@@ -220,7 +216,7 @@ class CommandPaletteComposeTest {
       )
 
     composeTestRule.setContent {
-      NanoAITheme {
+      TestingTheme {
         NanoShellScaffold(
           state = state.value,
           onEvent = { intent ->
@@ -235,7 +231,9 @@ class CommandPaletteComposeTest {
 
     composeTestRule.runOnIdle { assertThat(state.value.layout.progressJobs).hasSize(2) }
 
-    composeTestRule.waitForProgressItems(prefix = "progress_list_item_", count = 2)
+    composeTestRule.waitForNodeWithTag("progress_center_panel", useUnmergedTree = true)
+    composeTestRule.waitForNodeWithTag("progress_list_item_0", useUnmergedTree = true)
+    composeTestRule.waitForNodeWithTag("progress_list_item_1", useUnmergedTree = true)
 
     val retryAvailableButton =
       composeTestRule.onNodeWithTag(
@@ -258,8 +256,10 @@ class CommandPaletteComposeTest {
       SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "Retry unavailable")
     )
 
-    composeTestRule.waitUntil(timeoutMillis = 5_000) {
-      recorder.events.any { it is ShellUiEvent.RetryJob && it.job.jobId == retryable.jobId }
+    composeTestRule.waitForIdle()
+    composeTestRule.runOnIdle {
+      assertThat(recorder.events.filterIsInstance<ShellUiEvent.RetryJob>().map { it.job.jobId })
+        .contains(retryable.jobId)
     }
   }
 
@@ -274,7 +274,7 @@ class CommandPaletteComposeTest {
     val state = mutableStateOf(sampleState(showPalette = false, pendingUndo = payload))
 
     composeTestRule.setContent {
-      NanoAITheme {
+      TestingTheme {
         NanoShellScaffold(
           state = state.value,
           onEvent = { intent ->
@@ -287,27 +287,16 @@ class CommandPaletteComposeTest {
 
     composeTestRule.waitForIdle()
 
-    composeTestRule.waitUntil(timeoutMillis = 5_000) {
-      composeTestRule
-        .onAllNodesWithText("Image generation queued for reconnect", substring = false)
-        .fetchSemanticsNodes(false)
-        .isNotEmpty()
-    }
+    composeTestRule.waitUntilNodeWithText("Image generation queued for reconnect")
 
     composeTestRule.onNode(hasText("Image generation queued for reconnect")).assertExists()
-    composeTestRule.waitUntil(timeoutMillis = 5_000) {
-      composeTestRule
-        .onAllNodes(hasClickAction() and hasAnyChild(hasText("Undo", ignoreCase = true)))
-        .fetchSemanticsNodes(false)
-        .isNotEmpty()
-    }
+    composeTestRule.waitUntilNodeWithText("Undo", useUnmergedTree = true, ignoreCase = true)
+    composeTestRule.onNodeWithText("Undo", ignoreCase = true, useUnmergedTree = true).performClick()
 
-    composeTestRule
-      .onNode(hasClickAction() and hasAnyChild(hasText("Undo", ignoreCase = true)))
-      .performClick()
-
-    composeTestRule.waitUntil(timeoutMillis = 5_000) {
-      recorder.events.any { it is ShellUiEvent.Undo && it.payload == payload }
+    composeTestRule.waitForIdle()
+    composeTestRule.runOnIdle {
+      assertThat(recorder.events.filterIsInstance<ShellUiEvent.Undo>().map { it.payload })
+        .contains(payload)
     }
   }
 }
@@ -390,27 +379,33 @@ private class EventRecorder {
   }
 }
 
-private fun AndroidComposeTestRule<*, *>.waitForProgressItems(
-  prefix: String,
-  count: Int,
+private fun AndroidComposeTestRule<*, *>.waitForNodeWithTag(
+  tag: String,
+  useUnmergedTree: Boolean = false,
   timeoutMillis: Long = 10_000,
 ) {
   waitUntil(timeoutMillis) {
-    onAllNodesWithTagPrefix(prefix, useUnmergedTree = true).fetchSemanticsNodes().size == count
+    onAllNodesWithTag(tag, useUnmergedTree).fetchSemanticsNodes().isNotEmpty()
   }
 }
 
-private fun AndroidComposeTestRule<*, *>.onAllNodesWithTagPrefix(
-  prefix: String,
+private fun AndroidComposeTestRule<*, *>.waitUntilNodeWithText(
+  text: String,
   useUnmergedTree: Boolean = false,
-): SemanticsNodeInteractionCollection =
-  onAllNodes(
-    SemanticsMatcher("Has test tag with prefix $prefix") { node ->
-      val tag = node.config.getOrNull(SemanticsProperties.TestTag)
-      tag?.startsWith(prefix) == true
-    },
-    useUnmergedTree = useUnmergedTree,
-  )
+  ignoreCase: Boolean = false,
+  timeoutMillis: Long = 10_000,
+) {
+  waitUntil(timeoutMillis) {
+    onAllNodesWithText(
+        text,
+        substring = true,
+        ignoreCase = ignoreCase,
+        useUnmergedTree = useUnmergedTree,
+      )
+      .fetchSemanticsNodes(false)
+      .isNotEmpty()
+  }
+}
 
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 private fun sampleState(
@@ -434,6 +429,7 @@ private fun sampleState(
       pendingUndoAction = pendingUndo,
       progressJobs = progressJobs,
       recentActivity = sampleRecentActivity(),
+      showCoverageDashboard = false,
     )
   val banner =
     ConnectivityBannerState(

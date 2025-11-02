@@ -272,7 +272,11 @@ private fun SettingsCategoryContent(
         item { AboutSupportFeedbackCard() }
         item { AboutDocumentationCard() }
         item { AboutSystemInformationCard() }
-        item { AboutAdvancedDiagnosticsCard() }
+        item {
+          AboutAdvancedDiagnosticsCard(
+            onNavigateToCoverageDashboard = actions.onNavigateToCoverageDashboard
+          )
+        }
         item { AboutCacheManagementCard() }
         item { AboutExperimentalFeaturesCard() }
       }

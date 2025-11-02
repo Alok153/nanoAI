@@ -28,21 +28,21 @@ import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellLayoutState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellUiState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.UiPreferenceSnapshot
 import com.vjaykrsna.nanoai.feature.uiux.presentation.UndoPayload
+import com.vjaykrsna.nanoai.shared.testing.TestingTheme
 import com.vjaykrsna.nanoai.shared.ui.shell.NanoShellScaffold
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import org.junit.Rule
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalMaterial3WindowSizeClassApi::class)
 class AdaptiveShellTest {
-  @org.junit.jupiter.api.extension.RegisterExtension
-  @JvmField
-  val composeRule = createAndroidComposeRule<ComponentActivity>()
+  @get:Rule val composeRule = createAndroidComposeRule<ComponentActivity>()
 
   @Test
   fun compactWidth_usesModalDrawer() {
     val state =
       mutableStateOf(sampleState(WindowWidthSizeClass.Compact, WindowHeightSizeClass.Expanded))
-    composeRule.setContent { NanoShellScaffold(state = state.value, onEvent = {}) }
+    composeRule.setContent { TestingTheme { NanoShellScaffold(state = state.value, onEvent = {}) } }
 
     composeRule.onNodeWithTag("left_drawer_modal").assertIsDisplayed()
   }
@@ -51,7 +51,7 @@ class AdaptiveShellTest {
   fun expandedWidth_showsPermanentDrawer() {
     val state =
       mutableStateOf(sampleState(WindowWidthSizeClass.Expanded, WindowHeightSizeClass.Medium))
-    composeRule.setContent { NanoShellScaffold(state = state.value, onEvent = {}) }
+    composeRule.setContent { TestingTheme { NanoShellScaffold(state = state.value, onEvent = {}) } }
 
     composeRule.onNodeWithTag("left_drawer_permanent").assertIsDisplayed()
     composeRule.onAllNodesWithTag("left_drawer_modal").assertCountEquals(0)
@@ -61,7 +61,7 @@ class AdaptiveShellTest {
   fun accessibility_focusMovesIntoContent() {
     val state =
       mutableStateOf(sampleState(WindowWidthSizeClass.Medium, WindowHeightSizeClass.Medium))
-    composeRule.setContent { NanoShellScaffold(state = state.value, onEvent = {}) }
+    composeRule.setContent { TestingTheme { NanoShellScaffold(state = state.value, onEvent = {}) } }
 
     composeRule.waitForIdle()
 
@@ -93,6 +93,7 @@ class AdaptiveShellTest {
         pendingUndoAction = UndoPayload(actionId = "none"),
         progressJobs = emptyList(),
         recentActivity = emptyList(),
+        showCoverageDashboard = false,
       )
     val palette = CommandPaletteState()
     val banner =
@@ -109,7 +110,7 @@ class AdaptiveShellTest {
       )
 
     return ShellUiState(
-      layout = layout,
+      layout = layout.copy(showCoverageDashboard = false),
       commandPalette = palette,
       connectivityBanner = banner,
       preferences = UiPreferenceSnapshot(),

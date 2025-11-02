@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai.feature.chat.ui
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -21,15 +22,20 @@ import com.vjaykrsna.nanoai.shared.testing.FakePersonaRepository
 import io.mockk.coEvery
 import io.mockk.mockk
 import java.util.UUID
-import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class ChatScreenTest {
 
-  @org.junit.jupiter.api.extension.RegisterExtension
-  @JvmField
-  val composeTestRule = createComposeRule()
+  @get:Rule val composeTestRule = createComposeRule()
+
+  private companion object {
+    private const val COMPOSER_PLACEHOLDER = "Type a message…"
+  }
 
   private lateinit var conversationRepository: FakeConversationRepository
   private lateinit var personaRepository: FakePersonaRepository
@@ -42,7 +48,7 @@ class ChatScreenTest {
   private lateinit var getDefaultPersonaUseCase: GetDefaultPersonaUseCase
   private lateinit var viewModel: ChatViewModel
   private lateinit var harness: ComposeTestHarness
-  private val testDispatcher = StandardTestDispatcher()
+  private val testDispatcher = UnconfinedTestDispatcher()
 
   @Before
   fun setup() {
@@ -73,9 +79,23 @@ class ChatScreenTest {
     harness = ComposeTestHarness(composeTestRule)
   }
 
+  private fun renderScreen(content: @Composable () -> Unit = { DefaultScreen() }) {
+    composeTestRule.setContent(content)
+    drainPendingCoroutines()
+  }
+
+  @Composable
+  private fun DefaultScreen() {
+    ChatScreen(viewModel = viewModel, onNavigate = {})
+  }
+
+  private fun drainPendingCoroutines() {
+    composeTestRule.waitForIdle()
+  }
+
   @Test
   fun chatScreen_displaysContentDescription() {
-    composeTestRule.setContent { ChatScreen(viewModel = viewModel, onNavigate = {}) }
+    renderScreen()
 
     composeTestRule
       .onNodeWithContentDescription("Chat screen with message history and input")
@@ -84,10 +104,7 @@ class ChatScreenTest {
 
   @Test
   fun chatScreen_withNoThread_disablesSendButton() {
-    composeTestRule.setContent { ChatScreen(viewModel = viewModel, onNavigate = {}) }
-
-    // Composer bar should be disabled when no thread is selected
-    composeTestRule.waitForIdle()
+    renderScreen()
 
     // The actual send button is not directly testable, but we can verify composer is disabled
     // by checking that text input returns immediately without enabling send
@@ -104,12 +121,10 @@ class ChatScreenTest {
     personaRepository.setPersonas(listOf(persona))
     viewModel.selectThread(threadId)
 
-    composeTestRule.setContent { ChatScreen(viewModel = viewModel, onNavigate = {}) }
-
-    composeTestRule.waitForIdle()
+    renderScreen()
 
     // Input should be enabled
-    composeTestRule.onNodeWithText("Type a message...").assertIsDisplayed()
+    composeTestRule.onNodeWithText(COMPOSER_PLACEHOLDER).assertIsDisplayed()
   }
 
   @Test
@@ -123,12 +138,10 @@ class ChatScreenTest {
     personaRepository.setPersonas(listOf(persona))
     viewModel.selectThread(threadId)
 
-    composeTestRule.setContent { ChatScreen(viewModel = viewModel, onNavigate = {}) }
-
-    composeTestRule.waitForIdle()
+    renderScreen()
 
     // Type a message
-    composeTestRule.onNodeWithText("Type a message...").performTextInput("Hello")
+    composeTestRule.onNodeWithText(COMPOSER_PLACEHOLDER).performTextInput("Hello")
 
     // Send message triggers loading (though in this test it completes quickly)
     // The loading indicator would appear during actual network calls
@@ -147,9 +160,7 @@ class ChatScreenTest {
     conversationRepository.addMessage(threadId, message2)
     viewModel.selectThread(threadId)
 
-    composeTestRule.setContent { ChatScreen(viewModel = viewModel, onNavigate = {}) }
-
-    composeTestRule.waitForIdle()
+    renderScreen()
 
     // Verify messages are displayed
     composeTestRule.onNodeWithText("Hello", substring = true).assertIsDisplayed()
@@ -168,9 +179,7 @@ class ChatScreenTest {
     conversationRepository.addMessage(threadId, userMessage)
     viewModel.selectThread(threadId)
 
-    composeTestRule.setContent { ChatScreen(viewModel = viewModel, onNavigate = {}) }
-
-    composeTestRule.waitForIdle()
+    renderScreen()
 
     // User messages should have accessibility descriptions
     composeTestRule
@@ -207,13 +216,11 @@ class ChatScreenTest {
     conversationRepository.addThread(thread)
     viewModel.selectThread(threadId)
 
-    composeTestRule.setContent { ChatScreen(viewModel = viewModel, onNavigate = {}) }
-
-    composeTestRule.waitForIdle()
+    renderScreen()
 
     // No messages should be displayed
     // Composer should still be available
-    composeTestRule.onNodeWithText("Type a message...").assertIsDisplayed()
+    composeTestRule.onNodeWithText(COMPOSER_PLACEHOLDER).assertIsDisplayed()
   }
 
   @Test
@@ -227,12 +234,10 @@ class ChatScreenTest {
       NanoAIResult.recoverable("Failed to send prompt")
     viewModel.selectThread(threadId)
 
-    composeTestRule.setContent { ChatScreen(viewModel = viewModel, onNavigate = {}) }
-
-    composeTestRule.waitForIdle()
+    renderScreen()
 
     // Type and send to trigger error
-    composeTestRule.onNodeWithText("Type a message...").performTextInput("Test")
+    composeTestRule.onNodeWithText(COMPOSER_PLACEHOLDER).performTextInput("Test")
 
     // Error should be displayed (in production, this would show offline banner)
     composeTestRule.waitForIdle()
@@ -258,9 +263,7 @@ class ChatScreenTest {
     conversationRepository.addThread(thread)
     viewModel.selectThread(threadId)
 
-    composeTestRule.setContent { ChatScreen(viewModel = viewModel, onNavigate = {}) }
-
-    composeTestRule.waitForIdle()
+    renderScreen()
 
     // Latest message should be visible
     composeTestRule.onNodeWithText("Response 19", substring = true).assertIsDisplayed()
@@ -275,12 +278,10 @@ class ChatScreenTest {
     conversationRepository.addThread(thread)
     viewModel.selectThread(threadId)
 
-    composeTestRule.setContent { ChatScreen(viewModel = viewModel, onNavigate = {}) }
-
-    composeTestRule.waitForIdle()
+    renderScreen()
 
     // Type a message
-    composeTestRule.onNodeWithText("Type a message...").performTextInput("Test message")
+    composeTestRule.onNodeWithText(COMPOSER_PLACEHOLDER).performTextInput("Test message")
     composeTestRule.onNodeWithText("Test message").assertExists()
 
     // After sending, input should be cleared
@@ -300,7 +301,7 @@ class ChatScreenTest {
     composeTestRule.waitForIdle()
 
     // Try to send without persona
-    composeTestRule.onNodeWithText("Type a message...").performTextInput("Test")
+    composeTestRule.onNodeWithText(COMPOSER_PLACEHOLDER).performTextInput("Test")
 
     // Error should be shown about no persona
     composeTestRule.waitForIdle()
@@ -405,17 +406,15 @@ class ChatScreenTest {
     conversationRepository.addMessage(threadId, message)
     viewModel.selectThread(threadId)
 
-    composeTestRule.setContent {
+    renderScreen {
       // Dark mode would be controlled by system theme or app settings
       // For this test, we verify the screen renders regardless of theme
-      ChatScreen(viewModel = viewModel, onNavigate = {})
+      DefaultScreen()
     }
-
-    composeTestRule.waitForIdle()
 
     // Verify content is displayed in dark mode (colors are handled by MaterialTheme)
     composeTestRule.onNodeWithText("Dark mode test message").assertExists().assertIsDisplayed()
 
-    composeTestRule.onNodeWithText("Type a message...").assertExists().assertIsDisplayed()
+    composeTestRule.onNodeWithText(COMPOSER_PLACEHOLDER).assertExists().assertIsDisplayed()
   }
 }

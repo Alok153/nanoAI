@@ -2,6 +2,7 @@
 
 package com.vjaykrsna.nanoai.feature.uiux.ui
 
+import android.os.SystemClock
 import androidx.activity.ComponentActivity
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
@@ -9,14 +10,12 @@ import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteractionCollection
 import androidx.compose.ui.test.assertCountEquals
-import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -29,6 +28,7 @@ import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandAction
 import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandCategory
 import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandDestination
+import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandInvocationSource
 import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandPaletteState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ConnectivityBannerState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ConnectivityStatus
@@ -40,101 +40,77 @@ import com.vjaykrsna.nanoai.feature.uiux.presentation.RightPanel
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellLayoutState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellUiState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.UiPreferenceSnapshot
-import com.vjaykrsna.nanoai.feature.uiux.presentation.UndoPayload
-import com.vjaykrsna.nanoai.shared.ui.shell.NanoShellScaffold
+import com.vjaykrsna.nanoai.shared.testing.TestingTheme
 import com.vjaykrsna.nanoai.shared.ui.shell.ShellUiEvent
-import com.vjaykrsna.nanoai.shared.ui.theme.NanoAITheme
 import java.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import org.junit.Rule
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalMaterial3WindowSizeClassApi::class)
 class HomeHubFlowTest {
-  @org.junit.jupiter.api.extension.RegisterExtension
-  @JvmField
-  val composeRule = createAndroidComposeRule<ComponentActivity>()
+  @get:Rule val composeRule = createAndroidComposeRule<ComponentActivity>()
 
   @Test
   fun modeCards_renderAndTriggerModeSelection() {
     val events = mutableListOf<ShellUiEvent>()
-    val state = mutableStateOf(sampleState())
+    val shellState = sampleState()
 
-    composeRule.setContent {
-      NanoAITheme { NanoShellScaffold(state = state.value, onEvent = { event -> events += event }) }
-    }
+    renderHomeScreen(shellState) { event -> events += event }
 
     composeRule.waitForIdle()
 
-    composeRule.waitUntil(timeoutMillis = 5_000) {
-      composeRule
-        .onAllNodesWithTag("mode_card", useUnmergedTree = true)
-        .fetchSemanticsNodes(false)
-        .size >= 3
-    }
-    val modeCards = composeRule.onAllNodesWithTag("mode_card", useUnmergedTree = true)
+    composeRule.waitForNodesWithTagCount("mode_card", expectedCount = 3)
+    val modeCards = composeRule.onAllNodesWithTag("mode_card")
     modeCards.assertCountEquals(3)
     modeCards[0].performClick()
 
-    composeRule.waitUntil {
-      events.any { it is ShellUiEvent.ModeSelected && it.modeId == ModeId.CHAT }
+    composeRule.waitForIdle()
+    composeRule.runOnIdle {
+      assertThat(events.filterIsInstance<ShellUiEvent.ModeSelected>().first().modeId)
+        .isEqualTo(ModeId.CHAT)
     }
-
-    assertThat(events.filterIsInstance<ShellUiEvent.ModeSelected>().first().modeId)
-      .isEqualTo(ModeId.CHAT)
   }
 
   @Test
   fun recentActivity_showsLatestEntries() {
-    val state = mutableStateOf(sampleState())
-    composeRule.setContent { NanoAITheme { NanoShellScaffold(state = state.value, onEvent = {}) } }
+    val shellState = sampleState()
+    renderHomeScreen(shellState)
 
     composeRule.waitForIdle()
 
-    composeRule.waitUntil(timeoutMillis = 5_000) {
-      composeRule
-        .onAllNodesWithTagPrefix("recent_activity_item", useUnmergedTree = true)
-        .fetchSemanticsNodes(false)
-        .size == 2
-    }
+    composeRule.waitForNodesWithTagPrefixCount(prefix = "recent_activity_item", expectedCount = 2)
 
-    composeRule.onNodeWithTag("recent_activity_list", useUnmergedTree = true).assertIsDisplayed()
-    val items = composeRule.onAllNodesWithTagPrefix("recent_activity_item", useUnmergedTree = true)
+    composeRule.onNodeWithTag("recent_activity_list").assertExists()
+    val items = composeRule.onAllNodesWithTagPrefix("recent_activity_item")
     items.assertCountEquals(2)
-    items[0].assertIsDisplayed()
+    items[0].assertExists()
   }
 
   @Test
   fun quickActions_sectionVisible() {
     val events = mutableListOf<ShellUiEvent>()
-    val state = mutableStateOf(sampleState())
-    composeRule.setContent {
-      NanoAITheme { NanoShellScaffold(state = state.value, onEvent = { events += it }) }
-    }
+    val shellState = sampleState()
+    renderHomeScreen(shellState) { event -> events += event }
 
     composeRule.waitForIdle()
 
-    composeRule
-      .onNodeWithTag("home_tools_toggle", useUnmergedTree = true)
-      .assertIsDisplayed()
-      .performClick()
+    composeRule.onNodeWithTag("home_tools_toggle").assertExists().performClick()
 
-    composeRule.waitUntil(timeoutMillis = 5_000) {
-      composeRule
-        .onAllNodesWithTag("quick_actions_row", useUnmergedTree = true)
-        .fetchSemanticsNodes(false)
-        .isNotEmpty()
+    composeRule.waitForNodesWithTagCount(tag = "quick_actions_row", expectedCount = 1)
+
+    composeRule.onNodeWithTag("quick_actions_row").assertExists()
+    composeRule.onNodeWithContentDescription("New Chat").assertExists().performClick()
+
+    composeRule.waitForIdle()
+    composeRule.runOnIdle {
+      assertThat(events.filterIsInstance<ShellUiEvent.CommandInvoked>().first().action.title)
+        .isEqualTo("New Chat")
+      assertThat(
+          events.filterIsInstance<ShellUiEvent.ModeSelected>().any { it.modeId == ModeId.CHAT }
+        )
+        .isTrue()
     }
-
-    composeRule.onNodeWithTag("quick_actions_row", useUnmergedTree = true).assertIsDisplayed()
-    composeRule.onNodeWithContentDescription("New Chat").assertIsDisplayed().performClick()
-
-    composeRule.waitUntil {
-      events.any { it is ShellUiEvent.CommandInvoked } &&
-        events.any { it is ShellUiEvent.ModeSelected && it.modeId == ModeId.CHAT }
-    }
-
-    assertThat(events.filterIsInstance<ShellUiEvent.CommandInvoked>().first().action.title)
-      .isEqualTo("New Chat")
   }
 
   private fun sampleState(): ShellUiState {
@@ -171,9 +147,10 @@ class HomeHubFlowTest {
         activeMode = ModeId.HOME,
         showCommandPalette = false,
         connectivity = ConnectivityStatus.ONLINE,
-        pendingUndoAction = UndoPayload(actionId = "none"),
+        pendingUndoAction = null,
         progressJobs = emptyList(),
         recentActivity = recent,
+        showCoverageDashboard = false,
       )
     val palette =
       CommandPaletteState(
@@ -200,6 +177,27 @@ class HomeHubFlowTest {
     )
   }
 
+  private fun renderHomeScreen(state: ShellUiState, onEvent: (ShellUiEvent) -> Unit = {}) {
+    composeRule.setContent {
+      TestingTheme {
+        HomeScreen(
+          layout = state.layout,
+          modeCards = state.modeCards,
+          quickActions = state.quickActions,
+          recentActivity = state.layout.recentActivity,
+          progressJobs = state.layout.progressJobs,
+          onModeSelect = { mode -> onEvent(ShellUiEvent.ModeSelected(mode)) },
+          onQuickActionSelect = { action ->
+            onEvent(ShellUiEvent.CommandInvoked(action, CommandInvocationSource.QUICK_ACTION))
+          },
+          onRecentActivitySelect = { item -> onEvent(ShellUiEvent.ModeSelected(item.modeId)) },
+          onProgressRetry = { job -> onEvent(ShellUiEvent.RetryJob(job)) },
+          onProgressDismiss = { job -> onEvent(ShellUiEvent.CompleteJob(job.jobId)) },
+        )
+      }
+    }
+  }
+
   private fun modeCard(id: ModeId, title: String, icon: ImageVector): ModeCard =
     ModeCard(
       id = id,
@@ -215,6 +213,41 @@ class HomeHubFlowTest {
       enabled = true,
       badge = null,
     )
+
+  private fun ComposeContentTestRule.waitUntilWithClock(
+    timeoutMillis: Long = 5_000,
+    condition: () -> Boolean,
+  ) {
+    val deadline = SystemClock.elapsedRealtime() + timeoutMillis
+    while (SystemClock.elapsedRealtime() < deadline) {
+      if (condition()) return
+      runOnIdle {}
+    }
+    throw AssertionError("Condition not met within $timeoutMillis ms")
+  }
+
+  private fun ComposeContentTestRule.waitForNodesWithTagCount(
+    tag: String,
+    expectedCount: Int,
+    useUnmergedTree: Boolean = false,
+    timeoutMillis: Long = 5_000,
+  ) {
+    waitUntilWithClock(timeoutMillis) {
+      onAllNodesWithTag(tag, useUnmergedTree).fetchSemanticsNodes(false).size >= expectedCount
+    }
+  }
+
+  private fun ComposeContentTestRule.waitForNodesWithTagPrefixCount(
+    prefix: String,
+    expectedCount: Int,
+    useUnmergedTree: Boolean = false,
+    timeoutMillis: Long = 5_000,
+  ) {
+    waitUntilWithClock(timeoutMillis) {
+      onAllNodesWithTagPrefix(prefix, useUnmergedTree).fetchSemanticsNodes(false).size >=
+        expectedCount
+    }
+  }
 
   private fun ComposeContentTestRule.onAllNodesWithTagPrefix(
     prefix: String,

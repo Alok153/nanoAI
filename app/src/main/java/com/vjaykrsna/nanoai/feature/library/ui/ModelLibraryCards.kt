@@ -300,6 +300,55 @@ internal fun HuggingFaceModelCard(
         }
       }
 
+      model.license
+        ?.takeIf { it.isNotBlank() }
+        ?.let { license ->
+          Text(
+            text = "License: ${license}",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+          )
+        }
+      if (model.languages.isNotEmpty()) {
+        Text(
+          text = "Languages: ${model.languages.joinToString(", ")}",
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
+      model.baseModel
+        ?.takeIf { it.isNotBlank() }
+        ?.let { base ->
+          Text(
+            text = "Base model: ${base}",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+          )
+        }
+      if (model.architectures.isNotEmpty()) {
+        Text(
+          text = "Architectures: ${model.architectures.joinToString(", ")}",
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
+      model.modelType
+        ?.takeIf { it.isNotBlank() }
+        ?.let { type ->
+          Text(
+            text = "Type: ${type}",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+          )
+        }
+      model.totalSizeBytes?.let { size ->
+        Text(
+          text = "Size: ${formatSize(size)}",
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
+
       model.lastModified?.let { lastModified ->
         Text(
           text = formatUpdated(lastModified),
@@ -307,13 +356,30 @@ internal fun HuggingFaceModelCard(
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
       }
-      if (model.createdAt != null && model.lastModified == null) {
-        Text(
-          text = formatUpdated(model.createdAt),
-          style = MaterialTheme.typography.bodySmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-      }
+      model.createdAt
+        ?.takeUnless { createdAt ->
+          model.lastModified != null &&
+            formatUpdated(createdAt) == formatUpdated(model.lastModified)
+        }
+        ?.let { createdAt ->
+          Text(
+            text = formatUpdated(createdAt),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+          )
+        }
+
+      model.summary
+        ?.takeIf { it.isNotBlank() }
+        ?.let { summary ->
+          Text(
+            text = summary,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 3,
+            overflow = TextOverflow.Ellipsis,
+          )
+        }
 
       // Download button - enabled for compatible models, disabled for incompatible ones
       OutlinedButton(

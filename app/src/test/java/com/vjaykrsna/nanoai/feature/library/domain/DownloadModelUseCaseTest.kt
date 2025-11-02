@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai.feature.library.domain
 
+import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.feature.library.data.DownloadManager
 import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
 import com.vjaykrsna.nanoai.testing.assertRecoverableError
@@ -124,7 +125,7 @@ class DownloadModelUseCaseTest {
   }
 
   private fun createDownloadTask(status: DownloadStatus, id: UUID = UUID.randomUUID()) =
-    com.vjaykrsna.nanoai.core.domain.model.DownloadTask(
+    DownloadTask(
       taskId = id,
       modelId = "some-model",
       progress = 0.5f,

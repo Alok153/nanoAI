@@ -70,6 +70,9 @@ sealed class Screen(
   data object HelpShortcuts :
     Screen(route = "help/shortcuts", deepLinks = buildDeepLinks("help/shortcuts"))
 
+  data object CoverageDashboard :
+    Screen(route = "coverage/dashboard", deepLinks = buildDeepLinks("coverage/dashboard"))
+
   companion object {
     /** Stable listing of screens for lookup helpers. */
     val all: List<Screen> =
@@ -88,6 +91,7 @@ sealed class Screen(
         SettingsModels,
         HelpDocs,
         HelpShortcuts,
+        CoverageDashboard,
       )
 
     /** Finds the [Screen] that owns the provided [route] (supports nested segments). */

@@ -28,6 +28,7 @@ internal data class SettingsScreenActions(
   val onHuggingFaceApiKeyClick: () -> Unit,
   val onHuggingFaceDisconnectClick: () -> Unit,
   val onStatusMessageShow: () -> Unit,
+  val onNavigateToCoverageDashboard: () -> Unit,
 )
 
 internal data class SettingsActionDependencies(
@@ -48,6 +49,7 @@ internal fun createActions(
   privacyPreferences: PrivacyPreference,
   importBackupLauncher: ManagedActivityResultLauncher<Array<String>, Uri?>,
   dialogState: MutableSettingsDialogState,
+  onNavigateToCoverageDashboard: () -> Unit = {},
 ): SettingsScreenActions {
   val dependencies =
     SettingsActionDependencies(
@@ -68,6 +70,7 @@ internal fun createActions(
     dependencies = dependencies,
     dialogCallbacks = callbacks,
     dialogState = dialogState,
+    onNavigateToCoverageDashboard = onNavigateToCoverageDashboard,
   )
 }
 
@@ -75,6 +78,7 @@ internal fun createSettingsActions(
   dependencies: SettingsActionDependencies,
   dialogCallbacks: ProviderDialogCallbacks,
   dialogState: MutableSettingsDialogState,
+  onNavigateToCoverageDashboard: () -> Unit = {},
 ): SettingsScreenActions {
   val (viewModel, privacyPreferences, importBackupLauncher) = dependencies
 
@@ -110,6 +114,7 @@ internal fun createSettingsActions(
     onHuggingFaceApiKeyClick = { dialogState.showHuggingFaceApiKeyDialog.value = true },
     onHuggingFaceDisconnectClick = viewModel::disconnectHuggingFaceAccount,
     onStatusMessageShow = viewModel::clearStatusMessage,
+    onNavigateToCoverageDashboard = onNavigateToCoverageDashboard,
   )
 }
 

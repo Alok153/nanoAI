@@ -1,5 +1,7 @@
 package com.vjaykrsna.nanoai.feature.settings.ui
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
@@ -44,13 +46,21 @@ internal fun AboutSystemInformationCard(modifier: Modifier = Modifier) {
   )
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-internal fun AboutAdvancedDiagnosticsCard(modifier: Modifier = Modifier) {
+internal fun AboutAdvancedDiagnosticsCard(
+  modifier: Modifier = Modifier,
+  onNavigateToCoverageDashboard: () -> Unit = {},
+) {
   SettingsInfoCard(
     title = "Advanced Diagnostics",
     infoText =
       "Generate comprehensive diagnostic reports including application logs, performance metrics, and system traces to help our engineers identify and resolve issues.\n\nDiagnostics flow will lean on the telemetry pipeline in specs/002.",
-    modifier = modifier,
+    modifier =
+      modifier.combinedClickable(
+        onClick = { /* Regular click shows info dialog via SettingsInfoCard */ },
+        onLongClick = onNavigateToCoverageDashboard,
+      ),
   )
 }
 

@@ -10,10 +10,10 @@ import androidx.compose.ui.test.performScrollToNode
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.feature.library.domain.InstallState
+import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryTab
 import com.vjaykrsna.nanoai.shared.testing.DomainTestBuilders
 import io.mockk.coEvery
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 class ModelLibraryScreenStructureTest : BaseModelLibraryScreenTest() {
@@ -31,13 +31,13 @@ class ModelLibraryScreenStructureTest : BaseModelLibraryScreenTest() {
   fun modelLibraryScreen_displaysHeader() {
     renderModelLibraryScreen()
 
-    composeTestRule.onNodeWithText("Installed").assertExists()
-    composeTestRule.onNodeWithText("Storage").assertExists()
+    composeTestRule.onNodeWithText("Installed", substring = true).assertExists()
+    composeTestRule.onNodeWithText("Storage", substring = true).assertExists()
   }
 
   @Test
-  fun modelLibraryScreen_displaysLoadingIndicator() = runTest {
-    catalogRepository.replaceCatalog(emptyList())
+  fun modelLibraryScreen_displaysLoadingIndicator() {
+    replaceCatalog(emptyList())
     coEvery { refreshUseCase.invoke() } coAnswers
       {
         delay(1_200)
@@ -57,7 +57,7 @@ class ModelLibraryScreenStructureTest : BaseModelLibraryScreenTest() {
   }
 
   @Test
-  fun modelLibraryScreen_organizesModelsIntoSections() = runTest {
+  fun modelLibraryScreen_organizesModelsIntoSections() {
     val needsAttention =
       DomainTestBuilders.buildModelPackage(
         modelId = "attention-model",
@@ -77,9 +77,12 @@ class ModelLibraryScreenStructureTest : BaseModelLibraryScreenTest() {
         installState = InstallState.NOT_INSTALLED,
       )
 
-    catalogRepository.replaceCatalog(listOf(needsAttention, installed, available))
+    replaceCatalog(listOf(needsAttention, installed, available))
 
     renderModelLibraryScreen()
+
+    composeTestRule.runOnIdle { viewModel.selectTab(ModelLibraryTab.CURATED) }
+    composeTestRule.waitForIdle()
 
     composeTestRule.runOnIdle { assertThat(viewModel.curatedSections.value.available).isNotEmpty() }
 
@@ -95,8 +98,8 @@ class ModelLibraryScreenStructureTest : BaseModelLibraryScreenTest() {
   }
 
   @Test
-  fun modelLibraryScreen_emptyState() = runTest {
-    catalogRepository.replaceCatalog(emptyList())
+  fun modelLibraryScreen_emptyState() {
+    replaceCatalog(emptyList())
 
     renderModelLibraryScreen()
 

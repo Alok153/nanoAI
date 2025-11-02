@@ -95,6 +95,8 @@ fun NavigationScaffold(
     }
   }
 
+  val onNavigateToCoverageDashboard = { shellViewModel.onEvent(ShellUiEvent.ShowCoverageDashboard) }
+
   Box(modifier = modifier.fillMaxSize()) {
     NanoShellScaffold(
       state = shellUiState,
@@ -111,6 +113,7 @@ fun NavigationScaffold(
         ShellModeContent(
           modeId = modeId,
           modifier = Modifier.fillMaxSize(),
+          onNavigateToCoverageDashboard = onNavigateToCoverageDashboard,
           onUpdateChatState = shellViewModel::updateChatState,
           onNavigate = { mode -> shellViewModel.onEvent(ShellUiEvent.ModeSelected(mode)) },
         )
@@ -151,6 +154,7 @@ fun NavigationScaffold(
 private fun ShellModeContent(
   modeId: ModeId,
   modifier: Modifier = Modifier,
+  onNavigateToCoverageDashboard: () -> Unit,
   onUpdateChatState: (com.vjaykrsna.nanoai.feature.uiux.presentation.ChatState?) -> Unit,
   onNavigate: (ModeId) -> Unit,
 ) {
@@ -186,7 +190,11 @@ private fun ShellModeContent(
         onNavigate = onNavigate,
       )
     ModeId.LIBRARY -> ModelLibraryScreen(modifier = modifier)
-    ModeId.SETTINGS -> SettingsScreen(modifier = modifier)
+    ModeId.SETTINGS ->
+      SettingsScreen(
+        modifier = modifier,
+        onNavigateToCoverageDashboard = onNavigateToCoverageDashboard,
+      )
     ModeId.IMAGE -> ImageFeatureContainer(modifier = modifier)
     ModeId.AUDIO -> AudioScreen(modifier = modifier)
     ModeId.CODE -> ModePlaceholder("Code workspace", modifier)

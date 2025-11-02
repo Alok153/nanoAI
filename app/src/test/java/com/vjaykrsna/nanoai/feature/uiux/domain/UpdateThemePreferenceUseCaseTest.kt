@@ -4,6 +4,7 @@ package com.vjaykrsna.nanoai.feature.uiux.domain
 
 import android.os.Build
 import com.google.common.truth.Truth.assertThat
+import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import kotlin.test.fail
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.take
@@ -107,19 +108,17 @@ class UpdateThemePreferenceUseCaseTest {
         ?: fail("Expected suspend theme update method on ${instance.javaClass.name}")
 
     // Call the suspend method and get the result
-    val result =
-      method.invoke(instance, theme, "nanoai-user-primary")
-        as com.vjaykrsna.nanoai.core.common.NanoAIResult<*>
+    val result = method.invoke(instance, theme, "nanoai-user-primary") as NanoAIResult<*>
 
     // Assert that the result is successful
     when (result) {
-      is com.vjaykrsna.nanoai.core.common.NanoAIResult.Success<*> -> {
+      is NanoAIResult.Success<*> -> {
         // Success case - test passes
       }
-      is com.vjaykrsna.nanoai.core.common.NanoAIResult.RecoverableError -> {
+      is NanoAIResult.RecoverableError -> {
         fail("Expected successful theme update, but got recoverable error: ${result.message}")
       }
-      is com.vjaykrsna.nanoai.core.common.NanoAIResult.FatalError -> {
+      is NanoAIResult.FatalError -> {
         fail("Expected successful theme update, but got fatal error: ${result.message}")
       }
     }
