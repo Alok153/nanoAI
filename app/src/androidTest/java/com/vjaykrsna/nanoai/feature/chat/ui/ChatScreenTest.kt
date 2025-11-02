@@ -22,11 +22,13 @@ import com.vjaykrsna.nanoai.shared.testing.FakePersonaRepository
 import io.mockk.coEvery
 import io.mockk.mockk
 import java.util.UUID
-import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class ChatScreenTest {
 
   @get:Rule val composeTestRule = createComposeRule()
@@ -46,7 +48,7 @@ class ChatScreenTest {
   private lateinit var getDefaultPersonaUseCase: GetDefaultPersonaUseCase
   private lateinit var viewModel: ChatViewModel
   private lateinit var harness: ComposeTestHarness
-  private val testDispatcher = StandardTestDispatcher()
+  private val testDispatcher = UnconfinedTestDispatcher()
 
   @Before
   fun setup() {
@@ -88,8 +90,6 @@ class ChatScreenTest {
   }
 
   private fun drainPendingCoroutines() {
-    composeTestRule.waitForIdle()
-    testDispatcher.scheduler.advanceUntilIdle()
     composeTestRule.waitForIdle()
   }
 

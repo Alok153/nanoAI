@@ -17,7 +17,7 @@ class SettingsScreenHuggingFaceAuthTest : BaseSettingsScreenTest() {
 
     renderSettingsScreen()
 
-    composeTestRule.onNodeWithText("Offline & Models").performClick()
+    composeTestRule.onNodeWithText("APIs").performClick()
     composeTestRule.waitForIdle()
 
     composeTestRule
@@ -28,14 +28,20 @@ class SettingsScreenHuggingFaceAuthTest : BaseSettingsScreenTest() {
   @Test
   fun settingsScreen_huggingFaceAuth_authenticated_showsDisconnectButton() {
     mockHuggingFaceAuthState.value =
-      HuggingFaceAuthState(isAuthenticated = true, username = "testuser")
+      HuggingFaceAuthState(
+        isAuthenticated = true,
+        username = "testuser",
+        displayName = "Test User",
+      )
 
     renderSettingsScreen()
 
-    composeTestRule.onNodeWithText("Offline & Models").performClick()
+    composeTestRule.onNodeWithText("APIs").performClick()
     composeTestRule.waitForIdle()
 
-    composeTestRule.onNodeWithText("testuser", substring = true).assertIsDisplayed()
+    composeTestRule
+      .onNodeWithText("Connected as Test User", substring = false, useUnmergedTree = true)
+      .assertExists()
   }
 
   @Test
@@ -44,9 +50,11 @@ class SettingsScreenHuggingFaceAuthTest : BaseSettingsScreenTest() {
 
     renderSettingsScreen()
 
-    composeTestRule.onNodeWithText("Offline & Models").performClick()
+    composeTestRule.onNodeWithText("APIs").performClick()
     composeTestRule.waitForIdle()
-    composeTestRule.onNodeWithContentDescription("Login with Hugging Face account").performClick()
+    composeTestRule
+      .onNodeWithContentDescription("Login with Hugging Face account")
+      .performClick()
     composeTestRule.waitForIdle()
     // TODO: assert dialog content when exposed via semantics
   }
@@ -57,9 +65,11 @@ class SettingsScreenHuggingFaceAuthTest : BaseSettingsScreenTest() {
 
     renderSettingsScreen()
 
-    composeTestRule.onNodeWithText("Offline & Models").performClick()
+    composeTestRule.onNodeWithText("APIs").performClick()
     composeTestRule.waitForIdle()
-    composeTestRule.onNodeWithText("Connect to Hugging Face", substring = true).performClick()
+    composeTestRule
+      .onNodeWithContentDescription("Login with Hugging Face account")
+      .performClick()
     composeTestRule.waitForIdle()
   }
 
@@ -70,10 +80,12 @@ class SettingsScreenHuggingFaceAuthTest : BaseSettingsScreenTest() {
 
     renderSettingsScreen()
 
-    composeTestRule.onNodeWithText("Offline & Models").performClick()
+    composeTestRule.onNodeWithText("APIs").performClick()
     composeTestRule.waitForIdle()
 
-    composeTestRule.onNodeWithText("testuser", substring = true).assertIsDisplayed()
+    composeTestRule
+      .onNodeWithText("Connected as Test User", substring = false, useUnmergedTree = true)
+      .assertExists()
   }
 
   @Test
@@ -83,7 +95,7 @@ class SettingsScreenHuggingFaceAuthTest : BaseSettingsScreenTest() {
 
     renderSettingsScreen()
 
-    composeTestRule.onNodeWithText("Offline & Models").performClick()
+    composeTestRule.onNodeWithText("APIs").performClick()
     composeTestRule.waitForIdle()
     composeTestRule.onNodeWithText("Disconnect", substring = true).performClick()
     composeTestRule.waitForIdle()

@@ -26,10 +26,12 @@ class SettingsScreenStructureTest : BaseSettingsScreenTest() {
   fun settingsScreen_displaysCategoryTabs() {
     renderSettingsScreen()
 
-    composeTestRule.onNodeWithText("General").assertExists()
     composeTestRule.onNodeWithText("Appearance").assertExists()
+    composeTestRule.onNodeWithText("Behavior").assertExists()
+    composeTestRule.onNodeWithText("APIs").assertExists()
     composeTestRule.onNodeWithText("Privacy & Security").assertExists()
-    composeTestRule.onNodeWithText("Offline & Models").assertExists()
+    composeTestRule.onNodeWithText("Backup & Sync").assertExists()
+    composeTestRule.onNodeWithText("About").assertExists()
   }
 
   @Test
@@ -48,7 +50,10 @@ class SettingsScreenStructureTest : BaseSettingsScreenTest() {
     composeTestRule.onNodeWithText("Privacy & Security").performClick()
     composeTestRule.waitForIdle()
 
-    composeTestRule.onNodeWithText("Telemetry", substring = true).assertExists()
+    composeTestRule.onNodeWithText("Usage Analytics").assertExists()
+    composeTestRule
+      .onNodeWithContentDescription("Toggle usage analytics", useUnmergedTree = true)
+      .assertExists()
   }
 
   @Test
@@ -57,7 +62,9 @@ class SettingsScreenStructureTest : BaseSettingsScreenTest() {
 
     composeTestRule.onNodeWithText("Privacy & Security").performClick()
     composeTestRule.waitForIdle()
-    // TODO: verify semantics when toggle exposes label tags
+    composeTestRule
+      .onNodeWithContentDescription("Toggle usage analytics", useUnmergedTree = true)
+      .assertExists()
   }
 
   @Test
@@ -66,7 +73,9 @@ class SettingsScreenStructureTest : BaseSettingsScreenTest() {
 
     composeTestRule.onNodeWithText("Privacy & Security").performClick()
     composeTestRule.waitForIdle()
-    // TODO: trigger toggle once UI exposes testing hooks for verifying ViewModel invocation
+    composeTestRule
+      .onNodeWithContentDescription("Toggle usage analytics", useUnmergedTree = true)
+      .assertExists()
   }
 
   @Test
@@ -106,7 +115,7 @@ class SettingsScreenStructureTest : BaseSettingsScreenTest() {
   fun settingsScreen_aboutSection_displaysVersion() {
     renderSettingsScreen()
 
-    composeTestRule.onNodeWithText("About & Help").performClick()
+    composeTestRule.onNodeWithText("About").performClick()
     composeTestRule.waitForIdle()
     // TODO: verify version string when exposed via semantics
   }

@@ -5,8 +5,8 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import com.vjaykrsna.nanoai.core.model.InferenceMode
+import com.vjaykrsna.nanoai.shared.testing.TestingTheme
 import com.vjaykrsna.nanoai.shared.ui.sidebar.InferencePreferenceToggleRow
-import com.vjaykrsna.nanoai.shared.ui.theme.NanoAITheme
 import org.junit.Rule
 import org.junit.Test
 
@@ -16,7 +16,7 @@ class InferenceToggleAccessibilityTest {
   @Test
   fun inferenceToggle_exposesContentDescription() {
     composeRule.setContent {
-      NanoAITheme {
+      TestingTheme {
         InferencePreferenceToggleRow(
           inferenceMode = InferenceMode.LOCAL_FIRST,
           onInferenceModeChange = {},

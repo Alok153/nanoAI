@@ -1,9 +1,9 @@
 package com.vjaykrsna.nanoai.feature.settings.ui
 
+import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.junit4.AndroidComposeTestRule
+import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import com.vjaykrsna.nanoai.MainActivity
 import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreference
 import com.vjaykrsna.nanoai.core.data.preferences.RetentionPolicy
 import com.vjaykrsna.nanoai.core.domain.model.ApiProviderConfig
@@ -14,6 +14,7 @@ import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsError
 import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsUiUxState
 import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsViewModel
 import com.vjaykrsna.nanoai.shared.testing.TestEnvironmentRule
+import com.vjaykrsna.nanoai.shared.testing.TestingTheme
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import io.mockk.every
@@ -29,10 +30,8 @@ abstract class BaseSettingsScreenTest {
 
   @get:Rule(order = 0) val hiltRule = HiltAndroidRule(this)
 
-  @JvmField
-  @Rule
-  val composeTestRule: AndroidComposeTestRule<*, MainActivity> =
-    createAndroidComposeRule<MainActivity>()
+  @get:Rule(order = 1)
+  val composeTestRule: ComposeContentTestRule = createAndroidComposeRule<ComponentActivity>()
   @JvmField @Rule val testEnvironmentRule = TestEnvironmentRule()
 
   protected lateinit var viewModel: SettingsViewModel
@@ -72,7 +71,7 @@ abstract class BaseSettingsScreenTest {
   }
 
   protected fun renderSettingsScreen() {
-    composeTestRule.setContent { SettingsScreen(viewModel = viewModel) }
+    composeTestRule.setContent { TestingTheme { SettingsScreen(viewModel = viewModel) } }
     composeTestRule.waitForIdle()
   }
 }

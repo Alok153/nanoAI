@@ -1,5 +1,9 @@
 package com.vjaykrsna.nanoai.shared.testing
 
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.SemanticsActions
@@ -8,7 +12,6 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.ComposeTestRule
-import com.vjaykrsna.nanoai.shared.ui.theme.NanoAITheme
 
 /**
  * Compose test harness providing reusable accessibility matchers and test helpers.
@@ -147,6 +150,8 @@ sealed class AccessibilityAssertion {
  * testing.
  */
 @Composable
-fun TestingTheme(content: @Composable () -> Unit) {
-  NanoAITheme(dynamicColor = false, content = content)
+fun TestingTheme(darkTheme: Boolean = false, content: @Composable () -> Unit) {
+  // Tests avoid the production theme to prevent edge-to-edge side-effects that keep Compose busy.
+  val colorScheme = if (darkTheme) darkColorScheme() else lightColorScheme()
+  MaterialTheme(colorScheme = colorScheme, typography = Typography(), content = content)
 }

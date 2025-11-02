@@ -5,7 +5,7 @@ import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import com.vjaykrsna.nanoai.core.domain.model.ChatThread
 import com.vjaykrsna.nanoai.core.model.InferenceMode
-import com.vjaykrsna.nanoai.shared.ui.theme.NanoAITheme
+import com.vjaykrsna.nanoai.shared.testing.TestingTheme
 import java.util.UUID
 import kotlinx.datetime.Clock
 import org.junit.Before
@@ -57,11 +57,8 @@ abstract class BaseSidebarContentTest {
     interactions: SidebarInteractions = SidebarInteractions(),
   ) {
     composeRule.setContent {
-      NanoAITheme(dynamicColor = false) {
-        SidebarContent(state = state, interactions = interactions)
-      }
+      TestingTheme { SidebarContent(state = state, interactions = interactions) }
     }
-    composeRule.waitForIdle()
   }
 
   protected fun defaultState(

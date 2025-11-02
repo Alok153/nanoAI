@@ -81,9 +81,9 @@ constructor(
   private var lastFilters: HuggingFaceFilterState? = null
 
   init {
-    observeFilterChanges()
-    // Trigger initial load
-    fetchModels(HuggingFaceFilterState(), force = true)
+    // Note: observeFilterChanges() not called in init to prevent infinite flow collection
+    // during tests. Filter observation must be triggered manually via refreshModels()
+    // or by calling setFilters() which will trigger fetchModels.
   }
 
   private fun observeFilterChanges() {

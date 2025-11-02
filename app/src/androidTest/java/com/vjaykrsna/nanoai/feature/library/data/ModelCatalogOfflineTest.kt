@@ -28,9 +28,9 @@ import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import okhttp3.mockwebserver.MockWebServer
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import org.junit.jupiter.api.AfterEach
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ModelCatalogOfflineTest {
@@ -68,7 +68,7 @@ class ModelCatalogOfflineTest {
     useCase = RefreshModelCatalogUseCase(failingSource, repository)
   }
 
-  @AfterEach
+  @After
   fun tearDown() {
     database.close()
     mockWebServer.shutdown()

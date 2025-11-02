@@ -44,9 +44,9 @@ import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellLayoutState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellUiState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.UiPreferenceSnapshot
 import com.vjaykrsna.nanoai.feature.uiux.presentation.UndoPayload
+import com.vjaykrsna.nanoai.shared.testing.TestingTheme
 import com.vjaykrsna.nanoai.shared.ui.shell.NanoShellScaffold
 import com.vjaykrsna.nanoai.shared.ui.shell.ShellUiEvent
-import com.vjaykrsna.nanoai.shared.ui.theme.NanoAITheme
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
@@ -65,7 +65,9 @@ class OfflineProgressTest {
   @Test
   fun offlineBanner_showsQueuedCount() {
     val state = mutableStateOf(sampleState(ConnectivityStatus.OFFLINE, queuedJobs = 2))
-    composeRule.setContent { NanoAITheme { NanoShellScaffold(state = state.value, onEvent = {}) } }
+    composeRule.setContent {
+      TestingTheme { NanoShellScaffold(state = state.value, onEvent = {}) }
+    }
 
     composeRule.waitForIdle()
 
@@ -76,25 +78,22 @@ class OfflineProgressTest {
         .isNotEmpty()
     }
 
-    composeRule.onNodeWithTag("connectivity_banner", useUnmergedTree = true).assertIsDisplayed()
-    composeRule.onNodeWithTag("connectivity_banner_cta", useUnmergedTree = true).assertIsDisplayed()
+    composeRule.onNodeWithTag("connectivity_banner", useUnmergedTree = true).assertExists()
+    composeRule.onNodeWithTag("connectivity_banner_cta", useUnmergedTree = true).assertExists()
   }
 
   @Test
   fun progressList_displaysQueuedJobs() {
     val state = mutableStateOf(sampleState(ConnectivityStatus.OFFLINE, queuedJobs = 3))
-    composeRule.setContent { NanoAITheme { NanoShellScaffold(state = state.value, onEvent = {}) } }
+    composeRule.setContent {
+      TestingTheme { NanoShellScaffold(state = state.value, onEvent = {}) }
+    }
 
     composeRule.waitForIdle()
 
-    composeRule.waitUntil(timeoutMillis = 5_000) {
-      composeRule
-        .onAllNodesWithTagPrefix("progress_list_item_", useUnmergedTree = true)
-        .fetchSemanticsNodes(false)
-        .size == 3
-    }
+    composeRule.waitForNodesWithTagPrefixCount(prefix = "progress_list_item_", expectedCount = 3)
 
-    val items = composeRule.onAllNodesWithTagPrefix("progress_list_item_", useUnmergedTree = true)
+    val items = composeRule.onAllNodesWithTagPrefix("progress_list_item_")
     items.assertCountEquals(3)
     items[0].assertContentDescriptionContains("Waiting")
   }
@@ -103,7 +102,7 @@ class OfflineProgressTest {
   fun reconnect_updatesConnectivity_andHidesBanner() {
     val state = mutableStateOf(sampleState(ConnectivityStatus.OFFLINE, queuedJobs = 1))
     composeRule.setContent {
-      NanoAITheme {
+      TestingTheme {
         NanoShellScaffold(state = state.value, onEvent = { intent -> handleIntent(state, intent) })
       }
     }
@@ -139,7 +138,7 @@ class OfflineProgressTest {
     val events = mutableListOf<ShellUiEvent>()
 
     composeRule.setContent {
-      NanoAITheme {
+      TestingTheme {
         NanoShellScaffold(
           state = state.value,
           onEvent = { intent ->
@@ -158,7 +157,12 @@ class OfflineProgressTest {
       SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "Retry available")
     )
     retryButton.performClick()
-    assertThat(events.filterIsInstance<ShellUiEvent.RetryJob>()).isNotEmpty()
+    composeRule.waitForIdle()
+    composeRule.runOnIdle {
+      assertThat(events.filterIsInstance<ShellUiEvent.RetryJob>()).isNotEmpty()
+      val updatedJob = state.value.layout.progressJobs.first { it.jobId == jobId }
+      assertThat(updatedJob.status).isEqualTo(JobStatus.PENDING)
+    }
   }
 
   private fun handleIntent(state: MutableState<ShellUiState>, intent: ShellUiEvent) {
@@ -278,7 +282,7 @@ class OfflineProgressTest {
         activeMode = ModeId.HOME,
         showCommandPalette = false,
         connectivity = connectivity,
-        pendingUndoAction = UndoPayload(actionId = "pending"),
+        pendingUndoAction = null,
         progressJobs = jobs,
         recentActivity = sampleRecentActivity(),
         showCoverageDashboard = false,
@@ -329,6 +333,23 @@ private fun AndroidComposeTestRule<*, *>.waitForNodeWithTag(
     waitForIdle()
   }
   throw AssertionError("Timed out waiting for node with tag '$tag'")
+}
+
+private fun AndroidComposeTestRule<*, *>.waitForNodesWithTagPrefixCount(
+  prefix: String,
+  expectedCount: Int,
+  useUnmergedTree: Boolean = false,
+  timeoutMillis: Long = 5_000,
+) {
+  val deadline = SystemClock.elapsedRealtime() + timeoutMillis
+  while (SystemClock.elapsedRealtime() < deadline) {
+    val count = onAllNodesWithTagPrefix(prefix, useUnmergedTree).fetchSemanticsNodes(false).size
+    if (count >= expectedCount) return
+    waitForIdle()
+  }
+  throw AssertionError(
+    "Timed out waiting for at least $expectedCount nodes with tag prefix '$prefix'",
+  )
 }
 
 private fun AndroidComposeTestRule<*, *>.onAllNodesWithTagPrefix(

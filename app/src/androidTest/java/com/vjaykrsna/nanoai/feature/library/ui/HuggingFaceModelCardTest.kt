@@ -34,7 +34,6 @@ class HuggingFaceModelCardTest {
       )
 
     composeTestRule.setContent { TestingTheme { HuggingFaceModelCard(model) } }
-    composeTestRule.waitForIdle()
 
     composeTestRule
       .onNodeWithText("Test Model", substring = false, useUnmergedTree = true)
@@ -77,7 +76,6 @@ class HuggingFaceModelCardTest {
       )
 
     composeTestRule.setContent { TestingTheme { HuggingFaceModelCard(model) } }
-    composeTestRule.waitForIdle()
 
     // Basic info
     composeTestRule
@@ -157,7 +155,6 @@ class HuggingFaceModelCardTest {
       )
 
     composeTestRule.setContent { TestingTheme { HuggingFaceModelCard(model) } }
-    composeTestRule.waitForIdle()
 
     composeTestRule
       .onNodeWithText("Minimal Model", substring = false, useUnmergedTree = true)
@@ -214,14 +211,12 @@ class HuggingFaceModelCardTest {
     val modelState = mutableStateOf(gatedModel)
 
     composeTestRule.setContent { TestingTheme { HuggingFaceModelCard(modelState.value) } }
-    composeTestRule.waitForIdle()
 
     composeTestRule
       .onNodeWithText("Gated Model", substring = false, useUnmergedTree = true)
       .assertExists()
 
     composeTestRule.runOnIdle { modelState.value = disabledModel }
-    composeTestRule.waitForIdle()
 
     composeTestRule
       .onNodeWithText("Disabled Model", substring = false, useUnmergedTree = true)
@@ -267,7 +262,6 @@ class HuggingFaceModelCardTest {
     val modelState = mutableStateOf(tinyModel)
 
     composeTestRule.setContent { TestingTheme { HuggingFaceModelCard(modelState.value) } }
-    composeTestRule.waitForIdle()
 
     composeTestRule
       .onNodeWithText("Tiny Model", substring = false, useUnmergedTree = true)
@@ -277,7 +271,6 @@ class HuggingFaceModelCardTest {
       .assertExists()
 
     composeTestRule.runOnIdle { modelState.value = largeModel }
-    composeTestRule.waitForIdle()
 
     composeTestRule
       .onNodeWithText("Large Model", substring = false, useUnmergedTree = true)

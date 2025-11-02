@@ -19,7 +19,7 @@ import com.vjaykrsna.nanoai.feature.settings.ui.SettingsContentState
 import com.vjaykrsna.nanoai.feature.settings.ui.SettingsScreenActions
 import com.vjaykrsna.nanoai.feature.settings.ui.SettingsScreenContent
 import com.vjaykrsna.nanoai.shared.testing.TestEnvironmentRule
-import com.vjaykrsna.nanoai.shared.ui.theme.NanoAITheme
+import com.vjaykrsna.nanoai.shared.testing.TestingTheme
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
@@ -78,7 +78,7 @@ class SettingsScreenContractTest {
   @Test
   fun settingsScreen_displaysTabbedCategories_andGeneralCopy() {
     composeRule.setContent {
-      NanoAITheme {
+      TestingTheme {
         SettingsScreenContent(
           state = defaultState,
           snackbarHostState = SnackbarHostState(),
@@ -104,7 +104,7 @@ class SettingsScreenContractTest {
   @Test
   fun settingsScreen_apisSection_showsProvidersAndFab() {
     composeRule.setContent {
-      NanoAITheme {
+      TestingTheme {
         SettingsScreenContent(
           state = defaultState,
           snackbarHostState = SnackbarHostState(),
@@ -134,7 +134,7 @@ class SettingsScreenContractTest {
   @Test
   fun settingsScreen_backupSyncSection_exposesImportAndExport() {
     composeRule.setContent {
-      NanoAITheme {
+      TestingTheme {
         SettingsScreenContent(
           state = defaultState,
           snackbarHostState = SnackbarHostState(),

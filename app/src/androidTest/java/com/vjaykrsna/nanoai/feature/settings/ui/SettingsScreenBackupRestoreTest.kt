@@ -15,7 +15,7 @@ class SettingsScreenBackupRestoreTest : BaseSettingsScreenTest() {
   fun settingsScreen_exportData_showsDialog() {
     renderSettingsScreen()
 
-    composeTestRule.onNodeWithText("Backup & Restore").performClick()
+    composeTestRule.onNodeWithText("Backup & Sync").performClick()
     composeTestRule.waitForIdle()
     // TODO: click export button when surfaced for testing
   }
@@ -49,7 +49,7 @@ class SettingsScreenBackupRestoreTest : BaseSettingsScreenTest() {
   fun settingsScreen_importData_triggersFilePicker() {
     renderSettingsScreen()
 
-    composeTestRule.onNodeWithText("Backup & Restore").performClick()
+    composeTestRule.onNodeWithText("Backup & Sync").performClick()
     composeTestRule.waitForIdle()
     // TODO: click import button when file picker hook is exposed
   }
