@@ -8,12 +8,12 @@ import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSiz
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
-import androidx.compose.ui.test.assertContentDescriptionContains
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.hasTestTag
@@ -21,7 +21,7 @@ import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.waitUntilDoesNotExist
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -89,7 +89,13 @@ class OfflineProgressTest {
 
     val items = composeRule.onAllNodesWithTagPrefix("progress_list_item_")
     items.assertCountEquals(3)
-    items[0].assertContentDescriptionContains("Waiting")
+    val waitingMatcher =
+      SemanticsMatcher("ContentDescription includes Waiting") { node ->
+        node.config.getOrNull(SemanticsProperties.ContentDescription)?.any { entry ->
+          entry.contains("Waiting")
+        } == true
+      }
+    items[0].assert(waitingMatcher)
   }
 
   @Test
@@ -150,7 +156,7 @@ class OfflineProgressTest {
     retryButton.assert(
       SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "Retry available")
     )
-    retryButton.performClick()
+    retryButton.performSemanticsAction(SemanticsActions.OnClick)
     composeRule.waitForIdle()
     composeRule.runOnIdle {
       assertThat(events.filterIsInstance<ShellUiEvent.RetryJob>()).isNotEmpty()

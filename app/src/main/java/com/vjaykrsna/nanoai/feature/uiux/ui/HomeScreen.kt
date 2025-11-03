@@ -34,11 +34,13 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandAction
+import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandDestination
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ModeCard
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ModeId
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ProgressJob
 import com.vjaykrsna.nanoai.feature.uiux.presentation.RecentActivityItem
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellLayoutState
+import com.vjaykrsna.nanoai.feature.uiux.presentation.toModeIdOrNull
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoElevation
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoSpacing
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.layout.NanoScreen
@@ -83,6 +85,11 @@ fun HomeScreen(
       },
       onQuickActionSelect = { action ->
         onQuickActionSelect(action)
+        val modeToActivate =
+          (action.destination as? CommandDestination.Navigate)?.route?.toModeIdOrNull()
+        if (modeToActivate != null) {
+          onModeSelect(modeToActivate)
+        }
         recentConfirmation = null
       },
     )
@@ -183,11 +190,13 @@ private fun QuickActionsPanel(
       }
 
       if (expanded && actions.isNotEmpty()) {
-        QuickActionsRow(
-          actions = actions,
-          onQuickActionSelect = onQuickActionSelect,
-          modifier = Modifier.testTag("home_tools_panel_expanded"),
-        )
+        Box(modifier = Modifier.fillMaxWidth().testTag("home_tools_panel_expanded")) {
+          QuickActionsRow(
+            actions = actions,
+            onQuickActionSelect = onQuickActionSelect,
+            modifier = Modifier.fillMaxWidth(),
+          )
+        }
       } else {
         Surface(
           modifier = Modifier.fillMaxWidth().testTag("home_tools_panel_collapsed"),

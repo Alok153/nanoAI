@@ -10,7 +10,9 @@ import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
@@ -30,6 +32,8 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
+import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.unit.DpSize
@@ -232,25 +236,27 @@ class CommandPaletteComposeTest {
     composeTestRule.runOnIdle { assertThat(state.value.layout.progressJobs).hasSize(2) }
 
     composeTestRule.waitForNodeWithTag("progress_center_panel", useUnmergedTree = true)
-    composeTestRule.waitForNodeWithTag("progress_list_item_0", useUnmergedTree = true)
-    composeTestRule.waitForNodeWithTag("progress_list_item_1", useUnmergedTree = true)
+    composeTestRule.waitForNodeWithTag("progress_list")
+    val progressList = composeTestRule.onNodeWithTag("progress_list")
+    val canScroll =
+      progressList.fetchSemanticsNode().config.getOrNull(SemanticsActions.ScrollToIndex) != null
 
     val retryAvailableButton =
-      composeTestRule.onNodeWithTag(
-        "progress_retry_button_${retryable.jobId}",
-        useUnmergedTree = true,
-      )
+      composeTestRule.onNodeWithTag("progress_retry_button_${retryable.jobId}")
     retryAvailableButton.assertIsEnabled()
     retryAvailableButton.assert(
       SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "Retry available")
     )
-    retryAvailableButton.performClick()
+    retryAvailableButton.performSemanticsAction(SemanticsActions.OnClick)
+    composeTestRule.waitForIdle()
+    if (canScroll) {
+      progressList.performScrollToIndex(1)
+      composeTestRule.waitForIdle()
+    }
+    composeTestRule.waitForNodeWithTag("progress_retry_button_${nonRetryable.jobId}")
 
     val retryUnavailableButton =
-      composeTestRule.onNodeWithTag(
-        "progress_retry_button_${nonRetryable.jobId}",
-        useUnmergedTree = true,
-      )
+      composeTestRule.onNodeWithTag("progress_retry_button_${nonRetryable.jobId}")
     retryUnavailableButton.assertIsNotEnabled()
     retryUnavailableButton.assert(
       SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "Retry unavailable")
@@ -290,8 +296,10 @@ class CommandPaletteComposeTest {
     composeTestRule.waitUntilNodeWithText("Image generation queued for reconnect")
 
     composeTestRule.onNode(hasText("Image generation queued for reconnect")).assertExists()
-    composeTestRule.waitUntilNodeWithText("Undo", useUnmergedTree = true, ignoreCase = true)
-    composeTestRule.onNodeWithText("Undo", ignoreCase = true, useUnmergedTree = true).performClick()
+    composeTestRule.waitUntilNodeWithText("Undo", ignoreCase = true)
+    composeTestRule
+      .onNodeWithText("Undo", ignoreCase = true)
+      .performSemanticsAction(SemanticsActions.OnClick)
 
     composeTestRule.waitForIdle()
     composeTestRule.runOnIdle {
@@ -385,7 +393,8 @@ private fun AndroidComposeTestRule<*, *>.waitForNodeWithTag(
   timeoutMillis: Long = 10_000,
 ) {
   waitUntil(timeoutMillis) {
-    onAllNodesWithTag(tag, useUnmergedTree).fetchSemanticsNodes().isNotEmpty()
+    runCatching { onAllNodesWithTag(tag, useUnmergedTree).fetchSemanticsNodes().isNotEmpty() }
+      .getOrDefault(false)
   }
 }
 
