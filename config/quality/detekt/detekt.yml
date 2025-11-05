@@ -94,7 +94,7 @@ Compose:
     active: false
 
 # TODO: Enable custom UI quality rules after proper build integration
-# UIQuality: // **IT IS NOT PLANNED RIGHT NOW**
+# UIQuality: // **IT IS NOT PLANNED RIGHT NOW NEEDS REWRITE**
 #   active: true
 #   HardcodedStringInComposable:
 #     active: true
