@@ -1,0 +1,34 @@
+{
+  "plugins": [
+    {
+      "id": "com.vjaykrsna.nanoai.android.application",
+      "appliesTo": ["APPLICATION"],
+      "qualityTasks": ["detekt", "spotlessCheck"],
+      "documentationRef": "docs/development/BUILD_WORKFLOW.md#android-application-convention"
+    },
+    {
+      "id": "com.vjaykrsna.nanoai.android.feature",
+      "appliesTo": ["FEATURE"],
+      "qualityTasks": ["detekt", "spotlessCheck"],
+      "documentationRef": "docs/development/BUILD_WORKFLOW.md#android-feature-convention"
+    },
+    {
+      "id": "com.vjaykrsna.nanoai.android.library.compose",
+      "appliesTo": ["LIBRARY"],
+      "qualityTasks": ["detekt", "spotlessCheck"],
+      "documentationRef": "docs/development/BUILD_WORKFLOW.md#android-compose-library-convention"
+    },
+    {
+      "id": "com.vjaykrsna.nanoai.android.testing",
+      "appliesTo": ["TESTING"],
+      "qualityTasks": ["detekt", "spotlessCheck"],
+      "documentationRef": "docs/development/BUILD_WORKFLOW.md#android-testing-convention"
+    },
+    {
+      "id": "com.vjaykrsna.nanoai.kotlin.library",
+      "appliesTo": ["KOTLIN_LIBRARY"],
+      "qualityTasks": ["detekt", "spotlessCheck"],
+      "documentationRef": "docs/development/BUILD_WORKFLOW.md#kotlin-library-convention"
+    }
+  ]
+}

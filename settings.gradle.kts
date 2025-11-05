@@ -1,4 +1,5 @@
 pluginManagement {
+    includeBuild("build-logic")
     repositories {
         google {
             content {
@@ -23,3 +24,6 @@ dependencyResolutionManagement {
 rootProject.name = "NanoAI"
 include(":app")
 include(":macrobenchmark")
+include(":config:quality:detekt:custom-rules")
+
+includeBuild("build-logic")

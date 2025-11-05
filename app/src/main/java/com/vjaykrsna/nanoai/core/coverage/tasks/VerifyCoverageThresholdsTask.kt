@@ -21,9 +21,9 @@ import kotlin.io.path.readText
 import kotlin.math.absoluteValue
 import kotlin.system.exitProcess
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.w3c.dom.Element
@@ -36,6 +36,7 @@ import org.w3c.dom.Element
 object VerifyCoverageThresholdsTask {
 
   private const val DEFAULT_LAYER_MAP = "config/testing/coverage/layer-map.json"
+  private const val DEFAULT_COVERAGE_METADATA = "config/testing/coverage/coverage-metadata.json"
   private const val EXIT_HELP = 0
   private const val EXIT_USAGE_ERROR = 64
   private const val EXIT_DATA_ERROR = 66
@@ -61,10 +62,12 @@ object VerifyCoverageThresholdsTask {
     val parsedArgs = parseArgumentsOrExit(rawArgs)
     @Suppress("NewApi") // This is build-time code running on JVM, not Android runtime
     val layerMapPath = parsedArgs.layerMap ?: Path.of(DEFAULT_LAYER_MAP)
+    @Suppress("NewApi")
+    val metadataPath = parsedArgs.coverageMetadata ?: Path.of(DEFAULT_COVERAGE_METADATA)
 
-    validateInputPaths(parsedArgs.reportXml, layerMapPath)
+    validateInputPaths(parsedArgs.reportXml, layerMapPath, metadataPath)
 
-    val outcome = evaluateReport(parsedArgs, layerMapPath)
+    val outcome = evaluateReport(parsedArgs, layerMapPath, metadataPath)
 
     writeMarkdown(outcome.markdown, parsedArgs.markdownOutput)
     writeJsonReport(outcome, parsedArgs.jsonOutput)
@@ -77,6 +80,7 @@ object VerifyCoverageThresholdsTask {
   private data class Arguments(
     val reportXml: Path,
     val layerMap: Path?,
+    val coverageMetadata: Path?,
     val markdownOutput: Path?,
     val buildId: String?,
     val jsonOutput: Path?,
@@ -86,6 +90,7 @@ object VerifyCoverageThresholdsTask {
       fun parse(arguments: Array<String>): Arguments {
         var reportXml: Path? = null
         var layerMap: Path? = null
+        var coverageMetadata: Path? = null
         var markdown: Path? = null
         var buildId: String? = null
         var jsonOutput: Path? = null
@@ -99,6 +104,9 @@ object VerifyCoverageThresholdsTask {
             }
             "--layer-map" -> {
               layerMap = Path.of(next(arguments, ++index, arg))
+            }
+            "--coverage-metadata" -> {
+              coverageMetadata = Path.of(next(arguments, ++index, arg))
             }
             "--markdown" -> {
               markdown = Path.of(next(arguments, ++index, arg))
@@ -123,6 +131,7 @@ object VerifyCoverageThresholdsTask {
         return Arguments(
           reportXml = xml,
           layerMap = layerMap,
+          coverageMetadata = coverageMetadata,
           markdownOutput = markdown,
           buildId = buildId,
           jsonOutput = jsonOutput,
@@ -141,6 +150,9 @@ object VerifyCoverageThresholdsTask {
               appendLine("  --report-xml <path>   Absolute path to the merged JaCoCo XML report.")
               appendLine(
                 "  --layer-map <path>    Optional path to regex-based TestLayer mappings (default: $DEFAULT_LAYER_MAP)."
+              )
+              appendLine(
+                "  --coverage-metadata <path> Optional path describing coverage thresholds per layer (default: $DEFAULT_COVERAGE_METADATA)."
               )
               appendLine(
                 "  --markdown <path>     Optional path to write markdown summary for CI artifacts."
@@ -167,7 +179,7 @@ object VerifyCoverageThresholdsTask {
       }
   }
 
-  private fun validateInputPaths(reportXml: Path, layerMapPath: Path) {
+  private fun validateInputPaths(reportXml: Path, layerMapPath: Path, metadataPath: Path) {
     if (!reportXml.exists() || !reportXml.isRegularFile()) {
       System.err.println("verifyCoverage: coverage report not found at $reportXml")
       exitProcess(EXIT_DATA_ERROR)
@@ -176,11 +188,20 @@ object VerifyCoverageThresholdsTask {
       System.err.println("verifyCoverage: layer map not found at $layerMapPath")
       exitProcess(EXIT_DATA_ERROR)
     }
+    if (!metadataPath.exists() || !metadataPath.isRegularFile()) {
+      System.err.println("verifyCoverage: coverage metadata not found at $metadataPath")
+      exitProcess(EXIT_DATA_ERROR)
+    }
   }
 
-  private fun evaluateReport(parsedArgs: Arguments, layerMapPath: Path): TaskOutcome {
+  private fun evaluateReport(
+    parsedArgs: Arguments,
+    layerMapPath: Path,
+    metadataPath: Path,
+  ): TaskOutcome {
     val classifier = LayerClassifier.fromConfig(layerMapPath, json)
-    val parser = CoverageReportParser(classifier)
+    val thresholds = loadThresholdOverrides(metadataPath)
+    val parser = CoverageReportParser(classifier, thresholds)
     val parseResult = parser.parse(parsedArgs.reportXml, parsedArgs.buildId)
     val violation = verifyThresholds(parseResult.summary)
     val trend = buildTrendPoints(parseResult.summary)
@@ -193,6 +214,31 @@ object VerifyCoverageThresholdsTask {
       markdown = markdown,
       trend = trend,
     )
+  }
+
+  internal fun loadThresholdOverrides(path: Path): Map<TestLayer, Double> {
+    val overrides = mutableMapOf<TestLayer, Double>()
+    runCatching {
+        val root = json.parseToJsonElement(path.readText()).jsonObject
+        val metrics = root["metrics"]?.jsonArray ?: return@runCatching
+        metrics.forEach { element ->
+          val node = element.jsonObject
+          val layerName = node["layer"]?.jsonPrimitive?.content ?: return@forEach
+          val layer =
+            runCatching { TestLayer.valueOf(layerName.uppercase(Locale.ROOT)) }.getOrNull()
+              ?: return@forEach
+          val minimum = node["minimumPercent"]?.jsonPrimitive?.content?.toDoubleOrNull()
+          if (minimum != null) {
+            overrides[layer] = minimum
+          }
+        }
+      }
+      .onFailure {
+        System.err.println(
+          "verifyCoverage: failed to parse coverage metadata at $path - ${it.message}"
+        )
+      }
+    return DEFAULT_THRESHOLDS + overrides
   }
 
   private fun buildTrendPoints(summary: CoverageSummary): List<CoverageTrendPoint> {
@@ -294,8 +340,9 @@ object VerifyCoverageThresholdsTask {
         for ((key, value) in root) {
           if (key == "_default") continue
           val layer = key.asLayer()
-          val regexes = value.jsonArrayOrEmpty().map { Regex(it.jsonPrimitive.content) }
-          regexes.forEach { regex -> patterns += PatternEntry(layer, regex) }
+          val regexes =
+            value.jsonArrayOrEmpty().map { element -> Regex(element.jsonPrimitive.content) }
+          regexes.forEach { regex: Regex -> patterns += PatternEntry(layer, regex) }
         }
         return LayerClassifier(patterns, defaultLayer)
       }
@@ -560,10 +607,10 @@ private fun String.asLayer(): TestLayer {
   }
 }
 
-private fun JsonElement.jsonArrayOrEmpty(): JsonArray {
+private fun JsonElement.jsonArrayOrEmpty(): kotlinx.serialization.json.JsonArray {
   return when (this) {
-    is JsonArray -> this
-    else -> JsonArray(emptyList())
+    is kotlinx.serialization.json.JsonArray -> this
+    else -> kotlinx.serialization.json.JsonArray(emptyList())
   }
 }
 

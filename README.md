@@ -114,7 +114,12 @@ cd nanoAI
 ./gradlew installDebug  # Install on device
 ```
 
-See `docs/testing.md` for detailed testing instructions and `docs/ARCHITECTURE.md` for technical deep-dive.
+See `docs/development/TESTING.md` for detailed testing instructions and `docs/architecture/ARCHITECTURE.md` for technical deep-dive.
+
+Key guides for contributors:
+- `docs/development/BUILD_WORKFLOW.md` – build logic conventions and automation
+- `docs/development/QUALITY_GATES.md` – required static analysis and coverage thresholds
+- `docs/development/TESTING.md` – testing strategy, tooling, and coverage workflows
 
 ## 📄 License
 
@@ -183,7 +188,7 @@ We welcome contributions! Please:
 3. **Respect privacy** – Any new features must maintain our privacy-first approach
 4. **Document changes** – Update user-facing documentation for any new capabilities
 
-See our [Testing Guide](docs/testing.md) and [Architecture Overview](docs/ARCHITECTURE.md) for development details.
+See our [Testing Guide](docs/development/TESTING.md), [Quality Gates](docs/development/QUALITY_GATES.md), and [Architecture Overview](docs/architecture/ARCHITECTURE.md) for development details.
 
 ## 🎯 Roadmap
 

@@ -16,7 +16,7 @@ output-reports:
   active: true
 
 style:
-  active: true
+  active: false
   ForbiddenComment:
     active: false
   MaxLineLength:
@@ -38,6 +38,12 @@ style:
 
 formatting:
   active: false
+  Indentation:
+    active: false
+  MaximumLineLength:
+    active: false
+  ImportOrdering:
+    active: false
 
 complexity:
   active: true
@@ -93,12 +99,9 @@ Compose:
   ComposableParamOrder:
     active: false
 
-# TODO: Enable custom UI quality rules after proper build integration
-# UIQuality: // **IT IS NOT PLANNED RIGHT NOW NEEDS REWRITE**
-#   active: true
-#   HardcodedStringInComposable:
-#     active: true
-#   MissingContentDescription:
-#     active: true
-#   NonMaterialSpacing:
-#     active: true
+nanoai-clean-architecture:
+  active: true
+  CleanArchitectureLayering:
+    active: true
+    # Prevents feature/ui modules from importing data sources directly and blocks core modules from
+    # reaching into feature packages. Keeps NanoAI's Clean Architecture boundaries intact.

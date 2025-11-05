@@ -1,0 +1,39 @@
+{
+  "commands": [
+    {
+      "taskName": "testDebugUnitTest",
+      "scope": "UNIT",
+      "expectedDurationSeconds": 180,
+      "reportsGenerated": [
+        "app/build/reports/tests/testDebugUnitTest/index.html"
+      ],
+      "coverageDependencies": [
+        "verifyCoverageThresholds"
+      ]
+    },
+    {
+      "taskName": "verifyCoverageThresholds",
+      "scope": "UNIT",
+      "expectedDurationSeconds": 45,
+      "reportsGenerated": [
+        "app/build/reports/jacoco/full/summary.md",
+        "app/build/coverage/thresholds.md"
+      ],
+      "prerequisites": [
+        "testDebugUnitTest",
+        "jacocoFullReport"
+      ]
+    },
+    {
+      "taskName": "roboScreenshotDebug",
+      "scope": "SCREENSHOT",
+      "expectedDurationSeconds": 120,
+      "reportsGenerated": [
+        "app/src/test/screenshots"
+      ],
+      "prerequisites": [
+        "compileDebugUnitTestSources"
+      ]
+    }
+  ]
+}

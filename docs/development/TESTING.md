@@ -29,6 +29,7 @@ The project has been fully migrated to JUnit 5 (Jupiter):
 | Instrumentation (Compose UI + device flows) | `app/src/androidTest/java` | `./gradlew ciManagedDeviceDebugAndroidTest` | Boots the CI-managed Pixel 6 ATD image. For physical device testing pass `-Pnanoai.usePhysicalDevice=true`. |
 | Macrobenchmark | `macrobenchmark/src/main` | `./gradlew :macrobenchmark:connectedCheck` | Runs only when a device/emulator is attached. CI gate is optional but results are published for performance budgets. |
 | Coverage tooling | `scripts/coverage` | `./gradlew jacocoFullReport` | Merges JVM + instrumentation coverage, produces HTML + XML under `app/build/reports/jacoco/full/`. |
+| Screenshot baselines | `app/src/test/java` + Roborazzi | `./gradlew :app:roboScreenshotDebug` | Records Compose screenshots into `app/src/test/screenshots`. |
 
 ### Module-Specific Test Tasks
 For focused development and faster feedback, run tests for specific layers using command line filters:
@@ -67,6 +68,13 @@ For instrumentation tests (Android UI/device tests):
 - `MainDispatcherExtension` overrides `Dispatchers.Main` for coroutine tests.
 - `TestEnvironmentRule` resets Room/DataStore/network toggles between instrumentation runs (use as `@RegisterExtension` with `@JvmStatic` for JUnit 5).
 - Fixture builders live under `app/src/test/java/com/vjaykrsna/nanoai/**/fixtures` and `DomainTestBuilders` simplifies thread/message creation.
+- `FlowTestExt` (see `com.vjaykrsna.nanoai.shared.testing.FlowTestExt`) wraps Turbine with shared timeouts and automatic cancellation for Flow assertions.
+
+### Screenshot workflow (Roborazzi)
+
+- Record fresh baselines with `./gradlew :app:roboScreenshotDebug`.
+- Screenshots are stored under `app/src/test/screenshots`; commit updates when UI changes intentionally.
+- JVM tests can use the Roborazzi rule/utilities to capture Compose UI snapshots deterministically; the Gradle task injects the required system properties (`roborazzi.output-dir`, `roborazzi.record`).
 
 ### JUnit 5 Patterns
 **Android Instrumentation Tests:**
@@ -109,7 +117,7 @@ class MyUnitTest {
    ```bash
    ./gradlew check
    ```
-   `check` runs Spotless, Detekt, all JVM tests, managed-device instrumentation, merged coverage, and threshold verification.
+   `check` runs Spotless, Detekt, all JVM tests, managed-device instrumentation, merged coverage, threshold verification, and the Roborazzi screenshot gate.
 4. **After large UI changes** run instrumentation locally:
    ```bash
    ./gradlew ciManagedDeviceDebugAndroidTest
@@ -125,9 +133,9 @@ class MyUnitTest {
    - Pass `-Pnanoai.skipInstrumentation=true` when you only need JVM coverage locally (CI must keep instrumentation enabled).
 2. **Enforce thresholds**
    ```bash
-   ./gradlew verifyCoverageThresholds --report-xml app/build/reports/jacoco/full/jacocoFullReport.xml --json app/build/coverage/report.json
+   ./gradlew :app:verifyCoverageThresholds
    ```
-   Fails fast if any layer slips below its target and writes a summary to `app/build/coverage/thresholds.md`.
+   Loads layer metadata from `config/testing/coverage/coverage-metadata.json`, fails fast if any layer slips below target, and writes markdown/JSON summaries to `app/build/coverage/`.
 3. **Publish summaries**
    ```bash
    ./gradlew coverageMarkdownSummary

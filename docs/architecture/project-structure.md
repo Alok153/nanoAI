@@ -28,6 +28,7 @@ nanoAI/
 ```
 app/core/
 ├── common/                 # Shared utilities & extensions
+├── coverage/               # Test coverage reporting & analysis
 ├── data/                   # Room DAOs, network services, repositories
 ├── device/                 # Camera, storage, hardware access
 ├── di/                     # Hilt modules & dependency bindings
@@ -138,16 +139,7 @@ These directories exist locally but are excluded from version control:
 
 **Purpose:** Standardized local development environment across team members.
 
-### Asset Organization
 
-**Shared Code Location:**
-```
-app/srcs/                   # App-specific shared utilities
-├── main/java/com/vjaykrsna.nanoai/shared/
-└── androidTest/           # Integration tests
-```
-
-**Why `srcs`?** Contains utilities that need Android APIs but don't warrant a separate module.
 
 ## 📋 Naming & File Conventions
 

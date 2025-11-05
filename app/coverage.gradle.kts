@@ -2,6 +2,8 @@
 val jacocoExclusionPatterns =
   listOf("**/R.class", "**/R$*.class", "**/BuildConfig.*", "**/Manifest*.*", "**/*Test*.*")
 
+apply(from = rootProject.file("config/testing/coverage/coverage-thresholds.gradle.kts"))
+
 // Helper function to generate class directories for Jacoco, reducing repetition.
 fun jacocoClassDirectories(variant: String) =
   files(

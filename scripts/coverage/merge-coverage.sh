@@ -4,15 +4,43 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 OUTPUT_DIR="${1:-${ROOT_DIR}/app/build/reports/jacoco/full}"
+MODULE_PROFILES_FILE="${ROOT_DIR}/config/testing/coverage/module-profiles.json"
+
+mapfile -t MODULE_DIRS < <(
+  MODULE_PROFILES_FILE_PATH="${MODULE_PROFILES_FILE}" python <<'PY'
+import json
+import os
+from pathlib import Path
+
+profiles_file = Path(os.environ.get("MODULE_PROFILES_FILE_PATH", ""))
+if not profiles_file.exists():
+    raise SystemExit()
+
+data = json.loads(profiles_file.read_text())
+for profile in data.get("profiles", []):
+    name = profile.get("name", "").lstrip(":")
+    if not name:
+        continue
+    print(name.replace(":", "/"))
+PY
+) || true
+
+if [ ${#MODULE_DIRS[@]} -eq 0 ]; then
+  MODULE_DIRS=("app")
+fi
 
 REPORT_DIR="${ROOT_DIR}/app/build/reports/jacoco/full"
-EXEC_SOURCES=(
-  "${ROOT_DIR}/app/build/jacoco"
-  "${ROOT_DIR}/app/build/outputs/unit_test_code_coverage"
-  "${ROOT_DIR}/app/build/outputs/code_coverage"
-)
+EXEC_SOURCES=()
+for module_dir in "${MODULE_DIRS[@]}"; do
+  EXEC_SOURCES+=(
+    "${ROOT_DIR}/${module_dir}/build/jacoco"
+    "${ROOT_DIR}/${module_dir}/build/outputs/unit_test_code_coverage"
+    "${ROOT_DIR}/${module_dir}/build/outputs/code_coverage"
+  )
+done
 
 printf '[merge-coverage] Working directory: %s\n' "${ROOT_DIR}"
+printf '[merge-coverage] Aggregating coverage for modules: %s\n' "${MODULE_DIRS[*]}"
 "${ROOT_DIR}/gradlew" -p "${ROOT_DIR}" \
   testDebugUnitTest \
   connectedDebugAndroidTest \

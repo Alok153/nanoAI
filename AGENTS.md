@@ -94,12 +94,16 @@ See `gradle/libs.versions.toml` for version details and updates.
 
 ```
 nanoAI/
+├── .github/                       # GitHub workflows, actions, and prompts
+├── .specify/                      # Specification tools and templates
+├── Personal/                      # Personal files and notes
 ├── app/                           # 📱 Main Android application (:app)
 │   ├── src/main/java/com/vjaykrsna.nanoai/
 │   │   ├── MainActivity.kt        # Single activity architecture
 │   │   ├── NanoAIApplication.kt   # Application class
-│   │   ├── core/                  # Core infrastructure (9 modules)
+│   │   ├── core/                  # Core infrastructure (12 modules)
 │   │   │   ├── common/            # Shared utilities & extensions
+│   │   │   ├── coverage/          # Test coverage reporting & analysis
 │   │   │   ├── data/              # Database, network, repositories
 │   │   │   ├── device/            # Camera, storage, hardware access
 │   │   │   ├── di/                # Hilt dependency injection
@@ -119,10 +123,13 @@ nanoAI/
 │   │   │   └── uiux/             # Shared UI components
 │   │   └── shared/               # Cross-feature utilities
 │   ├── src/test/java/             # Unit tests (JVM)
-│   ├── src/androidTest/java/      # Instrumentation tests (device)
-│   └── srcs/                      # App-specific shared utilities
+│   └── src/androidTest/java/      # Instrumentation tests (device)
+├── build-logic/                   # Custom Gradle plugins & build logic
 ├── macrobenchmark/                # ⚡ Performance testing (:macrobenchmark)
 ├── docs/                          # 📚 Documentation & guides
+│   ├── api/                       # API documentation
+│   ├── architecture/              # System design & data flows
+│   └── development/               # Development guides & workflows
 ├── specs/                         # 🎯 Feature specifications
 ├── config/                        # ⚙️ Quality gates & configurations
 │   ├── quality/                   # Detekt, accessibility, UI quality
@@ -132,9 +139,10 @@ nanoAI/
 ├── gradle/                        # 🔨 Build system
 │   ├── libs.versions.toml         # Single source of truth for deps
 │   └── wrapper/                   # Gradle wrapper
-├── build.gradle.kts              # Root build script
-├── settings.gradle.kts           # Active modules (:app, :macrobenchmark)
-└── README.md                     # Project overview
+├── AGENTS.md                      # Agent rules and guidelines
+├── README.md                      # Project overview
+├── build.gradle.kts               # Root build script
+└── settings.gradle.kts            # Active modules (:app, :macrobenchmark)
 ```
 1. Check logs with `ShellTelemetry`
 2. Isolate layers (UI, Domain, Data)

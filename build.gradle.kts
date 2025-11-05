@@ -8,13 +8,18 @@ plugins {
     alias(libs.plugins.hilt) apply false
     id("io.gitlab.arturbosch.detekt") version "1.23.8"
     id("com.diffplug.spotless") version "7.0.4"
+    id("com.github.ben-manes.versions") version "0.53.0"
 }
+
+val libs = extensions.getByType<VersionCatalogsExtension>().named("libs")
+val detektConfig = file("${rootProject.projectDir}/config/quality/detekt/detekt.yml")
+val detektBaseline = file("${rootProject.projectDir}/config/quality/detekt/baseline.xml")
 
 detekt {
     buildUponDefaultConfig = true
     allRules = false
-    config.setFrom("${rootProject.projectDir}/config/quality/detekt/detekt.yml")
-    baseline = file("${rootProject.projectDir}/config/quality/detekt/baseline.xml")
+    config.setFrom(detektConfig)
+    baseline = detektBaseline
     source.setFrom(
         "app/src/main/java",
         "app/src/test/java",
@@ -23,27 +28,15 @@ detekt {
     )
 }
 
-subprojects {
-    listOf("org.jetbrains.kotlin.jvm", "org.jetbrains.kotlin.android").forEach { kotlinPluginId ->
-        pluginManager.withPlugin(kotlinPluginId) {
-            apply(plugin = "com.diffplug.spotless")
-            configure<com.diffplug.gradle.spotless.SpotlessExtension> {
-                kotlin {
-                    target("**/*.kt")
-                    // ktfmt auto-wraps at 100 chars, cannot be configured
-                    ktfmt().googleStyle()
-                }
-
-                kotlinGradle {
-                    target("**/*.gradle.kts")
-                    ktfmt().googleStyle()
-                }
-            }
-        }
-    }
+tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
+    jvmTarget = libs.findVersion("kotlinJvmTarget").get().requiredVersion
+    config.setFrom(detektConfig)
+    baseline = detektBaseline
+    parallel = true
 }
 
 dependencies {
-    detektPlugins("io.nlopez.compose.rules:detekt:0.4.9")
-    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.23.7")
+    detektPlugins("io.nlopez.compose.rules:detekt:0.4.27")
+    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.23.8")
+    detektPlugins(project(":config:quality:detekt:custom-rules"))
 }

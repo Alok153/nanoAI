@@ -1,0 +1,31 @@
+{
+  "metrics": [
+    {
+      "layer": "UI",
+      "minimumPercent": 65,
+      "sourceSets": [
+        "appDebug",
+        "appDebugAndroidTest"
+      ],
+      "reportPath": "app/build/reports/jacoco/full/jacocoFullReport.xml"
+    },
+    {
+      "layer": "VIEW_MODEL",
+      "minimumPercent": 75,
+      "sourceSets": [
+        "appDebug",
+        "appDebugUnitTest"
+      ],
+      "reportPath": "app/build/reports/jacoco/full/jacocoFullReport.xml"
+    },
+    {
+      "layer": "DATA",
+      "minimumPercent": 70,
+      "sourceSets": [
+        "appDebug",
+        "appDebugUnitTest"
+      ],
+      "reportPath": "app/build/reports/jacoco/full/jacocoFullReport.xml"
+    }
+  ]
+}

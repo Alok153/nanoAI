@@ -1,0 +1,53 @@
+{
+  "qualityGates": [
+    {
+      "gateId": "formatting",
+      "description": "Spotless formatting enforcement for Kotlin and Gradle sources",
+      "task": "spotlessCheck",
+      "threshold": { "requirement": "No format violations" },
+      "severity": "BLOCKING",
+      "documentationRef": "docs/development/QUALITY_GATES.md#1-formatting-spotless",
+      "bypassPolicy": "Not bypassable; run ./gradlew spotlessApply before commit"
+    },
+    {
+      "gateId": "static-analysis",
+      "description": "Detekt static analysis with custom clean architecture rule set",
+      "task": "detekt detektMain detektTest",
+      "threshold": { "requirement": "Zero Detekt violations" },
+      "severity": "BLOCKING",
+      "documentationRef": "docs/development/QUALITY_GATES.md#2-static-analysis-detekt",
+      "bypassPolicy": "Requires Eng Lead + QE approval with follow-up ticket in PR description"
+    },
+    {
+      "gateId": "unit-test-coverage",
+      "description": "Layer-specific coverage thresholds for ViewModel, UI, and Data",
+      "task": ":app:verifyCoverageThresholds",
+      "threshold": {
+        "viewModel": 75,
+        "ui": 65,
+        "data": 70
+      },
+      "severity": "BLOCKING",
+      "documentationRef": "docs/development/QUALITY_GATES.md#3-coverage-verification",
+      "bypassPolicy": "Allowed for hotfixes only; document mitigation ETA and risk owner"
+    },
+    {
+      "gateId": "screenshot-regression",
+      "description": "Roborazzi screenshot verification for Compose regressions",
+      "task": ":app:roboScreenshotDebug",
+      "threshold": { "requirement": "No unexpected diffs in verify mode" },
+      "severity": "BLOCKING",
+      "documentationRef": "docs/development/QUALITY_GATES.md#4-roborazzi-screenshot-diffs",
+      "bypassPolicy": "Permitted only with Eng Lead + Design sign-off; update baselines within 24h"
+    },
+    {
+      "gateId": "instrumentation-suite",
+      "description": "Managed-device instrumentation health gate",
+      "task": "ciManagedDeviceDebugAndroidTest",
+      "threshold": { "requirement": "All managed device tests pass" },
+      "severity": "WARNING",
+      "documentationRef": "docs/development/QUALITY_GATES.md#5-instrumentation-reliability",
+      "bypassPolicy": "Requires QE approval and tracking issue; flakiness must be resolved before release"
+    }
+  ]
+}

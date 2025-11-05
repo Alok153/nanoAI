@@ -16,10 +16,10 @@
 
 **Purpose**: Bootstrap composite build scaffolding required by all subsequent work
 
-- [ ] T001 [Setup] Update `settings.gradle.kts` to include `includeBuild("build-logic")` and share plugin repositories for the composite build
-- [ ] T002 [P] [Setup] Create `build-logic/settings.gradle.kts` with plugin management that imports the root `../gradle/libs.versions.toml`
-- [ ] T003 [P] [Setup] Create `build-logic/build.gradle.kts` applying the `kotlin-dsl` plugin and configuring repositories for convention plugins
-- [ ] T004 [P] [Setup] Create `build-logic/gradle.properties` setting JVM args and Kotlin code style defaults for the convention build
+- [X] T001 [Setup] Update `settings.gradle.kts` to include `includeBuild("build-logic")` and share plugin repositories for the composite build
+- [X] T002 [P] [Setup] Create `build-logic/settings.gradle.kts` with plugin management that imports the root `../gradle/libs.versions.toml`
+- [X] T003 [P] [Setup] Create `build-logic/build.gradle.kts` applying the `kotlin-dsl` plugin and configuring repositories for convention plugins
+- [X] T004 [P] [Setup] Create `build-logic/gradle.properties` setting JVM args and Kotlin code style defaults for the convention build
 
 ---
 
@@ -29,9 +29,9 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T005 [Foundation] Create `config/testing/coverage/module-profiles.json` enumerating `ModuleProfile` entries for `:app` and `:macrobenchmark`
-- [ ] T006 [Foundation] Extend `scripts/coverage/merge-coverage.sh` to consume `module-profiles.json` when assembling multi-module coverage reports
-- [ ] T007 [Foundation] Create `config/testing/coverage/coverage-metadata.json` capturing default `CoverageMetric` thresholds for UI, ViewModel, and Data layers
+- [X] T005 [Foundation] Create `config/testing/coverage/module-profiles.json` enumerating `ModuleProfile` entries for `:app` and `:macrobenchmark`
+- [X] T006 [Foundation] Extend `scripts/coverage/merge-coverage.sh` to consume `module-profiles.json` when assembling multi-module coverage reports
+- [X] T007 [Foundation] Create `config/testing/coverage/coverage-metadata.json` capturing default `CoverageMetric` thresholds for UI, ViewModel, and Data layers
 
 **Checkpoint**: Shared metadata ready – user story implementation can now begin in parallel
 
@@ -47,18 +47,18 @@ Tests not requested for this story (per spec).
 
 ### Implementation for User Story 1
 
-- [ ] T008 [US1] Implement `build-logic/src/main/kotlin/com/vjaykrsna/nanoai/buildlogic/SharedConfiguration.kt` with shared compile/target SDK, Kotlin options, and quality task wiring helpers
-- [ ] T009 [P] [US1] Implement `build-logic/src/main/kotlin/com/vjaykrsna/nanoai/buildlogic/AndroidApplicationConventionPlugin.kt` registering the application plugin id
-- [ ] T010 [P] [US1] Implement `build-logic/src/main/kotlin/com/vjaykrsna/nanoai/buildlogic/AndroidFeatureConventionPlugin.kt` encapsulating feature module defaults
-- [ ] T011 [P] [US1] Implement `build-logic/src/main/kotlin/com/vjaykrsna/nanoai/buildlogic/AndroidLibraryComposeConventionPlugin.kt` enabling Compose-specific build features
-- [ ] T012 [P] [US1] Implement `build-logic/src/main/kotlin/com/vjaykrsna/nanoai/buildlogic/AndroidTestingConventionPlugin.kt` covering instrumentation-only modules such as `:macrobenchmark`
-- [ ] T013 [P] [US1] Implement `build-logic/src/main/kotlin/com/vjaykrsna/nanoai/buildlogic/KotlinLibraryConventionPlugin.kt` for pure Kotlin modules shared across features
-- [ ] T014 [US1] Update `build-logic/build.gradle.kts` to declare all convention plugins inside the `gradlePlugin {}` block with correct implementation classes
-- [ ] T015 [P] [US1] Create plugin descriptor files under `build-logic/src/main/resources/META-INF/gradle-plugins/` mapping plugin ids to implementation classes
-- [ ] T016 [US1] Update `gradle/libs.versions.toml` with shared dependency aliases, compiler flags, and Android SDK constants consumed by the convention plugins
-- [ ] T017 [US1] Refactor `app/build.gradle.kts` to apply `com.vjaykrsna.nanoai.android.application` and remove duplicated Android + dependency configuration now provided by conventions
-- [ ] T018 [US1] Refactor `macrobenchmark/build.gradle.kts` to apply `com.vjaykrsna.nanoai.android.testing` for instrumentation defaults and drop redundant blocks
-- [ ] T019 [US1] Create `config/quality/conventions.json` documenting each `BuildConventionPlugin` (id, appliesTo, qualityTasks, documentationRef) for the `/conventions` API response
+- [X] T008 [US1] Implement `build-logic/src/main/kotlin/com/vjaykrsna/nanoai/buildlogic/SharedConfiguration.kt` with shared compile/target SDK, Kotlin options, and quality task wiring helpers
+- [X] T009 [P] [US1] Implement `build-logic/src/main/kotlin/com/vjaykrsna/nanoai/buildlogic/AndroidApplicationConventionPlugin.kt` registering the application plugin id
+- [X] T010 [P] [US1] Implement `build-logic/src/main/kotlin/com/vjaykrsna/nanoai/buildlogic/AndroidFeatureConventionPlugin.kt` encapsulating feature module defaults
+- [X] T011 [P] [US1] Implement `build-logic/src/main/kotlin/com/vjaykrsna/nanoai/buildlogic/AndroidLibraryComposeConventionPlugin.kt` enabling Compose-specific build features
+- [X] T012 [P] [US1] Implement `build-logic/src/main/kotlin/com/vjaykrsna/nanoai/buildlogic/AndroidTestingConventionPlugin.kt` covering instrumentation-only modules such as `:macrobenchmark`
+- [X] T013 [P] [US1] Implement `build-logic/src/main/kotlin/com/vjaykrsna/nanoai/buildlogic/KotlinLibraryConventionPlugin.kt` for pure Kotlin modules shared across features
+- [X] T014 [US1] Update `build-logic/build.gradle.kts` to declare all convention plugins inside the `gradlePlugin {}` block with correct implementation classes
+- [X] T015 [P] [US1] Create plugin descriptor files under `build-logic/src/main/resources/META-INF/gradle-plugins/` mapping plugin ids to implementation classes
+- [X] T016 [US1] Update `gradle/libs.versions.toml` with shared dependency aliases, compiler flags, and Android SDK constants consumed by the convention plugins
+- [X] T017 [US1] Refactor `app/build.gradle.kts` to apply `com.vjaykrsna.nanoai.android.application` and remove duplicated Android + dependency configuration now provided by conventions
+- [X] T018 [US1] Refactor `macrobenchmark/build.gradle.kts` to apply `com.vjaykrsna.nanoai.android.testing` for instrumentation defaults and drop redundant blocks
+- [X] T019 [US1] Create `config/quality/conventions.json` documenting each `BuildConventionPlugin` (id, appliesTo, qualityTasks, documentationRef) for the `/conventions` API response
 
 **Checkpoint**: User Story 1 functional – all modules rely on convention plugins and build consistently
 
@@ -74,15 +74,15 @@ Tests not requested for this story (per spec).
 
 ### Implementation for User Story 2
 
-- [ ] T020 [US2] Update `settings.gradle.kts` to include `:config:quality:detekt:custom-rules` and ensure the composite build exposes it
-- [ ] T021 [P] [US2] Create `config/quality/detekt/custom-rules/build.gradle.kts` configuring Kotlin/JVM compilation for the Detekt rule module
-- [ ] T022 [P] [US2] Implement `config/quality/detekt/custom-rules/src/main/kotlin/com/vjaykrsna/nanoai/detektrules/CleanArchitectureRuleSetProvider.kt`
-- [ ] T023 [P] [US2] Implement `config/quality/detekt/custom-rules/src/main/kotlin/com/vjaykrsna/nanoai/detektrules/CleanArchitectureRule.kt` enforcing layer boundaries
-- [ ] T024 [US2] Write `config/quality/detekt/detekt.yml` enabling type resolution, referencing the custom rule set, and documenting rule rationale
-- [ ] T025 [US2] Update `build.gradle.kts` to apply Detekt with type resolution defaults, wiring `detektPlugins(project(":config:quality:detekt:custom-rules"))`
-- [ ] T026 [P] [US2] Create `config/quality/spotless/spotless.kotlin.gradle` and `config/quality/spotless/spotless.misc.gradle` defining formatting standards
-- [ ] T027 [US2] Update `build.gradle.kts` and `build-logic/src/main/kotlin/com/vjaykrsna/nanoai/buildlogic/SharedConfiguration.kt` so convention plugins apply Spotless and Detekt tasks automatically
-- [ ] T028 [US2] Create `config/quality/detekt/rules.json` cataloguing each `StaticAnalysisRule` (ruleId, category, typeResolutionRequired, documentationRef)
+- [X] T020 [US2] Update `settings.gradle.kts` to include `:config:quality:detekt:custom-rules` and ensure the composite build exposes it
+- [X] T021 [P] [US2] Create `config/quality/detekt/custom-rules/build.gradle.kts` configuring Kotlin/JVM compilation for the Detekt rule module
+- [X] T022 [P] [US2] Implement `config/quality/detekt/custom-rules/src/main/kotlin/com/vjaykrsna/nanoai/detektrules/CleanArchitectureRuleSetProvider.kt`
+- [X] T023 [P] [US2] Implement `config/quality/detekt/custom-rules/src/main/kotlin/com/vjaykrsna/nanoai/detektrules/CleanArchitectureRule.kt` enforcing layer boundaries
+- [X] T024 [US2] Write `config/quality/detekt/detekt.yml` enabling type resolution, referencing the custom rule set, and documenting rule rationale
+- [X] T025 [US2] Update `build.gradle.kts` to apply Detekt with type resolution defaults, wiring `detektPlugins(project(":config:quality:detekt:custom-rules"))`
+- [X] T026 [P] [US2] Create `config/quality/spotless/spotless.kotlin.gradle` and `config/quality/spotless/spotless.misc.gradle` defining formatting standards
+- [X] T027 [US2] Update `build.gradle.kts` and `build-logic/src/main/kotlin/com/vjaykrsna/nanoai/buildlogic/SharedConfiguration.kt` so convention plugins apply Spotless and Detekt tasks automatically
+- [X] T028 [US2] Create `config/quality/detekt/rules.json` cataloguing each `StaticAnalysisRule` (ruleId, category, typeResolutionRequired, documentationRef)
 
 **Checkpoint**: User Story 2 complete – static analysis tooling centralized with custom rule enforcement
 
@@ -98,12 +98,12 @@ Tests not requested for this story (per spec).
 
 ### Implementation for User Story 3
 
-- [ ] T029 [US3] Create `config/testing/coverage/coverage-thresholds.gradle.kts` to enforce `CoverageMetric` thresholds using `coverage-metadata.json`
-- [ ] T030 [P] [US3] Update `scripts/coverage/generate-summary.py` to produce per-layer summaries matching `CoverageMetric` definitions
-- [ ] T031 [P] [US3] Add `app/src/test/java/com/vjaykrsna/nanoai/shared/testing/FlowTestExt.kt` providing a Turbine-based Flow testing helper
-- [ ] T032 [P] [US3] Add `config/testing/tooling/roborazzi-config.gradle.kts` configuring Roborazzi screenshot baselines
-- [ ] T033 [US3] Update `build.gradle.kts` and relevant convention plugins to register `verifyCoverageThresholds`, `roboScreenshotDebug`, and Flow helper dependencies
-- [ ] T034 [P] [US3] Create `config/testing/tooling/test-commands.json` enumerating each `TestCommand` (taskName, scope, expectedDurationSeconds, reportsGenerated)
+- [X] T029 [US3] Create `config/testing/coverage/coverage-thresholds.gradle.kts` to enforce `CoverageMetric` thresholds using `coverage-metadata.json`
+- [X] T030 [P] [US3] Update `scripts/coverage/generate-summary.py` to produce per-layer summaries matching `CoverageMetric` definitions
+- [X] T031 [P] [US3] Add `app/src/test/java/com/vjaykrsna.nanoai/shared/testing/FlowTestExt.kt` providing a Turbine-based Flow testing helper
+- [X] T032 [P] [US3] Add `config/testing/tooling/roborazzi-config.gradle.kts` configuring Roborazzi screenshot baselines
+- [X] T033 [US3] Update `build.gradle.kts` and relevant convention plugins to register `verifyCoverageThresholds`, `roboScreenshotDebug`, and Flow helper dependencies
+- [X] T034 [P] [US3] Create `config/testing/tooling/test-commands.json` enumerating each `TestCommand` (taskName, scope, expectedDurationSeconds, reportsGenerated)
 
 **Checkpoint**: User Story 3 complete – testing strategy automated with coverage and tooling clarity
 
@@ -119,10 +119,10 @@ Tests not requested for this story (per spec).
 
 ### Implementation for User Story 4
 
-- [ ] T035 [US4] Create `docs/development/BUILD_WORKFLOW.md` outlining end-to-end build, analysis, and testing commands referencing convention plugins
-- [ ] T036 [P] [US4] Update `docs/development/TESTING.md` to incorporate Flow helpers, screenshot strategy, and coverage verification steps
-- [ ] T037 [P] [US4] Update `docs/development/QUALITY_GATES.md` with detailed gate descriptions, thresholds, and bypass policy references
-- [ ] T038 [P] [US4] Update `README.md` to surface links to the new workflow and testing documentation for onboarding
+- [X] T035 [US4] Create `docs/development/BUILD_WORKFLOW.md` outlining end-to-end build, analysis, and testing commands referencing convention plugins
+- [X] T036 [P] [US4] Update `docs/development/TESTING.md` to incorporate Flow helpers, screenshot strategy, and coverage verification steps
+- [X] T037 [P] [US4] Update `docs/development/QUALITY_GATES.md` with detailed gate descriptions, thresholds, and bypass policy references
+- [X] T038 [P] [US4] Update `README.md` to surface links to the new workflow and testing documentation for onboarding
 
 **Checkpoint**: User Story 4 complete – documentation enables self-service onboarding
 
@@ -138,11 +138,11 @@ Tests not requested for this story (per spec).
 
 ### Implementation for User Story 5
 
-- [ ] T039 [US5] Create `scripts/hooks/pre-commit.sh` executing Spotless, Detekt, unit tests, and coverage verification with descriptive failure output
-- [ ] T040 [P] [US5] Create `scripts/hooks/install-hooks.sh` to symlink the pre-commit hook across developer environments (POSIX-compatible)
-- [ ] T041 [US5] Create `config/quality/quality-gates.json` documenting each `QualityGate` (gateId, task, threshold, severity, bypassPolicy)
-- [ ] T042 [US5] Update `docs/development/BUILD_WORKFLOW.md` with hook installation steps, bypass guidance, and troubleshooting tips
-- [ ] T043 [US5] Create `scripts/quality/annotate-build-scan.sh` posting branch, gate outcomes, and slow task tags to the `/build-scans/annotate` endpoint
+- [X] T039 [US5] Create `scripts/hooks/pre-commit.sh` executing Spotless, Detekt, unit tests, and coverage verification with descriptive failure output
+- [X] T040 [P] [US5] Create `scripts/hooks/install-hooks.sh` to symlink the pre-commit hook across developer environments (POSIX-compatible)
+- [X] T041 [US5] Create `config/quality/quality-gates.json` documenting each `QualityGate` (gateId, task, threshold, severity, bypassPolicy)
+- [X] T042 [US5] Update `docs/development/BUILD_WORKFLOW.md` with hook installation steps, bypass guidance, and troubleshooting tips
+- [X] T043 [US5] Create `scripts/quality/annotate-build-scan.sh` posting branch, gate outcomes, and slow task tags to the `/build-scans/annotate` endpoint
 
 **Checkpoint**: User Story 5 complete – automated gates enforced locally and in CI with actionable metadata
 
@@ -155,6 +155,9 @@ Tests not requested for this story (per spec).
 - [ ] T044 [Polish] Run `./gradlew assembleDebug --scan`, capture before/after timings, and append results to `docs/development/BUILD_WORKFLOW.md`
 - [ ] T045 [Polish] Execute `scripts/hooks/pre-commit.sh --dry-run` and record troubleshooting guidance in `docs/development/QUALITY_GATES.md`
 - [ ] T046 [Polish] Follow `specs/006-improve-workflow-centralise/quickstart.md` steps end-to-end and log successes/failures in `docs/development/BUILD_WORKFLOW.md`
+- [ ] T047 [Polish] Run `./gradlew detekt` to ensure static analysis passes across all modules
+- [ ] T048 [Polish] Run `./gradlew testDebugUnitTest` to verify all unit tests pass
+- [ ] T049 [Polish] Run `./gradlew connectedDebugAndroidTest` to verify instrumentation tests pass on device/emulator
 
 ---
 

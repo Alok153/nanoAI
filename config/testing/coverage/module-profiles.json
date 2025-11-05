@@ -1,0 +1,27 @@
+{
+  "profiles": [
+    {
+      "name": ":app",
+      "profileType": "APPLICATION",
+      "conventionPlugin": "com.vjaykrsna.nanoai.android.application",
+      "additionalPlugins": [
+        "org.jetbrains.kotlin.plugin.serialization",
+        "com.google.devtools.ksp",
+        "com.google.dagger.hilt.android",
+        "androidx.room",
+        "org.jetbrains.kotlin.plugin.compose",
+        "jacoco"
+      ],
+      "coverageLayer": "UI"
+    },
+    {
+      "name": ":macrobenchmark",
+      "profileType": "MACROBENCHMARK",
+      "conventionPlugin": "com.vjaykrsna.nanoai.android.testing",
+      "additionalPlugins": [
+        "org.jetbrains.kotlin.android"
+      ],
+      "coverageLayer": "INFRA"
+    }
+  ]
+}

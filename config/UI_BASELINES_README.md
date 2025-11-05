@@ -10,26 +10,6 @@ This directory contains baseline configurations and reference files for UI quali
 - **Usage**: Used by `androidx.test.espresso:espresso-accessibility` to establish baseline accessibility compliance
 - **Maintenance**: Should remain empty - new accessibility issues should be fixed, not baselined
 
-### `ui-quality-baseline.json`
-
-- **Purpose**: Comprehensive UI quality metrics and thresholds
-- **Contents**:
-  - Accessibility requirements (touch targets, contrast ratios)
-  - Performance benchmarks (frame drops, cold start time)
-  - Material Design compliance rules
-  - Layout performance guidelines
-- **Usage**: Referenced by UI quality lint rules and automated testing
-
-### `ui-test-baseline.properties`
-
-- **Purpose**: Configuration file for UI testing infrastructure
-- **Contents**:
-  - Screenshot testing settings for visual regression
-  - Accessibility testing parameters
-  - Performance monitoring thresholds
-  - Test execution configuration
-- **Usage**: Loaded by UI test utilities and CI/CD pipelines
-
 ## Usage in Testing
 
 ### Accessibility Testing
@@ -42,14 +22,6 @@ AccessibilityChecks.enable()
         // Check against baseline violations
         baselineChecker.isViolationAllowed(violation)
     }
-```
-
-### UI Quality Checks
-
-```kotlin
-// In UI tests or lint rules
-val qualityConfig = UiQualityConfig.loadFromBaseline()
-assertTrue(qualityConfig.validateComponent(component))
 ```
 
 ## Maintenance Guidelines

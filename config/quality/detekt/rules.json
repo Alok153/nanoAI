@@ -1,0 +1,10 @@
+{
+  "rules": [
+    {
+      "ruleId": "nanoai-clean-architecture:CleanArchitectureLayering",
+      "category": "ARCHITECTURE",
+      "typeResolutionRequired": true,
+      "documentationRef": "docs/development/QUALITY_GATES.md#clean-architecture-layering"
+    }
+  ]
+}
