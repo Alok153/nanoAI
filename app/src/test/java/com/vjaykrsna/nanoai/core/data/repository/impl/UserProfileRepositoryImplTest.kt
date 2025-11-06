@@ -1,7 +1,7 @@
 package com.vjaykrsna.nanoai.core.data.repository.impl
 
+import com.vjaykrsna.nanoai.core.data.uiux.UserProfileLocalDataSource
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
-import com.vjaykrsna.nanoai.feature.uiux.data.UserProfileLocalDataSource
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import io.mockk.coVerify
 import io.mockk.mockk

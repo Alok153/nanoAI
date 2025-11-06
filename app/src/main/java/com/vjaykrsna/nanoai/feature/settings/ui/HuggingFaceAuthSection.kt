@@ -21,8 +21,8 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.vjaykrsna.nanoai.feature.settings.domain.huggingface.HuggingFaceAuthState
-import com.vjaykrsna.nanoai.feature.settings.domain.huggingface.HuggingFaceTokenSource
+import com.vjaykrsna.nanoai.core.domain.settings.huggingface.HuggingFaceAuthState
+import com.vjaykrsna.nanoai.core.domain.settings.huggingface.HuggingFaceTokenSource
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoSpacing
 
 @Composable

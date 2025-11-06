@@ -1,8 +1,8 @@
 package com.vjaykrsna.nanoai.core.domain.usecase
 
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
-import com.vjaykrsna.nanoai.core.data.repository.ConversationRepository
 import com.vjaykrsna.nanoai.core.domain.model.ChatThread
+import com.vjaykrsna.nanoai.core.domain.repository.ConversationRepository
 import javax.inject.Inject
 import javax.inject.Singleton
 

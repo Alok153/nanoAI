@@ -7,24 +7,24 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.onFailure
 import com.vjaykrsna.nanoai.core.common.onSuccess
-import com.vjaykrsna.nanoai.core.data.preferences.RetentionPolicy
+import com.vjaykrsna.nanoai.core.domain.library.ModelDownloadsAndExportUseCase
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
+import com.vjaykrsna.nanoai.core.domain.settings.ApiProviderConfigUseCase
+import com.vjaykrsna.nanoai.core.domain.settings.ImportService
+import com.vjaykrsna.nanoai.core.domain.settings.ImportSummary
+import com.vjaykrsna.nanoai.core.domain.settings.huggingface.HuggingFaceAuthCoordinator
+import com.vjaykrsna.nanoai.core.domain.settings.huggingface.HuggingFaceAuthState
+import com.vjaykrsna.nanoai.core.domain.settings.huggingface.HuggingFaceDeviceAuthState
+import com.vjaykrsna.nanoai.core.domain.settings.huggingface.HuggingFaceOAuthConfig
+import com.vjaykrsna.nanoai.core.domain.settings.model.RetentionPolicy
+import com.vjaykrsna.nanoai.core.domain.uiux.ObserveUserProfileUseCase
+import com.vjaykrsna.nanoai.core.domain.uiux.SettingsOperationsUseCase
+import com.vjaykrsna.nanoai.core.domain.uiux.ToggleCompactModeUseCase
 import com.vjaykrsna.nanoai.core.domain.usecase.ObservePrivacyPreferencesUseCase
 import com.vjaykrsna.nanoai.core.domain.usecase.ObserveUiPreferencesUseCase
 import com.vjaykrsna.nanoai.core.domain.usecase.UpdatePrivacyPreferencesUseCase
 import com.vjaykrsna.nanoai.core.domain.usecase.UpdateUiPreferencesUseCase
-import com.vjaykrsna.nanoai.feature.library.domain.ModelDownloadsAndExportUseCase
-import com.vjaykrsna.nanoai.feature.settings.domain.ApiProviderConfigUseCase
-import com.vjaykrsna.nanoai.feature.settings.domain.ImportService
-import com.vjaykrsna.nanoai.feature.settings.domain.ImportSummary
-import com.vjaykrsna.nanoai.feature.settings.domain.huggingface.HuggingFaceAuthCoordinator
-import com.vjaykrsna.nanoai.feature.settings.domain.huggingface.HuggingFaceAuthState
-import com.vjaykrsna.nanoai.feature.settings.domain.huggingface.HuggingFaceDeviceAuthState
-import com.vjaykrsna.nanoai.feature.settings.domain.huggingface.HuggingFaceOAuthConfig
-import com.vjaykrsna.nanoai.feature.uiux.domain.ObserveUserProfileUseCase
-import com.vjaykrsna.nanoai.feature.uiux.domain.SettingsOperationsUseCase
-import com.vjaykrsna.nanoai.feature.uiux.domain.ToggleCompactModeUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlin.jvm.JvmName
@@ -86,12 +86,13 @@ constructor(
       .observeAllProviders()
       .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
-  val privacyPreferences: StateFlow<com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreference> =
+  val privacyPreferences:
+    StateFlow<com.vjaykrsna.nanoai.core.domain.settings.model.PrivacyPreference> =
     observePrivacyPreferencesUseCase()
       .stateIn(
         viewModelScope,
         SharingStarted.Eagerly,
-        com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreference(
+        com.vjaykrsna.nanoai.core.domain.settings.model.PrivacyPreference(
           exportWarningsDismissed = false,
           telemetryOptIn = false,
           consentAcknowledgedAt = null,
@@ -151,11 +152,19 @@ constructor(
   fun addApiProvider(config: APIProviderConfig) {
     viewModelScope.launch {
       _isLoading.value = true
-      apiProviderConfigUseCase.addProvider(config).onFailure { error ->
-        _errorEvents.emit(
-          SettingsError.ProviderAddFailed(error.message ?: "Failed to add provider")
-        )
-      }
+      runCatching { apiProviderConfigUseCase.addProvider(config) }
+        .onSuccess { result ->
+          result.onFailure { error ->
+            _errorEvents.emit(
+              SettingsError.ProviderAddFailed(error.message ?: "Failed to add provider")
+            )
+          }
+        }
+        .onFailure { throwable ->
+          _errorEvents.emit(
+            SettingsError.ProviderAddFailed(throwable.message ?: "Failed to add provider")
+          )
+        }
       _isLoading.value = false
     }
   }
@@ -163,11 +172,19 @@ constructor(
   fun updateApiProvider(config: APIProviderConfig) {
     viewModelScope.launch {
       _isLoading.value = true
-      apiProviderConfigUseCase.updateProvider(config).onFailure { error ->
-        _errorEvents.emit(
-          SettingsError.ProviderUpdateFailed(error.message ?: "Failed to update provider")
-        )
-      }
+      runCatching { apiProviderConfigUseCase.updateProvider(config) }
+        .onSuccess { result ->
+          result.onFailure { error ->
+            _errorEvents.emit(
+              SettingsError.ProviderUpdateFailed(error.message ?: "Failed to update provider")
+            )
+          }
+        }
+        .onFailure { throwable ->
+          _errorEvents.emit(
+            SettingsError.ProviderUpdateFailed(throwable.message ?: "Failed to update provider")
+          )
+        }
       _isLoading.value = false
     }
   }
@@ -175,11 +192,19 @@ constructor(
   fun deleteApiProvider(providerId: String) {
     viewModelScope.launch {
       _isLoading.value = true
-      apiProviderConfigUseCase.deleteProvider(providerId).onFailure { error ->
-        _errorEvents.emit(
-          SettingsError.ProviderDeleteFailed(error.message ?: "Failed to delete provider")
-        )
-      }
+      runCatching { apiProviderConfigUseCase.deleteProvider(providerId) }
+        .onSuccess { result ->
+          result.onFailure { error ->
+            _errorEvents.emit(
+              SettingsError.ProviderDeleteFailed(error.message ?: "Failed to delete provider")
+            )
+          }
+        }
+        .onFailure { throwable ->
+          _errorEvents.emit(
+            SettingsError.ProviderDeleteFailed(throwable.message ?: "Failed to delete provider")
+          )
+        }
       _isLoading.value = false
     }
   }

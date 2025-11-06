@@ -29,10 +29,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
+import com.vjaykrsna.nanoai.core.domain.model.uiux.PaletteSource
+import com.vjaykrsna.nanoai.core.domain.model.uiux.RightPanel
 import com.vjaykrsna.nanoai.core.model.PersonaSwitchAction
-import com.vjaykrsna.nanoai.feature.uiux.presentation.ModeId
-import com.vjaykrsna.nanoai.feature.uiux.presentation.PaletteSource
-import com.vjaykrsna.nanoai.feature.uiux.presentation.RightPanel
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellUiState
 import com.vjaykrsna.nanoai.shared.ui.shell.ShellUiEvent
 

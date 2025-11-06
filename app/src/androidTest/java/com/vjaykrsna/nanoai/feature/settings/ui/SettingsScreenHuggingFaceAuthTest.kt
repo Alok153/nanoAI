@@ -4,7 +4,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import com.vjaykrsna.nanoai.feature.settings.domain.huggingface.HuggingFaceAuthState
+import com.vjaykrsna.nanoai.core.domain.settings.huggingface.HuggingFaceAuthState
 import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Test
 

@@ -1,9 +1,9 @@
 package com.vjaykrsna.nanoai.testing.di
 
-import com.vjaykrsna.nanoai.core.data.repository.ConversationRepository
-import com.vjaykrsna.nanoai.core.data.repository.PersonaRepository
 import com.vjaykrsna.nanoai.core.di.RepositoryModule
-import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
+import com.vjaykrsna.nanoai.core.domain.library.ModelCatalogRepository
+import com.vjaykrsna.nanoai.core.domain.repository.ConversationRepository
+import com.vjaykrsna.nanoai.core.domain.repository.PersonaRepository
 import com.vjaykrsna.nanoai.testing.FakeConversationRepository
 import com.vjaykrsna.nanoai.testing.FakeModelCatalogRepository
 import com.vjaykrsna.nanoai.testing.FakePersonaRepository

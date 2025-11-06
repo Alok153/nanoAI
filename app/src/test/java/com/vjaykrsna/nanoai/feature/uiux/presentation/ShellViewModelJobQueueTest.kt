@@ -1,11 +1,14 @@
 package com.vjaykrsna.nanoai.feature.uiux.presentation
 
 import com.google.common.truth.Truth.assertThat
-import com.vjaykrsna.nanoai.feature.uiux.domain.NavigationOperationsUseCase
-import com.vjaykrsna.nanoai.feature.uiux.domain.QueueJobUseCase
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityStatus
+import com.vjaykrsna.nanoai.core.domain.model.uiux.JobStatus
+import com.vjaykrsna.nanoai.core.domain.model.uiux.JobType
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ProgressJob
+import com.vjaykrsna.nanoai.core.domain.uiux.NavigationOperationsUseCase
 import com.vjaykrsna.nanoai.shared.ui.shell.ShellUiEvent
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
-import io.mockk.*
+import io.mockk.mockk
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
@@ -17,16 +20,6 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
-
-private fun jobLabel(job: ProgressJob): String =
-  when (job.type) {
-    JobType.IMAGE_GENERATION -> "Image generation"
-    JobType.AUDIO_RECORDING -> "Audio recording"
-    JobType.MODEL_DOWNLOAD -> "Model download"
-    JobType.TEXT_GENERATION -> "Text generation"
-    JobType.TRANSLATION -> "Translation"
-    JobType.OTHER -> "Background task"
-  }
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ShellViewModelJobQueueTest {
@@ -41,36 +34,14 @@ class ShellViewModelJobQueueTest {
       runBlocking {
         fakeRepos.connectivityRepository.updateConnectivity(ConnectivityStatus.OFFLINE)
       }
-      val queueJobUseCase = mockk<QueueJobUseCase>(relaxed = true)
       val navigationOperationsUseCase =
         NavigationOperationsUseCase(fakeRepos.navigationRepository, dispatcher)
+      val progressViewModel = createProgressViewModel(fakeRepos, dispatcher)
 
-      // Mock sub-ViewModels
+      // Mock sub-ViewModels unrelated to progress operations
       val navigationViewModel = mockk<NavigationViewModel>(relaxed = true)
       val connectivityViewModel = mockk<ConnectivityViewModel>(relaxed = true)
-      val progressViewModel = mockk<ProgressViewModel>(relaxed = true)
       val themeViewModel = mockk<ThemeViewModel>(relaxed = true)
-
-      // Set up queue job use case to actually call repository
-      coEvery { queueJobUseCase.execute(any()) } coAnswers
-        {
-          val job = firstArg<ProgressJob>()
-          fakeRepos.progressRepository.queueJob(job)
-          val message =
-            when {
-              job.status == JobStatus.FAILED && job.canRetry -> "${jobLabel(job)} retry scheduled"
-              fakeRepos.connectivityRepository.connectivityBannerState.first().status !=
-                ConnectivityStatus.ONLINE -> "${jobLabel(job)} queued for reconnect"
-              job.status == JobStatus.PENDING -> "${jobLabel(job)} queued"
-              else -> "${jobLabel(job)} updated"
-            }
-          fakeRepos.navigationRepository.recordUndoPayload(
-            com.vjaykrsna.nanoai.feature.uiux.presentation.UndoPayload(
-              actionId = "queue-${job.jobId}",
-              metadata = mapOf("message" to message, "jobId" to job.jobId.toString()),
-            )
-          )
-        }
 
       val viewModel =
         ShellViewModel(
@@ -96,12 +67,11 @@ class ShellViewModelJobQueueTest {
 
       viewModel.onEvent(ShellUiEvent.QueueJob(job))
       advanceUntilIdle()
-
-      val progressJobs = fakeRepos.progressRepository.progressJobs.first()
+      val progressJobs = fakeRepos.progressRepository.progressJobs.first { it.isNotEmpty() }
       assertThat(progressJobs.map { it.jobId }).contains(jobId)
-      val undoPayload = fakeRepos.navigationRepository.undoPayload.first()
-      assertThat(undoPayload).isNotNull()
-      val message = undoPayload?.metadata?.get("message") as? String
+      val undoPayload =
+        requireNotNull(fakeRepos.navigationRepository.undoPayload.first { it != null })
+      val message = undoPayload.metadata["message"] as? String
       assertThat(message).isEqualTo("Image generation queued for reconnect")
     }
 
@@ -109,36 +79,14 @@ class ShellViewModelJobQueueTest {
   fun queueGeneration_retryableFailure_setsRetryMessage() =
     runTest(dispatcher) {
       val fakeRepos = createFakeRepositories()
-      val queueJobUseCase = mockk<QueueJobUseCase>(relaxed = true)
       val navigationOperationsUseCase =
         NavigationOperationsUseCase(fakeRepos.navigationRepository, dispatcher)
+      val progressViewModel = createProgressViewModel(fakeRepos, dispatcher)
 
-      // Mock sub-ViewModels
+      // Mock sub-ViewModels unrelated to progress operations
       val navigationViewModel = mockk<NavigationViewModel>(relaxed = true)
       val connectivityViewModel = mockk<ConnectivityViewModel>(relaxed = true)
-      val progressViewModel = mockk<ProgressViewModel>(relaxed = true)
       val themeViewModel = mockk<ThemeViewModel>(relaxed = true)
-
-      // Set up queue job use case to actually call repository
-      coEvery { queueJobUseCase.execute(any()) } coAnswers
-        {
-          val job = firstArg<ProgressJob>()
-          fakeRepos.progressRepository.queueJob(job)
-          val message =
-            when {
-              job.status == JobStatus.FAILED && job.canRetry -> "${jobLabel(job)} retry scheduled"
-              fakeRepos.connectivityRepository.connectivityBannerState.first().status !=
-                ConnectivityStatus.ONLINE -> "${jobLabel(job)} queued for reconnect"
-              job.status == JobStatus.PENDING -> "${jobLabel(job)} queued"
-              else -> "${jobLabel(job)} updated"
-            }
-          fakeRepos.navigationRepository.recordUndoPayload(
-            com.vjaykrsna.nanoai.feature.uiux.presentation.UndoPayload(
-              actionId = "queue-${job.jobId}",
-              metadata = mapOf("message" to message, "jobId" to job.jobId.toString()),
-            )
-          )
-        }
 
       val viewModel =
         ShellViewModel(
@@ -164,10 +112,10 @@ class ShellViewModelJobQueueTest {
 
       viewModel.onEvent(ShellUiEvent.QueueJob(job))
       advanceUntilIdle()
-
-      val progressJobs = fakeRepos.progressRepository.progressJobs.first()
-      val undoPayload = fakeRepos.navigationRepository.undoPayload.first()
-      val message = undoPayload?.metadata?.get("message") as? String
+      val progressJobs = fakeRepos.progressRepository.progressJobs.first { it.isNotEmpty() }
+      val undoPayload =
+        requireNotNull(fakeRepos.navigationRepository.undoPayload.first { it != null })
+      val message = undoPayload.metadata["message"] as? String
       assertThat(message).isEqualTo("Model download retry scheduled")
       assertThat(progressJobs.map { it.jobId }).contains(jobId)
     }

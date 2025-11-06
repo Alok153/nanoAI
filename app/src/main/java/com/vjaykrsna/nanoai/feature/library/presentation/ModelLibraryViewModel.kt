@@ -4,17 +4,17 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.*
+import com.vjaykrsna.nanoai.core.domain.library.DownloadModelUseCase
+import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceCatalogUseCase
+import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceModelCompatibilityChecker
+import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceToModelPackageConverter
+import com.vjaykrsna.nanoai.core.domain.library.ModelCatalogUseCase
+import com.vjaykrsna.nanoai.core.domain.library.RefreshModelCatalogUseCase
 import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
-import com.vjaykrsna.nanoai.feature.library.domain.DownloadModelUseCase
-import com.vjaykrsna.nanoai.feature.library.domain.DownloadStatus
-import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceCatalogUseCase
-import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceModelCompatibilityChecker
-import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceToModelPackageConverter
-import com.vjaykrsna.nanoai.feature.library.domain.InstallState
-import com.vjaykrsna.nanoai.feature.library.domain.ModelCatalogUseCase
-import com.vjaykrsna.nanoai.feature.library.domain.ProviderType
-import com.vjaykrsna.nanoai.feature.library.domain.RefreshModelCatalogUseCase
+import com.vjaykrsna.nanoai.core.domain.model.library.DownloadStatus
+import com.vjaykrsna.nanoai.core.domain.model.library.InstallState
+import com.vjaykrsna.nanoai.core.domain.model.library.ProviderType
 import com.vjaykrsna.nanoai.feature.library.presentation.model.HuggingFaceSortOption
 import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryDownloadItem
 import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryError
@@ -239,6 +239,8 @@ constructor(
         handleHuggingFaceDownload(hfModel)
       }
     }
+
+    refreshCatalog()
   }
 
   fun refreshCatalog() {
@@ -380,7 +382,7 @@ constructor(
   }
 
   fun downloadHuggingFaceModel(
-    hfModel: com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceModelSummary
+    hfModel: com.vjaykrsna.nanoai.core.domain.library.HuggingFaceModelSummary
   ) {
     huggingFaceLibraryViewModel.requestDownload(hfModel)
   }
@@ -442,7 +444,7 @@ constructor(
 
   @Suppress("ReturnCount")
   private suspend fun handleHuggingFaceDownload(
-    hfModel: com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceModelSummary
+    hfModel: com.vjaykrsna.nanoai.core.domain.library.HuggingFaceModelSummary
   ) {
     try {
       // Convert HF model to ModelPackage

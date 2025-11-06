@@ -1,9 +1,9 @@
 package com.vjaykrsna.nanoai.testing
 
+import com.vjaykrsna.nanoai.core.domain.library.ModelCatalogRefreshStatus
+import com.vjaykrsna.nanoai.core.domain.library.ModelCatalogRepository
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
-import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRefreshStatus
-import com.vjaykrsna.nanoai.feature.library.data.ModelCatalogRepository
-import com.vjaykrsna.nanoai.feature.library.domain.InstallState
+import com.vjaykrsna.nanoai.core.domain.model.library.InstallState
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton

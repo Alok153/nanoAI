@@ -1,7 +1,7 @@
 package com.vjaykrsna.nanoai.core.domain.usecase
 
-import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreference
 import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreferenceStore
+import com.vjaykrsna.nanoai.core.domain.settings.model.PrivacyPreference
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 

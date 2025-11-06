@@ -1,6 +1,8 @@
 package com.vjaykrsna.nanoai.feature.uiux.presentation
 
-import com.vjaykrsna.nanoai.feature.uiux.domain.NavigationOperationsUseCase
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
+import com.vjaykrsna.nanoai.core.domain.model.uiux.RightPanel
+import com.vjaykrsna.nanoai.core.domain.uiux.NavigationOperationsUseCase
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi

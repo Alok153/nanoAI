@@ -3,8 +3,8 @@ package com.vjaykrsna.nanoai.feature.chat.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
-import com.vjaykrsna.nanoai.core.data.repository.ConversationRepository
 import com.vjaykrsna.nanoai.core.domain.model.ChatThread
+import com.vjaykrsna.nanoai.core.domain.repository.ConversationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.UUID
 import javax.inject.Inject
@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 /**
@@ -42,15 +43,15 @@ constructor(
   val errors = _errors.asSharedFlow()
 
   init {
+    observeThreads()
     loadThreads()
   }
 
   fun loadThreads() {
     _isLoading.value = true
-    viewModelScope.launch {
+    viewModelScope.launch(dispatcher) {
       try {
-        val threads = conversationRepository.getAllThreads()
-        _threads.value = threads
+        conversationRepository.getAllThreads()
       } catch (e: Exception) {
         _errors.emit(HistoryError.LoadFailed(e.message ?: "Unknown error"))
       }
@@ -58,8 +59,8 @@ constructor(
     }
   }
 
-  fun archiveThread(threadId: java.util.UUID) {
-    viewModelScope.launch {
+  fun archiveThread(threadId: UUID) {
+    viewModelScope.launch(dispatcher) {
       try {
         conversationRepository.archiveThread(threadId)
         loadThreads() // Reload after archive
@@ -69,13 +70,21 @@ constructor(
     }
   }
 
-  fun deleteThread(threadId: java.util.UUID) {
-    viewModelScope.launch {
+  fun deleteThread(threadId: UUID) {
+    viewModelScope.launch(dispatcher) {
       try {
         conversationRepository.deleteThread(threadId)
         loadThreads() // Reload after delete
       } catch (e: Exception) {
         _errors.emit(HistoryError.DeleteFailed(e.message ?: "Unknown error"))
+      }
+    }
+  }
+
+  private fun observeThreads() {
+    viewModelScope.launch(dispatcher) {
+      conversationRepository.getAllThreadsFlow().collectLatest { threads ->
+        _threads.value = threads
       }
     }
   }

@@ -17,16 +17,12 @@ nanoAI/
 - `:app` - Main application with all features
 - `:macrobenchmark` - Cold start & frame rate testing
 
-**Inactive Directories:**
-- `library/` - Model management (not built)
-- `network/` - HTTP abstractions (not built)
-
 ## 📁 App Module Structure
 
-### Core Infrastructure (`app/src/main/java/com/vjaykrsna.nanoai/`)
+### Core Infrastructure (`app/src/main/java/com/vjaykrsna/nanoai/core/`)
 
 ```
-app/core/
+app/src/main/java/com/vjaykrsna/nanoai/core/
 ├── common/                 # Shared utilities & extensions
 ├── coverage/               # Test coverage reporting & analysis
 ├── data/                   # Room DAOs, network services, repositories
@@ -41,12 +37,12 @@ app/core/
 └── telemetry/              # Analytics & error reporting
 ```
 
-### Feature Organization (`app/src/main/java/com/vjaykrsna.nanoai/feature/`)
+### Feature Organization (`app/src/main/java/com/vjaykrsna/nanoai/feature/`)
 
 Features use clean architecture with 4 consistent layers:
 
 ```
-feature/{name}/
+app/src/main/java/com/vjaykrsna/nanoai/feature/{name}/
 ├── data/                   # Feature repositories & DAOs
 ├── domain/                 # Feature models & use cases
 ├── presentation/           # ViewModels & UI state
@@ -92,9 +88,9 @@ scripts/                    # Build & development helpers
 
 ### Test Organization
 
-**Unit Tests:** `src/test/java/` (JVM tests, no Android runtime)
-**Instrumentation:** `src/androidTest/java/` (device/emulator tests)
-**Benchmark:** `src/benchmark/` (performance suites)
+**Unit Tests:** `app/src/test/java/` (JVM tests, no Android runtime)
+**Instrumentation:** `app/src/androidTest/java/` (device/emulator tests)
+**Benchmark:** `macrobenchmark/src/main/` (performance suites)
 
 ```
 src/test/resources/          # JVM test resources
@@ -120,8 +116,8 @@ docs/                       # Project documentation
 
 specs/                      # Formal specifications
 ├── 001-foundation/         # Base system contracts
-├── 003-ui-ux/             # UI/UX specifications
-└── 005-test-coverage/     # Coverage requirements
+├── 005-improve-test-coverage/ # Coverage requirements
+└── 006-improve-workflow-centralise/ # Workflow centralisation
 ```
 
 ## 🔧 Development Tools & IDE
@@ -132,7 +128,6 @@ These directories exist locally but are excluded from version control:
 ```
 .cursor/                     # Cursor AI editor extensions
 .idea/                      # IntelliJ IDEA settings
-.specify/                   # Design specification tools
 .trunk/                     # Trunk.io code quality
 .vscode/                    # VS Code configuration
 ```

@@ -2,19 +2,19 @@ package com.vjaykrsna.nanoai
 
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
-import com.vjaykrsna.nanoai.core.data.preferences.DisclaimerExposureState
-import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreferenceStore
 import com.vjaykrsna.nanoai.core.data.preferences.UiPreferences
-import com.vjaykrsna.nanoai.core.data.preferences.UiPreferencesStore
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
-import com.vjaykrsna.nanoai.feature.uiux.domain.ObserveUserProfileUseCase
+import com.vjaykrsna.nanoai.core.domain.settings.model.DisclaimerExposureState
+import com.vjaykrsna.nanoai.core.domain.uiux.ObserveUserProfileUseCase
+import com.vjaykrsna.nanoai.core.domain.usecase.ObserveDisclaimerExposureUseCase
+import com.vjaykrsna.nanoai.core.domain.usecase.ObserveUiPreferencesUseCase
+import com.vjaykrsna.nanoai.core.domain.usecase.UpdatePrivacyPreferencesUseCase
 import com.vjaykrsna.nanoai.feature.uiux.presentation.AppViewModel
 import com.vjaykrsna.nanoai.feature.uiux.presentation.DisclaimerUiState
 import io.mockk.MockKAnnotations
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
-import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
@@ -29,18 +29,28 @@ class AppViewModelTest {
 
   @MockK private lateinit var observeUserProfileUseCase: ObserveUserProfileUseCase
 
-  @MockK private lateinit var privacyPreferenceStore: PrivacyPreferenceStore
+  @MockK private lateinit var observeDisclaimerExposureUseCase: ObserveDisclaimerExposureUseCase
 
-  @MockK private lateinit var uiPreferencesStore: UiPreferencesStore
+  @MockK private lateinit var observeUiPreferencesUseCase: ObserveUiPreferencesUseCase
+
+  @MockK private lateinit var updatePrivacyPreferencesUseCase: UpdatePrivacyPreferencesUseCase
 
   private lateinit var appViewModel: AppViewModel
 
   @Before
   fun setUp() {
     MockKAnnotations.init(this, relaxed = true)
-    // Default UI preferences mock
-    val uiPrefs = mockk<UiPreferences>(relaxed = true)
-    every { uiPreferencesStore.uiPreferences } returns MutableStateFlow(uiPrefs)
+    val uiPrefs = UiPreferences()
+    every { observeUiPreferencesUseCase() } returns MutableStateFlow(uiPrefs)
+    every { observeDisclaimerExposureUseCase() } returns
+      MutableStateFlow(
+        DisclaimerExposureState(
+          shouldShowDialog = false,
+          acknowledged = false,
+          acknowledgedAt = null,
+          shownCount = 0,
+        )
+      )
   }
 
   @Test
@@ -55,19 +65,24 @@ class AppViewModelTest {
         offline = false,
       )
     val disclaimerState =
-      mockk<com.vjaykrsna.nanoai.core.data.preferences.DisclaimerExposureState> {
-        every { shouldShowDialog } returns false
-        every { acknowledged } returns false
-        every { acknowledgedAt } returns null
-        every { shownCount } returns 0
-      }
+      DisclaimerExposureState(
+        shouldShowDialog = false,
+        acknowledged = false,
+        acknowledgedAt = null,
+        shownCount = 0,
+      )
 
     every { observeUserProfileUseCase.flow } returns MutableStateFlow(userProfileResult)
-    every { privacyPreferenceStore.disclaimerExposure } returns MutableStateFlow(disclaimerState)
+    every { observeDisclaimerExposureUseCase() } returns MutableStateFlow(disclaimerState)
 
     // When
     appViewModel =
-      AppViewModel(observeUserProfileUseCase, privacyPreferenceStore, uiPreferencesStore)
+      AppViewModel(
+        observeUserProfileUseCase,
+        observeDisclaimerExposureUseCase,
+        observeUiPreferencesUseCase,
+        updatePrivacyPreferencesUseCase,
+      )
 
     // Then
     appViewModel.uiState.test {
@@ -92,17 +107,22 @@ class AppViewModelTest {
       )
     every { observeUserProfileUseCase.flow } returns MutableStateFlow(userProfileResult)
     val disclaimerState =
-      mockk<com.vjaykrsna.nanoai.core.data.preferences.DisclaimerExposureState> {
-        every { shouldShowDialog } returns false
-        every { acknowledged } returns false
-        every { acknowledgedAt } returns null
-        every { shownCount } returns 0
-      }
-    every { privacyPreferenceStore.disclaimerExposure } returns MutableStateFlow(disclaimerState)
+      DisclaimerExposureState(
+        shouldShowDialog = false,
+        acknowledged = false,
+        acknowledgedAt = null,
+        shownCount = 0,
+      )
+    every { observeDisclaimerExposureUseCase() } returns MutableStateFlow(disclaimerState)
 
     // When
     appViewModel =
-      AppViewModel(observeUserProfileUseCase, privacyPreferenceStore, uiPreferencesStore)
+      AppViewModel(
+        observeUserProfileUseCase,
+        observeDisclaimerExposureUseCase,
+        observeUiPreferencesUseCase,
+        updatePrivacyPreferencesUseCase,
+      )
 
     // Then - Should not crash and should have default state
     appViewModel.uiState.test {
@@ -123,19 +143,24 @@ class AppViewModelTest {
         offline = false,
       )
     val disclaimerState =
-      mockk<com.vjaykrsna.nanoai.core.data.preferences.DisclaimerExposureState> {
-        every { shouldShowDialog } returns true
-        every { acknowledged } returns false
-        every { acknowledgedAt } returns null
-        every { shownCount } returns 0
-      }
+      DisclaimerExposureState(
+        shouldShowDialog = true,
+        acknowledged = false,
+        acknowledgedAt = null,
+        shownCount = 0,
+      )
 
     every { observeUserProfileUseCase.flow } returns MutableStateFlow(userProfileResult)
-    every { privacyPreferenceStore.disclaimerExposure } returns MutableStateFlow(disclaimerState)
+    every { observeDisclaimerExposureUseCase() } returns MutableStateFlow(disclaimerState)
 
     // When
     appViewModel =
-      AppViewModel(observeUserProfileUseCase, privacyPreferenceStore, uiPreferencesStore)
+      AppViewModel(
+        observeUserProfileUseCase,
+        observeDisclaimerExposureUseCase,
+        observeUiPreferencesUseCase,
+        updatePrivacyPreferencesUseCase,
+      )
 
     // Then
     appViewModel.uiState.test {
@@ -156,24 +181,57 @@ class AppViewModelTest {
         offline = false,
       )
     val disclaimerState =
-      mockk<com.vjaykrsna.nanoai.core.data.preferences.DisclaimerExposureState> {
-        every { shouldShowDialog } returns true
-        every { acknowledged } returns false
-        every { acknowledgedAt } returns null
-        every { shownCount } returns 0
-      }
+      DisclaimerExposureState(
+        shouldShowDialog = true,
+        acknowledged = false,
+        acknowledgedAt = null,
+        shownCount = 0,
+      )
 
     every { observeUserProfileUseCase.flow } returns MutableStateFlow(userProfileResult)
-    every { privacyPreferenceStore.disclaimerExposure } returns MutableStateFlow(disclaimerState)
+    every { observeDisclaimerExposureUseCase() } returns MutableStateFlow(disclaimerState)
 
     appViewModel =
-      AppViewModel(observeUserProfileUseCase, privacyPreferenceStore, uiPreferencesStore)
+      AppViewModel(
+        observeUserProfileUseCase,
+        observeDisclaimerExposureUseCase,
+        observeUiPreferencesUseCase,
+        updatePrivacyPreferencesUseCase,
+      )
 
     // When
     appViewModel.onDisclaimerAccepted()
 
     // Then
-    coVerify { privacyPreferenceStore.acknowledgeConsent(any()) }
+    coVerify { updatePrivacyPreferencesUseCase.acknowledgeConsent(any()) }
+  }
+
+  @Test
+  fun `onDisclaimerDisplayed records exposure`() = runTest {
+    // Given
+    val userProfileResult =
+      ObserveUserProfileUseCase.Result(
+        userProfile = null,
+        layoutSnapshots = emptyList(),
+        uiState = null,
+        hydratedFromCache = true,
+        offline = false,
+      )
+    every { observeUserProfileUseCase.flow } returns MutableStateFlow(userProfileResult)
+
+    appViewModel =
+      AppViewModel(
+        observeUserProfileUseCase,
+        observeDisclaimerExposureUseCase,
+        observeUiPreferencesUseCase,
+        updatePrivacyPreferencesUseCase,
+      )
+
+    // When
+    appViewModel.onDisclaimerDisplayed()
+
+    // Then
+    coVerify { updatePrivacyPreferencesUseCase.incrementDisclaimerShown() }
   }
 
   @Test
@@ -188,18 +246,23 @@ class AppViewModelTest {
         offline = false,
       )
     val disclaimerState =
-      mockk<com.vjaykrsna.nanoai.core.data.preferences.DisclaimerExposureState> {
-        every { shouldShowDialog } returns true
-        every { acknowledged } returns false
-        every { acknowledgedAt } returns null
-        every { shownCount } returns 0
-      }
+      DisclaimerExposureState(
+        shouldShowDialog = true,
+        acknowledged = false,
+        acknowledgedAt = null,
+        shownCount = 0,
+      )
 
     every { observeUserProfileUseCase.flow } returns MutableStateFlow(userProfileResult)
-    every { privacyPreferenceStore.disclaimerExposure } returns MutableStateFlow(disclaimerState)
+    every { observeDisclaimerExposureUseCase() } returns MutableStateFlow(disclaimerState)
 
     appViewModel =
-      AppViewModel(observeUserProfileUseCase, privacyPreferenceStore, uiPreferencesStore)
+      AppViewModel(
+        observeUserProfileUseCase,
+        observeDisclaimerExposureUseCase,
+        observeUiPreferencesUseCase,
+        updatePrivacyPreferencesUseCase,
+      )
 
     // When
     appViewModel.onDisclaimerAccepted()

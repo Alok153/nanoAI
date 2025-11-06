@@ -5,10 +5,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreference
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
-import com.vjaykrsna.nanoai.feature.settings.domain.huggingface.HuggingFaceAuthState
-import com.vjaykrsna.nanoai.feature.settings.domain.huggingface.HuggingFaceDeviceAuthState
+import com.vjaykrsna.nanoai.core.domain.settings.huggingface.HuggingFaceAuthState
+import com.vjaykrsna.nanoai.core.domain.settings.huggingface.HuggingFaceDeviceAuthState
+import com.vjaykrsna.nanoai.core.domain.settings.model.PrivacyPreference
 import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsUiUxState
 import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsViewModel
 

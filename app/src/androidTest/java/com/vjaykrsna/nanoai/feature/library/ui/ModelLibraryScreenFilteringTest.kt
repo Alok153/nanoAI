@@ -14,7 +14,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import com.google.common.truth.Truth.assertThat
-import com.vjaykrsna.nanoai.feature.library.domain.ProviderType
+import com.vjaykrsna.nanoai.core.domain.model.library.ProviderType
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryTab
 import com.vjaykrsna.nanoai.shared.testing.DomainTestBuilders
 import org.junit.Test

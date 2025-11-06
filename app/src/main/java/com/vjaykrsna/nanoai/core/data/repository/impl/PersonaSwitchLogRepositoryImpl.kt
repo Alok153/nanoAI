@@ -2,10 +2,10 @@ package com.vjaykrsna.nanoai.core.data.repository.impl
 
 import com.vjaykrsna.nanoai.core.common.IoDispatcher
 import com.vjaykrsna.nanoai.core.data.db.daos.PersonaSwitchLogDao
-import com.vjaykrsna.nanoai.core.data.repository.PersonaSwitchLogRepository
 import com.vjaykrsna.nanoai.core.domain.model.PersonaSwitchLog
 import com.vjaykrsna.nanoai.core.domain.model.toDomain
 import com.vjaykrsna.nanoai.core.domain.model.toEntity
+import com.vjaykrsna.nanoai.core.domain.repository.PersonaSwitchLogRepository
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton

@@ -1,0 +1,28 @@
+package com.vjaykrsna.nanoai.core.domain.uiux
+
+import com.vjaykrsna.nanoai.core.common.IoDispatcher
+import com.vjaykrsna.nanoai.core.domain.repository.UserProfileRepository
+import javax.inject.Inject
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+
+/** Toggles compact UI density, updating repositories and notifying observers. */
+class ToggleCompactModeUseCase
+@Inject
+constructor(
+  private val repository: UserProfileRepository,
+  @IoDispatcher private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
+) {
+  private val scope = CoroutineScope(SupervisorJob() + dispatcher)
+
+  fun toggle(enabled: Boolean, userId: String = UIUX_DEFAULT_USER_ID) {
+    scope.launch { repository.updateCompactMode(userId, enabled) }
+  }
+
+  fun toggle(enabled: Boolean) {
+    toggle(enabled, UIUX_DEFAULT_USER_ID)
+  }
+}

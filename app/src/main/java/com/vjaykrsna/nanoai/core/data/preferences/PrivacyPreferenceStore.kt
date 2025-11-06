@@ -9,6 +9,9 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.vjaykrsna.nanoai.core.domain.settings.model.DisclaimerExposureState
+import com.vjaykrsna.nanoai.core.domain.settings.model.PrivacyPreference
+import com.vjaykrsna.nanoai.core.domain.settings.model.RetentionPolicy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow

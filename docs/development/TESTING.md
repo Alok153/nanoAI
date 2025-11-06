@@ -162,7 +162,7 @@ class MyUnitTest {
    - Macrobenchmark: startup, transitions, frame timing.
 3. Inject dependencies through Hilt test components or fakes; never hit live services.
 4. Use deterministic tools (`Clock.System`, `MainDispatcherExtension`, `StandardTestDispatcher`).
-5. Document intent with concise KDoc and mention the related risk ID (see `docs/coverage/risk-register.md`).
+5. Document intent with concise KDoc and mention the related risk ID (see coverage reports in `app/build/coverage/`).
 6. Re-run `jacocoFullReport` + `verifyCoverageThresholds` before committing to catch regressions locally.
 
 ## 6. Troubleshooting Cheat Sheet

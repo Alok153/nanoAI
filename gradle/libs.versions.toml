@@ -82,6 +82,9 @@ kotlinJvmTarget = "17"
 kotlinCompilerArgs = "-opt-in=kotlin.RequiresOptIn|-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi|-opt-in=kotlinx.coroutines.FlowPreview|-opt-in=androidx.compose.material3.ExperimentalMaterial3Api|-Xenable-incremental-compilation|-Xuse-fast-jar-file-system|-Xannotation-default-target=param-property"
 detekt = "1.23.8"
 roborazzi = "1.11.0"
+spotless = "7.0.4"
+gradleVersions = "0.53.0"
+detektComposeRules = "0.4.27"
 
 # JSON Schema Validation
 networknt-json-schema = "1.5.2"
@@ -98,6 +101,8 @@ detekt-api = { group = "io.gitlab.arturbosch.detekt", name = "detekt-api", versi
 detekt-rules = { group = "io.gitlab.arturbosch.detekt", name = "detekt-rules", version.ref = "detekt" }
 detekt-test = { group = "io.gitlab.arturbosch.detekt", name = "detekt-test", version.ref = "detekt" }
 detekt-gradle-plugin = { group = "io.gitlab.arturbosch.detekt", name = "detekt-gradle-plugin", version.ref = "detekt" }
+detekt-compose-rules = { group = "io.nlopez.compose.rules", name = "detekt", version.ref = "detektComposeRules" }
+detekt-formatting = { group = "io.gitlab.arturbosch.detekt", name = "detekt-formatting", version.ref = "detekt" }
 roborazzi-core = { group = "io.github.takahirom.roborazzi", name = "roborazzi", version.ref = "roborazzi" }
 roborazzi-compose = { group = "io.github.takahirom.roborazzi", name = "roborazzi-compose", version.ref = "roborazzi" }
 roborazzi-junit = { group = "io.github.takahirom.roborazzi", name = "roborazzi-junit-rule", version.ref = "roborazzi" }
@@ -215,3 +220,6 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 android-test = { id = "com.android.test", version.ref = "agp" }
 androidx-room = { id = "androidx.room", version.ref = "room" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+versions = { id = "com.github.ben-manes.versions", version.ref = "gradleVersions" }

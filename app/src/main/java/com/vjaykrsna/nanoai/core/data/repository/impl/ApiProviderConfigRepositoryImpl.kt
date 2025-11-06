@@ -2,10 +2,10 @@ package com.vjaykrsna.nanoai.core.data.repository.impl
 
 import com.vjaykrsna.nanoai.core.common.IoDispatcher
 import com.vjaykrsna.nanoai.core.data.db.daos.ApiProviderConfigDao
-import com.vjaykrsna.nanoai.core.data.repository.ApiProviderConfigRepository
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
 import com.vjaykrsna.nanoai.core.domain.model.toDomain
 import com.vjaykrsna.nanoai.core.domain.model.toEntity
+import com.vjaykrsna.nanoai.core.domain.repository.ApiProviderConfigRepository
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher

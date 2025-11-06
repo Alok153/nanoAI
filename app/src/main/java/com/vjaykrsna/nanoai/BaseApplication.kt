@@ -17,7 +17,7 @@ abstract class BaseApplication : Application() {
     registerDownloadNotificationReceiver()
   }
 
-  private fun registerDownloadNotificationReceiver() {
+  protected fun registerDownloadNotificationReceiver() {
     val receiver = DownloadNotificationReceiver()
     val filter =
       IntentFilter().apply {

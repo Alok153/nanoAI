@@ -53,9 +53,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandAction
-import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandPaletteState
-import com.vjaykrsna.nanoai.feature.uiux.presentation.PaletteDismissReason
+import com.vjaykrsna.nanoai.core.domain.model.uiux.CommandAction
+import com.vjaykrsna.nanoai.core.domain.model.uiux.CommandPaletteState
+import com.vjaykrsna.nanoai.core.domain.model.uiux.PaletteDismissReason
 
 @Composable
 fun CommandPaletteSheet(

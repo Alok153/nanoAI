@@ -1,12 +1,11 @@
 package com.vjaykrsna.nanoai.feature.uiux.presentation
 
 import com.google.common.truth.Truth.assertThat
-import com.vjaykrsna.nanoai.feature.uiux.domain.JobOperationsUseCase
-import com.vjaykrsna.nanoai.feature.uiux.domain.QueueJobUseCase
-import com.vjaykrsna.nanoai.feature.uiux.domain.UndoActionUseCase
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityStatus
+import com.vjaykrsna.nanoai.core.domain.model.uiux.JobStatus
+import com.vjaykrsna.nanoai.core.domain.model.uiux.JobType
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ProgressJob
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
-import io.mockk.coEvery
-import io.mockk.mockk
 import java.util.UUID
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -30,26 +29,7 @@ class ProgressViewModelTest {
       runBlocking {
         fakeRepos.connectivityRepository.updateConnectivity(ConnectivityStatus.OFFLINE)
       }
-      val progressCoordinator = createFakeProgressCenterCoordinator()
-      val queueJobUseCase = mockk<QueueJobUseCase>(relaxed = true)
-      val jobOperationsUseCase = mockk<JobOperationsUseCase>(relaxed = true)
-      val undoActionUseCase = mockk<UndoActionUseCase>(relaxed = true)
-
-      // Set up queue job use case to actually call repository
-      coEvery { queueJobUseCase.execute(any()) } coAnswers
-        {
-          val job = firstArg<ProgressJob>()
-          fakeRepos.progressRepository.queueJob(job)
-        }
-
-      val viewModel =
-        ProgressViewModel(
-          progressCoordinator,
-          queueJobUseCase,
-          jobOperationsUseCase,
-          undoActionUseCase,
-          dispatcher,
-        )
+      val viewModel = createProgressViewModel(fakeRepos, dispatcher)
 
       val job =
         ProgressJob(

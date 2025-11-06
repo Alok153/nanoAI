@@ -4,8 +4,15 @@ import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
+import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.common.onFailure
 import com.vjaykrsna.nanoai.core.common.onSuccess
+import com.vjaykrsna.nanoai.core.domain.chat.ConversationUseCase
+import com.vjaykrsna.nanoai.core.domain.chat.SendPromptUseCase
+import com.vjaykrsna.nanoai.core.domain.chat.SwitchPersonaUseCase
+import com.vjaykrsna.nanoai.core.domain.library.Model
+import com.vjaykrsna.nanoai.core.domain.library.ModelCatalogUseCase
+import com.vjaykrsna.nanoai.core.domain.library.toModel
 import com.vjaykrsna.nanoai.core.domain.model.ChatThread
 import com.vjaykrsna.nanoai.core.domain.model.Message
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
@@ -15,12 +22,6 @@ import com.vjaykrsna.nanoai.core.domain.usecase.ObservePersonasUseCase
 import com.vjaykrsna.nanoai.core.model.MessageRole
 import com.vjaykrsna.nanoai.core.model.MessageSource
 import com.vjaykrsna.nanoai.core.model.PersonaSwitchAction
-import com.vjaykrsna.nanoai.feature.chat.domain.ConversationUseCase
-import com.vjaykrsna.nanoai.feature.chat.domain.SendPromptUseCase
-import com.vjaykrsna.nanoai.feature.chat.domain.SwitchPersonaUseCase
-import com.vjaykrsna.nanoai.feature.library.domain.Model
-import com.vjaykrsna.nanoai.feature.library.domain.ModelCatalogUseCase
-import com.vjaykrsna.nanoai.feature.library.domain.toModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.UUID
 import javax.inject.Inject
@@ -142,32 +143,43 @@ constructor(
     }
     viewModelScope.launch(dispatcher) {
       _isLoading.value = true
-      runCatching {
-          val userMessage =
-            Message(
-              messageId = UUID.randomUUID(),
-              threadId = threadId,
-              role = MessageRole.USER,
-              text = text,
-              source = MessageSource.LOCAL_MODEL,
-              latencyMs = null,
-              createdAt = kotlinx.datetime.Clock.System.now(),
-            )
-          conversationUseCase.saveMessage(userMessage)
+      val userMessage =
+        Message(
+          messageId = UUID.randomUUID(),
+          threadId = threadId,
+          role = MessageRole.USER,
+          text = text,
+          source = MessageSource.LOCAL_MODEL,
+          latencyMs = null,
+          createdAt = kotlinx.datetime.Clock.System.now(),
+        )
+
+      when (val saveResult = conversationUseCase.saveMessage(userMessage)) {
+        is NanoAIResult.Success -> {
+          sendPromptUseCase(threadId, text, personaId, _selectedImage.value, _recordedAudio.value)
+            .onFailure { error ->
+              _errorEvents.emit(ChatError.InferenceFailed(error.message ?: "Unknown error"))
+            }
+
+          _selectedImage.value = null
+          _recordedAudio.value = null
         }
-        .onFailure { error ->
-          _errorEvents.emit(ChatError.UnexpectedError("Failed to save message: ${error.message}"))
+        is NanoAIResult.RecoverableError -> {
+          _errorEvents.emit(
+            ChatError.UnexpectedError("Failed to save message: ${saveResult.message}")
+          )
           _isLoading.value = false
           return@launch
         }
-
-      sendPromptUseCase(threadId, text, personaId, _selectedImage.value, _recordedAudio.value)
-        .onFailure { error ->
-          _errorEvents.emit(ChatError.InferenceFailed(error.message ?: "Unknown error"))
+        is NanoAIResult.FatalError -> {
+          _errorEvents.emit(
+            ChatError.UnexpectedError("Failed to save message: ${saveResult.message}")
+          )
+          _isLoading.value = false
+          return@launch
         }
+      }
 
-      _selectedImage.value = null
-      _recordedAudio.value = null
       _isLoading.value = false
     }
   }

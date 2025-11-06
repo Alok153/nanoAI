@@ -1,8 +1,8 @@
 package com.vjaykrsna.nanoai.testing
 
-import com.vjaykrsna.nanoai.core.data.repository.ConversationRepository
 import com.vjaykrsna.nanoai.core.domain.model.ChatThread
 import com.vjaykrsna.nanoai.core.domain.model.Message
+import com.vjaykrsna.nanoai.core.domain.repository.ConversationRepository
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton

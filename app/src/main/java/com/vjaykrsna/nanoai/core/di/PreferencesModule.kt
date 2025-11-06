@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
-import com.vjaykrsna.nanoai.feature.uiux.domain.CommandPaletteActionProvider
+import com.vjaykrsna.nanoai.core.domain.uiux.CommandPaletteActionProvider
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

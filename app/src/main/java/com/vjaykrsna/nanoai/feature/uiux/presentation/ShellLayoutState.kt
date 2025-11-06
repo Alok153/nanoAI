@@ -3,6 +3,12 @@ package com.vjaykrsna.nanoai.feature.uiux.presentation
 import androidx.compose.material3.windowsizeclass.WindowHeightSizeClass
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityStatus
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ProgressJob
+import com.vjaykrsna.nanoai.core.domain.model.uiux.RecentActivityItem
+import com.vjaykrsna.nanoai.core.domain.model.uiux.RightPanel
+import com.vjaykrsna.nanoai.core.domain.model.uiux.UndoPayload
 
 /** Aggregated layout state consumed by the unified shell scaffold. */
 data class ShellLayoutState(

@@ -1,7 +1,7 @@
 package com.vjaykrsna.nanoai.core.domain.usecase
 
-import com.vjaykrsna.nanoai.core.data.repository.PersonaRepository
 import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
+import com.vjaykrsna.nanoai.core.domain.repository.PersonaRepository
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 

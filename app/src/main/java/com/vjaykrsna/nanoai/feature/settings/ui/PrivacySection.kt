@@ -14,8 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreference
-import com.vjaykrsna.nanoai.core.data.preferences.RetentionPolicy
+import com.vjaykrsna.nanoai.core.domain.settings.model.PrivacyPreference
+import com.vjaykrsna.nanoai.core.domain.settings.model.RetentionPolicy
 
 @Composable
 internal fun PrivacySection(

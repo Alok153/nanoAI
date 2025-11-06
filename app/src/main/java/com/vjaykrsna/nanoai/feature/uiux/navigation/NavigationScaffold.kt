@@ -1,7 +1,5 @@
 package com.vjaykrsna.nanoai.feature.uiux.navigation
 
-// Welcome / onboarding UI removed — onboarding is no longer part of the shell flow.
-// Welcome UI imports removed
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,6 +31,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.metrics.performance.PerformanceMetricsState
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityStatus
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
 import com.vjaykrsna.nanoai.feature.audio.ui.AudioScreen
 import com.vjaykrsna.nanoai.feature.chat.presentation.ChatViewModel
 import com.vjaykrsna.nanoai.feature.chat.ui.ChatScreen
@@ -40,12 +40,13 @@ import com.vjaykrsna.nanoai.feature.image.ui.ImageFeatureContainer
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryScreen
 import com.vjaykrsna.nanoai.feature.settings.ui.SettingsScreen
 import com.vjaykrsna.nanoai.feature.uiux.presentation.AppUiState
-import com.vjaykrsna.nanoai.feature.uiux.presentation.ConnectivityStatus
-import com.vjaykrsna.nanoai.feature.uiux.presentation.ModeId
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellViewModel
 import com.vjaykrsna.nanoai.shared.ui.components.DisclaimerDialog
 import com.vjaykrsna.nanoai.shared.ui.shell.NanoShellScaffold
 import com.vjaykrsna.nanoai.shared.ui.shell.ShellUiEvent
+
+// Welcome / onboarding UI removed — onboarding is no longer part of the shell flow.
+// Welcome UI imports removed
 
 /** Entry point that connects app-wide state to the unified Compose shell. */
 @Composable
@@ -156,7 +157,7 @@ private fun ShellModeContent(
   modifier: Modifier = Modifier,
   onNavigateToCoverageDashboard: () -> Unit,
   onUpdateChatState: (com.vjaykrsna.nanoai.feature.uiux.presentation.ChatState?) -> Unit,
-  onNavigate: (ModeId) -> Unit,
+  onNavigate: (ModeId) -> Unit = {},
 ) {
   var hasError by rememberSaveable { mutableStateOf(false) }
   var errorMessage by rememberSaveable { mutableStateOf("") }

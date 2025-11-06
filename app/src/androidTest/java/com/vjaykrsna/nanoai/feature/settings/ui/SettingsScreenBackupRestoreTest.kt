@@ -3,7 +3,7 @@ package com.vjaykrsna.nanoai.feature.settings.ui
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import com.vjaykrsna.nanoai.feature.settings.domain.ImportSummary
+import com.vjaykrsna.nanoai.core.domain.settings.ImportSummary
 import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsError
 import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Test

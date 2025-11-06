@@ -1,5 +1,7 @@
 package com.vjaykrsna.nanoai.feature.uiux.presentation
 
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityBannerState
+
 sealed class NanoError {
   data class Network(val banner: ConnectivityBannerState) : NanoError()
 

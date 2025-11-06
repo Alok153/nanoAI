@@ -4,18 +4,36 @@ import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSiz
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import com.vjaykrsna.nanoai.core.data.repository.UserProfileRepository
+import com.vjaykrsna.nanoai.core.domain.library.DownloadManager
 import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
+import com.vjaykrsna.nanoai.core.domain.model.library.DownloadStatus
+import com.vjaykrsna.nanoai.core.domain.model.uiux.CommandCategory
+import com.vjaykrsna.nanoai.core.domain.model.uiux.CommandPaletteState
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityBannerState
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityStatus
 import com.vjaykrsna.nanoai.core.domain.model.uiux.LayoutSnapshot
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
+import com.vjaykrsna.nanoai.core.domain.model.uiux.PaletteSource
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ProgressJob
+import com.vjaykrsna.nanoai.core.domain.model.uiux.RecentActivityItem
+import com.vjaykrsna.nanoai.core.domain.model.uiux.RightPanel
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UIStateSnapshot
+import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferenceSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferencesSnapshot
+import com.vjaykrsna.nanoai.core.domain.model.uiux.UndoPayload
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UserProfile
-import com.vjaykrsna.nanoai.feature.library.data.DownloadManager
-import com.vjaykrsna.nanoai.feature.library.domain.DownloadStatus
-import com.vjaykrsna.nanoai.feature.uiux.domain.CommandPaletteActionProvider
-import com.vjaykrsna.nanoai.feature.uiux.domain.ProgressCenterCoordinator
-import com.vjaykrsna.nanoai.feature.uiux.navigation.Screen
+import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
+import com.vjaykrsna.nanoai.core.domain.repository.UserProfileRepository
+import com.vjaykrsna.nanoai.core.domain.uiux.CommandPaletteActionProvider
+import com.vjaykrsna.nanoai.core.domain.uiux.JobOperationsUseCase
+import com.vjaykrsna.nanoai.core.domain.uiux.ProgressCenterCoordinator
+import com.vjaykrsna.nanoai.core.domain.uiux.QueueJobUseCase
+import com.vjaykrsna.nanoai.core.domain.uiux.UndoActionUseCase
+import com.vjaykrsna.nanoai.core.domain.uiux.navigation.Screen
 import java.util.UUID
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
@@ -110,8 +128,9 @@ internal class NoopUserProfileRepository : UserProfileRepository {
 }
 
 internal class FakeNavigationRepository(
-  private val userProfileRepository: com.vjaykrsna.nanoai.core.data.repository.UserProfileRepository
-) : com.vjaykrsna.nanoai.core.data.repository.NavigationRepository {
+  private val userProfileRepository:
+    com.vjaykrsna.nanoai.core.domain.repository.UserProfileRepository
+) : com.vjaykrsna.nanoai.core.domain.repository.NavigationRepository {
   override val ioDispatcher: kotlinx.coroutines.CoroutineDispatcher =
     kotlinx.coroutines.Dispatchers.Unconfined
 
@@ -134,12 +153,12 @@ internal class FakeNavigationRepository(
 
   internal val undoPayloadFlow =
     kotlinx.coroutines.flow.MutableStateFlow<
-      com.vjaykrsna.nanoai.feature.uiux.presentation.UndoPayload?
+      com.vjaykrsna.nanoai.core.domain.model.uiux.UndoPayload?
     >(
       null
     )
   override val undoPayload:
-    kotlinx.coroutines.flow.Flow<com.vjaykrsna.nanoai.feature.uiux.presentation.UndoPayload?> =
+    kotlinx.coroutines.flow.Flow<com.vjaykrsna.nanoai.core.domain.model.uiux.UndoPayload?> =
     undoPayloadFlow
 
   override fun updateWindowSizeClass(sizeClass: WindowSizeClass) {
@@ -162,7 +181,7 @@ internal class FakeNavigationRepository(
   }
 
   override suspend fun showCommandPalette(
-    source: com.vjaykrsna.nanoai.feature.uiux.presentation.PaletteSource
+    source: com.vjaykrsna.nanoai.core.domain.model.uiux.PaletteSource
   ) {
     commandPaletteStateFlow.value = CommandPaletteState(surfaceTarget = CommandCategory.MODES)
   }
@@ -172,14 +191,14 @@ internal class FakeNavigationRepository(
   }
 
   override suspend fun recordUndoPayload(
-    payload: com.vjaykrsna.nanoai.feature.uiux.presentation.UndoPayload?
+    payload: com.vjaykrsna.nanoai.core.domain.model.uiux.UndoPayload?
   ) {
     undoPayloadFlow.value = payload
   }
 }
 
 internal class FakeConnectivityRepository :
-  com.vjaykrsna.nanoai.core.data.repository.ConnectivityRepository {
+  com.vjaykrsna.nanoai.core.domain.repository.ConnectivityRepository {
   override val ioDispatcher: kotlinx.coroutines.CoroutineDispatcher =
     kotlinx.coroutines.Dispatchers.Unconfined
 
@@ -195,7 +214,7 @@ internal class FakeConnectivityRepository :
   }
 }
 
-internal class FakeThemeRepository : com.vjaykrsna.nanoai.core.data.repository.ThemeRepository {
+internal class FakeThemeRepository : com.vjaykrsna.nanoai.core.domain.repository.ThemeRepository {
   override val ioDispatcher: kotlinx.coroutines.CoroutineDispatcher =
     kotlinx.coroutines.Dispatchers.Unconfined
 
@@ -204,15 +223,11 @@ internal class FakeThemeRepository : com.vjaykrsna.nanoai.core.data.repository.T
   override val uiPreferenceSnapshot: kotlinx.coroutines.flow.Flow<UiPreferenceSnapshot> =
     uiPreferenceSnapshotFlow
 
-  override suspend fun updateThemePreference(
-    theme: com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
-  ) {
+  override suspend fun updateThemePreference(theme: ThemePreference) {
     uiPreferenceSnapshotFlow.value = uiPreferenceSnapshotFlow.value.copy(theme = theme)
   }
 
-  override suspend fun updateVisualDensity(
-    density: com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
-  ) {
+  override suspend fun updateVisualDensity(density: VisualDensity) {
     uiPreferenceSnapshotFlow.value = uiPreferenceSnapshotFlow.value.copy(density = density)
   }
 
@@ -223,7 +238,7 @@ internal class FakeThemeRepository : com.vjaykrsna.nanoai.core.data.repository.T
 }
 
 internal class FakeProgressRepository :
-  com.vjaykrsna.nanoai.core.data.repository.ProgressRepository {
+  com.vjaykrsna.nanoai.core.domain.repository.ProgressRepository {
   override val ioDispatcher: kotlinx.coroutines.CoroutineDispatcher =
     kotlinx.coroutines.Dispatchers.Unconfined
 
@@ -243,9 +258,50 @@ internal class FakeProgressRepository :
 internal fun createFakeCommandPaletteActionProvider(): CommandPaletteActionProvider =
   CommandPaletteActionProvider()
 
-internal fun createFakeProgressCenterCoordinator(): ProgressCenterCoordinator {
-  val downloadManager = FakeDownloadManager()
-  return ProgressCenterCoordinator(downloadManager = downloadManager)
+internal fun createFakeProgressCenterCoordinator(
+  progressRepository: com.vjaykrsna.nanoai.core.domain.repository.ProgressRepository =
+    FakeProgressRepository(),
+  downloadManager: DownloadManager = FakeDownloadManager(),
+  dispatcher: CoroutineDispatcher = Dispatchers.Unconfined,
+): ProgressCenterCoordinator =
+  ProgressCenterCoordinator(downloadManager = downloadManager, progressRepository, dispatcher)
+
+internal fun createProgressViewModel(
+  repositories: FakeRepositories,
+  dispatcher: CoroutineDispatcher = Dispatchers.Unconfined,
+): ProgressViewModel {
+  val coordinator =
+    createFakeProgressCenterCoordinator(
+      progressRepository = repositories.progressRepository,
+      dispatcher = dispatcher,
+    )
+  val queueJobUseCase =
+    QueueJobUseCase(
+      repositories.progressRepository,
+      repositories.connectivityRepository,
+      repositories.navigationRepository,
+      dispatcher,
+    )
+  val jobOperationsUseCase =
+    JobOperationsUseCase(
+      repositories.progressRepository,
+      repositories.navigationRepository,
+      coordinator,
+      dispatcher,
+    )
+  val undoActionUseCase =
+    UndoActionUseCase(
+      repositories.progressRepository,
+      repositories.navigationRepository,
+      dispatcher,
+    )
+  return ProgressViewModel(
+    coordinator,
+    queueJobUseCase,
+    jobOperationsUseCase,
+    undoActionUseCase,
+    dispatcher,
+  )
 }
 
 internal class FakeDownloadManager : DownloadManager {
@@ -298,9 +354,9 @@ internal fun createFakeRepositories(): FakeRepositories {
 }
 
 internal data class FakeRepositories(
-  val navigationRepository: com.vjaykrsna.nanoai.core.data.repository.NavigationRepository,
-  val connectivityRepository: com.vjaykrsna.nanoai.core.data.repository.ConnectivityRepository,
-  val themeRepository: com.vjaykrsna.nanoai.core.data.repository.ThemeRepository,
-  val progressRepository: com.vjaykrsna.nanoai.core.data.repository.ProgressRepository,
-  val userProfileRepository: com.vjaykrsna.nanoai.core.data.repository.UserProfileRepository,
+  val navigationRepository: com.vjaykrsna.nanoai.core.domain.repository.NavigationRepository,
+  val connectivityRepository: com.vjaykrsna.nanoai.core.domain.repository.ConnectivityRepository,
+  val themeRepository: com.vjaykrsna.nanoai.core.domain.repository.ThemeRepository,
+  val progressRepository: com.vjaykrsna.nanoai.core.domain.repository.ProgressRepository,
+  val userProfileRepository: com.vjaykrsna.nanoai.core.domain.repository.UserProfileRepository,
 )

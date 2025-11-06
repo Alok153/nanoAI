@@ -1,14 +1,14 @@
 package com.vjaykrsna.nanoai.core.telemetry
 
-import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandAction
-import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandDestination
-import com.vjaykrsna.nanoai.feature.uiux.presentation.CommandInvocationSource
-import com.vjaykrsna.nanoai.feature.uiux.presentation.DrawerSide
-import com.vjaykrsna.nanoai.feature.uiux.presentation.ModeId
-import com.vjaykrsna.nanoai.feature.uiux.presentation.PaletteDismissReason
-import com.vjaykrsna.nanoai.feature.uiux.presentation.PaletteSource
-import com.vjaykrsna.nanoai.feature.uiux.presentation.ProgressJob
-import com.vjaykrsna.nanoai.feature.uiux.presentation.RightPanel
+import com.vjaykrsna.nanoai.core.domain.model.uiux.CommandAction
+import com.vjaykrsna.nanoai.core.domain.model.uiux.CommandDestination
+import com.vjaykrsna.nanoai.core.domain.model.uiux.CommandInvocationSource
+import com.vjaykrsna.nanoai.core.domain.model.uiux.DrawerSide
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
+import com.vjaykrsna.nanoai.core.domain.model.uiux.PaletteDismissReason
+import com.vjaykrsna.nanoai.core.domain.model.uiux.PaletteSource
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ProgressJob
+import com.vjaykrsna.nanoai.core.domain.model.uiux.RightPanel
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton

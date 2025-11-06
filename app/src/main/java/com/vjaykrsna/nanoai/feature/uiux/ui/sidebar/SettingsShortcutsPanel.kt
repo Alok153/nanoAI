@@ -19,8 +19,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.vjaykrsna.nanoai.R
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
+import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferenceSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
-import com.vjaykrsna.nanoai.feature.uiux.presentation.UiPreferenceSnapshot
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.ThemePreferenceChips
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.VisualDensityChips
 

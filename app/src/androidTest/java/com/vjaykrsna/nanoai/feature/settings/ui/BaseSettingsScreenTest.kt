@@ -4,12 +4,12 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreference
-import com.vjaykrsna.nanoai.core.data.preferences.RetentionPolicy
 import com.vjaykrsna.nanoai.core.domain.model.ApiProviderConfig
-import com.vjaykrsna.nanoai.feature.settings.domain.ImportSummary
-import com.vjaykrsna.nanoai.feature.settings.domain.huggingface.HuggingFaceAuthState
-import com.vjaykrsna.nanoai.feature.settings.domain.huggingface.HuggingFaceDeviceAuthState
+import com.vjaykrsna.nanoai.core.domain.settings.ImportSummary
+import com.vjaykrsna.nanoai.core.domain.settings.huggingface.HuggingFaceAuthState
+import com.vjaykrsna.nanoai.core.domain.settings.huggingface.HuggingFaceDeviceAuthState
+import com.vjaykrsna.nanoai.core.domain.settings.model.PrivacyPreference
+import com.vjaykrsna.nanoai.core.domain.settings.model.RetentionPolicy
 import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsError
 import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsUiUxState
 import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsViewModel

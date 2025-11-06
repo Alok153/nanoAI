@@ -5,7 +5,7 @@ import androidx.room.Room
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.data.db.NanoAIDatabase
 import com.vjaykrsna.nanoai.core.data.db.daos.PersonaProfileDao
-import com.vjaykrsna.nanoai.core.data.repository.PersonaRepository
+import com.vjaykrsna.nanoai.core.domain.repository.PersonaRepository
 import com.vjaykrsna.nanoai.testing.DomainTestBuilders
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import java.util.UUID

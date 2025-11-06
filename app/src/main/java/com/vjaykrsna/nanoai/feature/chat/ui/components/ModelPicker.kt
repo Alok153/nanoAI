@@ -21,7 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.vjaykrsna.nanoai.feature.library.domain.Model
+import com.vjaykrsna.nanoai.core.domain.library.Model
 
 @Composable
 fun ModelPicker(

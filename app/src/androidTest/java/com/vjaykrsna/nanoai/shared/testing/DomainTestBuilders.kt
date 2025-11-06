@@ -4,11 +4,11 @@ import com.vjaykrsna.nanoai.core.domain.model.ChatThread
 import com.vjaykrsna.nanoai.core.domain.model.Message
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
+import com.vjaykrsna.nanoai.core.domain.model.library.DeliveryType
+import com.vjaykrsna.nanoai.core.domain.model.library.InstallState
+import com.vjaykrsna.nanoai.core.domain.model.library.ProviderType
 import com.vjaykrsna.nanoai.core.model.MessageRole
 import com.vjaykrsna.nanoai.core.model.MessageSource
-import com.vjaykrsna.nanoai.feature.library.data.catalog.DeliveryType
-import com.vjaykrsna.nanoai.feature.library.domain.InstallState
-import com.vjaykrsna.nanoai.feature.library.domain.ProviderType
 import java.util.UUID
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant

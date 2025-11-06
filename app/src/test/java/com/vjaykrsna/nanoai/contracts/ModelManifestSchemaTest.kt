@@ -4,6 +4,8 @@ import com.google.common.truth.Truth.assertThat
 import com.networknt.schema.JsonSchemaFactory
 import com.networknt.schema.SpecVersion
 import com.networknt.schema.ValidationMessage
+import com.vjaykrsna.nanoai.core.common.Capability
+import com.vjaykrsna.nanoai.core.common.RuntimeType
 import java.io.File
 import org.junit.Before
 import org.junit.Test
@@ -110,7 +112,7 @@ class ModelManifestSchemaTest {
   @Test
   fun `manifest runtime should accept valid enum values`() {
     // Arrange: Valid runtime enums per schema
-    val validRuntimes = listOf("MEDIA_PIPE", "TFLITE", "MLC_LLM", "ONNX_RUNTIME")
+    val validRuntimes = RuntimeType.entries.map { it.value }
 
     // Act & Assert: Each runtime should pass validation
     validRuntimes.forEach { runtime ->
@@ -200,7 +202,7 @@ class ModelManifestSchemaTest {
   @Test
   fun `manifest capabilities should accept valid enum values`() {
     // Arrange: Valid capability enums per schema
-    val validCapabilities = listOf("TEXT_GEN", "CODE_GEN", "IMAGE_GEN", "AUDIO_IN", "AUDIO_OUT")
+    val validCapabilities = Capability.entries.map { it.value }
 
     // Act & Assert: Each capability should pass validation
     validCapabilities.forEach { capability ->

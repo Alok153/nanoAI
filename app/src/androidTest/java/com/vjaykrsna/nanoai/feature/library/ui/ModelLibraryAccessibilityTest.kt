@@ -7,10 +7,10 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
-import com.vjaykrsna.nanoai.feature.library.data.catalog.DeliveryType
-import com.vjaykrsna.nanoai.feature.library.domain.DownloadStatus
-import com.vjaykrsna.nanoai.feature.library.domain.InstallState
-import com.vjaykrsna.nanoai.feature.library.domain.ProviderType
+import com.vjaykrsna.nanoai.core.domain.model.library.DeliveryType
+import com.vjaykrsna.nanoai.core.domain.model.library.DownloadStatus
+import com.vjaykrsna.nanoai.core.domain.model.library.InstallState
+import com.vjaykrsna.nanoai.core.domain.model.library.ProviderType
 import com.vjaykrsna.nanoai.shared.testing.TestingTheme
 import java.util.UUID
 import kotlinx.datetime.Instant

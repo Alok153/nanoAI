@@ -37,7 +37,8 @@ class NotificationHelperTest {
     assertNotNull(notification)
     assertEquals("Downloading $modelName", notification.extras.getString(Notification.EXTRA_TITLE))
     assertEquals("$progress% complete", notification.extras.getString(Notification.EXTRA_TEXT))
-    assertEquals(NotificationCompat.PRIORITY_DEFAULT, notification.priority)
+    @Suppress("DEPRECATION") val priority = notification.priority
+    assertEquals(NotificationCompat.PRIORITY_DEFAULT, priority)
     assertTrue(notification.flags and Notification.FLAG_ONGOING_EVENT != 0)
   }
 
@@ -53,7 +54,8 @@ class NotificationHelperTest {
       "$modelName downloaded successfully",
       notification.extras.getString(Notification.EXTRA_TEXT),
     )
-    assertEquals(NotificationCompat.PRIORITY_DEFAULT, notification.priority)
+    @Suppress("DEPRECATION") val priority = notification.priority
+    assertEquals(NotificationCompat.PRIORITY_DEFAULT, priority)
     assertTrue(notification.flags and Notification.FLAG_AUTO_CANCEL != 0)
   }
 
@@ -70,7 +72,8 @@ class NotificationHelperTest {
       "$modelName: $errorMessage",
       notification.extras.getString(Notification.EXTRA_TEXT),
     )
-    assertEquals(NotificationCompat.PRIORITY_DEFAULT, notification.priority)
+    @Suppress("DEPRECATION") val priority = notification.priority
+    assertEquals(NotificationCompat.PRIORITY_DEFAULT, priority)
     assertTrue(notification.flags and Notification.FLAG_AUTO_CANCEL != 0)
   }
 }

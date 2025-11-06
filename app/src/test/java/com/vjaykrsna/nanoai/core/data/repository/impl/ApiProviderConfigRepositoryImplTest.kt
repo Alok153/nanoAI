@@ -3,8 +3,8 @@ package com.vjaykrsna.nanoai.core.data.repository.impl
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.data.db.daos.ApiProviderConfigDao
 import com.vjaykrsna.nanoai.core.data.db.entities.ApiProviderConfigEntity
-import com.vjaykrsna.nanoai.core.data.repository.ApiProviderConfigRepository
 import com.vjaykrsna.nanoai.core.domain.model.ApiProviderConfig
+import com.vjaykrsna.nanoai.core.domain.repository.ApiProviderConfigRepository
 import com.vjaykrsna.nanoai.core.model.APIType
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import io.mockk.coEvery

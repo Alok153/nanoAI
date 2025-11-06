@@ -2,6 +2,7 @@
 
 package com.vjaykrsna.nanoai.feature.chat.presentation
 
+import app.cash.turbine.skipItems
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.testing.DomainTestBuilders
@@ -39,6 +40,7 @@ class HistoryViewModelTest {
 
     // Wait for init to complete
     viewModel.threads.test {
+      skipItems(1)
       val threads = awaitItem()
       assertThat(threads).hasSize(1)
       assertThat(threads.first().title).isEqualTo("Test Thread")
@@ -65,6 +67,7 @@ class HistoryViewModelTest {
     viewModel.loadThreads()
 
     viewModel.threads.test {
+      skipItems(1)
       val threads = awaitItem()
       assertThat(threads).hasSize(1)
       assertThat(threads.first().title).isEqualTo("Loaded Thread")
@@ -100,7 +103,11 @@ class HistoryViewModelTest {
     // Should reload and show archived threads or not
     // Assuming getAllThreads returns all, including archived
     viewModel.threads.test {
-      val threads = awaitItem()
+      skipItems(1)
+      var threads = awaitItem()
+      if (threads.isNotEmpty() && !threads.first().isArchived) {
+        threads = awaitItem()
+      }
       assertThat(threads).hasSize(1)
       assertThat(threads.first().isArchived).isTrue()
     }

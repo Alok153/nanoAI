@@ -3,8 +3,8 @@ package com.vjaykrsna.nanoai.feature.image.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.onFailure
-import com.vjaykrsna.nanoai.feature.image.domain.ImageGalleryUseCase
-import com.vjaykrsna.nanoai.feature.image.domain.model.GeneratedImage
+import com.vjaykrsna.nanoai.core.domain.image.ImageGalleryUseCase
+import com.vjaykrsna.nanoai.core.domain.image.model.GeneratedImage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.UUID
 import javax.inject.Inject

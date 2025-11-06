@@ -1,10 +1,12 @@
 package com.vjaykrsna.nanoai.core.di
 
 import com.vjaykrsna.nanoai.BuildConfig
+import com.vjaykrsna.nanoai.core.data.settings.huggingface.HuggingFaceAuthCoordinatorImpl
+import com.vjaykrsna.nanoai.core.domain.settings.huggingface.HuggingFaceAuthCoordinator
+import com.vjaykrsna.nanoai.core.domain.settings.huggingface.HuggingFaceOAuthConfig
 import com.vjaykrsna.nanoai.core.security.HuggingFaceCredentialRepository
 import com.vjaykrsna.nanoai.core.security.HuggingFaceCredentialRepositoryImpl
 import com.vjaykrsna.nanoai.core.security.HuggingFaceTokenProvider
-import com.vjaykrsna.nanoai.feature.settings.domain.huggingface.HuggingFaceOAuthConfig
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -27,6 +29,12 @@ abstract class HuggingFaceAuthModule {
   abstract fun bindHuggingFaceCredentialRepository(
     impl: HuggingFaceCredentialRepositoryImpl
   ): HuggingFaceCredentialRepository
+
+  @Binds
+  @Singleton
+  abstract fun bindHuggingFaceAuthCoordinator(
+    impl: HuggingFaceAuthCoordinatorImpl
+  ): HuggingFaceAuthCoordinator
 
   companion object {
     private const val DEFAULT_SCOPE = "all offline_access"

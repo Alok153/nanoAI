@@ -1,14 +1,14 @@
 package com.vjaykrsna.nanoai.core.data.repository.impl
 
 import com.vjaykrsna.nanoai.core.common.IoDispatcher
-import com.vjaykrsna.nanoai.core.data.repository.UserProfileRepository
+import com.vjaykrsna.nanoai.core.data.uiux.UserProfileLocalDataSource
 import com.vjaykrsna.nanoai.core.domain.model.uiux.LayoutSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UIStateSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferencesSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UserProfile
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
-import com.vjaykrsna.nanoai.feature.uiux.data.UserProfileLocalDataSource
+import com.vjaykrsna.nanoai.core.domain.repository.UserProfileRepository
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher

@@ -52,7 +52,7 @@ android {
     getByName("test") {
       java.srcDir("src/test/contract")
       java.srcDir("src/test/java")
-      resources.srcDir("$rootDir/config")
+      resources.srcDir(fileTree("$rootDir/config") { exclude("**/build/**") })
     }
   }
 }

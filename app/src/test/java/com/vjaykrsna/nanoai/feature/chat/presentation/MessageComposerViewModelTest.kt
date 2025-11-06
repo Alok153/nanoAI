@@ -5,11 +5,12 @@ package com.vjaykrsna.nanoai.feature.chat.presentation
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
-import com.vjaykrsna.nanoai.feature.chat.domain.SendPromptUseCase
+import com.vjaykrsna.nanoai.core.domain.chat.SendPromptUseCase
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import io.mockk.coEvery
 import io.mockk.mockk
 import java.util.UUID
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -74,6 +75,7 @@ class MessageComposerViewModelTest {
     viewModel.updateMessageText("Valid message")
 
     viewModel.sendMessage(UUID.randomUUID(), UUID.randomUUID())
+    runCurrent()
 
     assertThat(viewModel.messageText.value).isEmpty()
     assertThat(viewModel.isSending.value).isFalse()

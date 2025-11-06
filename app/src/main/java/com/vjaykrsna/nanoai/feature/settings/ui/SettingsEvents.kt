@@ -3,7 +3,7 @@ package com.vjaykrsna.nanoai.feature.settings.ui
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import com.vjaykrsna.nanoai.feature.settings.domain.ImportSummary
+import com.vjaykrsna.nanoai.core.domain.settings.ImportSummary
 import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsError
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest

@@ -64,7 +64,7 @@ nanoAI follows clean architecture principles with Kotlin-first design:
 - **Data Layer**: Room database for local storage, Retrofit for cloud APIs, WorkManager for background tasks
 - **Runtime Layer**: MediaPipe Generative for on-device inference, extensible to TensorFlow Lite/MLC LLM
 
-Key technologies: Kotlin 1.9.x, Jetpack Compose, Hilt DI, Room, DataStore, WorkManager, Coroutines.
+Key technologies: Kotlin 2.2.x, Jetpack Compose, Hilt DI, Room, DataStore, WorkManager, Coroutines.
 
 ## 🧪 Testing & Quality
 

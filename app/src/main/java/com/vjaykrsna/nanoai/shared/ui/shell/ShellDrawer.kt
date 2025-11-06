@@ -28,8 +28,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.vjaykrsna.nanoai.R
-import com.vjaykrsna.nanoai.feature.uiux.presentation.ModeId
-import com.vjaykrsna.nanoai.feature.uiux.presentation.PaletteSource
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
+import com.vjaykrsna.nanoai.core.domain.model.uiux.PaletteSource
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoElevation
 
 /** Events emitted by shell drawer components. */

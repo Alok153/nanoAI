@@ -5,7 +5,7 @@ import com.vjaykrsna.nanoai.core.data.db.daos.ChatThreadDao
 import com.vjaykrsna.nanoai.core.data.db.daos.MessageDao
 import com.vjaykrsna.nanoai.core.data.db.entities.ChatThreadEntity
 import com.vjaykrsna.nanoai.core.data.db.entities.MessageEntity
-import com.vjaykrsna.nanoai.core.data.repository.ConversationRepository
+import com.vjaykrsna.nanoai.core.domain.repository.ConversationRepository
 import com.vjaykrsna.nanoai.core.model.MessageRole
 import com.vjaykrsna.nanoai.core.model.MessageSource
 import com.vjaykrsna.nanoai.testing.DomainTestBuilders

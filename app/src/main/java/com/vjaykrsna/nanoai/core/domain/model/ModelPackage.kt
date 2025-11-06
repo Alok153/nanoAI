@@ -1,9 +1,9 @@
 package com.vjaykrsna.nanoai.core.domain.model
 
-import com.vjaykrsna.nanoai.feature.library.data.catalog.DeliveryType
-import com.vjaykrsna.nanoai.feature.library.data.catalog.ModelPackageEntity
-import com.vjaykrsna.nanoai.feature.library.domain.InstallState
-import com.vjaykrsna.nanoai.feature.library.domain.ProviderType
+import com.vjaykrsna.nanoai.core.data.db.entities.ModelPackageEntity
+import com.vjaykrsna.nanoai.core.domain.model.library.DeliveryType
+import com.vjaykrsna.nanoai.core.domain.model.library.InstallState
+import com.vjaykrsna.nanoai.core.domain.model.library.ProviderType
 import java.util.UUID
 import kotlinx.datetime.Instant
 

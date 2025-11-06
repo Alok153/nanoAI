@@ -3,11 +3,11 @@ package com.vjaykrsna.nanoai.feature.settings.ui
 import android.net.Uri
 import android.os.Environment
 import androidx.activity.compose.ManagedActivityResultLauncher
-import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreference
-import com.vjaykrsna.nanoai.core.data.preferences.RetentionPolicy
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
+import com.vjaykrsna.nanoai.core.domain.settings.model.PrivacyPreference
+import com.vjaykrsna.nanoai.core.domain.settings.model.RetentionPolicy
 import com.vjaykrsna.nanoai.core.model.APIType
 import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsViewModel
 import java.util.UUID

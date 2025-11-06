@@ -1,6 +1,7 @@
 package com.vjaykrsna.nanoai.contracts
 
 import com.google.common.truth.Truth.assertThat
+import com.vjaykrsna.nanoai.core.common.Capability
 import org.junit.Test
 
 /**
@@ -43,7 +44,7 @@ class ListModelsContractTest {
       mapOf(
         "id" to "gpt-4o-mini",
         "provider" to "openai",
-        "capabilities" to listOf("TEXT_GEN", "CODE_GEN"),
+        "capabilities" to listOf(Capability.TEXT_GEN.value, Capability.CODE_GEN.value),
       )
 
     val modelWithoutCapabilities = mapOf("id" to "gemini-pro", "provider" to "google")
@@ -52,7 +53,7 @@ class ListModelsContractTest {
     assertThat(modelWithCapabilities).containsKey("capabilities")
     val capabilities = modelWithCapabilities["capabilities"] as List<*>
     assertThat(capabilities).isNotEmpty()
-    assertThat(capabilities).contains("TEXT_GEN")
+    assertThat(capabilities).contains(Capability.TEXT_GEN.value)
 
     assertThat(modelWithoutCapabilities).doesNotContainKey("capabilities")
   }
@@ -165,13 +166,14 @@ class ListModelsContractTest {
   @Test
   fun `model capabilities should use standard enum values`() {
     // Arrange: Standard capability values per spec
-    val standardCapabilities = setOf("TEXT_GEN", "CODE_GEN", "IMAGE_GEN", "AUDIO_IN", "AUDIO_OUT")
+    val standardCapabilities = Capability.entries.map { it.value }.toSet()
 
     val model =
       mapOf(
         "id" to "gpt-4o",
         "provider" to "openai",
-        "capabilities" to listOf("TEXT_GEN", "CODE_GEN", "IMAGE_GEN"),
+        "capabilities" to
+          listOf(Capability.TEXT_GEN.value, Capability.CODE_GEN.value, Capability.IMAGE_GEN.value),
       )
 
     // Assert: Capabilities use standard values

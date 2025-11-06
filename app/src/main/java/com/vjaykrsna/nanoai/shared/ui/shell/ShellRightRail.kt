@@ -22,7 +22,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import com.vjaykrsna.nanoai.feature.uiux.presentation.ModeId
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellUiState
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoElevation
 import com.vjaykrsna.nanoai.feature.uiux.ui.sidebar.RightSidebarPanels

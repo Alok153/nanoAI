@@ -5,13 +5,13 @@ package com.vjaykrsna.nanoai.feature.chat.presentation
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.domain.chat.ConversationUseCase
+import com.vjaykrsna.nanoai.core.domain.chat.SendPromptUseCase
+import com.vjaykrsna.nanoai.core.domain.chat.SwitchPersonaUseCase
+import com.vjaykrsna.nanoai.core.domain.library.ModelCatalogUseCase
 import com.vjaykrsna.nanoai.core.domain.usecase.GetDefaultPersonaUseCase
 import com.vjaykrsna.nanoai.core.domain.usecase.ObservePersonasUseCase
 import com.vjaykrsna.nanoai.core.model.PersonaSwitchAction
-import com.vjaykrsna.nanoai.feature.chat.domain.ConversationUseCase
-import com.vjaykrsna.nanoai.feature.chat.domain.SendPromptUseCase
-import com.vjaykrsna.nanoai.feature.chat.domain.SwitchPersonaUseCase
-import com.vjaykrsna.nanoai.feature.library.domain.ModelCatalogUseCase
 import com.vjaykrsna.nanoai.testing.DomainTestBuilders
 import com.vjaykrsna.nanoai.testing.FakeConversationRepository
 import com.vjaykrsna.nanoai.testing.FakePersonaRepository

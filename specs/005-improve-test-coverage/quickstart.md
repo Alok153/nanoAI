@@ -34,7 +34,7 @@ Follow this checklist to validate the coverage initiative end-to-end.
   - Inspect console summary highlighting offending modules.
 
 ## 5. Review Risk Register
-- Open `docs/coverage/risk-register.md` and confirm all High/Critical items have assigned owners & mitigation builds.
+- Review the `RiskRegisterCoordinator` and `RiskRegisterItem` classes in the codebase to understand current risk tracking.
 - Track the latest coverage snapshot and ensure any new risks discovered during testing are documented with severity, mitigation plans, and target builds.
 
 ## 6. Ensure New Principles Compliance

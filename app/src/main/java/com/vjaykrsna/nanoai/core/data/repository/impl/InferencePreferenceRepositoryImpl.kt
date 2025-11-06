@@ -7,8 +7,8 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.vjaykrsna.nanoai.core.common.IoDispatcher
-import com.vjaykrsna.nanoai.core.data.repository.InferencePreferenceRepository
 import com.vjaykrsna.nanoai.core.domain.model.InferencePreference
+import com.vjaykrsna.nanoai.core.domain.repository.InferencePreferenceRepository
 import com.vjaykrsna.nanoai.core.model.InferenceMode
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject

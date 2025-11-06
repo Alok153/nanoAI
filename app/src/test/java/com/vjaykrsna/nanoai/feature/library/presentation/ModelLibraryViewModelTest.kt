@@ -5,16 +5,16 @@ package com.vjaykrsna.nanoai.feature.library.presentation
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.domain.library.DownloadModelUseCase
+import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceCatalogUseCase
+import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceModelCompatibilityChecker
+import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceToModelPackageConverter
+import com.vjaykrsna.nanoai.core.domain.library.ManageModelUseCase
+import com.vjaykrsna.nanoai.core.domain.library.ModelCatalogUseCase
+import com.vjaykrsna.nanoai.core.domain.library.RefreshModelCatalogUseCase
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
-import com.vjaykrsna.nanoai.feature.library.domain.DownloadModelUseCase
-import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceCatalogUseCase
-import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceModelCompatibilityChecker
-import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceToModelPackageConverter
-import com.vjaykrsna.nanoai.feature.library.domain.InstallState
-import com.vjaykrsna.nanoai.feature.library.domain.ManageModelUseCase
-import com.vjaykrsna.nanoai.feature.library.domain.ModelCatalogUseCase
-import com.vjaykrsna.nanoai.feature.library.domain.ProviderType
-import com.vjaykrsna.nanoai.feature.library.domain.RefreshModelCatalogUseCase
+import com.vjaykrsna.nanoai.core.domain.model.library.InstallState
+import com.vjaykrsna.nanoai.core.domain.model.library.ProviderType
 import com.vjaykrsna.nanoai.feature.library.presentation.model.HuggingFaceFilterState
 import com.vjaykrsna.nanoai.feature.library.presentation.model.HuggingFaceSortOption
 import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryError
@@ -27,7 +27,6 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import java.util.UUID
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
@@ -44,8 +43,6 @@ class ModelLibraryViewModelTest {
   @JvmField @RegisterExtension val mainDispatcherExtension = MainDispatcherExtension()
 
   private lateinit var fakeRepository: FakeModelCatalogRepository
-  private lateinit var allModelsState: MutableStateFlow<List<ModelPackage>>
-  private lateinit var installedModelsState: MutableStateFlow<List<ModelPackage>>
   private lateinit var modelCatalogUseCase: ModelCatalogUseCase
   private lateinit var refreshModelCatalogUseCase: RefreshModelCatalogUseCase
   private lateinit var huggingFaceCatalogUseCase: HuggingFaceCatalogUseCase
@@ -59,8 +56,6 @@ class ModelLibraryViewModelTest {
   @BeforeEach
   fun setup() {
     fakeRepository = FakeModelCatalogRepository()
-    allModelsState = MutableStateFlow(emptyList())
-    installedModelsState = MutableStateFlow(emptyList())
     modelCatalogUseCase = mockk(relaxed = true)
     refreshModelCatalogUseCase = mockk(relaxed = true)
     huggingFaceCatalogUseCase = mockk(relaxed = true)
@@ -74,8 +69,11 @@ class ModelLibraryViewModelTest {
     coEvery { refreshModelCatalogUseCase.invoke() } returns NanoAIResult.success(Unit)
 
     // Setup ModelCatalogUseCase mocks
-    every { modelCatalogUseCase.observeAllModels() } answers { allModelsState }
-    every { modelCatalogUseCase.observeInstalledModels() } answers { installedModelsState }
+    every { modelCatalogUseCase.observeAllModels() } answers { fakeRepository.observeAllModels() }
+    every { modelCatalogUseCase.observeInstalledModels() } answers
+      {
+        fakeRepository.observeInstalledModels()
+      }
 
     // Removed coEvery for getAllModels - not used in these tests
     coEvery { modelCatalogUseCase.getModel(any()) } coAnswers

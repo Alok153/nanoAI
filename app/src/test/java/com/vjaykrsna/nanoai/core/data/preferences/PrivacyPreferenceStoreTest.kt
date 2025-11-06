@@ -2,6 +2,7 @@ package com.vjaykrsna.nanoai.core.data.preferences
 
 import android.os.Build
 import com.google.common.truth.Truth.assertThat
+import com.vjaykrsna.nanoai.core.domain.settings.model.RetentionPolicy
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest

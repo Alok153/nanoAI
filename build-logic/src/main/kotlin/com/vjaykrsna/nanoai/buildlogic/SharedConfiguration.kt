@@ -110,8 +110,12 @@ internal object SharedConfiguration {
             "detektPlugins",
             project.dependencies.project(mapOf("path" to ":config:quality:detekt:custom-rules")),
         )
-        project.dependencies.add("detektPlugins", "io.nlopez.compose.rules:detekt:0.4.9")
-        project.dependencies.add("detektPlugins", "io.gitlab.arturbosch.detekt:detekt-formatting:1.23.7")
+        project.libs.findLibrary("detekt-compose-rules").ifPresent { dependency ->
+            project.dependencies.add("detektPlugins", dependency.get())
+        }
+        project.libs.findLibrary("detekt-formatting").ifPresent { dependency ->
+            project.dependencies.add("detektPlugins", dependency.get())
+        }
 
         project.tasks.withType<Detekt>().configureEach {
             buildUponDefaultConfig = true

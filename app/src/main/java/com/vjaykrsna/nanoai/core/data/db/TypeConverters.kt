@@ -1,6 +1,7 @@
 package com.vjaykrsna.nanoai.core.data.db
 
 import androidx.room.TypeConverter
+import com.vjaykrsna.nanoai.core.domain.model.library.DeliveryType
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ScreenType
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
@@ -8,7 +9,6 @@ import com.vjaykrsna.nanoai.core.maintenance.model.MaintenanceCategory
 import com.vjaykrsna.nanoai.core.maintenance.model.MaintenanceStatus
 import com.vjaykrsna.nanoai.core.maintenance.model.PriorityLevel
 import com.vjaykrsna.nanoai.core.maintenance.model.SeverityLevel
-import com.vjaykrsna.nanoai.feature.library.data.catalog.DeliveryType
 import kotlinx.datetime.Instant
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.MapSerializer

@@ -1,10 +1,12 @@
 package com.vjaykrsna.nanoai.feature.uiux.presentation
 
 import com.google.common.truth.Truth.assertThat
-import com.vjaykrsna.nanoai.feature.uiux.domain.NavigationOperationsUseCase
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
+import com.vjaykrsna.nanoai.core.domain.model.uiux.RightPanel
+import com.vjaykrsna.nanoai.core.domain.uiux.NavigationOperationsUseCase
 import com.vjaykrsna.nanoai.shared.ui.shell.ShellUiEvent
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
-import io.mockk.*
+import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -29,14 +31,8 @@ class ShellViewModelNavigationTest {
       // Mock sub-ViewModels
       val navigationViewModel = mockk<NavigationViewModel>(relaxed = true)
       val connectivityViewModel = mockk<ConnectivityViewModel>(relaxed = true)
-      val progressViewModel = mockk<ProgressViewModel>(relaxed = true)
       val themeViewModel = mockk<ThemeViewModel>(relaxed = true)
-
-      // Set up navigation use case to actually call repository
-      coEvery { navigationOperationsUseCase.openMode(any()) } coAnswers
-        {
-          fakeRepos.navigationRepository.openMode(firstArg())
-        }
+      val progressViewModel = createProgressViewModel(fakeRepos, dispatcher)
 
       val viewModel =
         ShellViewModel(
@@ -67,14 +63,8 @@ class ShellViewModelNavigationTest {
       // Mock sub-ViewModels
       val navigationViewModel = mockk<NavigationViewModel>(relaxed = true)
       val connectivityViewModel = mockk<ConnectivityViewModel>(relaxed = true)
-      val progressViewModel = mockk<ProgressViewModel>(relaxed = true)
       val themeViewModel = mockk<ThemeViewModel>(relaxed = true)
-
-      // Set up navigation use case to actually call repository
-      coEvery { navigationOperationsUseCase.toggleRightDrawer(any()) } coAnswers
-        {
-          fakeRepos.navigationRepository.toggleRightDrawer(firstArg())
-        }
+      val progressViewModel = createProgressViewModel(fakeRepos, dispatcher)
 
       val viewModel =
         ShellViewModel(

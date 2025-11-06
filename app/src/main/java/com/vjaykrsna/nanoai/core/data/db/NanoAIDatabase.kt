@@ -13,28 +13,28 @@ import com.vjaykrsna.nanoai.core.data.db.daos.UIStateSnapshotDao
 import com.vjaykrsna.nanoai.core.data.db.daos.UserProfileDao
 import com.vjaykrsna.nanoai.core.data.db.entities.ApiProviderConfigEntity
 import com.vjaykrsna.nanoai.core.data.db.entities.ChatThreadEntity
+import com.vjaykrsna.nanoai.core.data.db.entities.DownloadManifestEntity
 import com.vjaykrsna.nanoai.core.data.db.entities.LayoutSnapshotEntity
 import com.vjaykrsna.nanoai.core.data.db.entities.MessageEntity
+import com.vjaykrsna.nanoai.core.data.db.entities.ModelPackageEntity
 import com.vjaykrsna.nanoai.core.data.db.entities.PersonaProfileEntity
 import com.vjaykrsna.nanoai.core.data.db.entities.PersonaSwitchLogEntity
 import com.vjaykrsna.nanoai.core.data.db.entities.UIStateSnapshotEntity
 import com.vjaykrsna.nanoai.core.data.db.entities.UserProfileEntity
+import com.vjaykrsna.nanoai.core.data.image.db.GeneratedImageDao
+import com.vjaykrsna.nanoai.core.data.image.db.GeneratedImageEntity
+import com.vjaykrsna.nanoai.core.data.library.catalog.DownloadManifestDao
+import com.vjaykrsna.nanoai.core.data.library.catalog.ModelPackageReadDao
+import com.vjaykrsna.nanoai.core.data.library.catalog.ModelPackageRelationsDao
+import com.vjaykrsna.nanoai.core.data.library.catalog.ModelPackageWriteDao
+import com.vjaykrsna.nanoai.core.data.library.daos.DownloadTaskDao
+import com.vjaykrsna.nanoai.core.data.library.entities.DownloadTaskEntity
+import com.vjaykrsna.nanoai.core.data.library.huggingface.dao.HuggingFaceModelCacheDao
+import com.vjaykrsna.nanoai.core.data.library.huggingface.entities.HuggingFaceModelCacheEntity
 import com.vjaykrsna.nanoai.core.maintenance.db.CodeQualityMetricDao
 import com.vjaykrsna.nanoai.core.maintenance.db.CodeQualityMetricEntity
 import com.vjaykrsna.nanoai.core.maintenance.db.RepoMaintenanceTaskDao
 import com.vjaykrsna.nanoai.core.maintenance.db.RepoMaintenanceTaskEntity
-import com.vjaykrsna.nanoai.feature.image.data.db.GeneratedImageDao
-import com.vjaykrsna.nanoai.feature.image.data.db.GeneratedImageEntity
-import com.vjaykrsna.nanoai.feature.library.data.catalog.DownloadManifestDao
-import com.vjaykrsna.nanoai.feature.library.data.catalog.DownloadManifestEntity
-import com.vjaykrsna.nanoai.feature.library.data.catalog.ModelPackageEntity
-import com.vjaykrsna.nanoai.feature.library.data.catalog.ModelPackageReadDao
-import com.vjaykrsna.nanoai.feature.library.data.catalog.ModelPackageRelationsDao
-import com.vjaykrsna.nanoai.feature.library.data.catalog.ModelPackageWriteDao
-import com.vjaykrsna.nanoai.feature.library.data.daos.DownloadTaskDao
-import com.vjaykrsna.nanoai.feature.library.data.entities.DownloadTaskEntity
-import com.vjaykrsna.nanoai.feature.library.data.huggingface.dao.HuggingFaceModelCacheDao
-import com.vjaykrsna.nanoai.feature.library.data.huggingface.entities.HuggingFaceModelCacheEntity
 
 /**
  * Room database for nanoAI application.

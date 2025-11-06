@@ -1,8 +1,9 @@
 package com.vjaykrsna.nanoai.feature.uiux.presentation
 
 import com.google.common.truth.Truth.assertThat
-import com.vjaykrsna.nanoai.feature.uiux.domain.ConnectivityOperationsUseCase
-import com.vjaykrsna.nanoai.feature.uiux.domain.NavigationOperationsUseCase
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityStatus
+import com.vjaykrsna.nanoai.core.domain.uiux.ConnectivityOperationsUseCase
+import com.vjaykrsna.nanoai.core.domain.uiux.NavigationOperationsUseCase
 import com.vjaykrsna.nanoai.shared.ui.shell.ShellUiEvent
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import io.mockk.*

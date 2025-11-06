@@ -1,7 +1,7 @@
 package com.vjaykrsna.nanoai.core.domain.usecase
 
 import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreferenceStore
-import com.vjaykrsna.nanoai.core.data.preferences.RetentionPolicy
+import com.vjaykrsna.nanoai.core.domain.settings.model.RetentionPolicy
 import javax.inject.Inject
 import kotlinx.datetime.Instant
 
@@ -28,4 +28,7 @@ constructor(private val privacyPreferenceStore: PrivacyPreferenceStore) {
   /** Dismisses export warnings. */
   suspend fun setExportWarningsDismissed(dismissed: Boolean) =
     privacyPreferenceStore.setExportWarningsDismissed(dismissed)
+
+  /** Records that the disclaimer dialog was shown to the user. */
+  suspend fun incrementDisclaimerShown() = privacyPreferenceStore.incrementDisclaimerShown()
 }

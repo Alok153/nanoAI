@@ -12,6 +12,7 @@ import java.nio.file.Path
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import java.util.logging.Logger
 import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.io.path.exists
 import kotlin.io.path.isRegularFile
@@ -34,6 +35,8 @@ import org.w3c.dom.Element
  * [CoverageThresholdVerifier]. Intended to run from Gradle across CI and local environments.
  */
 object VerifyCoverageThresholdsTask {
+
+  private val logger = Logger.getLogger(VerifyCoverageThresholdsTask::class.java.name)
 
   private const val DEFAULT_LAYER_MAP = "config/testing/coverage/layer-map.json"
   private const val DEFAULT_COVERAGE_METADATA = "config/testing/coverage/coverage-metadata.json"
@@ -74,7 +77,7 @@ object VerifyCoverageThresholdsTask {
     logUnmappedClasses(outcome.unmappedClasses)
     handleViolation(outcome.violation)
 
-    System.out.println("verifyCoverage: thresholds satisfied for build ${outcome.summary.buildId}")
+    logger.info("verifyCoverage: thresholds satisfied for build ${outcome.summary.buildId}")
   }
 
   private data class Arguments(
@@ -173,7 +176,7 @@ object VerifyCoverageThresholdsTask {
   private fun parseArgumentsOrExit(rawArgs: Array<String>): Arguments {
     return runCatching { Arguments.parse(rawArgs) }
       .getOrElse { error ->
-        System.err.println("verifyCoverage: ${error.message}")
+        logger.severe("verifyCoverage: ${error.message}")
         Arguments.printUsage(System.err)
         exitProcess(EXIT_USAGE_ERROR)
       }
@@ -181,15 +184,15 @@ object VerifyCoverageThresholdsTask {
 
   private fun validateInputPaths(reportXml: Path, layerMapPath: Path, metadataPath: Path) {
     if (!reportXml.exists() || !reportXml.isRegularFile()) {
-      System.err.println("verifyCoverage: coverage report not found at $reportXml")
+      logger.severe("verifyCoverage: coverage report not found at $reportXml")
       exitProcess(EXIT_DATA_ERROR)
     }
     if (!layerMapPath.exists() || !layerMapPath.isRegularFile()) {
-      System.err.println("verifyCoverage: layer map not found at $layerMapPath")
+      logger.severe("verifyCoverage: layer map not found at $layerMapPath")
       exitProcess(EXIT_DATA_ERROR)
     }
     if (!metadataPath.exists() || !metadataPath.isRegularFile()) {
-      System.err.println("verifyCoverage: coverage metadata not found at $metadataPath")
+      logger.severe("verifyCoverage: coverage metadata not found at $metadataPath")
       exitProcess(EXIT_DATA_ERROR)
     }
   }
@@ -234,9 +237,7 @@ object VerifyCoverageThresholdsTask {
         }
       }
       .onFailure {
-        System.err.println(
-          "verifyCoverage: failed to parse coverage metadata at $path - ${it.message}"
-        )
+        logger.severe("verifyCoverage: failed to parse coverage metadata at $path - ${it.message}")
       }
     return DEFAULT_THRESHOLDS + overrides
   }
@@ -290,7 +291,7 @@ object VerifyCoverageThresholdsTask {
     if (unmappedClasses.isEmpty()) {
       return
     }
-    System.out.println(
+    logger.info(
       "verifyCoverage: ${unmappedClasses.size} classes were not mapped to a TestLayer; " +
         "first missing=${unmappedClasses.first()}"
     )
@@ -300,7 +301,7 @@ object VerifyCoverageThresholdsTask {
     if (violation == null) {
       return
     }
-    System.err.println(
+    logger.severe(
       "verifyCoverage: coverage below threshold for " +
         violation.layers.joinToString { it.displayName }
     )

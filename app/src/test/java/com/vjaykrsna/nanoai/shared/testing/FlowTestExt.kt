@@ -16,13 +16,14 @@ private val DEFAULT_TIMEOUT: Duration = 5.seconds
  * advances until idle before returning. Useful for verifying emissions in structured concurrency
  * tests that combine multiple async sources.
  */
-fun <T> TestScope.testFlow(
+suspend fun <T> TestScope.testFlow(
   flow: Flow<T>,
   timeout: Duration = DEFAULT_TIMEOUT,
   assertions: suspend TurbineTestContext<T>.() -> Unit,
 ) {
-  launch { flow.test(timeout) { assertions() } }
+  val job = launch { flow.test(timeout) { assertions() } }
   advanceUntilIdle()
+  job.join()
 }
 
 /**

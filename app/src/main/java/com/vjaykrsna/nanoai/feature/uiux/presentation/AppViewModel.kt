@@ -2,10 +2,11 @@ package com.vjaykrsna.nanoai.feature.uiux.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreferenceStore
-import com.vjaykrsna.nanoai.core.data.preferences.UiPreferencesStore
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
-import com.vjaykrsna.nanoai.feature.uiux.domain.ObserveUserProfileUseCase
+import com.vjaykrsna.nanoai.core.domain.uiux.ObserveUserProfileUseCase
+import com.vjaykrsna.nanoai.core.domain.usecase.ObserveDisclaimerExposureUseCase
+import com.vjaykrsna.nanoai.core.domain.usecase.ObserveUiPreferencesUseCase
+import com.vjaykrsna.nanoai.core.domain.usecase.UpdatePrivacyPreferencesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,8 +27,9 @@ class AppViewModel
 @Inject
 constructor(
   observeUserProfileUseCase: ObserveUserProfileUseCase,
-  private val privacyPreferenceStore: PrivacyPreferenceStore,
-  private val uiPreferencesStore: UiPreferencesStore,
+  private val observeDisclaimerExposureUseCase: ObserveDisclaimerExposureUseCase,
+  private val observeUiPreferencesUseCase: ObserveUiPreferencesUseCase,
+  private val updatePrivacyPreferencesUseCase: UpdatePrivacyPreferencesUseCase,
 ) : ViewModel() {
   private val _uiState = MutableStateFlow(AppUiState())
   val uiState: StateFlow<AppUiState> = _uiState.asStateFlow()
@@ -36,8 +38,8 @@ constructor(
     viewModelScope.launch {
       combine(
           observeUserProfileUseCase.flow,
-          privacyPreferenceStore.disclaimerExposure,
-          uiPreferencesStore.uiPreferences,
+          observeDisclaimerExposureUseCase(),
+          observeUiPreferencesUseCase(),
         ) { result, disclaimer, uiPrefs ->
           Triple(result, disclaimer, uiPrefs)
         }
@@ -67,12 +69,12 @@ constructor(
 
   /** Records that the disclaimer dialog was surfaced during this session. */
   fun onDisclaimerDisplayed() {
-    viewModelScope.launch { privacyPreferenceStore.incrementDisclaimerShown() }
+    viewModelScope.launch { updatePrivacyPreferencesUseCase.incrementDisclaimerShown() }
   }
 
   /** Marks the disclaimer as acknowledged so subsequent launches skip the dialog. */
   fun onDisclaimerAccepted() {
-    viewModelScope.launch { privacyPreferenceStore.acknowledgeConsent(Clock.System.now()) }
+    viewModelScope.launch { updatePrivacyPreferencesUseCase.acknowledgeConsent(Clock.System.now()) }
   }
 }
 

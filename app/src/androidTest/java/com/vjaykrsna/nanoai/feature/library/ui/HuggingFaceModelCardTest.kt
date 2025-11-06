@@ -6,7 +6,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import com.google.common.truth.Truth.assertThat
-import com.vjaykrsna.nanoai.feature.library.domain.HuggingFaceModelSummary
+import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceModelSummary
 import com.vjaykrsna.nanoai.shared.testing.TestingTheme
 import kotlinx.datetime.Instant
 import org.junit.Rule

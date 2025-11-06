@@ -1,6 +1,8 @@
 package com.vjaykrsna.nanoai.feature.uiux.presentation
 
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.vjaykrsna.nanoai.core.domain.model.uiux.CommandAction
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
 
 /** Representation of a primary mode displayed on the home hub grid. */
 data class ModeCard(

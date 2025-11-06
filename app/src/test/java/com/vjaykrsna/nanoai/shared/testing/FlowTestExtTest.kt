@@ -19,7 +19,7 @@ class FlowTestExtTest {
 
   @Test
   fun `TestScope testFlow drains shared flows and cancels`() = runTest {
-    val shared = MutableSharedFlow<Int>()
+    val shared = MutableSharedFlow<Int>(replay = 3)
 
     val emitter = launch {
       shared.emit(42)

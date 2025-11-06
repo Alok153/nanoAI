@@ -8,7 +8,12 @@ import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.vjaykrsna.nanoai.feature.uiux.domain.NavigationOperationsUseCase
+import com.vjaykrsna.nanoai.core.domain.model.uiux.CommandPaletteState
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
+import com.vjaykrsna.nanoai.core.domain.model.uiux.PaletteSource
+import com.vjaykrsna.nanoai.core.domain.model.uiux.RightPanel
+import com.vjaykrsna.nanoai.core.domain.model.uiux.UndoPayload
+import com.vjaykrsna.nanoai.core.domain.uiux.NavigationOperationsUseCase
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

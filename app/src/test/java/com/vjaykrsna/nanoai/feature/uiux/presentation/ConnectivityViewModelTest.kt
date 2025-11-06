@@ -1,6 +1,7 @@
 package com.vjaykrsna.nanoai.feature.uiux.presentation
 
-import com.vjaykrsna.nanoai.feature.uiux.domain.ConnectivityOperationsUseCase
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityStatus
+import com.vjaykrsna.nanoai.core.domain.uiux.ConnectivityOperationsUseCase
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi

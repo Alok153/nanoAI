@@ -14,7 +14,7 @@ class CleanArchitectureRuleTest {
         """
             package com.vjaykrsna.nanoai.feature.chat
 
-            import com.vjaykrsna.nanoai.core.data.repository.ChatRepository
+            import com.vjaykrsna.nanoai.core.domain.repository.ChatRepository
 
             class ChatViewModel(private val repository: ChatRepository)
         """

@@ -4,7 +4,6 @@
 
 package com.vjaykrsna.nanoai.feature.uiux.presentation
 
-// import com.vjaykrsna.telemetry.ShellTelemetry
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Code
@@ -19,7 +18,19 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
-import com.vjaykrsna.nanoai.feature.uiux.domain.NavigationOperationsUseCase
+import com.vjaykrsna.nanoai.core.domain.model.uiux.CommandAction
+import com.vjaykrsna.nanoai.core.domain.model.uiux.CommandCategory
+import com.vjaykrsna.nanoai.core.domain.model.uiux.CommandInvocationSource
+import com.vjaykrsna.nanoai.core.domain.model.uiux.CommandPaletteState
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityBannerState
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityStatus
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ProgressJob
+import com.vjaykrsna.nanoai.core.domain.model.uiux.RecentActivityItem
+import com.vjaykrsna.nanoai.core.domain.model.uiux.RightPanel
+import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferenceSnapshot
+import com.vjaykrsna.nanoai.core.domain.model.uiux.UndoPayload
+import com.vjaykrsna.nanoai.core.domain.uiux.NavigationOperationsUseCase
 import com.vjaykrsna.nanoai.shared.ui.shell.ShellUiEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -31,6 +42,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+
+// import com.vjaykrsna.telemetry.ShellTelemetry
 
 /** ViewModel coordinating shell layout state and user intents. */
 

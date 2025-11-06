@@ -1,7 +1,7 @@
 package com.vjaykrsna.nanoai.testing
 
-import com.vjaykrsna.nanoai.core.data.repository.PersonaRepository
 import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
+import com.vjaykrsna.nanoai.core.domain.repository.PersonaRepository
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton

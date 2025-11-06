@@ -3,10 +3,12 @@ package com.vjaykrsna.nanoai.feature.uiux.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
-import com.vjaykrsna.nanoai.feature.uiux.domain.JobOperationsUseCase
-import com.vjaykrsna.nanoai.feature.uiux.domain.ProgressCenterCoordinator
-import com.vjaykrsna.nanoai.feature.uiux.domain.QueueJobUseCase
-import com.vjaykrsna.nanoai.feature.uiux.domain.UndoActionUseCase
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ProgressJob
+import com.vjaykrsna.nanoai.core.domain.model.uiux.UndoPayload
+import com.vjaykrsna.nanoai.core.domain.uiux.JobOperationsUseCase
+import com.vjaykrsna.nanoai.core.domain.uiux.ProgressCenterCoordinator
+import com.vjaykrsna.nanoai.core.domain.uiux.QueueJobUseCase
+import com.vjaykrsna.nanoai.core.domain.uiux.UndoActionUseCase
 import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher

@@ -4,10 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.onFailure
 import com.vjaykrsna.nanoai.core.common.onSuccess
+import com.vjaykrsna.nanoai.core.domain.library.DownloadModelUseCase
+import com.vjaykrsna.nanoai.core.domain.library.ManageModelUseCase
 import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
-import com.vjaykrsna.nanoai.feature.library.domain.DownloadModelUseCase
-import com.vjaykrsna.nanoai.feature.library.domain.DownloadStatus
-import com.vjaykrsna.nanoai.feature.library.domain.ManageModelUseCase
+import com.vjaykrsna.nanoai.core.domain.model.library.DownloadStatus
 import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryError
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger

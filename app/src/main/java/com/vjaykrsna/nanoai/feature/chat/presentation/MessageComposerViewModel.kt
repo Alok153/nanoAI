@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
 import com.vjaykrsna.nanoai.core.common.onFailure
 import com.vjaykrsna.nanoai.core.common.onSuccess
-import com.vjaykrsna.nanoai.feature.chat.domain.SendPromptUseCase
+import com.vjaykrsna.nanoai.core.domain.chat.SendPromptUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.UUID
 import javax.inject.Inject
