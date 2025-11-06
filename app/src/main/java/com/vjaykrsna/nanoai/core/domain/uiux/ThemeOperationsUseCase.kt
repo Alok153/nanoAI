@@ -1,11 +1,14 @@
 package com.vjaykrsna.nanoai.core.domain.uiux
 
+import android.database.sqlite.SQLiteException
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferenceSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
 import com.vjaykrsna.nanoai.core.domain.repository.ThemeRepository
+import java.io.IOException
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -19,43 +22,56 @@ class ThemeOperationsUseCase @Inject constructor(private val themeRepository: Th
   fun observeUiPreferences(): Flow<UiPreferenceSnapshot> = themeRepository.uiPreferenceSnapshot
 
   /** Updates theme preference. */
-  suspend fun updateTheme(theme: ThemePreference): NanoAIResult<Unit> {
-    return try {
+  suspend fun updateTheme(theme: ThemePreference): NanoAIResult<Unit> =
+    guardThemeOperation(message = "Failed to update theme", context = mapOf("theme" to theme.name)) {
       themeRepository.updateThemePreference(theme)
       NanoAIResult.success(Unit)
-    } catch (e: Exception) {
-      NanoAIResult.recoverable(
-        message = "Failed to update theme",
-        cause = e,
-        context = mapOf("theme" to theme.name),
-      )
     }
-  }
 
   /** Updates visual density. */
-  suspend fun updateVisualDensity(density: VisualDensity): NanoAIResult<Unit> {
-    return try {
+  suspend fun updateVisualDensity(density: VisualDensity): NanoAIResult<Unit> =
+    guardThemeOperation(
+      message = "Failed to update visual density",
+      context = mapOf("density" to density.name),
+    ) {
       themeRepository.updateVisualDensity(density)
       NanoAIResult.success(Unit)
-    } catch (e: Exception) {
-      NanoAIResult.recoverable(
-        message = "Failed to update visual density",
-        cause = e,
-        context = mapOf("density" to density.name),
-      )
     }
-  }
 
   /** Updates high contrast enabled. */
-  suspend fun updateHighContrastEnabled(enabled: Boolean): NanoAIResult<Unit> {
-    return try {
+  suspend fun updateHighContrastEnabled(enabled: Boolean): NanoAIResult<Unit> =
+    guardThemeOperation(
+      message = "Failed to update high contrast",
+      context = mapOf("enabled" to enabled.toString()),
+    ) {
       themeRepository.updateHighContrastEnabled(enabled)
       NanoAIResult.success(Unit)
-    } catch (e: Exception) {
+    }
+
+  private inline fun <T> guardThemeOperation(
+    message: String,
+    context: Map<String, String>,
+    block: () -> NanoAIResult<T>,
+  ): NanoAIResult<T> {
+    return try {
+      block()
+    } catch (cancellation: CancellationException) {
+      throw cancellation
+    } catch (sqliteException: SQLiteException) {
+      NanoAIResult.recoverable(message = message, cause = sqliteException, context = context)
+    } catch (ioException: IOException) {
+      NanoAIResult.recoverable(message = message, cause = ioException, context = context)
+    } catch (illegalStateException: IllegalStateException) {
       NanoAIResult.recoverable(
-        message = "Failed to update high contrast",
-        cause = e,
-        context = mapOf("enabled" to enabled.toString()),
+        message = message,
+        cause = illegalStateException,
+        context = context,
+      )
+    } catch (illegalArgumentException: IllegalArgumentException) {
+      NanoAIResult.recoverable(
+        message = message,
+        cause = illegalArgumentException,
+        context = context,
       )
     }
   }

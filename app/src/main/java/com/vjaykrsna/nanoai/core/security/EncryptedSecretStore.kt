@@ -8,6 +8,8 @@ import androidx.security.crypto.MasterKey
 import com.vjaykrsna.nanoai.core.security.model.CredentialScope
 import com.vjaykrsna.nanoai.core.security.model.SecretCredential
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.io.IOException
+import java.security.GeneralSecurityException
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.datetime.Clock
@@ -55,10 +57,21 @@ private constructor(
         EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
         EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
       )
-    } catch (e: Exception) {
+    } catch (securityException: GeneralSecurityException) {
       // Handle keystore/encryption failures gracefully
       // This can happen if Android Keystore is unavailable or corrupted
-      android.util.Log.w("EncryptedSecretStore", "Failed to create EncryptedSharedPreferences", e)
+      android.util.Log.w(
+        "EncryptedSecretStore",
+        "Failed to create EncryptedSharedPreferences",
+        securityException,
+      )
+      null
+    } catch (ioException: IOException) {
+      android.util.Log.w(
+        "EncryptedSecretStore",
+        "I/O failure creating EncryptedSharedPreferences",
+        ioException,
+      )
       null
     }
   }

@@ -6,6 +6,7 @@ import com.vjaykrsna.nanoai.core.domain.model.Message
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 
 /** Fake implementation of [ConversationUseCase] for testing. */
@@ -26,15 +27,11 @@ constructor(private val fakeConversationRepository: FakeConversationRepository) 
   }
 
   suspend fun createNewThread(personaId: UUID, title: String?): NanoAIResult<UUID> {
-    return try {
-      val threadId = fakeConversationRepository.createNewThread(personaId, title)
-      NanoAIResult.success(threadId)
-    } catch (e: Exception) {
-      NanoAIResult.recoverable(
-        message = "Failed to create new thread",
-        cause = e,
-        context = mapOf("personaId" to personaId.toString(), "title" to (title ?: "")),
-      )
+    return guard(
+      message = "Failed to create new thread",
+      context = mapOf("personaId" to personaId.toString(), "title" to (title ?: "")),
+    ) {
+      fakeConversationRepository.createNewThread(personaId, title)
     }
   }
 
@@ -46,15 +43,11 @@ constructor(private val fakeConversationRepository: FakeConversationRepository) 
         context = mapOf("threadId" to threadId.toString()),
       )
     }
-    return try {
+    return guard(
+      message = "Failed to archive thread $threadId",
+      context = mapOf("threadId" to threadId.toString()),
+    ) {
       fakeConversationRepository.archiveThread(threadId)
-      NanoAIResult.success(Unit)
-    } catch (e: Exception) {
-      NanoAIResult.recoverable(
-        message = "Failed to archive thread $threadId",
-        cause = e,
-        context = mapOf("threadId" to threadId.toString()),
-      )
     }
   }
 
@@ -66,60 +59,61 @@ constructor(private val fakeConversationRepository: FakeConversationRepository) 
         context = mapOf("threadId" to threadId.toString()),
       )
     }
-    return try {
+    return guard(
+      message = "Failed to delete thread $threadId",
+      context = mapOf("threadId" to threadId.toString()),
+    ) {
       fakeConversationRepository.deleteThread(threadId)
-      NanoAIResult.success(Unit)
-    } catch (e: Exception) {
-      NanoAIResult.recoverable(
-        message = "Failed to delete thread $threadId",
-        cause = e,
-        context = mapOf("threadId" to threadId.toString()),
-      )
     }
   }
 
   suspend fun saveMessage(message: Message): NanoAIResult<Unit> {
-    return try {
+    return guard(
+      message = "Failed to save message ${message.messageId}",
+      context =
+        mapOf(
+          "messageId" to message.messageId.toString(),
+          "threadId" to message.threadId.toString(),
+          "role" to message.role.toString(),
+        ),
+    ) {
       fakeConversationRepository.saveMessage(message)
-      NanoAIResult.success(Unit)
-    } catch (e: Exception) {
-      NanoAIResult.recoverable(
-        message = "Failed to save message ${message.messageId}",
-        cause = e,
-        context =
-          mapOf(
-            "messageId" to message.messageId.toString(),
-            "threadId" to message.threadId.toString(),
-            "role" to message.role.toString(),
-          ),
-      )
     }
   }
 
   suspend fun getCurrentPersonaForThread(threadId: UUID): NanoAIResult<UUID?> {
-    return try {
-      val personaId = fakeConversationRepository.getCurrentPersonaForThread(threadId)
-      NanoAIResult.success(personaId)
-    } catch (e: Exception) {
-      NanoAIResult.recoverable(
-        message = "Failed to get current persona for thread $threadId",
-        cause = e,
-        context = mapOf("threadId" to threadId.toString()),
-      )
+    return guard(
+      message = "Failed to get current persona for thread $threadId",
+      context = mapOf("threadId" to threadId.toString()),
+    ) {
+      fakeConversationRepository.getCurrentPersonaForThread(threadId)
     }
   }
 
   suspend fun updateThreadPersona(threadId: UUID, personaId: UUID?): NanoAIResult<Unit> {
-    return try {
+    return guard(
+      message = "Failed to update persona for thread $threadId",
+      context =
+        mapOf("threadId" to threadId.toString(), "personaId" to (personaId?.toString() ?: "null")),
+    ) {
       fakeConversationRepository.updateThreadPersona(threadId, personaId)
-      NanoAIResult.success(Unit)
-    } catch (e: Exception) {
-      NanoAIResult.recoverable(
-        message = "Failed to update persona for thread $threadId",
-        cause = e,
-        context =
-          mapOf("threadId" to threadId.toString(), "personaId" to (personaId?.toString() ?: "null")),
-      )
+    }
+  }
+
+  private suspend inline fun <T> guard(
+    message: String,
+    context: Map<String, String>,
+    block: suspend () -> T,
+  ): NanoAIResult<T> {
+    return try {
+      val value = block()
+      NanoAIResult.success(value)
+    } catch (cancellationException: CancellationException) {
+      throw cancellationException
+    } catch (illegalStateException: IllegalStateException) {
+      NanoAIResult.recoverable(message = message, cause = illegalStateException, context = context)
+    } catch (illegalArgumentException: IllegalArgumentException) {
+      NanoAIResult.recoverable(message = message, cause = illegalArgumentException, context = context)
     }
   }
 }

@@ -9,7 +9,9 @@ import com.vjaykrsna.nanoai.testing.assertSuccess
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
+import kotlin.test.assertFailsWith
 import org.junit.Before
 import org.junit.Test
 
@@ -39,12 +41,20 @@ class ModelCatalogUseCaseTest {
 
   @Test
   fun `getAllModels returns recoverable error when repository fails`() = runTest {
-    val exception = RuntimeException("Repository error")
+    val exception = IllegalStateException("Repository error")
     coEvery { modelCatalogRepository.getAllModels() } throws exception
 
     val result = useCase.getAllModels()
 
     result.assertRecoverableError()
+  }
+
+  @Test
+  fun `getAllModels rethrows cancellation`() = runTest {
+    val cancellation = CancellationException("cancel")
+    coEvery { modelCatalogRepository.getAllModels() } throws cancellation
+
+    assertFailsWith<CancellationException> { useCase.getAllModels() }
   }
 
   @Test
@@ -70,7 +80,7 @@ class ModelCatalogUseCaseTest {
 
   @Test
   fun `getModel returns recoverable error when repository fails`() = runTest {
-    val exception = RuntimeException("Repository error")
+    val exception = IllegalArgumentException("Repository error")
     coEvery { modelCatalogRepository.getModel(modelId) } throws exception
 
     val result = useCase.getModel(modelId)
@@ -91,7 +101,7 @@ class ModelCatalogUseCaseTest {
   @Test
   fun `upsertModel returns recoverable error when repository fails`() = runTest {
     val model = createModelPackage(modelId)
-    val exception = RuntimeException("Repository error")
+    val exception = IllegalStateException("Repository error")
     coEvery { modelCatalogRepository.upsertModel(model) } throws exception
 
     val result = useCase.upsertModel(model)
@@ -115,7 +125,7 @@ class ModelCatalogUseCaseTest {
   fun `recordOfflineFallback returns recoverable error when repository fails`() = runTest {
     val reason = "network_unavailable"
     val cachedCount = 5
-    val exception = RuntimeException("Repository error")
+    val exception = IllegalStateException("Repository error")
     coEvery { modelCatalogRepository.recordOfflineFallback(any(), any(), any()) } throws exception
 
     val result = useCase.recordOfflineFallback(reason, cachedCount)

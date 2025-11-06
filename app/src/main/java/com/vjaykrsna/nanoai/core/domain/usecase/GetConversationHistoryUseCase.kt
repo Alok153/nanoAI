@@ -1,10 +1,13 @@
 package com.vjaykrsna.nanoai.core.domain.usecase
 
+import android.database.sqlite.SQLiteException
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.domain.model.ChatThread
 import com.vjaykrsna.nanoai.core.domain.repository.ConversationRepository
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Use case for retrieving conversation history.
@@ -25,10 +28,24 @@ constructor(private val conversationRepository: ConversationRepository) {
     return try {
       val threads = conversationRepository.getAllThreads()
       NanoAIResult.success(threads)
-    } catch (e: Exception) {
+    } catch (cancellationException: CancellationException) {
+      throw cancellationException
+    } catch (sqliteException: SQLiteException) {
       NanoAIResult.recoverable(
         message = "Failed to load conversation history",
-        cause = e,
+        cause = sqliteException,
+        context = emptyMap(),
+      )
+    } catch (ioException: IOException) {
+      NanoAIResult.recoverable(
+        message = "Failed to load conversation history",
+        cause = ioException,
+        context = emptyMap(),
+      )
+    } catch (illegalStateException: IllegalStateException) {
+      NanoAIResult.recoverable(
+        message = "Failed to load conversation history",
+        cause = illegalStateException,
         context = emptyMap(),
       )
     }

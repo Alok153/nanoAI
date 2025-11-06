@@ -1,13 +1,16 @@
 package com.vjaykrsna.nanoai.feature.chat.presentation
 
+import android.database.sqlite.SQLiteException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
 import com.vjaykrsna.nanoai.core.domain.model.ChatThread
 import com.vjaykrsna.nanoai.core.domain.repository.ConversationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.io.IOException
 import java.util.UUID
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -28,7 +31,6 @@ class HistoryViewModel
 @Inject
 constructor(
   private val conversationRepository: ConversationRepository,
-  @Suppress("UnusedPrivateProperty")
   @MainImmediateDispatcher
   private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
 ) : ViewModel() {
@@ -52,10 +54,11 @@ constructor(
     viewModelScope.launch(dispatcher) {
       try {
         conversationRepository.getAllThreads()
-      } catch (e: Exception) {
-        _errors.emit(HistoryError.LoadFailed(e.message ?: "Unknown error"))
+      } catch (throwable: Throwable) {
+        handleRepositoryFailure(throwable) { message -> HistoryError.LoadFailed(message) }
+      } finally {
+        _isLoading.value = false
       }
-      _isLoading.value = false
     }
   }
 
@@ -64,8 +67,8 @@ constructor(
       try {
         conversationRepository.archiveThread(threadId)
         loadThreads() // Reload after archive
-      } catch (e: Exception) {
-        _errors.emit(HistoryError.ArchiveFailed(e.message ?: "Unknown error"))
+      } catch (throwable: Throwable) {
+        handleRepositoryFailure(throwable) { message -> HistoryError.ArchiveFailed(message) }
       }
     }
   }
@@ -75,8 +78,8 @@ constructor(
       try {
         conversationRepository.deleteThread(threadId)
         loadThreads() // Reload after delete
-      } catch (e: Exception) {
-        _errors.emit(HistoryError.DeleteFailed(e.message ?: "Unknown error"))
+      } catch (throwable: Throwable) {
+        handleRepositoryFailure(throwable) { message -> HistoryError.DeleteFailed(message) }
       }
     }
   }
@@ -86,6 +89,20 @@ constructor(
       conversationRepository.getAllThreadsFlow().collectLatest { threads ->
         _threads.value = threads
       }
+    }
+  }
+
+  private suspend fun handleRepositoryFailure(
+    throwable: Throwable,
+    builder: (String) -> HistoryError,
+  ) {
+    when (throwable) {
+      is CancellationException -> throw throwable
+      is SQLiteException,
+      is IOException,
+      is IllegalStateException ->
+        _errors.emit(builder(throwable.message ?: "Unknown error"))
+      else -> throw throwable
     }
   }
 }

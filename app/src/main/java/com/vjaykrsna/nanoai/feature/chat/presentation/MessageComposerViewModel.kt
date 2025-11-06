@@ -28,7 +28,6 @@ class MessageComposerViewModel
 @Inject
 constructor(
   private val sendPromptUseCase: SendPromptUseCase,
-  @Suppress("UnusedPrivateProperty")
   @MainImmediateDispatcher
   private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
 ) : ViewModel() {
@@ -49,12 +48,12 @@ constructor(
   fun sendMessage(threadId: UUID, personaId: UUID) {
     val text = _messageText.value.trim()
     if (text.isEmpty()) {
-      viewModelScope.launch { _errors.emit(MessageComposerError.EmptyMessage) }
+      viewModelScope.launch(dispatcher) { _errors.emit(MessageComposerError.EmptyMessage) }
       return
     }
 
     _isSending.value = true
-    viewModelScope.launch {
+    viewModelScope.launch(dispatcher) {
       sendPromptUseCase(threadId, text, personaId)
         .onSuccess { _messageText.value = "" }
         .onFailure { error -> _errors.emit(MessageComposerError.SendFailed(error.message)) }

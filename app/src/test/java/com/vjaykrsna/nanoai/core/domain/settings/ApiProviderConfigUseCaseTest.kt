@@ -8,8 +8,10 @@ import com.vjaykrsna.nanoai.testing.assertRecoverableError
 import com.vjaykrsna.nanoai.testing.assertSuccess
 import io.mockk.coEvery
 import io.mockk.mockk
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Instant
+import kotlin.test.assertFailsWith
 import org.junit.Before
 import org.junit.Test
 
@@ -49,7 +51,7 @@ class ApiProviderConfigUseCaseTest {
 
   @Test
   fun `getAllProviders returns recoverable error when repository fails`() = runTest {
-    val exception = RuntimeException("Database error")
+    val exception = IllegalStateException("Database error")
     coEvery { apiProviderConfigRepository.getAllProviders() } throws exception
 
     val result = useCase.getAllProviders()
@@ -90,7 +92,7 @@ class ApiProviderConfigUseCaseTest {
   @Test
   fun `getProvider returns recoverable error when repository fails`() = runTest {
     val providerId = "openai"
-    val exception = RuntimeException("Database error")
+    val exception = IllegalStateException("Database error")
     coEvery { apiProviderConfigRepository.getProvider(providerId) } throws exception
 
     val result = useCase.getProvider(providerId)
@@ -125,7 +127,7 @@ class ApiProviderConfigUseCaseTest {
         apiKey = "AIzaSyTest",
         apiType = APIType.GEMINI,
       )
-    val exception = RuntimeException("Database error")
+    val exception = IllegalStateException("Database error")
     coEvery { apiProviderConfigRepository.addProvider(config) } throws exception
 
     val result = useCase.addProvider(config)
@@ -160,7 +162,7 @@ class ApiProviderConfigUseCaseTest {
         apiKey = "sk-updated123",
         apiType = APIType.OPENAI_COMPATIBLE,
       )
-    val exception = RuntimeException("Database error")
+    val exception = IllegalStateException("Database error")
     coEvery { apiProviderConfigRepository.updateProvider(config) } throws exception
 
     val result = useCase.updateProvider(config)
@@ -181,11 +183,19 @@ class ApiProviderConfigUseCaseTest {
   @Test
   fun `deleteProvider returns recoverable error when repository fails`() = runTest {
     val providerId = "openai"
-    val exception = RuntimeException("Database error")
+    val exception = IllegalStateException("Database error")
     coEvery { apiProviderConfigRepository.deleteProvider(providerId) } throws exception
 
     val result = useCase.deleteProvider(providerId)
 
     result.assertRecoverableError()
+  }
+
+  @Test
+  fun `getAllProviders rethrows cancellation exceptions`() = runTest {
+    val cancellation = CancellationException("Cancelled")
+    coEvery { apiProviderConfigRepository.getAllProviders() } throws cancellation
+
+    assertFailsWith<CancellationException> { useCase.getAllProviders() }
   }
 }

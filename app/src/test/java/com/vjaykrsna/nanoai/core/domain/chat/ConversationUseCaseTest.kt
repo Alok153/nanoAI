@@ -8,9 +8,15 @@ import com.vjaykrsna.nanoai.core.model.MessageSource
 import com.vjaykrsna.nanoai.testing.assertRecoverableError
 import com.vjaykrsna.nanoai.testing.assertSuccess
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import java.io.IOException
 import java.util.UUID
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertNull
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Instant
@@ -26,6 +32,15 @@ class ConversationUseCaseTest {
     conversationRepository = mockk(relaxed = true)
 
     useCase = ConversationUseCase(conversationRepository)
+  }
+
+  @Test
+  fun `createNewThread rethrows cancellation`() = runTest {
+    val personaId = UUID.randomUUID()
+    val cancellation = CancellationException("cancelled")
+    coEvery { conversationRepository.createNewThread(personaId, null) } throws cancellation
+
+    assertFailsWith<CancellationException> { useCase.createNewThread(personaId, null) }
   }
 
   @Test
@@ -82,14 +97,14 @@ class ConversationUseCaseTest {
     val result = useCase.createNewThread(personaId, title)
 
     val returnedThreadId = result.assertSuccess()
-    assert(returnedThreadId == threadId)
+    assertEquals(threadId, returnedThreadId)
   }
 
   @Test
   fun `createNewThread returns recoverable error when repository fails`() = runTest {
     val personaId = UUID.randomUUID()
     val title = "New Thread"
-    val exception = RuntimeException("Database error")
+    val exception = IllegalStateException("Database error")
     coEvery { conversationRepository.createNewThread(personaId, title) } throws exception
 
     val result = useCase.createNewThread(personaId, title)
@@ -105,12 +120,13 @@ class ConversationUseCaseTest {
     val result = useCase.archiveThread(threadId)
 
     result.assertSuccess()
+    coVerify(exactly = 1) { conversationRepository.archiveThread(threadId) }
   }
 
   @Test
   fun `archiveThread returns recoverable error when repository fails`() = runTest {
     val threadId = UUID.randomUUID()
-    val exception = RuntimeException("Database error")
+    val exception = IllegalArgumentException("Database error")
     coEvery { conversationRepository.archiveThread(threadId) } throws exception
 
     val result = useCase.archiveThread(threadId)
@@ -126,12 +142,13 @@ class ConversationUseCaseTest {
     val result = useCase.deleteThread(threadId)
 
     result.assertSuccess()
+    coVerify(exactly = 1) { conversationRepository.deleteThread(threadId) }
   }
 
   @Test
   fun `deleteThread returns recoverable error when repository fails`() = runTest {
     val threadId = UUID.randomUUID()
-    val exception = RuntimeException("Database error")
+    val exception = IllegalStateException("Database error")
     coEvery { conversationRepository.deleteThread(threadId) } throws exception
 
     val result = useCase.deleteThread(threadId)
@@ -156,6 +173,7 @@ class ConversationUseCaseTest {
     val result = useCase.saveMessage(message)
 
     result.assertSuccess()
+    coVerify(exactly = 1) { conversationRepository.saveMessage(message) }
   }
 
   @Test
@@ -169,7 +187,7 @@ class ConversationUseCaseTest {
         source = MessageSource.LOCAL_MODEL,
         createdAt = Instant.parse("2024-01-01T12:00:00Z"),
       )
-    val exception = RuntimeException("Database error")
+    val exception = IllegalStateException("Database error")
     coEvery { conversationRepository.saveMessage(message) } throws exception
 
     val result = useCase.saveMessage(message)
@@ -186,7 +204,7 @@ class ConversationUseCaseTest {
     val result = useCase.getCurrentPersonaForThread(threadId)
 
     val returnedPersonaId = result.assertSuccess()
-    assert(returnedPersonaId == personaId)
+    assertEquals(personaId, returnedPersonaId)
   }
 
   @Test
@@ -196,14 +214,13 @@ class ConversationUseCaseTest {
 
     val result = useCase.getCurrentPersonaForThread(threadId)
 
-    val returnedPersonaId = result.assertSuccess()
-    assert(returnedPersonaId == null)
+    assertNull(result.assertSuccess())
   }
 
   @Test
   fun `getCurrentPersonaForThread returns recoverable error when repository fails`() = runTest {
     val threadId = UUID.randomUUID()
-    val exception = RuntimeException("Database error")
+    val exception = IOException("Database error")
     coEvery { conversationRepository.getCurrentPersonaForThread(threadId) } throws exception
 
     val result = useCase.getCurrentPersonaForThread(threadId)
@@ -220,6 +237,7 @@ class ConversationUseCaseTest {
     val result = useCase.updateThreadPersona(threadId, personaId)
 
     result.assertSuccess()
+    coVerify(exactly = 1) { conversationRepository.updateThreadPersona(threadId, personaId) }
   }
 
   @Test
@@ -230,16 +248,57 @@ class ConversationUseCaseTest {
     val result = useCase.updateThreadPersona(threadId, null)
 
     result.assertSuccess()
+    coVerify(exactly = 1) { conversationRepository.updateThreadPersona(threadId, null) }
   }
 
   @Test
   fun `updateThreadPersona returns recoverable error when repository fails`() = runTest {
     val threadId = UUID.randomUUID()
     val personaId = UUID.randomUUID()
-    val exception = RuntimeException("Database error")
+    val exception = IllegalArgumentException("Database error")
     coEvery { conversationRepository.updateThreadPersona(threadId, personaId) } throws exception
 
     val result = useCase.updateThreadPersona(threadId, personaId)
+
+    result.assertRecoverableError()
+  }
+
+  @Test
+  fun `updateThread returns success when repository succeeds`() = runTest {
+    val thread =
+      ChatThread(
+        threadId = UUID.randomUUID(),
+        title = "Updated Thread",
+        personaId = UUID.randomUUID(),
+        activeModelId = "gpt-4-mini",
+        createdAt = Instant.parse("2024-02-01T08:00:00Z"),
+        updatedAt = Instant.parse("2024-02-01T09:00:00Z"),
+        isArchived = false,
+      )
+    coEvery { conversationRepository.updateThread(thread) } returns Unit
+
+    val result = useCase.updateThread(thread)
+
+    result.assertSuccess()
+    coVerify(exactly = 1) { conversationRepository.updateThread(thread) }
+  }
+
+  @Test
+  fun `updateThread returns recoverable error when repository fails`() = runTest {
+    val thread =
+      ChatThread(
+        threadId = UUID.randomUUID(),
+        title = "Updated Thread",
+        personaId = UUID.randomUUID(),
+        activeModelId = "gpt-4-mini",
+        createdAt = Instant.parse("2024-02-01T08:00:00Z"),
+        updatedAt = Instant.parse("2024-02-01T09:00:00Z"),
+        isArchived = false,
+      )
+    val exception = SecurityException("Permission denied")
+    coEvery { conversationRepository.updateThread(thread) } throws exception
+
+    val result = useCase.updateThread(thread)
 
     result.assertRecoverableError()
   }

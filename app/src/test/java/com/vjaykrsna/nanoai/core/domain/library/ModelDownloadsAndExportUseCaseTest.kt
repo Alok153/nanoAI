@@ -20,10 +20,13 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import java.io.IOException
 import java.util.UUID
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Clock
+import kotlin.test.assertFailsWith
 import org.junit.Before
 import org.junit.Test
 
@@ -80,6 +83,22 @@ class ModelDownloadsAndExportUseCaseTest {
   }
 
   @Test
+  fun `downloadModel returns recoverable when manager fails`() = runTest {
+    coEvery { downloadManager.getActiveDownloads() } throws IllegalStateException("down")
+
+    val result = useCase.downloadModel("faulty-model")
+
+    result.assertRecoverableError()
+  }
+
+  @Test
+  fun `downloadModel rethrows cancellation`() = runTest {
+    coEvery { downloadManager.getActiveDownloads() } throws CancellationException("cancel")
+
+    assertFailsWith<CancellationException> { useCase.downloadModel("cancel-model") }
+  }
+
+  @Test
   fun `verifyDownloadChecksum succeeds when checksums match`() = runTest {
     val modelId = "gemini-2.0-flash-lite"
     val checksum = "abc123"
@@ -109,6 +128,15 @@ class ModelDownloadsAndExportUseCaseTest {
   }
 
   @Test
+  fun `verifyDownloadChecksum returns recoverable when repository fails`() = runTest {
+    every { modelCatalogRepository.getModelById("error") } throws IllegalStateException("db")
+
+    val result = useCase.verifyDownloadChecksum("error")
+
+    result.assertRecoverableError()
+  }
+
+  @Test
   fun `pauseDownload updates status`() = runTest {
     val taskId = UUID.randomUUID()
 
@@ -116,6 +144,16 @@ class ModelDownloadsAndExportUseCaseTest {
 
     coVerify { downloadManager.pauseDownload(taskId) }
     coVerify { downloadManager.updateTaskStatus(taskId, DownloadStatus.PAUSED) }
+  }
+
+  @Test
+  fun `resumeDownload returns recoverable when manager throws`() = runTest {
+    val taskId = UUID.randomUUID()
+    coEvery { downloadManager.getTaskById(taskId) } throws IllegalStateException("db")
+
+    val result = useCase.resumeDownload(taskId)
+
+    result.assertRecoverableError()
   }
 
   @Test
@@ -214,6 +252,20 @@ class ModelDownloadsAndExportUseCaseTest {
   }
 
   @Test
+  fun `exportBackup returns recoverable when export fails`() = runTest {
+    val exportPath = "/tmp/fail.zip"
+    coEvery { exportService.gatherPersonas() } returns emptyList()
+    coEvery { exportService.gatherAPIProviderConfigs() } returns emptyList()
+    coEvery {
+      exportService.createExportBundle(emptyList(), emptyList(), exportPath, emptyList())
+    } throws IOException("disk full")
+
+    val result = useCase.exportBackup(exportPath)
+
+    result.assertRecoverableError()
+  }
+
+  @Test
   fun `getDownloadProgress proxies flow`() = runTest {
     val taskId = UUID.randomUUID()
     val progressFlow = flowOf(0.0f, 0.25f, 1.0f)
@@ -253,6 +305,16 @@ class ModelDownloadsAndExportUseCaseTest {
     coVerify { downloadManager.resetTask(taskId) }
     coVerify { downloadManager.startDownload(modelId) }
     coVerify { modelCatalogRepository.updateInstallState(modelId, InstallState.DOWNLOADING) }
+  }
+
+  @Test
+  fun `retryFailedDownload returns recoverable when manager throws`() = runTest {
+    val taskId = UUID.randomUUID()
+    coEvery { downloadManager.getTaskById(taskId) } throws IllegalStateException("db")
+
+    val result = useCase.retryFailedDownload(taskId)
+
+    result.assertRecoverableError()
   }
 
   private fun sampleModel(modelId: String, checksum: String?): ModelPackage =

@@ -1,8 +1,10 @@
 package com.vjaykrsna.nanoai.core.runtime
 
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 import kotlinx.coroutines.Dispatchers
@@ -54,8 +56,15 @@ class LeapInferenceService @Inject constructor() : InferenceService {
       // TODO: Implement actual Leap model loading once API is available
       // LeapClient.loadModel(model.manifestUrl)
       loadedModels.add(model.modelId)
-    } catch (e: Exception) {
-      throw LeapModelLoadException("Failed to load Leap model: ${model.modelId}", e)
+    } catch (cancellationException: CancellationException) {
+      throw cancellationException
+    } catch (ioException: IOException) {
+      throw LeapModelLoadException("Failed to load Leap model: ${model.modelId}", ioException)
+    } catch (illegalStateException: IllegalStateException) {
+      throw LeapModelLoadException(
+        "Failed to load Leap model: ${model.modelId}",
+        illegalStateException,
+      )
     }
   }
 

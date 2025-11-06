@@ -20,7 +20,6 @@ class ThemeViewModel
 @Inject
 constructor(
   private val themeOperationsUseCase: ThemeOperationsUseCase,
-  @Suppress("UnusedPrivateProperty")
   @MainImmediateDispatcher
   private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
 ) : ViewModel() {
@@ -36,16 +35,18 @@ constructor(
 
   /** Updates the theme preference for the active user. */
   fun updateThemePreference(theme: ThemePreference) {
-    viewModelScope.launch { themeOperationsUseCase.updateTheme(theme) }
+    viewModelScope.launch(dispatcher) { themeOperationsUseCase.updateTheme(theme) }
   }
 
   /** Updates the visual density preference for the active user. */
   fun updateVisualDensity(density: VisualDensity) {
-    viewModelScope.launch { themeOperationsUseCase.updateVisualDensity(density) }
+    viewModelScope.launch(dispatcher) { themeOperationsUseCase.updateVisualDensity(density) }
   }
 
   /** Updates the high contrast enabled preference for the active user. */
   fun updateHighContrastEnabled(enabled: Boolean) {
-    viewModelScope.launch { themeOperationsUseCase.updateHighContrastEnabled(enabled) }
+    viewModelScope.launch(dispatcher) {
+      themeOperationsUseCase.updateHighContrastEnabled(enabled)
+    }
   }
 }

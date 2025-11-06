@@ -2,14 +2,17 @@
 
 package com.vjaykrsna.nanoai.core.domain.library
 
+import android.database.sqlite.SQLiteException
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.core.domain.model.library.DownloadStatus
 import com.vjaykrsna.nanoai.core.domain.model.library.InstallState
+import java.io.IOException
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 
@@ -23,8 +26,11 @@ constructor(
   private val exportService: ExportService,
 ) : ModelDownloadsAndExportUseCaseInterface {
   /** Queue or start a download based on concurrency limits. */
-  override suspend fun downloadModel(modelId: String): NanoAIResult<UUID> {
-    return try {
+  override suspend fun downloadModel(modelId: String): NanoAIResult<UUID> =
+    guardOperation(
+      message = "Failed to start download for model $modelId",
+      context = mapOf("modelId" to modelId),
+    ) {
       val activeDownloads = downloadManager.getActiveDownloads().first()
       val activeCount = activeDownloads.count { it.status == DownloadStatus.DOWNLOADING }
       val maxConcurrent = downloadManager.getMaxConcurrentDownloads()
@@ -39,21 +45,17 @@ constructor(
       modelCatalogRepository.updateInstallState(modelId, InstallState.DOWNLOADING)
       modelCatalogRepository.updateDownloadTaskId(modelId, taskId)
       NanoAIResult.success(taskId)
-    } catch (e: Exception) {
-      NanoAIResult.recoverable(
-        message = "Failed to start download for model $modelId",
-        cause = e,
-        context = mapOf("modelId" to modelId),
-      )
     }
-  }
 
   /** Validate downloaded checksum and update install state accordingly. */
-  override suspend fun verifyDownloadChecksum(modelId: String): NanoAIResult<Boolean> {
-    return try {
+  override suspend fun verifyDownloadChecksum(modelId: String): NanoAIResult<Boolean> =
+    guardOperation(
+      message = "Failed to verify checksum for model $modelId",
+      context = mapOf("modelId" to modelId),
+    ) {
       val model: ModelPackage =
         modelCatalogRepository.getModelById(modelId).first()
-          ?: return NanoAIResult.recoverable(
+          ?: return@guardOperation NanoAIResult.recoverable(
             message = "Model $modelId not found",
             context = mapOf("modelId" to modelId),
           )
@@ -62,7 +64,7 @@ constructor(
         model.checksumSha256
           ?: run {
             modelCatalogRepository.updateInstallState(modelId, InstallState.ERROR)
-            return NanoAIResult.recoverable(
+            return@guardOperation NanoAIResult.recoverable(
               message = "No checksum available for model $modelId",
               context = mapOf("modelId" to modelId),
             )
@@ -72,7 +74,7 @@ constructor(
         downloadManager.getDownloadedChecksum(modelId)
           ?: run {
             modelCatalogRepository.updateInstallState(modelId, InstallState.ERROR)
-            return NanoAIResult.recoverable(
+            return@guardOperation NanoAIResult.recoverable(
               message = "Downloaded checksum not available for model $modelId",
               context = mapOf("modelId" to modelId),
             )
@@ -87,41 +89,33 @@ constructor(
         modelCatalogRepository.updateInstallState(modelId, InstallState.ERROR)
       }
       NanoAIResult.success(matches)
-    } catch (e: Exception) {
-      NanoAIResult.recoverable(
-        message = "Failed to verify checksum for model $modelId",
-        cause = e,
-        context = mapOf("modelId" to modelId),
-      )
     }
-  }
 
   /** Pause a download task and persist status. */
-  override suspend fun pauseDownload(taskId: UUID): NanoAIResult<Unit> {
-    return try {
+  override suspend fun pauseDownload(taskId: UUID): NanoAIResult<Unit> =
+    guardOperation(
+      message = "Failed to pause download $taskId",
+      context = mapOf("taskId" to taskId.toString()),
+    ) {
       downloadManager.pauseDownload(taskId)
       downloadManager.updateTaskStatus(taskId, DownloadStatus.PAUSED)
       NanoAIResult.success(Unit)
-    } catch (e: Exception) {
-      NanoAIResult.recoverable(
-        message = "Failed to pause download $taskId",
-        cause = e,
-        context = mapOf("taskId" to taskId.toString()),
-      )
     }
-  }
 
   /** Resume a paused download. */
-  override suspend fun resumeDownload(taskId: UUID): NanoAIResult<Unit> {
-    return try {
+  override suspend fun resumeDownload(taskId: UUID): NanoAIResult<Unit> =
+    guardOperation(
+      message = "Failed to resume download $taskId",
+      context = mapOf("taskId" to taskId.toString()),
+    ) {
       val task =
         downloadManager.getTaskById(taskId).first()
-          ?: return NanoAIResult.recoverable(
+          ?: return@guardOperation NanoAIResult.recoverable(
             message = "Download task $taskId not found",
             context = mapOf("taskId" to taskId.toString()),
           )
       if (task.status != DownloadStatus.PAUSED)
-        return NanoAIResult.recoverable(
+        return@guardOperation NanoAIResult.recoverable(
           message = "Download task $taskId is not paused",
           context = mapOf("taskId" to taskId.toString(), "status" to task.status.toString()),
         )
@@ -129,18 +123,14 @@ constructor(
       downloadManager.resumeDownload(taskId)
       downloadManager.updateTaskStatus(taskId, DownloadStatus.DOWNLOADING)
       NanoAIResult.success(Unit)
-    } catch (e: Exception) {
-      NanoAIResult.recoverable(
-        message = "Failed to resume download $taskId",
-        cause = e,
-        context = mapOf("taskId" to taskId.toString()),
-      )
     }
-  }
 
   /** Cancel a download and cleanup associated files. */
-  override suspend fun cancelDownload(taskId: UUID): NanoAIResult<Unit> {
-    return try {
+  override suspend fun cancelDownload(taskId: UUID): NanoAIResult<Unit> =
+    guardOperation(
+      message = "Failed to cancel download $taskId",
+      context = mapOf("taskId" to taskId.toString()),
+    ) {
       val modelId = downloadManager.getModelIdForTask(taskId)
       downloadManager.cancelDownload(taskId)
       modelId?.let {
@@ -149,21 +139,17 @@ constructor(
         modelCatalogRepository.updateDownloadTaskId(it, null)
       }
       NanoAIResult.success(Unit)
-    } catch (e: Exception) {
-      NanoAIResult.recoverable(
-        message = "Failed to cancel download $taskId",
-        cause = e,
-        context = mapOf("taskId" to taskId.toString()),
-      )
     }
-  }
 
   /** Delete a model if not active in any chat session. */
-  override suspend fun deleteModel(modelId: String): NanoAIResult<Unit> {
-    return try {
+  override suspend fun deleteModel(modelId: String): NanoAIResult<Unit> =
+    guardOperation(
+      message = "Failed to delete model $modelId",
+      context = mapOf("modelId" to modelId),
+    ) {
       val inUse = modelCatalogRepository.isModelActiveInSession(modelId)
       if (inUse) {
-        return NanoAIResult.recoverable(
+        return@guardOperation NanoAIResult.recoverable(
           message = "Model $modelId is active in a conversation",
           context = mapOf("modelId" to modelId),
         )
@@ -173,21 +159,21 @@ constructor(
       modelCatalogRepository.updateInstallState(modelId, InstallState.NOT_INSTALLED)
       modelCatalogRepository.updateDownloadTaskId(modelId, null)
       NanoAIResult.success(Unit)
-    } catch (e: Exception) {
-      NanoAIResult.recoverable(
-        message = "Failed to delete model $modelId",
-        cause = e,
-        context = mapOf("modelId" to modelId),
-      )
     }
-  }
 
   /** Export personas, provider configs, and optional chat history as bundle. */
   override suspend fun exportBackup(
     destinationPath: String,
     includeChatHistory: Boolean,
-  ): NanoAIResult<String> {
-    return try {
+  ): NanoAIResult<String> =
+    guardOperation(
+      message = "Failed to export backup to $destinationPath",
+      context =
+        mapOf(
+          "destinationPath" to destinationPath,
+          "includeChatHistory" to includeChatHistory.toString(),
+        ),
+    ) {
       val personas = exportService.gatherPersonas()
       val providers = exportService.gatherAPIProviderConfigs()
       val chatHistory = if (includeChatHistory) exportService.gatherChatHistory() else emptyList()
@@ -196,18 +182,7 @@ constructor(
         exportService.createExportBundle(personas, providers, destinationPath, chatHistory)
       exportService.notifyUnencryptedExport(bundlePath)
       NanoAIResult.success(bundlePath)
-    } catch (e: Exception) {
-      NanoAIResult.recoverable(
-        message = "Failed to export backup to $destinationPath",
-        cause = e,
-        context =
-          mapOf(
-            "destinationPath" to destinationPath,
-            "includeChatHistory" to includeChatHistory.toString(),
-          ),
-      )
     }
-  }
 
   /** Observe download progress as a Flow. */
   override fun getDownloadProgress(taskId: UUID): Flow<Float> =
@@ -222,22 +197,25 @@ constructor(
     downloadManager.observeManagedDownloads()
 
   /** Retry a failed download task. */
-  override suspend fun retryFailedDownload(taskId: UUID): NanoAIResult<Unit> {
-    return try {
+  override suspend fun retryFailedDownload(taskId: UUID): NanoAIResult<Unit> =
+    guardOperation(
+      message = "Failed to retry download $taskId",
+      context = mapOf("taskId" to taskId.toString()),
+    ) {
       val task =
         downloadManager.getTaskById(taskId).first()
-          ?: return NanoAIResult.recoverable(
+          ?: return@guardOperation NanoAIResult.recoverable(
             message = "Download task $taskId not found",
             context = mapOf("taskId" to taskId.toString()),
           )
       if (task.status != DownloadStatus.FAILED)
-        return NanoAIResult.recoverable(
+        return@guardOperation NanoAIResult.recoverable(
           message = "Download task $taskId is not failed",
           context = mapOf("taskId" to taskId.toString(), "status" to task.status.toString()),
         )
       val modelId =
         downloadManager.getModelIdForTask(taskId)
-          ?: return NanoAIResult.recoverable(
+          ?: return@guardOperation NanoAIResult.recoverable(
             message = "Model ID not found for task $taskId",
             context = mapOf("taskId" to taskId.toString()),
           )
@@ -247,12 +225,35 @@ constructor(
       modelCatalogRepository.updateInstallState(modelId, InstallState.DOWNLOADING)
       modelCatalogRepository.updateDownloadTaskId(modelId, taskId)
       NanoAIResult.success(Unit)
-    } catch (e: Exception) {
+    }
+
+  private inline fun <T> guardOperation(
+    message: String,
+    context: Map<String, String>,
+    block: () -> NanoAIResult<T>,
+  ): NanoAIResult<T> {
+    return try {
+      block()
+    } catch (cancellation: CancellationException) {
+      throw cancellation
+    } catch (sqliteException: SQLiteException) {
+      NanoAIResult.recoverable(message = message, cause = sqliteException, context = context)
+    } catch (ioException: IOException) {
+      NanoAIResult.recoverable(message = message, cause = ioException, context = context)
+    } catch (illegalStateException: IllegalStateException) {
       NanoAIResult.recoverable(
-        message = "Failed to retry download $taskId",
-        cause = e,
-        context = mapOf("taskId" to taskId.toString()),
+        message = message,
+        cause = illegalStateException,
+        context = context,
       )
+    } catch (illegalArgumentException: IllegalArgumentException) {
+      NanoAIResult.recoverable(
+        message = message,
+        cause = illegalArgumentException,
+        context = context,
+      )
+    } catch (securityException: SecurityException) {
+      NanoAIResult.recoverable(message = message, cause = securityException, context = context)
     }
   }
 }

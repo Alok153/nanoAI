@@ -26,6 +26,7 @@ import com.vjaykrsna.nanoai.feature.library.presentation.model.ModelLibraryTabSe
 import com.vjaykrsna.nanoai.feature.library.presentation.model.ModelSort
 import com.vjaykrsna.nanoai.feature.library.presentation.util.filterBy
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.io.IOException
 import java.util.Locale
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
@@ -495,11 +496,27 @@ constructor(
           )
         )
       }
-    } catch (e: Exception) {
+    } catch (cancellationException: CancellationException) {
+      throw cancellationException
+    } catch (ioException: IOException) {
       _errorEvents.emit(
         LibraryError.DownloadFailed(
           modelId = hfModel.modelId,
-          message = "Unexpected error: ${e.message}",
+          message = "Network error while processing Hugging Face model: ${ioException.message}",
+        )
+      )
+    } catch (illegalStateException: IllegalStateException) {
+      _errorEvents.emit(
+        LibraryError.DownloadFailed(
+          modelId = hfModel.modelId,
+          message = "Failed to process Hugging Face model: ${illegalStateException.message}",
+        )
+      )
+    } catch (illegalArgumentException: IllegalArgumentException) {
+      _errorEvents.emit(
+        LibraryError.DownloadFailed(
+          modelId = hfModel.modelId,
+          message = "Invalid Hugging Face model metadata: ${illegalArgumentException.message}",
         )
       )
     }

@@ -50,15 +50,28 @@ class PerformanceMonitor @Inject constructor(private val telemetryReporter: Tele
         metadata =
           mapOf(KEY_ACTIVITY to activity::class.java.simpleName, KEY_JANKSTATS_ENABLED to "true"),
       )
-    } catch (e: Exception) {
+    } catch (illegalStateException: IllegalStateException) {
       telemetryReporter.report(
         source = "PerformanceMonitor.startMonitoring",
         result =
           NanoAIResult.FatalError(
-            message = "Failed to initialize performance monitoring: ${e.message}",
+            message =
+              "Failed to initialize performance monitoring: ${illegalStateException.message}",
             supportContact = null,
             telemetryId = null,
-            cause = e,
+            cause = illegalStateException,
+          ),
+      )
+    } catch (securityException: SecurityException) {
+      telemetryReporter.report(
+        source = "PerformanceMonitor.startMonitoring",
+        result =
+          NanoAIResult.FatalError(
+            message =
+              "Security policy prevented performance monitoring: ${securityException.message}",
+            supportContact = null,
+            telemetryId = null,
+            cause = securityException,
           ),
       )
     }
@@ -75,15 +88,16 @@ class PerformanceMonitor @Inject constructor(private val telemetryReporter: Tele
         event = PERFORMANCE_MONITORING_STOPPED,
         metadata = mapOf(KEY_DURATION_MS to _performanceMetrics.value.sessionDurationMs.toString()),
       )
-    } catch (e: Exception) {
+    } catch (illegalStateException: IllegalStateException) {
       telemetryReporter.report(
         source = "PerformanceMonitor.stopMonitoring",
         result =
           NanoAIResult.RecoverableError(
-            message = "Failed to stop performance monitoring: ${e.message}",
+            message =
+              "Failed to stop performance monitoring: ${illegalStateException.message}",
             retryAfterSeconds = null,
             telemetryId = null,
-            cause = e,
+            cause = illegalStateException,
           ),
       )
     }

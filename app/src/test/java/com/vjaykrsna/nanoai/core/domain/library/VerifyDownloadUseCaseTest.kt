@@ -9,8 +9,10 @@ import com.vjaykrsna.nanoai.testing.assertSuccess
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import kotlin.test.assertFailsWith
 import org.junit.Before
 import org.junit.Test
 
@@ -90,6 +92,22 @@ class VerifyDownloadUseCaseTest {
 
     result.assertRecoverableError()
     coVerify { modelCatalogRepository.updateInstallState(modelId, InstallState.ERROR) }
+  }
+
+  @Test
+  fun `invoke returns recoverable error when repository fails`() = runTest {
+    coEvery { modelCatalogRepository.getModelById(modelId) } throws IllegalStateException("db")
+
+    val result = useCase.invoke(modelId)
+
+    result.assertRecoverableError()
+  }
+
+  @Test
+  fun `invoke rethrows cancellation`() = runTest {
+    coEvery { modelCatalogRepository.getModelById(modelId) } throws CancellationException("cancel")
+
+    assertFailsWith<CancellationException> { useCase.invoke(modelId) }
   }
 
   private fun createModelPackage(checksum: String?) =

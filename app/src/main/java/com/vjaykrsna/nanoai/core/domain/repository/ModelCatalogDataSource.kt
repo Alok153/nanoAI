@@ -8,12 +8,16 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.core.network.ConnectivityStatusProvider
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
+import retrofit2.HttpException
 
 /**
  * Data source for model catalog with offline-first approach.
@@ -42,8 +46,11 @@ constructor(
       if (cachedJson != null) {
         try {
           json.decodeFromString<List<ModelPackage>>(cachedJson)
-        } catch (e: Exception) {
-          Log.e("ModelCatalogDataSource", "Failed to decode cached catalog", e)
+        } catch (serializationException: SerializationException) {
+          Log.e("ModelCatalogDataSource", "Failed to decode cached catalog", serializationException)
+          emptyList()
+        } catch (illegalArgumentException: IllegalArgumentException) {
+          Log.e("ModelCatalogDataSource", "Invalid cached catalog content", illegalArgumentException)
           emptyList()
         }
       } else {
@@ -86,18 +93,16 @@ constructor(
         }
 
       NanoAIResult.success(models)
-    } catch (e: Exception) {
-      // Network failed, try cache
-      val cached = getCachedCatalog()
-      if (cached.isNotEmpty()) {
-        NanoAIResult.success(cached)
-      } else {
-        NanoAIResult.recoverable(
-          message = "Failed to load catalog from network and no cache available",
-          cause = e,
-          context = emptyMap(),
-        )
-      }
+    } catch (cancellationException: CancellationException) {
+      throw cancellationException
+    } catch (httpException: HttpException) {
+      recoverFromCatalogFailure(httpException)
+    } catch (ioException: IOException) {
+      recoverFromCatalogFailure(ioException)
+    } catch (serializationException: SerializationException) {
+      recoverFromCatalogFailure(serializationException)
+    } catch (illegalStateException: IllegalStateException) {
+      recoverFromCatalogFailure(illegalStateException)
     }
   }
 
@@ -106,8 +111,11 @@ constructor(
     return dataStore.data.first()[catalogKey]?.let { jsonString ->
       try {
         json.decodeFromString<List<ModelPackage>>(jsonString)
-      } catch (e: Exception) {
-        Log.e("ModelCatalogDataSource", "Failed to decode cached catalog", e)
+      } catch (serializationException: SerializationException) {
+        Log.e("ModelCatalogDataSource", "Failed to decode cached catalog", serializationException)
+        emptyList()
+      } catch (illegalArgumentException: IllegalArgumentException) {
+        Log.e("ModelCatalogDataSource", "Invalid cached catalog content", illegalArgumentException)
         emptyList()
       }
     } ?: emptyList()
@@ -117,5 +125,20 @@ constructor(
   private suspend fun cacheCatalog(models: List<ModelPackage>) {
     val jsonString = json.encodeToString(models)
     dataStore.edit { preferences -> preferences[catalogKey] = jsonString }
+  }
+
+  private suspend fun recoverFromCatalogFailure(
+    throwable: Throwable
+  ): NanoAIResult<List<ModelPackage>> {
+    val cached = getCachedCatalog()
+    return if (cached.isNotEmpty()) {
+      NanoAIResult.success(cached)
+    } else {
+      NanoAIResult.recoverable(
+        message = "Failed to load catalog from network and no cache available",
+        cause = throwable,
+        context = emptyMap(),
+      )
+    }
   }
 }

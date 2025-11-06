@@ -1,9 +1,12 @@
 package com.vjaykrsna.nanoai.core.domain.library
 
+import android.database.sqlite.SQLiteException
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 
 /** Use case for model catalog operations. */
@@ -19,57 +22,72 @@ constructor(private val modelCatalogRepository: ModelCatalogRepository) {
     modelCatalogRepository.observeInstalledModels()
 
   /** Get all models in the catalog. */
-  suspend fun getAllModels(): NanoAIResult<List<ModelPackage>> {
-    return try {
+  suspend fun getAllModels(): NanoAIResult<List<ModelPackage>> =
+    guardRepositoryCall(message = "Failed to get all models") {
       val models = modelCatalogRepository.getAllModels()
       NanoAIResult.success(models)
-    } catch (e: Exception) {
-      NanoAIResult.recoverable(message = "Failed to get all models", cause = e)
     }
-  }
 
   /** Get a specific model by ID. */
-  suspend fun getModel(modelId: String): NanoAIResult<ModelPackage?> {
-    return try {
+  suspend fun getModel(modelId: String): NanoAIResult<ModelPackage?> =
+    guardRepositoryCall(
+      message = "Failed to get model $modelId",
+      context = mapOf("modelId" to modelId),
+    ) {
       val model = modelCatalogRepository.getModel(modelId)
       NanoAIResult.success(model)
-    } catch (e: Exception) {
-      NanoAIResult.recoverable(
-        message = "Failed to get model $modelId",
-        cause = e,
-        context = mapOf("modelId" to modelId),
-      )
     }
-  }
 
   /** Insert or update a model in the catalog. */
-  suspend fun upsertModel(model: ModelPackage): NanoAIResult<Unit> {
-    return try {
+  suspend fun upsertModel(model: ModelPackage): NanoAIResult<Unit> =
+    guardRepositoryCall(
+      message = "Failed to upsert model ${model.modelId}",
+      context = mapOf("modelId" to model.modelId),
+    ) {
       modelCatalogRepository.upsertModel(model)
       NanoAIResult.success(Unit)
-    } catch (e: Exception) {
-      NanoAIResult.recoverable(
-        message = "Failed to upsert model ${model.modelId}",
-        cause = e,
-        context = mapOf("modelId" to model.modelId),
-      )
     }
-  }
 
   /** Record an offline fallback scenario. */
   suspend fun recordOfflineFallback(
     reason: String,
     cachedCount: Int,
     message: String? = null,
-  ): NanoAIResult<Unit> {
-    return try {
+  ): NanoAIResult<Unit> =
+    guardRepositoryCall(
+      message = "Failed to record offline fallback",
+      context =
+        mapOf("reason" to reason, "cachedCount" to cachedCount.toString()) +
+          (message?.let { mapOf("message" to it) } ?: emptyMap()),
+    ) {
       modelCatalogRepository.recordOfflineFallback(reason, cachedCount, message)
       NanoAIResult.success(Unit)
-    } catch (e: Exception) {
+    }
+
+  private inline fun <T> guardRepositoryCall(
+    message: String,
+    context: Map<String, String> = emptyMap(),
+    block: () -> NanoAIResult<T>,
+  ): NanoAIResult<T> {
+    return try {
+      block()
+    } catch (cancellation: CancellationException) {
+      throw cancellation
+    } catch (sqliteException: SQLiteException) {
+      NanoAIResult.recoverable(message = message, cause = sqliteException, context = context)
+    } catch (ioException: IOException) {
+      NanoAIResult.recoverable(message = message, cause = ioException, context = context)
+    } catch (illegalStateException: IllegalStateException) {
       NanoAIResult.recoverable(
-        message = "Failed to record offline fallback",
-        cause = e,
-        context = mapOf("reason" to reason, "cachedCount" to cachedCount.toString()),
+        message = message,
+        cause = illegalStateException,
+        context = context,
+      )
+    } catch (illegalArgumentException: IllegalArgumentException) {
+      NanoAIResult.recoverable(
+        message = message,
+        cause = illegalArgumentException,
+        context = context,
       )
     }
   }

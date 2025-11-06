@@ -1,12 +1,15 @@
 package com.vjaykrsna.nanoai.core.domain.library
 
+import android.database.sqlite.SQLiteException
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.core.domain.model.library.DownloadStatus
 import com.vjaykrsna.nanoai.core.domain.model.library.InstallState
+import java.io.IOException
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 
@@ -19,8 +22,11 @@ constructor(
   private val downloadManager: DownloadManager,
 ) {
   /** Queue or start a download based on concurrency limits. */
-  suspend fun downloadModel(modelId: String): NanoAIResult<UUID> {
-    return try {
+  suspend fun downloadModel(modelId: String): NanoAIResult<UUID> =
+    guardDownloadOperation(
+      message = "Failed to start download for model $modelId",
+      context = mapOf("modelId" to modelId),
+    ) {
       val activeDownloads = downloadManager.getActiveDownloads().first()
       val activeCount = activeDownloads.count { it.status == DownloadStatus.DOWNLOADING }
       val maxConcurrent = downloadManager.getMaxConcurrentDownloads()
@@ -35,33 +41,25 @@ constructor(
       modelCatalogRepository.updateInstallState(modelId, InstallState.DOWNLOADING)
       modelCatalogRepository.updateDownloadTaskId(modelId, taskId)
       NanoAIResult.success(taskId)
-    } catch (e: Exception) {
-      NanoAIResult.recoverable(
-        message = "Failed to start download for model $modelId",
-        cause = e,
-        context = mapOf("modelId" to modelId),
-      )
     }
-  }
 
   /** Pause a download task and persist status. */
-  suspend fun pauseDownload(taskId: UUID): NanoAIResult<Unit> {
-    return try {
+  suspend fun pauseDownload(taskId: UUID): NanoAIResult<Unit> =
+    guardDownloadOperation(
+      message = "Failed to pause download $taskId",
+      context = mapOf("taskId" to taskId.toString()),
+    ) {
       downloadManager.pauseDownload(taskId)
       downloadManager.updateTaskStatus(taskId, DownloadStatus.PAUSED)
       NanoAIResult.success(Unit)
-    } catch (e: Exception) {
-      NanoAIResult.recoverable(
-        message = "Failed to pause download $taskId",
-        cause = e,
-        context = mapOf("taskId" to taskId.toString()),
-      )
     }
-  }
 
   /** Resume a paused download. */
-  suspend fun resumeDownload(taskId: UUID): NanoAIResult<Unit> {
-    return try {
+  suspend fun resumeDownload(taskId: UUID): NanoAIResult<Unit> =
+    guardDownloadOperation(
+      message = "Failed to resume download $taskId",
+      context = mapOf("taskId" to taskId.toString()),
+    ) {
       val task = downloadManager.getTaskById(taskId).first()
       val result =
         if (task == null) {
@@ -80,18 +78,14 @@ constructor(
           NanoAIResult.success(Unit)
         }
       result
-    } catch (e: Exception) {
-      NanoAIResult.recoverable(
-        message = "Failed to resume download $taskId",
-        cause = e,
-        context = mapOf("taskId" to taskId.toString()),
-      )
     }
-  }
 
   /** Cancel a download and cleanup associated files. */
-  suspend fun cancelDownload(taskId: UUID): NanoAIResult<Unit> {
-    return try {
+  suspend fun cancelDownload(taskId: UUID): NanoAIResult<Unit> =
+    guardDownloadOperation(
+      message = "Failed to cancel download $taskId",
+      context = mapOf("taskId" to taskId.toString()),
+    ) {
       val modelId = downloadManager.getModelIdForTask(taskId)
       downloadManager.cancelDownload(taskId)
       modelId?.let {
@@ -100,18 +94,14 @@ constructor(
         modelCatalogRepository.updateDownloadTaskId(it, null)
       }
       NanoAIResult.success(Unit)
-    } catch (e: Exception) {
-      NanoAIResult.recoverable(
-        message = "Failed to cancel download $taskId",
-        cause = e,
-        context = mapOf("taskId" to taskId.toString()),
-      )
     }
-  }
 
   /** Retry a failed download task. */
-  suspend fun retryFailedDownload(taskId: UUID): NanoAIResult<Unit> {
-    return try {
+  suspend fun retryFailedDownload(taskId: UUID): NanoAIResult<Unit> =
+    guardDownloadOperation(
+      message = "Failed to retry download $taskId",
+      context = mapOf("taskId" to taskId.toString()),
+    ) {
       val task = downloadManager.getTaskById(taskId).first()
       val modelId = downloadManager.getModelIdForTask(taskId)
 
@@ -139,14 +129,7 @@ constructor(
           NanoAIResult.success(Unit)
         }
       result
-    } catch (e: Exception) {
-      NanoAIResult.recoverable(
-        message = "Failed to retry download $taskId",
-        cause = e,
-        context = mapOf("taskId" to taskId.toString()),
-      )
     }
-  }
 
   /** Observe download progress as a Flow. */
   fun getDownloadProgress(taskId: UUID): Flow<Float> = downloadManager.observeProgress(taskId)
@@ -157,4 +140,34 @@ constructor(
 
   /** Observe queued download tasks. */
   fun observeDownloadTasks(): Flow<List<DownloadTask>> = downloadManager.observeManagedDownloads()
+
+  private inline fun <T> guardDownloadOperation(
+    message: String,
+    context: Map<String, String> = emptyMap(),
+    block: () -> NanoAIResult<T>,
+  ): NanoAIResult<T> {
+    return try {
+      block()
+    } catch (cancellation: CancellationException) {
+      throw cancellation
+    } catch (sqliteException: SQLiteException) {
+      NanoAIResult.recoverable(message = message, cause = sqliteException, context = context)
+    } catch (ioException: IOException) {
+      NanoAIResult.recoverable(message = message, cause = ioException, context = context)
+    } catch (illegalStateException: IllegalStateException) {
+      NanoAIResult.recoverable(
+        message = message,
+        cause = illegalStateException,
+        context = context,
+      )
+    } catch (illegalArgumentException: IllegalArgumentException) {
+      NanoAIResult.recoverable(
+        message = message,
+        cause = illegalArgumentException,
+        context = context,
+      )
+    } catch (securityException: SecurityException) {
+      NanoAIResult.recoverable(message = message, cause = securityException, context = context)
+    }
+  }
 }

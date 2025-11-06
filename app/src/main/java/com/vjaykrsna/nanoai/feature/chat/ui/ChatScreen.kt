@@ -62,6 +62,7 @@ import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoSpacing
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import java.io.IOException
 
 private const val MESSAGE_BUBBLE_WIDTH_FRACTION = 0.85f
 
@@ -115,9 +116,12 @@ fun ChatScreen(
               }
             }
           bitmap?.let { viewModel.onImageSelected(it) }
-        } catch (e: Exception) {
-          // Log the error for debugging
-          android.util.Log.e("ChatScreen", "Failed to load image", e)
+        } catch (ioException: IOException) {
+          logImageSelectionFailure(ioException)
+        } catch (argumentException: IllegalArgumentException) {
+          logImageSelectionFailure(argumentException)
+        } catch (securityException: SecurityException) {
+          logImageSelectionFailure(securityException)
         }
       }
     }
@@ -231,6 +235,10 @@ fun ChatScreen(
       }
     }
   }
+}
+
+private fun logImageSelectionFailure(throwable: Throwable) {
+  android.util.Log.e("ChatScreen", "Failed to load image", throwable)
 }
 
 @Composable

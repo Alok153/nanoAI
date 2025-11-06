@@ -1,11 +1,14 @@
 package com.vjaykrsna.nanoai.core.domain.library
 
+import android.database.sqlite.SQLiteException
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.core.domain.model.library.DownloadStatus
 import com.vjaykrsna.nanoai.core.domain.model.library.InstallState
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 
 /** Use case for verifying downloaded model checksums. */
@@ -18,7 +21,10 @@ constructor(
 ) {
   /** Validate downloaded checksum and update install state accordingly. */
   suspend fun invoke(modelId: String): NanoAIResult<Boolean> =
-    try {
+    guardVerificationOperation(
+      message = "Failed to verify checksum for model $modelId",
+      context = mapOf("modelId" to modelId),
+    ) {
       when (val validation = validateModelAndChecksums(modelId)) {
         is ValidationResult.Success -> {
           val (model, expectedChecksum, actualChecksum) = validation.data
@@ -28,12 +34,6 @@ constructor(
         }
         is ValidationResult.Error -> validation.error
       }
-    } catch (e: Exception) {
-      NanoAIResult.recoverable(
-        message = "Failed to verify checksum for model $modelId",
-        cause = e,
-        context = mapOf("modelId" to modelId),
-      )
     }
 
   private suspend fun validateModelAndChecksums(modelId: String): ValidationResult {
@@ -84,6 +84,34 @@ constructor(
       model.downloadTaskId?.let { downloadManager.updateTaskStatus(it, DownloadStatus.COMPLETED) }
     } else {
       modelCatalogRepository.updateInstallState(modelId, InstallState.ERROR)
+    }
+  }
+
+  private inline fun <T> guardVerificationOperation(
+    message: String,
+    context: Map<String, String>,
+    block: () -> NanoAIResult<T>,
+  ): NanoAIResult<T> {
+    return try {
+      block()
+    } catch (cancellation: CancellationException) {
+      throw cancellation
+    } catch (sqliteException: SQLiteException) {
+      NanoAIResult.recoverable(message = message, cause = sqliteException, context = context)
+    } catch (ioException: IOException) {
+      NanoAIResult.recoverable(message = message, cause = ioException, context = context)
+    } catch (illegalStateException: IllegalStateException) {
+      NanoAIResult.recoverable(
+        message = message,
+        cause = illegalStateException,
+        context = context,
+      )
+    } catch (illegalArgumentException: IllegalArgumentException) {
+      NanoAIResult.recoverable(
+        message = message,
+        cause = illegalArgumentException,
+        context = context,
+      )
     }
   }
 }

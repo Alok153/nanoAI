@@ -7,10 +7,13 @@ import com.vjaykrsna.nanoai.testing.assertSuccess
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import java.io.IOException
 import java.util.UUID
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Instant
+import kotlin.test.assertFailsWith
 import org.junit.Before
 import org.junit.Test
 
@@ -87,12 +90,21 @@ class ImageGalleryUseCaseTest {
   @Test
   fun `getImageById returns recoverable error when repository fails`() = runTest {
     val imageId = UUID.randomUUID()
-    val exception = RuntimeException("Database error")
+    val exception = IllegalStateException("Database error")
     coEvery { imageGalleryRepository.getImageById(imageId) } throws exception
 
     val result = useCase.getImageById(imageId)
 
     result.assertRecoverableError()
+  }
+
+  @Test
+  fun `getImageById rethrows cancellation`() = runTest {
+    val imageId = UUID.randomUUID()
+    coEvery { imageGalleryRepository.getImageById(imageId) } throws
+      CancellationException("cancel")
+
+    assertFailsWith<CancellationException> { useCase.getImageById(imageId) }
   }
 
   @Test
@@ -130,7 +142,7 @@ class ImageGalleryUseCaseTest {
         filePath = "/images/sunset.jpg",
         createdAt = Instant.parse("2024-01-01T12:00:00Z"),
       )
-    val exception = RuntimeException("Storage error")
+    val exception = IOException("Storage error")
     coEvery { imageGalleryRepository.saveImage(image) } throws exception
 
     val result = useCase.saveImage(image)
@@ -151,7 +163,7 @@ class ImageGalleryUseCaseTest {
   @Test
   fun `deleteImage returns recoverable error when repository fails`() = runTest {
     val imageId = UUID.randomUUID()
-    val exception = RuntimeException("Database error")
+    val exception = IllegalArgumentException("Database error")
     coEvery { imageGalleryRepository.deleteImage(imageId) } throws exception
 
     val result = useCase.deleteImage(imageId)
@@ -170,7 +182,7 @@ class ImageGalleryUseCaseTest {
 
   @Test
   fun `deleteAllImages returns recoverable error when repository fails`() = runTest {
-    val exception = RuntimeException("Database error")
+    val exception = IllegalStateException("Database error")
     coEvery { imageGalleryRepository.deleteAllImages() } throws exception
 
     val result = useCase.deleteAllImages()

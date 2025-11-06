@@ -16,11 +16,14 @@ suspend fun retryWithBackoff(
     repeat(maxRetries) { attempt ->
         try {
             return block()
-        } catch (e: Exception) {
-            if (attempt == maxRetries - 1) throw e
+        } catch (ioException: IOException) {
+            if (attempt == maxRetries - 1) throw ioException
             delay(currentDelay)
-            currentDelay = (currentDelay * factor).toLong().coerceAtMost(maxDelay)
+        } catch (httpException: HttpException) {
+            if (attempt == maxRetries - 1) throw httpException
+            delay(currentDelay)
         }
+        currentDelay = (currentDelay * factor).toLong().coerceAtMost(maxDelay)
     }
 }
 ```

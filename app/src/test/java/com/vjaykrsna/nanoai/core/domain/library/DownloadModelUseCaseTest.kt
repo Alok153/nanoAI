@@ -9,8 +9,10 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import java.util.UUID
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import kotlin.test.assertFailsWith
 import org.junit.Before
 import org.junit.Test
 
@@ -73,12 +75,19 @@ class DownloadModelUseCaseTest {
 
   @Test
   fun `downloadModel returns recoverable error when download fails`() = runTest {
-    val exception = RuntimeException("Download failed")
+    val exception = IllegalStateException("Download failed")
     coEvery { downloadManager.getActiveDownloads() } throws exception
 
     val result = useCase.downloadModel(modelId)
 
     result.assertRecoverableError()
+  }
+
+  @Test
+  fun `downloadModel rethrows cancellation`() = runTest {
+    coEvery { downloadManager.getActiveDownloads() } throws CancellationException("cancel")
+
+    assertFailsWith<CancellationException> { useCase.downloadModel(modelId) }
   }
 
   @Test
@@ -105,6 +114,15 @@ class DownloadModelUseCaseTest {
   @Test
   fun `resumeDownload fails when task not found`() = runTest {
     coEvery { downloadManager.getTaskById(taskId) } returns flowOf(null)
+
+    val result = useCase.resumeDownload(taskId)
+
+    result.assertRecoverableError()
+  }
+
+  @Test
+  fun `resumeDownload returns recoverable when manager throws`() = runTest {
+    coEvery { downloadManager.getTaskById(taskId) } throws IllegalStateException("db error")
 
     val result = useCase.resumeDownload(taskId)
 

@@ -1,10 +1,12 @@
 package com.vjaykrsna.nanoai.core.domain.library
 
+import com.vjaykrsna.nanoai.testing.assertFatalError
 import com.vjaykrsna.nanoai.testing.assertRecoverableError
 import com.vjaykrsna.nanoai.testing.assertSuccess
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import java.io.IOException
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
@@ -49,12 +51,22 @@ class ExportBackupUseCaseTest {
   }
 
   @Test
-  fun `invoke returns recoverable error when export fails`() = runTest {
-    val exception = RuntimeException("Export failed")
+  fun `invoke returns recoverable error when export fails with io exception`() = runTest {
+    val exception = IOException("Export failed")
     coEvery { exportService.gatherPersonas() } throws exception
 
     val result = useCase.invoke(destinationPath, includeChatHistory = false)
 
     result.assertRecoverableError()
+  }
+
+  @Test
+  fun `invoke returns fatal error when security exception occurs`() = runTest {
+    val exception = SecurityException("Keystore locked")
+    coEvery { exportService.gatherPersonas() } throws exception
+
+    val result = useCase.invoke(destinationPath, includeChatHistory = true)
+
+    result.assertFatalError()
   }
 }

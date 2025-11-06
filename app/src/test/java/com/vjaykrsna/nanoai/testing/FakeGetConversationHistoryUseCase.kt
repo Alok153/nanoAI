@@ -4,6 +4,7 @@ import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.domain.model.ChatThread
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CancellationException
 
 /** Fake implementation of [GetConversationHistoryUseCase] for testing. */
 @Singleton
@@ -24,10 +25,18 @@ constructor(private val fakeConversationRepository: FakeConversationRepository) 
     return try {
       val threads = fakeConversationRepository.getAllThreads()
       NanoAIResult.success(threads)
-    } catch (e: Exception) {
+    } catch (cancellationException: CancellationException) {
+      throw cancellationException
+    } catch (illegalStateException: IllegalStateException) {
       NanoAIResult.recoverable(
         message = "Failed to load conversation history",
-        cause = e,
+        cause = illegalStateException,
+        context = emptyMap(),
+      )
+    } catch (illegalArgumentException: IllegalArgumentException) {
+      NanoAIResult.recoverable(
+        message = "Failed to load conversation history",
+        cause = illegalArgumentException,
         context = emptyMap(),
       )
     }

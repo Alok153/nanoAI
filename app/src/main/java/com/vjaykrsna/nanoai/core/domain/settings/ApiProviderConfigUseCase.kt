@@ -1,10 +1,13 @@
 package com.vjaykrsna.nanoai.core.domain.settings
 
+import android.database.sqlite.SQLiteException
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
 import com.vjaykrsna.nanoai.core.domain.repository.ApiProviderConfigRepository
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 
 /** Use case for API provider configuration operations. */
@@ -18,67 +21,78 @@ constructor(private val apiProviderConfigRepository: ApiProviderConfigRepository
     apiProviderConfigRepository.observeAllProviders()
 
   /** Get all API providers. */
-  override suspend fun getAllProviders(): NanoAIResult<List<APIProviderConfig>> {
-    return try {
+  override suspend fun getAllProviders(): NanoAIResult<List<APIProviderConfig>> =
+    guardRepositoryCall(message = "Failed to get all API providers") {
       val providers = apiProviderConfigRepository.getAllProviders()
       NanoAIResult.success(providers)
-    } catch (e: Exception) {
-      NanoAIResult.recoverable(message = "Failed to get all API providers", cause = e)
     }
-  }
 
   /** Get a specific provider by ID. */
-  override suspend fun getProvider(providerId: String): NanoAIResult<APIProviderConfig?> {
-    return try {
+  override suspend fun getProvider(providerId: String): NanoAIResult<APIProviderConfig?> =
+    guardRepositoryCall(
+      message = "Failed to get API provider $providerId",
+      context = mapOf("providerId" to providerId),
+    ) {
       val provider = apiProviderConfigRepository.getProvider(providerId)
       NanoAIResult.success(provider)
-    } catch (e: Exception) {
-      NanoAIResult.recoverable(
-        message = "Failed to get API provider $providerId",
-        cause = e,
-        context = mapOf("providerId" to providerId),
-      )
     }
-  }
 
   /** Add a new API provider. */
-  override suspend fun addProvider(config: APIProviderConfig): NanoAIResult<Unit> {
-    return try {
+  override suspend fun addProvider(config: APIProviderConfig): NanoAIResult<Unit> =
+    guardRepositoryCall(
+      message = "Failed to add API provider ${config.providerId}",
+      context =
+        mapOf("providerId" to config.providerId, "providerName" to config.providerName),
+    ) {
       apiProviderConfigRepository.addProvider(config)
       NanoAIResult.success(Unit)
-    } catch (e: Exception) {
-      NanoAIResult.recoverable(
-        message = "Failed to add API provider ${config.providerId}",
-        cause = e,
-        context = mapOf("providerId" to config.providerId, "providerName" to config.providerName),
-      )
     }
-  }
 
   /** Update an existing API provider. */
-  override suspend fun updateProvider(config: APIProviderConfig): NanoAIResult<Unit> {
-    return try {
+  override suspend fun updateProvider(config: APIProviderConfig): NanoAIResult<Unit> =
+    guardRepositoryCall(
+      message = "Failed to update API provider ${config.providerId}",
+      context =
+        mapOf("providerId" to config.providerId, "providerName" to config.providerName),
+    ) {
       apiProviderConfigRepository.updateProvider(config)
       NanoAIResult.success(Unit)
-    } catch (e: Exception) {
-      NanoAIResult.recoverable(
-        message = "Failed to update API provider ${config.providerId}",
-        cause = e,
-        context = mapOf("providerId" to config.providerId, "providerName" to config.providerName),
-      )
     }
-  }
 
   /** Delete an API provider. */
-  override suspend fun deleteProvider(providerId: String): NanoAIResult<Unit> {
-    return try {
+  override suspend fun deleteProvider(providerId: String): NanoAIResult<Unit> =
+    guardRepositoryCall(
+      message = "Failed to delete API provider $providerId",
+      context = mapOf("providerId" to providerId),
+    ) {
       apiProviderConfigRepository.deleteProvider(providerId)
       NanoAIResult.success(Unit)
-    } catch (e: Exception) {
+    }
+
+  private inline fun <T> guardRepositoryCall(
+    message: String,
+    context: Map<String, String> = emptyMap(),
+    block: () -> NanoAIResult<T>,
+  ): NanoAIResult<T> {
+    return try {
+      block()
+    } catch (cancellation: CancellationException) {
+      throw cancellation
+    } catch (sqliteException: SQLiteException) {
+      NanoAIResult.recoverable(message = message, cause = sqliteException, context = context)
+    } catch (ioException: IOException) {
+      NanoAIResult.recoverable(message = message, cause = ioException, context = context)
+    } catch (illegalStateException: IllegalStateException) {
       NanoAIResult.recoverable(
-        message = "Failed to delete API provider $providerId",
-        cause = e,
-        context = mapOf("providerId" to providerId),
+        message = message,
+        cause = illegalStateException,
+        context = context,
+      )
+    } catch (illegalArgumentException: IllegalArgumentException) {
+      NanoAIResult.recoverable(
+        message = message,
+        cause = illegalArgumentException,
+        context = context,
       )
     }
   }

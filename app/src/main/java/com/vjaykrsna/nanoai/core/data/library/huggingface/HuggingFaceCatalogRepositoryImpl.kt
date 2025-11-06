@@ -16,11 +16,13 @@ import kotlin.time.Duration.Companion.hours
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.minus
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
+import retrofit2.HttpException
 
 /** Retrofit-backed implementation for [HuggingFaceCatalogRepository]. */
 @Singleton
@@ -56,6 +58,18 @@ constructor(
         val models = fetchModelsFromNetwork(query, cacheExpiry)
         NanoAIResult.success(models)
       }
+    } catch (httpException: HttpException) {
+      NanoAIResult.recoverable(
+        message =
+          "Hugging Face returned HTTP ${httpException.code()} while fetching models.",
+        retryAfterSeconds = when (httpException.code()) {
+          429 -> DEFAULT_RETRY_AFTER_SECONDS
+          else -> 60L
+        },
+        telemetryId = null,
+        cause = httpException,
+        context = mapOf("query" to query.toString()),
+      )
     } catch (e: IOException) {
       NanoAIResult.recoverable(
         message =
@@ -65,11 +79,19 @@ constructor(
         cause = e,
         context = mapOf("query" to query.toString()),
       )
-    } catch (e: Exception) {
+    } catch (serializationException: SerializationException) {
+      NanoAIResult.recoverable(
+        message = "Failed to parse Hugging Face catalog response.",
+        retryAfterSeconds = DEFAULT_RETRY_AFTER_SECONDS,
+        telemetryId = null,
+        cause = serializationException,
+        context = mapOf("query" to query.toString()),
+      )
+    } catch (illegalStateException: IllegalStateException) {
       NanoAIResult.fatal(
         message = "An unexpected error occurred while fetching models.",
         supportContact = null,
-        cause = e,
+        cause = illegalStateException,
       )
     }
   }
@@ -231,6 +253,7 @@ constructor(
 
   private companion object {
     val DEFAULT_CACHE_TTL: Duration = 6.hours
+    const val DEFAULT_RETRY_AFTER_SECONDS: Long = 120L
     val DEFAULT_EXPANSIONS =
       listOf(
         "author",
