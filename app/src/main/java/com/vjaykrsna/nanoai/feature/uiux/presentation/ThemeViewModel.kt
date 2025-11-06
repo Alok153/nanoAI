@@ -20,8 +20,7 @@ class ThemeViewModel
 @Inject
 constructor(
   private val themeOperationsUseCase: ThemeOperationsUseCase,
-  @MainImmediateDispatcher
-  private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
+  @MainImmediateDispatcher private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
 ) : ViewModel() {
   /** Current UI preferences including theme, density, and other display settings. */
   val uiPreferences: StateFlow<UiPreferenceSnapshot> =
@@ -45,8 +44,6 @@ constructor(
 
   /** Updates the high contrast enabled preference for the active user. */
   fun updateHighContrastEnabled(enabled: Boolean) {
-    viewModelScope.launch(dispatcher) {
-      themeOperationsUseCase.updateHighContrastEnabled(enabled)
-    }
+    viewModelScope.launch(dispatcher) { themeOperationsUseCase.updateHighContrastEnabled(enabled) }
   }
 }

@@ -11,8 +11,7 @@ import kotlinx.coroutines.flow.flowOf
  *
  * Provides access to available AI models, their installation status, and metadata.
  */
-@Suppress("TooManyFunctions")
-interface ModelCatalogRepository {
+interface ModelCatalogReadRepository {
   /** Get all available models in the catalog. */
   suspend fun getAllModels(): List<ModelPackage>
 
@@ -28,6 +27,17 @@ interface ModelCatalogRepository {
   /** Get models by installation state. */
   suspend fun getModelsByState(state: InstallState): List<ModelPackage>
 
+  /** Observe all models (reactive updates). */
+  fun observeAllModels(): Flow<List<ModelPackage>>
+
+  /** Observe installed models (reactive updates). */
+  fun observeInstalledModels(): Flow<List<ModelPackage>>
+
+  /** Check whether a model is currently active in any non-archived chat session. */
+  suspend fun isModelActiveInSession(modelId: String): Boolean
+}
+
+interface ModelCatalogWriteRepository {
   /** Update model installation state. */
   suspend fun updateModelState(modelId: String, state: InstallState)
 
@@ -47,18 +57,11 @@ interface ModelCatalogRepository {
   /** Replace catalog entries, preserving local install states. */
   suspend fun replaceCatalog(models: List<ModelPackage>)
 
-  /** Observe all models (reactive updates). */
-  fun observeAllModels(): Flow<List<ModelPackage>>
-
-  /** Observe installed models (reactive updates). */
-  fun observeInstalledModels(): Flow<List<ModelPackage>>
-
-  /** Check whether a model is currently active in any non-archived chat session. */
-  suspend fun isModelActiveInSession(modelId: String): Boolean
-
   /** Delete downloaded artifacts for the provided model. */
   suspend fun deleteModelFiles(modelId: String)
+}
 
+interface ModelCatalogRefreshRepository {
   /**
    * Observe refresh status updates, including last successful sync and offline fallbacks.
    *
@@ -73,3 +76,6 @@ interface ModelCatalogRepository {
   /** Record an offline fallback scenario with the cached catalog size and failure reason. */
   suspend fun recordOfflineFallback(reason: String, cachedCount: Int, message: String? = null)
 }
+
+interface ModelCatalogRepository :
+  ModelCatalogReadRepository, ModelCatalogWriteRepository, ModelCatalogRefreshRepository

@@ -40,6 +40,9 @@ import com.vjaykrsna.nanoai.feature.image.ui.ImageFeatureContainer
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryScreen
 import com.vjaykrsna.nanoai.feature.settings.ui.SettingsScreen
 import com.vjaykrsna.nanoai.feature.uiux.presentation.AppUiState
+import com.vjaykrsna.nanoai.feature.uiux.presentation.ChatState
+import com.vjaykrsna.nanoai.feature.uiux.presentation.DisclaimerUiState
+import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellUiState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellViewModel
 import com.vjaykrsna.nanoai.shared.ui.components.DisclaimerDialog
 import com.vjaykrsna.nanoai.shared.ui.shell.NanoShellScaffold
@@ -50,7 +53,6 @@ import com.vjaykrsna.nanoai.shared.ui.shell.ShellUiEvent
 
 /** Entry point that connects app-wide state to the unified Compose shell. */
 @Composable
-@Suppress("LongMethod")
 fun NavigationScaffold(
   appState: AppUiState,
   windowSizeClass: WindowSizeClass,
@@ -62,53 +64,26 @@ fun NavigationScaffold(
   onDisclaimerDecline: () -> Unit = {},
 ) {
   val shellUiState by shellViewModel.uiState.collectAsStateWithLifecycle()
+  val metricsHolder = rememberPerformanceMetricsHolder()
 
-  val view = LocalView.current
-  val metricsStateHolder = remember(view) { PerformanceMetricsState.getHolderForHierarchy(view) }
+  SyncWindowSize(shellViewModel, windowSizeClass)
+  ObserveConnectivity(shellViewModel, appState.offline)
+  BindShellMetrics(shellUiState, metricsHolder)
 
-  LaunchedEffect(windowSizeClass) { shellViewModel.updateWindowSizeClass(windowSizeClass) }
-  LaunchedEffect(appState.offline) {
-    val status = if (appState.offline) ConnectivityStatus.OFFLINE else ConnectivityStatus.ONLINE
-    shellViewModel.onEvent(ShellUiEvent.ConnectivityChanged(status))
-  }
+  val disclaimerState =
+    rememberDisclaimerState(
+      disclaimer = appState.disclaimer,
+      onAccept = onDisclaimerAccept,
+      onDecline = onDisclaimerDecline,
+    )
 
-  LaunchedEffect(shellUiState.layout.activeMode) {
-    metricsStateHolder.state?.putState("shell_mode", shellUiState.layout.activeMode.name)
-  }
-  LaunchedEffect(shellUiState.layout.progressJobs) {
-    val activeJobs = shellUiState.layout.progressJobs.count { !it.isTerminal }
-    metricsStateHolder.state?.putState("active_jobs", activeJobs.toString())
-  }
-
-  DisposableEffect(metricsStateHolder) {
-    onDispose {
-      metricsStateHolder.state?.removeState("shell_mode")
-      metricsStateHolder.state?.removeState("active_jobs")
-    }
-  }
-
-  var disclaimerDismissedForSession by rememberSaveable { mutableStateOf(false) }
-  val shouldShowDisclaimer = appState.disclaimer.shouldShow && !disclaimerDismissedForSession
-
-  LaunchedEffect(appState.disclaimer.shouldShow) {
-    if (!appState.disclaimer.shouldShow) {
-      disclaimerDismissedForSession = false
-    }
-  }
-
-  val onNavigateToCoverageDashboard = { shellViewModel.onEvent(ShellUiEvent.ShowCoverageDashboard) }
+  val onNavigateToCoverageDashboard =
+    remember(shellViewModel) { { shellViewModel.onEvent(ShellUiEvent.ShowCoverageDashboard) } }
 
   Box(modifier = modifier.fillMaxSize()) {
     NanoShellScaffold(
       state = shellUiState,
-      onEvent = { event ->
-        when (event) {
-          is ShellUiEvent.ChatPersonaSelected ->
-            chatViewModel.switchPersona(event.personaId, event.action)
-          is ShellUiEvent.ChatTitleClicked -> chatViewModel.showModelPicker()
-          else -> shellViewModel.onEvent(event)
-        }
-      },
+      onEvent = { event -> handleShellEvent(event, shellViewModel, chatViewModel) },
       modifier = Modifier.fillMaxSize(),
       modeContent = { modeId ->
         ShellModeContent(
@@ -121,27 +96,8 @@ fun NavigationScaffold(
       },
     )
 
-    // Onboarding / welcome removed — main shell is shown directly.
+    DisclaimerOverlay(controller = disclaimerState, onDialogShow = onDisclaimerShow)
 
-    if (shouldShowDisclaimer) {
-      DisclaimerDialog(
-        onAccept = {
-          onDisclaimerAccept()
-          disclaimerDismissedForSession = true
-        },
-        onDecline = {
-          disclaimerDismissedForSession = true
-          onDisclaimerDecline()
-        },
-        onDismissRequest = {
-          disclaimerDismissedForSession = true
-          onDisclaimerDecline()
-        },
-        onDialogShow = onDisclaimerShow,
-      )
-    }
-
-    // Skip links for keyboard navigation accessibility
     SkipLinksNavigation(
       onSkipToContent = { shellViewModel.onEvent(ShellUiEvent.ModeSelected(ModeId.HOME)) },
       onSkipToNavigation = { shellViewModel.onEvent(ShellUiEvent.ToggleLeftDrawer) },
@@ -151,57 +107,182 @@ fun NavigationScaffold(
 }
 
 @Composable
-@Suppress("CyclomaticComplexMethod")
 private fun ShellModeContent(
   modeId: ModeId,
   modifier: Modifier = Modifier,
   onNavigateToCoverageDashboard: () -> Unit,
-  onUpdateChatState: (com.vjaykrsna.nanoai.feature.uiux.presentation.ChatState?) -> Unit,
+  onUpdateChatState: (ChatState?) -> Unit,
   onNavigate: (ModeId) -> Unit = {},
 ) {
-  var hasError by rememberSaveable { mutableStateOf(false) }
-  var errorMessage by rememberSaveable { mutableStateOf("") }
+  if (modeId == ModeId.HOME) {
+    error("HOME mode should be handled by NanoShellScaffold, not NavigationScaffold")
+  }
 
-  if (hasError) {
+  val providers =
+    rememberModeContentProviders(
+      onNavigateToCoverageDashboard = onNavigateToCoverageDashboard,
+      onUpdateChatState = onUpdateChatState,
+      onNavigate = onNavigate,
+    )
+
+  val content = providers[modeId]
+
+  if (content == null) {
     ErrorBoundary(
       modifier = modifier,
       title = "Navigation Error",
-      description = errorMessage,
-      onRetry = {
-        hasError = false
-        errorMessage = ""
-      },
+      description = "Unsupported shell mode: ${modeId.name}",
     )
-    return
+  } else {
+    content(modifier)
+  }
+}
+
+@Composable
+private fun rememberPerformanceMetricsHolder(): PerformanceMetricsState.Holder {
+  val view = LocalView.current
+  return remember(view) { PerformanceMetricsState.getHolderForHierarchy(view) }
+}
+
+@Composable
+private fun SyncWindowSize(shellViewModel: ShellViewModel, windowSizeClass: WindowSizeClass) {
+  LaunchedEffect(shellViewModel, windowSizeClass) {
+    shellViewModel.updateWindowSizeClass(windowSizeClass)
+  }
+}
+
+@Composable
+private fun ObserveConnectivity(shellViewModel: ShellViewModel, offline: Boolean) {
+  LaunchedEffect(shellViewModel, offline) {
+    val status = if (offline) ConnectivityStatus.OFFLINE else ConnectivityStatus.ONLINE
+    shellViewModel.onEvent(ShellUiEvent.ConnectivityChanged(status))
+  }
+}
+
+@Composable
+private fun BindShellMetrics(
+  shellUiState: ShellUiState,
+  metricsHolder: PerformanceMetricsState.Holder,
+) {
+  LaunchedEffect(shellUiState.layout.activeMode, metricsHolder) {
+    metricsHolder.state?.putState("shell_mode", shellUiState.layout.activeMode.name)
+  }
+  LaunchedEffect(shellUiState.layout.progressJobs, metricsHolder) {
+    val activeJobs = shellUiState.layout.progressJobs.count { !it.isTerminal }
+    metricsHolder.state?.putState("active_jobs", activeJobs.toString())
+  }
+  DisposableEffect(metricsHolder) {
+    onDispose {
+      metricsHolder.state?.removeState("shell_mode")
+      metricsHolder.state?.removeState("active_jobs")
+    }
+  }
+}
+
+private data class DisclaimerState(
+  val shouldShow: Boolean,
+  val onAccept: () -> Unit,
+  val onDecline: () -> Unit,
+  val onDismiss: () -> Unit,
+)
+
+@Composable
+private fun rememberDisclaimerState(
+  disclaimer: DisclaimerUiState,
+  onAccept: () -> Unit,
+  onDecline: () -> Unit,
+): DisclaimerState {
+  var dismissedForSession by rememberSaveable { mutableStateOf(false) }
+
+  LaunchedEffect(disclaimer.shouldShow) {
+    if (!disclaimer.shouldShow) {
+      dismissedForSession = false
+    }
   }
 
-  // TODO: Implement proper error boundary triggering for navigation failures
-  // Current error boundary exists but is never triggered. Consider:
-  // - Adding error states to ViewModels for navigation failures
-  // - Using LaunchedEffect to catch async errors
-  // - Adding validation for required screen dependencies
+  val shouldShow = disclaimer.shouldShow && !dismissedForSession
 
-  when (modeId) {
-    // HOME is handled directly by NanoShellScaffold - never called here
-    ModeId.HOME -> error("HOME mode should be handled by NanoShellScaffold, not NavigationScaffold")
-    ModeId.CHAT ->
-      ChatScreen(
-        modifier = modifier,
-        onUpdateChatState = onUpdateChatState,
-        onNavigate = onNavigate,
-      )
-    ModeId.LIBRARY -> ModelLibraryScreen(modifier = modifier)
-    ModeId.SETTINGS ->
-      SettingsScreen(
-        modifier = modifier,
-        onNavigateToCoverageDashboard = onNavigateToCoverageDashboard,
-      )
-    ModeId.IMAGE -> ImageFeatureContainer(modifier = modifier)
-    ModeId.AUDIO -> AudioScreen(modifier = modifier)
-    ModeId.CODE -> ModePlaceholder("Code workspace", modifier)
-    ModeId.TRANSLATE -> ModePlaceholder("Translation", modifier)
-    ModeId.HISTORY -> ModePlaceholder("History", modifier)
-    ModeId.TOOLS -> ModePlaceholder("Tools", modifier)
+  val accept: () -> Unit = {
+    onAccept()
+    dismissedForSession = true
+  }
+
+  val decline: () -> Unit = {
+    dismissedForSession = true
+    onDecline()
+  }
+
+  val dismiss: () -> Unit = {
+    dismissedForSession = true
+    onDecline()
+  }
+
+  return DisclaimerState(
+    shouldShow = shouldShow,
+    onAccept = accept,
+    onDecline = decline,
+    onDismiss = dismiss,
+  )
+}
+
+@Composable
+private fun DisclaimerOverlay(controller: DisclaimerState, onDialogShow: () -> Unit) {
+  if (!controller.shouldShow) return
+
+  DisclaimerDialog(
+    onAccept = controller.onAccept,
+    onDecline = controller.onDecline,
+    onDismissRequest = controller.onDismiss,
+    onDialogShow = onDialogShow,
+  )
+}
+
+private fun handleShellEvent(
+  event: ShellUiEvent,
+  shellViewModel: ShellViewModel,
+  chatViewModel: ChatViewModel,
+) {
+  when (event) {
+    is ShellUiEvent.ChatPersonaSelected ->
+      chatViewModel.switchPersona(event.personaId, event.action)
+    is ShellUiEvent.ChatTitleClicked -> chatViewModel.showModelPicker()
+    else -> shellViewModel.onEvent(event)
+  }
+}
+
+private typealias ModeContentProvider = @Composable (Modifier) -> Unit
+
+@Composable
+private fun rememberModeContentProviders(
+  onNavigateToCoverageDashboard: () -> Unit,
+  onUpdateChatState: (ChatState?) -> Unit,
+  onNavigate: (ModeId) -> Unit,
+): Map<ModeId, ModeContentProvider> {
+  return remember(onNavigateToCoverageDashboard, onUpdateChatState, onNavigate) {
+    mapOf(
+      ModeId.CHAT to
+        { innerModifier ->
+          ChatScreen(
+            modifier = innerModifier,
+            onUpdateChatState = onUpdateChatState,
+            onNavigate = onNavigate,
+          )
+        },
+      ModeId.LIBRARY to { innerModifier -> ModelLibraryScreen(modifier = innerModifier) },
+      ModeId.SETTINGS to
+        { innerModifier ->
+          SettingsScreen(
+            modifier = innerModifier,
+            onNavigateToCoverageDashboard = onNavigateToCoverageDashboard,
+          )
+        },
+      ModeId.IMAGE to { innerModifier -> ImageFeatureContainer(modifier = innerModifier) },
+      ModeId.AUDIO to { innerModifier -> AudioScreen(modifier = innerModifier) },
+      ModeId.CODE to { innerModifier -> ModePlaceholder("Code workspace", innerModifier) },
+      ModeId.TRANSLATE to { innerModifier -> ModePlaceholder("Translation", innerModifier) },
+      ModeId.HISTORY to { innerModifier -> ModePlaceholder("History", innerModifier) },
+      ModeId.TOOLS to { innerModifier -> ModePlaceholder("Tools", innerModifier) },
+    )
   }
 }
 

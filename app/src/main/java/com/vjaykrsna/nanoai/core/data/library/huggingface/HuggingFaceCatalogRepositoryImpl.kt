@@ -60,12 +60,12 @@ constructor(
       }
     } catch (httpException: HttpException) {
       NanoAIResult.recoverable(
-        message =
-          "Hugging Face returned HTTP ${httpException.code()} while fetching models.",
-        retryAfterSeconds = when (httpException.code()) {
-          429 -> DEFAULT_RETRY_AFTER_SECONDS
-          else -> 60L
-        },
+        message = "Hugging Face returned HTTP ${httpException.code()} while fetching models.",
+        retryAfterSeconds =
+          when (httpException.code()) {
+            429 -> DEFAULT_RETRY_AFTER_SECONDS
+            else -> 60L
+          },
         telemetryId = null,
         cause = httpException,
         context = mapOf("query" to query.toString()),

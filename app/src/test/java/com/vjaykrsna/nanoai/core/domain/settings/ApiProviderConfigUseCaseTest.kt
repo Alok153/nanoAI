@@ -8,10 +8,10 @@ import com.vjaykrsna.nanoai.testing.assertRecoverableError
 import com.vjaykrsna.nanoai.testing.assertSuccess
 import io.mockk.coEvery
 import io.mockk.mockk
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Instant
-import kotlin.test.assertFailsWith
 import org.junit.Before
 import org.junit.Test
 

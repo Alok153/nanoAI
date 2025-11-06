@@ -9,11 +9,11 @@ import io.mockk.every
 import io.mockk.mockk
 import java.io.IOException
 import java.util.UUID
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Instant
-import kotlin.test.assertFailsWith
 import org.junit.Before
 import org.junit.Test
 
@@ -101,8 +101,7 @@ class ImageGalleryUseCaseTest {
   @Test
   fun `getImageById rethrows cancellation`() = runTest {
     val imageId = UUID.randomUUID()
-    coEvery { imageGalleryRepository.getImageById(imageId) } throws
-      CancellationException("cancel")
+    coEvery { imageGalleryRepository.getImageById(imageId) } throws CancellationException("cancel")
 
     assertFailsWith<CancellationException> { useCase.getImageById(imageId) }
   }

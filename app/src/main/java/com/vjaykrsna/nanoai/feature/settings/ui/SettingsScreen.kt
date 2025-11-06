@@ -1,5 +1,3 @@
-@file:Suppress("LongParameterList")
-
 package com.vjaykrsna.nanoai.feature.settings.ui
 
 import android.net.Uri

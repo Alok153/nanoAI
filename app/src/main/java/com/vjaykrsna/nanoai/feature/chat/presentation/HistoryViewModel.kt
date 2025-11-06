@@ -31,8 +31,7 @@ class HistoryViewModel
 @Inject
 constructor(
   private val conversationRepository: ConversationRepository,
-  @MainImmediateDispatcher
-  private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
+  @MainImmediateDispatcher private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
 ) : ViewModel() {
 
   private val _threads = MutableStateFlow<List<ChatThread>>(emptyList())
@@ -100,8 +99,7 @@ constructor(
       is CancellationException -> throw throwable
       is SQLiteException,
       is IOException,
-      is IllegalStateException ->
-        _errors.emit(builder(throwable.message ?: "Unknown error"))
+      is IllegalStateException -> _errors.emit(builder(throwable.message ?: "Unknown error"))
       else -> throw throwable
     }
   }

@@ -23,7 +23,10 @@ class ThemeOperationsUseCase @Inject constructor(private val themeRepository: Th
 
   /** Updates theme preference. */
   suspend fun updateTheme(theme: ThemePreference): NanoAIResult<Unit> =
-    guardThemeOperation(message = "Failed to update theme", context = mapOf("theme" to theme.name)) {
+    guardThemeOperation(
+      message = "Failed to update theme",
+      context = mapOf("theme" to theme.name),
+    ) {
       themeRepository.updateThemePreference(theme)
       NanoAIResult.success(Unit)
     }
@@ -62,11 +65,7 @@ class ThemeOperationsUseCase @Inject constructor(private val themeRepository: Th
     } catch (ioException: IOException) {
       NanoAIResult.recoverable(message = message, cause = ioException, context = context)
     } catch (illegalStateException: IllegalStateException) {
-      NanoAIResult.recoverable(
-        message = message,
-        cause = illegalStateException,
-        context = context,
-      )
+      NanoAIResult.recoverable(message = message, cause = illegalStateException, context = context)
     } catch (illegalArgumentException: IllegalArgumentException) {
       NanoAIResult.recoverable(
         message = message,

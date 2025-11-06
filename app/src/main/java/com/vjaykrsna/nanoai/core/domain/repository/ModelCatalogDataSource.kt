@@ -50,7 +50,11 @@ constructor(
           Log.e("ModelCatalogDataSource", "Failed to decode cached catalog", serializationException)
           emptyList()
         } catch (illegalArgumentException: IllegalArgumentException) {
-          Log.e("ModelCatalogDataSource", "Invalid cached catalog content", illegalArgumentException)
+          Log.e(
+            "ModelCatalogDataSource",
+            "Invalid cached catalog content",
+            illegalArgumentException,
+          )
           emptyList()
         }
       } else {

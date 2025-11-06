@@ -113,7 +113,11 @@ constructor(private val fakeConversationRepository: FakeConversationRepository) 
     } catch (illegalStateException: IllegalStateException) {
       NanoAIResult.recoverable(message = message, cause = illegalStateException, context = context)
     } catch (illegalArgumentException: IllegalArgumentException) {
-      NanoAIResult.recoverable(message = message, cause = illegalArgumentException, context = context)
+      NanoAIResult.recoverable(
+        message = message,
+        cause = illegalArgumentException,
+        context = context,
+      )
     }
   }
 }

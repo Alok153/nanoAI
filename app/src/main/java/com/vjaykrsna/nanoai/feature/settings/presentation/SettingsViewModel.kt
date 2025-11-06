@@ -1,5 +1,3 @@
-@file:Suppress("LargeClass")
-
 package com.vjaykrsna.nanoai.feature.settings.presentation
 
 import android.net.Uri
@@ -28,6 +26,7 @@ import com.vjaykrsna.nanoai.core.domain.usecase.UpdateUiPreferencesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlin.jvm.JvmName
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -74,7 +73,50 @@ constructor(
 
   private val _uiUxState = MutableStateFlow(SettingsUiUxState())
   val uiUxState: StateFlow<SettingsUiUxState> = _uiUxState.asStateFlow()
-  private var previousUiUxState: SettingsUiUxState? = null
+
+  private val apiProviderController =
+    ApiProviderController(
+      scope = viewModelScope,
+      apiProviderConfigUseCase = apiProviderConfigUseCase,
+      isLoading = _isLoading,
+      errorEvents = _errorEvents,
+    )
+
+  private val backupController =
+    BackupController(
+      scope = viewModelScope,
+      modelDownloadsAndExportUseCase = modelDownloadsAndExportUseCase,
+      importService = importService,
+      isLoading = _isLoading,
+      exportSuccess = _exportSuccess,
+      importSuccess = _importSuccess,
+      errorEvents = _errorEvents,
+    )
+
+  private val privacyPreferenceController =
+    PrivacyPreferenceController(
+      scope = viewModelScope,
+      updatePrivacyPreferencesUseCase = updatePrivacyPreferencesUseCase,
+      errorEvents = _errorEvents,
+    )
+
+  private val uiPreferenceController =
+    UiPreferenceController(
+      scope = viewModelScope,
+      uiUxState = _uiUxState,
+      settingsOperationsUseCase = settingsOperationsUseCase,
+      toggleCompactModeUseCase = toggleCompactModeUseCase,
+      updateUiPreferencesUseCase = updateUiPreferencesUseCase,
+    )
+
+  private val huggingFaceController =
+    HuggingFaceAuthController(
+      scope = viewModelScope,
+      coordinator = huggingFaceAuthCoordinator,
+      oauthConfig = huggingFaceOAuthConfig,
+      uiUxState = _uiUxState,
+      errorEvents = _errorEvents,
+    )
 
   val huggingFaceAuthState: StateFlow<HuggingFaceAuthState> = huggingFaceAuthCoordinator.state
 
@@ -117,7 +159,7 @@ constructor(
           current.copy(
             themePreference = profile?.themePreference ?: ThemePreference.SYSTEM,
             compactModeEnabled = profile?.compactMode ?: false,
-            undoAvailable = previousUiUxState != null,
+            undoAvailable = uiPreferenceController.hasPendingUndo,
           )
         }
       }
@@ -149,272 +191,56 @@ constructor(
       .launchIn(viewModelScope)
   }
 
-  fun addApiProvider(config: APIProviderConfig) {
-    viewModelScope.launch {
-      _isLoading.value = true
-      runCatching { apiProviderConfigUseCase.addProvider(config) }
-        .onSuccess { result ->
-          result.onFailure { error ->
-            _errorEvents.emit(
-              SettingsError.ProviderAddFailed(error.message ?: "Failed to add provider")
-            )
-          }
-        }
-        .onFailure { throwable ->
-          _errorEvents.emit(
-            SettingsError.ProviderAddFailed(throwable.message ?: "Failed to add provider")
-          )
-        }
-      _isLoading.value = false
-    }
-  }
+  fun addApiProvider(config: APIProviderConfig) = apiProviderController.add(config)
 
-  fun updateApiProvider(config: APIProviderConfig) {
-    viewModelScope.launch {
-      _isLoading.value = true
-      runCatching { apiProviderConfigUseCase.updateProvider(config) }
-        .onSuccess { result ->
-          result.onFailure { error ->
-            _errorEvents.emit(
-              SettingsError.ProviderUpdateFailed(error.message ?: "Failed to update provider")
-            )
-          }
-        }
-        .onFailure { throwable ->
-          _errorEvents.emit(
-            SettingsError.ProviderUpdateFailed(throwable.message ?: "Failed to update provider")
-          )
-        }
-      _isLoading.value = false
-    }
-  }
+  fun updateApiProvider(config: APIProviderConfig) = apiProviderController.update(config)
 
-  fun deleteApiProvider(providerId: String) {
-    viewModelScope.launch {
-      _isLoading.value = true
-      runCatching { apiProviderConfigUseCase.deleteProvider(providerId) }
-        .onSuccess { result ->
-          result.onFailure { error ->
-            _errorEvents.emit(
-              SettingsError.ProviderDeleteFailed(error.message ?: "Failed to delete provider")
-            )
-          }
-        }
-        .onFailure { throwable ->
-          _errorEvents.emit(
-            SettingsError.ProviderDeleteFailed(throwable.message ?: "Failed to delete provider")
-          )
-        }
-      _isLoading.value = false
-    }
-  }
+  fun deleteApiProvider(providerId: String) = apiProviderController.delete(providerId)
 
-  fun exportBackup(destinationPath: String, includeChatHistory: Boolean = false) {
-    viewModelScope.launch {
-      _isLoading.value = true
-      modelDownloadsAndExportUseCase
-        .exportBackup(destinationPath, includeChatHistory)
-        .onSuccess { path -> _exportSuccess.emit(path) }
-        .onFailure { error ->
-          _errorEvents.emit(SettingsError.ExportFailed(error.message ?: "Export failed"))
-        }
-      _isLoading.value = false
-    }
-  }
+  fun exportBackup(destinationPath: String, includeChatHistory: Boolean = false) =
+    backupController.export(destinationPath, includeChatHistory)
 
-  fun importBackup(uri: Uri) {
-    viewModelScope.launch {
-      _isLoading.value = true
-      runCatching { importService.importBackup(uri) }
-        .fold(
-          onSuccess = { result ->
-            result
-              .onSuccess { summary -> _importSuccess.emit(summary) }
-              .onFailure { error ->
-                _errorEvents.emit(SettingsError.ImportFailed(error.message ?: "Import failed"))
-              }
-          },
-          onFailure = { error ->
-            _errorEvents.emit(SettingsError.UnexpectedError(error.message ?: "Unexpected error"))
-          },
-        )
-      _isLoading.value = false
-    }
-  }
+  fun importBackup(uri: Uri) = backupController.import(uri)
 
-  fun setTelemetryOptIn(optIn: Boolean) {
-    viewModelScope.launch {
-      runCatching { updatePrivacyPreferencesUseCase.setTelemetryOptIn(optIn) }
-        .onFailure { error ->
-          _errorEvents.emit(
-            SettingsError.PreferenceUpdateFailed(error.message ?: "Failed to update preference")
-          )
-        }
-    }
-  }
+  fun setTelemetryOptIn(optIn: Boolean) = privacyPreferenceController.setTelemetryOptIn(optIn)
 
-  fun acknowledgeConsent() {
-    viewModelScope.launch {
-      runCatching { updatePrivacyPreferencesUseCase.acknowledgeConsent(Clock.System.now()) }
-        .onFailure { error ->
-          _errorEvents.emit(
-            SettingsError.PreferenceUpdateFailed(error.message ?: "Failed to acknowledge consent")
-          )
-        }
-    }
-  }
+  fun acknowledgeConsent() = privacyPreferenceController.acknowledgeConsent()
 
-  fun setRetentionPolicy(policy: RetentionPolicy) {
-    viewModelScope.launch {
-      runCatching { updatePrivacyPreferencesUseCase.setRetentionPolicy(policy) }
-        .onFailure { error ->
-          _errorEvents.emit(
-            SettingsError.PreferenceUpdateFailed(error.message ?: "Failed to set retention policy")
-          )
-        }
-    }
-  }
+  fun setRetentionPolicy(policy: RetentionPolicy) =
+    privacyPreferenceController.setRetentionPolicy(policy)
 
-  fun dismissExportWarnings() {
-    viewModelScope.launch {
-      runCatching { updatePrivacyPreferencesUseCase.setExportWarningsDismissed(true) }
-        .onFailure { error ->
-          _errorEvents.emit(
-            SettingsError.PreferenceUpdateFailed(error.message ?: "Failed to dismiss warnings")
-          )
-        }
-    }
-  }
+  fun dismissExportWarnings() = privacyPreferenceController.dismissExportWarnings()
 
-  fun setThemePreference(themePreference: ThemePreference) {
-    previousUiUxState = _uiUxState.value
-    _uiUxState.update {
-      it.copy(
-        themePreference = themePreference,
-        undoAvailable = true,
-        statusMessage = "Theme updated",
-      )
-    }
-    viewModelScope.launch { settingsOperationsUseCase.updateTheme(themePreference) }
-  }
+  fun setThemePreference(themePreference: ThemePreference) =
+    uiPreferenceController.setThemePreference(themePreference)
 
-  fun applyDensityPreference(compactModeEnabled: Boolean) {
-    setCompactMode(compactModeEnabled)
-  }
+  fun applyDensityPreference(compactModeEnabled: Boolean) =
+    uiPreferenceController.applyDensityPreference(compactModeEnabled)
 
   @JvmName("internalSetLayoutMode")
-  fun setCompactMode(enabled: Boolean) {
-    previousUiUxState = _uiUxState.value
-    _uiUxState.update {
-      it.copy(
-        compactModeEnabled = enabled,
-        undoAvailable = true,
-        statusMessage = if (enabled) "Compact mode enabled" else "Compact mode disabled",
-      )
-    }
-    viewModelScope.launch { toggleCompactModeUseCase.toggle(enabled) }
-  }
+  fun setCompactMode(enabled: Boolean) = uiPreferenceController.setCompactMode(enabled)
 
-  fun setHighContrastEnabled(enabled: Boolean) {
-    _uiUxState.update {
-      it.copy(
-        highContrastEnabled = enabled,
-        undoAvailable = true,
-        statusMessage = if (enabled) "High contrast enabled" else "High contrast disabled",
-      )
-    }
-    viewModelScope.launch { updateUiPreferencesUseCase.setHighContrastEnabled(enabled) }
-  }
+  fun setHighContrastEnabled(enabled: Boolean) =
+    uiPreferenceController.setHighContrastEnabled(enabled)
 
-  fun undoUiPreferenceChange() {
-    val previous = previousUiUxState ?: return
-    _uiUxState.value = previous.copy(undoAvailable = false, statusMessage = "Preferences restored")
-    previousUiUxState = null
-    viewModelScope.launch {
-      settingsOperationsUseCase.updateTheme(previous.themePreference)
-      toggleCompactModeUseCase.toggle(previous.compactModeEnabled)
-    }
-  }
+  fun undoUiPreferenceChange() = uiPreferenceController.undo()
 
-  fun onMigrationSuccess() {
-    _uiUxState.update { it.copy(showMigrationSuccessNotification = true) }
-  }
+  fun onMigrationSuccess() = uiPreferenceController.onMigrationSuccess()
 
-  fun dismissMigrationSuccessNotification() {
-    _uiUxState.update { it.copy(showMigrationSuccessNotification = false) }
-  }
+  fun dismissMigrationSuccessNotification() =
+    uiPreferenceController.dismissMigrationSuccessNotification()
 
-  fun saveHuggingFaceApiKey(apiKey: String) {
-    viewModelScope.launch {
-      huggingFaceAuthCoordinator
-        .savePersonalAccessToken(apiKey)
-        .onSuccess { authState ->
-          if (authState.isAuthenticated) {
-            _uiUxState.update {
-              it.copy(statusMessage = "Hugging Face connected", undoAvailable = false)
-            }
-          } else if (authState.lastError != null) {
-            _errorEvents.emit(SettingsError.HuggingFaceAuthFailed(authState.lastError))
-          }
-        }
-        .onFailure { throwable ->
-          _errorEvents.emit(
-            SettingsError.HuggingFaceAuthFailed(
-              throwable.message ?: "Failed to save Hugging Face API key"
-            )
-          )
-        }
-    }
-  }
+  fun saveHuggingFaceApiKey(apiKey: String) = huggingFaceController.saveApiKey(apiKey)
 
-  fun refreshHuggingFaceAccount() {
-    viewModelScope.launch { huggingFaceAuthCoordinator.refreshAccount() }
-  }
+  fun refreshHuggingFaceAccount() = huggingFaceController.refreshAccount()
 
-  fun startHuggingFaceOAuthLogin() {
-    viewModelScope.launch {
-      val clientId = huggingFaceOAuthConfig.clientId.trim()
-      val scope = huggingFaceOAuthConfig.scope.ifBlank { DEFAULT_OAUTH_SCOPE }
+  fun startHuggingFaceOAuthLogin() = huggingFaceController.startOAuthLogin()
 
-      if (clientId.isBlank()) {
-        _errorEvents.emit(
-          SettingsError.HuggingFaceAuthFailed("Hugging Face OAuth client ID is not configured")
-        )
-        return@launch
-      }
+  fun cancelHuggingFaceOAuthLogin() = huggingFaceController.cancelOAuth()
 
-      huggingFaceAuthCoordinator
-        .beginDeviceAuthorization(clientId = clientId, scope = scope)
-        .onFailure { throwable ->
-          _errorEvents.emit(
-            SettingsError.HuggingFaceAuthFailed(
-              throwable.message ?: "Unable to start Hugging Face sign-in"
-            )
-          )
-        }
-    }
-  }
+  fun disconnectHuggingFaceAccount() = huggingFaceController.disconnect()
 
-  fun cancelHuggingFaceOAuthLogin() {
-    viewModelScope.launch { huggingFaceAuthCoordinator.cancelDeviceAuthorization() }
-  }
-
-  private companion object {
-    private const val DEFAULT_OAUTH_SCOPE = "all offline_access"
-  }
-
-  fun disconnectHuggingFaceAccount() {
-    viewModelScope.launch {
-      huggingFaceAuthCoordinator.clearCredentials()
-      _uiUxState.update {
-        it.copy(statusMessage = "Hugging Face disconnected", undoAvailable = false)
-      }
-    }
-  }
-
-  fun clearStatusMessage() {
-    _uiUxState.update { it.copy(statusMessage = null) }
-  }
+  fun clearStatusMessage() = uiPreferenceController.clearStatusMessage()
 }
 
 sealed class SettingsError {
@@ -443,3 +269,311 @@ data class SettingsUiUxState(
   val statusMessage: String? = null,
   val showMigrationSuccessNotification: Boolean = false,
 )
+
+private class ApiProviderController(
+  private val scope: CoroutineScope,
+  private val apiProviderConfigUseCase: ApiProviderConfigUseCase,
+  private val isLoading: MutableStateFlow<Boolean>,
+  private val errorEvents: MutableSharedFlow<SettingsError>,
+) {
+  fun add(config: APIProviderConfig) {
+    scope.launch {
+      isLoading.value = true
+      runCatching { apiProviderConfigUseCase.addProvider(config) }
+        .onSuccess { result ->
+          result.onFailure { error ->
+            errorEvents.emit(
+              SettingsError.ProviderAddFailed(error.message ?: "Failed to add provider")
+            )
+          }
+        }
+        .onFailure { throwable ->
+          errorEvents.emit(
+            SettingsError.ProviderAddFailed(throwable.message ?: "Failed to add provider")
+          )
+        }
+      isLoading.value = false
+    }
+  }
+
+  fun update(config: APIProviderConfig) {
+    scope.launch {
+      isLoading.value = true
+      runCatching { apiProviderConfigUseCase.updateProvider(config) }
+        .onSuccess { result ->
+          result.onFailure { error ->
+            errorEvents.emit(
+              SettingsError.ProviderUpdateFailed(error.message ?: "Failed to update provider")
+            )
+          }
+        }
+        .onFailure { throwable ->
+          errorEvents.emit(
+            SettingsError.ProviderUpdateFailed(throwable.message ?: "Failed to update provider")
+          )
+        }
+      isLoading.value = false
+    }
+  }
+
+  fun delete(providerId: String) {
+    scope.launch {
+      isLoading.value = true
+      runCatching { apiProviderConfigUseCase.deleteProvider(providerId) }
+        .onSuccess { result ->
+          result.onFailure { error ->
+            errorEvents.emit(
+              SettingsError.ProviderDeleteFailed(error.message ?: "Failed to delete provider")
+            )
+          }
+        }
+        .onFailure { throwable ->
+          errorEvents.emit(
+            SettingsError.ProviderDeleteFailed(throwable.message ?: "Failed to delete provider")
+          )
+        }
+      isLoading.value = false
+    }
+  }
+}
+
+private class BackupController(
+  private val scope: CoroutineScope,
+  private val modelDownloadsAndExportUseCase: ModelDownloadsAndExportUseCase,
+  private val importService: ImportService,
+  private val isLoading: MutableStateFlow<Boolean>,
+  private val exportSuccess: MutableSharedFlow<String>,
+  private val importSuccess: MutableSharedFlow<ImportSummary>,
+  private val errorEvents: MutableSharedFlow<SettingsError>,
+) {
+  fun export(destinationPath: String, includeChatHistory: Boolean) {
+    scope.launch {
+      isLoading.value = true
+      modelDownloadsAndExportUseCase
+        .exportBackup(destinationPath, includeChatHistory)
+        .onSuccess { path -> exportSuccess.emit(path) }
+        .onFailure { error ->
+          errorEvents.emit(SettingsError.ExportFailed(error.message ?: "Export failed"))
+        }
+      isLoading.value = false
+    }
+  }
+
+  fun import(uri: Uri) {
+    scope.launch {
+      isLoading.value = true
+      runCatching { importService.importBackup(uri) }
+        .fold(
+          onSuccess = { result ->
+            result
+              .onSuccess { summary -> importSuccess.emit(summary) }
+              .onFailure { error ->
+                errorEvents.emit(SettingsError.ImportFailed(error.message ?: "Import failed"))
+              }
+          },
+          onFailure = { error ->
+            errorEvents.emit(SettingsError.UnexpectedError(error.message ?: "Unexpected error"))
+          },
+        )
+      isLoading.value = false
+    }
+  }
+}
+
+private class PrivacyPreferenceController(
+  private val scope: CoroutineScope,
+  private val updatePrivacyPreferencesUseCase: UpdatePrivacyPreferencesUseCase,
+  private val errorEvents: MutableSharedFlow<SettingsError>,
+) {
+  fun setTelemetryOptIn(optIn: Boolean) {
+    scope.launch {
+      runCatching { updatePrivacyPreferencesUseCase.setTelemetryOptIn(optIn) }
+        .onFailure { error ->
+          errorEvents.emit(
+            SettingsError.PreferenceUpdateFailed(error.message ?: "Failed to update preference")
+          )
+        }
+    }
+  }
+
+  fun acknowledgeConsent() {
+    scope.launch {
+      runCatching { updatePrivacyPreferencesUseCase.acknowledgeConsent(Clock.System.now()) }
+        .onFailure { error ->
+          errorEvents.emit(
+            SettingsError.PreferenceUpdateFailed(error.message ?: "Failed to acknowledge consent")
+          )
+        }
+    }
+  }
+
+  fun setRetentionPolicy(policy: RetentionPolicy) {
+    scope.launch {
+      runCatching { updatePrivacyPreferencesUseCase.setRetentionPolicy(policy) }
+        .onFailure { error ->
+          errorEvents.emit(
+            SettingsError.PreferenceUpdateFailed(error.message ?: "Failed to set retention policy")
+          )
+        }
+    }
+  }
+
+  fun dismissExportWarnings() {
+    scope.launch {
+      runCatching { updatePrivacyPreferencesUseCase.setExportWarningsDismissed(true) }
+        .onFailure { error ->
+          errorEvents.emit(
+            SettingsError.PreferenceUpdateFailed(error.message ?: "Failed to dismiss warnings")
+          )
+        }
+    }
+  }
+}
+
+private class UiPreferenceController(
+  private val scope: CoroutineScope,
+  private val uiUxState: MutableStateFlow<SettingsUiUxState>,
+  private val settingsOperationsUseCase: SettingsOperationsUseCase,
+  private val toggleCompactModeUseCase: ToggleCompactModeUseCase,
+  private val updateUiPreferencesUseCase: UpdateUiPreferencesUseCase,
+) {
+  private var previousUiUxState: SettingsUiUxState? = null
+
+  val hasPendingUndo: Boolean
+    get() = previousUiUxState != null
+
+  fun setThemePreference(themePreference: ThemePreference) {
+    previousUiUxState = uiUxState.value
+    uiUxState.update {
+      it.copy(
+        themePreference = themePreference,
+        undoAvailable = true,
+        statusMessage = "Theme updated",
+      )
+    }
+    scope.launch { settingsOperationsUseCase.updateTheme(themePreference) }
+  }
+
+  fun applyDensityPreference(compactModeEnabled: Boolean) = setCompactMode(compactModeEnabled)
+
+  fun setCompactMode(enabled: Boolean) {
+    previousUiUxState = uiUxState.value
+    uiUxState.update {
+      it.copy(
+        compactModeEnabled = enabled,
+        undoAvailable = true,
+        statusMessage = if (enabled) "Compact mode enabled" else "Compact mode disabled",
+      )
+    }
+    scope.launch { toggleCompactModeUseCase.toggle(enabled) }
+  }
+
+  fun setHighContrastEnabled(enabled: Boolean) {
+    uiUxState.update {
+      it.copy(
+        highContrastEnabled = enabled,
+        undoAvailable = true,
+        statusMessage = if (enabled) "High contrast enabled" else "High contrast disabled",
+      )
+    }
+    scope.launch { updateUiPreferencesUseCase.setHighContrastEnabled(enabled) }
+  }
+
+  fun undo() {
+    val previous = previousUiUxState ?: return
+    uiUxState.value = previous.copy(undoAvailable = false, statusMessage = "Preferences restored")
+    previousUiUxState = null
+    scope.launch {
+      settingsOperationsUseCase.updateTheme(previous.themePreference)
+      toggleCompactModeUseCase.toggle(previous.compactModeEnabled)
+    }
+  }
+
+  fun onMigrationSuccess() {
+    uiUxState.update { it.copy(showMigrationSuccessNotification = true) }
+  }
+
+  fun dismissMigrationSuccessNotification() {
+    uiUxState.update { it.copy(showMigrationSuccessNotification = false) }
+  }
+
+  fun clearStatusMessage() {
+    uiUxState.update { it.copy(statusMessage = null) }
+  }
+}
+
+private class HuggingFaceAuthController(
+  private val scope: CoroutineScope,
+  private val coordinator: HuggingFaceAuthCoordinator,
+  private val oauthConfig: HuggingFaceOAuthConfig,
+  private val uiUxState: MutableStateFlow<SettingsUiUxState>,
+  private val errorEvents: MutableSharedFlow<SettingsError>,
+) {
+  fun saveApiKey(apiKey: String) {
+    scope.launch {
+      coordinator
+        .savePersonalAccessToken(apiKey)
+        .onSuccess { authState ->
+          when {
+            authState.isAuthenticated ->
+              uiUxState.update {
+                it.copy(statusMessage = "Hugging Face connected", undoAvailable = false)
+              }
+            authState.lastError != null ->
+              errorEvents.emit(SettingsError.HuggingFaceAuthFailed(authState.lastError))
+          }
+        }
+        .onFailure { throwable ->
+          errorEvents.emit(
+            SettingsError.HuggingFaceAuthFailed(
+              throwable.message ?: "Failed to save Hugging Face API key"
+            )
+          )
+        }
+    }
+  }
+
+  fun refreshAccount() {
+    scope.launch { coordinator.refreshAccount() }
+  }
+
+  fun startOAuthLogin() {
+    scope.launch {
+      val clientId = oauthConfig.clientId.trim()
+      val scopeParam = oauthConfig.scope.ifBlank { DEFAULT_OAUTH_SCOPE }
+
+      if (clientId.isBlank()) {
+        errorEvents.emit(
+          SettingsError.HuggingFaceAuthFailed("Hugging Face OAuth client ID is not configured")
+        )
+        return@launch
+      }
+
+      coordinator.beginDeviceAuthorization(clientId = clientId, scope = scopeParam).onFailure {
+        throwable ->
+        errorEvents.emit(
+          SettingsError.HuggingFaceAuthFailed(
+            throwable.message ?: "Unable to start Hugging Face sign-in"
+          )
+        )
+      }
+    }
+  }
+
+  fun cancelOAuth() {
+    scope.launch { coordinator.cancelDeviceAuthorization() }
+  }
+
+  fun disconnect() {
+    scope.launch {
+      coordinator.clearCredentials()
+      uiUxState.update {
+        it.copy(statusMessage = "Hugging Face disconnected", undoAvailable = false)
+      }
+    }
+  }
+
+  private companion object {
+    private const val DEFAULT_OAUTH_SCOPE = "all offline_access"
+  }
+}

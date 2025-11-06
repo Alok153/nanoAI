@@ -47,11 +47,7 @@ constructor(private val modelCatalogRepository: ModelCatalogRepository) {
     } catch (ioException: IOException) {
       NanoAIResult.recoverable(message = message, cause = ioException, context = context)
     } catch (illegalStateException: IllegalStateException) {
-      NanoAIResult.recoverable(
-        message = message,
-        cause = illegalStateException,
-        context = context,
-      )
+      NanoAIResult.recoverable(message = message, cause = illegalStateException, context = context)
     } catch (illegalArgumentException: IllegalArgumentException) {
       NanoAIResult.recoverable(
         message = message,

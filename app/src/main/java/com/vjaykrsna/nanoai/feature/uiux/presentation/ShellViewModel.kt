@@ -133,7 +133,89 @@ private val MODE_CARD_DEFINITIONS =
     ),
   )
 
-@Suppress("LargeClass")
+private fun buildInitialShellUiState(): ShellUiState {
+  val defaultWindowSize =
+    androidx.compose.material3.windowsizeclass.WindowSizeClass.calculateFromSize(
+      androidx.compose.ui.unit.DpSize(width = 640.dp, height = 360.dp)
+    )
+  return ShellUiState(
+    layout =
+      ShellLayoutState(
+        windowSizeClass = defaultWindowSize,
+        isLeftDrawerOpen = false,
+        isRightDrawerOpen = false,
+        activeRightPanel = null,
+        activeMode = ModeId.HOME,
+        showCommandPalette = false,
+        showCoverageDashboard = false,
+        connectivity = ConnectivityStatus.ONLINE,
+        pendingUndoAction = null,
+        progressJobs = emptyList(),
+        recentActivity = emptyList(),
+      ),
+    commandPalette = CommandPaletteState.Empty,
+    connectivityBanner = ConnectivityBannerState(status = ConnectivityStatus.ONLINE),
+    preferences = UiPreferenceSnapshot(),
+  )
+}
+
+private fun modeCardsForOnlineState(isOnline: Boolean): List<ModeCard> =
+  MODE_CARD_DEFINITIONS.filter { !it.requiresOnline || isOnline }
+    .map { definition ->
+      ModeCard(
+        id = definition.id,
+        title = definition.title,
+        subtitle = definition.subtitle,
+        icon = definition.icon,
+        primaryAction =
+          CommandAction(
+            id = definition.actionId,
+            title = definition.actionTitle,
+            category = definition.actionCategory,
+          ),
+        enabled = true,
+      )
+    }
+
+private fun quickActionsForMode(activeMode: ModeId): List<CommandAction> =
+  when (activeMode) {
+    ModeId.CHAT ->
+      listOf(
+        CommandAction(id = "new_chat", title = "New Chat", category = CommandCategory.MODES),
+        CommandAction(id = "clear_chat", title = "Clear Chat", category = CommandCategory.MODES),
+      )
+    ModeId.IMAGE ->
+      listOf(
+        CommandAction(id = "generate_image", title = "Generate", category = CommandCategory.MODES),
+        CommandAction(id = "edit_image", title = "Edit", category = CommandCategory.MODES),
+      )
+    ModeId.AUDIO ->
+      listOf(
+        CommandAction(id = "record_audio", title = "Record", category = CommandCategory.MODES),
+        CommandAction(
+          id = "transcribe_audio",
+          title = "Transcribe",
+          category = CommandCategory.MODES,
+        ),
+      )
+    ModeId.CODE ->
+      listOf(
+        CommandAction(id = "generate_code", title = "Generate", category = CommandCategory.MODES),
+        CommandAction(id = "analyze_code", title = "Analyze", category = CommandCategory.MODES),
+      )
+    ModeId.HISTORY ->
+      listOf(
+        CommandAction(id = "view_history", title = "View All", category = CommandCategory.MODES),
+        CommandAction(id = "search_history", title = "Search", category = CommandCategory.MODES),
+      )
+    ModeId.SETTINGS ->
+      listOf(
+        CommandAction(id = "open_settings", title = "Open", category = CommandCategory.SETTINGS)
+      )
+    else ->
+      listOf(CommandAction(id = "new_chat", title = "New Chat", category = CommandCategory.MODES))
+  }
+
 @HiltViewModel
 class ShellViewModel
 @Inject
@@ -247,42 +329,16 @@ constructor(
           commandPalette = commandPaletteState,
           connectivityBanner = normalizedBanner,
           preferences = UiPreferenceSnapshot(), // TODO
-          modeCards = buildModeCards(true), // TODO
-          quickActions = buildQuickActions(activeMode),
+          modeCards = modeCardsForOnlineState(true), // TODO
+          quickActions = quickActionsForMode(activeMode),
           chatState = chatState,
         )
       }
       .stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(UI_STATE_SUBSCRIPTION_TIMEOUT_MS),
-        initialValue = buildInitialState(),
+        initialValue = buildInitialShellUiState(),
       )
-
-  private fun buildInitialState(): ShellUiState {
-    val defaultWindowSize =
-      androidx.compose.material3.windowsizeclass.WindowSizeClass.calculateFromSize(
-        androidx.compose.ui.unit.DpSize(width = 640.dp, height = 360.dp)
-      )
-    return ShellUiState(
-      layout =
-        ShellLayoutState(
-          windowSizeClass = defaultWindowSize,
-          isLeftDrawerOpen = false,
-          isRightDrawerOpen = false,
-          activeRightPanel = null,
-          activeMode = ModeId.HOME,
-          showCommandPalette = false,
-          showCoverageDashboard = false,
-          connectivity = ConnectivityStatus.ONLINE,
-          pendingUndoAction = null,
-          progressJobs = emptyList(),
-          recentActivity = emptyList(),
-        ),
-      commandPalette = CommandPaletteState.Empty,
-      connectivityBanner = ConnectivityBannerState(status = ConnectivityStatus.ONLINE),
-      preferences = UiPreferenceSnapshot(),
-    )
-  }
 
   /** Records telemetry for command invocations to understand palette usage. */
   @Suppress("UnusedParameter")
@@ -305,67 +361,6 @@ constructor(
   fun updateChatState(chatState: ChatState?) {
     _chatState.value = chatState
   }
-
-  private fun buildModeCards(isOnline: Boolean): List<ModeCard> =
-    MODE_CARD_DEFINITIONS.filter { !it.requiresOnline || isOnline }
-      .map { definition ->
-        ModeCard(
-          id = definition.id,
-          title = definition.title,
-          subtitle = definition.subtitle,
-          icon = definition.icon,
-          primaryAction =
-            CommandAction(
-              id = definition.actionId,
-              title = definition.actionTitle,
-              category = definition.actionCategory,
-            ),
-          enabled = true,
-        )
-      }
-
-  private fun buildQuickActions(activeMode: ModeId): List<CommandAction> =
-    when (activeMode) {
-      ModeId.CHAT ->
-        listOf(
-          CommandAction(id = "new_chat", title = "New Chat", category = CommandCategory.MODES),
-          CommandAction(id = "clear_chat", title = "Clear Chat", category = CommandCategory.MODES),
-        )
-      ModeId.IMAGE ->
-        listOf(
-          CommandAction(
-            id = "generate_image",
-            title = "Generate",
-            category = CommandCategory.MODES,
-          ),
-          CommandAction(id = "edit_image", title = "Edit", category = CommandCategory.MODES),
-        )
-      ModeId.AUDIO ->
-        listOf(
-          CommandAction(id = "record_audio", title = "Record", category = CommandCategory.MODES),
-          CommandAction(
-            id = "transcribe_audio",
-            title = "Transcribe",
-            category = CommandCategory.MODES,
-          ),
-        )
-      ModeId.CODE ->
-        listOf(
-          CommandAction(id = "generate_code", title = "Generate", category = CommandCategory.MODES),
-          CommandAction(id = "analyze_code", title = "Analyze", category = CommandCategory.MODES),
-        )
-      ModeId.HISTORY ->
-        listOf(
-          CommandAction(id = "view_history", title = "View All", category = CommandCategory.MODES),
-          CommandAction(id = "search_history", title = "Search", category = CommandCategory.MODES),
-        )
-      ModeId.SETTINGS ->
-        listOf(
-          CommandAction(id = "open_settings", title = "Open", category = CommandCategory.SETTINGS)
-        )
-      else ->
-        listOf(CommandAction(id = "new_chat", title = "New Chat", category = CommandCategory.MODES))
-    }
 }
 
 /** Aggregated UI state exposed by [ShellViewModel]. */

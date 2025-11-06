@@ -45,6 +45,22 @@ class ModelCatalogRepositoryWriteOperationsTest {
   }
 
   @Test
+  fun `updateInstallState alias routes through updateModelState`() = runTest {
+    val expectedTime = Instant.parse("2025-12-04T00:00:00Z")
+    fixture.clock.advanceTo(expectedTime)
+
+    fixture.repository.updateInstallState("model-alias", InstallState.INSTALLED)
+
+    coVerify {
+      fixture.modelPackageWriteDao.updateInstallState(
+        "model-alias",
+        InstallState.INSTALLED,
+        expectedTime,
+      )
+    }
+  }
+
+  @Test
   fun `upsertModel writes entity`() = runTest {
     val model =
       ModelPackage(

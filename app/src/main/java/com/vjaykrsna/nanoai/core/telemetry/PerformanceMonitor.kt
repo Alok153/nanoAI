@@ -93,8 +93,7 @@ class PerformanceMonitor @Inject constructor(private val telemetryReporter: Tele
         source = "PerformanceMonitor.stopMonitoring",
         result =
           NanoAIResult.RecoverableError(
-            message =
-              "Failed to stop performance monitoring: ${illegalStateException.message}",
+            message = "Failed to stop performance monitoring: ${illegalStateException.message}",
             retryAfterSeconds = null,
             telemetryId = null,
             cause = illegalStateException,

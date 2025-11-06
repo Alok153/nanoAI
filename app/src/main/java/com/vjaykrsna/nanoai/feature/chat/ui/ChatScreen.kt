@@ -59,10 +59,10 @@ import com.vjaykrsna.nanoai.feature.uiux.ui.components.composer.NanoComposerBar
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.feedback.NanoErrorHandler
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoRadii
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoSpacing
+import java.io.IOException
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import java.io.IOException
 
 private const val MESSAGE_BUBBLE_WIDTH_FRACTION = 0.85f
 

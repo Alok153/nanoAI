@@ -9,9 +9,9 @@ import io.mockk.coVerify
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
-import kotlin.test.assertFailsWith
 import org.junit.Before
 import org.junit.Test
 
@@ -51,9 +51,7 @@ class ManageModelUseCaseTest {
 
     result.assertIsSuccess()
     coVerify(exactly = 1) { repository.deleteModelFiles(modelId) }
-    coVerify(exactly = 1) {
-      repository.updateInstallState(modelId, InstallState.NOT_INSTALLED)
-    }
+    coVerify(exactly = 1) { repository.updateInstallState(modelId, InstallState.NOT_INSTALLED) }
     coVerify(exactly = 1) { repository.updateDownloadTaskId(modelId, null) }
   }
 

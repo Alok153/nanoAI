@@ -41,8 +41,7 @@ constructor(private val apiProviderConfigRepository: ApiProviderConfigRepository
   override suspend fun addProvider(config: APIProviderConfig): NanoAIResult<Unit> =
     guardRepositoryCall(
       message = "Failed to add API provider ${config.providerId}",
-      context =
-        mapOf("providerId" to config.providerId, "providerName" to config.providerName),
+      context = mapOf("providerId" to config.providerId, "providerName" to config.providerName),
     ) {
       apiProviderConfigRepository.addProvider(config)
       NanoAIResult.success(Unit)
@@ -52,8 +51,7 @@ constructor(private val apiProviderConfigRepository: ApiProviderConfigRepository
   override suspend fun updateProvider(config: APIProviderConfig): NanoAIResult<Unit> =
     guardRepositoryCall(
       message = "Failed to update API provider ${config.providerId}",
-      context =
-        mapOf("providerId" to config.providerId, "providerName" to config.providerName),
+      context = mapOf("providerId" to config.providerId, "providerName" to config.providerName),
     ) {
       apiProviderConfigRepository.updateProvider(config)
       NanoAIResult.success(Unit)
@@ -83,11 +81,7 @@ constructor(private val apiProviderConfigRepository: ApiProviderConfigRepository
     } catch (ioException: IOException) {
       NanoAIResult.recoverable(message = message, cause = ioException, context = context)
     } catch (illegalStateException: IllegalStateException) {
-      NanoAIResult.recoverable(
-        message = message,
-        cause = illegalStateException,
-        context = context,
-      )
+      NanoAIResult.recoverable(message = message, cause = illegalStateException, context = context)
     } catch (illegalArgumentException: IllegalArgumentException) {
       NanoAIResult.recoverable(
         message = message,

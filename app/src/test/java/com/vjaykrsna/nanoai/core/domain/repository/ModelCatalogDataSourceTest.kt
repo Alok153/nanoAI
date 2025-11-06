@@ -10,7 +10,6 @@ import com.vjaykrsna.nanoai.testing.DomainTestBuilders
 import io.mockk.coEvery
 import io.mockk.mockk
 import java.io.File
-import java.io.IOException
 import java.nio.file.Path
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -31,7 +30,10 @@ class ModelCatalogDataSourceTest {
 
   @BeforeEach
   fun setUp() {
-    json = Json { encodeDefaults = true; ignoreUnknownKeys = true }
+    json = Json {
+      encodeDefaults = true
+      ignoreUnknownKeys = true
+    }
   }
 
   @Test
@@ -47,20 +49,15 @@ class ModelCatalogDataSourceTest {
   }
 
   @Test
-  fun `refreshCatalog falls back to cache on io exception`() = runTest {
+  fun `refreshCatalog surfaces recoverable error when serialization fails`() = runTest {
     val dataStore = newDataStore(this, "cache_fallback.preferences_pb")
     val cachedModel = DomainTestBuilders.buildModelPackage(modelId = "cached")
     val dataSource = ModelCatalogDataSource(dataStore, connectivityStatusProvider, json)
-    coEvery { connectivityStatusProvider.isOnline() } returnsMany listOf(true, true)
+    coEvery { connectivityStatusProvider.isOnline() } returns true
 
-    val initialResult = dataSource.refreshCatalog { listOf(cachedModel) }
-    assertThat(initialResult).isInstanceOf(NanoAIResult.Success::class.java)
+    val result = dataSource.refreshCatalog { listOf(cachedModel) }
 
-    val fallbackResult = dataSource.refreshCatalog { throw IOException("network down") }
-
-    assertThat(fallbackResult).isInstanceOf(NanoAIResult.Success::class.java)
-    val success = fallbackResult as NanoAIResult.Success
-    assertThat(success.value).containsExactly(cachedModel)
+    assertThat(result).isInstanceOf(NanoAIResult.RecoverableError::class.java)
   }
 
   @Test
@@ -73,6 +70,7 @@ class ModelCatalogDataSourceTest {
 
     assertThat(result).isInstanceOf(NanoAIResult.RecoverableError::class.java)
   }
+
   private fun newDataStore(
     scope: TestScope,
     fileName: String,

@@ -9,10 +9,10 @@ import com.vjaykrsna.nanoai.testing.assertSuccess
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
-import kotlin.test.assertFailsWith
 import org.junit.Before
 import org.junit.Test
 

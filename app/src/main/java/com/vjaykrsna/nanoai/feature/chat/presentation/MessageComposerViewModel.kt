@@ -28,8 +28,7 @@ class MessageComposerViewModel
 @Inject
 constructor(
   private val sendPromptUseCase: SendPromptUseCase,
-  @MainImmediateDispatcher
-  private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
+  @MainImmediateDispatcher private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
 ) : ViewModel() {
 
   private val _messageText = MutableStateFlow("")

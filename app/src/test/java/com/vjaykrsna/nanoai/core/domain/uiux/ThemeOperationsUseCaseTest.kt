@@ -10,9 +10,9 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
 import java.io.IOException
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
-import kotlin.test.assertFailsWith
 import org.junit.Before
 import org.junit.Test
 
@@ -47,7 +47,8 @@ class ThemeOperationsUseCaseTest {
 
   @Test
   fun `updateVisualDensity returns recoverable when repository throws illegal state`() = runTest {
-    coEvery { repository.updateVisualDensity(any()) } throws IllegalStateException("datastore locked")
+    coEvery { repository.updateVisualDensity(any()) } throws
+      IllegalStateException("datastore locked")
 
     val result = useCase.updateVisualDensity(VisualDensity.DEFAULT)
 
@@ -55,13 +56,14 @@ class ThemeOperationsUseCaseTest {
   }
 
   @Test
-  fun `updateHighContrastEnabled returns recoverable when repository throws io exception`() = runTest {
-    coEvery { repository.updateHighContrastEnabled(any()) } throws IOException("io error")
+  fun `updateHighContrastEnabled returns recoverable when repository throws io exception`() =
+    runTest {
+      coEvery { repository.updateHighContrastEnabled(any()) } throws IOException("io error")
 
-    val result = useCase.updateHighContrastEnabled(true)
+      val result = useCase.updateHighContrastEnabled(true)
 
-    result.assertRecoverableError()
-  }
+      result.assertRecoverableError()
+    }
 
   @Test
   fun `updateTheme rethrows cancellation exception`() = runTest {
