@@ -12,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 /** ViewModel responsible for connectivity status and banner management. */
 class ConnectivityViewModel
@@ -33,6 +34,6 @@ constructor(
 
   /** Updates connectivity status and handles online/offline transitions. */
   fun updateConnectivity(status: ConnectivityStatus) {
-    connectivityOperationsUseCase.updateConnectivity(status)
+    viewModelScope.launch(dispatcher) { connectivityOperationsUseCase.updateConnectivity(status) }
   }
 }

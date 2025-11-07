@@ -24,6 +24,7 @@ sealed class NanoAIResult<out T> {
     val supportContact: String?,
     val telemetryId: String? = null,
     val cause: Throwable? = null,
+    val context: Map<String, String> = emptyMap(),
   ) : NanoAIResult<Nothing>()
 
   companion object {
@@ -44,6 +45,7 @@ sealed class NanoAIResult<out T> {
       supportContact: String?,
       telemetryId: String? = null,
       cause: Throwable? = null,
-    ): FatalError = FatalError(message, supportContact, telemetryId, cause)
+      context: Map<String, String> = emptyMap(),
+    ): FatalError = FatalError(message, supportContact, telemetryId, cause, context)
   }
 }

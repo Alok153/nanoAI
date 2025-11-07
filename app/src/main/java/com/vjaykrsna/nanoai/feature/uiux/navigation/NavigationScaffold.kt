@@ -1,9 +1,12 @@
 package com.vjaykrsna.nanoai.feature.uiux.navigation
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
@@ -22,8 +25,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -329,8 +336,7 @@ private fun ModePlaceholder(title: String, modifier: Modifier = Modifier) {
  * readers and keyboard users.
  */
 @Composable
-@Suppress("UnusedParameter")
-private fun SkipLinksNavigation(
+internal fun SkipLinksNavigation(
   onSkipToContent: () -> Unit,
   onSkipToNavigation: () -> Unit,
   modifier: Modifier = Modifier,
@@ -340,16 +346,45 @@ private fun SkipLinksNavigation(
   // Implementation uses standard accessibility patterns:
   // - Alt+1: Skip to main content
   // - Alt+2: Skip to navigation
-  Box(
+  Column(
     modifier =
       modifier.fillMaxSize().semantics {
         contentDescription =
           "Skip links: Press Alt+1 to jump to main content, Alt+2 to jump to navigation"
-      }
+      },
+    verticalArrangement = Arrangement.Top,
+    horizontalAlignment = Alignment.Start,
   ) {
-    // Skip links are implemented as keyboard shortcuts in ShellViewModel
-    // and handled via accessibility services. This composable serves as
-    // documentation and accessibility marker.
+    SkipLinkButton(
+      label = "Skip to main content",
+      onClick = onSkipToContent,
+      testTag = "skip_link_content",
+    )
+    Spacer(modifier = Modifier.height(4.dp))
+    SkipLinkButton(
+      label = "Skip to navigation menu",
+      onClick = onSkipToNavigation,
+      testTag = "skip_link_navigation",
+    )
+  }
+}
+
+@Composable
+private fun SkipLinkButton(label: String, onClick: () -> Unit, testTag: String) {
+  var hasFocus by remember { mutableStateOf(false) }
+
+  TextButton(
+    onClick = onClick,
+    modifier =
+      Modifier.testTag(testTag)
+        .onFocusChanged { hasFocus = it.isFocused }
+        .alpha(if (hasFocus) 1f else 0f)
+        .semantics {
+          contentDescription = label
+          role = androidx.compose.ui.semantics.Role.Button
+        },
+  ) {
+    Text(text = label)
   }
 }
 

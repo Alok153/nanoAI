@@ -3,57 +3,26 @@ package com.vjaykrsna.nanoai.feature.library.presentation
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.vjaykrsna.nanoai.core.common.*
+import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
 import com.vjaykrsna.nanoai.core.domain.library.DownloadModelUseCase
 import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceCatalogUseCase
 import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceModelCompatibilityChecker
+import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceModelSummary
 import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceToModelPackageConverter
 import com.vjaykrsna.nanoai.core.domain.library.ModelCatalogUseCase
 import com.vjaykrsna.nanoai.core.domain.library.RefreshModelCatalogUseCase
-import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
-import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
-import com.vjaykrsna.nanoai.core.domain.model.library.DownloadStatus
-import com.vjaykrsna.nanoai.core.domain.model.library.InstallState
 import com.vjaykrsna.nanoai.core.domain.model.library.ProviderType
 import com.vjaykrsna.nanoai.feature.library.presentation.model.HuggingFaceSortOption
-import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryDownloadItem
-import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryError
 import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryFilterState
-import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryUiEvent
 import com.vjaykrsna.nanoai.feature.library.presentation.model.ModelLibrarySections
 import com.vjaykrsna.nanoai.feature.library.presentation.model.ModelLibrarySummary
-import com.vjaykrsna.nanoai.feature.library.presentation.model.ModelLibraryTabSections
 import com.vjaykrsna.nanoai.feature.library.presentation.model.ModelSort
-import com.vjaykrsna.nanoai.feature.library.presentation.util.filterBy
 import dagger.hilt.android.lifecycle.HiltViewModel
-import java.io.IOException
-import java.util.Locale
+import java.util.UUID
 import javax.inject.Inject
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 
-// Download priority constants (lower number = higher priority)
-private const val DOWNLOAD_PRIORITY_DOWNLOADING = 0
-private const val DOWNLOAD_PRIORITY_PAUSED = 1
-private const val DOWNLOAD_PRIORITY_QUEUED = 2
-private const val DOWNLOAD_PRIORITY_FAILED = 3
-private const val DOWNLOAD_PRIORITY_COMPLETED = 4
-private const val DOWNLOAD_PRIORITY_CANCELLED = 5
-
-@Suppress(
-  "LargeClass"
-) // ViewModel handles complex state management for entire model library feature
 @HiltViewModel
 class ModelLibraryViewModel
 @Inject
@@ -68,476 +37,101 @@ constructor(
   @MainImmediateDispatcher private val dispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 
-  // Create HuggingFace ViewModel manually since Hilt doesn't allow injecting ViewModels
   private val huggingFaceLibraryViewModel =
     HuggingFaceLibraryViewModel(huggingFaceCatalogUseCase, compatibilityChecker)
 
-  private val _isRefreshing = MutableStateFlow(false)
-  val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+  private val stateStore =
+    ModelLibraryStateStore(
+      modelCatalogUseCase = modelCatalogUseCase,
+      downloadManager = downloadManager,
+      huggingFaceLibraryViewModel = huggingFaceLibraryViewModel,
+      scope = viewModelScope,
+    )
 
-  // Combine refresh and download loading states
-  val isLoading: StateFlow<Boolean> =
-    combine(isRefreshing, downloadManager.isLoading) { refreshing, downloading ->
-        refreshing || downloading
-      }
-      .stateIn(viewModelScope, SharingStarted.Eagerly, false)
-
-  private val _errorEvents = MutableSharedFlow<LibraryError>()
-  val errorEvents = _errorEvents.asSharedFlow()
-
-  private val _uiEvents = MutableSharedFlow<LibraryUiEvent>()
-  val uiEvents = _uiEvents.asSharedFlow()
-
-  private val _filters = MutableStateFlow(LibraryFilterState())
-  val filters: StateFlow<LibraryFilterState> = _filters.asStateFlow()
-
-  val allModels: StateFlow<List<ModelPackage>> =
-    modelCatalogUseCase
-      .observeAllModels()
-      .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
-
-  val installedModels: StateFlow<List<ModelPackage>> =
-    modelCatalogUseCase
-      .observeInstalledModels()
-      .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
-
-  val providerOptions: StateFlow<List<ProviderType>> =
-    allModels
-      .map { models -> models.map(ModelPackage::providerType).distinct().sortedBy { it.name } }
-      .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
-
-  val capabilityOptions: StateFlow<List<String>> =
-    allModels
-      .map { models ->
-        models
-          .flatMap { it.capabilities }
-          .map { it.trim() }
-          .filter { it.isNotBlank() }
-          .map { it.lowercase(Locale.US) }
-          .distinct()
-          .sorted()
-      }
-      .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
-
-  // Delegate HuggingFace functionality to specialized ViewModel
-  val huggingFaceModels = huggingFaceLibraryViewModel.models
-  val huggingFaceFilters = huggingFaceLibraryViewModel.filters
-  val huggingFacePipelineOptions = huggingFaceLibraryViewModel.pipelineOptions
-  val huggingFaceLibraryOptions = huggingFaceLibraryViewModel.libraryOptions
-  val isHuggingFaceLoading = huggingFaceLibraryViewModel.isLoading
-  val huggingFaceDownloadableModelIds = huggingFaceLibraryViewModel.downloadableModelIds
-
-  // Pipeline options from HuggingFace (used across tabs)
-  val pipelineOptions = huggingFaceLibraryViewModel.pipelineOptions
-
-  private val downloadTasks: StateFlow<List<DownloadTask>> =
-    combine(
-        downloadManager.observeDownloadTasks(),
-        huggingFaceLibraryViewModel.errorEvents,
-        _errorEvents,
-      ) { tasks, hfErrors, localErrors ->
-        // Merge error flows if needed
-        tasks
-      }
-      .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
-
-  private val tabSections: StateFlow<ModelLibraryTabSections> =
-    combine(allModels, filters, downloadTasks) { models, filterState, downloads ->
-        val filtered = models.filterBy(filterState)
-
-        val prioritizedDownloads =
-          downloads
-            .filter { it.status.isActiveDownload() }
-            .sortedWith(
-              compareBy<DownloadTask> { downloadPriority(it.status) }
-                .thenByDescending { it.progress }
-                .thenBy { it.modelId }
-            )
-        val downloadItems =
-          prioritizedDownloads.map { task ->
-            val associatedModel = models.firstOrNull { it.modelId == task.modelId }
-            LibraryDownloadItem(task = task, model = associatedModel)
-          }
-
-        val activeIds = prioritizedDownloads.map { it.modelId }.toSet()
-
-        val localModels =
-          filtered.filter { model ->
-            model.installState == InstallState.INSTALLED || model.installState == InstallState.ERROR
-          }
-
-        val curatedAvailable =
-          filtered
-            .filter { it.installState == InstallState.NOT_INSTALLED }
-            .filterNot { it.modelId in activeIds }
-        val curatedInstalled = filtered.filter { it.installState == InstallState.INSTALLED }
-        val curatedAttention = filtered.filter { it.installState == InstallState.ERROR }
-
-        ModelLibraryTabSections(
-          local =
-            ModelLibrarySections(
-              downloads = downloadItems,
-              attention = localModels.filter { it.installState == InstallState.ERROR },
-              installed = localModels.filter { it.installState == InstallState.INSTALLED },
-              available = emptyList(),
-            ),
-          curated =
-            ModelLibrarySections(
-              downloads = downloadItems,
-              attention = curatedAttention,
-              installed = curatedInstalled,
-              available = curatedAvailable,
-            ),
-        )
-      }
-      .stateIn(viewModelScope, SharingStarted.Eagerly, ModelLibraryTabSections())
-
-  val localSections: StateFlow<ModelLibrarySections> =
-    tabSections
-      .map { it.local }
-      .stateIn(viewModelScope, SharingStarted.Eagerly, ModelLibrarySections())
-
-  val curatedSections: StateFlow<ModelLibrarySections> =
-    tabSections
-      .map { it.curated }
-      .stateIn(viewModelScope, SharingStarted.Eagerly, ModelLibrarySections())
-
-  val summary: StateFlow<ModelLibrarySummary> =
-    combine(allModels, installedModels) { all, installed ->
-        val attentionCount = all.count { it.installState == InstallState.ERROR }
-        val availableCount = all.count { it.installState == InstallState.NOT_INSTALLED }
-        ModelLibrarySummary(
-          total = all.size,
-          installed = installed.size,
-          attention = attentionCount,
-          available = availableCount,
-          installedBytes = installed.sumOf(ModelPackage::sizeBytes),
-        )
-      }
-      .stateIn(viewModelScope, SharingStarted.Eagerly, ModelLibrarySummary())
-
-  val hasActiveFilters: StateFlow<Boolean> =
-    filters.map { it.hasActiveFilters }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+  private val eventDelegate =
+    ModelLibraryEventDelegate(
+      modelCatalogUseCase = modelCatalogUseCase,
+      refreshModelCatalogUseCase = refreshModelCatalogUseCase,
+      downloadModelUseCase = downloadModelUseCase,
+      hfToModelConverter = hfToModelConverter,
+      huggingFaceLibraryViewModel = huggingFaceLibraryViewModel,
+      downloadManager = downloadManager,
+      stateStore = stateStore,
+      dispatcher = dispatcher,
+      scope = viewModelScope,
+    )
 
   init {
-    // Note: Infinite flow collectors commented out to prevent ComposeNotIdleException in tests.
-    // These collectors keep Compose waiting indefinitely. For production, consider using
-    // SharingStarted.WhileSubscribed() with timeout or manual subscription management.
-
-    // TODO: Re-enable error forwarding and download request handling in a test-friendly way
-    // Forward errors from child ViewModels
-    // viewModelScope.launch(dispatcher) {
-    //   huggingFaceLibraryViewModel.errorEvents.collect { error -> _errorEvents.emit(error) }
-    // }
-
-    // viewModelScope.launch(dispatcher) {
-    //   downloadManager.errorEvents.collect { error -> _errorEvents.emit(error) }
-    // }
-
-    // Handle Hugging Face download requests
-    viewModelScope.launch(dispatcher) {
-      huggingFaceLibraryViewModel.downloadRequests.collect { hfModel ->
-        handleHuggingFaceDownload(hfModel)
-      }
-    }
-
+    eventDelegate.start()
     refreshCatalog()
   }
 
-  fun refreshCatalog() {
-    if (_isRefreshing.value) return
+  val isRefreshing: StateFlow<Boolean> = stateStore.isRefreshing
+  val isLoading: StateFlow<Boolean> = stateStore.isLoading
+  val errorEvents = eventDelegate.errorEvents
+  val uiEvents = eventDelegate.uiEvents
+  val filters: StateFlow<LibraryFilterState> = stateStore.filters
+  val allModels = stateStore.allModels
+  val installedModels = stateStore.installedModels
+  val providerOptions: StateFlow<List<ProviderType>> = stateStore.providerOptions
+  val capabilityOptions = stateStore.capabilityOptions
+  val huggingFaceModels = stateStore.huggingFaceModels
+  val huggingFaceFilters = stateStore.huggingFaceFilters
+  val huggingFacePipelineOptions = stateStore.huggingFacePipelineOptions
+  val huggingFaceLibraryOptions = stateStore.huggingFaceLibraryOptions
+  val isHuggingFaceLoading = stateStore.isHuggingFaceLoading
+  val huggingFaceDownloadableModelIds = stateStore.huggingFaceDownloadableModelIds
+  val pipelineOptions = stateStore.pipelineOptions
+  val localSections: StateFlow<ModelLibrarySections> = stateStore.localSections
+  val curatedSections: StateFlow<ModelLibrarySections> = stateStore.curatedSections
+  val summary: StateFlow<ModelLibrarySummary> = stateStore.summary
+  val hasActiveFilters: StateFlow<Boolean> = stateStore.hasActiveFilters
 
-    _isRefreshing.value = true
+  fun refreshCatalog() = eventDelegate.refreshCatalog()
 
-    viewModelScope.launch(dispatcher) {
-      try {
-        refreshModelCatalogUseCase().onFailure { error ->
-          handleRefreshFailure(error.cause ?: Exception(error.message))
-        }
-      } finally {
-        _isRefreshing.value = false
-      }
-    }
-  }
+  fun updateSearchQuery(query: String) = stateStore.filtersController.updateSearchQuery(query)
 
-  // Filter and search functions
-  fun updateSearchQuery(query: String) {
-    _filters.update { state ->
-      when (state.tab) {
-        ModelLibraryTab.HUGGING_FACE -> {
-          huggingFaceLibraryViewModel.updateSearchQuery(query)
-          state.copy(huggingFaceSearchQuery = query)
-        }
-        else -> state.copy(localSearchQuery = query)
-      }
-    }
-  }
+  fun setPipeline(pipelineTag: String?) = stateStore.filtersController.setPipeline(pipelineTag)
 
-  fun setPipeline(pipelineTag: String?) {
-    _filters.update { it.copy(pipelineTag = pipelineTag) }
-    huggingFaceLibraryViewModel.setPipeline(pipelineTag)
-  }
+  fun setLocalSort(sort: ModelSort) = stateStore.filtersController.setLocalSort(sort)
 
-  fun setLocalSort(sort: ModelSort) {
-    _filters.update { it.copy(localSort = sort) }
-  }
+  fun setHuggingFaceSort(sort: HuggingFaceSortOption) =
+    stateStore.filtersController.setHuggingFaceSort(sort)
 
-  fun setHuggingFaceSort(sort: HuggingFaceSortOption) {
-    _filters.update { it.copy(huggingFaceSort = sort) }
-    huggingFaceLibraryViewModel.setSort(sort)
-  }
+  fun selectLocalLibrary(providerType: ProviderType?) =
+    stateStore.filtersController.selectLocalLibrary(providerType)
 
-  fun selectLocalLibrary(providerType: ProviderType?) {
-    _filters.update { it.copy(localLibrary = providerType) }
-  }
+  fun toggleCapability(capability: String) =
+    stateStore.filtersController.toggleCapability(capability)
 
-  fun toggleCapability(capability: String) {
-    _filters.update { state ->
-      val current = state.selectedCapabilities
-      val updated =
-        if (current.contains(capability)) {
-          current - capability
-        } else {
-          current + capability
-        }
-      state.copy(selectedCapabilities = updated)
-    }
-  }
+  fun clearSelectedCapabilities() = stateStore.filtersController.clearSelectedCapabilities()
 
-  fun clearSelectedCapabilities() {
-    _filters.update { it.copy(selectedCapabilities = emptySet()) }
-  }
+  fun setHuggingFaceLibrary(library: String?) =
+    stateStore.filtersController.setHuggingFaceLibrary(library)
 
-  fun setHuggingFaceLibrary(library: String?) {
-    _filters.update { it.copy(huggingFaceLibrary = library) }
-    huggingFaceLibraryViewModel.setLibrary(library)
-  }
+  fun clearFilters() = stateStore.filtersController.clearFilters()
 
-  fun clearFilters() {
-    _filters.update { state ->
-      when (state.tab) {
-        ModelLibraryTab.HUGGING_FACE -> {
-          huggingFaceLibraryViewModel.clearFilters()
-          state.copy(
-            huggingFaceSearchQuery = "",
-            pipelineTag = null,
-            huggingFaceSort = HuggingFaceSortOption.TRENDING,
-            huggingFaceLibrary = null,
-          )
-        }
-        else ->
-          state.copy(
-            localSearchQuery = "",
-            pipelineTag = null,
-            localSort = ModelSort.RECOMMENDED,
-            localLibrary = null,
-            selectedCapabilities = emptySet(),
-          )
-      }
-    }
-  }
+  fun selectTab(tab: ModelLibraryTab) = stateStore.filtersController.selectTab(tab)
 
-  fun selectTab(tab: ModelLibraryTab) {
-    _filters.update { state ->
-      if (state.tab == tab) {
-        state
-      } else {
-        val newState = state.copy(tab = tab)
-        // When switching to Hugging Face tab, sync the search query
-        if (tab == ModelLibraryTab.HUGGING_FACE) {
-          huggingFaceLibraryViewModel.updateSearchQuery(newState.huggingFaceSearchQuery)
-        }
-        newState
-      }
-    }
-  }
+  fun requestLocalModelImport() = eventDelegate.requestLocalModelImport()
 
-  // UI event functions
-  fun requestLocalModelImport() {
-    viewModelScope.launch(dispatcher) { _uiEvents.emit(LibraryUiEvent.RequestLocalModelImport) }
-  }
+  fun importLocalModel(uri: Uri) = eventDelegate.importLocalModel(uri)
 
-  @Suppress("UnusedParameter")
-  fun importLocalModel(uri: Uri) {
-    viewModelScope.launch(dispatcher) {
-      _errorEvents.emit(
-        LibraryError.UnexpectedError(
-          "Manual import isn't available yet. Check curated or Hugging Face tabs for downloads."
-        )
-      )
-    }
-  }
+  fun downloadModel(modelId: String) = eventDelegate.downloadActions.downloadModel(modelId)
 
-  // Download functions using UseCases
-  fun downloadModel(modelId: String) {
-    viewModelScope.launch(dispatcher) {
-      downloadModelUseCase.downloadModel(modelId).onFailure { error ->
-        _errorEvents.emit(
-          LibraryError.DownloadFailed(
-            modelId = modelId,
-            message = error.message ?: "Failed to start download",
-          )
-        )
-      }
-    }
-  }
+  fun downloadHuggingFaceModel(model: HuggingFaceModelSummary) =
+    eventDelegate.requestHuggingFaceDownload(model)
 
-  fun downloadHuggingFaceModel(
-    hfModel: com.vjaykrsna.nanoai.core.domain.library.HuggingFaceModelSummary
-  ) {
-    huggingFaceLibraryViewModel.requestDownload(hfModel)
-  }
+  fun pauseDownload(taskId: UUID) = eventDelegate.downloadActions.pauseDownload(taskId)
 
-  fun pauseDownload(taskId: java.util.UUID) {
-    viewModelScope.launch(dispatcher) { downloadModelUseCase.pauseDownload(taskId) }
-  }
+  fun resumeDownload(taskId: UUID) = eventDelegate.downloadActions.resumeDownload(taskId)
 
-  fun resumeDownload(taskId: java.util.UUID) {
-    viewModelScope.launch(dispatcher) { downloadModelUseCase.resumeDownload(taskId) }
-  }
+  fun cancelDownload(taskId: UUID) = eventDelegate.downloadActions.cancelDownload(taskId)
 
-  fun cancelDownload(taskId: java.util.UUID) {
-    viewModelScope.launch(dispatcher) { downloadModelUseCase.cancelDownload(taskId) }
-  }
+  fun retryDownload(taskId: UUID) = eventDelegate.downloadActions.retryDownload(taskId)
 
-  fun retryDownload(taskId: java.util.UUID) {
-    viewModelScope.launch(dispatcher) { downloadModelUseCase.retryFailedDownload(taskId) }
-  }
+  fun deleteModel(modelId: String) = eventDelegate.downloadActions.deleteModel(modelId)
 
-  fun deleteModel(modelId: String) {
-    downloadManager.deleteModel(modelId)
-  }
-
-  fun observeDownloadProgress(taskId: java.util.UUID): StateFlow<Float> =
-    downloadModelUseCase
-      .getDownloadProgress(taskId)
-      .stateIn(viewModelScope, SharingStarted.Eagerly, 0f)
-
-  private suspend fun handleRefreshFailure(error: Throwable) {
-    if (error is CancellationException) throw error
-
-    val rawMessage = error.message?.takeIf { it.isNotBlank() }
-    val userMessage = buildString {
-      append("Failed to refresh model catalog")
-      rawMessage?.let { append(": ").append(it) }
-    }
-
-    _errorEvents.emit(LibraryError.UnexpectedError(userMessage))
-
-    val cachedCount =
-      modelCatalogUseCase.getAllModels().fold(onSuccess = { it.size }, onFailure = { 0 })
-    modelCatalogUseCase.recordOfflineFallback(
-      reason = error::class.simpleName ?: "UnknownError",
-      cachedCount = cachedCount,
-      message = rawMessage,
-    )
-  }
-
-  private fun downloadPriority(status: DownloadStatus): Int =
-    when (status) {
-      DownloadStatus.DOWNLOADING -> DOWNLOAD_PRIORITY_DOWNLOADING
-      DownloadStatus.PAUSED -> DOWNLOAD_PRIORITY_PAUSED
-      DownloadStatus.QUEUED -> DOWNLOAD_PRIORITY_QUEUED
-      DownloadStatus.FAILED -> DOWNLOAD_PRIORITY_FAILED
-      DownloadStatus.COMPLETED -> DOWNLOAD_PRIORITY_COMPLETED
-      DownloadStatus.CANCELLED -> DOWNLOAD_PRIORITY_CANCELLED
-    }
-
-  private suspend fun handleHuggingFaceDownload(
-    hfModel: com.vjaykrsna.nanoai.core.domain.library.HuggingFaceModelSummary
-  ) {
-    try {
-      val modelPackage = convertHuggingFaceModelOrEmit(hfModel) ?: return
-      if (!ensureModelIsNewOrEmit(modelPackage)) return
-      if (!addModelToCatalogOrEmit(modelPackage)) return
-      startDownloadOrEmit(modelPackage.modelId)
-    } catch (cancellationException: CancellationException) {
-      throw cancellationException
-    } catch (ioException: IOException) {
-      _errorEvents.emit(
-        LibraryError.DownloadFailed(
-          modelId = hfModel.modelId,
-          message = "Network error while processing Hugging Face model: ${ioException.message}",
-        )
-      )
-    } catch (illegalStateException: IllegalStateException) {
-      _errorEvents.emit(
-        LibraryError.DownloadFailed(
-          modelId = hfModel.modelId,
-          message = "Failed to process Hugging Face model: ${illegalStateException.message}",
-        )
-      )
-    } catch (illegalArgumentException: IllegalArgumentException) {
-      _errorEvents.emit(
-        LibraryError.DownloadFailed(
-          modelId = hfModel.modelId,
-          message = "Invalid Hugging Face model metadata: ${illegalArgumentException.message}",
-        )
-      )
-    }
-  }
-
-  private suspend fun convertHuggingFaceModelOrEmit(
-    hfModel: com.vjaykrsna.nanoai.core.domain.library.HuggingFaceModelSummary
-  ): ModelPackage? {
-    val modelPackage = hfToModelConverter.convertIfCompatible(hfModel)
-    if (modelPackage == null) {
-      _errorEvents.emit(
-        LibraryError.DownloadFailed(
-          modelId = hfModel.modelId,
-          message = "Model is not compatible with local runtimes",
-        )
-      )
-    }
-    return modelPackage
-  }
-
-  private suspend fun ensureModelIsNewOrEmit(modelPackage: ModelPackage): Boolean {
-    val existingModel =
-      modelCatalogUseCase
-        .getModel(modelPackage.modelId)
-        .fold(onSuccess = { it }, onFailure = { null })
-
-    if (existingModel != null) {
-      _errorEvents.emit(
-        LibraryError.DownloadFailed(
-          modelId = modelPackage.modelId,
-          message = "Model already exists in catalog",
-        )
-      )
-      return false
-    }
-    return true
-  }
-
-  private suspend fun addModelToCatalogOrEmit(modelPackage: ModelPackage): Boolean {
-    var success = true
-    modelCatalogUseCase.upsertModel(modelPackage).onFailure { error ->
-      success = false
-      _errorEvents.emit(
-        LibraryError.DownloadFailed(
-          modelId = modelPackage.modelId,
-          message = "Failed to add model to catalog: ${error.message}",
-        )
-      )
-    }
-    return success
-  }
-
-  private suspend fun startDownloadOrEmit(modelId: String) {
-    downloadModelUseCase.downloadModel(modelId).onFailure { error ->
-      _errorEvents.emit(
-        LibraryError.DownloadFailed(
-          modelId = modelId,
-          message = error.message ?: "Failed to start download",
-        )
-      )
-    }
-  }
-
-  private fun DownloadStatus.isActiveDownload(): Boolean =
-    this == DownloadStatus.DOWNLOADING ||
-      this == DownloadStatus.PAUSED ||
-      this == DownloadStatus.QUEUED ||
-      this == DownloadStatus.FAILED
+  fun observeDownloadProgress(taskId: UUID) =
+    eventDelegate.downloadActions.observeDownloadProgress(taskId)
 }

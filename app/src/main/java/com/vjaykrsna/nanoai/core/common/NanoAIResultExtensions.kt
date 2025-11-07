@@ -10,7 +10,12 @@ inline fun <T, R> NanoAIResult<T>.fold(
     is NanoAIResult.RecoverableError -> onFailure(this)
     is NanoAIResult.FatalError ->
       onFailure(
-        NanoAIResult.recoverable(message = message, telemetryId = telemetryId, cause = cause)
+        NanoAIResult.recoverable(
+          message = message,
+          telemetryId = telemetryId,
+          cause = cause,
+          context = context,
+        )
       )
   }
 
@@ -27,7 +32,14 @@ inline fun <T> NanoAIResult<T>.onFailure(
   if (this is NanoAIResult.RecoverableError) {
     action(this)
   } else if (this is NanoAIResult.FatalError) {
-    action(NanoAIResult.recoverable(message = message, telemetryId = telemetryId, cause = cause))
+    action(
+      NanoAIResult.recoverable(
+        message = message,
+        telemetryId = telemetryId,
+        cause = cause,
+        context = context,
+      )
+    )
   }
   return this
 }

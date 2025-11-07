@@ -3,6 +3,7 @@ package com.vjaykrsna.nanoai.feature.uiux.presentation
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityStatus
 import com.vjaykrsna.nanoai.core.domain.uiux.ConnectivityOperationsUseCase
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
+import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -27,8 +28,8 @@ class ConnectivityViewModelTest {
       viewModel.updateConnectivity(ConnectivityStatus.ONLINE)
       advanceUntilIdle()
 
-      // Verify that updateConnectivity was called on the use case
-      // Since the banner state comes from the use case, we can't easily test the state change
-      // without mocking the flow, but this tests that the method delegates correctly
+      coVerify(exactly = 1) {
+        connectivityOperationsUseCase.updateConnectivity(ConnectivityStatus.ONLINE)
+      }
     }
 }

@@ -1,14 +1,19 @@
 package com.vjaykrsna.nanoai.testing
 
+import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
 import com.vjaykrsna.nanoai.core.domain.model.ChatThread
+import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.core.domain.model.Message
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
 import com.vjaykrsna.nanoai.core.domain.model.library.DeliveryType
+import com.vjaykrsna.nanoai.core.domain.model.library.DownloadStatus
 import com.vjaykrsna.nanoai.core.domain.model.library.InstallState
 import com.vjaykrsna.nanoai.core.domain.model.library.ProviderType
+import com.vjaykrsna.nanoai.core.model.APIType
 import com.vjaykrsna.nanoai.core.model.MessageRole
 import com.vjaykrsna.nanoai.core.model.MessageSource
+import com.vjaykrsna.nanoai.core.model.ProviderStatus
 import java.util.UUID
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
@@ -154,5 +159,45 @@ object DomainTestBuilders {
       signature = signature,
       createdAt = createdAt,
       updatedAt = updatedAt,
+    )
+
+  /** Creates a test [APIProviderConfig] with sensible defaults. */
+  fun buildProviderConfig(
+    providerId: String = "openai",
+    providerName: String = "OpenAI",
+    baseUrl: String = "https://api.openai.com/v1",
+    apiKey: String = "sk-test",
+    apiType: APIType = APIType.OPENAI_COMPATIBLE,
+    isEnabled: Boolean = true,
+    quotaResetAt: Instant? = null,
+    lastStatus: ProviderStatus = ProviderStatus.OK,
+  ): APIProviderConfig =
+    APIProviderConfig(
+      providerId = providerId,
+      providerName = providerName,
+      baseUrl = baseUrl,
+      apiKey = apiKey,
+      apiType = apiType,
+      isEnabled = isEnabled,
+      quotaResetAt = quotaResetAt,
+      lastStatus = lastStatus,
+    )
+
+  /** Creates a test [DownloadTask] with sensible defaults. */
+  fun buildDownloadTask(
+    taskId: UUID = UUID.randomUUID(),
+    modelId: String = "model-${taskId}",
+    status: DownloadStatus = DownloadStatus.DOWNLOADING,
+    progress: Float = 0f,
+    errorMessage: String? = null,
+    bytesDownloaded: Long = 0,
+  ): DownloadTask =
+    DownloadTask(
+      taskId = taskId,
+      modelId = modelId,
+      status = status,
+      progress = progress,
+      errorMessage = errorMessage,
+      bytesDownloaded = bytesDownloaded,
     )
 }

@@ -75,7 +75,7 @@ constructor(
             message = result.message,
             telemetryId = result.telemetryId,
             supportContact = result.supportContact,
-            context = extraContext,
+            context = result.context + extraContext,
           )
         val emitted = emit(payload)
         if (emitted) {

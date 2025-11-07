@@ -165,6 +165,14 @@ internal class FakeNavigationRepository(
     windowSizeClassFlow.value = sizeClass
   }
 
+  fun emitRecentActivity(items: List<RecentActivityItem>) {
+    recentActivityFlow.value = items
+  }
+
+  fun emitUndoPayload(payload: UndoPayload?) {
+    undoPayloadFlow.value = payload
+  }
+
   override suspend fun openMode(modeId: ModeId) {
     val route = Screen.fromModeId(modeId).route
     userProfileRepository.updateActiveModeRoute("default", route)

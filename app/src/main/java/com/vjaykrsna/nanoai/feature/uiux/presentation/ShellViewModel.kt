@@ -42,6 +42,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 // import com.vjaykrsna.telemetry.ShellTelemetry
 
@@ -242,37 +243,40 @@ constructor(
 
   @Suppress("CyclomaticComplexMethod")
   fun onEvent(event: ShellUiEvent) {
-    when (event) {
-      is ShellUiEvent.ModeSelected -> {
-        navigationViewModel.openMode(event.modeId)
-        _activeMode.value = event.modeId
+    viewModelScope.launch(dispatcher) {
+      when (event) {
+        is ShellUiEvent.ModeSelected -> {
+          navigationViewModel.openMode(event.modeId)
+          _activeMode.value = event.modeId
+        }
+        is ShellUiEvent.ToggleLeftDrawer -> {
+          navigationViewModel.toggleLeftDrawer()
+          _isLeftDrawerOpen.value = !_isLeftDrawerOpen.value
+        }
+        is ShellUiEvent.SetLeftDrawer -> {
+          navigationViewModel.setLeftDrawer(event.open)
+          _isLeftDrawerOpen.value = event.open
+        }
+        is ShellUiEvent.ToggleRightDrawer -> {
+          navigationViewModel.toggleRightDrawer(event.panel)
+          _isRightDrawerOpen.value = !_isRightDrawerOpen.value
+          _activeRightPanel.value = if (_isRightDrawerOpen.value) event.panel else null
+        }
+        is ShellUiEvent.ShowCommandPalette -> navigationViewModel.showCommandPalette(event.source)
+        is ShellUiEvent.HideCommandPalette -> navigationViewModel.hideCommandPalette()
+        is ShellUiEvent.CommandInvoked -> onCommandInvoked(event.action, event.source)
+        is ShellUiEvent.QueueJob -> progressViewModel.queueGeneration(event.job)
+        is ShellUiEvent.RetryJob -> progressViewModel.retryJob(event.job)
+        is ShellUiEvent.CompleteJob -> progressViewModel.completeJob(event.jobId)
+        is ShellUiEvent.Undo -> progressViewModel.undoAction(event.payload)
+        is ShellUiEvent.ConnectivityChanged ->
+          connectivityViewModel.updateConnectivity(event.status)
+        is ShellUiEvent.UpdateTheme -> themeViewModel.updateThemePreference(event.theme)
+        is ShellUiEvent.UpdateDensity -> themeViewModel.updateVisualDensity(event.density)
+        ShellUiEvent.ShowCoverageDashboard -> _showCoverageDashboard.value = true
+        ShellUiEvent.HideCoverageDashboard -> _showCoverageDashboard.value = false
+        else -> Unit
       }
-      is ShellUiEvent.ToggleLeftDrawer -> {
-        navigationViewModel.toggleLeftDrawer()
-        _isLeftDrawerOpen.value = !_isLeftDrawerOpen.value
-      }
-      is ShellUiEvent.SetLeftDrawer -> {
-        navigationViewModel.setLeftDrawer(event.open)
-        _isLeftDrawerOpen.value = event.open
-      }
-      is ShellUiEvent.ToggleRightDrawer -> {
-        navigationViewModel.toggleRightDrawer(event.panel)
-        _isRightDrawerOpen.value = !_isRightDrawerOpen.value
-        _activeRightPanel.value = if (_isRightDrawerOpen.value) event.panel else null
-      }
-      is ShellUiEvent.ShowCommandPalette -> navigationViewModel.showCommandPalette(event.source)
-      is ShellUiEvent.HideCommandPalette -> navigationViewModel.hideCommandPalette()
-      is ShellUiEvent.CommandInvoked -> onCommandInvoked(event.action, event.source)
-      is ShellUiEvent.QueueJob -> progressViewModel.queueGeneration(event.job)
-      is ShellUiEvent.RetryJob -> progressViewModel.retryJob(event.job)
-      is ShellUiEvent.CompleteJob -> progressViewModel.completeJob(event.jobId)
-      is ShellUiEvent.Undo -> progressViewModel.undoAction(event.payload)
-      is ShellUiEvent.ConnectivityChanged -> connectivityViewModel.updateConnectivity(event.status)
-      is ShellUiEvent.UpdateTheme -> themeViewModel.updateThemePreference(event.theme)
-      is ShellUiEvent.UpdateDensity -> themeViewModel.updateVisualDensity(event.density)
-      ShellUiEvent.ShowCoverageDashboard -> _showCoverageDashboard.value = true
-      ShellUiEvent.HideCoverageDashboard -> _showCoverageDashboard.value = false
-      else -> Unit
     }
   }
 
@@ -290,23 +294,18 @@ constructor(
         _showCoverageDashboard,
         _chatState,
       ) { values ->
-        val windowSizeClass = values[WINDOW_SIZE_CLASS_INDEX] as WindowSizeClass
-        val activeMode = values[ACTIVE_MODE_INDEX] as ModeId
-        val isLeftDrawerOpen = values[LEFT_DRAWER_OPEN_INDEX] as Boolean
-        val isRightDrawerOpen = values[RIGHT_DRAWER_OPEN_INDEX] as Boolean
-        val activeRightPanel = values[ACTIVE_RIGHT_PANEL_INDEX] as RightPanel?
-        @Suppress("UNCHECKED_CAST")
-        val recentActivity =
-          values[RECENT_ACTIVITY_INDEX] as? List<RecentActivityItem>
-            ?: error("Expected List<RecentActivityItem> at index $RECENT_ACTIVITY_INDEX")
-        val undoPayload = values[UNDO_PAYLOAD_INDEX] as UndoPayload?
-        val commandPaletteState = values[COMMAND_PALETTE_STATE_INDEX] as CommandPaletteState
-        @Suppress("UNCHECKED_CAST")
-        val jobs =
-          values[PROGRESS_JOBS_INDEX] as? List<ProgressJob>
-            ?: error("Expected List<ProgressJob> at index $PROGRESS_JOBS_INDEX")
-        val showCoverageDashboard = values[SHOW_COVERAGE_DASHBOARD_INDEX] as Boolean
-        val chatState = values[CHAT_STATE_INDEX] as ChatState?
+        val windowSizeClass = values.requireValue<WindowSizeClass>(WINDOW_SIZE_CLASS_INDEX)
+        val activeMode = values.requireValue<ModeId>(ACTIVE_MODE_INDEX)
+        val isLeftDrawerOpen = values.requireValue<Boolean>(LEFT_DRAWER_OPEN_INDEX)
+        val isRightDrawerOpen = values.requireValue<Boolean>(RIGHT_DRAWER_OPEN_INDEX)
+        val activeRightPanel = values.requireValueOrNull<RightPanel>(ACTIVE_RIGHT_PANEL_INDEX)
+        val recentActivity = values.requireValue<List<RecentActivityItem>>(RECENT_ACTIVITY_INDEX)
+        val undoPayload = values.requireValueOrNull<UndoPayload>(UNDO_PAYLOAD_INDEX)
+        val commandPaletteState =
+          values.requireValue<CommandPaletteState>(COMMAND_PALETTE_STATE_INDEX)
+        val jobs = values.requireValue<List<ProgressJob>>(PROGRESS_JOBS_INDEX)
+        val showCoverageDashboard = values.requireValue<Boolean>(SHOW_COVERAGE_DASHBOARD_INDEX)
+        val chatState = values.requireValueOrNull<ChatState>(CHAT_STATE_INDEX)
 
         val normalizedLayout =
           ShellLayoutState(
@@ -373,3 +372,24 @@ data class ShellUiState(
   val quickActions: List<CommandAction> = emptyList(),
   val chatState: ChatState? = null,
 )
+
+private inline fun <reified T> Array<Any?>.requireValue(index: Int): T {
+  val value =
+    getOrNull(index)
+      ?: error(
+        "Expected value of type ${T::class.simpleName} at index $index but array had size $size"
+      )
+  return value as? T
+    ?: error(
+      "Expected value of type ${T::class.simpleName} at index $index but was ${value::class.qualifiedName}"
+    )
+}
+
+private inline fun <reified T> Array<Any?>.requireValueOrNull(index: Int): T? {
+  val value = getOrNull(index)
+  if (value == null) return null
+  return value as? T
+    ?: error(
+      "Expected value of type ${T::class.simpleName} at index $index but was ${value::class.qualifiedName}"
+    )
+}

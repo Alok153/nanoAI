@@ -1,10 +1,9 @@
-@file:Suppress("UnusedParameter")
-
 package com.vjaykrsna.nanoai.core.domain.chat
 
 import android.graphics.Bitmap
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.domain.model.Message
+import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
 import com.vjaykrsna.nanoai.core.domain.repository.ConversationRepository
 import com.vjaykrsna.nanoai.core.domain.repository.InferencePreferenceRepository
 import com.vjaykrsna.nanoai.core.domain.repository.PersonaRepository
@@ -14,12 +13,14 @@ import com.vjaykrsna.nanoai.core.model.MessageSource
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.collections.buildMap
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.Clock
 
 private data class InferenceConfigurationData(
   val options: InferenceConfiguration,
   val preferLocal: Boolean,
+  val personaContext: Map<String, String>,
 )
 
 /** Use case for sending prompts and generating AI responses. */
@@ -35,7 +36,7 @@ constructor(
   override suspend operator fun invoke(
     threadId: UUID,
     prompt: String,
-    @Suppress("UnusedParameter") personaId: UUID,
+    personaId: UUID,
     image: Bitmap?,
     audio: ByteArray?,
   ): NanoAIResult<Unit> {
@@ -45,7 +46,13 @@ constructor(
     val options = prepareInferenceConfiguration(personaId)
     val inferenceResult = performInference(prompt, personaId, options, image, audio)
 
-    return handleInferenceResult(inferenceResult, threadId, personaId, options.preferLocal)
+    return handleInferenceResult(
+      result = inferenceResult,
+      threadId = threadId,
+      personaId = personaId,
+      preferLocal = options.preferLocal,
+      personaContext = options.personaContext,
+    )
   }
 
   private suspend fun checkInferenceAvailability(
@@ -83,7 +90,11 @@ constructor(
     val preferLocal =
       shouldPreferLocal(hasLocalModel, isOnline, userPreference.mode == InferenceMode.LOCAL_FIRST)
 
-    return InferenceConfigurationData(inferenceConfiguration, preferLocal)
+    return InferenceConfigurationData(
+      options = inferenceConfiguration,
+      preferLocal = preferLocal,
+      personaContext = buildPersonaContext(persona),
+    )
   }
 
   private suspend fun performInference(
@@ -106,11 +117,14 @@ constructor(
     threadId: UUID,
     personaId: UUID,
     preferLocal: Boolean,
+    personaContext: Map<String, String>,
   ): NanoAIResult<Unit> =
     when (result) {
       is NanoAIResult.Success -> saveSuccessMessage(result.value, threadId)
-      is NanoAIResult.RecoverableError -> saveErrorMessage(result, threadId, personaId, preferLocal)
-      is NanoAIResult.FatalError -> saveErrorMessage(result, threadId, personaId, preferLocal)
+      is NanoAIResult.RecoverableError ->
+        saveErrorMessage(result, threadId, personaId, preferLocal, personaContext)
+      is NanoAIResult.FatalError ->
+        saveErrorMessage(result, threadId, personaId, preferLocal, personaContext)
     }
 
   private suspend fun saveSuccessMessage(
@@ -136,6 +150,7 @@ constructor(
     threadId: UUID,
     personaId: UUID,
     preferLocal: Boolean,
+    personaContext: Map<String, String>,
   ): NanoAIResult<Unit> {
     val message =
       Message(
@@ -152,9 +167,7 @@ constructor(
     return NanoAIResult.recoverable(
       message = result.message,
       telemetryId = result.telemetryId,
-      context =
-        mapOf("threadId" to threadId.toString(), "personaId" to personaId.toString()) +
-          result.context,
+      context = buildTelemetryContext(threadId, personaId, personaContext) + result.context,
     )
   }
 
@@ -163,6 +176,7 @@ constructor(
     threadId: UUID,
     personaId: UUID,
     preferLocal: Boolean,
+    personaContext: Map<String, String>,
   ): NanoAIResult<Unit> {
     val message =
       Message(
@@ -181,6 +195,7 @@ constructor(
       supportContact = result.supportContact,
       telemetryId = result.telemetryId,
       cause = result.cause,
+      context = buildTelemetryContext(threadId, personaId, personaContext) + result.context,
     )
   }
 
@@ -194,4 +209,20 @@ constructor(
       !isOnline -> true
       else -> userPrefersLocal
     }
+
+  private fun buildPersonaContext(persona: PersonaProfile?): Map<String, String> = buildMap {
+    persona?.let {
+      put("personaName", it.name)
+      put("personaTemperature", it.temperature.toString())
+      put("personaTopP", it.topP.toString())
+      it.defaultModelPreference?.let { preference -> put("personaModelPreference", preference) }
+    }
+  }
+
+  private fun buildTelemetryContext(
+    threadId: UUID,
+    personaId: UUID,
+    personaContext: Map<String, String>,
+  ): Map<String, String> =
+    mapOf("threadId" to threadId.toString(), "personaId" to personaId.toString()) + personaContext
 }

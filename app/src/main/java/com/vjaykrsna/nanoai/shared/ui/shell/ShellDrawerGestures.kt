@@ -1,13 +1,15 @@
 package com.vjaykrsna.nanoai.shared.ui.shell
 
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.horizontalDrag
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.PointerInputScope
-import androidx.compose.ui.input.pointer.consumePositionChange
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellLayoutState
@@ -71,43 +73,45 @@ private suspend fun PointerInputScope.handleShellDrawerGestures(
   layoutProvider: () -> ShellLayoutState,
   onEvent: (ShellUiEvent) -> Unit,
 ) {
-  var gesture: DrawerSwipeAction? = null
-  var totalDrag = 0f
-
-  detectHorizontalDragGestures(
-    onDragStart = { offset: Offset ->
-      val snapshot = layoutProvider()
-      gesture =
-        determineGesture(
-          DrawerGestureContext(
-            snapshot = snapshot,
-            allowLeftGestures = allowLeftGestures,
-            allowRightGestures = allowRightGestures,
-            thresholds = thresholds,
-            startX = offset.x,
-            containerWidth = size.width.toFloat(),
-          )
+  awaitEachGesture {
+    val down = awaitFirstDown(requireUnconsumed = false)
+    val snapshot = layoutProvider()
+    var gesture =
+      determineGesture(
+        DrawerGestureContext(
+          snapshot = snapshot,
+          allowLeftGestures = allowLeftGestures,
+          allowRightGestures = allowRightGestures,
+          thresholds = thresholds,
+          startX = down.position.x,
+          containerWidth = size.width.toFloat(),
         )
-      totalDrag = 0f
-    },
-    onHorizontalDrag = { change, dragAmount ->
-      val activeGesture = gesture
-      if (activeGesture != null) {
-        totalDrag += dragAmount
-        @Suppress("DEPRECATION") change.consumePositionChange()
-      }
-    },
-    onDragCancel = { gesture = null },
-    onDragEnd = {
-      gesture?.handleDragEnd(
-        totalDrag = totalDrag,
-        snapshot = layoutProvider(),
-        thresholds = thresholds,
-        onEvent = onEvent,
       )
+    var totalDrag = 0f
+
+    if (gesture == null) {
+      waitForUpOrCancellation()
+      return@awaitEachGesture
+    }
+
+    val dragCompleted =
+      horizontalDrag(down.id) { change ->
+        totalDrag += change.positionChange().x
+        change.consume()
+      }
+
+    if (!dragCompleted) {
       gesture = null
-    },
-  )
+      return@awaitEachGesture
+    }
+
+    gesture?.handleDragEnd(
+      totalDrag = totalDrag,
+      snapshot = layoutProvider(),
+      thresholds = thresholds,
+      onEvent = onEvent,
+    )
+  }
 }
 
 private fun determineGesture(context: DrawerGestureContext): DrawerSwipeAction? {

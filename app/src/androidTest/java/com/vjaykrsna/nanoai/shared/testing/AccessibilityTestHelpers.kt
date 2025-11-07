@@ -13,20 +13,20 @@ import androidx.compose.ui.unit.dp
  *
  * Provides utilities to verify WCAG compliance, touch targets, and semantic properties.
  */
-class AccessibilityTestHelpers(
-  @Suppress("UnusedPrivateProperty") private val composeTestRule: ComposeTestRule
-) {
+class AccessibilityTestHelpers(private val composeTestRule: ComposeTestRule) {
 
   /**
    * Verifies that interactive elements meet minimum touch target size of 48dp. Checks both width
    * and height dimensions.
    */
   fun SemanticsNodeInteraction.assertMinimumTouchTarget() {
+    composeTestRule.waitForIdle()
     assert(hasMinimumTouchTarget(48.dp))
   }
 
   /** Verifies that interactive elements meet a custom minimum touch target size. */
   fun SemanticsNodeInteraction.assertMinimumTouchTarget(minSize: Dp) {
+    composeTestRule.waitForIdle()
     assert(hasMinimumTouchTarget(minSize))
   }
 
@@ -36,21 +36,25 @@ class AccessibilityTestHelpers(
    * semantic text properties.
    */
   fun SemanticsNodeInteraction.assertHasReadableText() {
+    composeTestRule.waitForIdle()
     assert(hasTextContent())
   }
 
   /** Verifies that elements with icons have appropriate content descriptions. */
   fun SemanticsNodeInteraction.assertIconHasDescription() {
+    composeTestRule.waitForIdle()
     assert(hasContentDescription() or hasTestTag())
   }
 
   /** Verifies that form controls are properly labeled. */
   fun SemanticsNodeInteraction.assertFormControlIsLabeled() {
+    composeTestRule.waitForIdle()
     assert(hasContentDescription() or hasStateDescription() or hasTestTag())
   }
 
   /** Verifies that headings are properly marked for screen reader navigation. */
   fun SemanticsNodeInteraction.assertIsProperHeading() {
+    composeTestRule.waitForIdle()
     assert(isHeading())
   }
 
@@ -66,6 +70,7 @@ class AccessibilityTestHelpers(
 
   /** Verifies that progress indicators provide current value information. */
   fun SemanticsNodeInteraction.assertProgressIndicatorProvidesValue() {
+    composeTestRule.waitForIdle()
     assert(hasProgressSemantics())
   }
 

@@ -43,7 +43,6 @@ fun ThemePreferenceChips(
 }
 
 @Composable
-@Suppress("UnusedParameter")
 fun VisualDensityChips(
   selected: VisualDensity,
   onSelect: (VisualDensity) -> Unit,
@@ -84,7 +83,8 @@ fun VisualDensityChips(
               overflow = TextOverflow.Ellipsis,
             )
           },
-          modifier = Modifier.semantics { contentDescription = "${label} density coming soon" },
+          modifier =
+            chipModifier(density).semantics { contentDescription = "${label} density coming soon" },
         )
       }
     }

@@ -1,9 +1,8 @@
-@file:Suppress("ReturnCount") // Multiple validation paths in use case
-
 package com.vjaykrsna.nanoai.core.domain.library
 
 import android.database.sqlite.SQLiteException
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.common.fold
 import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.core.domain.model.library.DownloadStatus
@@ -53,42 +52,23 @@ constructor(
       message = "Failed to verify checksum for model $modelId",
       context = mapOf("modelId" to modelId),
     ) {
-      val model: ModelPackage =
-        modelCatalogRepository.getModelById(modelId).first()
-          ?: return@guardOperation NanoAIResult.recoverable(
-            message = "Model $modelId not found",
-            context = mapOf("modelId" to modelId),
-          )
-
-      val expectedChecksum =
-        model.checksumSha256
-          ?: run {
-            modelCatalogRepository.updateInstallState(modelId, InstallState.ERROR)
-            return@guardOperation NanoAIResult.recoverable(
-              message = "No checksum available for model $modelId",
-              context = mapOf("modelId" to modelId),
-            )
-          }
-
-      val actualChecksum =
-        downloadManager.getDownloadedChecksum(modelId)
-          ?: run {
-            modelCatalogRepository.updateInstallState(modelId, InstallState.ERROR)
-            return@guardOperation NanoAIResult.recoverable(
-              message = "Downloaded checksum not available for model $modelId",
-              context = mapOf("modelId" to modelId),
-            )
-          }
-
-      val matches = expectedChecksum.equals(actualChecksum, ignoreCase = true)
-      if (matches) {
-        modelCatalogRepository.updateInstallState(modelId, InstallState.INSTALLED)
-        modelCatalogRepository.updateChecksum(modelId, actualChecksum)
-        model.downloadTaskId?.let { downloadManager.updateTaskStatus(it, DownloadStatus.COMPLETED) }
-      } else {
-        modelCatalogRepository.updateInstallState(modelId, InstallState.ERROR)
-      }
-      NanoAIResult.success(matches)
+      loadChecksumContext(modelId)
+        .fold(
+          onSuccess = { context ->
+            val matches = context.expectedChecksum.equals(context.actualChecksum, ignoreCase = true)
+            if (matches) {
+              modelCatalogRepository.updateInstallState(modelId, InstallState.INSTALLED)
+              modelCatalogRepository.updateChecksum(modelId, context.actualChecksum)
+              context.model.downloadTaskId?.let {
+                downloadManager.updateTaskStatus(it, DownloadStatus.COMPLETED)
+              }
+            } else {
+              modelCatalogRepository.updateInstallState(modelId, InstallState.ERROR)
+            }
+            NanoAIResult.success(matches)
+          },
+          onFailure = { error -> error },
+        )
     }
 
   /** Pause a download task and persist status. */
@@ -108,21 +88,26 @@ constructor(
       message = "Failed to resume download $taskId",
       context = mapOf("taskId" to taskId.toString()),
     ) {
-      val task =
-        downloadManager.getTaskById(taskId).first()
-          ?: return@guardOperation NanoAIResult.recoverable(
-            message = "Download task $taskId not found",
-            context = mapOf("taskId" to taskId.toString()),
-          )
-      if (task.status != DownloadStatus.PAUSED)
-        return@guardOperation NanoAIResult.recoverable(
-          message = "Download task $taskId is not paused",
-          context = mapOf("taskId" to taskId.toString(), "status" to task.status.toString()),
+      requireDownloadTask(taskId)
+        .fold(
+          onSuccess = { task ->
+            ensureTaskStatus(
+                task = task,
+                expectedStatus = DownloadStatus.PAUSED,
+                taskId = taskId,
+                errorMessage = "Download task $taskId is not paused",
+              )
+              .fold(
+                onSuccess = {
+                  downloadManager.resumeDownload(taskId)
+                  downloadManager.updateTaskStatus(taskId, DownloadStatus.DOWNLOADING)
+                  NanoAIResult.success(Unit)
+                },
+                onFailure = { error -> error },
+              )
+          },
+          onFailure = { error -> error },
         )
-
-      downloadManager.resumeDownload(taskId)
-      downloadManager.updateTaskStatus(taskId, DownloadStatus.DOWNLOADING)
-      NanoAIResult.success(Unit)
     }
 
   /** Cancel a download and cleanup associated files. */
@@ -202,29 +187,34 @@ constructor(
       message = "Failed to retry download $taskId",
       context = mapOf("taskId" to taskId.toString()),
     ) {
-      val task =
-        downloadManager.getTaskById(taskId).first()
-          ?: return@guardOperation NanoAIResult.recoverable(
-            message = "Download task $taskId not found",
-            context = mapOf("taskId" to taskId.toString()),
-          )
-      if (task.status != DownloadStatus.FAILED)
-        return@guardOperation NanoAIResult.recoverable(
-          message = "Download task $taskId is not failed",
-          context = mapOf("taskId" to taskId.toString(), "status" to task.status.toString()),
+      requireDownloadTask(taskId)
+        .fold(
+          onSuccess = { task ->
+            ensureTaskStatus(
+                task = task,
+                expectedStatus = DownloadStatus.FAILED,
+                taskId = taskId,
+                errorMessage = "Download task $taskId is not failed",
+              )
+              .fold(
+                onSuccess = {
+                  requireModelIdForTask(taskId)
+                    .fold(
+                      onSuccess = { modelId ->
+                        downloadManager.resetTask(taskId)
+                        downloadManager.startDownload(modelId)
+                        modelCatalogRepository.updateInstallState(modelId, InstallState.DOWNLOADING)
+                        modelCatalogRepository.updateDownloadTaskId(modelId, taskId)
+                        NanoAIResult.success(Unit)
+                      },
+                      onFailure = { error -> error },
+                    )
+                },
+                onFailure = { error -> error },
+              )
+          },
+          onFailure = { error -> error },
         )
-      val modelId =
-        downloadManager.getModelIdForTask(taskId)
-          ?: return@guardOperation NanoAIResult.recoverable(
-            message = "Model ID not found for task $taskId",
-            context = mapOf("taskId" to taskId.toString()),
-          )
-
-      downloadManager.resetTask(taskId)
-      downloadManager.startDownload(modelId)
-      modelCatalogRepository.updateInstallState(modelId, InstallState.DOWNLOADING)
-      modelCatalogRepository.updateDownloadTaskId(modelId, taskId)
-      NanoAIResult.success(Unit)
     }
 
   private inline fun <T> guardOperation(
@@ -250,6 +240,89 @@ constructor(
       )
     } catch (securityException: SecurityException) {
       NanoAIResult.recoverable(message = message, cause = securityException, context = context)
+    }
+  }
+
+  private data class ChecksumContext(
+    val model: ModelPackage,
+    val expectedChecksum: String,
+    val actualChecksum: String,
+  )
+
+  private suspend fun loadChecksumContext(modelId: String): NanoAIResult<ChecksumContext> {
+    val model = modelCatalogRepository.getModelById(modelId).first()
+    return when {
+      model == null ->
+        NanoAIResult.recoverable(
+          message = "Model $modelId not found",
+          context = mapOf("modelId" to modelId),
+        )
+      model.checksumSha256 == null -> {
+        modelCatalogRepository.updateInstallState(modelId, InstallState.ERROR)
+        NanoAIResult.recoverable(
+          message = "No checksum available for model $modelId",
+          context = mapOf("modelId" to modelId),
+        )
+      }
+      else -> {
+        val expectedChecksum = model.checksumSha256
+        val actualChecksum = downloadManager.getDownloadedChecksum(modelId)
+        if (actualChecksum == null) {
+          modelCatalogRepository.updateInstallState(modelId, InstallState.ERROR)
+          NanoAIResult.recoverable(
+            message = "Downloaded checksum not available for model $modelId",
+            context = mapOf("modelId" to modelId),
+          )
+        } else {
+          NanoAIResult.success(
+            ChecksumContext(
+              model = model,
+              expectedChecksum = expectedChecksum,
+              actualChecksum = actualChecksum,
+            )
+          )
+        }
+      }
+    }
+  }
+
+  private suspend fun requireDownloadTask(taskId: UUID): NanoAIResult<DownloadTask> {
+    val task = downloadManager.getTaskById(taskId).first()
+    return if (task != null) {
+      NanoAIResult.success(task)
+    } else {
+      NanoAIResult.recoverable(
+        message = "Download task $taskId not found",
+        context = mapOf("taskId" to taskId.toString()),
+      )
+    }
+  }
+
+  private fun ensureTaskStatus(
+    task: DownloadTask,
+    expectedStatus: DownloadStatus,
+    taskId: UUID,
+    errorMessage: String,
+  ): NanoAIResult<DownloadTask> {
+    return if (task.status == expectedStatus) {
+      NanoAIResult.success(task)
+    } else {
+      NanoAIResult.recoverable(
+        message = errorMessage,
+        context = mapOf("taskId" to taskId.toString(), "status" to task.status.toString()),
+      )
+    }
+  }
+
+  private suspend fun requireModelIdForTask(taskId: UUID): NanoAIResult<String> {
+    val modelId = downloadManager.getModelIdForTask(taskId)
+    return if (modelId != null) {
+      NanoAIResult.success(modelId)
+    } else {
+      NanoAIResult.recoverable(
+        message = "Model ID not found for task $taskId",
+        context = mapOf("taskId" to taskId.toString()),
+      )
     }
   }
 }
