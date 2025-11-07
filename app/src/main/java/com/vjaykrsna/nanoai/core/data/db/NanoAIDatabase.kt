@@ -52,6 +52,52 @@ import com.vjaykrsna.nanoai.core.maintenance.db.RepoMaintenanceTaskEntity
  * Foreign keys are enabled to ensure referential integrity and cascade deletes. TypeConverters
  * handle UUID, Instant, Set<String>, List<String>, Map<String, Boolean>, and enum conversions.
  */
+/** Core DAO access grouping to keep NanoAIDatabase succinct. */
+interface CoreDaoAccess {
+  fun chatThreadDao(): ChatThreadDao
+
+  fun messageDao(): MessageDao
+
+  fun personaProfileDao(): PersonaProfileDao
+
+  fun personaSwitchLogDao(): PersonaSwitchLogDao
+
+  fun apiProviderConfigDao(): ApiProviderConfigDao
+
+  fun repoMaintenanceTaskDao(): RepoMaintenanceTaskDao
+
+  fun codeQualityMetricDao(): CodeQualityMetricDao
+}
+
+/** Model catalog and download feature DAOs. */
+interface LibraryDaoAccess {
+  fun modelPackageReadDao(): ModelPackageReadDao
+
+  fun modelPackageWriteDao(): ModelPackageWriteDao
+
+  fun modelPackageRelationsDao(): ModelPackageRelationsDao
+
+  fun downloadManifestDao(): DownloadManifestDao
+
+  fun downloadTaskDao(): DownloadTaskDao
+
+  fun huggingFaceModelCacheDao(): HuggingFaceModelCacheDao
+}
+
+/** UI/UX persistence DAOs. */
+interface UiUxDaoAccess {
+  fun userProfileDao(): UserProfileDao
+
+  fun layoutSnapshotDao(): LayoutSnapshotDao
+
+  fun uiStateSnapshotDao(): UIStateSnapshotDao
+}
+
+/** Generated content DAO grouping. */
+interface ImageDaoAccess {
+  fun generatedImageDao(): GeneratedImageDao
+}
+
 @Database(
   entities =
     [
@@ -81,46 +127,8 @@ import com.vjaykrsna.nanoai.core.maintenance.db.RepoMaintenanceTaskEntity
   MaintenanceTypeConverters::class,
   DeliveryTypeConverters::class,
 )
-@Suppress("TooManyFunctions")
-abstract class NanoAIDatabase : RoomDatabase() {
-  // Core DAOs
-  abstract fun chatThreadDao(): ChatThreadDao
-
-  abstract fun messageDao(): MessageDao
-
-  abstract fun personaProfileDao(): PersonaProfileDao
-
-  abstract fun personaSwitchLogDao(): PersonaSwitchLogDao
-
-  abstract fun apiProviderConfigDao(): ApiProviderConfigDao
-
-  abstract fun repoMaintenanceTaskDao(): RepoMaintenanceTaskDao
-
-  abstract fun codeQualityMetricDao(): CodeQualityMetricDao
-
-  // Library feature DAOs
-  abstract fun modelPackageReadDao(): ModelPackageReadDao
-
-  abstract fun modelPackageWriteDao(): ModelPackageWriteDao
-
-  abstract fun modelPackageRelationsDao(): ModelPackageRelationsDao
-
-  abstract fun downloadManifestDao(): DownloadManifestDao
-
-  abstract fun downloadTaskDao(): DownloadTaskDao
-
-  abstract fun huggingFaceModelCacheDao(): HuggingFaceModelCacheDao
-
-  // UI/UX feature DAOs
-  abstract fun userProfileDao(): UserProfileDao
-
-  abstract fun layoutSnapshotDao(): LayoutSnapshotDao
-
-  abstract fun uiStateSnapshotDao(): UIStateSnapshotDao
-
-  // Image feature DAOs
-  abstract fun generatedImageDao(): GeneratedImageDao
-
+abstract class NanoAIDatabase :
+  RoomDatabase(), CoreDaoAccess, LibraryDaoAccess, UiUxDaoAccess, ImageDaoAccess {
   companion object {
     const val DATABASE_NAME = "nanoai_database"
   }

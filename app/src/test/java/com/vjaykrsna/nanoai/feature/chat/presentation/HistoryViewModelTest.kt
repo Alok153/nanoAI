@@ -1,5 +1,3 @@
-@file:Suppress("LargeClass")
-
 package com.vjaykrsna.nanoai.feature.chat.presentation
 
 import app.cash.turbine.skipItems
@@ -14,23 +12,22 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
-/**
- * Unit tests for [HistoryViewModel].
- *
- * Covers loading states, thread operations, and error handling.
- */
-class HistoryViewModelTest {
+abstract class HistoryViewModelTestBase {
 
-  @JvmField @RegisterExtension val mainDispatcherExtension = MainDispatcherExtension()
-
-  private lateinit var conversationRepository: FakeConversationRepository
-  private lateinit var viewModel: HistoryViewModel
+  protected val dispatcherExtension = MainDispatcherExtension()
+  protected lateinit var conversationRepository: FakeConversationRepository
+  protected lateinit var viewModel: HistoryViewModel
 
   @BeforeEach
-  fun setup() {
+  fun setupBase() {
     conversationRepository = FakeConversationRepository()
-    viewModel = HistoryViewModel(conversationRepository, mainDispatcherExtension.dispatcher)
+    viewModel = HistoryViewModel(conversationRepository, dispatcherExtension.dispatcher)
   }
+}
+
+class HistoryViewModelLoadingTest : HistoryViewModelTestBase() {
+
+  @JvmField @RegisterExtension val mainDispatcherExtension = dispatcherExtension
 
   @Test
   fun `init loads threads automatically`() = runTest {
@@ -38,7 +35,6 @@ class HistoryViewModelTest {
       DomainTestBuilders.buildChatThread(threadId = UUID.randomUUID(), title = "Test Thread")
     conversationRepository.addThread(thread)
 
-    // Wait for init to complete
     viewModel.threads.test {
       skipItems(1)
       val threads = awaitItem()
@@ -50,11 +46,11 @@ class HistoryViewModelTest {
   @Test
   fun `loadThreads sets loading state during operation`() = runTest {
     viewModel.isLoading.test {
-      assertThat(awaitItem()).isFalse() // Initial state
+      assertThat(awaitItem()).isFalse()
 
       viewModel.loadThreads()
-      assertThat(awaitItem()).isTrue() // Loading starts
-      assertThat(awaitItem()).isFalse() // Loading ends
+      assertThat(awaitItem()).isTrue()
+      assertThat(awaitItem()).isFalse()
     }
   }
 
@@ -86,6 +82,11 @@ class HistoryViewModelTest {
       cancelAndIgnoreRemainingEvents()
     }
   }
+}
+
+class HistoryViewModelArchiveTest : HistoryViewModelTestBase() {
+
+  @JvmField @RegisterExtension val mainDispatcherExtension = dispatcherExtension
 
   @Test
   fun `archiveThread reloads threads on success`() = runTest {
@@ -100,8 +101,6 @@ class HistoryViewModelTest {
 
     viewModel.archiveThread(threadId)
 
-    // Should reload and show archived threads or not
-    // Assuming getAllThreads returns all, including archived
     viewModel.threads.test {
       skipItems(1)
       var threads = awaitItem()
@@ -126,6 +125,11 @@ class HistoryViewModelTest {
       cancelAndIgnoreRemainingEvents()
     }
   }
+}
+
+class HistoryViewModelDeleteTest : HistoryViewModelTestBase() {
+
+  @JvmField @RegisterExtension val mainDispatcherExtension = dispatcherExtension
 
   @Test
   fun `deleteThread reloads threads on success`() = runTest {

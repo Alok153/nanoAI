@@ -16,50 +16,64 @@ import kotlinx.coroutines.flow.Flow
  * Provides methods to manage model download tasks and progress tracking.
  */
 @Dao
-@Suppress("TooManyFunctions")
-interface DownloadTaskDao {
-  /** Insert or update a download task. */
+interface DownloadTaskDao :
+  DownloadTaskWriteDao,
+  DownloadTaskReadDao,
+  DownloadTaskObservationDao,
+  DownloadTaskStatusDao,
+  DownloadTaskMaintenanceDao,
+  DownloadTaskMetricsDao
+
+/** Write helpers for download tasks. */
+interface DownloadTaskWriteDao {
   @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insert(task: DownloadTaskEntity)
 
-  /** Insert multiple download tasks. */
   @Insert(onConflict = OnConflictStrategy.REPLACE)
   suspend fun insertAll(tasks: List<DownloadTaskEntity>)
 
-  /** Update an existing download task. */
   @Update suspend fun update(task: DownloadTaskEntity)
 
-  /** Delete a download task. */
   @Delete suspend fun delete(task: DownloadTaskEntity)
+}
 
-  /** Get a specific task by ID. */
+/** Read helpers for download task queries. */
+interface DownloadTaskReadDao {
   @Query("SELECT * FROM download_tasks WHERE task_id = :taskId")
   suspend fun getById(taskId: String): DownloadTaskEntity?
 
-  /** Observe a specific task by ID (reactive). */
-  @Query("SELECT * FROM download_tasks WHERE task_id = :taskId")
-  fun observeById(taskId: String): Flow<DownloadTaskEntity?>
-
-  /** Get task by model ID (one model can only have one active download). */
   @Query("SELECT * FROM download_tasks WHERE model_id = :modelId LIMIT 1")
   suspend fun getByModelId(modelId: String): DownloadTaskEntity?
 
-  /** Get model ID for a given task. */
   @Query("SELECT model_id FROM download_tasks WHERE task_id = :taskId")
   suspend fun getModelIdForTask(taskId: String): String?
 
-  /** Get all tasks with a specific status. */
   @Query("SELECT * FROM download_tasks WHERE status = :status ORDER BY started_at ASC")
   suspend fun getByStatus(status: DownloadStatus): List<DownloadTaskEntity>
 
-  /** Get all queued downloads (for queue management). */
   @Query("SELECT * FROM download_tasks WHERE status = 'QUEUED' ORDER BY started_at ASC")
   suspend fun getQueuedDownloads(): List<DownloadTaskEntity>
 
-  /** Observe queued downloads (reactive). */
+  @Query("SELECT * FROM download_tasks WHERE status = 'DOWNLOADING' ORDER BY started_at ASC")
+  suspend fun getActiveDownloads(): List<DownloadTaskEntity>
+
+  @Query("SELECT * FROM download_tasks WHERE status = 'FAILED' ORDER BY finished_at DESC")
+  suspend fun getFailedDownloads(): List<DownloadTaskEntity>
+
+  @Query("SELECT * FROM download_tasks ORDER BY started_at DESC")
+  suspend fun getAll(): List<DownloadTaskEntity>
+
+  @Query("SELECT progress FROM download_tasks WHERE model_id = :modelId LIMIT 1")
+  suspend fun getDownloadProgress(modelId: String): Float?
+}
+
+/** Observation helpers for monitoring download tasks. */
+interface DownloadTaskObservationDao {
+  @Query("SELECT * FROM download_tasks WHERE task_id = :taskId")
+  fun observeById(taskId: String): Flow<DownloadTaskEntity?>
+
   @Query("SELECT * FROM download_tasks WHERE status = 'QUEUED' ORDER BY started_at ASC")
   fun observeQueuedDownloads(): Flow<List<DownloadTaskEntity>>
 
-  /** Observe all active, queued, paused, or failed downloads (reactive). */
   @Query(
     """
         SELECT *
@@ -70,27 +84,15 @@ interface DownloadTaskDao {
   )
   fun observeManagedDownloads(): Flow<List<DownloadTaskEntity>>
 
-  /** Get all active downloads (DOWNLOADING status). */
-  @Query("SELECT * FROM download_tasks WHERE status = 'DOWNLOADING' ORDER BY started_at ASC")
-  suspend fun getActiveDownloads(): List<DownloadTaskEntity>
-
-  /** Observe active downloads (reactive). */
   @Query("SELECT * FROM download_tasks WHERE status = 'DOWNLOADING' ORDER BY started_at ASC")
   fun observeActiveDownloads(): Flow<List<DownloadTaskEntity>>
+}
 
-  /** Get failed downloads for retry. */
-  @Query("SELECT * FROM download_tasks WHERE status = 'FAILED' ORDER BY finished_at DESC")
-  suspend fun getFailedDownloads(): List<DownloadTaskEntity>
-
-  /** Get all tasks. */
-  @Query("SELECT * FROM download_tasks ORDER BY started_at DESC")
-  suspend fun getAll(): List<DownloadTaskEntity>
-
-  /** Update task status. */
+/** Status mutation helpers for download tasks. */
+interface DownloadTaskStatusDao {
   @Query("UPDATE download_tasks SET status = :status WHERE task_id = :taskId")
   suspend fun updateStatus(taskId: String, status: DownloadStatus)
 
-  /** Update task status with error message. */
   @Query(
     """
         UPDATE download_tasks
@@ -100,7 +102,6 @@ interface DownloadTaskDao {
   )
   suspend fun updateStatusWithError(taskId: String, status: DownloadStatus, errorMessage: String)
 
-  /** Update download progress. */
   @Query(
     """
         UPDATE download_tasks
@@ -109,19 +110,18 @@ interface DownloadTaskDao {
         """
   )
   suspend fun updateProgress(taskId: String, progress: Float, bytesDownloaded: Long)
+}
 
-  /** Delete tasks by status (e.g., cleanup completed tasks). */
+/** Maintenance helpers for download tasks. */
+interface DownloadTaskMaintenanceDao {
   @Query("DELETE FROM download_tasks WHERE status = :status")
   suspend fun deleteByStatus(status: DownloadStatus)
 
-  /** Delete all tasks (for testing/debugging). */
   @Query("DELETE FROM download_tasks") suspend fun deleteAll()
+}
 
-  /** Count tasks by status. */
+/** Metrics helpers for download task analytics. */
+interface DownloadTaskMetricsDao {
   @Query("SELECT COUNT(*) FROM download_tasks WHERE status = :status")
   suspend fun countByStatus(status: DownloadStatus): Int
-
-  /** Get download progress for a model. */
-  @Query("SELECT progress FROM download_tasks WHERE model_id = :modelId LIMIT 1")
-  suspend fun getDownloadProgress(modelId: String): Float?
 }

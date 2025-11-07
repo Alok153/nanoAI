@@ -44,6 +44,7 @@ import com.vjaykrsna.nanoai.feature.library.presentation.model.ModelLibrarySumma
 import com.vjaykrsna.nanoai.feature.library.presentation.model.ModelSort
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.LOADING_INDICATOR_TAG
 import java.util.UUID
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 
 /**
@@ -69,8 +70,8 @@ fun ModelLibraryScreen(
   val snackbarHostState = remember { SnackbarHostState() }
   val documentLauncher = rememberImportModelLauncher(viewModel::importLocalModel)
 
-  CollectLibraryErrors(viewModel = viewModel, snackbarHostState = snackbarHostState)
-  CollectLibraryUiEvents(viewModel = viewModel, documentLauncher = documentLauncher)
+  CollectLibraryErrors(errors = viewModel.errorEvents, snackbarHostState = snackbarHostState)
+  CollectLibraryUiEvents(events = viewModel.uiEvents, documentLauncher = documentLauncher)
 
   val actions = rememberModelLibraryActions(viewModel)
 
@@ -147,24 +148,19 @@ private fun rememberModelLibraryActions(viewModel: ModelLibraryViewModel): Model
 }
 
 @Composable
-private fun CollectLibraryErrors(
-  viewModel: ModelLibraryViewModel,
-  snackbarHostState: SnackbarHostState,
-) {
-  LaunchedEffect(viewModel, snackbarHostState) {
-    viewModel.errorEvents.collectLatest { error ->
-      snackbarHostState.showSnackbar(error.toDisplayMessage())
-    }
+private fun CollectLibraryErrors(errors: Flow<LibraryError>, snackbarHostState: SnackbarHostState) {
+  LaunchedEffect(errors, snackbarHostState) {
+    errors.collectLatest { error -> snackbarHostState.showSnackbar(error.toDisplayMessage()) }
   }
 }
 
 @Composable
 private fun CollectLibraryUiEvents(
-  viewModel: ModelLibraryViewModel,
+  events: Flow<LibraryUiEvent>,
   documentLauncher: ManagedActivityResultLauncher<Array<String>, Uri?>,
 ) {
-  LaunchedEffect(viewModel, documentLauncher) {
-    viewModel.uiEvents.collectLatest { event ->
+  LaunchedEffect(events, documentLauncher) {
+    events.collectLatest { event ->
       if (event == LibraryUiEvent.RequestLocalModelImport) {
         documentLauncher.launch(arrayOf("application/octet-stream", "application/x-tflite", "*/*"))
       }
@@ -184,7 +180,7 @@ private fun rememberImportModelLauncher(
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun ModelLibraryLayout(
-  modifier: Modifier,
+  modifier: Modifier = Modifier,
   state: ModelLibraryScreenState,
   snackbarHostState: SnackbarHostState,
   pullRefreshState: PullRefreshState,
@@ -248,7 +244,7 @@ private fun ModelLibraryLayout(
 
 @Composable
 private fun ModelLibraryTabContent(
-  modifier: Modifier,
+  modifier: Modifier = Modifier,
   state: ModelLibraryScreenState,
   actions: ModelLibraryActions,
 ) {
@@ -310,7 +306,7 @@ private fun ModelLibraryTabContent(
 
 @Composable
 private fun ModelLibraryLoadingIndicator(
-  modifier: Modifier,
+  modifier: Modifier = Modifier,
   testTag: String,
   contentDescription: String,
 ) {

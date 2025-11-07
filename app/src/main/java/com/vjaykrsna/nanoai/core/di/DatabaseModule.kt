@@ -13,7 +13,7 @@ import com.vjaykrsna.nanoai.core.data.db.daos.PersonaSwitchLogDao
 import com.vjaykrsna.nanoai.core.data.db.daos.UIStateSnapshotDao
 import com.vjaykrsna.nanoai.core.data.db.daos.UserProfileDao
 import com.vjaykrsna.nanoai.core.data.image.db.GeneratedImageDao
-import com.vjaykrsna.nanoai.core.data.library.daos.DownloadManifestDao
+import com.vjaykrsna.nanoai.core.data.library.catalog.DownloadManifestDao
 import com.vjaykrsna.nanoai.core.data.library.daos.DownloadTaskDao
 import com.vjaykrsna.nanoai.core.data.library.daos.ModelPackageReadDao
 import com.vjaykrsna.nanoai.core.data.library.daos.ModelPackageRelationsDao
@@ -28,10 +28,9 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
-/** Hilt module providing database and DAO instances. */
+/** Provides the Room database instance. */
 @Module
 @InstallIn(SingletonComponent::class)
-@Suppress("TooManyFunctions")
 object DatabaseModule {
   @Provides
   @Singleton
@@ -40,7 +39,12 @@ object DatabaseModule {
       .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
       .fallbackToDestructiveMigration(true)
       .build()
+}
 
+/** Provides DAOs for core chat and persona features. */
+@Module
+@InstallIn(SingletonComponent::class)
+object CoreDaoModule {
   @Provides
   @Singleton
   fun provideChatThreadDao(database: NanoAIDatabase): ChatThreadDao = database.chatThreadDao()
@@ -63,7 +67,12 @@ object DatabaseModule {
   @Singleton
   fun provideApiProviderConfigDao(database: NanoAIDatabase): ApiProviderConfigDao =
     database.apiProviderConfigDao()
+}
 
+/** Provides DAOs associated with model catalog and downloads. */
+@Module
+@InstallIn(SingletonComponent::class)
+object LibraryDaoModule {
   @Provides
   @Singleton
   fun provideModelPackageReadDao(database: NanoAIDatabase): ModelPackageReadDao =
@@ -92,7 +101,12 @@ object DatabaseModule {
   @Singleton
   fun provideHuggingFaceModelCacheDao(database: NanoAIDatabase): HuggingFaceModelCacheDao =
     database.huggingFaceModelCacheDao()
+}
 
+/** Provides DAOs supporting UI/UX specific persistence. */
+@Module
+@InstallIn(SingletonComponent::class)
+object UiUxDaoModule {
   @Provides
   @Singleton
   fun provideUserProfileDao(database: NanoAIDatabase): UserProfileDao = database.userProfileDao()
@@ -106,7 +120,12 @@ object DatabaseModule {
   @Singleton
   fun provideUIStateSnapshotDao(database: NanoAIDatabase): UIStateSnapshotDao =
     database.uiStateSnapshotDao()
+}
 
+/** Provides DAOs for maintenance telemetry and generated content. */
+@Module
+@InstallIn(SingletonComponent::class)
+object MaintenanceDaoModule {
   @Provides
   @Singleton
   fun provideRepoMaintenanceTaskDao(database: NanoAIDatabase): RepoMaintenanceTaskDao =
@@ -116,7 +135,12 @@ object DatabaseModule {
   @Singleton
   fun provideCodeQualityMetricDao(database: NanoAIDatabase): CodeQualityMetricDao =
     database.codeQualityMetricDao()
+}
 
+/** Provides DAOs for the image generation feature set. */
+@Module
+@InstallIn(SingletonComponent::class)
+object ImageDaoModule {
   @Provides
   @Singleton
   fun provideGeneratedImageDao(database: NanoAIDatabase): GeneratedImageDao =

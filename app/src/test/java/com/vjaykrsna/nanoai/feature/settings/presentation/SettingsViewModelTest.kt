@@ -1,5 +1,3 @@
-@file:Suppress("LargeClass")
-
 package com.vjaykrsna.nanoai.feature.settings.presentation
 
 import android.net.Uri
@@ -32,6 +30,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -41,34 +40,29 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
-/**
- * Unit tests for [SettingsViewModel].
- *
- * Covers HuggingFace auth announcements, privacy updates, and undo flows.
- */
-class SettingsViewModelTest {
+abstract class SettingsViewModelTestBase {
 
-  @JvmField @RegisterExtension val mainDispatcherExtension = MainDispatcherExtension()
-
-  private lateinit var apiProviderConfigUseCase: ApiProviderConfigUseCase
-  private lateinit var modelDownloadsAndExportUseCase: ModelDownloadsAndExportUseCase
-  private lateinit var observePrivacyPreferencesUseCase: ObservePrivacyPreferencesUseCase
-  private lateinit var observeUiPreferencesUseCase: ObserveUiPreferencesUseCase
-  private lateinit var updatePrivacyPreferencesUseCase: UpdatePrivacyPreferencesUseCase
-  private lateinit var updateUiPreferencesUseCase: UpdateUiPreferencesUseCase
-  private lateinit var importService: ImportService
-  private lateinit var observeUserProfileUseCase: ObserveUserProfileUseCase
-  private lateinit var settingsOperationsUseCase: SettingsOperationsUseCase
-  private lateinit var toggleCompactModeUseCase: ToggleCompactModeUseCase
-  private lateinit var huggingFaceAuthCoordinator: HuggingFaceAuthCoordinator
-  private lateinit var huggingFaceOAuthConfig: HuggingFaceOAuthConfig
-  private lateinit var deviceAuthStateFlow: MutableStateFlow<HuggingFaceDeviceAuthState?>
-  private lateinit var viewModel: SettingsViewModel
+  protected val dispatcherExtension = MainDispatcherExtension()
+  protected lateinit var apiProviderConfigUseCase: ApiProviderConfigUseCase
+  protected lateinit var modelDownloadsAndExportUseCase: ModelDownloadsAndExportUseCase
+  protected lateinit var observePrivacyPreferencesUseCase: ObservePrivacyPreferencesUseCase
+  protected lateinit var observeUiPreferencesUseCase: ObserveUiPreferencesUseCase
+  protected lateinit var updatePrivacyPreferencesUseCase: UpdatePrivacyPreferencesUseCase
+  protected lateinit var updateUiPreferencesUseCase: UpdateUiPreferencesUseCase
+  protected lateinit var importService: ImportService
+  protected lateinit var observeUserProfileUseCase: ObserveUserProfileUseCase
+  protected lateinit var settingsOperationsUseCase: SettingsOperationsUseCase
+  protected lateinit var toggleCompactModeUseCase: ToggleCompactModeUseCase
+  protected lateinit var huggingFaceAuthCoordinator: HuggingFaceAuthCoordinator
+  protected lateinit var huggingFaceOAuthConfig: HuggingFaceOAuthConfig
+  protected lateinit var deviceAuthStateFlow: MutableStateFlow<HuggingFaceDeviceAuthState?>
+  protected lateinit var viewModel: SettingsViewModel
 
   @BeforeEach
-  fun setup() {
+  fun setUpBase() {
     setupMocks()
     setupDefaultFlows()
+    viewModel = buildViewModel()
   }
 
   private fun setupMocks() {
@@ -122,23 +116,28 @@ class SettingsViewModelTest {
     every { huggingFaceAuthCoordinator.state } returns
       MutableStateFlow(HuggingFaceAuthState(isAuthenticated = false, lastError = null))
     every { huggingFaceAuthCoordinator.deviceAuthState } returns deviceAuthStateFlow
-
-    viewModel =
-      SettingsViewModel(
-        apiProviderConfigUseCase,
-        modelDownloadsAndExportUseCase,
-        observePrivacyPreferencesUseCase,
-        observeUiPreferencesUseCase,
-        updatePrivacyPreferencesUseCase,
-        updateUiPreferencesUseCase,
-        importService,
-        observeUserProfileUseCase,
-        settingsOperationsUseCase,
-        toggleCompactModeUseCase,
-        huggingFaceAuthCoordinator,
-        huggingFaceOAuthConfig,
-      )
   }
+
+  protected fun buildViewModel(): SettingsViewModel =
+    SettingsViewModel(
+      apiProviderConfigUseCase,
+      modelDownloadsAndExportUseCase,
+      observePrivacyPreferencesUseCase,
+      observeUiPreferencesUseCase,
+      updatePrivacyPreferencesUseCase,
+      updateUiPreferencesUseCase,
+      importService,
+      observeUserProfileUseCase,
+      settingsOperationsUseCase,
+      toggleCompactModeUseCase,
+      huggingFaceAuthCoordinator,
+      huggingFaceOAuthConfig,
+    )
+}
+
+class SettingsViewModelPrivacyPreferencesTest : SettingsViewModelTestBase() {
+
+  @JvmField @RegisterExtension val mainDispatcherExtension = dispatcherExtension
 
   @Test
   fun `setTelemetryOptIn updates privacy preference`() = runTest {
@@ -203,6 +202,43 @@ class SettingsViewModelTest {
   }
 
   @Test
+  fun `dismissExportWarnings clears state`() = runTest {
+    coEvery { updatePrivacyPreferencesUseCase.setExportWarningsDismissed(true) } returns Unit
+
+    viewModel.dismissExportWarnings()
+    advanceUntilIdle()
+
+    coVerify { updatePrivacyPreferencesUseCase.setExportWarningsDismissed(true) }
+  }
+
+  @Test
+  fun `privacyPreferences exposes store preferences`() = runTest {
+    val prefs =
+      PrivacyPreference(
+        exportWarningsDismissed = true,
+        telemetryOptIn = true,
+        consentAcknowledgedAt = Clock.System.now(),
+        disclaimerShownCount = 3,
+        retentionPolicy = RetentionPolicy.MANUAL_PURGE_ONLY,
+      )
+    every { observePrivacyPreferencesUseCase() } returns flowOf(prefs)
+
+    viewModel = buildViewModel()
+    advanceUntilIdle()
+
+    viewModel.privacyPreferences.test {
+      val preferences = awaitItem()
+      assertThat(preferences.telemetryOptIn).isTrue()
+      assertThat(preferences.retentionPolicy).isEqualTo(RetentionPolicy.MANUAL_PURGE_ONLY)
+    }
+  }
+}
+
+class SettingsViewModelUiPreferencesTest : SettingsViewModelTestBase() {
+
+  @JvmField @RegisterExtension val mainDispatcherExtension = dispatcherExtension
+
+  @Test
   fun `setThemePreference updates UI state and calls use case`() = runTest {
     coEvery { settingsOperationsUseCase.updateTheme(ThemePreference.DARK) } returns
       NanoAIResult.success(Unit)
@@ -242,11 +278,9 @@ class SettingsViewModelTest {
     coEvery { settingsOperationsUseCase.updateTheme(any()) } returns NanoAIResult.success(Unit)
     coEvery { toggleCompactModeUseCase.toggle(any()) } returns Unit
 
-    // Make a change to enable undo
     viewModel.setThemePreference(ThemePreference.DARK)
     advanceUntilIdle()
 
-    // Undo the change
     viewModel.undoUiPreferenceChange()
     advanceUntilIdle()
 
@@ -257,6 +291,29 @@ class SettingsViewModelTest {
       assertThat(state.statusMessage).isEqualTo("Preferences restored")
     }
   }
+
+  @Test
+  fun `clearStatusMessage removes active status message`() = runTest {
+    coEvery { settingsOperationsUseCase.updateTheme(ThemePreference.DARK) } returns
+      NanoAIResult.success(Unit)
+
+    viewModel.setThemePreference(ThemePreference.DARK)
+    advanceUntilIdle()
+
+    viewModel.uiUxState.test {
+      val updated = awaitItem()
+      assertThat(updated.statusMessage).isEqualTo("Theme updated")
+
+      viewModel.clearStatusMessage()
+      val cleared = awaitItem()
+      assertThat(cleared.statusMessage).isNull()
+    }
+  }
+}
+
+class SettingsViewModelHuggingFaceAuthTest : SettingsViewModelTestBase() {
+
+  @JvmField @RegisterExtension val mainDispatcherExtension = dispatcherExtension
 
   @Test
   fun `saveHuggingFaceApiKey updates state on success`() = runTest {
@@ -294,7 +351,7 @@ class SettingsViewModelTest {
         userCode = "TEST-CODE",
         verificationUri = "https://huggingface.co/login/device",
         verificationUriComplete = "https://huggingface.co/login/device?code=TEST-CODE",
-        expiresAt = Clock.System.now() + kotlin.time.Duration.parse("15m"),
+        expiresAt = Clock.System.now() + 15.minutes,
         pollIntervalSeconds = 5,
       )
     coEvery { huggingFaceAuthCoordinator.beginDeviceAuthorization(any(), any()) } returns
@@ -346,6 +403,80 @@ class SettingsViewModelTest {
   }
 
   @Test
+  fun `huggingFaceAuthState exposes coordinator state`() = runTest {
+    val authState = HuggingFaceAuthState(isAuthenticated = true, lastError = null)
+    every { huggingFaceAuthCoordinator.state } returns MutableStateFlow(authState)
+
+    viewModel = buildViewModel()
+    advanceUntilIdle()
+
+    viewModel.huggingFaceAuthState.test {
+      val state = awaitItem()
+      assertThat(state.isAuthenticated).isTrue()
+    }
+  }
+
+  @Test
+  fun `huggingFaceDeviceAuthState mirrors coordinator flow`() = runTest {
+    val deviceAuthState =
+      HuggingFaceDeviceAuthState(
+        userCode = "ABC123",
+        verificationUri = "https://huggingface.co/device",
+        verificationUriComplete = null,
+        expiresAt = Clock.System.now(),
+        pollIntervalSeconds = 5,
+        isPolling = false,
+        lastErrorAnnouncement = null,
+      )
+
+    viewModel.huggingFaceDeviceAuthState.test {
+      assertThat(awaitItem()).isNull()
+
+      deviceAuthStateFlow.value = deviceAuthState
+      val observed = awaitItem()
+      assertThat(observed?.userCode).isEqualTo("ABC123")
+      cancelAndIgnoreRemainingEvents()
+    }
+  }
+
+  @Test
+  fun `device auth announcement updates status message`() = runTest {
+    val announcementState =
+      HuggingFaceDeviceAuthState(
+        userCode = "TEST",
+        verificationUri = "https://huggingface.co/device",
+        verificationUriComplete = null,
+        expiresAt = Clock.System.now(),
+        pollIntervalSeconds = 5,
+        isPolling = true,
+        lastErrorAnnouncement = "Code TEST expires in 10 minutes",
+      )
+
+    deviceAuthStateFlow.value = announcementState
+    advanceUntilIdle()
+
+    viewModel.uiUxState.test {
+      val state = awaitItem()
+      assertThat(state.statusMessage).isEqualTo("Code TEST expires in 10 minutes")
+    }
+  }
+
+  @Test
+  fun `refreshHuggingFaceAccount delegates to coordinator`() = runTest {
+    coEvery { huggingFaceAuthCoordinator.refreshAccount() } returns mockk()
+
+    viewModel.refreshHuggingFaceAccount()
+    advanceUntilIdle()
+
+    coVerify { huggingFaceAuthCoordinator.refreshAccount() }
+  }
+}
+
+class SettingsViewModelImportExportTest : SettingsViewModelTestBase() {
+
+  @JvmField @RegisterExtension val mainDispatcherExtension = dispatcherExtension
+
+  @Test
   fun `exportBackup calls use case and emits success`() = runTest {
     val path = "/backup/path"
     coEvery { modelDownloadsAndExportUseCase.exportBackup(path, false) } returns
@@ -371,6 +502,22 @@ class SettingsViewModelTest {
 
       val error = awaitItem()
       assertThat(error).isInstanceOf(SettingsError.ExportFailed::class.java)
+    }
+  }
+
+  @Test
+  fun `exportBackup toggles loading state`() = runTest {
+    val path = "/test/export/path"
+    coEvery { modelDownloadsAndExportUseCase.exportBackup(path, false) } returns
+      NanoAIResult.success(path)
+
+    viewModel.isLoading.test {
+      assertThat(awaitItem()).isFalse()
+
+      viewModel.exportBackup(path, false)
+      assertThat(awaitItem()).isTrue()
+      assertThat(awaitItem()).isFalse()
+      cancelAndIgnoreRemainingEvents()
     }
   }
 
@@ -410,110 +557,34 @@ class SettingsViewModelTest {
   }
 
   @Test
-  fun `huggingFaceAuthState exposes coordinator state`() = runTest {
-    val authState = HuggingFaceAuthState(isAuthenticated = true, lastError = null)
-    every { huggingFaceAuthCoordinator.state } returns MutableStateFlow(authState)
-
-    val vm =
-      SettingsViewModel(
-        apiProviderConfigUseCase,
-        modelDownloadsAndExportUseCase,
-        observePrivacyPreferencesUseCase,
-        observeUiPreferencesUseCase,
-        updatePrivacyPreferencesUseCase,
-        updateUiPreferencesUseCase,
-        importService,
-        observeUserProfileUseCase,
-        settingsOperationsUseCase,
-        toggleCompactModeUseCase,
-        huggingFaceAuthCoordinator,
-        huggingFaceOAuthConfig,
+  fun `importBackup toggles loading state`() = runTest {
+    val uri = mockk<Uri>()
+    val summary =
+      ImportSummary(
+        personasImported = 1,
+        personasUpdated = 0,
+        providersImported = 0,
+        providersUpdated = 0,
       )
+    coEvery { importService.importBackup(uri) } returns Result.success(summary)
 
-    advanceUntilIdle()
+    viewModel.isLoading.test {
+      assertThat(awaitItem()).isFalse()
 
-    vm.huggingFaceAuthState.test {
-      val state = awaitItem()
-      assertThat(state.isAuthenticated).isTrue()
+      viewModel.importBackup(uri)
+      assertThat(awaitItem()).isTrue()
+      assertThat(awaitItem()).isFalse()
+      cancelAndIgnoreRemainingEvents()
     }
   }
+}
+
+class SettingsViewModelApiProviderTest : SettingsViewModelTestBase() {
+
+  @JvmField @RegisterExtension val mainDispatcherExtension = dispatcherExtension
 
   @Test
-  fun `privacyPreferences exposes store preferences`() = runTest {
-    val prefs =
-      PrivacyPreference(
-        exportWarningsDismissed = true,
-        telemetryOptIn = true,
-        consentAcknowledgedAt = Clock.System.now(),
-        disclaimerShownCount = 3,
-        retentionPolicy = RetentionPolicy.MANUAL_PURGE_ONLY,
-      )
-    every { observePrivacyPreferencesUseCase() } returns flowOf(prefs)
-
-    val vm =
-      SettingsViewModel(
-        apiProviderConfigUseCase,
-        modelDownloadsAndExportUseCase,
-        observePrivacyPreferencesUseCase,
-        observeUiPreferencesUseCase,
-        updatePrivacyPreferencesUseCase,
-        updateUiPreferencesUseCase,
-        importService,
-        observeUserProfileUseCase,
-        settingsOperationsUseCase,
-        toggleCompactModeUseCase,
-        huggingFaceAuthCoordinator,
-        huggingFaceOAuthConfig,
-      )
-
-    advanceUntilIdle()
-
-    vm.privacyPreferences.test {
-      val preferences = awaitItem()
-      assertThat(preferences.telemetryOptIn).isTrue()
-      assertThat(preferences.retentionPolicy).isEqualTo(RetentionPolicy.MANUAL_PURGE_ONLY)
-    }
-  }
-
-  @Test
-  fun `device auth announcement updates status message`() = runTest {
-    val announcementState =
-      HuggingFaceDeviceAuthState(
-        userCode = "TEST",
-        verificationUri = "https://huggingface.co/device",
-        verificationUriComplete = null,
-        expiresAt = Clock.System.now(),
-        pollIntervalSeconds = 5,
-        isPolling = true,
-        lastErrorAnnouncement = "Code TEST expires in 10 minutes",
-      )
-
-    deviceAuthStateFlow.value = announcementState
-    advanceUntilIdle()
-
-    viewModel.uiUxState.test {
-      val state = awaitItem()
-      assertThat(state.statusMessage).isEqualTo("Code TEST expires in 10 minutes")
-    }
-  }
-
-  @Test
-  fun `clearStatusMessage removes active status message`() = runTest {
-    viewModel.setThemePreference(ThemePreference.DARK)
-    advanceUntilIdle()
-
-    viewModel.uiUxState.test {
-      val updated = awaitItem()
-      assertThat(updated.statusMessage).isEqualTo("Theme updated")
-
-      viewModel.clearStatusMessage()
-      val cleared = awaitItem()
-      assertThat(cleared.statusMessage).isNull()
-    }
-  }
-
-  @Test
-  fun `addApiProvider_emitsProviderAddFailedOnError`() = runTest {
+  fun `addApiProvider emits ProviderAddFailed on error`() = runTest {
     val config = mockk<com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig>()
     coEvery { apiProviderConfigUseCase.addProvider(config) } throws Exception("Network error")
 
@@ -529,7 +600,7 @@ class SettingsViewModelTest {
   }
 
   @Test
-  fun `updateApiProvider_emitsProviderUpdateFailedOnError`() = runTest {
+  fun `updateApiProvider emits ProviderUpdateFailed on error`() = runTest {
     val config = mockk<com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig>()
     coEvery { apiProviderConfigUseCase.updateProvider(config) } throws Exception("Update failed")
 
@@ -545,7 +616,7 @@ class SettingsViewModelTest {
   }
 
   @Test
-  fun `deleteApiProvider_emitsProviderDeleteFailedOnError`() = runTest {
+  fun `deleteApiProvider emits ProviderDeleteFailed on error`() = runTest {
     val providerId = "test-provider-id"
     coEvery { apiProviderConfigUseCase.deleteProvider(providerId) } throws
       Exception("Delete failed")
@@ -562,9 +633,7 @@ class SettingsViewModelTest {
   }
 
   @Test
-  fun `validateProvider_checksRequiredFields`() = runTest {
-    // This test verifies that provider validation occurs within the repository
-    // The validation logic would be in the APIProviderConfig data class or repository
+  fun `addApiProvider delegates to use case`() = runTest {
     val config = mockk<com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig>()
     coEvery { apiProviderConfigUseCase.addProvider(config) } returns NanoAIResult.success(Unit)
 
@@ -572,93 +641,5 @@ class SettingsViewModelTest {
     advanceUntilIdle()
 
     coVerify { apiProviderConfigUseCase.addProvider(config) }
-  }
-
-  @Test
-  fun `refreshHuggingFaceAccount_updatesAuthState`() = runTest {
-    val authState = mockk<HuggingFaceAuthState>()
-    coEvery { huggingFaceAuthCoordinator.refreshAccount() } returns authState
-
-    viewModel.refreshHuggingFaceAccount()
-    advanceUntilIdle()
-
-    coVerify { huggingFaceAuthCoordinator.refreshAccount() }
-  }
-
-  @Test
-  fun `refreshHuggingFaceAccount_handlesAuthFailure`() = runTest {
-    val authState = mockk<HuggingFaceAuthState>()
-    coEvery { huggingFaceAuthCoordinator.refreshAccount() } returns authState
-
-    viewModel.refreshHuggingFaceAccount()
-    advanceUntilIdle()
-
-    coVerify { huggingFaceAuthCoordinator.refreshAccount() }
-  }
-
-  @Test
-  fun `huggingFaceOAuth_completesSuccessfully`() = runTest {
-    val deviceAuthState =
-      HuggingFaceDeviceAuthState(
-        userCode = "TEST-CODE",
-        verificationUri = "https://huggingface.co/login/device",
-        verificationUriComplete = "https://huggingface.co/login/device?code=TEST-CODE",
-        expiresAt = Clock.System.now() + kotlin.time.Duration.parse("15m"),
-        pollIntervalSeconds = 5,
-      )
-    coEvery { huggingFaceAuthCoordinator.beginDeviceAuthorization(any(), any()) } returns
-      Result.success(deviceAuthState)
-
-    viewModel.startHuggingFaceOAuthLogin()
-    advanceUntilIdle()
-
-    coVerify { huggingFaceAuthCoordinator.beginDeviceAuthorization(any(), any()) }
-  }
-
-  @Test
-  fun `dismissExportWarnings_clearsState`() = runTest {
-    coEvery { updatePrivacyPreferencesUseCase.setExportWarningsDismissed(true) } returns Unit
-
-    viewModel.dismissExportWarnings()
-    advanceUntilIdle()
-
-    coVerify { updatePrivacyPreferencesUseCase.setExportWarningsDismissed(true) }
-  }
-
-  @Test
-  fun `exportData_triggersExportFlow`() = runTest {
-    val path = "/test/export/path"
-    coEvery { modelDownloadsAndExportUseCase.exportBackup(path, false) } returns
-      NanoAIResult.success(path)
-
-    viewModel.isLoading.test {
-      assertThat(awaitItem()).isFalse()
-
-      viewModel.exportBackup(path, false)
-      assertThat(awaitItem()).isTrue() // Loading starts
-      assertThat(awaitItem()).isFalse() // Loading ends
-    }
-  }
-
-  @Test
-  fun `importData_handlesValidation`() = runTest {
-    val uri = mockk<android.net.Uri>()
-    val summary =
-      ImportSummary(
-        personasImported = 3,
-        personasUpdated = 2,
-        providersImported = 0,
-        providersUpdated = 0,
-      )
-    coEvery { importService.importBackup(uri) } returns Result.success(summary)
-
-    viewModel.importSuccess.test {
-      viewModel.importBackup(uri)
-      advanceUntilIdle()
-
-      val result = awaitItem()
-      assertThat(result.personasImported).isEqualTo(3)
-      cancelAndIgnoreRemainingEvents()
-    }
   }
 }

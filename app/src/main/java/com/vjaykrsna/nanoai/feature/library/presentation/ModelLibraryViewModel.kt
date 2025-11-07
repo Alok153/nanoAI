@@ -443,59 +443,14 @@ constructor(
       DownloadStatus.CANCELLED -> DOWNLOAD_PRIORITY_CANCELLED
     }
 
-  @Suppress("ReturnCount")
   private suspend fun handleHuggingFaceDownload(
     hfModel: com.vjaykrsna.nanoai.core.domain.library.HuggingFaceModelSummary
   ) {
     try {
-      // Convert HF model to ModelPackage
-      val modelPackage = hfToModelConverter.convertIfCompatible(hfModel)
-      if (modelPackage == null) {
-        _errorEvents.emit(
-          LibraryError.DownloadFailed(
-            modelId = hfModel.modelId,
-            message = "Model is not compatible with local runtimes",
-          )
-        )
-        return
-      }
-
-      // Check if already exists
-      val existingModel =
-        modelCatalogUseCase
-          .getModel(modelPackage.modelId)
-          .fold(onSuccess = { it }, onFailure = { null })
-      if (existingModel != null) {
-        _errorEvents.emit(
-          LibraryError.DownloadFailed(
-            modelId = modelPackage.modelId,
-            message = "Model already exists in catalog",
-          )
-        )
-        return
-      }
-
-      // Add to catalog first
-      modelCatalogUseCase.upsertModel(modelPackage).onFailure { error ->
-        _errorEvents.emit(
-          LibraryError.DownloadFailed(
-            modelId = modelPackage.modelId,
-            message = "Failed to add model to catalog: ${error.message}",
-          )
-        )
-        return
-      }
-
-      // Start download
-      val result = downloadModelUseCase.downloadModel(modelPackage.modelId)
-      result.onFailure { error ->
-        _errorEvents.emit(
-          LibraryError.DownloadFailed(
-            modelId = modelPackage.modelId,
-            message = error.message ?: "Failed to start download",
-          )
-        )
-      }
+      val modelPackage = convertHuggingFaceModelOrEmit(hfModel) ?: return
+      if (!ensureModelIsNewOrEmit(modelPackage)) return
+      if (!addModelToCatalogOrEmit(modelPackage)) return
+      startDownloadOrEmit(modelPackage.modelId)
     } catch (cancellationException: CancellationException) {
       throw cancellationException
     } catch (ioException: IOException) {
@@ -517,6 +472,64 @@ constructor(
         LibraryError.DownloadFailed(
           modelId = hfModel.modelId,
           message = "Invalid Hugging Face model metadata: ${illegalArgumentException.message}",
+        )
+      )
+    }
+  }
+
+  private suspend fun convertHuggingFaceModelOrEmit(
+    hfModel: com.vjaykrsna.nanoai.core.domain.library.HuggingFaceModelSummary
+  ): ModelPackage? {
+    val modelPackage = hfToModelConverter.convertIfCompatible(hfModel)
+    if (modelPackage == null) {
+      _errorEvents.emit(
+        LibraryError.DownloadFailed(
+          modelId = hfModel.modelId,
+          message = "Model is not compatible with local runtimes",
+        )
+      )
+    }
+    return modelPackage
+  }
+
+  private suspend fun ensureModelIsNewOrEmit(modelPackage: ModelPackage): Boolean {
+    val existingModel =
+      modelCatalogUseCase
+        .getModel(modelPackage.modelId)
+        .fold(onSuccess = { it }, onFailure = { null })
+
+    if (existingModel != null) {
+      _errorEvents.emit(
+        LibraryError.DownloadFailed(
+          modelId = modelPackage.modelId,
+          message = "Model already exists in catalog",
+        )
+      )
+      return false
+    }
+    return true
+  }
+
+  private suspend fun addModelToCatalogOrEmit(modelPackage: ModelPackage): Boolean {
+    var success = true
+    modelCatalogUseCase.upsertModel(modelPackage).onFailure { error ->
+      success = false
+      _errorEvents.emit(
+        LibraryError.DownloadFailed(
+          modelId = modelPackage.modelId,
+          message = "Failed to add model to catalog: ${error.message}",
+        )
+      )
+    }
+    return success
+  }
+
+  private suspend fun startDownloadOrEmit(modelId: String) {
+    downloadModelUseCase.downloadModel(modelId).onFailure { error ->
+      _errorEvents.emit(
+        LibraryError.DownloadFailed(
+          modelId = modelId,
+          message = error.message ?: "Failed to start download",
         )
       )
     }

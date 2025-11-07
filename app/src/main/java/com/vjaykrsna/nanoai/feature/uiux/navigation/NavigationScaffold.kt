@@ -42,7 +42,6 @@ import com.vjaykrsna.nanoai.feature.settings.ui.SettingsScreen
 import com.vjaykrsna.nanoai.feature.uiux.presentation.AppUiState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ChatState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.DisclaimerUiState
-import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellUiState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellViewModel
 import com.vjaykrsna.nanoai.shared.ui.components.DisclaimerDialog
 import com.vjaykrsna.nanoai.shared.ui.shell.NanoShellScaffold
@@ -64,11 +63,31 @@ fun NavigationScaffold(
   onDisclaimerDecline: () -> Unit = {},
 ) {
   val shellUiState by shellViewModel.uiState.collectAsStateWithLifecycle()
-  val metricsHolder = rememberPerformanceMetricsHolder()
+  val view = LocalView.current
+  val metricsHolder = remember(view) { PerformanceMetricsState.getHolderForHierarchy(view) }
 
-  SyncWindowSize(shellViewModel, windowSizeClass)
-  ObserveConnectivity(shellViewModel, appState.offline)
-  BindShellMetrics(shellUiState, metricsHolder)
+  LaunchedEffect(windowSizeClass) { shellViewModel.updateWindowSizeClass(windowSizeClass) }
+
+  LaunchedEffect(appState.offline) {
+    val status = if (appState.offline) ConnectivityStatus.OFFLINE else ConnectivityStatus.ONLINE
+    shellViewModel.onEvent(ShellUiEvent.ConnectivityChanged(status))
+  }
+
+  LaunchedEffect(shellUiState.layout.activeMode, metricsHolder) {
+    metricsHolder.state?.putState("shell_mode", shellUiState.layout.activeMode.name)
+  }
+
+  LaunchedEffect(shellUiState.layout.progressJobs, metricsHolder) {
+    val activeJobs = shellUiState.layout.progressJobs.count { !it.isTerminal }
+    metricsHolder.state?.putState("active_jobs", activeJobs.toString())
+  }
+
+  DisposableEffect(metricsHolder) {
+    onDispose {
+      metricsHolder.state?.removeState("shell_mode")
+      metricsHolder.state?.removeState("active_jobs")
+    }
+  }
 
   val disclaimerState =
     rememberDisclaimerState(
@@ -135,47 +154,6 @@ private fun ShellModeContent(
     )
   } else {
     content(modifier)
-  }
-}
-
-@Composable
-private fun rememberPerformanceMetricsHolder(): PerformanceMetricsState.Holder {
-  val view = LocalView.current
-  return remember(view) { PerformanceMetricsState.getHolderForHierarchy(view) }
-}
-
-@Composable
-private fun SyncWindowSize(shellViewModel: ShellViewModel, windowSizeClass: WindowSizeClass) {
-  LaunchedEffect(shellViewModel, windowSizeClass) {
-    shellViewModel.updateWindowSizeClass(windowSizeClass)
-  }
-}
-
-@Composable
-private fun ObserveConnectivity(shellViewModel: ShellViewModel, offline: Boolean) {
-  LaunchedEffect(shellViewModel, offline) {
-    val status = if (offline) ConnectivityStatus.OFFLINE else ConnectivityStatus.ONLINE
-    shellViewModel.onEvent(ShellUiEvent.ConnectivityChanged(status))
-  }
-}
-
-@Composable
-private fun BindShellMetrics(
-  shellUiState: ShellUiState,
-  metricsHolder: PerformanceMetricsState.Holder,
-) {
-  LaunchedEffect(shellUiState.layout.activeMode, metricsHolder) {
-    metricsHolder.state?.putState("shell_mode", shellUiState.layout.activeMode.name)
-  }
-  LaunchedEffect(shellUiState.layout.progressJobs, metricsHolder) {
-    val activeJobs = shellUiState.layout.progressJobs.count { !it.isTerminal }
-    metricsHolder.state?.putState("active_jobs", activeJobs.toString())
-  }
-  DisposableEffect(metricsHolder) {
-    onDispose {
-      metricsHolder.state?.removeState("shell_mode")
-      metricsHolder.state?.removeState("active_jobs")
-    }
   }
 }
 

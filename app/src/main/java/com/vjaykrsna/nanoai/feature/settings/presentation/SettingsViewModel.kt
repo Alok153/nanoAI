@@ -82,15 +82,20 @@ constructor(
       errorEvents = _errorEvents,
     )
 
+  private val backupSignals =
+    BackupSignals(
+      isLoading = _isLoading,
+      exportSuccess = _exportSuccess,
+      importSuccess = _importSuccess,
+      errorEvents = _errorEvents,
+    )
+
   private val backupController =
     BackupController(
       scope = viewModelScope,
       modelDownloadsAndExportUseCase = modelDownloadsAndExportUseCase,
       importService = importService,
-      isLoading = _isLoading,
-      exportSuccess = _exportSuccess,
-      importSuccess = _importSuccess,
-      errorEvents = _errorEvents,
+      signals = backupSignals,
     )
 
   private val privacyPreferenceController =
@@ -337,45 +342,53 @@ private class ApiProviderController(
   }
 }
 
+private data class BackupSignals(
+  val isLoading: MutableStateFlow<Boolean>,
+  val exportSuccess: MutableSharedFlow<String>,
+  val importSuccess: MutableSharedFlow<ImportSummary>,
+  val errorEvents: MutableSharedFlow<SettingsError>,
+)
+
 private class BackupController(
   private val scope: CoroutineScope,
   private val modelDownloadsAndExportUseCase: ModelDownloadsAndExportUseCase,
   private val importService: ImportService,
-  private val isLoading: MutableStateFlow<Boolean>,
-  private val exportSuccess: MutableSharedFlow<String>,
-  private val importSuccess: MutableSharedFlow<ImportSummary>,
-  private val errorEvents: MutableSharedFlow<SettingsError>,
+  private val signals: BackupSignals,
 ) {
   fun export(destinationPath: String, includeChatHistory: Boolean) {
     scope.launch {
-      isLoading.value = true
+      signals.isLoading.value = true
       modelDownloadsAndExportUseCase
         .exportBackup(destinationPath, includeChatHistory)
-        .onSuccess { path -> exportSuccess.emit(path) }
+        .onSuccess { path -> signals.exportSuccess.emit(path) }
         .onFailure { error ->
-          errorEvents.emit(SettingsError.ExportFailed(error.message ?: "Export failed"))
+          signals.errorEvents.emit(SettingsError.ExportFailed(error.message ?: "Export failed"))
         }
-      isLoading.value = false
+      signals.isLoading.value = false
     }
   }
 
   fun import(uri: Uri) {
     scope.launch {
-      isLoading.value = true
+      signals.isLoading.value = true
       runCatching { importService.importBackup(uri) }
         .fold(
           onSuccess = { result ->
             result
-              .onSuccess { summary -> importSuccess.emit(summary) }
+              .onSuccess { summary -> signals.importSuccess.emit(summary) }
               .onFailure { error ->
-                errorEvents.emit(SettingsError.ImportFailed(error.message ?: "Import failed"))
+                signals.errorEvents.emit(
+                  SettingsError.ImportFailed(error.message ?: "Import failed")
+                )
               }
           },
           onFailure = { error ->
-            errorEvents.emit(SettingsError.UnexpectedError(error.message ?: "Unexpected error"))
+            signals.errorEvents.emit(
+              SettingsError.UnexpectedError(error.message ?: "Unexpected error")
+            )
           },
         )
-      isLoading.value = false
+      signals.isLoading.value = false
     }
   }
 }

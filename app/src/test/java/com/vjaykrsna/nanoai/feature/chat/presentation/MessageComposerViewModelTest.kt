@@ -1,5 +1,3 @@
-@file:Suppress("LargeClass")
-
 package com.vjaykrsna.nanoai.feature.chat.presentation
 
 import app.cash.turbine.test
@@ -16,25 +14,23 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
-/**
- * Unit tests for [MessageComposerViewModel].
- *
- * Covers message text updates, sending with error handling, and state management.
- */
-class MessageComposerViewModelTest {
+abstract class MessageComposerViewModelTestBase {
 
-  @JvmField @RegisterExtension val mainDispatcherExtension = MainDispatcherExtension()
-
-  private lateinit var sendPromptUseCase: SendPromptUseCase
-  private lateinit var viewModel: MessageComposerViewModel
+  protected val dispatcherExtension = MainDispatcherExtension()
+  protected lateinit var sendPromptUseCase: SendPromptUseCase
+  protected lateinit var viewModel: MessageComposerViewModel
 
   @BeforeEach
-  fun setup() {
+  fun setUpBase() {
     sendPromptUseCase = mockk(relaxed = true)
     coEvery { sendPromptUseCase(any(), any(), any()) } returns NanoAIResult.success(Unit)
-
-    viewModel = MessageComposerViewModel(sendPromptUseCase, mainDispatcherExtension.dispatcher)
+    viewModel = MessageComposerViewModel(sendPromptUseCase, dispatcherExtension.dispatcher)
   }
+}
+
+class MessageComposerViewModelStateTest : MessageComposerViewModelTestBase() {
+
+  @JvmField @RegisterExtension val mainDispatcherExtension = dispatcherExtension
 
   @Test
   fun `updateMessageText updates the message text state`() = runTest {
@@ -42,6 +38,32 @@ class MessageComposerViewModelTest {
 
     assertThat(viewModel.messageText.value).isEqualTo("Hello world")
   }
+
+  @Test
+  fun `sendMessage sets sending state during operation`() = runTest {
+    viewModel.updateMessageText("Test")
+
+    viewModel.isSending.test {
+      assertThat(awaitItem()).isFalse()
+
+      viewModel.sendMessage(UUID.randomUUID(), UUID.randomUUID())
+      assertThat(awaitItem()).isTrue()
+      assertThat(awaitItem()).isFalse()
+    }
+  }
+
+  @Test
+  fun `clearMessage resets the message text`() = runTest {
+    viewModel.updateMessageText("Some text")
+    viewModel.clearMessage()
+
+    assertThat(viewModel.messageText.value).isEmpty()
+  }
+}
+
+class MessageComposerViewModelSendTest : MessageComposerViewModelTestBase() {
+
+  @JvmField @RegisterExtension val mainDispatcherExtension = dispatcherExtension
 
   @Test
   fun `sendMessage with empty text emits EmptyMessage error`() = runTest {
@@ -82,19 +104,6 @@ class MessageComposerViewModelTest {
   }
 
   @Test
-  fun `sendMessage sets sending state during operation`() = runTest {
-    viewModel.updateMessageText("Test")
-
-    viewModel.isSending.test {
-      assertThat(awaitItem()).isFalse()
-
-      viewModel.sendMessage(UUID.randomUUID(), UUID.randomUUID())
-      assertThat(awaitItem()).isTrue()
-      assertThat(awaitItem()).isFalse()
-    }
-  }
-
-  @Test
   fun `sendMessage emits SendFailed error on use case failure`() = runTest {
     coEvery { sendPromptUseCase(any(), any(), any()) } returns
       NanoAIResult.recoverable(message = "Network error")
@@ -126,13 +135,5 @@ class MessageComposerViewModelTest {
       assertThat((error as MessageComposerError.SendFailed).message).isEqualTo("")
       cancelAndIgnoreRemainingEvents()
     }
-  }
-
-  @Test
-  fun `clearMessage resets the message text`() = runTest {
-    viewModel.updateMessageText("Some text")
-    viewModel.clearMessage()
-
-    assertThat(viewModel.messageText.value).isEmpty()
   }
 }

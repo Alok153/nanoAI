@@ -40,15 +40,10 @@ import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
 
-/**
- * Hilt module providing repository implementations.
- *
- * Binds repository interfaces to their concrete implementations.
- */
+/** Binds repositories associated with conversations and personas. */
 @Module
 @InstallIn(SingletonComponent::class)
-@Suppress("TooManyFunctions")
-abstract class RepositoryModule {
+abstract class ConversationRepositoryModule {
   @Binds
   @Singleton
   abstract fun bindConversationRepository(impl: ConversationRepositoryImpl): ConversationRepository
@@ -62,7 +57,12 @@ abstract class RepositoryModule {
   abstract fun bindPersonaSwitchLogRepository(
     impl: PersonaSwitchLogRepositoryImpl
   ): PersonaSwitchLogRepository
+}
 
+/** Binds repositories responsible for inference and provider preferences. */
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class PreferenceRepositoryModule {
   @Binds
   @Singleton
   abstract fun bindInferencePreferenceRepository(
@@ -74,7 +74,12 @@ abstract class RepositoryModule {
   abstract fun bindApiProviderConfigRepository(
     impl: ApiProviderConfigRepositoryImpl
   ): ApiProviderConfigRepository
+}
 
+/** Binds repositories serving the model catalog and download flows. */
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class LibraryRepositoryModule {
   @Binds
   @Singleton
   abstract fun bindModelCatalogRepository(impl: ModelCatalogRepositoryImpl): ModelCatalogRepository
@@ -92,11 +97,21 @@ abstract class RepositoryModule {
   abstract fun bindHuggingFaceCatalogRepository(
     impl: HuggingFaceCatalogRepositoryImpl
   ): HuggingFaceCatalogRepository
+}
 
+/** Binds import/export services used for library maintenance. */
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class LibraryMaintenanceModule {
   @Binds @Singleton abstract fun bindExportService(impl: ExportServiceImpl): ExportService
 
   @Binds @Singleton abstract fun bindImportService(impl: ImportServiceImpl): ImportService
+}
 
+/** Binds repositories powering shell UI/UX coordination. */
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class UiUxRepositoryModule {
   @Binds
   @Singleton
   abstract fun bindUserProfileRepository(impl: UserProfileRepositoryImpl): UserProfileRepository
@@ -124,17 +139,41 @@ abstract class RepositoryModule {
   abstract fun bindProgressRepository(
     impl: ProgressRepositoryImpl
   ): com.vjaykrsna.nanoai.core.domain.repository.ProgressRepository
-
-  @Binds @Singleton abstract fun bindAudioRepository(impl: AudioRepositoryImpl): AudioRepository
-
-  companion object {
-    @Provides
-    @Singleton
-    fun provideProgressCenterCoordinator(
-      downloadManager: DownloadManager,
-      progressRepository: com.vjaykrsna.nanoai.core.domain.repository.ProgressRepository,
-      @IoDispatcher ioDispatcher: CoroutineDispatcher,
-    ): ProgressCenterCoordinator =
-      ProgressCenterCoordinator(downloadManager, progressRepository, ioDispatcher)
-  }
 }
+
+/** Binds cross-cutting repositories such as audio capture. */
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class AudioRepositoryModule {
+  @Binds @Singleton abstract fun bindAudioRepository(impl: AudioRepositoryImpl): AudioRepository
+}
+
+/** Provides handcrafted coordinators that stitch multiple repositories together. */
+@Module
+@InstallIn(SingletonComponent::class)
+object ProgressCoordinatorModule {
+  @Provides
+  @Singleton
+  fun provideProgressCenterCoordinator(
+    downloadManager: DownloadManager,
+    progressRepository: com.vjaykrsna.nanoai.core.domain.repository.ProgressRepository,
+    @IoDispatcher ioDispatcher: CoroutineDispatcher,
+  ): ProgressCenterCoordinator =
+    ProgressCenterCoordinator(downloadManager, progressRepository, ioDispatcher)
+}
+
+/** Legacy aggregation module retained for tests that replace RepositoryModule wholesale. */
+@Module(
+  includes =
+    [
+      ConversationRepositoryModule::class,
+      PreferenceRepositoryModule::class,
+      LibraryRepositoryModule::class,
+      LibraryMaintenanceModule::class,
+      UiUxRepositoryModule::class,
+      AudioRepositoryModule::class,
+      ProgressCoordinatorModule::class,
+    ]
+)
+@InstallIn(SingletonComponent::class)
+object RepositoryModule

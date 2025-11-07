@@ -8,66 +8,68 @@ import kotlinx.coroutines.flow.Flow
 /**
  * Domain contract for coordinating model downloads.
  *
- * Implementations live in the data layer and integrate platform services while exposing an
- * interface that remains stable for domain and presentation consumers.
+ * The contract is split into focused capabilities to avoid large, catch-all interfaces while still
+ * exposing a single aggregation type (`DownloadManager`) to consumers.
  */
-@Suppress("TooManyFunctions")
-interface DownloadManager {
-  /** Start downloading a model. Queues if max concurrent downloads reached. */
-  suspend fun startDownload(modelId: String): UUID
-
-  /** Queue a download without starting immediately. */
-  suspend fun queueDownload(modelId: String): UUID
-
-  /** Pause an active download. */
-  suspend fun pauseDownload(taskId: UUID)
-
-  /** Resume a previously paused download. */
-  suspend fun resumeDownload(taskId: UUID)
-
-  /** Cancel a download and clean up. */
-  suspend fun cancelDownload(taskId: UUID)
-
-  /** Retry a failed download. */
-  suspend fun retryDownload(taskId: UUID)
-
-  /** Reset internal task state before retry. */
-  suspend fun resetTask(taskId: UUID)
-
-  /** Get current status of a download task. */
-  suspend fun getDownloadStatus(taskId: UUID): DownloadTask?
-
-  /** Observe a specific download task. */
-  suspend fun getTaskById(taskId: UUID): Flow<DownloadTask?>
-
-  /** Get all active downloads. */
-  suspend fun getActiveDownloads(): Flow<List<DownloadTask>>
-
-  /** Get queued downloads. */
-  fun getQueuedDownloads(): Flow<List<DownloadTask>>
-
-  /** Observe all downloads the system is tracking (queued, running, paused, failed). */
-  fun observeManagedDownloads(): Flow<List<DownloadTask>>
-
-  /** Observe download progress for a task. */
-  fun observeProgress(taskId: UUID): Flow<Float>
-
-  /** Get max concurrent downloads configured by user. */
-  suspend fun getMaxConcurrentDownloads(): Int
-
-  /** Update the status of a download task. */
-  suspend fun updateTaskStatus(taskId: UUID, status: DownloadStatus)
-
-  /** Map task to model ID. */
-  suspend fun getModelIdForTask(taskId: UUID): String?
-
-  /** Compute checksum of downloaded model artifacts. */
-  suspend fun getDownloadedChecksum(modelId: String): String?
-
-  /** Delete partially downloaded files for the model. */
-  suspend fun deletePartialFiles(modelId: String)
+interface DownloadManager :
+  DownloadTaskScheduling,
+  DownloadTaskControl,
+  DownloadTaskInspection,
+  DownloadTaskConfiguration,
+  DownloadTaskArtifacts {
 
   companion object {
     const val DEFAULT_MAX_CONCURRENT_DOWNLOADS = 2
   }
+}
+
+/** Start or queue downloads within concurrency limits. */
+interface DownloadTaskScheduling {
+  suspend fun startDownload(modelId: String): UUID
+
+  suspend fun queueDownload(modelId: String): UUID
+}
+
+/** Control operations for task lifecycle management (pause/resume/cancel/retry). */
+interface DownloadTaskControl {
+  suspend fun pauseDownload(taskId: UUID)
+
+  suspend fun resumeDownload(taskId: UUID)
+
+  suspend fun cancelDownload(taskId: UUID)
+
+  suspend fun retryDownload(taskId: UUID)
+
+  suspend fun resetTask(taskId: UUID)
+}
+
+/** Inspect and observe download tasks within the system. */
+interface DownloadTaskInspection {
+  suspend fun getDownloadStatus(taskId: UUID): DownloadTask?
+
+  suspend fun getTaskById(taskId: UUID): Flow<DownloadTask?>
+
+  suspend fun getActiveDownloads(): Flow<List<DownloadTask>>
+
+  fun getQueuedDownloads(): Flow<List<DownloadTask>>
+
+  fun observeManagedDownloads(): Flow<List<DownloadTask>>
+
+  fun observeProgress(taskId: UUID): Flow<Float>
+}
+
+/** Access configuration and status mutation capabilities. */
+interface DownloadTaskConfiguration {
+  suspend fun getMaxConcurrentDownloads(): Int
+
+  suspend fun updateTaskStatus(taskId: UUID, status: DownloadStatus)
+}
+
+/** Access model download artifacts and cleanup helpers. */
+interface DownloadTaskArtifacts {
+  suspend fun getModelIdForTask(taskId: UUID): String?
+
+  suspend fun getDownloadedChecksum(modelId: String): String?
+
+  suspend fun deletePartialFiles(modelId: String)
 }

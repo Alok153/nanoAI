@@ -22,7 +22,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-@Suppress("TooManyFunctions")
 class DownloadManager
 @Inject
 constructor(
@@ -40,7 +39,7 @@ constructor(
   val errorEvents = _errorEvents.asSharedFlow()
 
   fun downloadModel(modelId: String) {
-    startOperation()
+    updateLoadingState(isStarting = true)
 
     viewModelScope.launch {
       try {
@@ -57,7 +56,7 @@ constructor(
       } catch (error: Throwable) {
         _errorEvents.emit(LibraryError.UnexpectedError(error.message ?: "Unexpected error"))
       } finally {
-        stopOperation()
+        updateLoadingState(isStarting = false)
       }
     }
   }
@@ -107,7 +106,7 @@ constructor(
   }
 
   fun deleteModel(modelId: String) {
-    startOperation()
+    updateLoadingState(isStarting = true)
 
     viewModelScope.launch {
       try {
@@ -120,7 +119,7 @@ constructor(
       } catch (error: Throwable) {
         _errorEvents.emit(LibraryError.UnexpectedError(error.message ?: "Unexpected error"))
       } finally {
-        stopOperation()
+        updateLoadingState(isStarting = false)
       }
     }
   }
@@ -164,17 +163,16 @@ constructor(
     downloadObservers.clear()
   }
 
-  private fun startOperation() {
-    val newCount = activeOperations.incrementAndGet()
-    if (newCount == 1) {
-      viewModelScope.launch { _isLoading.emit(true) }
-    }
-  }
-
-  private fun stopOperation() {
-    val remaining = activeOperations.updateAndGet { current -> (current - 1).coerceAtLeast(0) }
-    if (remaining == 0) {
-      viewModelScope.launch { _isLoading.emit(false) }
+  private fun updateLoadingState(isStarting: Boolean) {
+    val count =
+      if (isStarting) {
+        activeOperations.incrementAndGet()
+      } else {
+        activeOperations.updateAndGet { current -> (current - 1).coerceAtLeast(0) }
+      }
+    val shouldEmit = isStarting && count == 1 || !isStarting && count == 0
+    if (shouldEmit) {
+      viewModelScope.launch { _isLoading.emit(isStarting) }
     }
   }
 }
