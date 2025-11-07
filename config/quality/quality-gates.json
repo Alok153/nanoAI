@@ -48,6 +48,17 @@
       "severity": "WARNING",
       "documentationRef": "docs/development/QUALITY_GATES.md#5-instrumentation-reliability",
       "bypassPolicy": "Requires QE approval and tracking issue; flakiness must be resolved before release"
+    },
+    {
+      "gateId": "macrobenchmark-performance",
+      "description": "Macrobenchmark cold start, navigation latency, and frame timing budgets",
+      "task": ":macrobenchmark:verifyMacrobenchmarkPerformance",
+      "threshold": {
+        "requirement": "Startup median ≤1500 ms, UI navigation ≤600 ms p90, frame jank ≤5%"
+      },
+      "severity": "BLOCKING",
+      "documentationRef": "docs/development/QUALITY_GATES.md#6-macrobenchmark-performance",
+      "bypassPolicy": "Eng Lead + QE approval with documented mitigation plan and follow-up issue within 1 working day"
     }
   ]
 }

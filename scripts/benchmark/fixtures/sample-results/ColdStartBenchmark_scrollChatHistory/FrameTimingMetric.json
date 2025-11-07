@@ -1,0 +1,7 @@
+{
+  "summary": {
+    "jankPercent": 3.0,
+    "frameTime90thPercentileMs": 18.0,
+    "frameTime95thPercentileMs": 20.0
+  }
+}

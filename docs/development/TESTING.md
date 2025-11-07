@@ -27,7 +27,7 @@ The project has been fully migrated to JUnit 5 (Jupiter):
 | --- | --- | --- | --- |
 | JVM unit + contract | `app/src/test/java` | `./gradlew testDebugUnitTest` | Supports `--tests "pkg.ClassTest"` selectors. Generates HTML in `app/build/reports/tests/testDebugUnitTest/` and JaCoCo `.exec` files. |
 | Instrumentation (Compose UI + device flows) | `app/src/androidTest/java` | `./gradlew ciManagedDeviceDebugAndroidTest` | Boots the CI-managed Pixel 6 ATD image. For physical device testing pass `-Pnanoai.usePhysicalDevice=true`. |
-| Macrobenchmark | `macrobenchmark/src/main` | `./gradlew :macrobenchmark:connectedCheck` | Runs only when a device/emulator is attached. CI gate is optional but results are published for performance budgets. |
+| Macrobenchmark | `macrobenchmark/src/main` | `./gradlew :macrobenchmark:verifyMacrobenchmarkPerformance` | Runs connected macrobenchmarks, then invokes `scripts/benchmark/analyze-results.sh` to compare against `macrobenchmark-baselines.json`. Requires emulator/physical device. |
 | Coverage tooling | `scripts/coverage` | `./gradlew jacocoFullReport` | Merges JVM + instrumentation coverage, produces HTML + XML under `app/build/reports/jacoco/full/`. |
 | Screenshot baselines | `app/src/test/java` + Roborazzi | `./gradlew :app:roboScreenshotDebug` | Records Compose screenshots into `app/src/test/screenshots`. |
 

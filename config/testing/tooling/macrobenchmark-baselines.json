@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "defaults": {
+    "StartupTimingMetric": {
+      "medianMs": { "max": 1500.0 },
+      "p90Ms": { "max": 1700.0 }
+    },
+    "FrameTimingMetric": {
+      "jankPercent": { "max": 5.0 },
+      "frameTime90thPercentileMs": { "max": 24.0 }
+    }
+  },
+  "benchmarks": {
+    "ColdStartBenchmark_startupNoCompilation": { "metrics": {} },
+    "ColdStartBenchmark_startupPartialCompilation": { "metrics": {} },
+    "ColdStartBenchmark_startupFullCompilation": { "metrics": {} },
+    "ColdStartBenchmark_scrollChatHistory": { "metrics": {} },
+    "ColdStartBenchmark_scrollModelLibrary": { "metrics": {} },
+    "ColdStartBenchmark_openPersonaSelector": { "metrics": {} },
+    "ColdStartBenchmark_validateQueueFlushPerformance": { "metrics": {} },
+    "CoverageDashboardStartupBenchmark_warmStartup": {
+      "metrics": {
+        "StartupTimingMetric": {
+          "medianMs": { "max": 500.0 },
+          "p90Ms": { "max": 600.0 }
+        },
+        "Outputs.coverage_dashboard_startup_ms": {
+          "max": { "max": 100.0 },
+          "p95": { "max": 100.0 }
+        }
+      }
+    },
+    "UiUxStartupBenchmark_coldStartMeetsFmpBudgetPartialCompilation": {
+      "metrics": {
+        "StartupTimingMetric": {
+          "medianMs": { "max": 500.0 },
+          "p90Ms": { "max": 600.0 }
+        }
+      }
+    },
+    "UiUxStartupBenchmark_navigateHomeToSettingsLatency": { "metrics": {} },
+    "UiUxStartupBenchmark_themeToggleAnimationJankFree": { "metrics": {} }
+  }
+}

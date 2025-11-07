@@ -13,6 +13,7 @@ approval from the Eng Lead + QE counterpart and must be documented in the PR des
 | Coverage | `./gradlew :app:verifyCoverageThresholds` | ≥75 % ViewModel, ≥65 % UI, ≥70 % Data (from `coverage-metadata.json`) | `app/build/coverage/thresholds.{md,json}` |
 | Screenshot regression | `./gradlew :app:roboScreenshotDebug` (verify mode in CI) | No unexpected diffs; baselines under `app/src/test/screenshots` | Test run output + Roborazzi artefacts |
 | Instrumentation health | `./gradlew ciManagedDeviceDebugAndroidTest` | All tests pass on managed ATD Pixel 6 | `app/build/reports/androidTests/managedDebug/index.html` |
+| Macrobenchmark performance | `./gradlew :macrobenchmark:verifyMacrobenchmarkPerformance` | Startup median ≤1500 ms, navigation ≤600 ms p90, frame jank ≤5 % (see `macrobenchmark-baselines.json`) | `macrobenchmark/build/reports/macrobenchmark/summary.md` |
 
 ## Gate Details
 
@@ -43,6 +44,15 @@ approval from the Eng Lead + QE counterpart and must be documented in the PR des
 - Managed-device suite (`ciManagedDeviceDebugAndroidTest`) ensures Compose UI, accessibility and
   offline scenarios stay healthy
 - Flaky tests must be quarantined with `@Ignore` + tracking ticket; long-term skips are not allowed
+
+### 6. Macrobenchmark Performance
+- `verifyMacrobenchmarkPerformance` depends on `connectedCheck`, then executes
+  `scripts/benchmark/analyze-results.sh` to compare results with
+  `config/testing/tooling/macrobenchmark-baselines.json`
+- Coverage spans cold start, navigation latency, and frame-timing/jank thresholds; update the
+  baseline file when intentional budget shifts are product-approved
+- Reports live in `macrobenchmark/build/reports/macrobenchmark/summary.{md,json}` for easy CI
+  annotation; regressions fail the gate and require sign-off from Eng Lead + QE
 
 ## Recommended Order Before Pushing
 1. `./gradlew spotlessApply detekt`

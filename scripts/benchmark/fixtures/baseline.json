@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "defaults": {
+    "FrameTimingMetric": {
+      "jankPercent": { "max": 5.0 }
+    }
+  },
+  "benchmarks": {
+    "ColdStartBenchmark_startupNoCompilation": {
+      "metrics": {
+        "StartupTimingMetric": {
+          "medianMs": { "max": 1500.0 },
+          "p90Ms": { "max": 1700.0 }
+        }
+      }
+    },
+    "ColdStartBenchmark_scrollChatHistory": {
+      "metrics": {
+        "FrameTimingMetric": {
+          "frameTime90thPercentileMs": { "max": 24.0 }
+        }
+      }
+    }
+  }
+}

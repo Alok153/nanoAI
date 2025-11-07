@@ -24,6 +24,7 @@ hooks so `./gradlew check` runs formatting, static analysis, and coverage gates 
 | Run unit tests | `./gradlew testDebugUnitTest` | Flow helpers live under `com.vjaykrsna.nanoai.shared.testing` |
 | Record screenshots | `./gradlew :app:roboScreenshotDebug` | Outputs to `app/src/test/screenshots` |
 | Merge coverage artefacts | `./gradlew :app:coverageMergeArtifacts` | Invokes `scripts/coverage/merge-coverage.sh` |
+| Verify macrobenchmark budgets | `./gradlew :macrobenchmark:verifyMacrobenchmarkPerformance` | Executes connected macrobenchmarks and summarizes results to `macrobenchmark/build/reports/macrobenchmark/summary.md` |
 
 ## Quality Gates
 
@@ -31,6 +32,10 @@ All convention plugins wire `spotlessCheck`, `detekt`, `verifyCoverageThresholds
 application module) `roboScreenshotDebug` into the `check` lifecycle. Running `./gradlew check`
 provides a full signal that can be consumed locally or in CI. Coverage thresholds are defined in
 `config/testing/coverage/coverage-metadata.json` and exposed through `coverage-thresholds.gradle.kts`.
+
+Macrobenchmark verification lives outside `check` because it requires a device/emulator. CI pipelines
+should invoke `./gradlew :macrobenchmark:verifyMacrobenchmarkPerformance` (see
+`config/quality/quality-gates.json`) so performance regressions are caught before merge.
 
 ### Local Hook Installation
 
