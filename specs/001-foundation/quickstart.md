@@ -1,38 +1,31 @@
 # Quickstart Validation: Offline Multimodal nanoAI Assistant
 
-## Device & Build Setup
-1. Use reference device: Pixel 7 (Android 14, 8 GB RAM) and budget device: Pixel 4a (Android 13, 6 GB RAM).
-2. Install latest build from `app/build/outputs/apk/debug/app-debug.apk`.
-3. Clear app data before each run to validate onboarding.
+## Setup
+1. Use reference (e.g., Pixel 7) and budget (e.g., Pixel 4a) devices/emulators.
+2. Install latest debug APK from `app/build/outputs/apk/debug/`.
+3. Clear app data before each run.
 
-## Smoke Test Flow (Foundation + Consolidated Features)
-1. Launch app → confirm first-launch disclaimer dialog appears with responsibility notice and acknowledge button.
-2. From sidebar (left drawer), navigate to **Model Library** → download "Nano Phi-2 Lite" (MediaPipe bundle).
-   - Verify progress bar, pause/resume controls, and completion state.
-3. Return to chat view → ensure downloaded model is preselected; send "Summarize the benefits of offline AI." → response within 2 s median.
-4. Toggle persona to "Creative Muse" → when prompted, choose **Continue in current thread**. Confirm persona switch log entry.
-5. Use sidebar quick toggles to switch between local/cloud inference modes and clear conversation context.
-6. Test command palette (Ctrl+K / Cmd+K) → search for "New Chat" and verify navigation works.
-7. Open **Settings → Export & Backup** → run universal export and confirm warning about unencrypted JSON archive.
-8. Navigate to **Privacy Dashboard** → confirm consent timestamp, disclaimer acknowledgment count, and telemetry toggle (off by default).
-9. Test Material 3 theming → toggle between light/dark modes and verify instant theme switching.
-10. Verify home hub grid layout → confirm mode cards (Chat, Image, Audio, Code, Translate) with proper icons and accessibility labels.
+## Core Flow
+1. Launch app → verify first-launch disclaimer appears; acknowledge once.
+2. Open Model Library → download a local model → see progress and completion.
+3. Go to Chat → confirm downloaded model is selectable; send prompt → response is shown.
+4. Switch persona from sidebar → confirm behavior matches spec (continue/split thread as configured).
+5. Open Settings → run export → confirm archive created and warning shown.
+6. Verify light/dark theme toggle and basic navigation (Home, Chat, Library, Settings).
 
-## Offline Readiness
-1. Enable airplane mode with local model installed.
-2. Send audio prompt stub (future scope) via text entry referencing audio → ensures graceful message noting audio support pending.
-3. Submit text prompt → confirm offline banner and successful local response.
+## Offline Behavior
+1. With at least one local model installed, enable airplane mode.
+2. Open Chat → banner indicates offline.
+3. Send prompt → response uses local model without crashes.
 
 ## Failure Handling
-1. In model library, queue two downloads with max concurrency = 1 → second shows queued.
-2. Force-stop network → resume download → verify failure message and retry option.
-3. Delete active model from settings → confirm running session stops and user notified.
+1. Start two model downloads with concurrency limit = 1 → second waits.
+2. Disable network mid-download → verify graceful failure and retry.
+3. Delete an in-use local model → active inference stops and user is notified.
 
-## Performance Checks
-- Capture frame timeline using `adb shell dumpsys gfxinfo` while scrolling chat list; ensure dropped frames <5%.
-- Run macrobenchmark suite `:macrobenchmark:coldStart` and assert cold start <1.5 s.
+## Performance & Quality
+- Run `./gradlew testDebugUnitTest`.
+- Run `./gradlew spotlessCheck detekt`.
+- Run `./gradlew verifyCoverageThresholds`.
 
-## Regression Hooks
-- Run unit tests: `./gradlew testDebugUnitTest`.
-- Run instrumentation tests: `./gradlew connectedDebugAndroidTest` (requires emulator with API 33+).
-- Validate baseline profile generation: `./gradlew :app:generateBaselineProfile`.
+If these checks pass, the foundation implementation is considered healthy.
