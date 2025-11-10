@@ -1,7 +1,6 @@
 package com.vjaykrsna.nanoai.feature.chat.presentation
 
 import android.graphics.Bitmap
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
@@ -16,28 +15,28 @@ import com.vjaykrsna.nanoai.core.domain.library.toModel
 import com.vjaykrsna.nanoai.core.domain.model.ChatThread
 import com.vjaykrsna.nanoai.core.domain.model.Message
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
-import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
 import com.vjaykrsna.nanoai.core.domain.usecase.GetDefaultPersonaUseCase
 import com.vjaykrsna.nanoai.core.domain.usecase.ObservePersonasUseCase
 import com.vjaykrsna.nanoai.core.model.MessageRole
 import com.vjaykrsna.nanoai.core.model.MessageSource
 import com.vjaykrsna.nanoai.core.model.PersonaSwitchAction
+import com.vjaykrsna.nanoai.feature.chat.presentation.state.ChatAudioAttachment
+import com.vjaykrsna.nanoai.feature.chat.presentation.state.ChatComposerAttachments
+import com.vjaykrsna.nanoai.feature.chat.presentation.state.ChatImageAttachment
+import com.vjaykrsna.nanoai.feature.chat.presentation.state.ChatUiState
+import com.vjaykrsna.nanoai.shared.state.NanoAIViewEvent
+import com.vjaykrsna.nanoai.shared.state.ViewModelStateHost
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 
 @HiltViewModel
 class ChatViewModel
@@ -49,154 +48,114 @@ constructor(
   private val observePersonasUseCase: ObservePersonasUseCase,
   private val getDefaultPersonaUseCase: GetDefaultPersonaUseCase,
   private val modelCatalogUseCase: ModelCatalogUseCase,
-  @MainImmediateDispatcher private val dispatcher: CoroutineDispatcher,
-) : ViewModel() {
-  private val flowSharingStarted: SharingStarted = SharingStarted.Eagerly
-  private val _currentThreadId = MutableStateFlow<UUID?>(null)
-  val currentThreadId: StateFlow<UUID?> = _currentThreadId.asStateFlow()
+  @MainImmediateDispatcher mainDispatcher: CoroutineDispatcher,
+) :
+  ViewModelStateHost<ChatUiState, ChatUiEvent>(
+    initialState = ChatUiState(),
+    dispatcher = mainDispatcher,
+  ) {
+  private val currentThreadId = MutableStateFlow<UUID?>(null)
 
-  private val _isLoading = MutableStateFlow(false)
-  val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
-
-  private val _errorEvents = MutableSharedFlow<ChatError>()
-  val errorEvents = _errorEvents.asSharedFlow()
-
-  private val _events = MutableSharedFlow<ChatViewEvent>()
-  val events = _events.asSharedFlow()
-
-  private val _selectedImage = MutableStateFlow<Bitmap?>(null)
-  val selectedImage: StateFlow<Bitmap?> = _selectedImage.asStateFlow()
-
-  private val _recordedAudio = MutableStateFlow<ByteArray?>(null)
-  val recordedAudio: StateFlow<ByteArray?> = _recordedAudio.asStateFlow()
-
-  private val threads: StateFlow<List<ChatThread>> =
-    conversationUseCase.getAllThreadsFlow().stateIn(viewModelScope, flowSharingStarted, emptyList())
-
-  val messages: StateFlow<List<Message>> =
-    _currentThreadId
-      .flatMapLatest { threadId ->
-        threadId?.let { conversationUseCase.getMessagesFlow(it) } ?: flowOf(emptyList())
-      }
-      .stateIn(viewModelScope, flowSharingStarted, emptyList())
-
-  val currentThread: StateFlow<ChatThread?> =
-    combine(_currentThreadId, threads) { threadId, threadsSnapshot ->
-        threadsSnapshot.firstOrNull { it.threadId == threadId }
-      }
-      .stateIn(viewModelScope, flowSharingStarted, null)
-
-  val availablePersonas: StateFlow<List<PersonaProfile>> =
-    observePersonasUseCase().stateIn(viewModelScope, flowSharingStarted, emptyList())
-
-  val models: StateFlow<List<Model>> =
-    modelCatalogUseCase
-      .observeInstalledModels()
-      .map { list: List<ModelPackage> -> list.map { it.toModel() } }
-      .stateIn(viewModelScope, flowSharingStarted, emptyList())
-
-  private val _showModelPicker = MutableStateFlow(false)
-  val showModelPicker: StateFlow<Boolean> = _showModelPicker.asStateFlow()
+  init {
+    observeThreads()
+    observeMessages()
+    observePersonas()
+    observeInstalledModels()
+  }
 
   fun showModelPicker() {
-    _showModelPicker.value = true
+    updateState { copy(isModelPickerVisible = true) }
   }
 
   fun dismissModelPicker() {
-    _showModelPicker.value = false
+    updateState { copy(isModelPickerVisible = false) }
   }
 
   fun selectModel(model: Model) {
-    val thread = currentThread.value
-    if (thread == null) {
-      // TODO: Handle the case where there is no active thread
-      return
-    }
+    val thread = state.value.activeThread ?: return
     viewModelScope.launch(dispatcher) {
-      conversationUseCase.updateThread(thread.copy(activeModelId = model.modelId)).onFailure {
-        // TODO: Handle error
-      }
-      _showModelPicker.value = false
-      _events.emit(ChatViewEvent.ModelSelected(model.displayName))
+      conversationUseCase
+        .updateThread(thread.copy(activeModelId = model.modelId))
+        .onFailure { error ->
+          emitError(ChatError.UnexpectedError(error.message ?: "Failed to select model"))
+        }
+        .onSuccess {
+          updateState { copy(isModelPickerVisible = false) }
+          emitEvent(ChatUiEvent.ModelSelected(model.displayName))
+        }
     }
   }
 
   fun selectThread(threadId: UUID) {
-    _currentThreadId.value = threadId
+    setActiveThread(threadId)
   }
 
   fun onImageSelected(bitmap: Bitmap) {
-    _selectedImage.value = bitmap
+    updateState { copy(attachments = attachments.copy(image = ChatImageAttachment(bitmap))) }
   }
 
-  fun onAudioRecorded(audioData: ByteArray) {
-    _recordedAudio.value = audioData
+  fun onAudioRecorded(audioData: ByteArray, mimeType: String? = null) {
+    updateState {
+      copy(attachments = attachments.copy(audio = ChatAudioAttachment(audioData, mimeType)))
+    }
+  }
+
+  fun clearPendingError() {
+    updateState { copy(pendingErrorMessage = null) }
+  }
+
+  private fun clearAttachments() {
+    updateState { copy(attachments = ChatComposerAttachments()) }
   }
 
   fun sendMessage(text: String, personaId: UUID) {
-    val threadId = _currentThreadId.value
+    val trimmed = text.trim()
+    if (trimmed.isEmpty()) return
+
+    val threadId = state.value.activeThreadId
     if (threadId == null) {
       viewModelScope.launch(dispatcher) {
-        _errorEvents.emit(ChatError.ThreadCreationFailed("No active thread available"))
+        emitError(ChatError.ThreadCreationFailed("No active thread available"))
       }
       return
     }
+
     viewModelScope.launch(dispatcher) {
-      _isLoading.value = true
+      updateState { copy(isSendingMessage = true, pendingErrorMessage = null) }
+
+      val attachmentsSnapshot = state.value.attachments
+      val image = attachmentsSnapshot.image?.bitmap
+      val audio = attachmentsSnapshot.audio?.data
+
       val userMessage =
         Message(
           messageId = UUID.randomUUID(),
           threadId = threadId,
           role = MessageRole.USER,
-          text = text,
+          text = trimmed,
           source = MessageSource.LOCAL_MODEL,
           latencyMs = null,
-          createdAt = kotlinx.datetime.Clock.System.now(),
+          createdAt = Clock.System.now(),
         )
 
-      when (val saveResult = conversationUseCase.saveMessage(userMessage)) {
-        is NanoAIResult.Success -> {
-          sendPromptUseCase(threadId, text, personaId, _selectedImage.value, _recordedAudio.value)
-            .onFailure { error ->
-              _errorEvents.emit(ChatError.InferenceFailed(error.message ?: "Unknown error"))
-            }
-
-          _selectedImage.value = null
-          _recordedAudio.value = null
-        }
-        is NanoAIResult.RecoverableError -> {
-          _errorEvents.emit(
-            ChatError.UnexpectedError("Failed to save message: ${saveResult.message}")
-          )
-          _isLoading.value = false
-          return@launch
-        }
-        is NanoAIResult.FatalError -> {
-          _errorEvents.emit(
-            ChatError.UnexpectedError("Failed to save message: ${saveResult.message}")
-          )
-          _isLoading.value = false
-          return@launch
-        }
-      }
-
-      _isLoading.value = false
+      val messageData = MessageData(threadId, trimmed, personaId, image, audio)
+      val saveResult = conversationUseCase.saveMessage(userMessage)
+      handleSaveMessageResult(saveResult, messageData)
+      updateState { copy(isSendingMessage = false) }
     }
   }
 
   fun switchPersona(newPersonaId: UUID, action: PersonaSwitchAction) {
-    val threadId = _currentThreadId.value ?: return
+    val threadId = state.value.activeThreadId ?: return
     viewModelScope.launch(dispatcher) {
       switchPersonaUseCase(threadId, newPersonaId, action)
         .onSuccess { newThreadId ->
           if (action == PersonaSwitchAction.START_NEW_THREAD) {
-            _currentThreadId.value = newThreadId
+            setActiveThread(newThreadId)
           }
         }
         .onFailure { error ->
-          _errorEvents.emit(
-            ChatError.PersonaSwitchFailed(error.message ?: "Failed to switch persona")
-          )
+          emitError(ChatError.PersonaSwitchFailed(error.message ?: "Failed to switch persona"))
         }
     }
   }
@@ -206,11 +165,9 @@ constructor(
       val defaultPersonaId = personaId ?: getDefaultPersonaUseCase()?.personaId ?: UUID.randomUUID()
       conversationUseCase
         .createNewThread(defaultPersonaId, title)
-        .onSuccess { threadId -> _currentThreadId.value = threadId }
+        .onSuccess { threadId -> setActiveThread(threadId) }
         .onFailure { error ->
-          _errorEvents.emit(
-            ChatError.ThreadCreationFailed(error.message ?: "Failed to create thread")
-          )
+          emitError(ChatError.ThreadCreationFailed(error.message ?: "Failed to create thread"))
         }
     }
   }
@@ -220,14 +177,12 @@ constructor(
       conversationUseCase
         .archiveThread(threadId)
         .onSuccess {
-          if (_currentThreadId.value == threadId) {
-            _currentThreadId.value = null
+          if (state.value.activeThreadId == threadId) {
+            setActiveThread(null)
           }
         }
         .onFailure { error ->
-          _errorEvents.emit(
-            ChatError.ThreadArchiveFailed(error.message ?: "Failed to archive thread")
-          )
+          emitError(ChatError.ThreadArchiveFailed(error.message ?: "Failed to archive thread"))
         }
     }
   }
@@ -237,33 +192,135 @@ constructor(
       conversationUseCase
         .deleteThread(threadId)
         .onSuccess {
-          if (_currentThreadId.value == threadId) {
-            _currentThreadId.value = null
+          if (state.value.activeThreadId == threadId) {
+            setActiveThread(null)
           }
         }
         .onFailure { error ->
-          _errorEvents.emit(
-            ChatError.ThreadDeletionFailed(error.message ?: "Failed to delete thread")
-          )
+          emitError(ChatError.ThreadDeletionFailed(error.message ?: "Failed to delete thread"))
         }
     }
   }
+
+  private fun observeThreads() {
+    viewModelScope.launch(dispatcher) {
+      conversationUseCase.getAllThreadsFlow().collect { threads ->
+        val (resolvedId, resolvedThread) = resolveActiveThread(threads, currentThreadId.value)
+        currentThreadId.value = resolvedId
+        updateState {
+          copy(threads = threads, activeThreadId = resolvedId, activeThread = resolvedThread)
+        }
+      }
+    }
+  }
+
+  private fun observeMessages() {
+    viewModelScope.launch(dispatcher) {
+      currentThreadId
+        .flatMapLatest { threadId ->
+          threadId?.let { conversationUseCase.getMessagesFlow(it) } ?: flowOf(emptyList())
+        }
+        .collect { messages -> updateState { copy(messages = messages) } }
+    }
+  }
+
+  private fun observePersonas() {
+    viewModelScope.launch(dispatcher) {
+      observePersonasUseCase().collect { personas -> updateState { copy(personas = personas) } }
+    }
+  }
+
+  private fun observeInstalledModels() {
+    viewModelScope.launch(dispatcher) {
+      modelCatalogUseCase
+        .observeInstalledModels()
+        .map { list: List<ModelPackage> -> list.map { it.toModel() } }
+        .collect { models -> updateState { copy(installedModels = models) } }
+    }
+  }
+
+  private fun setActiveThread(threadId: UUID?) {
+    currentThreadId.value = threadId
+    updateState {
+      val activeThread = threadId?.let { id -> threads.firstOrNull { it.threadId == id } }
+      copy(activeThreadId = threadId, activeThread = activeThread)
+    }
+  }
+
+  private suspend fun emitError(error: ChatError) {
+    updateState { copy(pendingErrorMessage = error.message) }
+    emitEvent(ChatUiEvent.ErrorRaised(error))
+  }
+
+  private fun resolveActiveThread(
+    threads: List<ChatThread>,
+    requestedId: UUID?,
+  ): Pair<UUID?, ChatThread?> {
+    if (requestedId == null) return null to null
+    val activeThread = threads.firstOrNull { it.threadId == requestedId }
+    return if (activeThread != null) requestedId to activeThread else null to null
+  }
+
+  private suspend fun handleSaveMessageResult(
+    saveResult: NanoAIResult<Unit>,
+    messageData: MessageData,
+  ) {
+    when (saveResult) {
+      is NanoAIResult.Success -> handleInference(messageData)
+      is NanoAIResult.RecoverableError -> {
+        emitError(ChatError.UnexpectedError("Failed to save message: ${saveResult.message}"))
+        updateState { copy(isSendingMessage = false) }
+      }
+      is NanoAIResult.FatalError -> {
+        emitError(ChatError.UnexpectedError("Failed to save message: ${saveResult.message}"))
+        updateState { copy(isSendingMessage = false) }
+      }
+    }
+  }
+
+  private suspend fun handleInference(messageData: MessageData) {
+    val inferenceResult =
+      sendPromptUseCase(
+        messageData.threadId,
+        messageData.text,
+        messageData.personaId,
+        messageData.image,
+        messageData.audio,
+      )
+    when (inferenceResult) {
+      is NanoAIResult.Success -> clearAttachments()
+      is NanoAIResult.RecoverableError ->
+        emitError(ChatError.InferenceFailed(inferenceResult.message ?: "Failed to start inference"))
+      is NanoAIResult.FatalError ->
+        emitError(ChatError.InferenceFailed(inferenceResult.message ?: "Failed to start inference"))
+    }
+  }
+
+  private data class MessageData(
+    val threadId: UUID,
+    val text: String,
+    val personaId: UUID,
+    val image: Bitmap?,
+    val audio: ByteArray?,
+  )
 }
 
-sealed class ChatError {
-  data class InferenceFailed(val message: String) : ChatError()
+sealed interface ChatUiEvent : NanoAIViewEvent {
+  data class ErrorRaised(val error: ChatError) : ChatUiEvent
 
-  data class PersonaSwitchFailed(val message: String) : ChatError()
-
-  data class ThreadCreationFailed(val message: String) : ChatError()
-
-  data class ThreadArchiveFailed(val message: String) : ChatError()
-
-  data class ThreadDeletionFailed(val message: String) : ChatError()
-
-  data class UnexpectedError(val message: String) : ChatError()
+  data class ModelSelected(val modelName: String) : ChatUiEvent
 }
 
-sealed class ChatViewEvent {
-  data class ModelSelected(val modelName: String) : ChatViewEvent()
+sealed class ChatError(open val message: String) {
+  data class InferenceFailed(override val message: String) : ChatError(message)
+
+  data class PersonaSwitchFailed(override val message: String) : ChatError(message)
+
+  data class ThreadCreationFailed(override val message: String) : ChatError(message)
+
+  data class ThreadArchiveFailed(override val message: String) : ChatError(message)
+
+  data class ThreadDeletionFailed(override val message: String) : ChatError(message)
+
+  data class UnexpectedError(override val message: String) : ChatError(message)
 }

@@ -1,33 +1,33 @@
 package com.vjaykrsna.nanoai.feature.chat.presentation
 
-import app.cash.turbine.skipItems
-import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
+import com.vjaykrsna.nanoai.feature.chat.presentation.state.HistoryUiState
+import com.vjaykrsna.nanoai.shared.state.ViewModelStateHostTestHarness
 import com.vjaykrsna.nanoai.testing.DomainTestBuilders
 import com.vjaykrsna.nanoai.testing.FakeConversationRepository
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import java.util.UUID
+import kotlinx.coroutines.async
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
-abstract class HistoryViewModelTestBase {
+class HistoryViewModelTest {
 
-  protected val dispatcherExtension = MainDispatcherExtension()
-  protected lateinit var conversationRepository: FakeConversationRepository
-  protected lateinit var viewModel: HistoryViewModel
+  @JvmField @RegisterExtension val mainDispatcherExtension = MainDispatcherExtension()
+
+  private lateinit var conversationRepository: FakeConversationRepository
+  private lateinit var viewModel: HistoryViewModel
+  private lateinit var harness: ViewModelStateHostTestHarness<HistoryUiState, HistoryUiEvent>
 
   @BeforeEach
-  fun setupBase() {
+  fun setup() {
     conversationRepository = FakeConversationRepository()
-    viewModel = HistoryViewModel(conversationRepository, dispatcherExtension.dispatcher)
+    viewModel = HistoryViewModel(conversationRepository, mainDispatcherExtension.dispatcher)
+    harness = ViewModelStateHostTestHarness(viewModel)
   }
-}
-
-class HistoryViewModelLoadingTest : HistoryViewModelTestBase() {
-
-  @JvmField @RegisterExtension val mainDispatcherExtension = dispatcherExtension
 
   @Test
   fun `init loads threads automatically`() = runTest {
@@ -35,132 +35,86 @@ class HistoryViewModelLoadingTest : HistoryViewModelTestBase() {
       DomainTestBuilders.buildChatThread(threadId = UUID.randomUUID(), title = "Test Thread")
     conversationRepository.addThread(thread)
 
-    viewModel.threads.test {
-      skipItems(1)
-      val threads = awaitItem()
-      assertThat(threads).hasSize(1)
-      assertThat(threads.first().title).isEqualTo("Test Thread")
-    }
+    advanceUntilIdle()
+
+    val state = harness.awaitState(predicate = { it.threads.isNotEmpty() })
+    assertThat(state.threads).hasSize(1)
+    assertThat(state.threads.first().title).isEqualTo("Test Thread")
   }
 
   @Test
-  fun `loadThreads sets loading state during operation`() = runTest {
-    viewModel.isLoading.test {
-      assertThat(awaitItem()).isFalse()
-
-      viewModel.loadThreads()
-      assertThat(awaitItem()).isTrue()
-      assertThat(awaitItem()).isFalse()
-    }
-  }
-
-  @Test
-  fun `loadThreads updates threads on success`() = runTest {
-    val thread =
-      DomainTestBuilders.buildChatThread(threadId = UUID.randomUUID(), title = "Loaded Thread")
-    conversationRepository.addThread(thread)
-
+  fun `loadThreads toggles loading state`() = runTest {
+    val loadingState = async { harness.awaitState(predicate = { it.isLoading }) }
     viewModel.loadThreads()
 
-    viewModel.threads.test {
-      skipItems(1)
-      val threads = awaitItem()
-      assertThat(threads).hasSize(1)
-      assertThat(threads.first().title).isEqualTo("Loaded Thread")
-    }
+    assertThat(loadingState.await().isLoading).isTrue()
+    advanceUntilIdle()
+    assertThat(harness.currentState.isLoading).isFalse()
   }
 
   @Test
-  fun `loadThreads emits LoadFailed error on failure`() = runTest {
+  fun `loadThreads surfaces errors`() = runTest {
     conversationRepository.shouldFailOnGetAllThreads = true
 
-    viewModel.errors.test {
+    harness.testEvents {
       viewModel.loadThreads()
-
-      val error = awaitItem()
+      val event = awaitItem()
+      val error = (event as HistoryUiEvent.ErrorRaised).error
       assertThat(error).isInstanceOf(HistoryError.LoadFailed::class.java)
-      cancelAndIgnoreRemainingEvents()
     }
   }
-}
-
-class HistoryViewModelArchiveTest : HistoryViewModelTestBase() {
-
-  @JvmField @RegisterExtension val mainDispatcherExtension = dispatcherExtension
 
   @Test
-  fun `archiveThread reloads threads on success`() = runTest {
+  fun `archiveThread marks thread archived`() = runTest {
     val threadId = UUID.randomUUID()
-    val thread =
-      DomainTestBuilders.buildChatThread(
-        threadId = threadId,
-        title = "To Archive",
-        isArchived = false,
-      )
+    val thread = DomainTestBuilders.buildChatThread(threadId = threadId, isArchived = false)
     conversationRepository.addThread(thread)
 
     viewModel.archiveThread(threadId)
+    advanceUntilIdle()
 
-    viewModel.threads.test {
-      skipItems(1)
-      var threads = awaitItem()
-      if (threads.isNotEmpty() && !threads.first().isArchived) {
-        threads = awaitItem()
-      }
-      assertThat(threads).hasSize(1)
-      assertThat(threads.first().isArchived).isTrue()
-    }
+    val state =
+      harness.awaitState(
+        predicate = { state ->
+          state.threads.firstOrNull { it.threadId == threadId }?.isArchived == true
+        }
+      )
+    assertThat(state.threads.first { it.threadId == threadId }.isArchived).isTrue()
   }
 
   @Test
-  fun `archiveThread emits ArchiveFailed error on failure`() = runTest {
-    val threadId = UUID.randomUUID()
+  fun `archiveThread surfaces ArchiveFailed`() = runTest {
     conversationRepository.shouldFailOnArchiveThread = true
 
-    viewModel.errors.test {
-      viewModel.archiveThread(threadId)
-
-      val error = awaitItem()
+    harness.testEvents {
+      viewModel.archiveThread(UUID.randomUUID())
+      val event = awaitItem()
+      val error = (event as HistoryUiEvent.ErrorRaised).error
       assertThat(error).isInstanceOf(HistoryError.ArchiveFailed::class.java)
-      cancelAndIgnoreRemainingEvents()
     }
   }
-}
-
-class HistoryViewModelDeleteTest : HistoryViewModelTestBase() {
-
-  @JvmField @RegisterExtension val mainDispatcherExtension = dispatcherExtension
 
   @Test
-  fun `deleteThread reloads threads on success`() = runTest {
+  fun `deleteThread removes thread`() = runTest {
     val threadId = UUID.randomUUID()
-    val thread =
-      DomainTestBuilders.buildChatThread(
-        threadId = threadId,
-        title = "To Delete",
-        isArchived = false,
-      )
+    val thread = DomainTestBuilders.buildChatThread(threadId = threadId)
     conversationRepository.addThread(thread)
 
     viewModel.deleteThread(threadId)
+    advanceUntilIdle()
 
-    viewModel.threads.test {
-      val threads = awaitItem()
-      assertThat(threads).isEmpty()
-    }
+    assertThat(harness.currentState.threads).isEmpty()
   }
 
   @Test
-  fun `deleteThread emits DeleteFailed error on failure`() = runTest {
-    val threadId = UUID.randomUUID()
+  fun `deleteThread surfaces DeleteFailed`() = runTest {
     conversationRepository.shouldFailOnDeleteThread = true
 
-    viewModel.errors.test {
-      viewModel.deleteThread(threadId)
-
-      val error = awaitItem()
+    harness.testEvents {
+      viewModel.deleteThread(UUID.randomUUID())
+      val event = awaitItem()
+      val error = (event as HistoryUiEvent.ErrorRaised).error
       assertThat(error).isInstanceOf(HistoryError.DeleteFailed::class.java)
-      cancelAndIgnoreRemainingEvents()
     }
   }
 }

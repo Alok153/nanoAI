@@ -32,7 +32,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,10 +47,11 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vjaykrsna.nanoai.core.domain.model.Message
-import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
 import com.vjaykrsna.nanoai.core.model.MessageRole
 import com.vjaykrsna.nanoai.feature.chat.presentation.ChatError
+import com.vjaykrsna.nanoai.feature.chat.presentation.ChatUiEvent
 import com.vjaykrsna.nanoai.feature.chat.presentation.ChatViewModel
 import com.vjaykrsna.nanoai.feature.chat.ui.components.ModelPicker
 import com.vjaykrsna.nanoai.feature.uiux.presentation.NanoError
@@ -88,14 +88,8 @@ fun ChatScreen(
   onUpdateChatState: ((com.vjaykrsna.nanoai.feature.uiux.presentation.ChatState?) -> Unit)? = null,
   onNavigate: (com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId) -> Unit = {},
 ) {
-  val messages by viewModel.messages.collectAsState()
-  val currentThread by viewModel.currentThread.collectAsState()
-  val availablePersonas by viewModel.availablePersonas.collectAsState()
-  val isLoading by viewModel.isLoading.collectAsState()
-  val showModelPicker by viewModel.showModelPicker.collectAsState()
-  val models by viewModel.models.collectAsState()
+  val uiState by viewModel.state.collectAsStateWithLifecycle()
   val sheetState = rememberModalBottomSheetState()
-  val selectedImage by viewModel.selectedImage.collectAsState()
 
   val snackbarHostState = remember { SnackbarHostState() }
   var composerText by rememberSaveable { mutableStateOf("") }
@@ -126,23 +120,21 @@ fun ChatScreen(
       }
     }
 
-  LaunchedEffect(availablePersonas, currentThread) {
+  LaunchedEffect(uiState.personas, uiState.activeThread) {
     onUpdateChatState?.invoke(
       com.vjaykrsna.nanoai.feature.uiux.presentation.ChatState(
-        availablePersonas = availablePersonas,
-        currentPersonaId = currentThread?.personaId,
+        availablePersonas = uiState.personas,
+        currentPersonaId = uiState.activeThread?.personaId,
       )
     )
   }
 
-  LaunchedEffect(Unit) {
-    viewModel.errorEvents.collectLatest { error -> activeError = error.toNanoError() }
-  }
-
-  LaunchedEffect(snackbarHostState) {
+  LaunchedEffect(viewModel, snackbarHostState) {
     viewModel.events.collectLatest { event ->
-      if (event is com.vjaykrsna.nanoai.feature.chat.presentation.ChatViewEvent.ModelSelected) {
-        snackbarHostState.showSnackbar("Switched to ${event.modelName}")
+      when (event) {
+        is ChatUiEvent.ErrorRaised -> activeError = event.error.toNanoError()
+        is ChatUiEvent.ModelSelected ->
+          snackbarHostState.showSnackbar("Switched to ${event.modelName}")
       }
     }
   }
@@ -159,8 +151,8 @@ fun ChatScreen(
       verticalArrangement = Arrangement.spacedBy(NanoSpacing.md),
     ) {
       MessagesList(
-        messages = messages,
-        isLoading = isLoading,
+        messages = uiState.messages,
+        isLoading = uiState.isSendingMessage,
         modifier = Modifier.weight(1f).fillMaxWidth(),
       )
 
@@ -168,12 +160,15 @@ fun ChatScreen(
         error = activeError,
         snackbarHostState = snackbarHostState,
         modifier = Modifier.fillMaxWidth(),
-        onDismiss = { activeError = null },
+        onDismiss = {
+          activeError = null
+          viewModel.clearPendingError()
+        },
       )
 
-      selectedImage?.let {
+      uiState.attachments.image?.let {
         Image(
-          bitmap = it.asImageBitmap(),
+          bitmap = it.bitmap.asImageBitmap(),
           contentDescription = "Selected image",
           modifier = Modifier.size(128.dp),
         )
@@ -184,11 +179,11 @@ fun ChatScreen(
         onValueChange = { composerText = it },
         modifier = Modifier.fillMaxWidth(),
         placeholder = "Type a message…",
-        enabled = !isLoading && currentThread != null,
+        enabled = !uiState.isSendingMessage && uiState.activeThread != null,
         onSend = {
           val trimmed = composerText.trim()
           if (trimmed.isNotEmpty()) {
-            val personaId = currentThread?.personaId
+            val personaId = uiState.activeThread?.personaId
             if (personaId != null) {
               viewModel.sendMessage(trimmed, personaId)
               composerText = ""
@@ -202,8 +197,9 @@ fun ChatScreen(
             }
           }
         },
-        sendEnabled = composerText.isNotBlank() && currentThread != null && !isLoading,
-        isSending = isLoading,
+        sendEnabled =
+          composerText.isNotBlank() && uiState.activeThread != null && !uiState.isSendingMessage,
+        isSending = uiState.isSendingMessage,
         onImageSelect = { imagePickerLauncher.launch("image/*") },
         onAudioRecord = { /* TODO: Implement audio recording */ },
       )
@@ -217,14 +213,14 @@ fun ChatScreen(
           .semantics { contentDescription = "Chat notifications and messages" },
     )
 
-    if (showModelPicker) {
+    if (uiState.isModelPickerVisible) {
       ModalBottomSheet(
         onDismissRequest = { viewModel.dismissModelPicker() },
         sheetState = sheetState,
       ) {
         ModelPicker(
-          models = models,
-          selectedModelId = currentThread?.activeModelId,
+          models = uiState.installedModels,
+          selectedModelId = uiState.activeThread?.activeModelId,
           onModelSelect = { viewModel.selectModel(it) },
           onManageModelsClick = {
             viewModel.dismissModelPicker()

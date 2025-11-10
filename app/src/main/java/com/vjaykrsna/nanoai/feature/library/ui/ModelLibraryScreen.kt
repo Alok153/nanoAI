@@ -20,7 +20,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -30,6 +29,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceModelSummary
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.core.domain.model.library.ProviderType
@@ -37,14 +37,11 @@ import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryTab
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryViewModel
 import com.vjaykrsna.nanoai.feature.library.presentation.model.HuggingFaceSortOption
 import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryError
-import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryFilterState
-import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryUiEvent
-import com.vjaykrsna.nanoai.feature.library.presentation.model.ModelLibrarySections
-import com.vjaykrsna.nanoai.feature.library.presentation.model.ModelLibrarySummary
+import com.vjaykrsna.nanoai.feature.library.presentation.model.ModelLibraryUiEvent
 import com.vjaykrsna.nanoai.feature.library.presentation.model.ModelSort
+import com.vjaykrsna.nanoai.feature.library.presentation.state.ModelLibraryUiState
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.LOADING_INDICATOR_TAG
 import java.util.UUID
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 
 /**
@@ -66,59 +63,34 @@ fun ModelLibraryScreen(
   modifier: Modifier = Modifier,
   viewModel: ModelLibraryViewModel = hiltViewModel(),
 ) {
-  val state = rememberModelLibraryScreenState(viewModel)
+  val uiState by viewModel.state.collectAsStateWithLifecycle()
   val snackbarHostState = remember { SnackbarHostState() }
   val documentLauncher = rememberImportModelLauncher(viewModel::importLocalModel)
-
-  CollectLibraryErrors(errors = viewModel.errorEvents, snackbarHostState = snackbarHostState)
-  CollectLibraryUiEvents(events = viewModel.uiEvents, documentLauncher = documentLauncher)
-
   val actions = rememberModelLibraryActions(viewModel)
 
+  LaunchedEffect(viewModel, snackbarHostState, documentLauncher) {
+    viewModel.events.collectLatest { event ->
+      when (event) {
+        is ModelLibraryUiEvent.ErrorRaised ->
+          snackbarHostState.showSnackbar(event.error.toDisplayMessage())
+        is ModelLibraryUiEvent.Message -> snackbarHostState.showSnackbar(event.message)
+        ModelLibraryUiEvent.RequestLocalModelImport ->
+          documentLauncher.launch(
+            arrayOf("application/octet-stream", "application/x-tflite", "*/*")
+          )
+      }
+    }
+  }
+
   val pullRefreshState =
-    rememberPullRefreshState(refreshing = state.isRefreshing, onRefresh = actions.onRefresh)
+    rememberPullRefreshState(refreshing = uiState.isRefreshing, onRefresh = actions.onRefresh)
 
   ModelLibraryLayout(
     modifier = modifier,
-    state = state,
+    state = uiState,
     snackbarHostState = snackbarHostState,
     pullRefreshState = pullRefreshState,
     actions = actions,
-  )
-}
-
-@Composable
-private fun rememberModelLibraryScreenState(
-  viewModel: ModelLibraryViewModel
-): ModelLibraryScreenState {
-  val filters by viewModel.filters.collectAsState()
-  val summary by viewModel.summary.collectAsState()
-  val localSections by viewModel.localSections.collectAsState()
-  val curatedSections by viewModel.curatedSections.collectAsState()
-  val huggingFaceModels by viewModel.huggingFaceModels.collectAsState()
-  val huggingFaceDownloadableModelIds by viewModel.huggingFaceDownloadableModelIds.collectAsState()
-  val pipelineOptions by viewModel.pipelineOptions.collectAsState()
-  val huggingFaceLibraryOptions by viewModel.huggingFaceLibraryOptions.collectAsState()
-  val providerOptions by viewModel.providerOptions.collectAsState()
-  val capabilityOptions by viewModel.capabilityOptions.collectAsState()
-  val isLoading by viewModel.isLoading.collectAsState()
-  val isRefreshing by viewModel.isRefreshing.collectAsState()
-  val isHuggingFaceLoading by viewModel.isHuggingFaceLoading.collectAsState()
-
-  return ModelLibraryScreenState(
-    filters = filters,
-    summary = summary,
-    localSections = localSections,
-    curatedSections = curatedSections,
-    huggingFaceModels = huggingFaceModels,
-    huggingFaceDownloadableModelIds = huggingFaceDownloadableModelIds,
-    pipelineOptions = pipelineOptions,
-    huggingFaceLibraryOptions = huggingFaceLibraryOptions,
-    providerOptions = providerOptions,
-    capabilityOptions = capabilityOptions,
-    isLoading = isLoading,
-    isRefreshing = isRefreshing,
-    isHuggingFaceLoading = isHuggingFaceLoading,
   )
 }
 
@@ -148,27 +120,6 @@ private fun rememberModelLibraryActions(viewModel: ModelLibraryViewModel): Model
 }
 
 @Composable
-private fun CollectLibraryErrors(errors: Flow<LibraryError>, snackbarHostState: SnackbarHostState) {
-  LaunchedEffect(errors, snackbarHostState) {
-    errors.collectLatest { error -> snackbarHostState.showSnackbar(error.toDisplayMessage()) }
-  }
-}
-
-@Composable
-private fun CollectLibraryUiEvents(
-  events: Flow<LibraryUiEvent>,
-  documentLauncher: ManagedActivityResultLauncher<Array<String>, Uri?>,
-) {
-  LaunchedEffect(events, documentLauncher) {
-    events.collectLatest { event ->
-      if (event == LibraryUiEvent.RequestLocalModelImport) {
-        documentLauncher.launch(arrayOf("application/octet-stream", "application/x-tflite", "*/*"))
-      }
-    }
-  }
-}
-
-@Composable
 private fun rememberImportModelLauncher(
   onImport: (Uri) -> Unit
 ): ManagedActivityResultLauncher<Array<String>, Uri?> {
@@ -181,7 +132,7 @@ private fun rememberImportModelLauncher(
 @Composable
 private fun ModelLibraryLayout(
   modifier: Modifier = Modifier,
-  state: ModelLibraryScreenState,
+  state: ModelLibraryUiState,
   snackbarHostState: SnackbarHostState,
   pullRefreshState: PullRefreshState,
   actions: ModelLibraryActions,
@@ -245,7 +196,7 @@ private fun ModelLibraryLayout(
 @Composable
 private fun ModelLibraryTabContent(
   modifier: Modifier = Modifier,
-  state: ModelLibraryScreenState,
+  state: ModelLibraryUiState,
   actions: ModelLibraryActions,
 ) {
   when (state.filters.tab) {
@@ -329,22 +280,6 @@ private fun LibraryError.toDisplayMessage(): String =
     is LibraryError.UnexpectedError -> "Error: ${message}"
     is LibraryError.HuggingFaceLoadFailed -> "Hugging Face error: ${message}"
   }
-
-private data class ModelLibraryScreenState(
-  val filters: LibraryFilterState,
-  val summary: ModelLibrarySummary,
-  val localSections: ModelLibrarySections,
-  val curatedSections: ModelLibrarySections,
-  val huggingFaceModels: List<HuggingFaceModelSummary>,
-  val huggingFaceDownloadableModelIds: Set<String>,
-  val pipelineOptions: List<String>,
-  val huggingFaceLibraryOptions: List<String>,
-  val providerOptions: List<ProviderType>,
-  val capabilityOptions: List<String>,
-  val isLoading: Boolean,
-  val isRefreshing: Boolean,
-  val isHuggingFaceLoading: Boolean,
-)
 
 private data class ModelLibraryActions(
   val onRefresh: () -> Unit,

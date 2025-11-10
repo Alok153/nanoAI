@@ -1,11 +1,12 @@
 package com.vjaykrsna.nanoai.feature.chat.presentation
 
 import android.database.sqlite.SQLiteException
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
-import com.vjaykrsna.nanoai.core.domain.model.ChatThread
 import com.vjaykrsna.nanoai.core.domain.repository.ConversationRepository
+import com.vjaykrsna.nanoai.feature.chat.presentation.state.HistoryUiState
+import com.vjaykrsna.nanoai.shared.state.NanoAIViewEvent
+import com.vjaykrsna.nanoai.shared.state.ViewModelStateHost
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.io.IOException
 import java.util.UUID
@@ -13,11 +14,6 @@ import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -31,17 +27,12 @@ class HistoryViewModel
 @Inject
 constructor(
   private val conversationRepository: ConversationRepository,
-  @MainImmediateDispatcher private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
-) : ViewModel() {
-
-  private val _threads = MutableStateFlow<List<ChatThread>>(emptyList())
-  val threads: StateFlow<List<ChatThread>> = _threads.asStateFlow()
-
-  private val _isLoading = MutableStateFlow(false)
-  val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
-
-  private val _errors = MutableSharedFlow<HistoryError>()
-  val errors = _errors.asSharedFlow()
+  @MainImmediateDispatcher mainDispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
+) :
+  ViewModelStateHost<HistoryUiState, HistoryUiEvent>(
+    initialState = HistoryUiState(),
+    dispatcher = mainDispatcher,
+  ) {
 
   init {
     observeThreads()
@@ -49,14 +40,14 @@ constructor(
   }
 
   fun loadThreads() {
-    _isLoading.value = true
+    updateState { copy(isLoading = true, pendingErrorMessage = null) }
     viewModelScope.launch(dispatcher) {
       try {
         conversationRepository.getAllThreads()
       } catch (throwable: Throwable) {
         handleRepositoryFailure(throwable) { message -> HistoryError.LoadFailed(message) }
       } finally {
-        _isLoading.value = false
+        updateState { copy(isLoading = false) }
       }
     }
   }
@@ -65,7 +56,6 @@ constructor(
     viewModelScope.launch(dispatcher) {
       try {
         conversationRepository.archiveThread(threadId)
-        loadThreads() // Reload after archive
       } catch (throwable: Throwable) {
         handleRepositoryFailure(throwable) { message -> HistoryError.ArchiveFailed(message) }
       }
@@ -76,17 +66,20 @@ constructor(
     viewModelScope.launch(dispatcher) {
       try {
         conversationRepository.deleteThread(threadId)
-        loadThreads() // Reload after delete
       } catch (throwable: Throwable) {
         handleRepositoryFailure(throwable) { message -> HistoryError.DeleteFailed(message) }
       }
     }
   }
 
+  fun clearPendingError() {
+    updateState { copy(pendingErrorMessage = null) }
+  }
+
   private fun observeThreads() {
     viewModelScope.launch(dispatcher) {
       conversationRepository.getAllThreadsFlow().collectLatest { threads ->
-        _threads.value = threads
+        updateState { copy(threads = threads) }
       }
     }
   }
@@ -99,16 +92,25 @@ constructor(
       is CancellationException -> throw throwable
       is SQLiteException,
       is IOException,
-      is IllegalStateException -> _errors.emit(builder(throwable.message ?: "Unknown error"))
+      is IllegalStateException -> emitError(builder(throwable.message ?: "Unknown error"))
       else -> throw throwable
     }
   }
+
+  private suspend fun emitError(error: HistoryError) {
+    updateState { copy(pendingErrorMessage = error.message) }
+    emitEvent(HistoryUiEvent.ErrorRaised(error))
+  }
 }
 
-sealed class HistoryError {
-  data class LoadFailed(val message: String) : HistoryError()
+sealed interface HistoryUiEvent : NanoAIViewEvent {
+  data class ErrorRaised(val error: HistoryError) : HistoryUiEvent
+}
 
-  data class ArchiveFailed(val message: String) : HistoryError()
+sealed class HistoryError(open val message: String) {
+  data class LoadFailed(override val message: String) : HistoryError(message)
 
-  data class DeleteFailed(val message: String) : HistoryError()
+  data class ArchiveFailed(override val message: String) : HistoryError(message)
+
+  data class DeleteFailed(override val message: String) : HistoryError(message)
 }

@@ -211,9 +211,9 @@ Room database with 8 entities supporting offline-first functionality:
 
 All entities include proper foreign key relationships and indexing for performance.
 
-## ViewModel Architecture
+### ViewModel Architecture
 
-Distributed responsibility pattern ensures clean separation and testability across feature modules. ViewModels now exclusively use UseCases for business logic, never calling repositories directly.
+Distributed responsibility pattern ensures clean separation and testability across feature modules. All feature ViewModels extend the shared `ViewModelStateHost`, exposing a single immutable `StateFlow<UiState>` plus a typed `SharedFlow` of one-off events. Reducers run on injected dispatchers to keep UI → ViewModel → UseCase interactions predictable and fully testable. ViewModels now exclusively use UseCases for business logic, never calling repositories directly.
 
 ### Core Feature ViewModels
 - **ChatViewModel**: Manages conversation state and AI interactions
@@ -231,10 +231,10 @@ Distributed responsibility pattern ensures clean separation and testability acro
 
 ### Architecture Benefits
 - **Clean Separation**: ViewModels orchestrate UI state, UseCases handle business logic
-- **Testability**: Each layer testable in isolation with high coverage
+- **Testability**: `ViewModelStateHost` standardises reducers/events so tests assert entire state snapshots via the shared harness
 - **Scalability**: Feature modules evolve independently
 - **Maintainability**: Clear boundaries enable safer refactoring
-- **Consistency**: Unified error handling across all operations
+- **Consistency**: Unified state + event exposure enforces the single-source-of-truth model for Compose collectors
 
 
 ## Quality Standards

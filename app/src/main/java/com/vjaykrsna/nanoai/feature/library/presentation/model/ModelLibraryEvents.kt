@@ -1,5 +1,7 @@
 package com.vjaykrsna.nanoai.feature.library.presentation.model
 
+import com.vjaykrsna.nanoai.shared.state.NanoAIViewEvent
+
 sealed class LibraryError {
   data class DownloadFailed(val modelId: String, val message: String) : LibraryError()
 
@@ -18,6 +20,10 @@ sealed class LibraryError {
   data class HuggingFaceLoadFailed(val message: String) : LibraryError()
 }
 
-sealed class LibraryUiEvent {
-  data object RequestLocalModelImport : LibraryUiEvent()
+sealed interface ModelLibraryUiEvent : NanoAIViewEvent {
+  data class ErrorRaised(val error: LibraryError) : ModelLibraryUiEvent
+
+  data class Message(val message: String) : ModelLibraryUiEvent
+
+  data object RequestLocalModelImport : ModelLibraryUiEvent
 }
