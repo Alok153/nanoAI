@@ -1,14 +1,14 @@
 <!-- Sync Impact Report
-Version change: 1.4.0 → 1.4.1
-Modified principles: Streamlined and Clean Codebase (added anti-overengineering guidance)
-Added sections: None
+Version change: 1.4.1 → 1.5.0
+Modified principles: Added Test Coverage and Types, File Organization and Modularity, expanded Documentation & Knowledge Sharing, added Tooling and Automation Standards
+Added sections: Test Coverage and Types, File Organization and Modularity, Tooling and Automation Standards
 Removed sections: None
 Templates requiring updates:
 ✅ .specify/templates/plan-template.md updated
 ✅ .specify/templates/spec-template.md updated
 ✅ .specify/templates/tasks-template.md updated
 ✅ Runtime docs (README.md, docs/) updated
-Follow-up TODOs: Consider adding lightweight placeholder checks in CI and a README badge reflecting constitution version
+Follow-up TODOs: Implement automated constitution checks in CI/hooks, add READMEs to docs/ and scripts/, re-enable lint if resolved
 -->
 
 # nanoAI Android App Constitution
@@ -24,7 +24,6 @@ Rationale: Enforcing clean boundaries and idiomatic Kotlin keeps the app testabl
 ### Polished Material UX
 - Screens MUST follow Material 3 guidelines, including typography, spacing, elevation.
 - Every user interaction MUST respond within 100ms for touch feedback and 500ms for content updates; longer tasks require progress indicators or loading states.
-- Composable functions MUST use PascalCase naming (e.g., `ThemeToggle`), while regular functions use camelCase. Lambda parameters in composables MUST be present tense (e.g., `onClick`, not `onClicked`). Composable parameters MUST be ordered as: modifiers first, then other parameters with defaults, then optional trailing lambda.
 Rationale: Consistent, responsive UI earns trust and reduces rework when new surfaces are introduced.
 
 ### Resilient Performance & Offline Readiness
@@ -37,27 +36,35 @@ Rationale: Users stay engaged only when the app feels fast and reliable regardle
 - Unit tests MUST cover every ViewModel, use case, and repository with deterministic assertions; UI and instrumentation tests cover critical flows.
 - Static analysis (ktlint, Detekt, Android Lint) and dependency vulnerability scans MUST run in CI with zero ignored blockers.
 - No code merges without a green CI signal and reviewer verification against constitution checklists.
+
+#### Test Coverage and Types
+- Unit tests MUST achieve ≥75% coverage for ViewModels/Domain, ≥65% for UI/Compose, and ≥70% for Data/Repositories; integration tests MUST cover critical flows (e.g., offline sync, model downloads).
+- Instrumentation tests MUST verify accessibility and offline scenarios; macrobenchmarks MUST enforce performance budgets (e.g., <1.5s cold start).
+Rationale: Prevents testing inconsistencies in a growing codebase and ensures privacy/offline features are robust.
+
 Rationale: Automation prevents regressions and keeps delivery velocity sustainable.
 
 ### Privacy & Data Stewardship
 - Sensitive data at rest MUST use Android keystore-backed encryption; network calls MUST enforce TLS 1.3 and certificate pinning for first-party APIs.
 Rationale: Responsible stewardship protects users, satisfies compliance, and preserves the app's reputation.
 
-### AI Inference Integrity
-- Local LLM and multimodal models MUST use validated runtimes (e.g., MediaPipe, ONNX, LEAP); online API fallbacks MUST include retry logic with exponential backoff (max 3 retries).
-- Non-deterministic AI outputs MUST be mocked in unit tests; integration tests MUST validate fallback to online APIs when local models fail.
-- AI features MUST be implemented as optional dynamic modules (e.g., via Play Feature Delivery) to keep base APK <100MB and enable on-demand loading.
-Rationale: Ensures reliable, secure AI behavior across local/online modes, preventing degraded UX from model errors or network issues.
-
 ### Streamlined and Clean Codebase
 - Maintaining support for previous versions or legacy code is not necessary; always prefer streamlined and clean code.
 - Overengineering MUST be avoided: prefer simple, well-documented solutions that meet stated requirements. Complex or highly-architected designs require explicit justification in the plan, measurable tradeoffs, and a rollback path.
 Rationale: Ensures the codebase remains maintainable, efficient, and focused on current needs without unnecessary complexity for legacy support.
 
+### File Organization and Modularity
+- UI modules MUST avoid excessive fragmentation; limit composable files to one per screen/component unless justified by reusability or >500 lines. Feature-specific data MUST reside in `feature/*/data/` for consistency.
+- New abstractions or modules REQUIRE PR justification with measurable tradeoffs (e.g., "reduces duplication by X% but adds Y% maintenance cost"); simpler solutions preferred.
+Rationale: Prevents over-engineering and ensures scalable, maintainable structure in a growing project.
+
 ### Documentation & Knowledge Sharing
-- All public APIs, complex logic, and architectural decisions MUST be documented with KDoc comments; READMEs, design docs, and wikis MUST be updated on changes.
-- Knowledge sharing sessions MUST be held for major changes; documentation reviews MUST be part of PR processes.
-Rationale: Ensures maintainability, smooth onboarding, and prevents knowledge silos in a growing team.
+- All public APIs, complex logic, and architectural decisions MUST be documented with KDoc comments including `@param`, `@return`, `@throws`, and examples; private functions require comments only if non-obvious.
+- READMEs, design docs (in `docs/`), and wikis MUST be updated on changes; use Markdown with consistent headers (e.g., # for sections, ## for subsections) and include diagrams (e.g., Mermaid for architecture).
+- Knowledge sharing MUST include bi-weekly sessions for major changes; PRs MUST link to updated docs or specs in `specs/`.
+- API documentation MUST be auto-generated (e.g., via Dokka) and hosted in `docs/api/`; outdated docs flagged in CI via link checks.
+- Constitution compliance MUST be verified via automated scripts in pre-commit hooks and CI, including checks for Kotlin purity, encryption usage, and performance regressions.
+Rationale: Ensures documentation remains consistent, useful, and enforceable as the team scales; automates alignment with principles.
 
 ### Code Review & Collaboration
 - All code changes MUST undergo peer review with at least one approver; reviews MUST verify constitution compliance and include constructive feedback.
@@ -79,9 +86,14 @@ Rationale: Ensures reliability, quick feedback loops, and smooth, predictable re
 - AI/ML Libraries: Use approved runtimes like MediaPipe for local inference; external APIs (e.g., for image gen) MUST be configurable via encrypted prefs without hardcoding keys.
 - Model Management: Downloaded models MUST be stored in app-specific directories; support export/import for backups.
 
+### Tooling and Automation Standards
+- Static analysis (Detekt, Android Lint) MUST run in CI with zero ignored blockers; re-enable disabled checks when resolved.
+- CI pipelines MUST enforce performance budgets (e.g., <1.5s cold start, <5% jank) and include lightweight security scans (e.g., OWASP Dependency Check).
+Rationale: Prevents build/config inconsistencies and ensures automated quality in a complex app.
+
 ## Development Workflow & Quality Gates
 
 1. Product discovery tickets MUST specify acceptance criteria mapped to the governing principles before development begins.
 2. Every feature branch MUST start with tests or contract updates demonstrating the expected behavior.
 
-**Version**: 1.4.1 | **Ratified**: 2025-10-02 | **Last Amended**: 2025-10-12
+**Version**: 1.5.0 | **Ratified**: 2025-10-02 | **Last Amended**: 2025-11-10
