@@ -33,6 +33,39 @@ This guide documents the UI component patterns and Material Design 3 compliance 
 
 ## Component Patterns
 
+### Consuming Unified UiState + Events
+
+Compose screens should observe the single `UiState` exposed by `ViewModelStateHost` and react to one-off events inside a `LaunchedEffect` collector. Keep intent handlers explicit so previews and tests can supply fakes easily.
+
+```kotlin
+@Composable
+fun SettingsRoute(
+    viewModel: SettingsViewModel = hiltViewModel(),
+    onNavigate: (SettingsUiEvent) -> Unit,
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event -> onNavigate(event) }
+    }
+
+    SettingsScreen(
+        state = state,
+        onIntent = viewModel::handleIntent,
+    )
+}
+
+@Composable
+fun SettingsScreen(
+    state: SettingsUiState,
+    onIntent: (SettingsScreenIntent) -> Unit,
+) {
+    // Render from immutable state and dispatch intents back to the ViewModel.
+}
+```
+
+**Key Requirements**: Always derive UI from the immutable `state`, translate user actions into intents, and collect events once at the route/root level to avoid duplicated side effects.
+
 ### Buttons and Interactive Elements
 
 ```kotlin

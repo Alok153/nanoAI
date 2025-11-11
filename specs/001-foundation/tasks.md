@@ -61,7 +61,7 @@ description: "Task list for standardising ViewModel state patterns"
 - [x] T012 [US2] Create ModelLibraryUiState aggregating local/curated sections, filters, download queue, and Hugging Face catalog in app/src/main/java/com/vjaykrsna/nanoai/feature/library/presentation/state/ModelLibraryUiState.kt.
 - [x] T013 [US2] Collapse ModelLibraryStateStore outputs into ModelLibraryUiState reducers and drop ad-hoc MutableStateFlows in app/src/main/java/com/vjaykrsna/nanoai/feature/library/presentation/ModelLibraryStateStore.kt.
 - [x] T014 [US2] Refactor ModelLibraryViewModel to use ViewModelStateHost, emit ModelLibraryUiState, and normalize events in app/src/main/java/com/vjaykrsna/nanoai/feature/library/presentation/ModelLibraryViewModel.kt.
-- [ ] T015 [US2] Align HuggingFaceLibraryViewModel with shared state/event contracts to avoid divergent patterns in app/src/main/java/com/vjaykrsna/nanoai/feature/library/presentation/HuggingFaceLibraryViewModel.kt.
+- [x] T015 [US2] Align HuggingFaceLibraryViewModel with shared state/event contracts to avoid divergent patterns in app/src/main/java/com/vjaykrsna/nanoai/feature/library/presentation/HuggingFaceLibraryViewModel.kt.
 - [x] T016 [US2] Update ModelLibraryScreen and supporting UI components to consume ModelLibraryUiState in app/src/main/java/com/vjaykrsna/nanoai/feature/library/ui/ModelLibraryScreen.kt.
 - [x] T017 [US2] Add ModelLibraryViewModelTest (and relevant Hugging Face coverage) using the new harness in app/src/test/java/com/vjaykrsna/nanoai/feature/library/presentation/.
 
@@ -77,10 +77,10 @@ description: "Task list for standardising ViewModel state patterns"
 
 ### Implementation for User Story 4
 
-- [ ] T018 [US4] Define SettingsUiState (replacing SettingsUiUxState) covering providers, privacy, UI preferences, backup progress, and Hugging Face data in app/src/main/java/com/vjaykrsna/nanoai/feature/settings/presentation/state/SettingsUiState.kt.
-- [ ] T019 [US4] Refactor SettingsViewModel to adopt ViewModelStateHost, emit SettingsUiState, and route controller side effects through NanoAIViewEvent in app/src/main/java/com/vjaykrsna/nanoai/feature/settings/presentation/SettingsViewModel.kt.
-- [ ] T020 [US4] Update SettingsScreen wiring (SettingsScreen.kt, SettingsScreenState.kt, SettingsScreenContent.kt, sections) to consume SettingsUiState and streamlined events in app/src/main/java/com/vjaykrsna/nanoai/feature/settings/ui/.
-- [ ] T021 [US4] Refresh SettingsViewModel tests (SettingsViewModelTest.kt, SettingsViewModelUiUxTest.kt, import/export suites) to cover the unified state in app/src/test/java/com/vjaykrsna/nanoai/feature/settings/presentation/.
+- [x] T018 [US4] Define SettingsUiState (replacing SettingsUiUxState) covering providers, privacy, UI preferences, backup progress, and Hugging Face data in app/src/main/java/com/vjaykrsna/nanoai/feature/settings/presentation/state/SettingsUiState.kt.
+- [x] T019 [US4] Refactor SettingsViewModel to adopt ViewModelStateHost, emit SettingsUiState, and route controller side effects through NanoAIViewEvent in app/src/main/java/com/vjaykrsna/nanoai/feature/settings/presentation/SettingsViewModel.kt.
+- [x] T020 [US4] Update SettingsScreen wiring (SettingsScreen.kt, SettingsScreenState.kt, SettingsScreenContent.kt, sections) to consume SettingsUiState and streamlined events in app/src/main/java/com/vjaykrsna/nanoai/feature/settings/ui/.
+- [x] T021 [US4] Refresh SettingsViewModel tests (SettingsViewModelTest.kt, SettingsViewModelUiUxTest.kt, import/export suites) to cover the unified state in app/src/test/java/com/vjaykrsna/nanoai/feature/settings/presentation/.
 
 **Checkpoint**: Settings flows expose a unified state model and pass updated tests.
 

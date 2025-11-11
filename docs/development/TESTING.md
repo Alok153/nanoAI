@@ -69,6 +69,7 @@ For instrumentation tests (Android UI/device tests):
 - `TestEnvironmentRule` resets Room/DataStore/network toggles between instrumentation runs (use as `@RegisterExtension` with `@JvmStatic` for JUnit 5).
 - Fixture builders live under `app/src/test/java/com/vjaykrsna/nanoai/**/fixtures` and `DomainTestBuilders` simplifies thread/message creation.
 - `FlowTestExt` (see `com.vjaykrsna.nanoai.shared.testing.FlowTestExt`) wraps Turbine with shared timeouts and automatic cancellation for Flow assertions.
+- `ViewModelStateHostTestHarness` (app/src/test/java/com/vjaykrsna/nanoai/shared/state/) drives ViewModel tests against a single `state` plus `events` stream. Prefer it whenever a ViewModel extends `ViewModelStateHost` to keep coverage above the 75 % requirement while exercising reducers and one-shot events.
 
 ### Screenshot workflow (Roborazzi)
 

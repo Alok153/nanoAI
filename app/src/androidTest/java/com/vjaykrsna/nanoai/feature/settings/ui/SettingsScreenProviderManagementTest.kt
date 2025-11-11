@@ -42,17 +42,21 @@ class SettingsScreenProviderManagementTest : BaseSettingsScreenTest() {
 
   @Test
   fun settingsScreen_displaysProviderList() {
-    mockApiProviders.value =
-      listOf(
-        ApiProviderConfig(
-          providerId = "gemini-cloud",
-          providerName = "Google Gemini",
-          baseUrl = "https://gemini.googleapis.com",
-          apiKey = "test-key-123",
-          apiType = APIType.OPENAI_COMPATIBLE,
-          isEnabled = true,
-        )
+    updateState {
+      it.copy(
+        apiProviders =
+          listOf(
+            ApiProviderConfig(
+              providerId = "gemini-cloud",
+              providerName = "Google Gemini",
+              baseUrl = "https://gemini.googleapis.com",
+              apiKey = "test-key-123",
+              apiType = APIType.OPENAI_COMPATIBLE,
+              isEnabled = true,
+            )
+          )
       )
+    }
 
     renderSettingsScreen()
 
@@ -72,17 +76,21 @@ class SettingsScreenProviderManagementTest : BaseSettingsScreenTest() {
 
   @Test
   fun settingsScreen_editProvider_updatesData() {
-    mockApiProviders.value =
-      listOf(
-        ApiProviderConfig(
-          providerId = "gemini-cloud",
-          providerName = "Google Gemini",
-          baseUrl = "https://gemini.googleapis.com",
-          apiKey = "test-key-123",
-          apiType = APIType.OPENAI_COMPATIBLE,
-          isEnabled = true,
-        )
+    updateState {
+      it.copy(
+        apiProviders =
+          listOf(
+            ApiProviderConfig(
+              providerId = "gemini-cloud",
+              providerName = "Google Gemini",
+              baseUrl = "https://gemini.googleapis.com",
+              apiKey = "test-key-123",
+              apiType = APIType.OPENAI_COMPATIBLE,
+              isEnabled = true,
+            )
+          )
       )
+    }
 
     renderSettingsScreen()
 

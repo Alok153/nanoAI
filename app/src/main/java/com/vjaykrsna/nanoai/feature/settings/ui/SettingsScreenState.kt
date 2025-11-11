@@ -6,11 +6,8 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
-import com.vjaykrsna.nanoai.core.domain.settings.huggingface.HuggingFaceAuthState
-import com.vjaykrsna.nanoai.core.domain.settings.huggingface.HuggingFaceDeviceAuthState
-import com.vjaykrsna.nanoai.core.domain.settings.model.PrivacyPreference
-import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsUiUxState
 import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsViewModel
+import com.vjaykrsna.nanoai.feature.settings.presentation.state.SettingsUiState
 
 internal data class SettingsDialogState(
   val showAddProviderDialog: Boolean,
@@ -32,12 +29,11 @@ internal data class SettingsDialogHandlers(
 )
 
 internal data class SettingsScreenCoordinator(
-  val contentState: SettingsContentState,
+  val uiState: SettingsUiState,
   val snackbarHostState: SnackbarHostState,
   val actions: SettingsScreenActions,
   val dialogState: SettingsDialogState,
   val dialogHandlers: SettingsDialogHandlers,
-  val huggingFaceDeviceAuthState: HuggingFaceDeviceAuthState?,
 )
 
 internal data class MutableSettingsDialogState(
@@ -121,11 +117,3 @@ internal fun createDialogHandlers(
     },
   )
 }
-
-internal data class SettingsContentState(
-  val apiProviders: List<APIProviderConfig>,
-  val privacyPreferences: PrivacyPreference,
-  val uiUxState: SettingsUiUxState,
-  val huggingFaceState: HuggingFaceAuthState,
-  val isLoading: Boolean = false,
-)

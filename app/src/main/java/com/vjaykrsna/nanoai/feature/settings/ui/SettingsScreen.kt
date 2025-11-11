@@ -35,7 +35,7 @@ fun SettingsScreen(
   val coordinator = rememberSettingsScreenState(viewModel, onNavigateToCoverageDashboard)
 
   SettingsScreenContent(
-    state = coordinator.contentState,
+    state = coordinator.uiState,
     snackbarHostState = coordinator.snackbarHostState,
     actions = coordinator.actions,
     modifier = modifier,
@@ -51,7 +51,7 @@ fun SettingsScreen(
     onExportConfirm = coordinator.dialogHandlers.onExportConfirm,
     showHuggingFaceLoginDialog = coordinator.dialogState.showHuggingFaceLoginDialog,
     showHuggingFaceApiKeyDialog = coordinator.dialogState.showHuggingFaceApiKeyDialog,
-    huggingFaceDeviceAuthState = coordinator.huggingFaceDeviceAuthState,
+    huggingFaceDeviceAuthState = coordinator.uiState.huggingFaceDeviceAuthState,
     onHuggingFaceLoginDismiss = coordinator.dialogHandlers.onHuggingFaceLoginDismiss,
     onHuggingFaceLoginConfirm = coordinator.dialogHandlers.onHuggingFaceLoginConfirm,
     onHuggingFaceApiKeyDismiss = coordinator.dialogHandlers.onHuggingFaceApiKeyDismiss,
@@ -64,48 +64,31 @@ internal fun rememberSettingsScreenState(
   viewModel: SettingsViewModel,
   onNavigateToCoverageDashboard: () -> Unit = {},
 ): SettingsScreenCoordinator {
-  val apiProviders by viewModel.apiProviders.collectAsState()
-  val privacyPreferences by viewModel.privacyPreferences.collectAsState()
-  val uiUxState by viewModel.uiUxState.collectAsState()
-  val huggingFaceAuthState by viewModel.huggingFaceAuthState.collectAsState()
-  val huggingFaceDeviceAuthState by viewModel.huggingFaceDeviceAuthState.collectAsState()
-  val isLoading by viewModel.isLoading.collectAsState()
+  val uiState by viewModel.state.collectAsState()
 
   val snackbarHostState = remember { SnackbarHostState() }
   val dialogState = rememberMutableSettingsDialogState()
 
   val importBackupLauncher = rememberImportBackupLauncher(viewModel::importBackup)
 
-  CollectSettingsErrorEvents(viewModel.errorEvents, snackbarHostState)
-  CollectExportSuccessEvents(viewModel.exportSuccess, snackbarHostState)
-  CollectImportSuccessEvents(viewModel.importSuccess, snackbarHostState)
+  CollectSettingsEvents(viewModel.events, snackbarHostState)
 
   val actions =
     createActions(
       viewModel,
-      privacyPreferences,
+      uiState.privacyPreference,
       importBackupLauncher,
       dialogState,
       onNavigateToCoverageDashboard,
     )
   val dialogHandlers = createDialogHandlers(viewModel, dialogState)
 
-  val contentState =
-    SettingsContentState(
-      apiProviders = apiProviders,
-      privacyPreferences = privacyPreferences,
-      uiUxState = uiUxState,
-      huggingFaceState = huggingFaceAuthState,
-      isLoading = isLoading,
-    )
-
   return SettingsScreenCoordinator(
-    contentState = contentState,
+    uiState = uiState,
     snackbarHostState = snackbarHostState,
     actions = actions,
     dialogState = dialogState.snapshot(),
     dialogHandlers = dialogHandlers,
-    huggingFaceDeviceAuthState = huggingFaceDeviceAuthState,
   )
 }
 

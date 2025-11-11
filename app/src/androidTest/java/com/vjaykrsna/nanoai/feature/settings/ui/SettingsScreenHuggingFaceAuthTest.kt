@@ -13,7 +13,7 @@ class SettingsScreenHuggingFaceAuthTest : BaseSettingsScreenTest() {
 
   @Test
   fun settingsScreen_huggingFaceAuth_notAuthenticated_showsLoginButton() {
-    mockHuggingFaceAuthState.value = HuggingFaceAuthState.unauthenticated()
+    updateState { it.copy(huggingFaceAuthState = HuggingFaceAuthState.unauthenticated()) }
 
     renderSettingsScreen()
 
@@ -27,8 +27,16 @@ class SettingsScreenHuggingFaceAuthTest : BaseSettingsScreenTest() {
 
   @Test
   fun settingsScreen_huggingFaceAuth_authenticated_showsDisconnectButton() {
-    mockHuggingFaceAuthState.value =
-      HuggingFaceAuthState(isAuthenticated = true, username = "testuser", displayName = "Test User")
+    updateState {
+      it.copy(
+        huggingFaceAuthState =
+          HuggingFaceAuthState(
+            isAuthenticated = true,
+            username = "testuser",
+            displayName = "Test User",
+          )
+      )
+    }
 
     renderSettingsScreen()
 
@@ -42,7 +50,7 @@ class SettingsScreenHuggingFaceAuthTest : BaseSettingsScreenTest() {
 
   @Test
   fun settingsScreen_clickHuggingFaceLogin_opensDialog() {
-    mockHuggingFaceAuthState.value = HuggingFaceAuthState.unauthenticated()
+    updateState { it.copy(huggingFaceAuthState = HuggingFaceAuthState.unauthenticated()) }
 
     renderSettingsScreen()
 
@@ -55,7 +63,7 @@ class SettingsScreenHuggingFaceAuthTest : BaseSettingsScreenTest() {
 
   @Test
   fun settingsScreen_huggingFaceLogin_triggersOAuth() {
-    mockHuggingFaceAuthState.value = HuggingFaceAuthState.unauthenticated()
+    updateState { it.copy(huggingFaceAuthState = HuggingFaceAuthState.unauthenticated()) }
 
     renderSettingsScreen()
 
@@ -67,8 +75,16 @@ class SettingsScreenHuggingFaceAuthTest : BaseSettingsScreenTest() {
 
   @Test
   fun settingsScreen_huggingFaceAccount_displaysInfo() {
-    mockHuggingFaceAuthState.value =
-      HuggingFaceAuthState(isAuthenticated = true, username = "testuser", displayName = "Test User")
+    updateState {
+      it.copy(
+        huggingFaceAuthState =
+          HuggingFaceAuthState(
+            isAuthenticated = true,
+            username = "testuser",
+            displayName = "Test User",
+          )
+      )
+    }
 
     renderSettingsScreen()
 
@@ -82,8 +98,16 @@ class SettingsScreenHuggingFaceAuthTest : BaseSettingsScreenTest() {
 
   @Test
   fun settingsScreen_huggingFaceLogout_clearsCredentials() {
-    mockHuggingFaceAuthState.value =
-      HuggingFaceAuthState(isAuthenticated = true, username = "testuser", displayName = "Test User")
+    updateState {
+      it.copy(
+        huggingFaceAuthState =
+          HuggingFaceAuthState(
+            isAuthenticated = true,
+            username = "testuser",
+            displayName = "Test User",
+          )
+      )
+    }
 
     renderSettingsScreen()
 

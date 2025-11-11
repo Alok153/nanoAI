@@ -15,13 +15,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
-import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsUiUxState
+import com.vjaykrsna.nanoai.feature.settings.presentation.state.SettingsUiState
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.ThemePreferenceChips
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.VisualDensityChips
 
 @Composable
 internal fun AppearanceThemeCard(
-  uiUxState: SettingsUiUxState,
+  state: SettingsUiState,
   onThemeChange: (ThemePreference) -> Unit,
   onHighContrastChange: (Boolean) -> Unit,
   modifier: Modifier = Modifier,
@@ -70,7 +70,7 @@ internal fun AppearanceThemeCard(
   ) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
       ThemePreferenceChips(
-        selected = uiUxState.themePreference,
+        selected = state.themePreference,
         onSelect = onThemeChange,
         modifier = Modifier.fillMaxWidth(),
         supportedThemes =
@@ -88,7 +88,7 @@ internal fun AppearanceThemeCard(
         verticalAlignment = Alignment.CenterVertically,
       ) {
         Text(text = "High contrast", style = MaterialTheme.typography.bodyLarge)
-        Switch(checked = uiUxState.highContrastEnabled, onCheckedChange = onHighContrastChange)
+        Switch(checked = state.highContrastEnabled, onCheckedChange = onHighContrastChange)
       }
     }
   }
@@ -96,12 +96,12 @@ internal fun AppearanceThemeCard(
 
 @Composable
 internal fun AppearanceDensityCard(
-  uiUxState: SettingsUiUxState,
+  state: SettingsUiState,
   onDensityChange: (VisualDensity) -> Unit,
   modifier: Modifier = Modifier,
 ) {
   val selectedDensity =
-    if (uiUxState.compactModeEnabled) VisualDensity.COMPACT else VisualDensity.DEFAULT
+    if (state.compactModeEnabled) VisualDensity.COMPACT else VisualDensity.DEFAULT
 
   SettingsInteractiveCard(
     title = "Layout Density",

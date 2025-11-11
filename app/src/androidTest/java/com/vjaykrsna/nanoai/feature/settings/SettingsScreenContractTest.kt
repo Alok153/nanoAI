@@ -12,10 +12,8 @@ import androidx.compose.ui.test.performClick
 import androidx.test.filters.LargeTest
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
 import com.vjaykrsna.nanoai.core.domain.settings.huggingface.HuggingFaceAuthState
-import com.vjaykrsna.nanoai.core.domain.settings.model.PrivacyPreference
 import com.vjaykrsna.nanoai.core.model.APIType
-import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsUiUxState
-import com.vjaykrsna.nanoai.feature.settings.ui.SettingsContentState
+import com.vjaykrsna.nanoai.feature.settings.presentation.state.SettingsUiState
 import com.vjaykrsna.nanoai.feature.settings.ui.SettingsScreenActions
 import com.vjaykrsna.nanoai.feature.settings.ui.SettingsScreenContent
 import com.vjaykrsna.nanoai.shared.testing.TestEnvironmentRule
@@ -48,11 +46,10 @@ class SettingsScreenContractTest {
     )
 
   private val defaultState =
-    SettingsContentState(
+    SettingsUiState(
       apiProviders = listOf(sampleProvider),
-      privacyPreferences = PrivacyPreference(),
-      uiUxState = SettingsUiUxState(showMigrationSuccessNotification = true),
-      huggingFaceState = HuggingFaceAuthState.unauthenticated(),
+      showMigrationSuccessNotification = true,
+      huggingFaceAuthState = HuggingFaceAuthState.unauthenticated(),
     )
 
   private val noopActions =

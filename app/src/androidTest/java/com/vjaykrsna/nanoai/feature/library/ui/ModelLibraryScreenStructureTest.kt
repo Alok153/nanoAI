@@ -47,7 +47,7 @@ class ModelLibraryScreenStructureTest : BaseModelLibraryScreenTest() {
     renderModelLibraryScreen()
 
     composeTestRule.runOnIdle { viewModel.refreshCatalog() }
-    composeTestRule.waitUntil(timeoutMillis = 5_000) { viewModel.isLoading.value }
+    composeTestRule.waitUntil(timeoutMillis = 5_000) { viewModel.state.value.isLoading }
     composeTestRule.waitUntil(timeoutMillis = 5_000) {
       composeTestRule
         .onAllNodesWithTag(ModelLibraryUiConstants.LOADING_INDICATOR_TAG)
@@ -84,7 +84,9 @@ class ModelLibraryScreenStructureTest : BaseModelLibraryScreenTest() {
     composeTestRule.runOnIdle { viewModel.selectTab(ModelLibraryTab.CURATED) }
     composeTestRule.waitForIdle()
 
-    composeTestRule.runOnIdle { assertThat(viewModel.curatedSections.value.available).isNotEmpty() }
+    composeTestRule.runOnIdle {
+      assertThat(viewModel.state.value.curatedSections.available).isNotEmpty()
+    }
 
     val listNode = composeTestRule.onNodeWithTag(ModelLibraryUiConstants.LIST_TAG)
     listNode.performScrollToNode(hasText("Attention Model", substring = false))

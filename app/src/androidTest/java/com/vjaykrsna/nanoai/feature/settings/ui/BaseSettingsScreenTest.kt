@@ -4,15 +4,9 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import com.vjaykrsna.nanoai.core.domain.model.ApiProviderConfig
-import com.vjaykrsna.nanoai.core.domain.settings.ImportSummary
-import com.vjaykrsna.nanoai.core.domain.settings.huggingface.HuggingFaceAuthState
-import com.vjaykrsna.nanoai.core.domain.settings.huggingface.HuggingFaceDeviceAuthState
-import com.vjaykrsna.nanoai.core.domain.settings.model.PrivacyPreference
-import com.vjaykrsna.nanoai.core.domain.settings.model.RetentionPolicy
-import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsError
-import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsUiUxState
 import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsViewModel
+import com.vjaykrsna.nanoai.feature.settings.presentation.model.SettingsUiEvent
+import com.vjaykrsna.nanoai.feature.settings.presentation.state.SettingsUiState
 import com.vjaykrsna.nanoai.shared.testing.TestEnvironmentRule
 import com.vjaykrsna.nanoai.shared.testing.TestingTheme
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -36,42 +30,27 @@ abstract class BaseSettingsScreenTest {
 
   protected lateinit var viewModel: SettingsViewModel
 
-  protected val mockApiProviders = MutableStateFlow<List<ApiProviderConfig>>(emptyList())
-  protected val mockPrivacyPreferences =
-    MutableStateFlow(
-      PrivacyPreference(
-        exportWarningsDismissed = false,
-        telemetryOptIn = false,
-        consentAcknowledgedAt = null,
-        disclaimerShownCount = 0,
-        retentionPolicy = RetentionPolicy.INDEFINITE,
-      )
-    )
-  protected val mockUiUxState = MutableStateFlow(SettingsUiUxState())
-  protected val mockHuggingFaceAuthState = MutableStateFlow(HuggingFaceAuthState.unauthenticated())
-  protected val mockHuggingFaceDeviceAuthState = MutableStateFlow<HuggingFaceDeviceAuthState?>(null)
-  protected val mockIsLoading = MutableStateFlow(false)
-  protected val mockErrorEvents = MutableSharedFlow<SettingsError>(extraBufferCapacity = 1)
-  protected val mockExportSuccess = MutableSharedFlow<String>(extraBufferCapacity = 1)
-  protected val mockImportSuccess = MutableSharedFlow<ImportSummary>(extraBufferCapacity = 1)
+  protected val mockState = MutableStateFlow(SettingsUiState())
+  protected val mockEvents = MutableSharedFlow<SettingsUiEvent>(extraBufferCapacity = 4)
 
   @Before
   fun setUpBase() {
     hiltRule.inject()
     viewModel = mockk(relaxed = true)
-    every { viewModel.apiProviders } returns mockApiProviders
-    every { viewModel.privacyPreferences } returns mockPrivacyPreferences
-    every { viewModel.uiUxState } returns mockUiUxState
-    every { viewModel.huggingFaceAuthState } returns mockHuggingFaceAuthState
-    every { viewModel.huggingFaceDeviceAuthState } returns mockHuggingFaceDeviceAuthState
-    every { viewModel.isLoading } returns mockIsLoading
-    every { viewModel.errorEvents } returns mockErrorEvents
-    every { viewModel.exportSuccess } returns mockExportSuccess
-    every { viewModel.importSuccess } returns mockImportSuccess
+    every { viewModel.state } returns mockState
+    every { viewModel.events } returns mockEvents
   }
 
   protected fun renderSettingsScreen() {
     composeTestRule.setContent { TestingTheme { SettingsScreen(viewModel = viewModel) } }
     composeTestRule.waitForIdle()
+  }
+
+  protected fun updateState(transform: (SettingsUiState) -> SettingsUiState) {
+    mockState.value = transform(mockState.value)
+  }
+
+  protected fun emitEvent(event: SettingsUiEvent) {
+    mockEvents.tryEmit(event)
   }
 }

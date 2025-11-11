@@ -2,7 +2,7 @@ package com.vjaykrsna.nanoai.shared.ui.shell
 
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.size as layoutSize
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.runtime.getValue
@@ -43,7 +43,7 @@ class ShellDrawerGesturesTest {
     composeRule.setContent {
       Box(
         modifier =
-          Modifier.size(400.dp)
+          Modifier.layoutSize(400.dp)
             .shellDrawerGestures(layout, thresholds) { event ->
               events += event
               when (event) {
@@ -62,13 +62,18 @@ class ShellDrawerGesturesTest {
       )
     }
 
+    val gestureCenterY = with(composeRule.density) { 400.dp.toPx() / 2f }
+
     composeRule.onNodeWithTag("shell_drawer_target").performTouchInput {
-      val centerY = size.height / 2f
-      down(Offset(1f, centerY))
-      moveTo(Offset(200f, centerY))
+      val start = Offset.Zero.copy(x = 1f, y = gestureCenterY)
+      val end = Offset.Zero.copy(x = 200f, y = gestureCenterY)
+      down(start)
+      moveTo(end)
       up()
     }
 
-    composeRule.runOnIdle { assertEquals(listOf(ShellUiEvent.ToggleLeftDrawer), events) }
+    composeRule.runOnIdle {
+      assertEquals(listOf<ShellUiEvent>(ShellUiEvent.ToggleLeftDrawer), events)
+    }
   }
 }

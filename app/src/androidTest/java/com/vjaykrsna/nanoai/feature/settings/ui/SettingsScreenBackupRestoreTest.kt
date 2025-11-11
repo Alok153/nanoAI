@@ -5,6 +5,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.vjaykrsna.nanoai.core.domain.settings.ImportSummary
 import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsError
+import com.vjaykrsna.nanoai.feature.settings.presentation.model.SettingsUiEvent
 import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Test
 
@@ -24,7 +25,7 @@ class SettingsScreenBackupRestoreTest : BaseSettingsScreenTest() {
   fun settingsScreen_exportSuccess_showsSnackbar() {
     renderSettingsScreen()
 
-    composeTestRule.runOnIdle { mockExportSuccess.tryEmit("Export successful") }
+    composeTestRule.runOnIdle { emitEvent(SettingsUiEvent.ExportCompleted("Export successful")) }
 
     composeTestRule.waitUntil(timeoutMillis = 5_000) {
       composeTestRule
@@ -59,12 +60,14 @@ class SettingsScreenBackupRestoreTest : BaseSettingsScreenTest() {
     renderSettingsScreen()
 
     composeTestRule.runOnIdle {
-      mockImportSuccess.tryEmit(
-        ImportSummary(
-          personasImported = 5,
-          personasUpdated = 0,
-          providersImported = 2,
-          providersUpdated = 1,
+      emitEvent(
+        SettingsUiEvent.ImportCompleted(
+          ImportSummary(
+            personasImported = 5,
+            personasUpdated = 0,
+            providersImported = 2,
+            providersUpdated = 1,
+          )
         )
       )
     }
@@ -93,7 +96,7 @@ class SettingsScreenBackupRestoreTest : BaseSettingsScreenTest() {
     renderSettingsScreen()
 
     composeTestRule.runOnIdle {
-      mockErrorEvents.tryEmit(SettingsError.UnexpectedError("Test error"))
+      emitEvent(SettingsUiEvent.ErrorRaised(SettingsError.UnexpectedError("Test error")))
     }
 
     composeTestRule.waitUntil(timeoutMillis = 5_000) {

@@ -13,6 +13,7 @@ import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceToModelPackageConvert
 import com.vjaykrsna.nanoai.core.domain.library.ModelCatalogUseCase
 import com.vjaykrsna.nanoai.core.domain.library.RefreshModelCatalogUseCase
 import com.vjaykrsna.nanoai.core.domain.model.library.ProviderType
+import com.vjaykrsna.nanoai.feature.library.presentation.model.HuggingFaceLibraryUiEvent
 import com.vjaykrsna.nanoai.feature.library.presentation.model.HuggingFaceSortOption
 import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryError
 import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryFilterState
@@ -51,7 +52,11 @@ constructor(
 
   private val refreshing = AtomicBoolean(false)
   private val huggingFaceLibraryViewModel =
-    HuggingFaceLibraryViewModel(huggingFaceCatalogUseCase, compatibilityChecker)
+    HuggingFaceLibraryViewModel(
+      huggingFaceCatalogUseCase = huggingFaceCatalogUseCase,
+      compatibilityChecker = compatibilityChecker,
+      mainDispatcher = mainDispatcher,
+    )
 
   private val downloadActions =
     ModelDownloadActionHandler(
@@ -75,7 +80,6 @@ constructor(
     observeDownloadLoading()
     observeDownloadErrors()
     observeHuggingFaceState()
-    observeHuggingFaceDownloads()
     refreshCatalog()
   }
 
@@ -255,44 +259,26 @@ constructor(
 
   private fun observeHuggingFaceState() {
     viewModelScope.launch(mainDispatcher) {
-      huggingFaceLibraryViewModel.models.collect { models ->
-        updateState { copy(huggingFaceModels = models) }
+      huggingFaceLibraryViewModel.state.collect { hfState ->
+        updateState {
+          copy(
+            huggingFaceModels = hfState.models,
+            huggingFaceFilterState = hfState.filters,
+            pipelineOptions = hfState.pipelineOptions,
+            huggingFaceLibraryOptions = hfState.libraryOptions,
+            huggingFaceDownloadableModelIds = hfState.downloadableModelIds,
+            isHuggingFaceLoading = hfState.isLoading,
+          )
+        }
       }
     }
     viewModelScope.launch(mainDispatcher) {
-      huggingFaceLibraryViewModel.filters.collect { filters ->
-        updateState { copy(huggingFaceFilterState = filters) }
-      }
-    }
-    viewModelScope.launch(mainDispatcher) {
-      huggingFaceLibraryViewModel.pipelineOptions.collect { options ->
-        updateState { copy(pipelineOptions = options) }
-      }
-    }
-    viewModelScope.launch(mainDispatcher) {
-      huggingFaceLibraryViewModel.libraryOptions.collect { options ->
-        updateState { copy(huggingFaceLibraryOptions = options) }
-      }
-    }
-    viewModelScope.launch(mainDispatcher) {
-      huggingFaceLibraryViewModel.downloadableModelIds.collect { ids ->
-        updateState { copy(huggingFaceDownloadableModelIds = ids) }
-      }
-    }
-    viewModelScope.launch(mainDispatcher) {
-      huggingFaceLibraryViewModel.isLoading.collect { loading ->
-        updateState { copy(isHuggingFaceLoading = loading) }
-      }
-    }
-    viewModelScope.launch(mainDispatcher) {
-      huggingFaceLibraryViewModel.errorEvents.collect { error -> emitError(error) }
-    }
-  }
-
-  private fun observeHuggingFaceDownloads() {
-    viewModelScope.launch(mainDispatcher) {
-      huggingFaceLibraryViewModel.downloadRequests.collect { model ->
-        huggingFaceCoordinator.process(model)
+      huggingFaceLibraryViewModel.events.collect { event ->
+        when (event) {
+          is HuggingFaceLibraryUiEvent.DownloadRequested ->
+            huggingFaceCoordinator.process(event.model)
+          is HuggingFaceLibraryUiEvent.ErrorRaised -> emitError(event.error)
+        }
       }
     }
   }

@@ -40,6 +40,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.vjaykrsna.nanoai.feature.settings.presentation.state.SettingsUiState
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoSpacing
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.primitives.NanoCard
 import kotlinx.coroutines.launch
@@ -57,7 +58,7 @@ private enum class SettingsCategory(val title: String) {
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 internal fun SettingsScreenContent(
-  state: SettingsContentState,
+  state: SettingsUiState,
   snackbarHostState: SnackbarHostState,
   actions: SettingsScreenActions,
   modifier: Modifier = Modifier,
@@ -159,7 +160,7 @@ private fun SettingsCategoryTabs(
 @Composable
 private fun SettingsCategoryContent(
   category: SettingsCategory,
-  state: SettingsContentState,
+  state: SettingsUiState,
   actions: SettingsScreenActions,
   modifier: Modifier = Modifier,
 ) {
@@ -192,16 +193,13 @@ private fun SettingsCategoryContent(
       SettingsCategory.APPEARANCE -> {
         item {
           AppearanceThemeCard(
-            uiUxState = state.uiUxState,
+            state = state,
             onThemeChange = actions.onThemePreferenceChange,
             onHighContrastChange = actions.onHighContrastChange,
           )
         }
         item {
-          AppearanceDensityCard(
-            uiUxState = state.uiUxState,
-            onDensityChange = actions.onVisualDensityChange,
-          )
+          AppearanceDensityCard(state = state, onDensityChange = actions.onVisualDensityChange)
         }
         item { AppearanceTypographyCard() }
         item { AppearanceAnimationPreferencesCard() }
@@ -214,7 +212,7 @@ private fun SettingsCategoryContent(
       }
       SettingsCategory.APIS -> {
         // NOTE: Migration card shows once after credential storage upgrade
-        if (state.uiUxState.showMigrationSuccessNotification) {
+        if (state.showMigrationSuccessNotification) {
           item { MigrationSuccessCard(onDismiss = actions.onDismissMigrationSuccess) }
         }
 
@@ -234,7 +232,7 @@ private fun SettingsCategoryContent(
 
         item {
           HuggingFaceAuthCard(
-            state = state.huggingFaceState,
+            state = state.huggingFaceAuthState,
             onLoginClick = actions.onHuggingFaceLoginClick,
             onApiKeyClick = actions.onHuggingFaceApiKeyClick,
             onDisconnectClick = actions.onHuggingFaceDisconnectClick,
@@ -247,7 +245,7 @@ private fun SettingsCategoryContent(
       SettingsCategory.PRIVACY_SECURITY -> {
         item {
           PrivacySection(
-            privacyPreferences = state.privacyPreferences,
+            privacyPreferences = state.privacyPreference,
             onTelemetryToggle = actions.onTelemetryToggle,
             onRetentionPolicyChange = actions.onRetentionPolicyChange,
           )

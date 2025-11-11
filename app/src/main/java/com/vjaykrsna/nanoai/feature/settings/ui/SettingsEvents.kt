@@ -5,39 +5,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import com.vjaykrsna.nanoai.core.domain.settings.ImportSummary
 import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsError
+import com.vjaykrsna.nanoai.feature.settings.presentation.model.SettingsUiEvent
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
-internal fun CollectSettingsErrorEvents(
-  errorEvents: Flow<SettingsError>,
+internal fun CollectSettingsEvents(
+  events: Flow<SettingsUiEvent>,
   snackbarHostState: SnackbarHostState,
 ) {
   LaunchedEffect(Unit) {
-    errorEvents.collectLatest { error -> snackbarHostState.showSnackbar(error.toUserMessage()) }
-  }
-}
-
-@Composable
-internal fun CollectExportSuccessEvents(
-  exportSuccess: Flow<String>,
-  snackbarHostState: SnackbarHostState,
-) {
-  LaunchedEffect(Unit) {
-    exportSuccess.collectLatest { path ->
-      snackbarHostState.showSnackbar(exportSuccessMessage(path))
-    }
-  }
-}
-
-@Composable
-internal fun CollectImportSuccessEvents(
-  importSuccess: Flow<ImportSummary>,
-  snackbarHostState: SnackbarHostState,
-) {
-  LaunchedEffect(Unit) {
-    importSuccess.collectLatest { summary ->
-      snackbarHostState.showSnackbar(buildImportSuccessMessage(summary))
+    events.collectLatest { event ->
+      when (event) {
+        is SettingsUiEvent.ErrorRaised ->
+          snackbarHostState.showSnackbar(event.error.toUserMessage())
+        is SettingsUiEvent.ExportCompleted ->
+          snackbarHostState.showSnackbar(exportSuccessMessage(event.destinationPath))
+        is SettingsUiEvent.ImportCompleted ->
+          snackbarHostState.showSnackbar(buildImportSuccessMessage(event.summary))
+      }
     }
   }
 }

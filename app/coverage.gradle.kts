@@ -134,7 +134,7 @@ tasks.register<JavaExec>("verifyCoverageThresholds") {
   outputs.file(coverageGateMarkdown)
   outputs.file(coverageGateJson)
 
-  mainClass.set("com.vjaykrsna.nanoai.coverage.tasks.VerifyCoverageThresholdsTask")
+  mainClass.set("com.vjaykrsna.nanoai.core.coverage.tasks.VerifyCoverageThresholdsTask")
 
   classpath(
     layout.buildDirectory.dir("tmp/kotlin-classes/debug"),

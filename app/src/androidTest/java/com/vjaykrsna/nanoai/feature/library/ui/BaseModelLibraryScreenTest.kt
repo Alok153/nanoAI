@@ -78,7 +78,7 @@ abstract class BaseModelLibraryScreenTest {
         hfToModelConverter = hfToModelConverter,
         huggingFaceCatalogUseCase = huggingFaceCatalogUseCase,
         compatibilityChecker = compatibilityChecker,
-        dispatcher = testDispatcher,
+        mainDispatcher = testDispatcher,
       )
   }
 

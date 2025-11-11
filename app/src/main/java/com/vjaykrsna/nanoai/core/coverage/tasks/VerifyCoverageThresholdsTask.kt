@@ -7,12 +7,15 @@ import com.vjaykrsna.nanoai.core.coverage.model.CoverageTrendPoint
 import com.vjaykrsna.nanoai.core.coverage.model.TestLayer
 import com.vjaykrsna.nanoai.core.coverage.verification.CoverageThresholdVerifier
 import java.io.PrintStream
+import java.io.StringReader
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import java.util.logging.Logger
+import javax.xml.XMLConstants
+import javax.xml.parsers.DocumentBuilder
 import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.io.path.exists
 import kotlin.io.path.isRegularFile
@@ -28,6 +31,8 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.w3c.dom.Element
+import org.xml.sax.EntityResolver
+import org.xml.sax.InputSource
 
 /**
  * Host-side entry-point that parses merged JaCoCo XML coverage reports, aggregates coverage per
@@ -74,8 +79,19 @@ object VerifyCoverageThresholdsTask {
 
     writeMarkdown(outcome.markdown, parsedArgs.markdownOutput)
     writeJsonReport(outcome, parsedArgs.jsonOutput)
-    logUnmappedClasses(outcome.unmappedClasses)
-    handleViolation(outcome.violation)
+    if (outcome.unmappedClasses.isNotEmpty()) {
+      logger.info(
+        "verifyCoverage: ${outcome.unmappedClasses.size} classes were not mapped to a TestLayer; " +
+          "first missing=${outcome.unmappedClasses.first()}"
+      )
+    }
+    outcome.violation?.let { violation ->
+      logger.severe(
+        "verifyCoverage: coverage below threshold for " +
+          violation.layers.joinToString { it.displayName }
+      )
+      exitProcess(EXIT_THRESHOLD_FAILURE)
+    }
 
     logger.info("verifyCoverage: thresholds satisfied for build ${outcome.summary.buildId}")
   }
@@ -204,7 +220,7 @@ object VerifyCoverageThresholdsTask {
   ): TaskOutcome {
     val classifier = LayerClassifier.fromConfig(layerMapPath, json)
     val thresholds = loadThresholdOverrides(metadataPath)
-    val parser = CoverageReportParser(classifier, thresholds)
+    val parser = CoverageReportParser(classifier, thresholds, logger)
     val parseResult = parser.parse(parsedArgs.reportXml, parsedArgs.buildId)
     val violation = verifyThresholds(parseResult.summary)
     val trend = buildTrendPoints(parseResult.summary)
@@ -241,6 +257,8 @@ object VerifyCoverageThresholdsTask {
       }
     return DEFAULT_THRESHOLDS + overrides
   }
+
+  internal fun newDocumentBuilderForTest(): DocumentBuilder = createDocumentBuilder(logger)
 
   private fun buildTrendPoints(summary: CoverageSummary): List<CoverageTrendPoint> {
     val points =
@@ -285,27 +303,6 @@ object VerifyCoverageThresholdsTask {
           )
       path.outputStream().use { output -> output.write(payload.toByteArray(Charsets.UTF_8)) }
     }
-  }
-
-  private fun logUnmappedClasses(unmappedClasses: List<String>) {
-    if (unmappedClasses.isEmpty()) {
-      return
-    }
-    logger.info(
-      "verifyCoverage: ${unmappedClasses.size} classes were not mapped to a TestLayer; " +
-        "first missing=${unmappedClasses.first()}"
-    )
-  }
-
-  private fun handleViolation(violation: CoverageThresholdVerifier.ThresholdViolation?) {
-    if (violation == null) {
-      return
-    }
-    logger.severe(
-      "verifyCoverage: coverage below threshold for " +
-        violation.layers.joinToString { it.displayName }
-    )
-    exitProcess(EXIT_THRESHOLD_FAILURE)
   }
 
   private data class TaskOutcome(
@@ -353,6 +350,7 @@ object VerifyCoverageThresholdsTask {
   private class CoverageReportParser(
     private val classifier: LayerClassifier,
     private val thresholds: Map<TestLayer, Double> = DEFAULT_THRESHOLDS,
+    private val logger: Logger,
   ) {
     fun parse(reportXml: Path, buildIdOverride: String?): ParseResult {
       val document = parseDocument(reportXml)
@@ -368,10 +366,7 @@ object VerifyCoverageThresholdsTask {
     }
 
     private fun parseDocument(reportXml: Path) =
-      DocumentBuilderFactory.newInstance()
-        .apply { isNamespaceAware = false }
-        .newDocumentBuilder()
-        .parse(reportXml.toFile())
+      createDocumentBuilder(logger).parse(reportXml.toFile())
 
     private fun initialiseTotals(): MutableMap<TestLayer, LayerCoverageTotals> {
       return TestLayer.entries.associateWith { LayerCoverageTotals() }.toMutableMap()
@@ -589,6 +584,36 @@ object VerifyCoverageThresholdsTask {
       }
     }
   }
+}
+
+private const val ACCESS_EXTERNAL_DTD_PROPERTY =
+  "http://javax.xml.XMLConstants/property/accessExternalDTD"
+private const val ACCESS_EXTERNAL_SCHEMA_PROPERTY =
+  "http://javax.xml.XMLConstants/property/accessExternalSchema"
+
+private fun createDocumentBuilder(logger: Logger): DocumentBuilder {
+  val factory =
+    DocumentBuilderFactory.newInstance().apply {
+      isNamespaceAware = false
+      trySetFeature(logger, XMLConstants.FEATURE_SECURE_PROCESSING, true)
+      trySetFeature(logger, "http://apache.org/xml/features/nonvalidating/load-external-dtd", false)
+      trySetAttribute(logger, ACCESS_EXTERNAL_DTD_PROPERTY, "")
+      trySetAttribute(logger, ACCESS_EXTERNAL_SCHEMA_PROPERTY, "")
+    }
+  return factory.newDocumentBuilder().apply {
+    // Prevent external DTD lookups so parsing stays offline.
+    setEntityResolver(EntityResolver { _, _ -> InputSource(StringReader("")) })
+  }
+}
+
+private fun DocumentBuilderFactory.trySetFeature(logger: Logger, name: String, value: Boolean) {
+  runCatching { setFeature(name, value) }
+    .onFailure { logger.fine("verifyCoverage: unable to set feature $name - ${it.message}") }
+}
+
+private fun DocumentBuilderFactory.trySetAttribute(logger: Logger, name: String, value: String) {
+  runCatching { setAttribute(name, value) }
+    .onFailure { logger.fine("verifyCoverage: unable to set attribute $name - ${it.message}") }
 }
 
 private fun resolveBranch(): String? {

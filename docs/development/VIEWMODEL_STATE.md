@@ -81,6 +81,16 @@ harness.testEvents {
 - Ensure UI composables observe only the new unified state/event streams before deleting legacy fields.
 - Update documentation (`docs/development/TESTING.md`, `docs/development/UI_COMPONENTS.md`) with feature-specific notes once migrated.
 
+## Adoption Tracker
+| Feature / ViewModel | Status | Next Steps |
+| --- | --- | --- |
+| `ModelLibraryViewModel` | ✅ Complete | Covered by T012–T017 in `specs/001-foundation/tasks.md`.
+| `HuggingFaceLibraryViewModel` | ✅ Complete | Shared state/events aligned in T015.
+| `SettingsViewModel` | ✅ Complete | Unified `SettingsUiState` + harnessed tests (T018–T021).
+| `ChatViewModel` | 🚧 Pending | Implement T007–T009 to migrate chat flows onto `ViewModelStateHost`.
+| `HistoryViewModel` | 🚧 Pending | Implement T010–T011 to consolidate history state and tests.
+| Remaining feature ViewModels | 🔍 Assess | Audit per sprint; open follow-up tasks for audio, image, and settings submodules as needed.
+
 ## References
 - `AGENTS.md` architecture and coverage requirements.
 - `Personal/issues.md` refactoring backlog for inconsistent ViewModel state patterns.

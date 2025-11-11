@@ -105,3 +105,6 @@ nanoai-clean-architecture:
     active: true
     # Prevents feature/ui modules from importing data sources directly and blocks core modules from
     # reaching into feature packages. Keeps NanoAI's Clean Architecture boundaries intact.
+  ViewModelSingleState:
+    active: true
+    # Enforces a single public state stream per ViewModel and blocks additional Flow/LiveData outputs.

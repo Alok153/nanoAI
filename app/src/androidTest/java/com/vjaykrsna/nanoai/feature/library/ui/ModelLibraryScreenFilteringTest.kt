@@ -192,7 +192,9 @@ class ModelLibraryScreenFilteringTest : BaseModelLibraryScreenTest() {
         .isEmpty()
     }
 
-    composeTestRule.runOnIdle { assertThat(viewModel.filters.value.currentSearchQuery()).isEmpty() }
+    composeTestRule.runOnIdle {
+      assertThat(viewModel.state.value.filters.currentSearchQuery()).isEmpty()
+    }
   }
 
   @Test

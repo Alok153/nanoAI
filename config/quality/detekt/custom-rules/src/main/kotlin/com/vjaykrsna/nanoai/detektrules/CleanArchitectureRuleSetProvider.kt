@@ -8,5 +8,5 @@ class CleanArchitectureRuleSetProvider : RuleSetProvider {
   override val ruleSetId: String = "nanoai-clean-architecture"
 
   override fun instance(config: Config): RuleSet =
-    RuleSet(ruleSetId, listOf(CleanArchitectureRule(config)))
+    RuleSet(ruleSetId, listOf(CleanArchitectureRule(config), ViewModelStateRule(config)))
 }
