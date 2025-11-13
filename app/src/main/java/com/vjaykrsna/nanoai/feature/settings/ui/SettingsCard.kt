@@ -38,11 +38,11 @@ import com.vjaykrsna.nanoai.feature.uiux.ui.components.primitives.NanoCard
 @Composable
 internal fun SettingsCard(
   title: String,
+  infoContent: @Composable () -> Unit,
   modifier: Modifier = Modifier,
   onClick: (() -> Unit)? = null,
   showInfoButton: Boolean = true,
   infoTitle: String = title,
-  infoContent: @Composable () -> Unit,
   content: (@Composable () -> Unit)? = null,
 ) {
   var showInfoDialog by remember { mutableStateOf(false) }

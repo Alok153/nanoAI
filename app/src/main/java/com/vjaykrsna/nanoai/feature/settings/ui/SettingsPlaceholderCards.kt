@@ -18,8 +18,8 @@ import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoSpacing
 @Composable
 internal fun SettingsPlaceholderCard(
   description: String,
-  supportingText: String? = null,
   modifier: Modifier = Modifier,
+  supportingText: String? = null,
 ) {
   Column(
     modifier = modifier.fillMaxWidth().padding(NanoSpacing.md),

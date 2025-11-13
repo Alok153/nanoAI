@@ -59,6 +59,8 @@ import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellUiState
 import com.vjaykrsna.nanoai.feature.uiux.ui.commandpalette.CommandPaletteSheet
 import java.util.UUID
 
+private const val COVERAGE_CARD_WIDTH_FRACTION = 0.8f
+
 /** Root scaffold Compose entry point for the unified shell experience. */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
@@ -380,7 +382,10 @@ private fun CoverageDashboardOverlay(onDismiss: () -> Unit, modifier: Modifier =
         .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.5f)),
     contentAlignment = androidx.compose.ui.Alignment.Center,
   ) {
-    androidx.compose.material3.Card(modifier = Modifier.fillMaxWidth(0.8f), onClick = onDismiss) {
+    androidx.compose.material3.Card(
+      modifier = Modifier.fillMaxWidth(COVERAGE_CARD_WIDTH_FRACTION),
+      onClick = onDismiss,
+    ) {
       androidx.compose.foundation.layout.Column(
         modifier = Modifier.padding(16.dp),
         horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,

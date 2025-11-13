@@ -114,9 +114,9 @@ fun NavigationScaffold(
       modeContent = { modeId ->
         ShellModeContent(
           modeId = modeId,
-          modifier = Modifier.fillMaxSize(),
           onNavigateToCoverageDashboard = onNavigateToCoverageDashboard,
           onUpdateChatState = shellViewModel::updateChatState,
+          modifier = Modifier.fillMaxSize(),
           onNavigate = { mode -> shellViewModel.onEvent(ShellUiEvent.ModeSelected(mode)) },
         )
       },
@@ -135,9 +135,9 @@ fun NavigationScaffold(
 @Composable
 private fun ShellModeContent(
   modeId: ModeId,
-  modifier: Modifier = Modifier,
   onNavigateToCoverageDashboard: () -> Unit,
   onUpdateChatState: (ChatState?) -> Unit,
+  modifier: Modifier = Modifier,
   onNavigate: (ModeId) -> Unit = {},
 ) {
   if (modeId == ModeId.HOME) {

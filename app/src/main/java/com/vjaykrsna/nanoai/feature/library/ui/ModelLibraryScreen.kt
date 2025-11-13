@@ -86,11 +86,11 @@ fun ModelLibraryScreen(
     rememberPullRefreshState(refreshing = uiState.isRefreshing, onRefresh = actions.onRefresh)
 
   ModelLibraryLayout(
-    modifier = modifier,
     state = uiState,
     snackbarHostState = snackbarHostState,
     pullRefreshState = pullRefreshState,
     actions = actions,
+    modifier = modifier,
   )
 }
 
@@ -131,11 +131,11 @@ private fun rememberImportModelLauncher(
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun ModelLibraryLayout(
-  modifier: Modifier = Modifier,
   state: ModelLibraryUiState,
   snackbarHostState: SnackbarHostState,
   pullRefreshState: PullRefreshState,
   actions: ModelLibraryActions,
+  modifier: Modifier = Modifier,
 ) {
   Box(
     modifier =
@@ -174,7 +174,7 @@ private fun ModelLibraryLayout(
 
       ModelLibraryTabs(selectedTab = state.filters.tab, onTabSelect = actions.onSelectTab)
 
-      ModelLibraryTabContent(modifier = Modifier.weight(1f), state = state, actions = actions)
+      ModelLibraryTabContent(state = state, actions = actions, modifier = Modifier.weight(1f))
     }
 
     SnackbarHost(
@@ -195,21 +195,20 @@ private fun ModelLibraryLayout(
 
 @Composable
 private fun ModelLibraryTabContent(
-  modifier: Modifier = Modifier,
   state: ModelLibraryUiState,
   actions: ModelLibraryActions,
+  modifier: Modifier = Modifier,
 ) {
   when (state.filters.tab) {
     ModelLibraryTab.LOCAL -> {
       if (state.isLoading) {
         ModelLibraryLoadingIndicator(
-          modifier = modifier.fillMaxWidth(),
           testTag = LOADING_INDICATOR_TAG,
           contentDescription = "Loading models",
+          modifier = modifier.fillMaxWidth(),
         )
       } else {
         ModelLibraryContent(
-          modifier = modifier,
           sections = state.localSections,
           selectedTab = ModelLibraryTab.LOCAL,
           onDownload = actions.onDownloadModel,
@@ -218,6 +217,7 @@ private fun ModelLibraryTabContent(
           onResume = actions.onResumeDownload,
           onCancel = actions.onCancelDownload,
           onRetry = actions.onRetryDownload,
+          modifier = modifier,
           onImportLocalModel = actions.onImportLocalModel,
         )
       }
@@ -225,13 +225,12 @@ private fun ModelLibraryTabContent(
     ModelLibraryTab.CURATED -> {
       if (state.isLoading) {
         ModelLibraryLoadingIndicator(
-          modifier = modifier.fillMaxWidth(),
           testTag = LOADING_INDICATOR_TAG,
           contentDescription = "Loading curated models",
+          modifier = modifier.fillMaxWidth(),
         )
       } else {
         ModelLibraryContent(
-          modifier = modifier,
           sections = state.curatedSections,
           selectedTab = ModelLibraryTab.CURATED,
           onDownload = actions.onDownloadModel,
@@ -240,6 +239,7 @@ private fun ModelLibraryTabContent(
           onResume = actions.onResumeDownload,
           onCancel = actions.onCancelDownload,
           onRetry = actions.onRetryDownload,
+          modifier = modifier,
         )
       }
     }
@@ -257,9 +257,9 @@ private fun ModelLibraryTabContent(
 
 @Composable
 private fun ModelLibraryLoadingIndicator(
-  modifier: Modifier = Modifier,
   testTag: String,
   contentDescription: String,
+  modifier: Modifier = Modifier,
 ) {
   Box(modifier = modifier, contentAlignment = Alignment.Center) {
     CircularProgressIndicator(

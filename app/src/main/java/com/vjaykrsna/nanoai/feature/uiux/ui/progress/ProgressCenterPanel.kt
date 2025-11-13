@@ -56,6 +56,7 @@ private val PROGRESS_ITEM_CORNER_RADIUS = 16.dp
 private const val PROGRESS_PERCENT_SCALE = 100
 private const val PROGRESS_PERCENT_MIN = 0
 private const val PROGRESS_PERCENT_MAX = 100
+private const val PROGRESS_INLINE_ITEM_THRESHOLD = 4
 
 /** Displays the current queue of background jobs inside the progress center. */
 @Composable
@@ -99,7 +100,7 @@ fun ProgressCenterPanel(
                 .align(Alignment.CenterHorizontally),
           )
         } else {
-          if (jobs.size <= 4) {
+          if (jobs.size <= PROGRESS_INLINE_ITEM_THRESHOLD) {
             Column(
               modifier = Modifier.fillMaxWidth().testTag("progress_list"),
               verticalArrangement = Arrangement.spacedBy(PROGRESS_LIST_ITEM_SPACING),

@@ -71,53 +71,57 @@ constructor(
   fun onSendMessage() {
     val latestState = state.value
     val trimmed = latestState.composerText.trim()
-    if (trimmed.isEmpty()) return
+    if (trimmed.isEmpty()) {
+      return
+    }
 
     val threadId = latestState.activeThreadId
     val personaId = latestState.activeThread?.personaId
 
-    if (threadId == null) {
-      viewModelScope.launch(dispatcher) {
-        emitError(ChatError.ThreadCreationFailed("No active thread available"))
+    when {
+      threadId == null -> {
+        viewModelScope.launch(dispatcher) {
+          emitError(ChatError.ThreadCreationFailed("No active thread available"))
+        }
       }
-      return
-    }
-
-    if (personaId == null) {
-      viewModelScope.launch(dispatcher) {
-        emitError(ChatError.PersonaSelectionFailed("Choose a persona before sending messages"))
+      personaId == null -> {
+        viewModelScope.launch(dispatcher) {
+          emitError(ChatError.PersonaSelectionFailed("Choose a persona before sending messages"))
+        }
       }
-      return
-    }
+      else -> {
+        val attachmentsSnapshot = latestState.attachments
 
-    val attachmentsSnapshot = latestState.attachments
+        viewModelScope.launch(dispatcher) {
+          updateState {
+            copy(isSendingMessage = true, pendingErrorMessage = null, composerText = "")
+          }
 
-    viewModelScope.launch(dispatcher) {
-      updateState { copy(isSendingMessage = true, pendingErrorMessage = null, composerText = "") }
+          val userMessage =
+            Message(
+              messageId = UUID.randomUUID(),
+              threadId = threadId,
+              role = MessageRole.USER,
+              text = trimmed,
+              source = MessageSource.LOCAL_MODEL,
+              latencyMs = null,
+              createdAt = Clock.System.now(),
+            )
 
-      val userMessage =
-        Message(
-          messageId = UUID.randomUUID(),
-          threadId = threadId,
-          role = MessageRole.USER,
-          text = trimmed,
-          source = MessageSource.LOCAL_MODEL,
-          latencyMs = null,
-          createdAt = Clock.System.now(),
-        )
+          val messageData =
+            MessageData(
+              threadId = threadId,
+              text = trimmed,
+              personaId = personaId,
+              image = attachmentsSnapshot.image?.bitmap,
+              audio = attachmentsSnapshot.audio?.data,
+            )
 
-      val messageData =
-        MessageData(
-          threadId = threadId,
-          text = trimmed,
-          personaId = personaId,
-          image = attachmentsSnapshot.image?.bitmap,
-          audio = attachmentsSnapshot.audio?.data,
-        )
-
-      val saveResult = conversationUseCase.saveMessage(userMessage)
-      handleSaveMessageResult(saveResult, messageData)
-      updateState { copy(isSendingMessage = false) }
+          val saveResult = conversationUseCase.saveMessage(userMessage)
+          handleSaveMessageResult(saveResult, messageData)
+          updateState { copy(isSendingMessage = false) }
+        }
+      }
     }
   }
 

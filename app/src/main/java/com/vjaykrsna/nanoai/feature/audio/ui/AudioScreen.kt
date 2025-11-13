@@ -54,6 +54,12 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlinx.coroutines.flow.collectLatest
 
+private const val WAVEFORM_ROTATION_DEGREES = 360f
+private const val WAVEFORM_ROTATION_DURATION_MS = 10_000
+private const val WAVEFORM_BASE_RADIUS_DIVISOR = 3f
+private const val WAVEFORM_RADIUS_OFFSET_DIVISOR = 8f
+private const val WAVEFORM_STROKE_WIDTH = 3f
+
 /**
  * Audio/voice calling screen with waveform visualization and call controls.
  *
@@ -223,10 +229,10 @@ private fun WaveformVisualization(
   val rotationAngle by
     infiniteTransition.animateFloat(
       initialValue = 0f,
-      targetValue = 360f,
+      targetValue = WAVEFORM_ROTATION_DEGREES,
       animationSpec =
         infiniteRepeatable(
-          animation = tween(durationMillis = 10000, easing = LinearEasing),
+          animation = tween(durationMillis = WAVEFORM_ROTATION_DURATION_MS, easing = LinearEasing),
           repeatMode = RepeatMode.Restart,
         ),
       label = "rotation",
@@ -242,12 +248,12 @@ private fun WaveformVisualization(
         Canvas(modifier = Modifier.fillMaxSize().padding(NanoSpacing.md)) {
           val centerX = size.width / 2
           val centerY = size.height / 2
-          val baseRadius = size.minDimension / 3
-          val angleStep = 360f / waveformData.size
+          val baseRadius = size.minDimension / WAVEFORM_BASE_RADIUS_DIVISOR
+          val angleStep = WAVEFORM_ROTATION_DEGREES / waveformData.size
 
           waveformData.forEachIndexed { index, amplitude ->
             val angle = Math.toRadians((index * angleStep + rotationAngle).toDouble())
-            val radiusOffset = amplitude * (size.minDimension / 8)
+            val radiusOffset = amplitude * (size.minDimension / WAVEFORM_RADIUS_OFFSET_DIVISOR)
             val startRadius = baseRadius
             val endRadius = baseRadius + radiusOffset
 
@@ -260,7 +266,7 @@ private fun WaveformVisualization(
               color = primaryColor,
               start = Offset(startX, startY),
               end = Offset(endX, endY),
-              strokeWidth = 3f,
+              strokeWidth = WAVEFORM_STROKE_WIDTH,
             )
           }
         }

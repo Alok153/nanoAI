@@ -73,5 +73,6 @@ class ShellViewModelJobUndoTest {
       val clearedProgressJobs = fakeRepos.progressRepository.progressJobs.first { it.isEmpty() }
       val clearedUndoPayload = fakeRepos.navigationRepository.undoPayload.first { it == null }
       assertThat(clearedProgressJobs).isEmpty()
+      assertThat(clearedUndoPayload).isNull()
     }
 }

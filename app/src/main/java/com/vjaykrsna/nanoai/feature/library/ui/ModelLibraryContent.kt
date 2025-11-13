@@ -66,8 +66,8 @@ internal fun ModelLibraryContent(
   onResume: (UUID) -> Unit,
   onCancel: (UUID) -> Unit,
   onRetry: (UUID) -> Unit,
-  onImportLocalModel: (() -> Unit)? = null,
   modifier: Modifier = Modifier,
+  onImportLocalModel: (() -> Unit)? = null,
 ) {
   val listHasContent =
     sections.downloads.isNotEmpty() ||

@@ -52,20 +52,22 @@ class LeapInferenceService @Inject constructor() : InferenceService {
    * @param model The model to load.
    */
   suspend fun loadModel(model: ModelPackage) {
-    try {
-      // TODO: Implement actual Leap model loading once API is available
-      // LeapClient.loadModel(model.manifestUrl)
-      loadedModels.add(model.modelId)
-    } catch (cancellationException: CancellationException) {
-      throw cancellationException
-    } catch (ioException: IOException) {
-      throw LeapModelLoadException("Failed to load Leap model: ${model.modelId}", ioException)
-    } catch (illegalStateException: IllegalStateException) {
-      throw LeapModelLoadException(
-        "Failed to load Leap model: ${model.modelId}",
-        illegalStateException,
-      )
-    }
+    runCatching {
+        // TODO: Implement actual Leap model loading once API is available
+        // LeapClient.loadModel(model.manifestUrl)
+        loadedModels.add(model.modelId)
+      }
+      .onFailure { throwable ->
+        val mappedThrowable =
+          when (throwable) {
+            is CancellationException -> throwable
+            is IOException,
+            is IllegalStateException ->
+              LeapModelLoadException("Failed to load Leap model: ${model.modelId}", throwable)
+            else -> throwable
+          }
+        throw mappedThrowable
+      }
   }
 
   /**

@@ -44,6 +44,8 @@ import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.FILTER_PA
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.FILTER_TOGGLE_TAG
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.SEARCH_FIELD_TAG
 
+private const val FILTER_BADGE_MAX_DISPLAY = 9
+
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 internal fun ModelLibraryToolbar(
@@ -80,7 +82,7 @@ internal fun ModelLibraryToolbar(
   val badgeLabel =
     when {
       !hasFilterPanel || activeFilterCount <= 0 -> null
-      activeFilterCount > 9 -> "9+"
+      activeFilterCount > FILTER_BADGE_MAX_DISPLAY -> "${FILTER_BADGE_MAX_DISPLAY}+"
       else -> activeFilterCount.toString()
     }
 

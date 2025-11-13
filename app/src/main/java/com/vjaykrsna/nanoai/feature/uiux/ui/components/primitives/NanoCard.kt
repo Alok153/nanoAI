@@ -29,8 +29,8 @@ import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoSpacing
 
 @Composable
 fun NanoCard(
-  title: String? = null,
   modifier: Modifier = Modifier,
+  title: String? = null,
   subtitle: String? = null,
   supportingText: String? = null,
   icon: ImageVector? = null,

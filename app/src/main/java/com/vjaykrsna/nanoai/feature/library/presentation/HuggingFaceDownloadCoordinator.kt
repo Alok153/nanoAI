@@ -21,10 +21,17 @@ internal class HuggingFaceDownloadCoordinator(
 
   suspend fun process(model: HuggingFaceModelSummary) {
     try {
-      val modelPackage = convertOrEmit(model) ?: return
-      if (!ensureModelIsNewOrEmit(modelPackage)) return
-      if (!addModelToCatalogOrEmit(modelPackage)) return
-      startDownloadOrEmit(modelPackage.modelId)
+      val modelPackage = convertOrEmit(model)
+      if (modelPackage == null) {
+        return
+      }
+
+      val shouldDownload =
+        ensureModelIsNewOrEmit(modelPackage) && addModelToCatalogOrEmit(modelPackage)
+
+      if (shouldDownload) {
+        startDownloadOrEmit(modelPackage.modelId)
+      }
     } catch (cancellation: CancellationException) {
       throw cancellation
     } catch (ioException: IOException) {

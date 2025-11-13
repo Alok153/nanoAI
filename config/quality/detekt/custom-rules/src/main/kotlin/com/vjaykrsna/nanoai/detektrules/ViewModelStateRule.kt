@@ -56,20 +56,22 @@ class ViewModelStateRule(config: Config) : Rule(config) {
       .any { typeName -> typeName.contains("ViewModelStateHost") }
 
   private fun KtProperty.isTopLevelMemberOf(klass: KtClass): Boolean {
-    if (isLocal) return false
-    if (hasModifier(KtTokens.PRIVATE_KEYWORD)) return false
-    val containingClass = getStrictParentOfType<KtClassOrObject>()
-    if (containingClass != klass) return false
-    val propertyName = name ?: return false
-    if (propertyName in allowedPropertyNames) return false
-    return true
+    val isEligibleMember =
+      !isLocal &&
+        !hasModifier(KtTokens.PRIVATE_KEYWORD) &&
+        getStrictParentOfType<KtClassOrObject>() == klass
+    if (!isEligibleMember) {
+      return false
+    }
+
+    val propertyName = name
+    return propertyName != null && propertyName !in allowedPropertyNames
   }
 
   private fun KtNamedFunction.isTopLevelMemberOf(klass: KtClass): Boolean {
     if (hasModifier(KtTokens.PRIVATE_KEYWORD)) return false
     val containingClass = getStrictParentOfType<KtClassOrObject>()
-    if (containingClass != klass) return false
-    return true
+    return containingClass == klass
   }
 
   private fun KtProperty.exposesAdditionalFlow(): Boolean {
@@ -77,8 +79,10 @@ class ViewModelStateRule(config: Config) : Rule(config) {
     if (typeText != null && flowTypeIndicators.any { indicator -> typeText.contains(indicator) }) {
       return true
     }
-    val initializerText = initializer?.text?.normalized() ?: return false
-    return flowExpressionIndicators.any { indicator -> initializerText.contains(indicator) }
+
+    val initializerText = initializer?.text?.normalized()
+    return initializerText != null &&
+      flowExpressionIndicators.any { indicator -> initializerText.contains(indicator) }
   }
 
   private fun KtNamedFunction.exposesFlowReturnType(): Boolean {

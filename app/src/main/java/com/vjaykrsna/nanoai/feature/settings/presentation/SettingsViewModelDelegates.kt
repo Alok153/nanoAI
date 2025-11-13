@@ -115,10 +115,13 @@ internal class SettingsStateObservers(
 private fun HuggingFaceDeviceAuthState?.deriveStatusMessage(): String? {
   if (this == null) return null
   val announcement = lastErrorAnnouncement
-  if (!announcement.isNullOrBlank()) return announcement
   val error = lastError
-  if (!error.isNullOrBlank()) return error
-  return null
+
+  return when {
+    !announcement.isNullOrBlank() -> announcement
+    !error.isNullOrBlank() -> error
+    else -> null
+  }
 }
 
 internal class SettingsApiProviderActions(

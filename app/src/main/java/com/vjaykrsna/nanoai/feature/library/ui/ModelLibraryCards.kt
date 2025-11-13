@@ -79,12 +79,12 @@ internal fun ModelManagementCard(
   model: ModelPackage,
   primaryActionLabel: String,
   onPrimaryAction: () -> Unit,
+  modifier: Modifier = Modifier,
   secondaryActionLabel: String? = null,
   onSecondaryAction: (() -> Unit)? = null,
   emphasizeSecondary: Boolean = true,
   primaryActionIcon: ImageVector = Icons.Filled.Download,
   secondaryActionIcon: ImageVector = Icons.Filled.Delete,
-  modifier: Modifier = Modifier,
 ) {
   Card(
     modifier = modifier.fillMaxWidth(),

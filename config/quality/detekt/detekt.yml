@@ -2,44 +2,25 @@ config:
   excludes: '(^|.*/)(build|generated|ap_generated_sources|ksp|kspCaches|kapt|intermediates|outputs|kotlinToolingMetadata|\.gradle)(/.*)?$'
 
 style:
-  active: false
+  active: true
   ForbiddenComment:
     active: false
   MaxLineLength:
     active: false
   WildcardImport:
     active: false
-  MagicNumber:
-    active: true
-    ignoreAnnotated: ['Composable', 'Preview', 'Test']
-    ignoreNumbers: ['0', '1', '-1']
-  MayBeConst:
-    active: false
 
 formatting:
   active: false
-  Indentation:
-    active: false
-  MaximumLineLength:
-    active: false
   ImportOrdering:
     active: false
 
 complexity:
-  LargeClass:
-    active: true
-    threshold: 300
-    ignoreAnnotated: ['Composable', 'Singleton', 'Worker', 'HiltWorker']
   LongMethod:
-    active: true
-    threshold: 60
     ignoreAnnotated: ['Composable', 'Test', 'Preview']
   CyclomaticComplexMethod:
-    active: true
-    threshold: 10
     ignoreAnnotated: ['Composable', 'Test', 'Preview']
   LongParameterList:
-    active: true
     functionThreshold: 6
     constructorThreshold: 7
     ignoreDefaultParameters: true
@@ -59,10 +40,6 @@ naming:
   FunctionNaming:
     active: true
     functionPattern: '([a-z][a-zA-Z0-9]*)|([A-Z][a-zA-Z0-9]*)'
-
-Compose:
-  ComposableParamOrder:
-    active: false
 
 nanoai-clean-architecture:
   active: true

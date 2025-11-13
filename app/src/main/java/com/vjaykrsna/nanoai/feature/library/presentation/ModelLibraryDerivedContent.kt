@@ -12,6 +12,13 @@ import com.vjaykrsna.nanoai.feature.library.presentation.model.ModelLibrarySumma
 import com.vjaykrsna.nanoai.feature.library.presentation.util.filterBy
 import java.util.Locale
 
+private const val PRIORITY_DOWNLOADING = 0
+private const val PRIORITY_PAUSED = 1
+private const val PRIORITY_QUEUED = 2
+private const val PRIORITY_FAILED = 3
+private const val PRIORITY_COMPLETED = 4
+private const val PRIORITY_CANCELLED = 5
+
 internal data class ModelLibraryDerivedContent(
   val localSections: ModelLibrarySections,
   val curatedSections: ModelLibrarySections,
@@ -115,12 +122,12 @@ private fun buildCapabilityOptions(models: List<ModelPackage>): List<String> =
 
 private fun downloadPriority(status: DownloadStatus): Int =
   when (status) {
-    DownloadStatus.DOWNLOADING -> 0
-    DownloadStatus.PAUSED -> 1
-    DownloadStatus.QUEUED -> 2
-    DownloadStatus.FAILED -> 3
-    DownloadStatus.COMPLETED -> 4
-    DownloadStatus.CANCELLED -> 5
+    DownloadStatus.DOWNLOADING -> PRIORITY_DOWNLOADING
+    DownloadStatus.PAUSED -> PRIORITY_PAUSED
+    DownloadStatus.QUEUED -> PRIORITY_QUEUED
+    DownloadStatus.FAILED -> PRIORITY_FAILED
+    DownloadStatus.COMPLETED -> PRIORITY_COMPLETED
+    DownloadStatus.CANCELLED -> PRIORITY_CANCELLED
   }
 
 private fun DownloadStatus.isActiveDownload(): Boolean =

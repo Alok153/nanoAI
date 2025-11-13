@@ -45,6 +45,8 @@ import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoSpacing
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.primitives.NanoCard
 import kotlinx.coroutines.launch
 
+private const val SETTINGS_HEADER_WIDTH_FRACTION = 0.6f
+
 // NOTE: Tab order designed to match user workflow - frequently changed settings first
 private enum class SettingsCategory(val title: String) {
   APPEARANCE(title = "Appearance"),
@@ -315,7 +317,7 @@ internal fun SettingsSectionSkeleton(modifier: Modifier = Modifier) {
       // Header skeleton
       Box(
         modifier =
-          Modifier.fillMaxWidth(0.6f)
+          Modifier.fillMaxWidth(SETTINGS_HEADER_WIDTH_FRACTION)
             .height(16.dp)
             .background(
               MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),

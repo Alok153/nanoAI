@@ -50,8 +50,8 @@ class CoverageDashboardTest {
         CoverageDashboardScreen(
           state = state,
           onRefresh = {},
-          onRiskSelect = {},
           onShareRequest = {},
+          onRiskSelect = {},
         )
       }
     }
@@ -103,8 +103,8 @@ class CoverageDashboardTest {
         CoverageDashboardScreen(
           state = state,
           onRefresh = {},
-          onRiskSelect = {},
           onShareRequest = {},
+          onRiskSelect = {},
         )
       }
     }
@@ -149,8 +149,8 @@ class CoverageDashboardTest {
         CoverageDashboardScreen(
           state = state,
           onRefresh = {},
-          onRiskSelect = {},
           onShareRequest = {},
+          onRiskSelect = {},
         )
       }
     }

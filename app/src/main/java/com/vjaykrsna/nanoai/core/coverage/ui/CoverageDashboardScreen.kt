@@ -63,9 +63,9 @@ data class RiskChipState(
 fun CoverageDashboardScreen(
   state: CoverageDashboardUiState,
   onRefresh: () -> Unit,
-  onRiskSelect: (RiskChipState) -> Unit = { _ -> },
   onShareRequest: () -> Unit,
   modifier: Modifier = Modifier,
+  onRiskSelect: (RiskChipState) -> Unit = { _ -> },
 ) {
   Column(
     modifier = modifier.fillMaxSize().padding(16.dp),
