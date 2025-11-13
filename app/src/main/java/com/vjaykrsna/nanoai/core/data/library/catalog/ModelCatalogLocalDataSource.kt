@@ -17,8 +17,8 @@ constructor(
   private val modelPackageWriteDao: ModelPackageWriteDao,
   private val relationsDao: ModelPackageRelationsDao,
   private val downloadManifestDao: DownloadManifestDao,
+  private val clock: Clock,
 ) {
-  private val clock: Clock = Clock.System
 
   fun observeModel(modelId: String): Flow<ModelPackageWithManifests?> =
     relationsDao.observeModelWithManifests(modelId)

@@ -92,7 +92,6 @@ fun ChatScreen(
   val sheetState = rememberModalBottomSheetState()
 
   val snackbarHostState = remember { SnackbarHostState() }
-  var composerText by rememberSaveable { mutableStateOf("") }
   var activeError by remember { mutableStateOf<NanoError?>(null) }
   val context = LocalContext.current
 
@@ -175,30 +174,21 @@ fun ChatScreen(
       }
 
       NanoComposerBar(
-        value = composerText,
-        onValueChange = { composerText = it },
+        value = uiState.composerText,
+        onValueChange = { viewModel.onComposerTextChanged(it) },
         modifier = Modifier.fillMaxWidth(),
         placeholder = "Type a message…",
         enabled = !uiState.isSendingMessage && uiState.activeThread != null,
         onSend = {
-          val trimmed = composerText.trim()
-          if (trimmed.isNotEmpty()) {
-            val personaId = uiState.activeThread?.personaId
-            if (personaId != null) {
-              viewModel.sendMessage(trimmed, personaId)
-              composerText = ""
-              activeError = null
-            } else {
-              activeError =
-                NanoError.Inline(
-                  title = "No persona selected",
-                  description = "Choose a persona before sending messages.",
-                )
-            }
+          if (uiState.composerText.isNotBlank()) {
+            viewModel.onSendMessage()
+            activeError = null
           }
         },
         sendEnabled =
-          composerText.isNotBlank() && uiState.activeThread != null && !uiState.isSendingMessage,
+          uiState.composerText.isNotBlank() &&
+            uiState.activeThread != null &&
+            !uiState.isSendingMessage,
         isSending = uiState.isSendingMessage,
         onImageSelect = { imagePickerLauncher.launch("image/*") },
         onAudioRecord = { /* TODO: Implement audio recording */ },
@@ -329,6 +319,8 @@ private fun ChatError.toNanoError(): NanoError {
       NanoError.Inline(title = "Couldn't complete inference", description = message)
     is ChatError.PersonaSwitchFailed ->
       NanoError.Inline(title = "Persona switch failed", description = message)
+    is ChatError.PersonaSelectionFailed ->
+      NanoError.Inline(title = "No persona selected", description = message)
     is ChatError.ThreadCreationFailed ->
       NanoError.Inline(title = "Couldn't start conversation", description = message)
     is ChatError.ThreadArchiveFailed ->

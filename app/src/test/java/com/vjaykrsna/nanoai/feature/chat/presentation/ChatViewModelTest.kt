@@ -94,7 +94,8 @@ class ChatViewModelTest {
     val personaId = UUID.randomUUID()
 
     harness.testEvents {
-      viewModel.sendMessage("Test message", personaId)
+      viewModel.onComposerTextChanged("Test message")
+      viewModel.onSendMessage()
       advanceUntilIdle()
 
       val event = awaitItem()
@@ -118,7 +119,8 @@ class ChatViewModelTest {
     viewModel.selectThread(threadId)
     advanceUntilIdle()
 
-    viewModel.sendMessage("Test prompt", personaId)
+    viewModel.onComposerTextChanged("Test prompt")
+    viewModel.onSendMessage()
     advanceUntilIdle()
 
     val messages = conversationRepository.getMessages(threadId)
@@ -137,10 +139,12 @@ class ChatViewModelTest {
     viewModel.selectThread(threadId)
     advanceUntilIdle()
 
-    viewModel.sendMessage("Hello", personaId)
+    viewModel.onComposerTextChanged("Hello")
+    viewModel.onSendMessage()
     advanceUntilIdle()
 
     assertThat(harness.currentState.isSendingMessage).isFalse()
+    assertThat(harness.currentState.composerText).isEmpty()
   }
 
   @Test
@@ -156,7 +160,8 @@ class ChatViewModelTest {
     advanceUntilIdle()
 
     harness.testEvents {
-      viewModel.sendMessage("Test", personaId)
+      viewModel.onComposerTextChanged("Test")
+      viewModel.onSendMessage()
       advanceUntilIdle()
 
       val event = awaitItem()
@@ -204,6 +209,124 @@ class ChatViewModelTest {
       val error = (event as ChatUiEvent.ErrorRaised).error
       assertThat(error).isInstanceOf(ChatError.PersonaSwitchFailed::class.java)
     }
+  }
+
+  @Test
+  fun `sendMessage emits error when persona missing`() = runTest {
+    val threadId = UUID.randomUUID()
+    val thread = DomainTestBuilders.buildChatThread(threadId = threadId, personaId = null)
+    conversationRepository.addThread(thread)
+
+    viewModel.selectThread(threadId)
+    advanceUntilIdle()
+
+    harness.testEvents {
+      viewModel.onComposerTextChanged("Hello")
+      viewModel.onSendMessage()
+      advanceUntilIdle()
+
+      val event = awaitItem()
+      val error = (event as ChatUiEvent.ErrorRaised).error
+      assertThat(error).isInstanceOf(ChatError.PersonaSelectionFailed::class.java)
+    }
+  }
+
+  @Test
+  fun `showModelPicker toggles visibility`() = runTest {
+    assertThat(harness.currentState.isModelPickerVisible).isFalse()
+
+    viewModel.showModelPicker()
+
+    assertThat(harness.currentState.isModelPickerVisible).isTrue()
+
+    viewModel.dismissModelPicker()
+
+    assertThat(harness.currentState.isModelPickerVisible).isFalse()
+  }
+
+  @Test
+  fun `attachments update when media provided`() = runTest {
+    val threadId = UUID.randomUUID()
+    val personaId = UUID.randomUUID()
+    val thread = DomainTestBuilders.buildChatThread(threadId = threadId, personaId = personaId)
+    conversationRepository.addThread(thread)
+    viewModel.selectThread(threadId)
+    advanceUntilIdle()
+
+    val bitmap = mockk<android.graphics.Bitmap>(relaxed = true)
+    val audioData = byteArrayOf(1, 2, 3)
+
+    viewModel.onImageSelected(bitmap)
+    viewModel.onAudioRecorded(audioData, "audio/wav")
+
+    val attachments = harness.currentState.attachments
+    assertThat(attachments.image).isNotNull()
+    assertThat(attachments.image?.bitmap).isEqualTo(bitmap)
+    assertThat(attachments.audio).isNotNull()
+    assertThat(attachments.audio?.data).isEqualTo(audioData)
+    assertThat(attachments.audio?.mimeType).isEqualTo("audio/wav")
+  }
+
+  @Test
+  fun `successful send clears attachments`() = runTest {
+    val threadId = UUID.randomUUID()
+    val personaId = UUID.randomUUID()
+    val thread = DomainTestBuilders.buildChatThread(threadId = threadId, personaId = personaId)
+    conversationRepository.addThread(thread)
+    viewModel.selectThread(threadId)
+    advanceUntilIdle()
+
+    val bitmap = mockk<android.graphics.Bitmap>(relaxed = true)
+    val audioData = byteArrayOf(5, 6, 7)
+
+    viewModel.onImageSelected(bitmap)
+    viewModel.onAudioRecorded(audioData, "audio/wav")
+    viewModel.onComposerTextChanged("Prompt")
+    viewModel.onSendMessage()
+    advanceUntilIdle()
+
+    val attachments = harness.currentState.attachments
+    assertThat(attachments.image).isNull()
+    assertThat(attachments.audio).isNull()
+  }
+
+  @Test
+  fun `clearPendingError removes pending message`() = runTest {
+    viewModel.onComposerTextChanged("Hello")
+    viewModel.onSendMessage()
+    advanceUntilIdle()
+
+    assertThat(harness.currentState.pendingErrorMessage).isNotNull()
+
+    viewModel.clearPendingError()
+
+    assertThat(harness.currentState.pendingErrorMessage).isNull()
+  }
+
+  @Test
+  fun `sendMessage surfaces error when saving message fails`() = runTest {
+    val threadId = UUID.randomUUID()
+    val personaId = UUID.randomUUID()
+    val thread = DomainTestBuilders.buildChatThread(threadId = threadId, personaId = personaId)
+    conversationRepository.addThread(thread)
+    conversationRepository.shouldFailOnSaveMessage = true
+
+    viewModel.selectThread(threadId)
+    advanceUntilIdle()
+
+    harness.testEvents {
+      viewModel.onComposerTextChanged("Prompt")
+      viewModel.onSendMessage()
+      advanceUntilIdle()
+
+      val event = awaitItem()
+      val error = (event as ChatUiEvent.ErrorRaised).error
+      assertThat(error).isInstanceOf(ChatError.UnexpectedError::class.java)
+      cancelAndIgnoreRemainingEvents()
+    }
+
+    assertThat(harness.currentState.isSendingMessage).isFalse()
+    assertThat(harness.currentState.pendingErrorMessage).isNotNull()
   }
 
   @Test

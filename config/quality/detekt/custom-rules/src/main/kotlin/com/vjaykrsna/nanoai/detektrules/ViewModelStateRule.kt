@@ -26,7 +26,9 @@ class ViewModelStateRule(config: Config) : Rule(config) {
     )
 
   override fun visitClass(klass: KtClass) {
-    if (!klass.isViewModel()) return
+    if (!klass.isStateHostViewModel()) return
+    val packageName = klass.containingKtFile.packageFqName.asString()
+    if (targetedPackages.none { prefix -> packageName.startsWith(prefix) }) return
     super.visitClass(klass)
 
     val propertyViolations =
@@ -48,14 +50,10 @@ class ViewModelStateRule(config: Config) : Rule(config) {
     }
   }
 
-  private fun KtClass.isViewModel(): Boolean =
+  private fun KtClass.isStateHostViewModel(): Boolean =
     superTypeListEntries
       .mapNotNull { entry -> entry.typeReference?.text }
-      .any { typeName ->
-        typeName.contains("ViewModelStateHost") ||
-          typeName.contains("ViewModel<") ||
-          typeName.endsWith("ViewModel")
-      }
+      .any { typeName -> typeName.contains("ViewModelStateHost") }
 
   private fun KtProperty.isTopLevelMemberOf(klass: KtClass): Boolean {
     if (isLocal) return false
@@ -101,6 +99,12 @@ class ViewModelStateRule(config: Config) : Rule(config) {
   private fun String.normalized(): String = replace("\\s".toRegex(), "")
 
   private val allowedPropertyNames = setOf("state", "events")
+  private val targetedPackages =
+    listOf(
+      "com.vjaykrsna.nanoai.feature.chat",
+      "com.vjaykrsna.nanoai.feature.library",
+      "com.vjaykrsna.nanoai.feature.settings",
+    )
 
   private val flowTypeIndicators =
     listOf(

@@ -1,6 +1,21 @@
 // Common exclusion patterns for Jacoco reports to avoid repetition.
 val jacocoExclusionPatterns =
-  listOf("**/R.class", "**/R$*.class", "**/BuildConfig.*", "**/Manifest*.*", "**/*Test*.*")
+  listOf(
+    "**/R.class",
+    "**/R$*.class",
+    "**/BuildConfig.*",
+    "**/Manifest*.*",
+    "**/*Test*.*",
+    // Hilt weaves this receiver at runtime causing JaCoCo class-data mismatches.
+    "**/DownloadNotificationReceiver.*",
+    // Room generates DAO implementations at compile time; their stubs inflate coverage noise.
+    "**/core/data/db/daos/**",
+    "**/core/data/library/**/dao/**",
+    "**/core/data/image/db/**",
+    // Generated Room implementation and adapter classes provide no executable business logic.
+    "**/*Dao_Impl*",
+    "**/*Database_Impl*",
+  )
 
 apply(from = rootProject.file("config/testing/coverage/coverage-thresholds.gradle.kts"))
 

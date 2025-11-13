@@ -29,6 +29,7 @@ import com.vjaykrsna.nanoai.shared.state.ViewModelStateHost
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.UUID
 import javax.inject.Inject
+import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
@@ -61,6 +62,63 @@ constructor(
     observeMessages()
     observePersonas()
     observeInstalledModels()
+  }
+
+  fun onComposerTextChanged(newText: String) {
+    updateState { copy(composerText = newText, pendingErrorMessage = null) }
+  }
+
+  fun onSendMessage() {
+    val latestState = state.value
+    val trimmed = latestState.composerText.trim()
+    if (trimmed.isEmpty()) return
+
+    val threadId = latestState.activeThreadId
+    val personaId = latestState.activeThread?.personaId
+
+    if (threadId == null) {
+      viewModelScope.launch(dispatcher) {
+        emitError(ChatError.ThreadCreationFailed("No active thread available"))
+      }
+      return
+    }
+
+    if (personaId == null) {
+      viewModelScope.launch(dispatcher) {
+        emitError(ChatError.PersonaSelectionFailed("Choose a persona before sending messages"))
+      }
+      return
+    }
+
+    val attachmentsSnapshot = latestState.attachments
+
+    viewModelScope.launch(dispatcher) {
+      updateState { copy(isSendingMessage = true, pendingErrorMessage = null, composerText = "") }
+
+      val userMessage =
+        Message(
+          messageId = UUID.randomUUID(),
+          threadId = threadId,
+          role = MessageRole.USER,
+          text = trimmed,
+          source = MessageSource.LOCAL_MODEL,
+          latencyMs = null,
+          createdAt = Clock.System.now(),
+        )
+
+      val messageData =
+        MessageData(
+          threadId = threadId,
+          text = trimmed,
+          personaId = personaId,
+          image = attachmentsSnapshot.image?.bitmap,
+          audio = attachmentsSnapshot.audio?.data,
+        )
+
+      val saveResult = conversationUseCase.saveMessage(userMessage)
+      handleSaveMessageResult(saveResult, messageData)
+      updateState { copy(isSendingMessage = false) }
+    }
   }
 
   fun showModelPicker() {
@@ -106,43 +164,6 @@ constructor(
 
   private fun clearAttachments() {
     updateState { copy(attachments = ChatComposerAttachments()) }
-  }
-
-  fun sendMessage(text: String, personaId: UUID) {
-    val trimmed = text.trim()
-    if (trimmed.isEmpty()) return
-
-    val threadId = state.value.activeThreadId
-    if (threadId == null) {
-      viewModelScope.launch(dispatcher) {
-        emitError(ChatError.ThreadCreationFailed("No active thread available"))
-      }
-      return
-    }
-
-    viewModelScope.launch(dispatcher) {
-      updateState { copy(isSendingMessage = true, pendingErrorMessage = null) }
-
-      val attachmentsSnapshot = state.value.attachments
-      val image = attachmentsSnapshot.image?.bitmap
-      val audio = attachmentsSnapshot.audio?.data
-
-      val userMessage =
-        Message(
-          messageId = UUID.randomUUID(),
-          threadId = threadId,
-          role = MessageRole.USER,
-          text = trimmed,
-          source = MessageSource.LOCAL_MODEL,
-          latencyMs = null,
-          createdAt = Clock.System.now(),
-        )
-
-      val messageData = MessageData(threadId, trimmed, personaId, image, audio)
-      val saveResult = conversationUseCase.saveMessage(userMessage)
-      handleSaveMessageResult(saveResult, messageData)
-      updateState { copy(isSendingMessage = false) }
-    }
   }
 
   fun switchPersona(newPersonaId: UUID, action: PersonaSwitchAction) {
@@ -208,7 +229,11 @@ constructor(
         val (resolvedId, resolvedThread) = resolveActiveThread(threads, currentThreadId.value)
         currentThreadId.value = resolvedId
         updateState {
-          copy(threads = threads, activeThreadId = resolvedId, activeThread = resolvedThread)
+          copy(
+            threads = threads.toPersistentList(),
+            activeThreadId = resolvedId,
+            activeThread = resolvedThread,
+          )
         }
       }
     }
@@ -220,13 +245,15 @@ constructor(
         .flatMapLatest { threadId ->
           threadId?.let { conversationUseCase.getMessagesFlow(it) } ?: flowOf(emptyList())
         }
-        .collect { messages -> updateState { copy(messages = messages) } }
+        .collect { messages -> updateState { copy(messages = messages.toPersistentList()) } }
     }
   }
 
   private fun observePersonas() {
     viewModelScope.launch(dispatcher) {
-      observePersonasUseCase().collect { personas -> updateState { copy(personas = personas) } }
+      observePersonasUseCase().collect { personas ->
+        updateState { copy(personas = personas.toPersistentList()) }
+      }
     }
   }
 
@@ -235,7 +262,7 @@ constructor(
       modelCatalogUseCase
         .observeInstalledModels()
         .map { list: List<ModelPackage> -> list.map { it.toModel() } }
-        .collect { models -> updateState { copy(installedModels = models) } }
+        .collect { models -> updateState { copy(installedModels = models.toPersistentList()) } }
     }
   }
 
@@ -315,6 +342,8 @@ sealed class ChatError(open val message: String) {
   data class InferenceFailed(override val message: String) : ChatError(message)
 
   data class PersonaSwitchFailed(override val message: String) : ChatError(message)
+
+  data class PersonaSelectionFailed(override val message: String) : ChatError(message)
 
   data class ThreadCreationFailed(override val message: String) : ChatError(message)
 

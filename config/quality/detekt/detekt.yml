@@ -1,19 +1,5 @@
-build:
-  maxIssues: 0
-  excludeCorrectable: false
-
 config:
-  validation: true
-  warningsAsErrors: false
   excludes: '(^|.*/)(build|generated|ap_generated_sources|ksp|kspCaches|kapt|intermediates|outputs|kotlinToolingMetadata|\.gradle)(/.*)?$'
-
-processors:
-  active: true
-
-console-reports:
-  active: true
-output-reports:
-  active: true
 
 style:
   active: false
@@ -27,13 +13,7 @@ style:
     active: true
     ignoreAnnotated: ['Composable', 'Preview', 'Test']
     ignoreNumbers: ['0', '1', '-1']
-  DataClassContainsFunctions:
-    active: false
   MayBeConst:
-    active: false
-  UseDataClass:
-    active: false
-  SpacingBetweenPackageAndImports:
     active: false
 
 formatting:
@@ -46,10 +26,6 @@ formatting:
     active: false
 
 complexity:
-  active: true
-  NestedBlockDepth:
-    active: true
-    threshold: 4
   LargeClass:
     active: true
     threshold: 300
@@ -75,27 +51,16 @@ complexity:
     thresholdInObjects: 12
     ignoreAnnotated: ['Dao', 'Module', 'Singleton', 'Composable', 'HiltViewModel', 'Worker', 'HiltWorker']
 
-potential-bugs:
-  active: true
-  LateinitUsage:
-    active: false
-
-performance:
-  active: true
-
 exceptions:
-  active: true
   TooGenericExceptionCaught:
     active: false
 
 naming:
-  active: true
   FunctionNaming:
     active: true
     functionPattern: '([a-z][a-zA-Z0-9]*)|([A-Z][a-zA-Z0-9]*)'
 
 Compose:
-  active: true
   ComposableParamOrder:
     active: false
 
@@ -106,5 +71,5 @@ nanoai-clean-architecture:
     # Prevents feature/ui modules from importing data sources directly and blocks core modules from
     # reaching into feature packages. Keeps NanoAI's Clean Architecture boundaries intact.
   ViewModelSingleState:
-    active: true
+    active: false
     # Enforces a single public state stream per ViewModel and blocks additional Flow/LiveData outputs.

@@ -42,13 +42,14 @@ class ModelDownloadWorkerIntegrityTest {
   }
   private val fakeManifestDao = FakeDownloadManifestDao()
   private val fakeWriteDao = FakeModelPackageWriteDao()
+  private val clock = Clock.System
   private val localDataSource =
     ModelCatalogLocalDataSource(
       modelPackageWriteDao = fakeWriteDao,
       relationsDao = NoopModelPackageRelationsDao,
       downloadManifestDao = fakeManifestDao,
+      clock = clock,
     )
-  private val clock = Clock.System
   private val fakeDeviceIdProvider =
     object : DeviceIdentityProvider {
       override fun deviceId(): String = "device-test"

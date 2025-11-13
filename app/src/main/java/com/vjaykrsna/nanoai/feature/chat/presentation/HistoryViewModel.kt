@@ -11,6 +11,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import java.io.IOException
 import java.util.UUID
 import javax.inject.Inject
+import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -79,7 +80,7 @@ constructor(
   private fun observeThreads() {
     viewModelScope.launch(dispatcher) {
       conversationRepository.getAllThreadsFlow().collectLatest { threads ->
-        updateState { copy(threads = threads) }
+        updateState { copy(threads = threads.toPersistentList()) }
       }
     }
   }

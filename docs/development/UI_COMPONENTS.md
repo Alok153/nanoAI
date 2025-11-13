@@ -62,6 +62,25 @@ fun SettingsScreen(
 ) {
     // Render from immutable state and dispatch intents back to the ViewModel.
 }
+
+// For chat-like inputs, forward composer updates via intents so state stays canonical.
+@Composable
+fun ChatScreen(
+    state: ChatUiState,
+    onComposerIntent: (ChatIntent) -> Unit,
+) {
+    NanoComposerBar(
+        value = state.composerText,
+        onValueChange = { text -> onComposerIntent(ChatIntent.UpdateComposer(text)) },
+        onSend = { onComposerIntent(ChatIntent.SendMessage) },
+        sendEnabled = state.composerText.isNotBlank() && !state.isSendingMessage,
+    )
+}
+
+sealed interface ChatIntent {
+    data class UpdateComposer(val text: String) : ChatIntent
+    data object SendMessage : ChatIntent
+}
 ```
 
 **Key Requirements**: Always derive UI from the immutable `state`, translate user actions into intents, and collect events once at the route/root level to avoid duplicated side effects.

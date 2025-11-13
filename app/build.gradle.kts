@@ -81,6 +81,7 @@ dependencies {
   // Coroutines
   implementation(libs.kotlinx.coroutines.core)
   implementation(libs.kotlinx.coroutines.android)
+  implementation(libs.kotlinx.collections.immutable)
 
   // Date and time utilities
   implementation(libs.kotlinx.datetime)

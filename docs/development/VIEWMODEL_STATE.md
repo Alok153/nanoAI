@@ -51,7 +51,8 @@ val harness = ViewModelStateHostTestHarness(viewModel)
 harness.assertInitialState { it.isLoading is false }
 
 harness.testStates {
-    viewModel.onSendMessage("Hello")
+    viewModel.onComposerTextChanged("Hello")
+    viewModel.onSendMessage()
     awaitState { it.isLoading }
     awaitState { !it.isLoading && it.messages.last().text == "Hello" }
 }
@@ -87,8 +88,8 @@ harness.testEvents {
 | `ModelLibraryViewModel` | ✅ Complete | Covered by T012–T017 in `specs/001-foundation/tasks.md`.
 | `HuggingFaceLibraryViewModel` | ✅ Complete | Shared state/events aligned in T015.
 | `SettingsViewModel` | ✅ Complete | Unified `SettingsUiState` + harnessed tests (T018–T021).
-| `ChatViewModel` | 🚧 Pending | Implement T007–T009 to migrate chat flows onto `ViewModelStateHost`.
-| `HistoryViewModel` | 🚧 Pending | Implement T010–T011 to consolidate history state and tests.
+| `ChatViewModel` | ✅ Complete | Unified `ChatUiState` (composer text, attachments, persistent collections) with refreshed harness coverage (T007–T011).
+| `HistoryViewModel` | ✅ Complete | Shared host adoption with persistent state collections and updated tests (T010–T011).
 | Remaining feature ViewModels | 🔍 Assess | Audit per sprint; open follow-up tasks for audio, image, and settings submodules as needed.
 
 ## References

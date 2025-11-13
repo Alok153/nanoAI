@@ -7,6 +7,8 @@ import com.vjaykrsna.nanoai.core.domain.model.Message
 import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
 import com.vjaykrsna.nanoai.shared.state.NanoAIViewState
 import java.util.UUID
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
 
 /**
  * Immutable snapshot of the chat presentation layer.
@@ -14,12 +16,13 @@ import java.util.UUID
  * Aggregates every value that the UI needs so composables can render from a single source of truth.
  */
 data class ChatUiState(
-  val threads: List<ChatThread> = emptyList(),
+  val threads: PersistentList<ChatThread> = persistentListOf(),
   val activeThreadId: UUID? = null,
   val activeThread: ChatThread? = null,
-  val messages: List<Message> = emptyList(),
-  val personas: List<PersonaProfile> = emptyList(),
-  val installedModels: List<Model> = emptyList(),
+  val messages: PersistentList<Message> = persistentListOf(),
+  val personas: PersistentList<PersonaProfile> = persistentListOf(),
+  val installedModels: PersistentList<Model> = persistentListOf(),
+  val composerText: String = "",
   val isModelPickerVisible: Boolean = false,
   val isSendingMessage: Boolean = false,
   val attachments: ChatComposerAttachments = ChatComposerAttachments(),

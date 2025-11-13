@@ -40,11 +40,11 @@ description: "Task list for standardising ViewModel state patterns"
 
 ### Implementation for User Story 1
 
-- [ ] T007 [US1] Introduce ChatUiState data class capturing thread, messages, personas, model picker, attachments, loading/error flags in app/src/main/java/com/vjaykrsna/nanoai/feature/chat/presentation/state/ChatUiState.kt.
-- [ ] T008 [US1] Refactor ChatViewModel to extend ViewModelStateHost, emit ChatUiState via one StateFlow, migrate error/events onto NanoAIViewEvent in app/src/main/java/com/vjaykrsna/nanoai/feature/chat/presentation/ChatViewModel.kt.
-- [ ] T009 [US1] Update ChatScreen and related composables to consume ChatUiState and event collectors in app/src/main/java/com/vjaykrsna/nanoai/feature/chat/ui/ChatScreen.kt.
-- [ ] T010 [US1] Migrate HistoryViewModel to the shared state host with a HistoryUiState in app/src/main/java/com/vjaykrsna/nanoai/feature/chat/presentation/HistoryViewModel.kt and new app/src/main/java/com/vjaykrsna/nanoai/feature/chat/presentation/state/HistoryUiState.kt.
-- [ ] T011 [US1] Refresh chat feature tests (ChatViewModelTest.kt, HistoryViewModelTest.kt) to use ViewModelStateHostTestHarness and validate new state/event contracts in app/src/test/java/com/vjaykrsna/nanoai/feature/chat/presentation/.
+- [x] T007 [US1] Introduce ChatUiState data class capturing thread, messages, personas, model picker, attachments, loading/error flags in app/src/main/java/com/vjaykrsna/nanoai/feature/chat/presentation/state/ChatUiState.kt.
+- [x] T008 [US1] Refactor ChatViewModel to extend ViewModelStateHost, emit ChatUiState via one StateFlow, migrate error/events onto NanoAIViewEvent in app/src/main/java/com/vjaykrsna/nanoai/feature/chat/presentation/ChatViewModel.kt.
+- [x] T009 [US1] Update ChatScreen and related composables to consume ChatUiState and event collectors in app/src/main/java/com/vjaykrsna/nanoai/feature/chat/ui/ChatScreen.kt.
+- [x] T010 [US1] Migrate HistoryViewModel to the shared state host with a HistoryUiState in app/src/main/java/com/vjaykrsna/nanoai/feature/chat/presentation/HistoryViewModel.kt and new app/src/main/java/com/vjaykrsna/nanoai/feature/chat/presentation/state/HistoryUiState.kt.
+- [x] T011 [US1] Refresh chat feature tests (ChatViewModelTest.kt, HistoryViewModelTest.kt) to use ViewModelStateHostTestHarness and validate new state/event contracts in app/src/test/java/com/vjaykrsna/nanoai/feature/chat/presentation/.
 
 **Checkpoint**: Chat flows operate offline with consolidated state; tests cover new behavior.
 
@@ -90,10 +90,10 @@ description: "Task list for standardising ViewModel state patterns"
 
 **Purpose**: Lock in consistency and quality gates across the codebase.
 
-- [ ] T022 Add Detekt rule enforcing single-state exposure for ViewModels (update config/quality/detekt/detekt.yml and create ViewModelStateRule in config/quality/detekt/custom-rules/src/main/kotlin/).
-- [ ] T023 Update docs/development/TESTING.md with ViewModelStateHostTestHarness usage and coverage expectations.
-- [ ] T024 Extend docs/development/VIEWMODEL_STATE.md with an adoption tracker covering remaining ViewModels and follow-up actions.
-- [ ] T025 Refresh docs/development/UI_COMPONENTS.md to show how composables consume the unified UiState + event streams.
+- [x] T022 Add Detekt rule enforcing single-state exposure for ViewModels (update config/quality/detekt/detekt.yml and create ViewModelStateRule in config/quality/detekt/custom-rules/src/main/kotlin/).
+- [x] T023 Update docs/development/TESTING.md with ViewModelStateHostTestHarness usage and coverage expectations.
+- [x] T024 Extend docs/development/VIEWMODEL_STATE.md with an adoption tracker covering remaining ViewModels and follow-up actions.
+- [x] T025 Refresh docs/development/UI_COMPONENTS.md to show how composables consume the unified UiState + event streams.
 - [ ] T026 Run ./gradlew spotlessCheck detekt testDebugUnitTest verifyCoverageThresholds to confirm formatting, static analysis, and coverage gates.
 
 ---
