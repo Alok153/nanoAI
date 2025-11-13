@@ -205,61 +205,74 @@ private fun ImageGalleryItem(
     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
   ) {
     Column(modifier = Modifier.fillMaxWidth().padding(NanoSpacing.sm)) {
-      // Image placeholder
-      Surface(
-        modifier = Modifier.fillMaxWidth().height(150.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        shape = MaterialTheme.shapes.small,
-      ) {
-        Box(contentAlignment = Alignment.Center) {
-          Icon(
-            Icons.Default.Image,
-            contentDescription = null,
-            modifier = Modifier.size(48.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-          )
-        }
-      }
+      ImageGalleryThumbnail()
 
       Spacer(modifier = Modifier.height(NanoSpacing.sm))
 
-      // Metadata
-      Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.Top,
-      ) {
-        Column(modifier = Modifier.weight(1f)) {
-          Text(
-            text = image.prompt,
-            style = MaterialTheme.typography.bodySmall,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            fontWeight = FontWeight.Medium,
-          )
-          Spacer(modifier = Modifier.height(4.dp))
-          Text(
-            text = "${image.width}×${image.height} • ${image.steps} steps",
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-          )
-          Text(
-            text =
-              image.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()).let {
-                "${it.date} ${it.hour}:${it.minute.toString().padStart(2, '0')}"
-              },
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-          )
-        }
-        IconButton(onClick = onDeleteClick, modifier = Modifier.size(32.dp)) {
-          Icon(
-            Icons.Default.Delete,
-            contentDescription = "Delete image",
-            tint = MaterialTheme.colorScheme.error,
-          )
-        }
-      }
+      ImageGalleryMetadataRow(image = image, onDeleteClick = onDeleteClick)
     }
+  }
+}
+
+@Composable
+private fun ImageGalleryThumbnail() {
+  Surface(
+    modifier = Modifier.fillMaxWidth().height(150.dp),
+    color = MaterialTheme.colorScheme.surfaceVariant,
+    shape = MaterialTheme.shapes.small,
+  ) {
+    Box(contentAlignment = Alignment.Center) {
+      Icon(
+        Icons.Default.Image,
+        contentDescription = null,
+        modifier = Modifier.size(48.dp),
+        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+    }
+  }
+}
+
+@Composable
+private fun ImageGalleryMetadataRow(image: GeneratedImage, onDeleteClick: () -> Unit) {
+  Row(
+    modifier = Modifier.fillMaxWidth(),
+    horizontalArrangement = Arrangement.SpaceBetween,
+    verticalAlignment = Alignment.Top,
+  ) {
+    ImageMetadataDetails(image = image)
+    IconButton(onClick = onDeleteClick, modifier = Modifier.size(32.dp)) {
+      Icon(
+        Icons.Default.Delete,
+        contentDescription = "Delete image",
+        tint = MaterialTheme.colorScheme.error,
+      )
+    }
+  }
+}
+
+@Composable
+private fun ImageMetadataDetails(image: GeneratedImage) {
+  Column(modifier = Modifier.weight(1f)) {
+    Text(
+      text = image.prompt,
+      style = MaterialTheme.typography.bodySmall,
+      maxLines = 2,
+      overflow = TextOverflow.Ellipsis,
+      fontWeight = FontWeight.Medium,
+    )
+    Spacer(modifier = Modifier.height(4.dp))
+    Text(
+      text = "${image.width}×${image.height} • ${image.steps} steps",
+      style = MaterialTheme.typography.labelSmall,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Text(
+      text =
+        image.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()).let {
+          "${it.date} ${it.hour}:${it.minute.toString().padStart(2, '0')}"
+        },
+      style = MaterialTheme.typography.labelSmall,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
   }
 }

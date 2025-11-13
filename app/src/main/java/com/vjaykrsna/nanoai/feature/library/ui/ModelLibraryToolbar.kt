@@ -91,194 +91,321 @@ internal fun ModelLibraryToolbar(
       modifier = Modifier.fillMaxWidth().padding(16.dp),
       verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-      Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+      ModelLibrarySearchRow(
+        searchQuery = searchQuery,
+        hasFilterPanel = hasFilterPanel,
+        filtersExpanded = filtersExpanded,
+        badgeLabel = badgeLabel,
+        onSearchChange = onSearchChange,
+        onFiltersToggle = { filtersExpanded = !filtersExpanded },
+      )
+
+      ModelLibraryFiltersSection(
+        visible = hasFilterPanel && filtersExpanded,
+        tab = tab,
+        pipelineOptions = pipelineOptions,
+        selectedPipeline = selectedPipeline,
+        capabilityOptions = capabilityOptions,
+        selectedCapabilities = selectedCapabilities,
+        localSort = localSort,
+        huggingFaceSort = huggingFaceSort,
+        localLibraryOptions = localLibraryOptions,
+        selectedLocalLibrary = selectedLocalLibrary,
+        huggingFaceLibraryOptions = huggingFaceLibraryOptions,
+        selectedHuggingFaceLibrary = selectedHuggingFaceLibrary,
+        onPipelineSelect = onPipelineSelect,
+        onSelectLocalSort = onSelectLocalSort,
+        onSelectHuggingFaceSort = onSelectHuggingFaceSort,
+        onSelectLocalLibrary = onSelectLocalLibrary,
+        onSelectHuggingFaceLibrary = onSelectHuggingFaceLibrary,
+        onToggleCapability = onToggleCapability,
+      )
+    }
+  }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun ModelLibrarySearchRow(
+  searchQuery: String,
+  hasFilterPanel: Boolean,
+  filtersExpanded: Boolean,
+  badgeLabel: String?,
+  onSearchChange: (String) -> Unit,
+  onFiltersToggle: () -> Unit,
+) {
+  Row(
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(12.dp),
+  ) {
+    OutlinedTextField(
+      value = searchQuery,
+      onValueChange = onSearchChange,
+      modifier = Modifier.weight(1f).testTag(SEARCH_FIELD_TAG),
+      singleLine = true,
+      shape = MaterialTheme.shapes.large,
+      placeholder = { Text("Search models") },
+      leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+      trailingIcon =
+        if (searchQuery.isNotBlank()) {
+          {
+            IconButton(onClick = { onSearchChange("") }) {
+              Icon(Icons.Filled.Close, contentDescription = "Clear search query")
+            }
+          }
+        } else {
+          null
+        },
+      colors =
+        OutlinedTextFieldDefaults.colors(
+          focusedContainerColor = MaterialTheme.colorScheme.surface,
+          unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+          focusedBorderColor = MaterialTheme.colorScheme.primary,
+          unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+          cursorColor = MaterialTheme.colorScheme.primary,
+          focusedLeadingIconColor = MaterialTheme.colorScheme.primary,
+          unfocusedLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+          focusedTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+          unfocusedTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+          focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+          unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        ),
+    )
+
+    if (hasFilterPanel) {
+      IconButton(modifier = Modifier.testTag(FILTER_TOGGLE_TAG), onClick = onFiltersToggle) {
+        BadgedBox(badge = { badgeLabel?.let { label -> Badge { Text(label) } } }) {
+          val description = if (filtersExpanded) "Collapse filters" else "Expand filters"
+          Icon(imageVector = Icons.Outlined.Tune, contentDescription = description)
+        }
+      }
+    }
+  }
+}
+
+@Composable
+private fun ModelLibraryFiltersSection(
+  visible: Boolean,
+  tab: ModelLibraryTab,
+  pipelineOptions: List<String>,
+  selectedPipeline: String?,
+  capabilityOptions: List<String>,
+  selectedCapabilities: Set<String>,
+  localSort: ModelSort,
+  huggingFaceSort: HuggingFaceSortOption,
+  localLibraryOptions: List<ProviderType>,
+  selectedLocalLibrary: ProviderType?,
+  huggingFaceLibraryOptions: List<String>,
+  selectedHuggingFaceLibrary: String?,
+  onPipelineSelect: (String?) -> Unit,
+  onSelectLocalSort: (ModelSort) -> Unit,
+  onSelectHuggingFaceSort: (HuggingFaceSortOption) -> Unit,
+  onSelectLocalLibrary: (ProviderType?) -> Unit,
+  onSelectHuggingFaceLibrary: (String?) -> Unit,
+  onToggleCapability: (String) -> Unit,
+) {
+  AnimatedVisibility(visible = visible) {
+    Surface(
+      modifier = Modifier.fillMaxWidth().testTag(FILTER_PANEL_TAG),
+      shape = MaterialTheme.shapes.large,
+      tonalElevation = 1.dp,
+      color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+    ) {
+      Column(
+        modifier = Modifier.fillMaxWidth().padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
       ) {
-        OutlinedTextField(
-          value = searchQuery,
-          onValueChange = onSearchChange,
-          modifier = Modifier.weight(1f).testTag(SEARCH_FIELD_TAG),
-          singleLine = true,
-          shape = MaterialTheme.shapes.large,
-          placeholder = { Text("Search models") },
-          leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-          trailingIcon =
-            if (searchQuery.isNotBlank()) {
-              {
-                IconButton(onClick = { onSearchChange("") }) {
-                  Icon(Icons.Filled.Close, contentDescription = "Clear search query")
-                }
-              }
-            } else {
-              null
-            },
-          colors =
-            OutlinedTextFieldDefaults.colors(
-              focusedContainerColor = MaterialTheme.colorScheme.surface,
-              unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-              focusedBorderColor = MaterialTheme.colorScheme.primary,
-              unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-              cursorColor = MaterialTheme.colorScheme.primary,
-              focusedLeadingIconColor = MaterialTheme.colorScheme.primary,
-              unfocusedLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-              focusedTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-              unfocusedTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-              focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
-              unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            ),
+        SortFilterSection(
+          tab = tab,
+          localSort = localSort,
+          huggingFaceSort = huggingFaceSort,
+          onSelectLocalSort = onSelectLocalSort,
+          onSelectHuggingFaceSort = onSelectHuggingFaceSort,
         )
 
-        if (hasFilterPanel) {
-          IconButton(
-            modifier = Modifier.testTag(FILTER_TOGGLE_TAG),
-            onClick = { filtersExpanded = !filtersExpanded },
-          ) {
-            BadgedBox(badge = { badgeLabel?.let { label -> Badge { Text(label) } } }) {
-              Icon(
-                imageVector = Icons.Outlined.Tune,
-                contentDescription = if (filtersExpanded) "Collapse filters" else "Expand filters",
-              )
-            }
+        PipelineFilterSection(
+          pipelineOptions = pipelineOptions,
+          selectedPipeline = selectedPipeline,
+          onPipelineSelect = onPipelineSelect,
+        )
+
+        CapabilityFilterSection(
+          tab = tab,
+          capabilityOptions = capabilityOptions,
+          selectedCapabilities = selectedCapabilities,
+          onToggleCapability = onToggleCapability,
+        )
+
+        LibraryFilterSection(
+          tab = tab,
+          localLibraryOptions = localLibraryOptions,
+          selectedLocalLibrary = selectedLocalLibrary,
+          huggingFaceLibraryOptions = huggingFaceLibraryOptions,
+          selectedHuggingFaceLibrary = selectedHuggingFaceLibrary,
+          onSelectLocalLibrary = onSelectLocalLibrary,
+          onSelectHuggingFaceLibrary = onSelectHuggingFaceLibrary,
+        )
+      }
+    }
+  }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun SortFilterSection(
+  tab: ModelLibraryTab,
+  localSort: ModelSort,
+  huggingFaceSort: HuggingFaceSortOption,
+  onSelectLocalSort: (ModelSort) -> Unit,
+  onSelectHuggingFaceSort: (HuggingFaceSortOption) -> Unit,
+) {
+  FilterSection(title = "Sort order") {
+    val sortScroll = rememberScrollState()
+    Row(
+      modifier = Modifier.horizontalScroll(sortScroll),
+      horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+      when (tab) {
+        ModelLibraryTab.HUGGING_FACE -> {
+          HuggingFaceSortOption.entries.forEach { option ->
+            val selected = option == huggingFaceSort
+            FilterChip(
+              selected = selected,
+              label = { Text(option.label()) },
+              onClick = { if (!selected) onSelectHuggingFaceSort(option) },
+            )
+          }
+        }
+        else -> {
+          ModelSort.entries.forEach { option ->
+            val selected = option == localSort
+            FilterChip(
+              selected = selected,
+              label = { Text(option.label()) },
+              onClick = { if (!selected) onSelectLocalSort(option) },
+            )
           }
         }
       }
+    }
+  }
+}
 
-      AnimatedVisibility(visible = hasFilterPanel && filtersExpanded) {
-        Surface(
-          modifier = Modifier.fillMaxWidth().testTag(FILTER_PANEL_TAG),
-          shape = MaterialTheme.shapes.large,
-          tonalElevation = 1.dp,
-          color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
-        ) {
-          Column(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-          ) {
-            FilterSection(title = "Sort order") {
-              val sortScroll = rememberScrollState()
-              Row(
-                modifier = Modifier.horizontalScroll(sortScroll),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-              ) {
-                when (tab) {
-                  ModelLibraryTab.HUGGING_FACE -> {
-                    HuggingFaceSortOption.entries.forEach { option ->
-                      val selected = option == huggingFaceSort
-                      FilterChip(
-                        selected = selected,
-                        label = { Text(option.label()) },
-                        onClick = { if (!selected) onSelectHuggingFaceSort(option) },
-                      )
-                    }
-                  }
-                  else -> {
-                    ModelSort.entries.forEach { option ->
-                      val selected = option == localSort
-                      FilterChip(
-                        selected = selected,
-                        label = { Text(option.label()) },
-                        onClick = { if (!selected) onSelectLocalSort(option) },
-                      )
-                    }
-                  }
-                }
-              }
-            }
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun PipelineFilterSection(
+  pipelineOptions: List<String>,
+  selectedPipeline: String?,
+  onPipelineSelect: (String?) -> Unit,
+) {
+  if (pipelineOptions.isEmpty()) return
 
-            if (pipelineOptions.isNotEmpty()) {
-              FilterSection(title = "Pipeline") {
-                val pipelineScroll = rememberScrollState()
-                Row(
-                  modifier = Modifier.horizontalScroll(pipelineScroll),
-                  horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                  FilterChip(
-                    selected = selectedPipeline == null,
-                    onClick = { onPipelineSelect(null) },
-                    label = { Text("All pipelines") },
-                  )
+  FilterSection(title = "Pipeline") {
+    val pipelineScroll = rememberScrollState()
+    Row(
+      modifier = Modifier.horizontalScroll(pipelineScroll),
+      horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+      FilterChip(
+        selected = selectedPipeline == null,
+        onClick = { onPipelineSelect(null) },
+        label = { Text("All pipelines") },
+      )
 
-                  pipelineOptions.forEach { pipeline ->
-                    val display = pipeline.trim()
-                    val selected = selectedPipeline?.equals(display, ignoreCase = true) == true
-                    FilterChip(
-                      selected = selected,
-                      onClick = { onPipelineSelect(if (selected) null else display) },
-                      label = { Text(display) },
-                    )
-                  }
-                }
-              }
-            }
+      pipelineOptions.forEach { pipeline ->
+        val display = pipeline.trim()
+        val selected = selectedPipeline?.equals(display, ignoreCase = true) == true
+        FilterChip(
+          selected = selected,
+          onClick = { onPipelineSelect(if (selected) null else display) },
+          label = { Text(display) },
+        )
+      }
+    }
+  }
+}
 
-            if (capabilityOptions.isNotEmpty() && tab != ModelLibraryTab.HUGGING_FACE) {
-              FilterSection(title = "Capabilities") {
-                val capabilityScroll = rememberScrollState()
-                Row(
-                  modifier = Modifier.horizontalScroll(capabilityScroll),
-                  horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                  capabilityOptions.forEach { capability ->
-                    val display = capability.trim().replaceFirstChar { it.uppercase() }
-                    val selected = selectedCapabilities.contains(capability)
-                    FilterChip(
-                      selected = selected,
-                      onClick = { onToggleCapability(capability) },
-                      label = { Text(display) },
-                    )
-                  }
-                }
-              }
-            }
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun CapabilityFilterSection(
+  tab: ModelLibraryTab,
+  capabilityOptions: List<String>,
+  selectedCapabilities: Set<String>,
+  onToggleCapability: (String) -> Unit,
+) {
+  if (capabilityOptions.isEmpty() || tab == ModelLibraryTab.HUGGING_FACE) return
 
-            val showLocalLibrary =
-              tab != ModelLibraryTab.HUGGING_FACE && localLibraryOptions.isNotEmpty()
-            val showHuggingFaceLibrary =
-              tab == ModelLibraryTab.HUGGING_FACE && huggingFaceLibraryOptions.isNotEmpty()
+  FilterSection(title = "Capabilities") {
+    val capabilityScroll = rememberScrollState()
+    Row(
+      modifier = Modifier.horizontalScroll(capabilityScroll),
+      horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+      capabilityOptions.forEach { capability ->
+        val display = capability.trim().replaceFirstChar { it.uppercase() }
+        val selected = selectedCapabilities.contains(capability)
+        FilterChip(
+          selected = selected,
+          onClick = { onToggleCapability(capability) },
+          label = { Text(display) },
+        )
+      }
+    }
+  }
+}
 
-            if (showLocalLibrary || showHuggingFaceLibrary) {
-              FilterSection(title = "Library") {
-                val libraryScroll = rememberScrollState()
-                Row(
-                  modifier = Modifier.horizontalScroll(libraryScroll),
-                  horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                  when (tab) {
-                    ModelLibraryTab.HUGGING_FACE -> {
-                      FilterChip(
-                        selected = selectedHuggingFaceLibrary == null,
-                        onClick = { onSelectHuggingFaceLibrary(null) },
-                        label = { Text("All libraries") },
-                      )
-                      huggingFaceLibraryOptions.forEach { library ->
-                        val selected = selectedHuggingFaceLibrary == library
-                        FilterChip(
-                          selected = selected,
-                          onClick = { onSelectHuggingFaceLibrary(if (selected) null else library) },
-                          label = { Text(library) },
-                        )
-                      }
-                    }
-                    else -> {
-                      FilterChip(
-                        selected = selectedLocalLibrary == null,
-                        onClick = { onSelectLocalLibrary(null) },
-                        label = { Text("All providers") },
-                      )
-                      localLibraryOptions.forEach { provider ->
-                        val selected = selectedLocalLibrary == provider
-                        FilterChip(
-                          selected = selected,
-                          onClick = { onSelectLocalLibrary(if (selected) null else provider) },
-                          label = { Text(provider.displayName()) },
-                        )
-                      }
-                    }
-                  }
-                }
-              }
-            }
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun LibraryFilterSection(
+  tab: ModelLibraryTab,
+  localLibraryOptions: List<ProviderType>,
+  selectedLocalLibrary: ProviderType?,
+  huggingFaceLibraryOptions: List<String>,
+  selectedHuggingFaceLibrary: String?,
+  onSelectLocalLibrary: (ProviderType?) -> Unit,
+  onSelectHuggingFaceLibrary: (String?) -> Unit,
+) {
+  val showLocalLibrary = tab != ModelLibraryTab.HUGGING_FACE && localLibraryOptions.isNotEmpty()
+  val showHuggingFaceLibrary =
+    tab == ModelLibraryTab.HUGGING_FACE && huggingFaceLibraryOptions.isNotEmpty()
+
+  if (!showLocalLibrary && !showHuggingFaceLibrary) return
+
+  FilterSection(title = "Library") {
+    val libraryScroll = rememberScrollState()
+    Row(
+      modifier = Modifier.horizontalScroll(libraryScroll),
+      horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+      when (tab) {
+        ModelLibraryTab.HUGGING_FACE -> {
+          FilterChip(
+            selected = selectedHuggingFaceLibrary == null,
+            onClick = { onSelectHuggingFaceLibrary(null) },
+            label = { Text("All libraries") },
+          )
+          huggingFaceLibraryOptions.forEach { library ->
+            val selected = selectedHuggingFaceLibrary == library
+            FilterChip(
+              selected = selected,
+              onClick = { onSelectHuggingFaceLibrary(if (selected) null else library) },
+              label = { Text(library) },
+            )
+          }
+        }
+        else -> {
+          FilterChip(
+            selected = selectedLocalLibrary == null,
+            onClick = { onSelectLocalLibrary(null) },
+            label = { Text("All providers") },
+          )
+          localLibraryOptions.forEach { provider ->
+            val selected = selectedLocalLibrary == provider
+            FilterChip(
+              selected = selected,
+              onClick = { onSelectLocalLibrary(if (selected) null else provider) },
+              label = { Text(provider.displayName()) },
+            )
           }
         }
       }

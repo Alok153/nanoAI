@@ -16,10 +16,6 @@ formatting:
     active: false
 
 complexity:
-  LongMethod:
-    ignoreAnnotated: ['Composable', 'Test', 'Preview']
-  CyclomaticComplexMethod:
-    ignoreAnnotated: ['Composable', 'Test', 'Preview']
   LongParameterList:
     functionThreshold: 6
     constructorThreshold: 7

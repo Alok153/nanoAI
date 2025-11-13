@@ -34,74 +34,20 @@ class CoverageReportContractTest {
 
   @Test
   fun `generated coverage report conforms to schema`() {
-    val summary =
-      createSummary(
-        buildId = "build-2025-10-10",
-        riskIds = listOf("risk-high-ui", "risk-critical-data"),
-        trendDelta = mapOf(TestLayer.VIEW_MODEL to 3.2, TestLayer.UI to 1.5, TestLayer.DATA to -0.5),
-      )
-
-    val trend =
-      listOf(
-        CoverageTrendPoint(
-          buildId = "build-2025-10-08",
-          layer = TestLayer.VIEW_MODEL,
-          coverage = 78.0,
-          threshold = 75.0,
-          recordedAt = Instant.parse("2025-10-08T12:00:00Z"),
-        ),
-        CoverageTrendPoint(
-          buildId = "build-2025-10-09",
-          layer = TestLayer.UI,
-          coverage = 67.0,
-          threshold = 65.0,
-          recordedAt = Instant.parse("2025-10-09T12:00:00Z"),
-        ),
-      )
-
-    val riskRegister =
-      listOf(
-        RiskRegisterItem(
-          riskId = "risk-high-ui",
-          layer = TestLayer.UI,
-          description = "Compose semantics missing for chat composer",
-          severity = RiskRegisterItem.Severity.HIGH,
-          targetBuild = "build-2025-10-15",
-          status = RiskRegisterItem.Status.IN_PROGRESS,
-          mitigation = "Add Compose accessibility tests",
-        ),
-        RiskRegisterItem(
-          riskId = "risk-critical-data",
-          layer = TestLayer.DATA,
-          description = "Room DAO lacks offline write coverage",
-          severity = RiskRegisterItem.Severity.CRITICAL,
-          targetBuild = "build-2025-10-20",
-          status = RiskRegisterItem.Status.OPEN,
-          mitigation = "Expand DAO integration tests",
-        ),
-      )
-
-    val catalog =
-      listOf(
-        TestSuiteCatalogEntry(
-          suiteId = "suite-viewmodel-chat",
-          owner = "quality-engineering",
-          layer = TestLayer.VIEW_MODEL,
-          journey = "Chat send message",
-          coverageContribution = 4.5,
-          riskTags = setOf("risk-high-ui", "risk-critical-data"),
-        )
-      )
-
     val reportJson =
-      CoverageReportGenerator(clock = fixedClock)
-        .generate(
-          summary = summary,
-          trend = trend,
-          riskRegister = riskRegister,
-          catalog = catalog,
-          branch = "main",
-        )
+      generateReport(
+        summary =
+          createSummary(
+            buildId = "build-2025-10-10",
+            riskIds = listOf("risk-high-ui", "risk-critical-data"),
+            trendDelta =
+              mapOf(TestLayer.VIEW_MODEL to 3.2, TestLayer.UI to 1.5, TestLayer.DATA to -0.5),
+          ),
+        trend = sampleTrend(),
+        riskRegister = sampleSchemaRiskRegister(),
+        catalog = sampleSchemaCatalog(),
+        branch = "main",
+      )
 
     val validationErrors = schema.validate(mapper.readTree(reportJson))
 
@@ -252,4 +198,72 @@ class CoverageReportContractTest {
 
   private fun defaultTrendDelta(): Map<TestLayer, Double> =
     mapOf(TestLayer.VIEW_MODEL to 3.2, TestLayer.UI to 1.5, TestLayer.DATA to -0.5)
+
+  private fun generateReport(
+    summary: CoverageSummary,
+    trend: List<CoverageTrendPoint>,
+    riskRegister: List<RiskRegisterItem>,
+    catalog: List<TestSuiteCatalogEntry>,
+    branch: String?,
+  ): String =
+    CoverageReportGenerator(clock = fixedClock)
+      .generate(
+        summary = summary,
+        trend = trend,
+        riskRegister = riskRegister,
+        catalog = catalog,
+        branch = branch,
+      )
+
+  private fun sampleTrend(): List<CoverageTrendPoint> =
+    listOf(
+      CoverageTrendPoint(
+        buildId = "build-2025-10-08",
+        layer = TestLayer.VIEW_MODEL,
+        coverage = 78.0,
+        threshold = 75.0,
+        recordedAt = Instant.parse("2025-10-08T12:00:00Z"),
+      ),
+      CoverageTrendPoint(
+        buildId = "build-2025-10-09",
+        layer = TestLayer.UI,
+        coverage = 67.0,
+        threshold = 65.0,
+        recordedAt = Instant.parse("2025-10-09T12:00:00Z"),
+      ),
+    )
+
+  private fun sampleSchemaRiskRegister(): List<RiskRegisterItem> =
+    listOf(
+      RiskRegisterItem(
+        riskId = "risk-high-ui",
+        layer = TestLayer.UI,
+        description = "Compose semantics missing for chat composer",
+        severity = RiskRegisterItem.Severity.HIGH,
+        targetBuild = "build-2025-10-15",
+        status = RiskRegisterItem.Status.IN_PROGRESS,
+        mitigation = "Add Compose accessibility tests",
+      ),
+      RiskRegisterItem(
+        riskId = "risk-critical-data",
+        layer = TestLayer.DATA,
+        description = "Room DAO lacks offline write coverage",
+        severity = RiskRegisterItem.Severity.CRITICAL,
+        targetBuild = "build-2025-10-20",
+        status = RiskRegisterItem.Status.OPEN,
+        mitigation = "Expand DAO integration tests",
+      ),
+    )
+
+  private fun sampleSchemaCatalog(): List<TestSuiteCatalogEntry> =
+    listOf(
+      TestSuiteCatalogEntry(
+        suiteId = "suite-viewmodel-chat",
+        owner = "quality-engineering",
+        layer = TestLayer.VIEW_MODEL,
+        journey = "Chat send message",
+        coverageContribution = 4.5,
+        riskTags = setOf("risk-high-ui", "risk-critical-data"),
+      )
+    )
 }

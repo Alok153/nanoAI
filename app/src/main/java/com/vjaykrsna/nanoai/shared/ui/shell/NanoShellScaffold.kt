@@ -1,49 +1,14 @@
 package com.vjaykrsna.nanoai.shared.ui.shell
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.FastOutLinearInEasing
-import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.PermanentNavigationDrawer
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.Text
-import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEvent
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.isCtrlPressed
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.input.key.type
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.unit.dp
 import com.vjaykrsna.nanoai.core.domain.model.uiux.CommandAction
-import com.vjaykrsna.nanoai.core.domain.model.uiux.CommandDestination
 import com.vjaykrsna.nanoai.core.domain.model.uiux.CommandInvocationSource
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityStatus
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
@@ -54,12 +19,9 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.RightPanel
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UndoPayload
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
-import com.vjaykrsna.nanoai.core.domain.uiux.navigation.toModeIdOrNull
+import com.vjaykrsna.nanoai.core.model.PersonaSwitchAction
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellUiState
-import com.vjaykrsna.nanoai.feature.uiux.ui.commandpalette.CommandPaletteSheet
 import java.util.UUID
-
-private const val COVERAGE_CARD_WIDTH_FRACTION = 0.8f
 
 /** Root scaffold Compose entry point for the unified shell experience. */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3WindowSizeClassApi::class)
@@ -70,217 +32,34 @@ fun NanoShellScaffold(
   modifier: Modifier = Modifier,
   modeContent: @Composable (ModeId) -> Unit = {},
 ) {
-  /**
-   * Architecture Overview: NanoShellScaffold is the root container for the unified shell
-   * experience. It orchestrates:
-   * 1. Left Navigation Drawer (modal or permanent based on layout)
-   * 2. Right Panels (model selector, progress, etc.)
-   * 3. Command Palette overlay
-   * 4. Responsive layout adapting to window size class
-   *
-   * The main composable is focused on:
-   * - State management and synchronization with Material3 drawer
-   * - Keyboard shortcuts handling
-   * - Event dispatch orchestration
-   * - Conditional UI rendering based on layout
-   *
-   * Child composables handle specific UI sections:
-   * - ShellDrawerContent: Navigation drawer UI
-   * - ShellRightRailHost: Right panels and main content area
-   * - CommandPaletteSheet: Command palette overlay
-   */
   val layout = state.layout
   val snackbarHostState = remember { SnackbarHostState() }
   val focusRequester = remember { FocusRequester() }
-  val drawerState =
-    rememberDrawerState(initialValue = androidx.compose.material3.DrawerValue.Closed)
-  val currentOnEvent by rememberUpdatedState(newValue = onEvent)
-  val latestLeftDrawerOpen by rememberUpdatedState(layout.isLeftDrawerOpen)
+  val drawerState = rememberShellScaffoldState()
+  val currentOnEvent = rememberUpdatedState(onEvent)
 
-  fun closeLeftDrawerIfOpen() {
-    if (!layout.canToggleLeftDrawer) return
-    if (layout.isLeftDrawerOpen) {
-      currentOnEvent(ShellUiEvent.ToggleLeftDrawer)
-    }
-  }
+  val dispatchEvent =
+    remember(layout, currentOnEvent) { createShellEventDispatcher(layout, currentOnEvent.value) }
 
-  fun closeRightDrawerIfOpen() {
-    if (layout.isRightDrawerOpen) {
-      val panel = layout.activeRightPanel ?: RightPanel.MODEL_SELECTOR
-      currentOnEvent(ShellUiEvent.ToggleRightDrawer(panel))
-    }
-  }
+  ShellScaffoldEffects(
+    layout = layout,
+    drawerState = drawerState,
+    snackbarHostState = snackbarHostState,
+    focusRequester = focusRequester,
+    onEvent = currentOnEvent.value,
+  )
 
-  fun toggleLeftDrawerWithRules() {
-    if (!layout.canToggleLeftDrawer) return
-    if (layout.isRightDrawerOpen) {
-      closeRightDrawerIfOpen()
-    }
-    currentOnEvent(ShellUiEvent.ToggleLeftDrawer)
-  }
-
-  fun toggleRightDrawerWithRules(panel: RightPanel) {
-    if (layout.isLeftDrawerOpen) {
-      closeLeftDrawerIfOpen()
-    }
-    currentOnEvent(ShellUiEvent.ToggleRightDrawer(panel))
-  }
-
-  val dispatchEvent: (ShellUiEvent) -> Unit = { event ->
-    when (event) {
-      ShellUiEvent.ToggleLeftDrawer -> toggleLeftDrawerWithRules()
-      is ShellUiEvent.ToggleRightDrawer -> toggleRightDrawerWithRules(event.panel)
-      is ShellUiEvent.ShowCommandPalette -> {
-        closeLeftDrawerIfOpen()
-        closeRightDrawerIfOpen()
-        currentOnEvent(event)
-      }
-      is ShellUiEvent.ModeSelected -> {
-        closeLeftDrawerIfOpen()
-        closeRightDrawerIfOpen()
-        currentOnEvent(event)
-      }
-      else -> currentOnEvent(event)
-    }
-  }
-
-  LaunchedEffect(layout.useModalNavigation, layout.isLeftDrawerOpen) {
-    if (!layout.useModalNavigation) {
-      drawerState.close()
-      return@LaunchedEffect
-    }
-    if (layout.isLeftDrawerOpen) {
-      drawerState.open()
-    } else {
-      drawerState.close()
-    }
-  }
-
-  LaunchedEffect(drawerState, layout.useModalNavigation) {
-    if (!layout.useModalNavigation) return@LaunchedEffect
-    snapshotFlow { drawerState.currentValue }
-      .collect { value ->
-        val isOpen = value == androidx.compose.material3.DrawerValue.Open
-        if (isOpen != latestLeftDrawerOpen) {
-          currentOnEvent(ShellUiEvent.SetLeftDrawer(isOpen))
-        }
-      }
-  }
-
-  LaunchedEffect(layout.pendingUndoAction) {
-    val payload = layout.pendingUndoAction ?: return@LaunchedEffect
-    val message = payload.metadata["message"] as? String ?: "Action completed"
-    val result = snackbarHostState.showSnackbar(message = message, actionLabel = "Undo")
-    if (result == SnackbarResult.ActionPerformed) {
-      currentOnEvent(ShellUiEvent.Undo(payload))
-    }
-  }
-
-  LaunchedEffect(Unit) { focusRequester.requestFocus() }
-  LaunchedEffect(layout.isPaletteVisible) {
-    if (!layout.isPaletteVisible) {
-      focusRequester.requestFocus()
-    }
-  }
-
-  Box(
-    modifier =
-      modifier
-        .fillMaxSize()
-        .let {
-          val thresholds = rememberShellDrawerThresholds()
-          it.shellDrawerGestures(layout, thresholds, dispatchEvent)
-        }
-        .focusRequester(focusRequester)
-        .onPreviewKeyEvent { event ->
-          handleShellShortcuts(event, layout.isPaletteVisible, dispatchEvent)
-        }
-        .testTag("shell_root")
-  ) {
-    if (layout.usesPermanentLeftDrawer) {
-      PermanentNavigationDrawer(
-        drawerContent = {
-          ShellDrawerContent(
-            variant = DrawerVariant.Permanent,
-            activeMode = layout.activeMode,
-            onEvent = { drawerEvent ->
-              when (drawerEvent) {
-                is ShellDrawerEvent.ModeSelected ->
-                  dispatchEvent(ShellUiEvent.ModeSelected(drawerEvent.modeId))
-                is ShellDrawerEvent.ShowCommandPalette ->
-                  dispatchEvent(ShellUiEvent.ShowCommandPalette(drawerEvent.source))
-                ShellDrawerEvent.CloseDrawer -> closeLeftDrawerIfOpen()
-              }
-            },
-          )
-        },
-        modifier = Modifier.testTag("left_drawer_permanent"),
-      ) {
-        ShellRightRailHost(
-          state = state,
-          snackbarHostState = snackbarHostState,
-          onEvent = dispatchEvent,
-          modeContent = modeContent,
-          originalOnEvent = onEvent,
-        )
-      }
-    } else {
-      ModalNavigationDrawer(
-        drawerContent = {
-          ShellDrawerContent(
-            variant = DrawerVariant.Modal,
-            activeMode = layout.activeMode,
-            onEvent = { drawerEvent ->
-              when (drawerEvent) {
-                is ShellDrawerEvent.ModeSelected ->
-                  dispatchEvent(ShellUiEvent.ModeSelected(drawerEvent.modeId))
-                is ShellDrawerEvent.ShowCommandPalette ->
-                  dispatchEvent(ShellUiEvent.ShowCommandPalette(drawerEvent.source))
-                ShellDrawerEvent.CloseDrawer -> closeLeftDrawerIfOpen()
-              }
-            },
-          )
-        },
-        drawerState = drawerState,
-        gesturesEnabled = layout.useModalNavigation && !layout.isRightDrawerOpen,
-        modifier = Modifier.testTag("left_drawer_modal"),
-      ) {
-        ShellRightRailHost(
-          state = state,
-          snackbarHostState = snackbarHostState,
-          onEvent = dispatchEvent,
-          modeContent = modeContent,
-          originalOnEvent = onEvent,
-        )
-      }
-    }
-
-    AnimatedVisibility(
-      visible = layout.isPaletteVisible,
-      enter = fadeIn(animationSpec = tween(durationMillis = 120, easing = FastOutLinearInEasing)),
-      exit = fadeOut(animationSpec = tween(durationMillis = 100, easing = LinearOutSlowInEasing)),
-    ) {
-      CommandPaletteSheet(
-        state = state.commandPalette,
-        onDismissRequest = { reason -> dispatchEvent(ShellUiEvent.HideCommandPalette(reason)) },
-        onCommandSelect = { action ->
-          handleCommandAction(action, CommandInvocationSource.PALETTE, dispatchEvent)
-        },
-        modifier = Modifier.fillMaxSize(),
-      )
-    }
-
-    AnimatedVisibility(
-      visible = layout.showCoverageDashboard,
-      enter = fadeIn(animationSpec = tween(durationMillis = 120, easing = FastOutLinearInEasing)),
-      exit = fadeOut(animationSpec = tween(durationMillis = 100, easing = LinearOutSlowInEasing)),
-    ) {
-      CoverageDashboardOverlay(
-        onDismiss = { dispatchEvent(ShellUiEvent.HideCoverageDashboard) },
-        modifier = Modifier.fillMaxSize(),
-      )
-    }
-  }
+  ShellScaffoldLayout(
+    state = state,
+    layout = layout,
+    snackbarHostState = snackbarHostState,
+    focusRequester = focusRequester,
+    drawerState = drawerState,
+    dispatchEvent = dispatchEvent,
+    onEvent = currentOnEvent.value,
+    modeContent = modeContent,
+    modifier = modifier,
+  )
 }
 
 /** Events emitted by [NanoShellScaffold] to interact with view models. */
@@ -314,10 +93,8 @@ sealed interface ShellUiEvent {
 
   data class UpdateDensity(val density: VisualDensity) : ShellUiEvent
 
-  data class ChatPersonaSelected(
-    val personaId: java.util.UUID,
-    val action: com.vjaykrsna.nanoai.core.model.PersonaSwitchAction,
-  ) : ShellUiEvent
+  data class ChatPersonaSelected(val personaId: UUID, val action: PersonaSwitchAction) :
+    ShellUiEvent
 
   data object ChatTitleClicked : ShellUiEvent
 
@@ -329,76 +106,4 @@ sealed interface ShellUiEvent {
 internal enum class DrawerVariant {
   Modal,
   Permanent,
-}
-
-internal fun handleCommandAction(
-  action: CommandAction,
-  source: CommandInvocationSource,
-  onEvent: (ShellUiEvent) -> Unit,
-) {
-  onEvent(ShellUiEvent.CommandInvoked(action, source))
-  when (val destination = action.destination) {
-    is CommandDestination.Navigate -> {
-      val modeId = routeToMode(destination.route)
-      if (modeId != null) {
-        onEvent(ShellUiEvent.ModeSelected(modeId))
-      }
-    }
-    is CommandDestination.OpenRightPanel ->
-      onEvent(ShellUiEvent.ToggleRightDrawer(destination.panel))
-    CommandDestination.None -> Unit
-  }
-}
-
-private fun routeToMode(route: String): ModeId? = route.substringBefore('/').toModeIdOrNull()
-
-private fun handleShellShortcuts(
-  event: KeyEvent,
-  paletteVisible: Boolean,
-  onEvent: (ShellUiEvent) -> Unit,
-): Boolean {
-  if (event.type != KeyEventType.KeyDown) return false
-  return when {
-    event.key == Key.K && event.isCtrlPressed -> {
-      onEvent(ShellUiEvent.ShowCommandPalette(PaletteSource.KEYBOARD_SHORTCUT))
-      true
-    }
-    event.key == Key.Escape && paletteVisible -> {
-      onEvent(ShellUiEvent.HideCommandPalette(PaletteDismissReason.BACK_PRESSED))
-      true
-    }
-    else -> false
-  }
-}
-
-@Composable
-private fun CoverageDashboardOverlay(onDismiss: () -> Unit, modifier: Modifier = Modifier) {
-  // TODO: Implement proper coverage dashboard overlay with ViewModel
-  // For now, show a placeholder
-  androidx.compose.foundation.layout.Box(
-    modifier =
-      modifier
-        .fillMaxSize()
-        .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.5f)),
-    contentAlignment = androidx.compose.ui.Alignment.Center,
-  ) {
-    androidx.compose.material3.Card(
-      modifier = Modifier.fillMaxWidth(COVERAGE_CARD_WIDTH_FRACTION),
-      onClick = onDismiss,
-    ) {
-      androidx.compose.foundation.layout.Column(
-        modifier = Modifier.padding(16.dp),
-        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
-      ) {
-        androidx.compose.material3.Text(
-          text = "Coverage Dashboard",
-          style = androidx.compose.material3.MaterialTheme.typography.headlineSmall,
-        )
-        androidx.compose.material3.Text(
-          text = "This is a placeholder. Tap to dismiss.",
-          style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
-        )
-      }
-    }
-  }
 }

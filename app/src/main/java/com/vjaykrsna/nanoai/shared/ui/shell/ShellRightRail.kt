@@ -42,63 +42,97 @@ internal fun ShellRightRailHost(
 ) {
   val layout = state.layout
   if (layout.supportsRightRail) {
-    Row(modifier = Modifier.fillMaxSize()) {
-      ShellMainSurface(
-        state = state,
-        snackbarHostState = snackbarHostState,
-        onEvent = onEvent,
-        modeContent = modeContent,
-        modifier = Modifier.weight(1f),
-        originalOnEvent = originalOnEvent,
-      )
-
-      Surface(
-        tonalElevation = NanoElevation.level2,
-        modifier = Modifier.fillMaxHeight().width(320.dp).testTag("right_sidebar_permanent"),
-      ) {
-        RightSidebarPanels(state = state, onEvent = onEvent, modifier = Modifier.fillMaxSize())
-      }
-    }
+    PermanentRightRailLayout(
+      state = state,
+      onEvent = onEvent,
+      modeContent = modeContent,
+      snackbarHostState = snackbarHostState,
+      originalOnEvent = originalOnEvent,
+    )
   } else {
-    val parentLayoutDirection = LocalLayoutDirection.current
-    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-      Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopEnd) {
-        CompositionLocalProvider(LocalLayoutDirection provides parentLayoutDirection) {
-          ShellMainSurface(
-            state = state,
-            snackbarHostState = snackbarHostState,
-            onEvent = onEvent,
-            modeContent = modeContent,
-            modifier = Modifier.fillMaxSize().align(Alignment.TopStart),
-            originalOnEvent = originalOnEvent,
-          )
-        }
+    ModalRightRailLayout(
+      state = state,
+      onEvent = onEvent,
+      modeContent = modeContent,
+      snackbarHostState = snackbarHostState,
+      originalOnEvent = originalOnEvent,
+    )
+  }
+}
 
-        AnimatedVisibility(
-          visible = layout.isRightDrawerOpen,
-          enter =
-            slideInHorizontally(
-              animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing)
-            ) { drawerWidth ->
-              drawerWidth
-            },
-          exit =
-            slideOutHorizontally(
-              animationSpec = tween(durationMillis = 160, easing = LinearOutSlowInEasing)
-            ) { drawerWidth ->
-              drawerWidth
-            },
+@Composable
+private fun PermanentRightRailLayout(
+  state: ShellUiState,
+  onEvent: (ShellUiEvent) -> Unit,
+  modeContent: @Composable (ModeId) -> Unit,
+  snackbarHostState: androidx.compose.material3.SnackbarHostState,
+  originalOnEvent: (ShellUiEvent) -> Unit,
+) {
+  Row(modifier = Modifier.fillMaxSize()) {
+    ShellMainSurface(
+      state = state,
+      snackbarHostState = snackbarHostState,
+      onEvent = onEvent,
+      modeContent = modeContent,
+      modifier = Modifier.weight(1f),
+      originalOnEvent = originalOnEvent,
+    )
+
+    Surface(
+      tonalElevation = NanoElevation.level2,
+      modifier = Modifier.fillMaxHeight().width(320.dp).testTag("right_sidebar_permanent"),
+    ) {
+      RightSidebarPanels(state = state, onEvent = onEvent, modifier = Modifier.fillMaxSize())
+    }
+  }
+}
+
+@Composable
+private fun ModalRightRailLayout(
+  state: ShellUiState,
+  onEvent: (ShellUiEvent) -> Unit,
+  modeContent: @Composable (ModeId) -> Unit,
+  snackbarHostState: androidx.compose.material3.SnackbarHostState,
+  originalOnEvent: (ShellUiEvent) -> Unit,
+) {
+  val parentLayoutDirection = LocalLayoutDirection.current
+  CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopEnd) {
+      CompositionLocalProvider(LocalLayoutDirection provides parentLayoutDirection) {
+        ShellMainSurface(
+          state = state,
+          snackbarHostState = snackbarHostState,
+          onEvent = onEvent,
+          modeContent = modeContent,
+          modifier = Modifier.fillMaxSize().align(Alignment.TopStart),
+          originalOnEvent = originalOnEvent,
+        )
+      }
+
+      AnimatedVisibility(
+        visible = state.layout.isRightDrawerOpen,
+        enter =
+          slideInHorizontally(
+            animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing)
+          ) { drawerWidth ->
+            drawerWidth
+          },
+        exit =
+          slideOutHorizontally(
+            animationSpec = tween(durationMillis = 160, easing = LinearOutSlowInEasing)
+          ) { drawerWidth ->
+            drawerWidth
+          },
+      ) {
+        Surface(
+          tonalElevation = NanoElevation.level3,
+          modifier =
+            Modifier.align(Alignment.TopEnd)
+              .fillMaxHeight()
+              .width(320.dp)
+              .testTag("right_sidebar_modal"),
         ) {
-          Surface(
-            tonalElevation = NanoElevation.level3,
-            modifier =
-              Modifier.align(Alignment.TopEnd)
-                .fillMaxHeight()
-                .width(320.dp)
-                .testTag("right_sidebar_modal"),
-          ) {
-            RightSidebarPanels(state = state, onEvent = onEvent, modifier = Modifier.fillMaxSize())
-          }
+          RightSidebarPanels(state = state, onEvent = onEvent, modifier = Modifier.fillMaxSize())
         }
       }
     }

@@ -1,10 +1,5 @@
 package com.vjaykrsna.nanoai.feature.chat.ui
 
-import android.graphics.BitmapFactory
-import android.graphics.ImageDecoder
-import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,6 +21,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -35,12 +31,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
@@ -48,18 +44,21 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.vjaykrsna.nanoai.core.domain.library.Model
 import com.vjaykrsna.nanoai.core.domain.model.Message
 import com.vjaykrsna.nanoai.core.model.MessageRole
 import com.vjaykrsna.nanoai.feature.chat.presentation.ChatError
 import com.vjaykrsna.nanoai.feature.chat.presentation.ChatUiEvent
 import com.vjaykrsna.nanoai.feature.chat.presentation.ChatViewModel
+import com.vjaykrsna.nanoai.feature.chat.presentation.state.ChatUiState
 import com.vjaykrsna.nanoai.feature.chat.ui.components.ModelPicker
+import com.vjaykrsna.nanoai.feature.uiux.presentation.ChatState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.NanoError
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.composer.NanoComposerBar
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.feedback.NanoErrorHandler
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoRadii
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoSpacing
-import java.io.IOException
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -85,115 +84,115 @@ private const val MESSAGE_BUBBLE_WIDTH_FRACTION = 0.85f
 fun ChatScreen(
   modifier: Modifier = Modifier,
   viewModel: ChatViewModel = hiltViewModel(),
-  onUpdateChatState: ((com.vjaykrsna.nanoai.feature.uiux.presentation.ChatState?) -> Unit)? = null,
+  onUpdateChatState: ((ChatState?) -> Unit)? = null,
   onNavigate: (com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId) -> Unit = {},
 ) {
   val uiState by viewModel.state.collectAsStateWithLifecycle()
   val sheetState = rememberModalBottomSheetState()
-
   val snackbarHostState = remember { SnackbarHostState() }
   var activeError by remember { mutableStateOf<NanoError?>(null) }
-  val context = LocalContext.current
 
-  val imagePickerLauncher =
-    rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { uri: Uri?
-      ->
-      uri?.let {
-        try {
-          val bitmap =
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
-              ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, it))
-            } else {
-              context.contentResolver.openInputStream(it)?.use { stream ->
-                BitmapFactory.decodeStream(stream)
-              }
-            }
-          bitmap?.let { viewModel.onImageSelected(it) }
-        } catch (ioException: IOException) {
-          logImageSelectionFailure(ioException)
-        } catch (argumentException: IllegalArgumentException) {
-          logImageSelectionFailure(argumentException)
-        } catch (securityException: SecurityException) {
-          logImageSelectionFailure(securityException)
-        }
+  val launchImagePicker = rememberChatImagePicker { bitmap -> viewModel.onImageSelected(bitmap) }
+
+  HandleChatStateUpdates(uiState, onUpdateChatState)
+  HandleChatEvents(
+    events = viewModel.events,
+    snackbarHostState = snackbarHostState,
+    onError = { activeError = it },
+  )
+
+  ChatScreenScaffold(
+    uiState = uiState,
+    snackbarHostState = snackbarHostState,
+    activeError = activeError,
+    onDismissError = {
+      activeError = null
+      viewModel.clearPendingError()
+    },
+    onComposerTextChange = viewModel::onComposerTextChanged,
+    onSendMessage = {
+      if (uiState.composerText.isNotBlank()) {
+        viewModel.onSendMessage()
+        activeError = null
       }
-    }
+    },
+    onImageSelect = launchImagePicker,
+    onDismissModelPicker = viewModel::dismissModelPicker,
+    onModelSelect = viewModel::selectModel,
+    onManageModels = {
+      viewModel.dismissModelPicker()
+      onNavigate(com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId.LIBRARY)
+    },
+    sheetState = sheetState,
+    modifier = modifier,
+  )
+}
 
-  LaunchedEffect(uiState.personas, uiState.activeThread) {
-    onUpdateChatState?.invoke(
-      com.vjaykrsna.nanoai.feature.uiux.presentation.ChatState(
+@Composable
+private fun HandleChatStateUpdates(
+  uiState: ChatUiState,
+  onUpdateChatState: ((ChatState?) -> Unit)?,
+) {
+  val latestUpdateChatState by rememberUpdatedState(onUpdateChatState)
+  LaunchedEffect(uiState.personas, uiState.activeThread, latestUpdateChatState) {
+    latestUpdateChatState?.invoke(
+      ChatState(
         availablePersonas = uiState.personas,
         currentPersonaId = uiState.activeThread?.personaId,
       )
     )
   }
+}
 
-  LaunchedEffect(viewModel, snackbarHostState) {
-    viewModel.events.collectLatest { event ->
+@Composable
+private fun HandleChatEvents(
+  events: Flow<ChatUiEvent>,
+  snackbarHostState: SnackbarHostState,
+  onError: (NanoError) -> Unit,
+) {
+  val latestOnError by rememberUpdatedState(onError)
+  LaunchedEffect(events, snackbarHostState) {
+    events.collectLatest { event ->
       when (event) {
-        is ChatUiEvent.ErrorRaised -> activeError = event.error.toNanoError()
+        is ChatUiEvent.ErrorRaised -> latestOnError(event.error.toNanoError())
         is ChatUiEvent.ModelSelected ->
           snackbarHostState.showSnackbar("Switched to ${event.modelName}")
       }
     }
   }
+}
 
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun ChatScreenScaffold(
+  uiState: ChatUiState,
+  snackbarHostState: SnackbarHostState,
+  activeError: NanoError?,
+  onDismissError: () -> Unit,
+  onComposerTextChange: (String) -> Unit,
+  onSendMessage: () -> Unit,
+  onImageSelect: () -> Unit,
+  onDismissModelPicker: () -> Unit,
+  onModelSelect: (Model) -> Unit,
+  onManageModels: () -> Unit,
+  sheetState: SheetState,
+  modifier: Modifier = Modifier,
+) {
   Box(
     modifier =
       modifier.fillMaxSize().semantics {
         contentDescription = "Chat screen with message history and input"
       }
   ) {
-    Column(
-      modifier =
-        Modifier.fillMaxSize().padding(horizontal = NanoSpacing.lg, vertical = NanoSpacing.md),
-      verticalArrangement = Arrangement.spacedBy(NanoSpacing.md),
-    ) {
-      MessagesList(
-        messages = uiState.messages,
-        isLoading = uiState.isSendingMessage,
-        modifier = Modifier.weight(1f).fillMaxWidth(),
-      )
-
-      NanoErrorHandler(
-        error = activeError,
-        snackbarHostState = snackbarHostState,
-        modifier = Modifier.fillMaxWidth(),
-        onDismiss = {
-          activeError = null
-          viewModel.clearPendingError()
-        },
-      )
-
-      uiState.attachments.image?.let {
-        Image(
-          bitmap = it.bitmap.asImageBitmap(),
-          contentDescription = "Selected image",
-          modifier = Modifier.size(128.dp),
-        )
-      }
-
-      NanoComposerBar(
-        value = uiState.composerText,
-        onValueChange = { viewModel.onComposerTextChanged(it) },
-        modifier = Modifier.fillMaxWidth(),
-        placeholder = "Type a message…",
-        enabled = !uiState.isSendingMessage && uiState.activeThread != null,
-        onSend = {
-          if (uiState.composerText.isNotBlank()) {
-            viewModel.onSendMessage()
-            activeError = null
-          }
-        },
-        sendEnabled =
-          uiState.composerText.isNotBlank() &&
-            uiState.activeThread != null &&
-            !uiState.isSendingMessage,
-        isSending = uiState.isSendingMessage,
-        onImageSelect = { imagePickerLauncher.launch("image/*") },
-        onAudioRecord = { /* TODO: Implement audio recording */ },
-      )
-    }
+    ChatMessageContent(
+      uiState = uiState,
+      snackbarHostState = snackbarHostState,
+      activeError = activeError,
+      onDismissError = onDismissError,
+      onComposerTextChange = onComposerTextChange,
+      onSendMessage = onSendMessage,
+      onImageSelect = onImageSelect,
+    )
 
     SnackbarHost(
       hostState = snackbarHostState,
@@ -204,18 +203,12 @@ fun ChatScreen(
     )
 
     if (uiState.isModelPickerVisible) {
-      ModalBottomSheet(
-        onDismissRequest = { viewModel.dismissModelPicker() },
-        sheetState = sheetState,
-      ) {
+      ModalBottomSheet(onDismissRequest = onDismissModelPicker, sheetState = sheetState) {
         ModelPicker(
           models = uiState.installedModels,
           selectedModelId = uiState.activeThread?.activeModelId,
-          onModelSelect = { viewModel.selectModel(it) },
-          onManageModelsClick = {
-            viewModel.dismissModelPicker()
-            onNavigate(com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId.LIBRARY)
-          },
+          onModelSelect = onModelSelect,
+          onManageModelsClick = onManageModels,
           modifier = Modifier.fillMaxWidth(),
         )
       }
@@ -223,8 +216,73 @@ fun ChatScreen(
   }
 }
 
-private fun logImageSelectionFailure(throwable: Throwable) {
-  android.util.Log.e("ChatScreen", "Failed to load image", throwable)
+@Composable
+private fun ChatMessageContent(
+  uiState: ChatUiState,
+  snackbarHostState: SnackbarHostState,
+  activeError: NanoError?,
+  onDismissError: () -> Unit,
+  onComposerTextChange: (String) -> Unit,
+  onSendMessage: () -> Unit,
+  onImageSelect: () -> Unit,
+) {
+  Column(
+    modifier =
+      Modifier.fillMaxSize().padding(horizontal = NanoSpacing.lg, vertical = NanoSpacing.md),
+    verticalArrangement = Arrangement.spacedBy(NanoSpacing.md),
+  ) {
+    MessagesList(
+      messages = uiState.messages,
+      isLoading = uiState.isSendingMessage,
+      modifier = Modifier.weight(1f).fillMaxWidth(),
+    )
+
+    NanoErrorHandler(
+      error = activeError,
+      snackbarHostState = snackbarHostState,
+      modifier = Modifier.fillMaxWidth(),
+      onDismiss = onDismissError,
+    )
+
+    uiState.attachments.image?.let { attachment ->
+      Image(
+        bitmap = attachment.bitmap.asImageBitmap(),
+        contentDescription = "Selected image",
+        modifier = Modifier.size(128.dp),
+      )
+    }
+
+    ChatComposerBar(
+      uiState = uiState,
+      onValueChange = onComposerTextChange,
+      onSendMessage = onSendMessage,
+      onImageSelect = onImageSelect,
+    )
+  }
+}
+
+@Composable
+private fun ChatComposerBar(
+  uiState: ChatUiState,
+  onValueChange: (String) -> Unit,
+  onSendMessage: () -> Unit,
+  onImageSelect: () -> Unit,
+) {
+  NanoComposerBar(
+    value = uiState.composerText,
+    onValueChange = onValueChange,
+    modifier = Modifier.fillMaxWidth(),
+    placeholder = "Type a message…",
+    enabled = !uiState.isSendingMessage && uiState.activeThread != null,
+    onSend = onSendMessage,
+    sendEnabled =
+      uiState.composerText.isNotBlank() &&
+        uiState.activeThread != null &&
+        !uiState.isSendingMessage,
+    isSending = uiState.isSendingMessage,
+    onImageSelect = { onImageSelect() },
+    onAudioRecord = { /* TODO: Implement audio recording */ },
+  )
 }
 
 @Composable

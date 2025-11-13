@@ -29,6 +29,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.vjaykrsna.nanoai.core.domain.model.uiux.CommandInvocationSource
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RightPanel
+import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellLayoutState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellUiState
 import com.vjaykrsna.nanoai.feature.uiux.ui.HomeScreen
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.ConnectivityBanner
@@ -57,57 +58,73 @@ internal fun ShellMainSurface(
     },
     snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
   ) { innerPadding ->
-    Column(
-      modifier =
-        Modifier.fillMaxSize()
-          .padding(innerPadding)
-          .testTag("shell_content")
-          .semantics {
-            contentDescription = "Main content area"
-            stateDescription = layout.connectivityStatusDescription
-          }
-          .focusable(),
-      verticalArrangement = Arrangement.Top,
-    ) {
-      val bannerState = state.connectivityBanner
-      if (!layout.isPaletteVisible && bannerState.isVisible) {
-        ConnectivityBanner(
-          state = bannerState,
-          onCtaClick = {
-            bannerState.cta?.let { action ->
-              handleCommandAction(action, CommandInvocationSource.BANNER, onEvent)
-            }
-          },
-          onDismiss = {
-            // Persist dismissal once the repository exposes the corresponding event.
-          },
-          modifier = Modifier.fillMaxWidth().testTag("connectivity_banner"),
-        )
-      }
+    ShellContentColumn(
+      state = state,
+      layout = layout,
+      onEvent = onEvent,
+      modeContent = modeContent,
+      modifier = Modifier.fillMaxSize().padding(innerPadding),
+    )
+  }
+}
 
-      when (layout.activeMode) {
-        ModeId.HOME ->
-          HomeScreen(
-            layout = layout,
-            modeCards = state.modeCards,
-            quickActions = state.quickActions,
-            recentActivity = layout.recentActivity,
-            progressJobs = layout.progressJobs,
-            onModeSelect = { modeId -> onEvent(ShellUiEvent.ModeSelected(modeId)) },
-            onQuickActionSelect = { action ->
-              handleCommandAction(
-                action = action,
-                source = CommandInvocationSource.QUICK_ACTION,
-                onEvent = onEvent,
-              )
-            },
-            onRecentActivitySelect = { item -> onEvent(ShellUiEvent.ModeSelected(item.modeId)) },
-            onProgressRetry = { job -> onEvent(ShellUiEvent.RetryJob(job)) },
-            onProgressDismiss = { job -> onEvent(ShellUiEvent.CompleteJob(job.jobId)) },
-            modifier = Modifier.fillMaxSize(),
-          )
-        else -> modeContent(layout.activeMode)
-      }
+@Composable
+private fun ShellContentColumn(
+  state: ShellUiState,
+  layout: ShellLayoutState,
+  onEvent: (ShellUiEvent) -> Unit,
+  modeContent: @Composable (ModeId) -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  Column(
+    modifier =
+      modifier
+        .testTag("shell_content")
+        .semantics {
+          contentDescription = "Main content area"
+          stateDescription = layout.connectivityStatusDescription
+        }
+        .focusable(),
+    verticalArrangement = Arrangement.Top,
+  ) {
+    val bannerState = state.connectivityBanner
+    if (!layout.isPaletteVisible && bannerState.isVisible) {
+      ConnectivityBanner(
+        state = bannerState,
+        onCtaClick = {
+          bannerState.cta?.let { action ->
+            handleCommandAction(action, CommandInvocationSource.BANNER, onEvent)
+          }
+        },
+        onDismiss = {
+          // Persist dismissal once the repository exposes the corresponding event.
+        },
+        modifier = Modifier.fillMaxWidth().testTag("connectivity_banner"),
+      )
+    }
+
+    when (layout.activeMode) {
+      ModeId.HOME ->
+        HomeScreen(
+          layout = layout,
+          modeCards = state.modeCards,
+          quickActions = state.quickActions,
+          recentActivity = layout.recentActivity,
+          progressJobs = layout.progressJobs,
+          onModeSelect = { modeId -> onEvent(ShellUiEvent.ModeSelected(modeId)) },
+          onQuickActionSelect = { action ->
+            handleCommandAction(
+              action = action,
+              source = CommandInvocationSource.QUICK_ACTION,
+              onEvent = onEvent,
+            )
+          },
+          onRecentActivitySelect = { item -> onEvent(ShellUiEvent.ModeSelected(item.modeId)) },
+          onProgressRetry = { job -> onEvent(ShellUiEvent.RetryJob(job)) },
+          onProgressDismiss = { job -> onEvent(ShellUiEvent.CompleteJob(job.jobId)) },
+          modifier = Modifier.fillMaxSize(),
+        )
+      else -> modeContent(layout.activeMode)
     }
   }
 }

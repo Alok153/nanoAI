@@ -1,8 +1,6 @@
 package com.vjaykrsna.nanoai.feature.uiux.ui.components.composer
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
@@ -46,6 +44,29 @@ fun NanoComposerBar(
     verticalAlignment = Alignment.CenterVertically,
     modifier = modifier.padding(vertical = NanoSpacing.sm),
   ) {
+    ComposerAttachmentButtons(
+      enabled = enabled,
+      onImageSelect = onImageSelect,
+      onAudioRecord = onAudioRecord,
+    )
+    ComposerInputField(
+      value = value,
+      onValueChange = onValueChange,
+      placeholder = placeholder,
+      enabled = enabled,
+    )
+    Spacer(modifier = Modifier.width(NanoSpacing.sm))
+    ComposerSendSection(isSending = isSending, sendEnabled = sendEnabled, onSend = onSend)
+  }
+}
+
+@Composable
+private fun ComposerAttachmentButtons(
+  enabled: Boolean,
+  onImageSelect: () -> Unit,
+  onAudioRecord: () -> Unit,
+) {
+  Row(verticalAlignment = Alignment.CenterVertically) {
     IconButton(
       onClick = onImageSelect,
       enabled = enabled,
@@ -68,26 +89,33 @@ fun NanoComposerBar(
         tint = MaterialTheme.colorScheme.onSurfaceVariant,
       )
     }
-    OutlinedTextField(
-      value = value,
-      onValueChange = onValueChange,
-      modifier = Modifier.weight(1f),
-      placeholder = { Text(text = placeholder) },
-      enabled = enabled,
-      keyboardOptions =
-        KeyboardOptions(
-          capitalization = KeyboardCapitalization.Sentences,
-          imeAction = ImeAction.Send,
-        ),
-    )
+  }
+}
 
-    Spacer(modifier = Modifier.width(NanoSpacing.sm))
+@Composable
+private fun ComposerInputField(
+  value: String,
+  onValueChange: (String) -> Unit,
+  placeholder: String,
+  enabled: Boolean,
+) {
+  OutlinedTextField(
+    value = value,
+    onValueChange = onValueChange,
+    modifier = Modifier.weight(1f),
+    placeholder = { Text(text = placeholder) },
+    enabled = enabled,
+    keyboardOptions =
+      KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Send),
+  )
+}
 
-    AnimatedVisibility(visible = isSending, enter = fadeIn(), exit = fadeOut()) {
+@Composable
+private fun ComposerSendSection(isSending: Boolean, sendEnabled: Boolean, onSend: () -> Unit) {
+  AnimatedContent(targetState = isSending, label = "composer_send_state") { sending ->
+    if (sending) {
       CircularProgressIndicator(modifier = Modifier.size(24.dp))
-    }
-
-    AnimatedVisibility(visible = !isSending, enter = fadeIn(), exit = fadeOut()) {
+    } else {
       IconButton(
         onClick = onSend,
         enabled = sendEnabled,

@@ -34,76 +34,102 @@ class ShellViewModelUiStateAggregationTest {
   fun uiStateReflectsCombinedSources() =
     runTest(dispatcher) {
       val repositories = createFakeRepositories()
-      val navigationOperationsUseCase =
-        NavigationOperationsUseCase(repositories.navigationRepository, dispatcher)
+      val viewModel = createShellViewModel(repositories, dispatcher)
+      val fixtures = uiAggregationFixtures()
 
-      val navigationViewModel = mockk<NavigationViewModel>(relaxed = true)
-      val connectivityViewModel = mockk<ConnectivityViewModel>(relaxed = true)
-      val themeViewModel = mockk<ThemeViewModel>(relaxed = true)
-      val progressViewModel = createProgressViewModel(repositories, dispatcher)
-
-      val viewModel =
-        ShellViewModel(
-          navigationOperationsUseCase,
-          navigationViewModel,
-          connectivityViewModel,
-          progressViewModel,
-          themeViewModel,
-          dispatcher,
-        )
-
-      val activityItem =
-        RecentActivityItem(
-          id = "recent",
-          modeId = ModeId.CHAT,
-          title = "Chat session",
-          timestamp = Instant.now(),
-          status = RecentStatus.COMPLETED,
-        )
-      val undoPayload = UndoPayload(actionId = "undo.chat", metadata = mapOf("origin" to "test"))
-      val job =
-        ProgressJob(
-          jobId = UUID.randomUUID(),
-          type = JobType.MODEL_DOWNLOAD,
-          status = JobStatus.RUNNING,
-          progress = 0.5f,
-        )
-      val persona =
-        PersonaProfile(
-          personaId = UUID.randomUUID(),
-          name = "Test Persona",
-          description = "",
-          systemPrompt = "Help the user",
-          createdAt = Clock.System.now(),
-          updatedAt = Clock.System.now(),
-        )
-      val chatState =
-        ChatState(availablePersonas = listOf(persona), currentPersonaId = persona.personaId)
-
-      val fakeNavigationRepository = repositories.navigationRepository as FakeNavigationRepository
-      viewModel.updateChatState(chatState)
-      viewModel.onEvent(ShellUiEvent.QueueJob(job))
-      viewModel.onEvent(ShellUiEvent.ShowCoverageDashboard)
+      viewModel.applyInitialState(fixtures)
 
       advanceUntilIdle()
 
-      fakeNavigationRepository.emitRecentActivity(listOf(activityItem))
-      fakeNavigationRepository.emitUndoPayload(undoPayload)
+      val navigationRepository = repositories.navigationRepository as FakeNavigationRepository
+      navigationRepository.emitRecentActivity(listOf(fixtures.activityItem))
+      navigationRepository.emitUndoPayload(fixtures.undoPayload)
 
       advanceUntilIdle()
 
-      val uiState =
-        viewModel.uiState.first { state ->
-          state.layout.recentActivity.isNotEmpty() &&
-            state.layout.pendingUndoAction == undoPayload &&
-            state.layout.progressJobs.any { it.jobId == job.jobId }
-        }
+      val uiState = viewModel.awaitAggregatedState(fixtures)
 
-      assertThat(uiState.layout.recentActivity).containsExactly(activityItem)
-      assertThat(uiState.layout.pendingUndoAction).isEqualTo(undoPayload)
-      assertThat(uiState.layout.progressJobs).contains(job)
+      assertThat(uiState.layout.recentActivity).containsExactly(fixtures.activityItem)
+      assertThat(uiState.layout.pendingUndoAction).isEqualTo(fixtures.undoPayload)
+      assertThat(uiState.layout.progressJobs).contains(fixtures.job)
       assertThat(uiState.layout.showCoverageDashboard).isTrue()
-      assertThat(uiState.chatState).isEqualTo(chatState)
+      assertThat(uiState.chatState).isEqualTo(fixtures.chatState)
       assertThat(uiState.quickActions).isNotEmpty()
     }
+}
+
+private fun createShellViewModel(
+  repositories: FakeRepositories,
+  dispatcher: StandardTestDispatcher,
+): ShellViewModel {
+  val navigationOperationsUseCase =
+    NavigationOperationsUseCase(repositories.navigationRepository, dispatcher)
+  val navigationViewModel = mockk<NavigationViewModel>(relaxed = true)
+  val connectivityViewModel = mockk<ConnectivityViewModel>(relaxed = true)
+  val themeViewModel = mockk<ThemeViewModel>(relaxed = true)
+  val progressViewModel = createProgressViewModel(repositories, dispatcher)
+
+  return ShellViewModel(
+    navigationOperationsUseCase,
+    navigationViewModel,
+    connectivityViewModel,
+    progressViewModel,
+    themeViewModel,
+    dispatcher,
+  )
+}
+
+private data class UiAggregationFixtures(
+  val activityItem: RecentActivityItem,
+  val undoPayload: UndoPayload,
+  val job: ProgressJob,
+  val chatState: ChatState,
+)
+
+private fun uiAggregationFixtures(): UiAggregationFixtures {
+  val persona =
+    PersonaProfile(
+      personaId = UUID.randomUUID(),
+      name = "Test Persona",
+      description = "",
+      systemPrompt = "Help the user",
+      createdAt = Clock.System.now(),
+      updatedAt = Clock.System.now(),
+    )
+
+  return UiAggregationFixtures(
+    activityItem =
+      RecentActivityItem(
+        id = "recent",
+        modeId = ModeId.CHAT,
+        title = "Chat session",
+        timestamp = Instant.now(),
+        status = RecentStatus.COMPLETED,
+      ),
+    undoPayload = UndoPayload(actionId = "undo.chat", metadata = mapOf("origin" to "test")),
+    job =
+      ProgressJob(
+        jobId = UUID.randomUUID(),
+        type = JobType.MODEL_DOWNLOAD,
+        status = JobStatus.RUNNING,
+        progress = 0.5f,
+      ),
+    chatState = ChatState(availablePersonas = listOf(persona), currentPersonaId = persona.personaId),
+  )
+}
+
+private fun ShellViewModel.applyInitialState(fixtures: UiAggregationFixtures) {
+  updateChatState(fixtures.chatState)
+  onEvent(ShellUiEvent.QueueJob(fixtures.job))
+  onEvent(ShellUiEvent.ShowCoverageDashboard)
+}
+
+private suspend fun ShellViewModel.awaitAggregatedState(
+  fixtures: UiAggregationFixtures
+): ShellUiState {
+  return uiState.first { state ->
+    state.layout.recentActivity.isNotEmpty() &&
+      state.layout.pendingUndoAction == fixtures.undoPayload &&
+      state.layout.progressJobs.any { it.jobId == fixtures.job.jobId }
+  }
 }

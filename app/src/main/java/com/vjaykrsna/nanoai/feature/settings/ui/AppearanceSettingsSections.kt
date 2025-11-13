@@ -29,70 +29,79 @@ internal fun AppearanceThemeCard(
   SettingsInteractiveCard(
     title = "Theme & High Contrast",
     modifier = modifier,
-    infoContent = {
-      Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(
-          text =
-            "Theme options control the overall appearance and color scheme of the app interface.",
-          style = MaterialTheme.typography.bodyMedium,
-        )
-        Text(
-          text = "Available themes:",
-          style = MaterialTheme.typography.labelMedium,
-          color = MaterialTheme.colorScheme.primary,
-        )
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-          Text(
-            "• System: Matches your device's theme setting",
-            style = MaterialTheme.typography.bodySmall,
-          )
-          Text(
-            "• Light: Clean, bright interface for well-lit environments",
-            style = MaterialTheme.typography.bodySmall,
-          )
-          Text(
-            "• Dark: Easy on the eyes in low-light conditions",
-            style = MaterialTheme.typography.bodySmall,
-          )
-          Text(
-            "• AMOLED: Pure black background for OLED screens",
-            style = MaterialTheme.typography.bodySmall,
-          )
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-          text =
-            "High contrast increases color differences for better accessibility. Use this if you have visual impairments or are in bright sunlight.",
-          style = MaterialTheme.typography.bodyMedium,
-        )
-      }
-    },
+    infoContent = { AppearanceThemeExplainer() },
   ) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
       ThemePreferenceChips(
         selected = state.themePreference,
         onSelect = onThemeChange,
         modifier = Modifier.fillMaxWidth(),
-        supportedThemes =
-          listOf(
-            ThemePreference.SYSTEM,
-            ThemePreference.LIGHT,
-            ThemePreference.DARK,
-            ThemePreference.AMOLED,
-          ),
+        supportedThemes = supportedThemeOptions(),
       )
 
-      Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-      ) {
-        Text(text = "High contrast", style = MaterialTheme.typography.bodyLarge)
-        Switch(checked = state.highContrastEnabled, onCheckedChange = onHighContrastChange)
-      }
+      HighContrastToggle(enabled = state.highContrastEnabled, onToggle = onHighContrastChange)
     }
   }
 }
+
+@Composable
+private fun AppearanceThemeExplainer() {
+  Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Text(
+      text = "Theme options control the overall appearance and color scheme of the app interface.",
+      style = MaterialTheme.typography.bodyMedium,
+    )
+    Text(
+      text = "Available themes:",
+      style = MaterialTheme.typography.labelMedium,
+      color = MaterialTheme.colorScheme.primary,
+    )
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+      Text(
+        text = "• System: Matches your device's theme setting",
+        style = MaterialTheme.typography.bodySmall,
+      )
+      Text(
+        text = "• Light: Clean, bright interface for well-lit environments",
+        style = MaterialTheme.typography.bodySmall,
+      )
+      Text(
+        text = "• Dark: Easy on the eyes in low-light conditions",
+        style = MaterialTheme.typography.bodySmall,
+      )
+      Text(
+        text = "• AMOLED: Pure black background for OLED screens",
+        style = MaterialTheme.typography.bodySmall,
+      )
+    }
+    Spacer(modifier = Modifier.height(8.dp))
+    Text(
+      text =
+        "High contrast increases color differences for better accessibility. Use this if you have visual impairments or are in bright sunlight.",
+      style = MaterialTheme.typography.bodyMedium,
+    )
+  }
+}
+
+@Composable
+private fun HighContrastToggle(enabled: Boolean, onToggle: (Boolean) -> Unit) {
+  Row(
+    modifier = Modifier.fillMaxWidth(),
+    horizontalArrangement = Arrangement.SpaceBetween,
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    Text(text = "High contrast", style = MaterialTheme.typography.bodyLarge)
+    Switch(checked = enabled, onCheckedChange = onToggle)
+  }
+}
+
+private fun supportedThemeOptions(): List<ThemePreference> =
+  listOf(
+    ThemePreference.SYSTEM,
+    ThemePreference.LIGHT,
+    ThemePreference.DARK,
+    ThemePreference.AMOLED,
+  )
 
 @Composable
 internal fun AppearanceDensityCard(

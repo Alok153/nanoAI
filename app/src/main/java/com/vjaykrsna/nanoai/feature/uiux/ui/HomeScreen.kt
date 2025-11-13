@@ -163,55 +163,76 @@ private fun QuickActionsPanel(
       modifier = Modifier.padding(NanoSpacing.md),
       verticalArrangement = Arrangement.spacedBy(NanoSpacing.sm),
     ) {
-      Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-      ) {
-        Column(verticalArrangement = Arrangement.spacedBy(NanoSpacing.xs)) {
-          Text(text = "Quick actions", style = MaterialTheme.typography.titleMedium)
-          Text(
-            text = if (actions.isEmpty()) "No shortcuts available" else "${actions.size} shortcuts",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-          )
-        }
-        TextButton(
-          onClick = onToggle,
-          modifier =
-            Modifier.testTag("home_tools_toggle").semantics {
-              contentDescription = "Toggle tools panel"
-              stateDescription = if (expanded) "Expanded" else "Collapsed"
-            },
-          enabled = actions.isNotEmpty(),
-        ) {
-          Text(if (expanded) "Hide" else "Show")
-        }
-      }
+      QuickActionsHeader(actions = actions, expanded = expanded, onToggle = onToggle)
+      QuickActionsBody(
+        actions = actions,
+        expanded = expanded,
+        onQuickActionSelect = onQuickActionSelect,
+      )
+    }
+  }
+}
 
-      if (expanded && actions.isNotEmpty()) {
-        Box(modifier = Modifier.fillMaxWidth().testTag("home_tools_panel_expanded")) {
-          QuickActionsRow(
-            actions = actions,
-            onQuickActionSelect = onQuickActionSelect,
-            modifier = Modifier.fillMaxWidth(),
-          )
-        }
-      } else {
-        Surface(
-          modifier = Modifier.fillMaxWidth().testTag("home_tools_panel_collapsed"),
-          tonalElevation = NanoElevation.level0,
-          color = MaterialTheme.colorScheme.surfaceVariant,
-          shape = MaterialTheme.shapes.medium,
-        ) {
-          Text(
-            text = if (actions.isEmpty()) "No tools to show" else "Tools panel collapsed",
-            modifier = Modifier.padding(vertical = NanoSpacing.sm, horizontal = NanoSpacing.md),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-          )
-        }
-      }
+@Composable
+private fun QuickActionsHeader(
+  actions: List<CommandAction>,
+  expanded: Boolean,
+  onToggle: () -> Unit,
+) {
+  Row(
+    modifier = Modifier.fillMaxWidth(),
+    horizontalArrangement = Arrangement.SpaceBetween,
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    Column(verticalArrangement = Arrangement.spacedBy(NanoSpacing.xs)) {
+      Text(text = "Quick actions", style = MaterialTheme.typography.titleMedium)
+      Text(
+        text = if (actions.isEmpty()) "No shortcuts available" else "${actions.size} shortcuts",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+    }
+    TextButton(
+      onClick = onToggle,
+      modifier =
+        Modifier.testTag("home_tools_toggle").semantics {
+          contentDescription = "Toggle tools panel"
+          stateDescription = if (expanded) "Expanded" else "Collapsed"
+        },
+      enabled = actions.isNotEmpty(),
+    ) {
+      Text(if (expanded) "Hide" else "Show")
+    }
+  }
+}
+
+@Composable
+private fun QuickActionsBody(
+  actions: List<CommandAction>,
+  expanded: Boolean,
+  onQuickActionSelect: (CommandAction) -> Unit,
+) {
+  if (expanded && actions.isNotEmpty()) {
+    Box(modifier = Modifier.fillMaxWidth().testTag("home_tools_panel_expanded")) {
+      QuickActionsRow(
+        actions = actions,
+        onQuickActionSelect = onQuickActionSelect,
+        modifier = Modifier.fillMaxWidth(),
+      )
+    }
+  } else {
+    Surface(
+      modifier = Modifier.fillMaxWidth().testTag("home_tools_panel_collapsed"),
+      tonalElevation = NanoElevation.level0,
+      color = MaterialTheme.colorScheme.surfaceVariant,
+      shape = MaterialTheme.shapes.medium,
+    ) {
+      Text(
+        text = if (actions.isEmpty()) "No tools to show" else "Tools panel collapsed",
+        modifier = Modifier.padding(vertical = NanoSpacing.sm, horizontal = NanoSpacing.md),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
     }
   }
 }
