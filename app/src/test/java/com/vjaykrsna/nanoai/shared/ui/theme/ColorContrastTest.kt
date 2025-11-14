@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai.shared.ui.theme
 
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import com.vjaykrsna.nanoai.shared.ui.theme.ColorContrastUtil.calculateContrastRatio
@@ -49,72 +50,7 @@ class ColorContrastTest {
         inversePrimary = LightInversePrimary,
       )
 
-    // Test primary color combinations
-    assertContrastRatio(colorScheme.primary, colorScheme.onPrimary, "Light Primary on OnPrimary")
-
-    assertContrastRatio(
-      colorScheme.primaryContainer,
-      colorScheme.onPrimaryContainer,
-      "Light PrimaryContainer on OnPrimaryContainer",
-    )
-
-    // Test secondary color combinations
-    assertContrastRatio(
-      colorScheme.secondary,
-      colorScheme.onSecondary,
-      "Light Secondary on OnSecondary",
-    )
-
-    assertContrastRatio(
-      colorScheme.secondaryContainer,
-      colorScheme.onSecondaryContainer,
-      "Light SecondaryContainer on OnSecondaryContainer",
-    )
-
-    // Test tertiary color combinations
-    assertContrastRatio(
-      colorScheme.tertiary,
-      colorScheme.onTertiary,
-      "Light Tertiary on OnTertiary",
-    )
-
-    assertContrastRatio(
-      colorScheme.tertiaryContainer,
-      colorScheme.onTertiaryContainer,
-      "Light TertiaryContainer on OnTertiaryContainer",
-    )
-
-    // Test background combinations
-    assertContrastRatio(
-      colorScheme.background,
-      colorScheme.onBackground,
-      "Light Background on OnBackground",
-    )
-
-    // Test surface combinations
-    assertContrastRatio(colorScheme.surface, colorScheme.onSurface, "Light Surface on OnSurface")
-
-    assertContrastRatio(
-      colorScheme.surfaceVariant,
-      colorScheme.onSurfaceVariant,
-      "Light SurfaceVariant on OnSurfaceVariant",
-    )
-
-    // Test error combinations
-    assertContrastRatio(colorScheme.error, colorScheme.onError, "Light Error on OnError")
-
-    assertContrastRatio(
-      colorScheme.errorContainer,
-      colorScheme.onErrorContainer,
-      "Light ErrorContainer on OnErrorContainer",
-    )
-
-    // Test inverse combinations
-    assertContrastRatio(
-      colorScheme.inverseSurface,
-      colorScheme.inverseOnSurface,
-      "Light InverseSurface on InverseOnSurface",
-    )
+    assertSchemeContrast("Light", colorScheme)
   }
 
   @Test
@@ -150,68 +86,7 @@ class ColorContrastTest {
         inversePrimary = DarkInversePrimary,
       )
 
-    // Test primary color combinations
-    assertContrastRatio(colorScheme.primary, colorScheme.onPrimary, "Dark Primary on OnPrimary")
-
-    assertContrastRatio(
-      colorScheme.primaryContainer,
-      colorScheme.onPrimaryContainer,
-      "Dark PrimaryContainer on OnPrimaryContainer",
-    )
-
-    // Test secondary color combinations
-    assertContrastRatio(
-      colorScheme.secondary,
-      colorScheme.onSecondary,
-      "Dark Secondary on OnSecondary",
-    )
-
-    assertContrastRatio(
-      colorScheme.secondaryContainer,
-      colorScheme.onSecondaryContainer,
-      "Dark SecondaryContainer on OnSecondaryContainer",
-    )
-
-    // Test tertiary color combinations
-    assertContrastRatio(colorScheme.tertiary, colorScheme.onTertiary, "Dark Tertiary on OnTertiary")
-
-    assertContrastRatio(
-      colorScheme.tertiaryContainer,
-      colorScheme.onTertiaryContainer,
-      "Dark TertiaryContainer on OnTertiaryContainer",
-    )
-
-    // Test background combinations
-    assertContrastRatio(
-      colorScheme.background,
-      colorScheme.onBackground,
-      "Dark Background on OnBackground",
-    )
-
-    // Test surface combinations
-    assertContrastRatio(colorScheme.surface, colorScheme.onSurface, "Dark Surface on OnSurface")
-
-    assertContrastRatio(
-      colorScheme.surfaceVariant,
-      colorScheme.onSurfaceVariant,
-      "Dark SurfaceVariant on OnSurfaceVariant",
-    )
-
-    // Test error combinations
-    assertContrastRatio(colorScheme.error, colorScheme.onError, "Dark Error on OnError")
-
-    assertContrastRatio(
-      colorScheme.errorContainer,
-      colorScheme.onErrorContainer,
-      "Dark ErrorContainer on OnErrorContainer",
-    )
-
-    // Test inverse combinations
-    assertContrastRatio(
-      colorScheme.inverseSurface,
-      colorScheme.inverseOnSurface,
-      "Dark InverseSurface on InverseOnSurface",
-    )
+    assertSchemeContrast("Dark", colorScheme)
   }
 
   @Test
@@ -247,72 +122,7 @@ class ColorContrastTest {
         inversePrimary = DarkInversePrimary,
       )
 
-    // Test primary color combinations
-    assertContrastRatio(colorScheme.primary, colorScheme.onPrimary, "AMOLED Primary on OnPrimary")
-
-    assertContrastRatio(
-      colorScheme.primaryContainer,
-      colorScheme.onPrimaryContainer,
-      "AMOLED PrimaryContainer on OnPrimaryContainer",
-    )
-
-    // Test secondary color combinations
-    assertContrastRatio(
-      colorScheme.secondary,
-      colorScheme.onSecondary,
-      "AMOLED Secondary on OnSecondary",
-    )
-
-    assertContrastRatio(
-      colorScheme.secondaryContainer,
-      colorScheme.onSecondaryContainer,
-      "AMOLED SecondaryContainer on OnSecondaryContainer",
-    )
-
-    // Test tertiary color combinations
-    assertContrastRatio(
-      colorScheme.tertiary,
-      colorScheme.onTertiary,
-      "AMOLED Tertiary on OnTertiary",
-    )
-
-    assertContrastRatio(
-      colorScheme.tertiaryContainer,
-      colorScheme.onTertiaryContainer,
-      "AMOLED TertiaryContainer on OnTertiaryContainer",
-    )
-
-    // Test background combinations (AMOLED uses pure black background)
-    assertContrastRatio(
-      colorScheme.background,
-      colorScheme.onBackground,
-      "AMOLED Background on OnBackground",
-    )
-
-    // Test surface combinations (AMOLED uses pure black surface)
-    assertContrastRatio(colorScheme.surface, colorScheme.onSurface, "AMOLED Surface on OnSurface")
-
-    assertContrastRatio(
-      colorScheme.surfaceVariant,
-      colorScheme.onSurfaceVariant,
-      "AMOLED SurfaceVariant on OnSurfaceVariant",
-    )
-
-    // Test error combinations
-    assertContrastRatio(colorScheme.error, colorScheme.onError, "AMOLED Error on OnError")
-
-    assertContrastRatio(
-      colorScheme.errorContainer,
-      colorScheme.onErrorContainer,
-      "AMOLED ErrorContainer on OnErrorContainer",
-    )
-
-    // Test inverse combinations
-    assertContrastRatio(
-      colorScheme.inverseSurface,
-      colorScheme.inverseOnSurface,
-      "AMOLED InverseSurface on InverseOnSurface",
-    )
+    assertSchemeContrast("AMOLED", colorScheme)
   }
 
   /**
@@ -332,5 +142,49 @@ class ColorContrastTest {
       "$description has contrast ratio $contrastRatio:1, which is below WCAG AA minimum of $wcagAAMinimumRatio:1",
       contrastRatio >= wcagAAMinimumRatio,
     )
+  }
+
+  private fun assertSchemeContrast(label: String, scheme: ColorScheme) {
+    listOf(
+        Triple("$label Primary on OnPrimary", scheme.primary, scheme.onPrimary),
+        Triple(
+          "$label PrimaryContainer on OnPrimaryContainer",
+          scheme.primaryContainer,
+          scheme.onPrimaryContainer,
+        ),
+        Triple("$label Secondary on OnSecondary", scheme.secondary, scheme.onSecondary),
+        Triple(
+          "$label SecondaryContainer on OnSecondaryContainer",
+          scheme.secondaryContainer,
+          scheme.onSecondaryContainer,
+        ),
+        Triple("$label Tertiary on OnTertiary", scheme.tertiary, scheme.onTertiary),
+        Triple(
+          "$label TertiaryContainer on OnTertiaryContainer",
+          scheme.tertiaryContainer,
+          scheme.onTertiaryContainer,
+        ),
+        Triple("$label Background on OnBackground", scheme.background, scheme.onBackground),
+        Triple("$label Surface on OnSurface", scheme.surface, scheme.onSurface),
+        Triple(
+          "$label SurfaceVariant on OnSurfaceVariant",
+          scheme.surfaceVariant,
+          scheme.onSurfaceVariant,
+        ),
+        Triple("$label Error on OnError", scheme.error, scheme.onError),
+        Triple(
+          "$label ErrorContainer on OnErrorContainer",
+          scheme.errorContainer,
+          scheme.onErrorContainer,
+        ),
+        Triple(
+          "$label InverseSurface on InverseOnSurface",
+          scheme.inverseSurface,
+          scheme.inverseOnSurface,
+        ),
+      )
+      .forEach { (description, background, foreground) ->
+        assertContrastRatio(background, foreground, description)
+      }
   }
 }

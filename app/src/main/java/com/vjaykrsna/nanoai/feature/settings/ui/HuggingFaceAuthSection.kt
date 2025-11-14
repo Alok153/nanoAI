@@ -50,99 +50,112 @@ internal fun HuggingFaceAuthCard(
     title = "Hugging Face Account",
     modifier = modifier,
     showInfoButton = true,
-    infoContent = {
-      Text(
-        text =
-          "Connect your Hugging Face account to access models and datasets from the Hugging Face Hub.",
-        style = MaterialTheme.typography.bodyLarge,
-      )
-    },
+    infoContent = { HuggingFaceInfoSheet() },
     content = {
       Column(
         modifier = Modifier.fillMaxWidth().padding(NanoSpacing.md),
         verticalArrangement = Arrangement.spacedBy(NanoSpacing.md),
       ) {
-        val statusText =
-          when {
-            state.isVerifying -> "Verifying credential…"
-            state.isAuthenticated && state.accountLabel != null ->
-              "Connected as ${state.accountLabel}"
-            state.isAuthenticated -> "Connected"
-            else -> "Not connected"
-          }
-
-        val statusColor =
-          when {
-            state.isAuthenticated -> MaterialTheme.colorScheme.primary
-            state.isVerifying -> MaterialTheme.colorScheme.tertiary
-            else -> MaterialTheme.colorScheme.onSurfaceVariant
-          }
-
-        Text(
-          text = statusText,
-          style = MaterialTheme.typography.bodyMedium,
-          color = statusColor,
-          fontWeight = FontWeight.Medium,
+        AuthStatusHeadline(state)
+        SupportingStatusLine(state)
+        HuggingFaceAuthActions(onLoginClick = onLoginClick, onApiKeyClick = onApiKeyClick)
+        DisconnectButton(
+          state = state,
+          onDisconnectClick = onDisconnectClick,
+          modifier = Modifier.align(Alignment.End),
         )
-
-        val supportingText = supportingStatusLine(state)
-        if (supportingText != null) {
-          Text(
-            text = supportingText,
-            style = MaterialTheme.typography.bodySmall,
-            color =
-              if (state.lastError != null) MaterialTheme.colorScheme.error
-              else MaterialTheme.colorScheme.onSurfaceVariant,
-          )
-        }
-
-        Row(
-          modifier = Modifier.fillMaxWidth(),
-          horizontalArrangement = Arrangement.spacedBy(NanoSpacing.sm),
-        ) {
-          OutlinedButton(
-            onClick = onLoginClick,
-            modifier =
-              Modifier.weight(1f).semantics {
-                contentDescription = "Login with Hugging Face account"
-              },
-          ) {
-            Icon(
-              Icons.AutoMirrored.Filled.Login,
-              contentDescription = null,
-              modifier = Modifier.padding(end = 8.dp),
-            )
-            Text("Login")
-          }
-
-          FilledTonalButton(
-            onClick = onApiKeyClick,
-            modifier =
-              Modifier.weight(1f).semantics { contentDescription = "Enter API key manually" },
-          ) {
-            Icon(
-              Icons.Default.Key,
-              contentDescription = null,
-              modifier = Modifier.padding(end = 8.dp),
-            )
-            Text("API Key")
-          }
-        }
-
-        if (state.isAuthenticated) {
-          TextButton(
-            onClick = onDisconnectClick,
-            modifier =
-              Modifier.align(Alignment.End).semantics {
-                contentDescription = "Disconnect Hugging Face account"
-              },
-          ) {
-            Text("Disconnect")
-          }
-        }
       }
     },
   )
+}
+
+@Composable
+private fun HuggingFaceInfoSheet() {
+  Text(
+    text =
+      "Connect your Hugging Face account to access models and datasets from the Hugging Face Hub.",
+    style = MaterialTheme.typography.bodyLarge,
+  )
+}
+
+@Composable
+private fun AuthStatusHeadline(state: HuggingFaceAuthState) {
+  val statusText =
+    when {
+      state.isVerifying -> "Verifying credential…"
+      state.isAuthenticated && state.accountLabel != null -> "Connected as ${state.accountLabel}"
+      state.isAuthenticated -> "Connected"
+      else -> "Not connected"
+    }
+
+  val statusColor =
+    when {
+      state.isAuthenticated -> MaterialTheme.colorScheme.primary
+      state.isVerifying -> MaterialTheme.colorScheme.tertiary
+      else -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
+
+  Text(
+    text = statusText,
+    style = MaterialTheme.typography.bodyMedium,
+    color = statusColor,
+    fontWeight = FontWeight.Medium,
+  )
+}
+
+@Composable
+private fun SupportingStatusLine(state: HuggingFaceAuthState) {
+  val supportingText = supportingStatusLine(state) ?: return
+  val color =
+    if (state.lastError != null) MaterialTheme.colorScheme.error
+    else MaterialTheme.colorScheme.onSurfaceVariant
+
+  Text(text = supportingText, style = MaterialTheme.typography.bodySmall, color = color)
+}
+
+@Composable
+private fun HuggingFaceAuthActions(onLoginClick: () -> Unit, onApiKeyClick: () -> Unit) {
+  Row(
+    modifier = Modifier.fillMaxWidth(),
+    horizontalArrangement = Arrangement.spacedBy(NanoSpacing.sm),
+  ) {
+    OutlinedButton(
+      onClick = onLoginClick,
+      modifier =
+        Modifier.weight(1f).semantics { contentDescription = "Login with Hugging Face account" },
+    ) {
+      Icon(
+        Icons.AutoMirrored.Filled.Login,
+        contentDescription = null,
+        modifier = Modifier.padding(end = 8.dp),
+      )
+      Text("Login")
+    }
+
+    FilledTonalButton(
+      onClick = onApiKeyClick,
+      modifier = Modifier.weight(1f).semantics { contentDescription = "Enter API key manually" },
+    ) {
+      Icon(Icons.Default.Key, contentDescription = null, modifier = Modifier.padding(end = 8.dp))
+      Text("API Key")
+    }
+  }
+}
+
+@Composable
+private fun DisconnectButton(
+  state: HuggingFaceAuthState,
+  onDisconnectClick: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  if (!state.isAuthenticated) return
+
+  TextButton(
+    onClick = onDisconnectClick,
+    modifier = modifier.semantics { contentDescription = "Disconnect Hugging Face account" },
+  ) {
+    Text("Disconnect")
+  }
 }
 
 private fun supportingStatusLine(state: HuggingFaceAuthState): String? =

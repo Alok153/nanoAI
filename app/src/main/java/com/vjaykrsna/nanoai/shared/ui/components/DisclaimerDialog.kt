@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -46,84 +47,137 @@ fun DisclaimerDialog(
   modifier: Modifier = Modifier,
   onDialogShow: (() -> Unit)? = null,
 ) {
-  // String resources
-  val dialogContentDescription = stringResource(R.string.disclaimer_dialog_content_description)
-  val declineContentDescription = stringResource(R.string.disclaimer_decline_content_description)
-  val agreeContentDescription = stringResource(R.string.disclaimer_agree_content_description)
-  val scrollComplete = stringResource(R.string.disclaimer_scroll_complete)
-  val scrollIncomplete = stringResource(R.string.disclaimer_scroll_incomplete)
-
+  val strings = rememberDisclaimerStrings()
   val scrollState = rememberScrollState()
   var acceptEnabled by rememberSaveable { mutableStateOf(false) }
+  val onDialogShowState = rememberUpdatedState(onDialogShow)
 
-  LaunchedEffect(Unit) { onDialogShow?.invoke() }
-
-  LaunchedEffect(scrollState) {
-    snapshotFlow { !scrollState.canScrollForward }
-      .distinctUntilChanged()
-      .filter { it }
-      .collect { acceptEnabled = true }
-  }
+  LaunchedEffect(Unit) { onDialogShowState.value?.invoke() }
+  ObserveScrollCompletion(onScrolledToEnd = { acceptEnabled = true }, scrollState = scrollState)
 
   Dialog(
     onDismissRequest = onDismissRequest,
     properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),
   ) {
-    Surface(
-      modifier =
-        modifier.fillMaxWidth().testTag("disclaimer_dialog_container").semantics {
-          contentDescription = dialogContentDescription
-        },
-      shape = MaterialTheme.shapes.extraLarge,
-      tonalElevation = 6.dp,
+    DisclaimerDialogSurface(
+      strings = strings,
+      scrollState = scrollState,
+      acceptEnabled = acceptEnabled,
+      onDecline = onDecline,
+      onAccept = onAccept,
+      modifier = modifier,
+    )
+  }
+}
+
+@Composable
+private fun rememberDisclaimerStrings(): DisclaimerStrings =
+  DisclaimerStrings(
+    dialogContentDescription = stringResource(R.string.disclaimer_dialog_content_description),
+    declineContentDescription = stringResource(R.string.disclaimer_decline_content_description),
+    agreeContentDescription = stringResource(R.string.disclaimer_agree_content_description),
+    scrollComplete = stringResource(R.string.disclaimer_scroll_complete),
+    scrollIncomplete = stringResource(R.string.disclaimer_scroll_incomplete),
+  )
+
+@Composable
+private fun ObserveScrollCompletion(
+  onScrolledToEnd: () -> Unit,
+  scrollState: androidx.compose.foundation.ScrollState,
+) {
+  val onScrolledToEndState = rememberUpdatedState(onScrolledToEnd)
+  LaunchedEffect(scrollState) {
+    snapshotFlow { !scrollState.canScrollForward }
+      .distinctUntilChanged()
+      .filter { it }
+      .collect { onScrolledToEndState.value() }
+  }
+}
+
+@Composable
+private fun DisclaimerDialogSurface(
+  strings: DisclaimerStrings,
+  scrollState: androidx.compose.foundation.ScrollState,
+  acceptEnabled: Boolean,
+  onDecline: () -> Unit,
+  onAccept: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  Surface(
+    modifier =
+      modifier.fillMaxWidth().testTag("disclaimer_dialog_container").semantics {
+        contentDescription = strings.dialogContentDescription
+      },
+    shape = MaterialTheme.shapes.extraLarge,
+    tonalElevation = 6.dp,
+  ) {
+    Column(
+      modifier = Modifier.fillMaxWidth().padding(all = 24.dp),
+      verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-      Column(
-        modifier = Modifier.fillMaxWidth().padding(all = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
-      ) {
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-          Text(
-            text = stringResource(R.string.disclaimer_title),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.SemiBold,
-          )
-          Text(
-            text = stringResource(R.string.disclaimer_subtitle),
-            style = MaterialTheme.typography.bodyMedium,
-          )
-        }
-
-        DisclaimerScrollableContent(scrollState = scrollState)
-
-        Row(
-          modifier = Modifier.fillMaxWidth(),
-          horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
-        ) {
-          TextButton(
-            onClick = onDecline,
-            modifier =
-              Modifier.testTag("disclaimer_decline_button").semantics {
-                contentDescription = declineContentDescription
-              },
-          ) {
-            Text(stringResource(R.string.disclaimer_decline))
-          }
-          Button(
-            onClick = onAccept,
-            enabled = acceptEnabled,
-            modifier =
-              Modifier.testTag("disclaimer_accept_button").semantics {
-                contentDescription = agreeContentDescription
-                stateDescription = if (acceptEnabled) scrollComplete else scrollIncomplete
-              },
-          ) {
-            Text(stringResource(R.string.disclaimer_agree))
-          }
-        }
-      }
+      DisclaimerDialogHeader()
+      DisclaimerScrollableContent(scrollState = scrollState)
+      DisclaimerDialogActions(strings, acceptEnabled, onDecline, onAccept)
     }
   }
 }
+
+@Composable
+private fun DisclaimerDialogHeader() {
+  Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Text(
+      text = stringResource(R.string.disclaimer_title),
+      style = MaterialTheme.typography.titleLarge,
+      fontWeight = FontWeight.SemiBold,
+    )
+    Text(
+      text = stringResource(R.string.disclaimer_subtitle),
+      style = MaterialTheme.typography.bodyMedium,
+    )
+  }
+}
+
+@Composable
+private fun DisclaimerDialogActions(
+  strings: DisclaimerStrings,
+  acceptEnabled: Boolean,
+  onDecline: () -> Unit,
+  onAccept: () -> Unit,
+) {
+  Row(
+    modifier = Modifier.fillMaxWidth(),
+    horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
+  ) {
+    TextButton(
+      onClick = onDecline,
+      modifier =
+        Modifier.testTag("disclaimer_decline_button").semantics {
+          contentDescription = strings.declineContentDescription
+        },
+    ) {
+      Text(stringResource(R.string.disclaimer_decline))
+    }
+    Button(
+      onClick = onAccept,
+      enabled = acceptEnabled,
+      modifier =
+        Modifier.testTag("disclaimer_accept_button").semantics {
+          contentDescription = strings.agreeContentDescription
+          stateDescription = if (acceptEnabled) strings.scrollComplete else strings.scrollIncomplete
+        },
+    ) {
+      Text(stringResource(R.string.disclaimer_agree))
+    }
+  }
+}
+
+private data class DisclaimerStrings(
+  val dialogContentDescription: String,
+  val declineContentDescription: String,
+  val agreeContentDescription: String,
+  val scrollComplete: String,
+  val scrollIncomplete: String,
+)
 
 @Composable
 private fun DisclaimerScrollableContent(scrollState: androidx.compose.foundation.ScrollState) {

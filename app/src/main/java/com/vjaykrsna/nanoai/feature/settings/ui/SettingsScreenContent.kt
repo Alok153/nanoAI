@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,7 +18,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -33,7 +31,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.semantics.contentDescription
@@ -48,7 +45,7 @@ import kotlinx.coroutines.launch
 private const val SETTINGS_HEADER_WIDTH_FRACTION = 0.6f
 
 // NOTE: Tab order designed to match user workflow - frequently changed settings first
-private enum class SettingsCategory(val title: String) {
+internal enum class SettingsCategory(val title: String) {
   APPEARANCE(title = "Appearance"),
   BEHAVIOR(title = "Behavior"),
   APIS(title = "APIs"),
@@ -167,22 +164,7 @@ private fun SettingsCategoryContent(
   modifier: Modifier = Modifier,
 ) {
   if (state.isLoading) {
-    Box(
-      modifier = Modifier.fillMaxSize().semantics { contentDescription = "Loading settings" },
-      contentAlignment = Alignment.Center,
-    ) {
-      Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-      ) {
-        CircularProgressIndicator()
-        Text(
-          "Loading settings...",
-          style = MaterialTheme.typography.bodyMedium,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-      }
-    }
+    SettingsCategoryLoading(modifier.fillMaxSize())
     return
   }
 
@@ -191,96 +173,7 @@ private fun SettingsCategoryContent(
     verticalArrangement = Arrangement.spacedBy(NanoSpacing.lg),
     contentPadding = PaddingValues(top = NanoSpacing.lg, bottom = 112.dp),
   ) {
-    when (category) {
-      SettingsCategory.APPEARANCE -> {
-        item {
-          AppearanceThemeCard(
-            state = state,
-            onThemeChange = actions.onThemePreferenceChange,
-            onHighContrastChange = actions.onHighContrastChange,
-          )
-        }
-        item {
-          AppearanceDensityCard(state = state, onDensityChange = actions.onVisualDensityChange)
-        }
-        item { AppearanceTypographyCard() }
-        item { AppearanceAnimationPreferencesCard() }
-      }
-      SettingsCategory.BEHAVIOR -> {
-        item { BehaviorStartupCard() }
-        item { BehaviorInputPreferencesCard() }
-        item { BehaviorAccessibilityCard() }
-        item { BehaviorNotificationsCard() }
-      }
-      SettingsCategory.APIS -> {
-        // NOTE: Migration card shows once after credential storage upgrade
-        if (state.showMigrationSuccessNotification) {
-          item { MigrationSuccessCard(onDismiss = actions.onDismissMigrationSuccess) }
-        }
-
-        item { ApiProvidersCard(hasProviders = state.apiProviders.isNotEmpty()) }
-
-        items(
-          items = state.apiProviders,
-          key = { it.providerId },
-          contentType = { "api_provider_card" },
-        ) { provider ->
-          ApiProviderCard(
-            provider = provider,
-            onEdit = { actions.onProviderEdit(provider) },
-            onDelete = { actions.onProviderDelete(provider) },
-          )
-        }
-
-        item {
-          HuggingFaceAuthCard(
-            state = state.huggingFaceAuthState,
-            onLoginClick = actions.onHuggingFaceLoginClick,
-            onApiKeyClick = actions.onHuggingFaceApiKeyClick,
-            onDisconnectClick = actions.onHuggingFaceDisconnectClick,
-          )
-        }
-
-        item { APIsLoadBalancingCard() }
-        item { APIsTestingCard() }
-      }
-      SettingsCategory.PRIVACY_SECURITY -> {
-        item {
-          PrivacySection(
-            privacyPreferences = state.privacyPreference,
-            onTelemetryToggle = actions.onTelemetryToggle,
-            onRetentionPolicyChange = actions.onRetentionPolicyChange,
-          )
-        }
-        item { PrivacyAppLockCard() }
-        item { PrivacyDataManagementCard() }
-        item { PrivacyEncryptionCard() }
-      }
-      SettingsCategory.BACKUP_SYNC -> {
-        item {
-          DataManagementSection(
-            onImportBackupClick = actions.onImportBackupClick,
-            onExportBackupClick = actions.onExportBackupClick,
-          )
-        }
-        item { BackupAutomatedCard() }
-        item { BackupCloudSyncCard() }
-        item { BackupDataMigrationCard() }
-      }
-      SettingsCategory.ABOUT -> {
-        item { AboutNanoAICard() }
-        item { AboutSupportFeedbackCard() }
-        item { AboutDocumentationCard() }
-        item { AboutSystemInformationCard() }
-        item {
-          AboutAdvancedDiagnosticsCard(
-            onNavigateToCoverageDashboard = actions.onNavigateToCoverageDashboard
-          )
-        }
-        item { AboutCacheManagementCard() }
-        item { AboutExperimentalFeaturesCard() }
-      }
-    }
+    settingsCategoryItems(category, state, actions)
   }
 }
 

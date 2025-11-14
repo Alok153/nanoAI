@@ -14,8 +14,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
@@ -47,13 +45,8 @@ import com.vjaykrsna.nanoai.core.domain.model.library.DownloadStatus
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryTab
 import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryDownloadItem
 import com.vjaykrsna.nanoai.feature.library.presentation.model.ModelLibrarySections
-import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.DOWNLOAD_QUEUE_HEADER_TAG
-import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.DOWNLOAD_QUEUE_TAG
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.LIST_TAG
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.PERCENTAGE_MULTIPLIER
-import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.SECTION_ATTENTION_TAG
-import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.SECTION_AVAILABLE_TAG
-import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.SECTION_INSTALLED_TAG
 import java.util.UUID
 
 @Composable
@@ -86,107 +79,12 @@ internal fun ModelLibraryContent(
     contentPadding = PaddingValues(bottom = 32.dp),
     verticalArrangement = Arrangement.spacedBy(16.dp),
   ) {
-    if (showLocalCallout) {
-      item(key = "local_cta") { LocalLibraryCallout(onImportLocalModel = onImportLocalModel) }
-    }
-
-    if (sections.downloads.isNotEmpty()) {
-      item(key = "downloads_header") {
-        SectionHeader(
-          title = "Active downloads",
-          subtitle = "In-progress and queued runtime updates",
-          modifier = Modifier.testTag(DOWNLOAD_QUEUE_HEADER_TAG),
-        )
-      }
-      items(
-        items = sections.downloads,
-        key = { "download_${it.task.taskId}" },
-        contentType = { "download_item" },
-      ) { item ->
-        DownloadQueueCard(
-          item = item,
-          onPause = onPause,
-          onResume = onResume,
-          onCancel = onCancel,
-          onRetry = onRetry,
-          modifier = Modifier.testTag(DOWNLOAD_QUEUE_TAG),
-        )
-      }
-    }
-
-    if (sections.attention.isNotEmpty()) {
-      item(key = "attention_header") {
-        SectionHeader(
-          title = "Needs attention",
-          subtitle = "Downloads that require manual action",
-          modifier = Modifier.testTag(SECTION_ATTENTION_TAG),
-        )
-      }
-      items(
-        items = sections.attention,
-        key = { "attention_${it.modelId}_${it.providerType}_${it.version}" },
-        contentType = { "model_attention_item" },
-      ) { model ->
-        ModelManagementCard(
-          model = model,
-          primaryActionLabel = "Retry",
-          onPrimaryAction = { onDownload(model) },
-          secondaryActionLabel = "Delete",
-          onSecondaryAction = { onDelete(model) },
-          primaryActionIcon = Icons.Filled.Refresh,
-        )
-      }
-    }
-
-    if (sections.installed.isNotEmpty()) {
-      item(key = "installed_header") {
-        SectionHeader(
-          title = "Installed",
-          subtitle = "Local runtimes ready for inference",
-          modifier = Modifier.testTag(SECTION_INSTALLED_TAG),
-        )
-      }
-      items(
-        items = sections.installed,
-        key = { "installed_${it.modelId}_${it.providerType}_${it.version}" },
-        contentType = { "model_installed_item" },
-      ) { model ->
-        ModelManagementCard(
-          model = model,
-          primaryActionLabel = "Remove",
-          onPrimaryAction = { onDelete(model) },
-          primaryActionIcon = Icons.Filled.Delete,
-        )
-      }
-    }
-
-    if (sections.available.isNotEmpty()) {
-      item(key = "available_header") {
-        SectionHeader(
-          title = "Available",
-          subtitle = "Models ready for download",
-          modifier = Modifier.testTag(SECTION_AVAILABLE_TAG),
-        )
-      }
-      items(
-        items = sections.available,
-        key = { "available_${it.modelId}_${it.providerType}_${it.version}" },
-        contentType = { "model_available_item" },
-      ) { model ->
-        ModelManagementCard(
-          model = model,
-          primaryActionLabel = "Download",
-          onPrimaryAction = { onDownload(model) },
-          secondaryActionLabel = null,
-          onSecondaryAction = {},
-          primaryActionIcon = Icons.Filled.Download,
-        )
-      }
-    }
-
-    if (!listHasContent) {
-      item(key = "empty_state") { EmptyState() }
-    }
+    localLibraryCalloutSection(showLocalCallout, onImportLocalModel)
+    downloadSection(sections.downloads, onPause, onResume, onCancel, onRetry)
+    attentionSection(sections.attention, onDownload, onDelete)
+    installedSection(sections.installed, onDelete)
+    availableSection(sections.available, onDownload)
+    emptyStateSection(listHasContent)
   }
 }
 
@@ -239,7 +137,7 @@ internal fun HuggingFaceLibraryContent(
 }
 
 @Composable
-private fun DownloadQueueCard(
+internal fun DownloadQueueCard(
   item: LibraryDownloadItem,
   onPause: (UUID) -> Unit,
   onResume: (UUID) -> Unit,
@@ -273,7 +171,7 @@ private fun DownloadQueueCard(
 }
 
 @Composable
-private fun SectionHeader(title: String, subtitle: String, modifier: Modifier = Modifier) {
+internal fun SectionHeader(title: String, subtitle: String, modifier: Modifier = Modifier) {
   Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
     Text(
       text = title,
@@ -290,7 +188,7 @@ private fun SectionHeader(title: String, subtitle: String, modifier: Modifier = 
 }
 
 @Composable
-private fun LocalLibraryCallout(onImportLocalModel: (() -> Unit)?) {
+internal fun LocalLibraryCallout(onImportLocalModel: (() -> Unit)?) {
   Surface(shape = MaterialTheme.shapes.large, tonalElevation = 2.dp) {
     Column(
       modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -396,7 +294,7 @@ private fun LinearDownloadIndicator(progress: Float) {
 }
 
 @Composable
-private fun EmptyState(
+internal fun EmptyState(
   title: String = "No models to show",
   message: String = "Adjust your filters or connect to the catalog to discover new runtimes.",
 ) {

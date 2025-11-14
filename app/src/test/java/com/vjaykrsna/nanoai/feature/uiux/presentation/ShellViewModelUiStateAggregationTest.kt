@@ -18,6 +18,7 @@ import java.util.UUID
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Clock
@@ -26,7 +27,7 @@ import org.junit.jupiter.api.extension.RegisterExtension
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ShellViewModelUiStateAggregationTest {
-  private val dispatcher = StandardTestDispatcher()
+  private val dispatcher: TestDispatcher = StandardTestDispatcher()
 
   @JvmField @RegisterExtension val mainDispatcher = MainDispatcherExtension(dispatcher)
 
@@ -60,7 +61,7 @@ class ShellViewModelUiStateAggregationTest {
 
 private fun createShellViewModel(
   repositories: FakeRepositories,
-  dispatcher: StandardTestDispatcher,
+  dispatcher: TestDispatcher,
 ): ShellViewModel {
   val navigationOperationsUseCase =
     NavigationOperationsUseCase(repositories.navigationRepository, dispatcher)

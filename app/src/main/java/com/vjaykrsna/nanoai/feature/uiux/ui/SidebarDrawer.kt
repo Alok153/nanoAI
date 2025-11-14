@@ -37,65 +37,74 @@ fun SidebarDrawer(
         .semantics { contentDescription = "Sidebar navigation" }
         .testTag("sidebar_drawer")
   ) {
-    Text(
-      text = "Navigation",
-      style = MaterialTheme.typography.titleMedium,
-      modifier = Modifier.semantics { heading() },
-    )
-    NavigationDrawerItem(
-      icon = { Icon(Icons.Outlined.Home, contentDescription = null) },
-      label = { Text("Home") },
-      selected = activeRoute?.startsWith("home") == true,
+    SidebarSectionTitle(text = "Navigation", style = MaterialTheme.typography.titleMedium)
+    SidebarNavItem(
+      label = "Home",
+      icon = Icons.Outlined.Home,
+      isSelected = activeRoute?.startsWith("home") == true,
+      testTag = "sidebar_nav_home",
       onClick = onNavigateHome,
-      modifier =
-        Modifier.testTag("sidebar_nav_home").semantics {
-          contentDescription = "Navigate to Home"
-          if (activeRoute?.startsWith("home") == true) stateDescription = "Currently selected"
-        },
-      colors =
-        NavigationDrawerItemDefaults.colors(
-          selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-          unselectedContainerColor = MaterialTheme.colorScheme.surface,
-        ),
     )
-    NavigationDrawerItem(
-      icon = { Icon(Icons.Outlined.Settings, contentDescription = null) },
-      label = { Text("Settings") },
-      selected = activeRoute?.startsWith("settings") == true,
+    SidebarNavItem(
+      label = "Settings",
+      icon = Icons.Outlined.Settings,
+      isSelected = activeRoute?.startsWith("settings") == true,
+      testTag = "sidebar_item_settings",
       onClick = onNavigateSettings,
-      modifier =
-        Modifier.testTag("sidebar_item_settings").semantics {
-          contentDescription = "Navigate to Settings"
-          if (activeRoute?.startsWith("settings") == true) stateDescription = "Currently selected"
-        },
-      colors =
-        NavigationDrawerItemDefaults.colors(
-          selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-          unselectedContainerColor = MaterialTheme.colorScheme.surface,
-        ),
     )
     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-    Text(
-      text = "Pinned tools",
-      style = MaterialTheme.typography.titleSmall,
-      modifier = Modifier.semantics { heading() },
-    )
-    pinnedTools.forEach { tool ->
-      Text(
-        text = tool,
-        style = MaterialTheme.typography.bodySmall,
-        modifier =
-          Modifier.fillMaxWidth()
-            .padding(vertical = 4.dp)
-            .testTag("sidebar_pinned_$tool")
-            .semantics { contentDescription = "$tool pinned tool" },
-      )
-    }
+    SidebarSectionTitle(text = "Pinned tools", style = MaterialTheme.typography.titleSmall)
+    PinnedToolsList(pinnedTools)
     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
     Text(
       text = "Deep links",
       style = MaterialTheme.typography.titleSmall,
       modifier = Modifier.testTag("sidebar_deeplink_slot").semantics { heading() },
+    )
+  }
+}
+
+@Composable
+private fun SidebarSectionTitle(text: String, style: androidx.compose.ui.text.TextStyle) {
+  Text(text = text, style = style, modifier = Modifier.semantics { heading() })
+}
+
+@Composable
+private fun SidebarNavItem(
+  label: String,
+  icon: androidx.compose.ui.graphics.vector.ImageVector,
+  isSelected: Boolean,
+  testTag: String,
+  onClick: () -> Unit,
+) {
+  NavigationDrawerItem(
+    icon = { Icon(icon, contentDescription = null) },
+    label = { Text(label) },
+    selected = isSelected,
+    onClick = onClick,
+    modifier =
+      Modifier.testTag(testTag).semantics {
+        contentDescription = "Navigate to $label"
+        if (isSelected) stateDescription = "Currently selected"
+      },
+    colors =
+      NavigationDrawerItemDefaults.colors(
+        selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+        unselectedContainerColor = MaterialTheme.colorScheme.surface,
+      ),
+  )
+}
+
+@Composable
+private fun PinnedToolsList(pinnedTools: List<String>) {
+  pinnedTools.forEach { tool ->
+    Text(
+      text = tool,
+      style = MaterialTheme.typography.bodySmall,
+      modifier =
+        Modifier.fillMaxWidth().padding(vertical = 4.dp).testTag("sidebar_pinned_$tool").semantics {
+          contentDescription = "$tool pinned tool"
+        },
     )
   }
 }

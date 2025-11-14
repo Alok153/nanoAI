@@ -2,6 +2,7 @@ package com.vjaykrsna.nanoai.feature.uiux.ui.components.composer
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -93,7 +94,7 @@ private fun ComposerAttachmentButtons(
 }
 
 @Composable
-private fun ComposerInputField(
+private fun RowScope.ComposerInputField(
   value: String,
   onValueChange: (String) -> Unit,
   placeholder: String,

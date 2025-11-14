@@ -51,81 +51,24 @@ class HuggingFaceModelCardTest {
 
   @Test
   fun `displays enhanced metadata when available`() {
-    val model =
-      HuggingFaceModelSummary(
-        modelId = "test/model",
-        displayName = "Test Model",
-        author = "test-author",
-        pipelineTag = "text-generation",
-        libraryName = "transformers",
-        tags = listOf("tag1", "tag2"),
-        likes = 100,
-        downloads = 1000,
-        license = "apache-2.0",
-        languages = listOf("en", "es"),
-        baseModel = "gpt-2",
-        architectures = listOf("Transformer", "GPT"),
-        modelType = "gpt2",
-        totalSizeBytes = 1024L * 1024 * 1024 * 2, // 2 GB
-        summary = "A powerful language model",
-        description = "This is a detailed description of the model",
-        trendingScore = 95,
-        createdAt = Instant.parse("2024-01-01T00:00:00Z"),
-        lastModified = Instant.parse("2024-01-02T00:00:00Z"),
-        isPrivate = false,
-      )
+    composeTestRule.setContent { TestingTheme { HuggingFaceModelCard(enhancedModel()) } }
 
-    composeTestRule.setContent { TestingTheme { HuggingFaceModelCard(model) } }
+    assertExactText("Test Model")
+    assertExactText("By test-author")
 
-    // Basic info
-    composeTestRule
-      .onNodeWithText("Test Model", substring = false, useUnmergedTree = true)
-      .assertExists()
-    composeTestRule
-      .onNodeWithText("By test-author", substring = false, useUnmergedTree = true)
-      .assertExists()
+    assertSubstring("apache")
+    assertSubstring("Languages:")
+    assertSubstring("en, es")
+    assertSubstring("Base model:")
+    assertAnyNode("gpt-2")
+    assertSubstring("Architectures:")
+    assertAnyNode("Transformer")
+    assertSubstring("Size:")
+    assertAnyNode("GB")
+    assertSubstring("powerful language")
 
-    // Enhanced metadata
-    composeTestRule
-      .onNodeWithText("apache", substring = true, ignoreCase = true, useUnmergedTree = true)
-      .assertExists()
-    composeTestRule
-      .onNodeWithText("Languages:", substring = true, ignoreCase = true, useUnmergedTree = true)
-      .assertExists()
-    composeTestRule
-      .onNodeWithText("en, es", substring = true, ignoreCase = true, useUnmergedTree = true)
-      .assertExists()
-    composeTestRule
-      .onNodeWithText("Base model:", substring = true, ignoreCase = true, useUnmergedTree = true)
-      .assertExists()
-    val baseModelNodes =
-      composeTestRule
-        .onAllNodesWithText("gpt-2", substring = true, ignoreCase = true, useUnmergedTree = true)
-        .fetchSemanticsNodes()
-    assertThat(baseModelNodes).isNotEmpty()
-    composeTestRule
-      .onNodeWithText("Architectures:", substring = true, ignoreCase = true, useUnmergedTree = true)
-      .assertExists()
-    val architectureNodes =
-      composeTestRule
-        .onAllNodesWithText("Transformer", substring = true, useUnmergedTree = true)
-        .fetchSemanticsNodes()
-    assertThat(architectureNodes).isNotEmpty()
-    composeTestRule
-      .onNodeWithText("Size:", substring = true, ignoreCase = true, useUnmergedTree = true)
-      .assertExists()
-    val sizeNodes =
-      composeTestRule
-        .onAllNodesWithText("GB", substring = true, ignoreCase = true, useUnmergedTree = true)
-        .fetchSemanticsNodes()
-    assertThat(sizeNodes).isNotEmpty()
-    composeTestRule
-      .onNodeWithText("powerful language", substring = true, useUnmergedTree = true)
-      .assertExists()
-
-    // Date formatting
-    composeTestRule.onNodeWithText("01/01/24").assertExists() // created date
-    composeTestRule.onNodeWithText("01/02/24").assertExists() // modified date
+    composeTestRule.onNodeWithText("01/01/24").assertExists()
+    composeTestRule.onNodeWithText("01/02/24").assertExists()
   }
 
   @Test
@@ -277,4 +220,46 @@ class HuggingFaceModelCardTest {
       .assertExists()
     composeTestRule.onNodeWithText("15", substring = true, useUnmergedTree = true).assertExists()
   }
+}
+
+private fun enhancedModel(): HuggingFaceModelSummary =
+  HuggingFaceModelSummary(
+    modelId = "test/model",
+    displayName = "Test Model",
+    author = "test-author",
+    pipelineTag = "text-generation",
+    libraryName = "transformers",
+    tags = listOf("tag1", "tag2"),
+    likes = 100,
+    downloads = 1000,
+    license = "apache-2.0",
+    languages = listOf("en", "es"),
+    baseModel = "gpt-2",
+    architectures = listOf("Transformer", "GPT"),
+    modelType = "gpt2",
+    totalSizeBytes = 1024L * 1024 * 1024 * 2,
+    summary = "A powerful language model",
+    description = "This is a detailed description of the model",
+    trendingScore = 95,
+    createdAt = Instant.parse("2024-01-01T00:00:00Z"),
+    lastModified = Instant.parse("2024-01-02T00:00:00Z"),
+    isPrivate = false,
+  )
+
+private fun HuggingFaceModelCardTest.assertExactText(text: String) {
+  composeTestRule.onNodeWithText(text, substring = false, useUnmergedTree = true).assertExists()
+}
+
+private fun HuggingFaceModelCardTest.assertSubstring(text: String) {
+  composeTestRule
+    .onNodeWithText(text, substring = true, ignoreCase = true, useUnmergedTree = true)
+    .assertExists()
+}
+
+private fun HuggingFaceModelCardTest.assertAnyNode(text: String) {
+  val nodes =
+    composeTestRule
+      .onAllNodesWithText(text, substring = true, ignoreCase = true, useUnmergedTree = true)
+      .fetchSemanticsNodes()
+  assertThat(nodes).isNotEmpty()
 }

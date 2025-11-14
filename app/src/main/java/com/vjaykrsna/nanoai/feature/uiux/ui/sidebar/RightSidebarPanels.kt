@@ -49,76 +49,105 @@ fun RightSidebarPanels(
   val layout = state.layout
   val activePanel = layout.activeRightPanel ?: RightPanel.MODEL_SELECTOR
 
-  Surface(
-    modifier =
-      modifier.testTag("right_sidebar_panels").semantics {
-        stateDescription =
-          when (activePanel) {
-            RightPanel.MODEL_SELECTOR -> "Model controls"
-            RightPanel.SETTINGS_SHORTCUT -> "Settings shortcuts"
-          }
-      },
-    tonalElevation = 2.dp,
-  ) {
-    Column(
-      modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 16.dp),
-      verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-      RightSidebarHeader(
-        activePanel = activePanel,
-        isDrawerOpen = layout.isRightDrawerOpen,
-        onClose = {
-          if (layout.isRightDrawerOpen && layout.activeRightPanel != null) {
-            onEvent(ShellUiEvent.ToggleRightDrawer(layout.activeRightPanel))
-          }
-        },
-      )
+  Surface(modifier = modifier.rightSidebarSemantics(activePanel), tonalElevation = 2.dp) {
+    RightSidebarContent(state = state, activePanel = activePanel, onEvent = onEvent)
+  }
+}
 
-      RightPanelSwitcher(
-        activePanel = activePanel,
-        onPanelSelect = { panel ->
-          if (panel != activePanel) {
-            onEvent(ShellUiEvent.ToggleRightDrawer(panel))
-          }
-        },
-      )
-
+private fun Modifier.rightSidebarSemantics(activePanel: RightPanel): Modifier =
+  testTag("right_sidebar_panels").semantics {
+    stateDescription =
       when (activePanel) {
-        RightPanel.MODEL_SELECTOR ->
-          if (layout.activeMode == ModeId.CHAT && state.chatState != null) {
-            ChatModelSelectorPanel(
-              availablePersonas = state.chatState.availablePersonas,
-              currentPersonaId = state.chatState.currentPersonaId,
-              onPersonaSelect = { persona ->
-                onEvent(
-                  ShellUiEvent.ChatPersonaSelected(
-                    persona.personaId,
-                    com.vjaykrsna.nanoai.core.model.PersonaSwitchAction.CONTINUE_THREAD,
-                  )
-                )
-              },
-            )
-          } else {
-            ModelSelectorPanel(
-              activeMode = layout.activeMode,
-              modeCards = state.modeCards,
-              connectivity = layout.connectivity,
-              onModeSelect = { modeId -> onEvent(ShellUiEvent.ModeSelected(modeId)) },
-              onOpenPalette = {
-                onEvent(ShellUiEvent.ShowCommandPalette(PaletteSource.QUICK_ACTION))
-              },
-              onOpenLibrary = { onEvent(ShellUiEvent.ModeSelected(ModeId.LIBRARY)) },
-            )
-          }
-        RightPanel.SETTINGS_SHORTCUT ->
-          SettingsShortcutsPanel(
-            preferences = state.preferences,
-            onThemeSelect = { theme -> onEvent(ShellUiEvent.UpdateTheme(theme)) },
-            onDensitySelect = { density -> onEvent(ShellUiEvent.UpdateDensity(density)) },
-            onOpenSettings = { onEvent(ShellUiEvent.ModeSelected(ModeId.SETTINGS)) },
-          )
+        RightPanel.MODEL_SELECTOR -> "Model controls"
+        RightPanel.SETTINGS_SHORTCUT -> "Settings shortcuts"
       }
-    }
+  }
+
+@Composable
+private fun RightSidebarContent(
+  state: ShellUiState,
+  activePanel: RightPanel,
+  onEvent: (ShellUiEvent) -> Unit,
+) {
+  val layout = state.layout
+  Column(
+    modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 16.dp),
+    verticalArrangement = Arrangement.spacedBy(16.dp),
+  ) {
+    RightSidebarHeader(
+      activePanel = activePanel,
+      isDrawerOpen = layout.isRightDrawerOpen,
+      onClose = { closePanelIfNeeded(layout, onEvent) },
+    )
+
+    RightPanelSwitcher(
+      activePanel = activePanel,
+      onPanelSelect = { panel -> togglePanel(panel, activePanel, onEvent) },
+    )
+
+    RightSidebarPanelContent(state = state, activePanel = activePanel, onEvent = onEvent)
+  }
+}
+
+private fun closePanelIfNeeded(
+  layout: com.vjaykrsna.nanoai.feature.uiux.presentation.ShellLayoutState,
+  onEvent: (ShellUiEvent) -> Unit,
+) {
+  if (layout.isRightDrawerOpen && layout.activeRightPanel != null) {
+    onEvent(ShellUiEvent.ToggleRightDrawer(layout.activeRightPanel))
+  }
+}
+
+private fun togglePanel(
+  targetPanel: RightPanel,
+  currentPanel: RightPanel,
+  onEvent: (ShellUiEvent) -> Unit,
+) {
+  if (targetPanel != currentPanel) {
+    onEvent(ShellUiEvent.ToggleRightDrawer(targetPanel))
+  }
+}
+
+@Composable
+private fun RightSidebarPanelContent(
+  state: ShellUiState,
+  activePanel: RightPanel,
+  onEvent: (ShellUiEvent) -> Unit,
+) {
+  when (activePanel) {
+    RightPanel.MODEL_SELECTOR -> RightSidebarModelPanel(state = state, onEvent = onEvent)
+    RightPanel.SETTINGS_SHORTCUT ->
+      SettingsShortcutsPanel(
+        preferences = state.preferences,
+        onThemeSelect = { theme -> onEvent(ShellUiEvent.UpdateTheme(theme)) },
+        onDensitySelect = { density -> onEvent(ShellUiEvent.UpdateDensity(density)) },
+        onOpenSettings = { onEvent(ShellUiEvent.ModeSelected(ModeId.SETTINGS)) },
+      )
+  }
+}
+
+@Composable
+private fun RightSidebarModelPanel(state: ShellUiState, onEvent: (ShellUiEvent) -> Unit) {
+  val layout = state.layout
+  if (layout.activeMode == ModeId.CHAT && state.chatState != null) {
+    ChatModelSelectorPanel(
+      availablePersonas = state.chatState.availablePersonas,
+      currentPersonaId = state.chatState.currentPersonaId,
+      onPersonaSelect = { persona ->
+        onEvent(
+          ShellUiEvent.ChatPersonaSelected(persona.personaId, PersonaSwitchAction.CONTINUE_THREAD)
+        )
+      },
+    )
+  } else {
+    ModelSelectorPanel(
+      activeMode = layout.activeMode,
+      modeCards = state.modeCards,
+      connectivity = layout.connectivity,
+      onModeSelect = { modeId -> onEvent(ShellUiEvent.ModeSelected(modeId)) },
+      onOpenPalette = { onEvent(ShellUiEvent.ShowCommandPalette(PaletteSource.QUICK_ACTION)) },
+      onOpenLibrary = { onEvent(ShellUiEvent.ModeSelected(ModeId.LIBRARY)) },
+    )
   }
 }
 

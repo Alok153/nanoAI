@@ -56,58 +56,8 @@ class CoverageReportContractTest {
 
   @Test
   fun `risk register is sorted by severity`() {
-    val riskRegister =
-      listOf(
-        RiskRegisterItem(
-          riskId = "risk-medium-vm",
-          layer = TestLayer.VIEW_MODEL,
-          description = "ViewModel emits stale state",
-          severity = RiskRegisterItem.Severity.MEDIUM,
-          targetBuild = "build-2025-10-18",
-          status = RiskRegisterItem.Status.OPEN,
-          mitigation = "Add regression suite",
-        ),
-        RiskRegisterItem(
-          riskId = "risk-critical-data",
-          layer = TestLayer.DATA,
-          description = "Room DAO lacks offline write coverage",
-          severity = RiskRegisterItem.Severity.CRITICAL,
-          targetBuild = "build-2025-10-20",
-          status = RiskRegisterItem.Status.OPEN,
-          mitigation = "Expand DAO integration tests",
-        ),
-        RiskRegisterItem(
-          riskId = "risk-low-history",
-          layer = TestLayer.DATA,
-          description = "History cache misses refresh occasionally",
-          severity = RiskRegisterItem.Severity.LOW,
-          targetBuild = null,
-          status = RiskRegisterItem.Status.DEFERRED,
-          mitigation = "Monitor via telemetry",
-        ),
-        RiskRegisterItem(
-          riskId = "risk-high-ui",
-          layer = TestLayer.UI,
-          description = "Compose semantics missing for chat composer",
-          severity = RiskRegisterItem.Severity.HIGH,
-          targetBuild = "build-2025-10-15",
-          status = RiskRegisterItem.Status.IN_PROGRESS,
-          mitigation = "Add Compose accessibility tests",
-        ),
-      )
-
-    val catalog =
-      listOf(
-        TestSuiteCatalogEntry(
-          suiteId = "suite-coverage",
-          owner = "quality-engineering",
-          layer = TestLayer.VIEW_MODEL,
-          journey = "Coverage guard",
-          coverageContribution = 6.0,
-          riskTags =
-            setOf("risk-critical-data", "risk-high-ui", "risk-medium-vm", "risk-low-history"),
-        )
-      )
+    val riskRegister = unsortedRiskRegister()
+    val catalog = coverageCatalogForSorting()
 
     val reportJson =
       CoverageReportGenerator(clock = fixedClock)
@@ -264,6 +214,58 @@ class CoverageReportContractTest {
         journey = "Chat send message",
         coverageContribution = 4.5,
         riskTags = setOf("risk-high-ui", "risk-critical-data"),
+      )
+    )
+
+  private fun unsortedRiskRegister(): List<RiskRegisterItem> =
+    listOf(
+      RiskRegisterItem(
+        riskId = "risk-medium-vm",
+        layer = TestLayer.VIEW_MODEL,
+        description = "ViewModel emits stale state",
+        severity = RiskRegisterItem.Severity.MEDIUM,
+        targetBuild = "build-2025-10-18",
+        status = RiskRegisterItem.Status.OPEN,
+        mitigation = "Add regression suite",
+      ),
+      RiskRegisterItem(
+        riskId = "risk-critical-data",
+        layer = TestLayer.DATA,
+        description = "Room DAO lacks offline write coverage",
+        severity = RiskRegisterItem.Severity.CRITICAL,
+        targetBuild = "build-2025-10-20",
+        status = RiskRegisterItem.Status.OPEN,
+        mitigation = "Expand DAO integration tests",
+      ),
+      RiskRegisterItem(
+        riskId = "risk-low-history",
+        layer = TestLayer.DATA,
+        description = "History cache misses refresh occasionally",
+        severity = RiskRegisterItem.Severity.LOW,
+        targetBuild = null,
+        status = RiskRegisterItem.Status.DEFERRED,
+        mitigation = "Monitor via telemetry",
+      ),
+      RiskRegisterItem(
+        riskId = "risk-high-ui",
+        layer = TestLayer.UI,
+        description = "Compose semantics missing for chat composer",
+        severity = RiskRegisterItem.Severity.HIGH,
+        targetBuild = "build-2025-10-15",
+        status = RiskRegisterItem.Status.IN_PROGRESS,
+        mitigation = "Add Compose accessibility tests",
+      ),
+    )
+
+  private fun coverageCatalogForSorting(): List<TestSuiteCatalogEntry> =
+    listOf(
+      TestSuiteCatalogEntry(
+        suiteId = "suite-coverage",
+        owner = "quality-engineering",
+        layer = TestLayer.VIEW_MODEL,
+        journey = "Coverage guard",
+        coverageContribution = 6.0,
+        riskTags = setOf("risk-critical-data", "risk-high-ui", "risk-medium-vm", "risk-low-history"),
       )
     )
 }

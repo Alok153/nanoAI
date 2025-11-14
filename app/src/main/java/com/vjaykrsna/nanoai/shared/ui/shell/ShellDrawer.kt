@@ -62,80 +62,78 @@ private fun DrawerSheetContent(activeMode: ModeId, onEvent: (ShellDrawerEvent) -
     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 24.dp),
     verticalArrangement = Arrangement.spacedBy(16.dp),
   ) {
-    // Search/Command palette at the top
-    Surface(
-      tonalElevation = NanoElevation.level1,
-      shape = RoundedCornerShape(12.dp),
-      onClick = {
-        onEvent(ShellDrawerEvent.ShowCommandPalette(PaletteSource.TOP_APP_BAR))
-        onEvent(ShellDrawerEvent.CloseDrawer)
-      },
+    DrawerCommandPaletteShortcut(onEvent)
+    DrawerNavigationSection(activeMode = activeMode, onEvent = onEvent)
+  }
+}
+
+@Composable
+private fun DrawerCommandPaletteShortcut(onEvent: (ShellDrawerEvent) -> Unit) {
+  Surface(
+    tonalElevation = NanoElevation.level1,
+    shape = RoundedCornerShape(12.dp),
+    onClick = {
+      onEvent(ShellDrawerEvent.ShowCommandPalette(PaletteSource.TOP_APP_BAR))
+      onEvent(ShellDrawerEvent.CloseDrawer)
+    },
+  ) {
+    Row(
+      modifier =
+        Modifier.fillMaxWidth()
+          .padding(horizontal = 16.dp, vertical = 12.dp)
+          .testTag("drawer_command_palette"),
+      horizontalArrangement = Arrangement.spacedBy(12.dp),
+      verticalAlignment = Alignment.CenterVertically,
     ) {
+      Icon(Icons.Outlined.Search, contentDescription = null)
       Row(
-        modifier =
-          Modifier.fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-            .testTag("drawer_command_palette"),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.weight(1f),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
       ) {
-        Icon(Icons.Outlined.Search, contentDescription = null)
-        Row(
-          modifier = Modifier.weight(1f),
-          verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-          Text(
-            stringResource(R.string.nano_shell_search),
-            style = MaterialTheme.typography.titleSmall,
-          )
-          Text(
-            "Ctrl+K",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-          )
-        }
+        Text(
+          stringResource(R.string.nano_shell_search),
+          style = MaterialTheme.typography.titleSmall,
+        )
+        Text(
+          "Ctrl+K",
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+        )
       }
     }
-
-    // Navigation items
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-      // Home button
-      DrawerNavigationItem(
-        icon = Icons.Outlined.Home,
-        title = "Home",
-        selected = activeMode == ModeId.HOME,
-        onClick = {
-          onEvent(ShellDrawerEvent.ModeSelected(ModeId.HOME))
-          onEvent(ShellDrawerEvent.CloseDrawer)
-        },
-      )
-
-      // Settings button
-      DrawerNavigationItem(
-        icon = Icons.Outlined.Settings,
-        title = "Settings",
-        selected = activeMode == ModeId.SETTINGS,
-        onClick = {
-          onEvent(ShellDrawerEvent.ModeSelected(ModeId.SETTINGS))
-          onEvent(ShellDrawerEvent.CloseDrawer)
-        },
-      )
-
-      // Chat History button
-      DrawerNavigationItem(
-        icon = Icons.Default.History,
-        title = "Chat History",
-        selected = activeMode == ModeId.HISTORY,
-        onClick = {
-          onEvent(ShellDrawerEvent.ModeSelected(ModeId.HISTORY))
-          onEvent(ShellDrawerEvent.CloseDrawer)
-        },
-      )
-
-      // Mode cards removed intentionally - only Home, Settings, and Chat History required
-    }
   }
+}
+
+@Composable
+private fun DrawerNavigationSection(activeMode: ModeId, onEvent: (ShellDrawerEvent) -> Unit) {
+  Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    DrawerNavigationItem(
+      icon = Icons.Outlined.Home,
+      title = "Home",
+      selected = activeMode == ModeId.HOME,
+      onClick = { navigateFromDrawer(ModeId.HOME, onEvent) },
+    )
+
+    DrawerNavigationItem(
+      icon = Icons.Outlined.Settings,
+      title = "Settings",
+      selected = activeMode == ModeId.SETTINGS,
+      onClick = { navigateFromDrawer(ModeId.SETTINGS, onEvent) },
+    )
+
+    DrawerNavigationItem(
+      icon = Icons.Default.History,
+      title = "Chat History",
+      selected = activeMode == ModeId.HISTORY,
+      onClick = { navigateFromDrawer(ModeId.HISTORY, onEvent) },
+    )
+  }
+}
+
+private fun navigateFromDrawer(modeId: ModeId, onEvent: (ShellDrawerEvent) -> Unit) {
+  onEvent(ShellDrawerEvent.ModeSelected(modeId))
+  onEvent(ShellDrawerEvent.CloseDrawer)
 }
 
 @Composable

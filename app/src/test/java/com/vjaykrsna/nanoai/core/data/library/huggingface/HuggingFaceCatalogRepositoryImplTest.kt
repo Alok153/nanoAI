@@ -114,38 +114,6 @@ class HuggingFaceCatalogRepositoryImplTest {
 
   @Test
   fun `listModels correctly parses rich metadata from network response`() = runTest {
-    val networkDto =
-      HuggingFaceModelListingDto(
-        modelId = "test-model",
-        author = "test-author",
-        pipelineTag = "text-generation",
-        libraryName = "transformers",
-        tags = listOf("tag1", "tag2"),
-        likes = 100,
-        downloads = 1000,
-        gated = JsonPrimitive(false),
-        disabled = false,
-        cardData =
-          ModelCardDataDto(
-            license = "apache-2.0",
-            languages = JsonArray(listOf(JsonPrimitive("en"), JsonPrimitive("es"))),
-            baseModel = JsonPrimitive("base-model-123"),
-            datasets = JsonArray(listOf(JsonPrimitive("dataset1"), JsonPrimitive("dataset2"))),
-            summary = "A test model summary",
-            description = "A detailed description of the test model",
-          ),
-        config = ModelConfigDto(architectures = listOf("Transformer", "BERT"), modelType = "bert"),
-        siblings =
-          listOf(
-            ModelSiblingDto(filename = "model.bin", sizeBytes = 1000000L),
-            ModelSiblingDto(filename = "config.json", sizeBytes = 2000L),
-          ),
-        trendingScore = 50,
-        createdAt = "2024-01-01T00:00:00Z",
-        lastModified = "2024-01-02T00:00:00Z",
-        isPrivate = false,
-      )
-
     val query = HuggingFaceCatalogQuery(limit = 10, offset = 0)
     val expiryTime = Instant.parse("2024-01-01T00:00:00Z")
 
@@ -178,7 +146,7 @@ class HuggingFaceCatalogRepositoryImplTest {
         any(),
         any(),
       )
-    } returns listOf(networkDto)
+    } returns listOf(richListingDto())
     coEvery { cacheDataSource.storeModels(any()) } returns Unit
     coEvery { cacheDataSource.pruneOlderThan(any()) } returns Unit
 
@@ -187,30 +155,7 @@ class HuggingFaceCatalogRepositoryImplTest {
     assertTrue(result is NanoAIResult.Success)
     val models = (result as NanoAIResult.Success).value
     assertEquals(1, models.size)
-    val model = models[0]
-
-    assertEquals("test-model", model.modelId)
-    assertEquals("test-author", model.author)
-    assertEquals("text-generation", model.pipelineTag)
-    assertEquals("transformers", model.libraryName)
-    assertEquals(listOf("tag1", "tag2"), model.tags)
-    assertEquals(100L, model.likes)
-    assertEquals(1000L, model.downloads)
-    assertEquals("apache-2.0", model.license)
-    assertEquals(listOf("en", "es"), model.languages)
-    assertEquals("base-model-123", model.baseModel)
-    assertEquals(listOf("dataset1", "dataset2"), model.datasets)
-    assertEquals(listOf("Transformer", "BERT"), model.architectures)
-    assertEquals("bert", model.modelType)
-    assertFalse(model.hasGatedAccess)
-    assertFalse(model.isDisabled)
-    assertEquals(1002000L, model.totalSizeBytes) // Sum of siblings
-    assertEquals("A test model summary", model.summary)
-    assertEquals("A detailed description of the test model", model.description)
-    assertEquals(50L, model.trendingScore)
-    assertEquals(Instant.parse("2024-01-01T00:00:00Z"), model.createdAt)
-    assertEquals(Instant.parse("2024-01-02T00:00:00Z"), model.lastModified)
-    assertFalse(model.isPrivate)
+    assertRichModel(models[0])
   }
 
   private fun createTestModel(modelId: String) =
@@ -330,4 +275,61 @@ class HuggingFaceCatalogRepositoryImplTest {
 
   private fun createTestDto(modelId: String) =
     HuggingFaceModelListingDto(modelId = modelId, likes = 0, downloads = 0, isPrivate = false)
+
+  private fun richListingDto(): HuggingFaceModelListingDto =
+    HuggingFaceModelListingDto(
+      modelId = "test-model",
+      author = "test-author",
+      pipelineTag = "text-generation",
+      libraryName = "transformers",
+      tags = listOf("tag1", "tag2"),
+      likes = 100,
+      downloads = 1000,
+      gated = JsonPrimitive(false),
+      disabled = false,
+      cardData =
+        ModelCardDataDto(
+          license = "apache-2.0",
+          languages = JsonArray(listOf(JsonPrimitive("en"), JsonPrimitive("es"))),
+          baseModel = JsonPrimitive("base-model-123"),
+          datasets = JsonArray(listOf(JsonPrimitive("dataset1"), JsonPrimitive("dataset2"))),
+          summary = "A test model summary",
+          description = "A detailed description of the test model",
+        ),
+      config = ModelConfigDto(architectures = listOf("Transformer", "BERT"), modelType = "bert"),
+      siblings =
+        listOf(
+          ModelSiblingDto(filename = "model.bin", sizeBytes = 1000000L),
+          ModelSiblingDto(filename = "config.json", sizeBytes = 2000L),
+        ),
+      trendingScore = 50,
+      createdAt = "2024-01-01T00:00:00Z",
+      lastModified = "2024-01-02T00:00:00Z",
+      isPrivate = false,
+    )
+
+  private fun assertRichModel(model: HuggingFaceModelSummary) {
+    assertEquals("test-model", model.modelId)
+    assertEquals("test-author", model.author)
+    assertEquals("text-generation", model.pipelineTag)
+    assertEquals("transformers", model.libraryName)
+    assertEquals(listOf("tag1", "tag2"), model.tags)
+    assertEquals(100L, model.likes)
+    assertEquals(1000L, model.downloads)
+    assertEquals("apache-2.0", model.license)
+    assertEquals(listOf("en", "es"), model.languages)
+    assertEquals("base-model-123", model.baseModel)
+    assertEquals(listOf("dataset1", "dataset2"), model.datasets)
+    assertEquals(listOf("Transformer", "BERT"), model.architectures)
+    assertEquals("bert", model.modelType)
+    assertFalse(model.hasGatedAccess)
+    assertFalse(model.isDisabled)
+    assertEquals(1002000L, model.totalSizeBytes)
+    assertEquals("A test model summary", model.summary)
+    assertEquals("A detailed description of the test model", model.description)
+    assertEquals(50L, model.trendingScore)
+    assertEquals(Instant.parse("2024-01-01T00:00:00Z"), model.createdAt)
+    assertEquals(Instant.parse("2024-01-02T00:00:00Z"), model.lastModified)
+    assertFalse(model.isPrivate)
+  }
 }

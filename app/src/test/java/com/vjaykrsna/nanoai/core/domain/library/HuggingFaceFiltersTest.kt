@@ -41,73 +41,10 @@ class HuggingFaceFiltersTest {
 
   @Test
   fun `sizeBucket computed property categorizes correctly`() {
-    val tinyModel =
-      HuggingFaceModelSummary(
-        modelId = "tiny",
-        displayName = "Tiny Model",
-        author = "test",
-        pipelineTag = null,
-        libraryName = null,
-        tags = emptyList(),
-        likes = 0,
-        downloads = 0,
-        totalSizeBytes = 500L * 1024 * 1024, // 500 MB
-        trendingScore = null,
-        createdAt = null,
-        lastModified = null,
-        isPrivate = false,
-      )
-
-    val smallModel =
-      HuggingFaceModelSummary(
-        modelId = "small",
-        displayName = "Small Model",
-        author = "test",
-        pipelineTag = null,
-        libraryName = null,
-        tags = emptyList(),
-        likes = 0,
-        downloads = 0,
-        totalSizeBytes = 2L * 1024 * 1024 * 1024, // 2 GB
-        trendingScore = null,
-        createdAt = null,
-        lastModified = null,
-        isPrivate = false,
-      )
-
-    val largeModel =
-      HuggingFaceModelSummary(
-        modelId = "large",
-        displayName = "Large Model",
-        author = "test",
-        pipelineTag = null,
-        libraryName = null,
-        tags = emptyList(),
-        likes = 0,
-        downloads = 0,
-        totalSizeBytes = 15L * 1024 * 1024 * 1024, // 15 GB
-        trendingScore = null,
-        createdAt = null,
-        lastModified = null,
-        isPrivate = false,
-      )
-
-    val unknownSizeModel =
-      HuggingFaceModelSummary(
-        modelId = "unknown",
-        displayName = "Unknown Size Model",
-        author = "test",
-        pipelineTag = null,
-        libraryName = null,
-        tags = emptyList(),
-        likes = 0,
-        downloads = 0,
-        totalSizeBytes = null,
-        trendingScore = null,
-        createdAt = null,
-        lastModified = null,
-        isPrivate = false,
-      )
+    val tinyModel = summaryWithSize(modelId = "tiny", bytes = 500L * 1024 * 1024)
+    val smallModel = summaryWithSize(modelId = "small", bytes = 2L * 1024 * 1024 * 1024)
+    val largeModel = summaryWithSize(modelId = "large", bytes = 15L * 1024 * 1024 * 1024)
+    val unknownSizeModel = summaryWithSize(modelId = "unknown", bytes = null)
 
     assertThat(tinyModel.sizeBucket).isEqualTo(HuggingFaceSizeBucket.TINY)
     assertThat(smallModel.sizeBucket).isEqualTo(HuggingFaceSizeBucket.SMALL)
@@ -121,4 +58,21 @@ class HuggingFaceFiltersTest {
     assertThat(HuggingFaceSizeBucket.FOUR_GB).isEqualTo(4L * 1024 * 1024 * 1024)
     assertThat(HuggingFaceSizeBucket.TEN_GB).isEqualTo(10L * 1024 * 1024 * 1024)
   }
+
+  private fun summaryWithSize(modelId: String, bytes: Long?): HuggingFaceModelSummary =
+    HuggingFaceModelSummary(
+      modelId = modelId,
+      displayName = modelId,
+      author = "test",
+      pipelineTag = null,
+      libraryName = null,
+      tags = emptyList(),
+      likes = 0,
+      downloads = 0,
+      totalSizeBytes = bytes,
+      trendingScore = null,
+      createdAt = null,
+      lastModified = null,
+      isPrivate = false,
+    )
 }

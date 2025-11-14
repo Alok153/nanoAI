@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -81,109 +82,56 @@ fun ImageGalleryScreen(
     }
   }
 
+  ImageGalleryScreenContent(
+    images = images,
+    snackbarHostState = snackbarHostState,
+    onNavigateBack = onNavigateBack,
+    onImageClick = onImageClick,
+    onDeleteRequest = { image ->
+      selectedImage = image
+      showDeleteDialog = true
+    },
+    selectedImage = selectedImage,
+    showDeleteDialog = showDeleteDialog,
+    onConfirmDelete = {
+      selectedImage?.let { viewModel.deleteImage(it.id) }
+      showDeleteDialog = false
+      selectedImage = null
+    },
+    onDismissDelete = {
+      showDeleteDialog = false
+      selectedImage = null
+    },
+    modifier = modifier,
+  )
+}
+
+@Composable
+internal fun ImageGalleryScreenContent(
+  images: List<GeneratedImage>,
+  snackbarHostState: SnackbarHostState,
+  onNavigateBack: () -> Unit,
+  onImageClick: (GeneratedImage) -> Unit,
+  onDeleteRequest: (GeneratedImage) -> Unit,
+  selectedImage: GeneratedImage?,
+  showDeleteDialog: Boolean,
+  onConfirmDelete: () -> Unit,
+  onDismissDelete: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
   Box(modifier = modifier.fillMaxSize().semantics { contentDescription = "Image gallery screen" }) {
     Column(modifier = Modifier.fillMaxSize().padding(NanoSpacing.lg)) {
-      // Header
-      Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-      ) {
-        Row(
-          verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.spacedBy(NanoSpacing.sm),
-        ) {
-          IconButton(onClick = onNavigateBack, modifier = Modifier.testTag("back_button")) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-          }
-          Text(
-            text = "Image Gallery",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-          )
-        }
-        Text(
-          text = "${images.size} images",
-          style = MaterialTheme.typography.bodyMedium,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-      }
-
+      ImageGalleryHeader(imageCount = images.size, onNavigateBack = onNavigateBack)
       Spacer(modifier = Modifier.height(NanoSpacing.md))
-
-      // Gallery grid
-      if (images.isEmpty()) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-          Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(NanoSpacing.sm),
-          ) {
-            Icon(
-              Icons.Default.Image,
-              contentDescription = null,
-              modifier = Modifier.size(64.dp),
-              tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-              "No generated images yet",
-              style = MaterialTheme.typography.bodyLarge,
-              color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-          }
-        }
-      } else {
-        LazyVerticalGrid(
-          columns = GridCells.Adaptive(minSize = 150.dp),
-          contentPadding = PaddingValues(vertical = NanoSpacing.sm),
-          horizontalArrangement = Arrangement.spacedBy(NanoSpacing.md),
-          verticalArrangement = Arrangement.spacedBy(NanoSpacing.md),
-          modifier = Modifier.fillMaxSize().testTag("image_gallery_grid"),
-        ) {
-          items(images, key = { it.id }) { image ->
-            ImageGalleryItem(
-              image = image,
-              onClick = { onImageClick(image) },
-              onDeleteClick = {
-                selectedImage = image
-                showDeleteDialog = true
-              },
-            )
-          }
-        }
-      }
+      ImageGalleryGridContent(
+        images = images,
+        onImageClick = onImageClick,
+        onDeleteRequest = onDeleteRequest,
+      )
     }
 
-    // Delete confirmation dialog
     if (showDeleteDialog && selectedImage != null) {
-      AlertDialog(
-        onDismissRequest = {
-          showDeleteDialog = false
-          selectedImage = null
-        },
-        title = { Text("Delete Image?") },
-        text = { Text("This action cannot be undone.") },
-        confirmButton = {
-          TextButton(
-            onClick = {
-              selectedImage?.let { viewModel.deleteImage(it.id) }
-              showDeleteDialog = false
-              selectedImage = null
-            }
-          ) {
-            Text("Delete")
-          }
-        },
-        dismissButton = {
-          TextButton(
-            onClick = {
-              showDeleteDialog = false
-              selectedImage = null
-            }
-          ) {
-            Text("Cancel")
-          }
-        },
-      )
+      ImageGalleryDeleteDialog(onConfirmDelete = onConfirmDelete, onDismissDelete = onDismissDelete)
     }
 
     SnackbarHost(
@@ -191,6 +139,95 @@ fun ImageGalleryScreen(
       modifier = Modifier.align(Alignment.BottomCenter).padding(NanoSpacing.md),
     )
   }
+}
+
+@Composable
+private fun ImageGalleryHeader(imageCount: Int, onNavigateBack: () -> Unit) {
+  Row(
+    modifier = Modifier.fillMaxWidth(),
+    horizontalArrangement = Arrangement.SpaceBetween,
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    Row(
+      verticalAlignment = Alignment.CenterVertically,
+      horizontalArrangement = Arrangement.spacedBy(NanoSpacing.sm),
+    ) {
+      IconButton(onClick = onNavigateBack, modifier = Modifier.testTag("back_button")) {
+        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+      }
+      Text(
+        text = "Image Gallery",
+        style = MaterialTheme.typography.headlineMedium,
+        fontWeight = FontWeight.Bold,
+      )
+    }
+    Text(
+      text = "$imageCount images",
+      style = MaterialTheme.typography.bodyMedium,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+  }
+}
+
+@Composable
+private fun ImageGalleryGridContent(
+  images: List<GeneratedImage>,
+  onImageClick: (GeneratedImage) -> Unit,
+  onDeleteRequest: (GeneratedImage) -> Unit,
+) {
+  if (images.isEmpty()) {
+    ImageGalleryEmptyState()
+    return
+  }
+
+  LazyVerticalGrid(
+    columns = GridCells.Adaptive(minSize = 150.dp),
+    contentPadding = PaddingValues(vertical = NanoSpacing.sm),
+    horizontalArrangement = Arrangement.spacedBy(NanoSpacing.md),
+    verticalArrangement = Arrangement.spacedBy(NanoSpacing.md),
+    modifier = Modifier.fillMaxSize().testTag("image_gallery_grid"),
+  ) {
+    items(images, key = { it.id }) { image ->
+      ImageGalleryItem(
+        image = image,
+        onClick = { onImageClick(image) },
+        onDeleteClick = { onDeleteRequest(image) },
+      )
+    }
+  }
+}
+
+@Composable
+private fun ImageGalleryEmptyState() {
+  Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    Column(
+      horizontalAlignment = Alignment.CenterHorizontally,
+      verticalArrangement = Arrangement.spacedBy(NanoSpacing.sm),
+    ) {
+      Icon(
+        Icons.Default.Image,
+        contentDescription = null,
+        modifier = Modifier.size(64.dp),
+        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+      Text(
+        "No generated images yet",
+        style = MaterialTheme.typography.bodyLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+    }
+  }
+}
+
+@Composable
+private fun ImageGalleryDeleteDialog(onConfirmDelete: () -> Unit, onDismissDelete: () -> Unit) {
+  AlertDialog(
+    onDismissRequest = onDismissDelete,
+    title = { Text("Delete Image?") },
+    text = { Text("This action cannot be undone.") },
+    confirmButton = { TextButton(onClick = onConfirmDelete) { Text("Delete") } },
+    dismissButton = { TextButton(onClick = onDismissDelete) { Text("Cancel") } },
+  )
 }
 
 @Composable
@@ -251,7 +288,7 @@ private fun ImageGalleryMetadataRow(image: GeneratedImage, onDeleteClick: () -> 
 }
 
 @Composable
-private fun ImageMetadataDetails(image: GeneratedImage) {
+private fun RowScope.ImageMetadataDetails(image: GeneratedImage) {
   Column(modifier = Modifier.weight(1f)) {
     Text(
       text = image.prompt,
