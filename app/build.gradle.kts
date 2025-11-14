@@ -92,7 +92,6 @@ android {
 dependencies {
   // MediaPipe
   implementation(libs.mediapipe.tasks.genai)
-  implementation(libs.mediapipe.tasks.vision)
 
   // Leap
   implementation(libs.leap.sdk)
@@ -103,7 +102,6 @@ dependencies {
   implementation(libs.kotlinx.serialization.core)
   implementation(libs.kotlinx.serialization.json)
   implementation(libs.okhttp)
-  implementation(libs.okhttp.logging.interceptor)
 
   // Database
   implementation(libs.androidx.room.runtime)
@@ -133,6 +131,7 @@ dependencies {
   // Hilt
   implementation(libs.hilt.android)
   implementation(libs.hilt.navigation.compose)
+  implementation(libs.hilt.lifecycle.viewmodel.compose)
   implementation(libs.hilt.work)
   ksp(libs.hilt.compiler)
   ksp(libs.androidx.hilt.compiler)

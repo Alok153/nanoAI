@@ -28,7 +28,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -40,7 +39,8 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vjaykrsna.nanoai.feature.audio.presentation.AudioSessionState
 import com.vjaykrsna.nanoai.feature.audio.presentation.AudioUiState
 import com.vjaykrsna.nanoai.feature.audio.presentation.AudioViewModel
@@ -54,7 +54,7 @@ import kotlinx.coroutines.flow.collectLatest
  */
 @Composable
 fun AudioScreen(modifier: Modifier = Modifier, viewModel: AudioViewModel = hiltViewModel()) {
-  val uiState by viewModel.uiState.collectAsState()
+  val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val snackbarHostState = remember { SnackbarHostState() }
 
   LaunchedEffect(Unit) {

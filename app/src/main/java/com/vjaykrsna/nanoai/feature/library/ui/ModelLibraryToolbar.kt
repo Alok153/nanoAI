@@ -22,8 +22,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -421,7 +421,7 @@ internal fun ModelLibraryTabs(
 ) {
   val tabs = ModelLibraryTab.entries
   val selectedIndex = tabs.indexOf(selectedTab).coerceAtLeast(0)
-  TabRow(
+  PrimaryTabRow(
     selectedTabIndex = selectedIndex,
     modifier =
       modifier.fillMaxWidth().semantics { contentDescription = "Model library navigation tabs" },

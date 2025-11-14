@@ -33,7 +33,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,8 +45,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vjaykrsna.nanoai.core.domain.image.model.GeneratedImage
+import com.vjaykrsna.nanoai.feature.image.presentation.ImageGalleryEvent
 import com.vjaykrsna.nanoai.feature.image.presentation.ImageGalleryViewModel
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoSpacing
 import kotlinx.coroutines.flow.collectLatest
@@ -66,7 +67,7 @@ fun ImageGalleryScreen(
   onImageClick: (GeneratedImage) -> Unit = {},
   viewModel: ImageGalleryViewModel = hiltViewModel(),
 ) {
-  val images by viewModel.images.collectAsState()
+  val images by viewModel.images.collectAsStateWithLifecycle()
   val snackbarHostState = remember { SnackbarHostState() }
   var selectedImage by remember { mutableStateOf<GeneratedImage?>(null) }
   var showDeleteDialog by remember { mutableStateOf(false) }
@@ -74,10 +75,8 @@ fun ImageGalleryScreen(
   LaunchedEffect(Unit) {
     viewModel.events.collectLatest { event ->
       when (event) {
-        is com.vjaykrsna.nanoai.feature.image.presentation.ImageGalleryEvent.ImageDeleted ->
-          snackbarHostState.showSnackbar("Image deleted")
-        is com.vjaykrsna.nanoai.feature.image.presentation.ImageGalleryEvent.AllImagesDeleted ->
-          snackbarHostState.showSnackbar("All images deleted")
+        ImageGalleryEvent.ImageDeleted -> snackbarHostState.showSnackbar("Image deleted")
+        ImageGalleryEvent.AllImagesDeleted -> snackbarHostState.showSnackbar("All images deleted")
       }
     }
   }
