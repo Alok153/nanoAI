@@ -65,7 +65,9 @@ internal fun SettingsCard(
             )
           }
         }
-      } else null,
+      } else {
+        null
+      },
     supportingContent = content,
   )
 

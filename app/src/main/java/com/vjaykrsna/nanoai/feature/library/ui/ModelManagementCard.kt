@@ -155,8 +155,7 @@ private fun ModelActionButtons(
   ) {
     FilledTonalButton(
       onClick = onPrimaryAction,
-      modifier =
-        Modifier.semantics { contentDescription = "${primaryActionLabel} ${modelName}".trim() },
+      modifier = Modifier.semantics { contentDescription = "$primaryActionLabel $modelName".trim() },
     ) {
       Icon(primaryActionIcon, contentDescription = null)
       Spacer(modifier = Modifier.size(8.dp))
@@ -165,7 +164,7 @@ private fun ModelActionButtons(
 
     if (secondaryActionLabel != null && onSecondaryAction != null) {
       val secondaryModifier =
-        Modifier.semantics { contentDescription = "${secondaryActionLabel} ${modelName}".trim() }
+        Modifier.semantics { contentDescription = "$secondaryActionLabel $modelName".trim() }
       if (emphasizeSecondary) {
         OutlinedButton(onClick = onSecondaryAction, modifier = secondaryModifier) {
           Icon(secondaryActionIcon, contentDescription = null)

@@ -29,8 +29,11 @@ class LeapInferenceService @Inject constructor() : InferenceService {
     return withContext(Dispatchers.Default) {
       // TODO: Implement actual Leap inference once API is available
       val prompt =
-        if (request.systemPrompt.isNullOrBlank()) request.prompt
-        else "${request.systemPrompt}\n\n${request.prompt}"
+        if (request.systemPrompt.isNullOrBlank()) {
+          request.prompt
+        } else {
+          "${request.systemPrompt}\n\n${request.prompt}"
+        }
 
       val latency = measureTime {
         // Placeholder for actual inference

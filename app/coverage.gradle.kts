@@ -199,6 +199,7 @@ val legacyCoverageMarkdown = layout.buildDirectory.file("reports/jacoco/full/sum
 tasks.register<Exec>("coverageMarkdownSummary") {
   group = "verification"
   description = "Generates markdown coverage summary from merged JaCoCo XML report."
+  notCompatibleWithConfigurationCache("Runs external python script that inspects project layout")
 
   dependsOn(tasks.named("jacocoFullReport"))
 

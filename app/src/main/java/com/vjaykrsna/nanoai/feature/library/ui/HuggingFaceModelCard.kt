@@ -72,7 +72,7 @@ internal fun HuggingFaceModelHeader(model: HuggingFaceModelSummary) {
       ?.takeIf { it.isNotBlank() }
       ?.let { author ->
         Text(
-          text = "By ${author}",
+          text = "By $author",
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -138,13 +138,23 @@ internal fun HuggingFaceDownloadButton(
     modifier =
       Modifier.semantics {
         contentDescription =
-          if (isDownloadable) "Download ${model.displayName}"
-          else "Model ${model.displayName} is not supported on this device"
+          if (isDownloadable) {
+            "Download ${model.displayName}"
+          } else {
+            "Model ${model.displayName} is not supported on this device"
+          }
       },
   ) {
     Icon(Icons.Filled.Download, contentDescription = null)
     Spacer(modifier = Modifier.size(8.dp))
-    Text(if (isDownloadable) "Download" else "Unsupported")
+    Text(
+      text =
+        if (isDownloadable) {
+          "Download"
+        } else {
+          "Unsupported"
+        }
+    )
   }
 }
 
@@ -167,12 +177,15 @@ internal fun buildMetadataLines(model: HuggingFaceModelSummary): List<String> {
       ?.let { formatUpdated(it) }
       ?.takeUnless { value -> updatedText != null && value == updatedText }
   return buildList {
-    model.license?.takeIf { it.isNotBlank() }?.let { add("License: ${it}") }
-    if (model.languages.isNotEmpty()) add("Languages: ${model.languages.joinToString(", ")}")
-    model.baseModel?.takeIf { it.isNotBlank() }?.let { add("Base model: ${it}") }
-    if (model.architectures.isNotEmpty())
+    model.license?.takeIf { it.isNotBlank() }?.let { add("License: $it") }
+    if (model.languages.isNotEmpty()) {
+      add("Languages: ${model.languages.joinToString(", ")}")
+    }
+    model.baseModel?.takeIf { it.isNotBlank() }?.let { add("Base model: $it") }
+    if (model.architectures.isNotEmpty()) {
       add("Architectures: ${model.architectures.joinToString(", ")}")
-    model.modelType?.takeIf { it.isNotBlank() }?.let { add("Type: ${it}") }
+    }
+    model.modelType?.takeIf { it.isNotBlank() }?.let { add("Type: $it") }
     model.totalSizeBytes?.let { add("Size: ${formatSize(it)}") }
     updatedText?.let { add(it) }
     createdText?.let { add(it) }
@@ -196,8 +209,10 @@ private fun formatCount(value: Long): String {
     if (
       remainder >= ModelLibraryUiConstants.COUNT_DECIMAL_THRESHOLD ||
         remainder % ModelLibraryUiConstants.COUNT_INTEGER_CHECK == 0.0
-    )
+    ) {
       "%.0f%s"
-    else "%.1f%s"
+    } else {
+      "%.1f%s"
+    }
   return pattern.format(Locale.US, remainder, units[unitIndex])
 }

@@ -21,6 +21,7 @@ import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -32,6 +33,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
@@ -187,36 +189,74 @@ private fun ActiveSessionControls(
     horizontalArrangement = Arrangement.spacedBy(NanoSpacing.xl),
     verticalAlignment = Alignment.CenterVertically,
   ) {
-    FloatingActionButton(
-      onClick = onToggleMute,
-      containerColor =
-        if (isMuted) MaterialTheme.colorScheme.error
-        else MaterialTheme.colorScheme.secondaryContainer,
-      modifier = Modifier.size(64.dp).testTag("audio_mute_button"),
-    ) {
-      Icon(
-        imageVector = if (isMuted) Icons.Default.MicOff else Icons.Default.Mic,
-        contentDescription = if (isMuted) "Unmute" else "Mute",
-        modifier = Modifier.size(32.dp),
-      )
+    MuteControlButton(isMuted = isMuted, onToggleMute = onToggleMute)
+
+    SpeakerControlButton(isSpeakerOn = isSpeakerOn, onToggleSpeaker = onToggleSpeaker)
+  }
+}
+
+@Composable
+private fun MuteControlButton(isMuted: Boolean, onToggleMute: () -> Unit) {
+  val containerColor =
+    if (isMuted) {
+      MaterialTheme.colorScheme.error
+    } else {
+      MaterialTheme.colorScheme.secondaryContainer
+    }
+  val icon = if (isMuted) Icons.Default.MicOff else Icons.Default.Mic
+  val description = if (isMuted) "Unmute" else "Mute"
+
+  SessionControlFab(
+    onClick = onToggleMute,
+    containerColor = containerColor,
+    icon = icon,
+    contentDescription = description,
+    modifier = Modifier.size(64.dp).testTag("audio_mute_button"),
+  )
+}
+
+@Composable
+private fun SpeakerControlButton(isSpeakerOn: Boolean, onToggleSpeaker: () -> Unit) {
+  val containerColor =
+    if (isSpeakerOn) {
+      MaterialTheme.colorScheme.primaryContainer
+    } else {
+      MaterialTheme.colorScheme.secondaryContainer
+    }
+  val description = if (isSpeakerOn) "Speaker on" else "Speaker off"
+  val tint =
+    if (isSpeakerOn) {
+      MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+      MaterialTheme.colorScheme.onSecondaryContainer
     }
 
-    FloatingActionButton(
-      onClick = onToggleSpeaker,
-      containerColor =
-        if (isSpeakerOn) MaterialTheme.colorScheme.primaryContainer
-        else MaterialTheme.colorScheme.secondaryContainer,
-      modifier = Modifier.size(64.dp).testTag("audio_speaker_button"),
-    ) {
-      Icon(
-        imageVector = Icons.AutoMirrored.Filled.VolumeUp,
-        contentDescription = if (isSpeakerOn) "Speaker on" else "Speaker off",
-        modifier = Modifier.size(32.dp),
-        tint =
-          if (isSpeakerOn) MaterialTheme.colorScheme.onPrimaryContainer
-          else MaterialTheme.colorScheme.onSecondaryContainer,
-      )
-    }
+  SessionControlFab(
+    onClick = onToggleSpeaker,
+    containerColor = containerColor,
+    icon = Icons.AutoMirrored.Filled.VolumeUp,
+    contentDescription = description,
+    modifier = Modifier.size(64.dp).testTag("audio_speaker_button"),
+    iconTint = tint,
+  )
+}
+
+@Composable
+private fun SessionControlFab(
+  onClick: () -> Unit,
+  containerColor: Color,
+  icon: ImageVector,
+  contentDescription: String,
+  modifier: Modifier = Modifier,
+  iconTint: Color? = null,
+) {
+  FloatingActionButton(onClick = onClick, containerColor = containerColor, modifier = modifier) {
+    Icon(
+      imageVector = icon,
+      contentDescription = contentDescription,
+      modifier = Modifier.size(32.dp),
+      tint = iconTint ?: LocalContentColor.current,
+    )
   }
 }
 

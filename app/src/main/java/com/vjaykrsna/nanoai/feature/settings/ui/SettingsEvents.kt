@@ -30,14 +30,14 @@ internal fun CollectSettingsEvents(
 
 private fun SettingsError.toUserMessage(): String =
   when (this) {
-    is SettingsError.ProviderAddFailed -> "Failed to add provider: ${message}"
-    is SettingsError.ProviderUpdateFailed -> "Failed to update provider: ${message}"
-    is SettingsError.ProviderDeleteFailed -> "Failed to delete provider: ${message}"
-    is SettingsError.ExportFailed -> "Export failed: ${message}"
-    is SettingsError.ImportFailed -> "Import failed: ${message}"
-    is SettingsError.PreferenceUpdateFailed -> "Failed to update preference: ${message}"
-    is SettingsError.UnexpectedError -> "Unexpected error: ${message}"
-    is SettingsError.HuggingFaceAuthFailed -> "Hugging Face authentication failed: ${message}"
+    is SettingsError.ProviderAddFailed -> "Failed to add provider: $message"
+    is SettingsError.ProviderUpdateFailed -> "Failed to update provider: $message"
+    is SettingsError.ProviderDeleteFailed -> "Failed to delete provider: $message"
+    is SettingsError.ExportFailed -> "Export failed: $message"
+    is SettingsError.ImportFailed -> "Import failed: $message"
+    is SettingsError.PreferenceUpdateFailed -> "Failed to update preference: $message"
+    is SettingsError.UnexpectedError -> "Unexpected error: $message"
+    is SettingsError.HuggingFaceAuthFailed -> "Hugging Face authentication failed: $message"
   }
 
 private fun exportSuccessMessage(path: String): String =

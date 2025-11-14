@@ -186,7 +186,7 @@ object DomainTestBuilders {
   /** Creates a test [DownloadTask] with sensible defaults. */
   fun buildDownloadTask(
     taskId: UUID = UUID.randomUUID(),
-    modelId: String = "model-${taskId}",
+    modelId: String = "model-$taskId",
     status: DownloadStatus = DownloadStatus.DOWNLOADING,
     progress: Float = 0f,
     errorMessage: String? = null,

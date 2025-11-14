@@ -305,8 +305,9 @@ constructor(
   ): NanoAIResult<String> {
     val fileSize = file.length()
     val sizeValidation =
-      if (fileSize == manifest.sizeBytes) null
-      else {
+      if (fileSize == manifest.sizeBytes) {
+        null
+      } else {
         file.delete()
         NanoAIResult.recoverable(
           message = "Size mismatch detected",

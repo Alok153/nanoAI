@@ -111,6 +111,12 @@ class PerformanceMonitor @Inject constructor(private val telemetryReporter: Tele
   /** Reports performance metrics for the current session. */
   fun reportSessionMetrics() {
     val metrics = _performanceMetrics.value
+    val formattedFrameDropRatio = String.format(Locale.ROOT, "%.2f", metrics.frameDropRatio)
+    val formattedAverageFrameTime = String.format(Locale.ROOT, "%.2f", metrics.averageFrameTimeMs)
+    val frameDropPercentage =
+      String.format(Locale.ROOT, "%.1f", metrics.frameDropRatio * PERCENTAGE_MULTIPLIER)
+    val thresholdPercentage =
+      String.format(Locale.ROOT, "%.1f", FRAME_DROP_THRESHOLD * PERCENTAGE_MULTIPLIER)
 
     telemetryReporter.trackInteraction(
       event = PERFORMANCE_SESSION_REPORT,
@@ -118,9 +124,8 @@ class PerformanceMonitor @Inject constructor(private val telemetryReporter: Tele
         mapOf(
           KEY_TOTAL_FRAMES to metrics.totalFrames.toString(),
           KEY_JANKY_FRAMES to metrics.jankyFrames.toString(),
-          KEY_FRAME_DROP_RATIO to String.format(Locale.ROOT, "%.2f", metrics.frameDropRatio),
-          KEY_AVERAGE_FRAME_TIME_MS to
-            String.format(Locale.ROOT, "%.2f", metrics.averageFrameTimeMs),
+          KEY_FRAME_DROP_RATIO to formattedFrameDropRatio,
+          KEY_AVERAGE_FRAME_TIME_MS to formattedAverageFrameTime,
           KEY_SESSION_DURATION_MS to metrics.sessionDurationMs.toString(),
         ),
     )
@@ -131,8 +136,7 @@ class PerformanceMonitor @Inject constructor(private val telemetryReporter: Tele
         source = "PerformanceMonitor",
         result =
           NanoAIResult.RecoverableError(
-            message =
-              "High frame drop ratio detected: ${String.format(Locale.ROOT, "%.1f", metrics.frameDropRatio * PERCENTAGE_MULTIPLIER)}%",
+            message = "High frame drop ratio detected: $frameDropPercentage%",
             retryAfterSeconds = null,
             telemetryId = null,
             cause = null,
@@ -140,9 +144,7 @@ class PerformanceMonitor @Inject constructor(private val telemetryReporter: Tele
               mapOf(
                 "jankyFrames" to metrics.jankyFrames.toString(),
                 "totalFrames" to metrics.totalFrames.toString(),
-                "threshold" to
-                  String.format(Locale.ROOT, "%.1f", FRAME_DROP_THRESHOLD * PERCENTAGE_MULTIPLIER) +
-                    "%",
+                "threshold" to "$thresholdPercentage%",
               ),
           ),
       )

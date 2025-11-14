@@ -271,14 +271,14 @@ private fun ModelLibraryLoadingIndicator(
 
 private fun LibraryError.toDisplayMessage(): String =
   when (this) {
-    is LibraryError.DownloadFailed -> "Download failed for ${modelId}: ${message}"
-    is LibraryError.DeleteFailed -> "Delete failed for ${modelId}: ${message}"
-    is LibraryError.PauseFailed -> "Pause failed: ${message}"
-    is LibraryError.ResumeFailed -> "Resume failed: ${message}"
-    is LibraryError.CancelFailed -> "Cancel failed: ${message}"
-    is LibraryError.RetryFailed -> "Retry failed: ${message}"
-    is LibraryError.UnexpectedError -> "Error: ${message}"
-    is LibraryError.HuggingFaceLoadFailed -> "Hugging Face error: ${message}"
+    is LibraryError.DownloadFailed -> "Download failed for $modelId: $message"
+    is LibraryError.DeleteFailed -> "Delete failed for $modelId: $message"
+    is LibraryError.PauseFailed -> "Pause failed: $message"
+    is LibraryError.ResumeFailed -> "Resume failed: $message"
+    is LibraryError.CancelFailed -> "Cancel failed: $message"
+    is LibraryError.RetryFailed -> "Retry failed: $message"
+    is LibraryError.UnexpectedError -> "Error: $message"
+    is LibraryError.HuggingFaceLoadFailed -> "Hugging Face error: $message"
   }
 
 private data class ModelLibraryActions(

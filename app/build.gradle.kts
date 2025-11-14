@@ -1,6 +1,38 @@
 import com.android.build.api.dsl.ManagedVirtualDevice
+import org.gradle.api.artifacts.VersionCatalogsExtension
 
 plugins { id("com.vjaykrsna.nanoai.android.application") }
+
+val libsCatalog = extensions.getByType<VersionCatalogsExtension>().named("libs")
+
+fun version(alias: String): String =
+  libsCatalog.findVersion(alias).orElseThrow {
+    IllegalStateException("Missing version '$alias' in libs.versions.toml")
+  }.requiredVersion
+
+configurations.configureEach {
+  resolutionStrategy.eachDependency {
+    when ("${requested.group}:${requested.name}") {
+      "androidx.test.espresso:espresso-core",
+      "androidx.test.espresso:espresso-idling-resource" -> {
+        useVersion(version("espressoCore"))
+        because("Align Espresso with Compose ui-test stack")
+      }
+      "androidx.test:runner" -> {
+        useVersion(version("runner"))
+        because("Ensure consistent AndroidX Test runner across configurations")
+      }
+      "androidx.test:core" -> {
+        useVersion(version("androidxTestCore"))
+        because("Ensure consistent AndroidX Test core across configurations")
+      }
+      "androidx.test.ext:junit" -> {
+        useVersion(version("junitVersion"))
+        because("Ensure consistent AndroidX Test JUnit extensions across configurations")
+      }
+    }
+  }
+}
 
 fun createQuotedStringBuildConfigField(
   defaultConfig: com.android.build.api.dsl.DefaultConfig,

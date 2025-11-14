@@ -101,7 +101,7 @@ class ProgressCenterCoordinatorTest {
   ): DownloadTask =
     DownloadTask(
       taskId = id,
-      modelId = "model-${id}",
+      modelId = "model-$id",
       progress = progress,
       status = status,
       startedAt = Clock.System.now(),

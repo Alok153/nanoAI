@@ -211,7 +211,7 @@ private fun LayerCard(state: LayerCoverageState, delta: Double?) {
       if (delta != null) {
         val deltaLabel = if (delta >= 0) "+${formatDecimal(delta)}" else formatDecimal(delta)
         Text(
-          text = "Week-over-week ${deltaLabel}",
+          text = "Week-over-week $deltaLabel",
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

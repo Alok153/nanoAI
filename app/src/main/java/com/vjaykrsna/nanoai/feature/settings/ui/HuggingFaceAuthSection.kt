@@ -107,8 +107,11 @@ private fun AuthStatusHeadline(state: HuggingFaceAuthState) {
 private fun SupportingStatusLine(state: HuggingFaceAuthState) {
   val supportingText = supportingStatusLine(state) ?: return
   val color =
-    if (state.lastError != null) MaterialTheme.colorScheme.error
-    else MaterialTheme.colorScheme.onSurfaceVariant
+    if (state.lastError != null) {
+      MaterialTheme.colorScheme.error
+    } else {
+      MaterialTheme.colorScheme.onSurfaceVariant
+    }
 
   Text(text = supportingText, style = MaterialTheme.typography.bodySmall, color = color)
 }

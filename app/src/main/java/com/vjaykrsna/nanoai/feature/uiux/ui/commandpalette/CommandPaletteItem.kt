@@ -92,10 +92,17 @@ private data class PaletteItemColors(val container: Color, val title: Color)
 @Composable
 private fun paletteItemColors(selected: Boolean, enabled: Boolean): PaletteItemColors {
   val containerColor =
-    if (selected) MaterialTheme.colorScheme.secondaryContainer
-    else MaterialTheme.colorScheme.surfaceVariant
+    if (selected) {
+      MaterialTheme.colorScheme.secondaryContainer
+    } else {
+      MaterialTheme.colorScheme.surfaceVariant
+    }
   val titleColor =
-    if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+    if (enabled) {
+      MaterialTheme.colorScheme.onSurface
+    } else {
+      MaterialTheme.colorScheme.onSurfaceVariant
+    }
   return PaletteItemColors(container = containerColor, title = titleColor)
 }
 

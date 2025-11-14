@@ -172,8 +172,12 @@ private fun ModelOptionCard(
         modifier = Modifier.fillMaxWidth(),
       ) {
         Text(
-          if (isAvailable) stringResource(R.string.model_selector_panel_activate)
-          else stringResource(R.string.model_selector_panel_unavailable_offline)
+          text =
+            if (isAvailable) {
+              stringResource(R.string.model_selector_panel_activate)
+            } else {
+              stringResource(R.string.model_selector_panel_unavailable_offline)
+            }
         )
       }
     }

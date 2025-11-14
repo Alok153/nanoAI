@@ -158,8 +158,11 @@ private fun jobActionLabels(job: ProgressJob): JobActionLabels {
       job.type.label.lowercase(),
     )
   val retryStateDescription =
-    if (job.canRetryNow) stringResource(R.string.progress_center_panel_retry_available)
-    else stringResource(R.string.progress_center_panel_retry_unavailable)
+    if (job.canRetryNow) {
+      stringResource(R.string.progress_center_panel_retry_available)
+    } else {
+      stringResource(R.string.progress_center_panel_retry_unavailable)
+    }
   val clearContentDescription =
     stringResource(
       R.string.progress_center_panel_clear_content_description,

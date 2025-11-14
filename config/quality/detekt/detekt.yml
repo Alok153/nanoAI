@@ -11,8 +11,24 @@ style:
     active: false
 
 formatting:
-  active: false
+  active: true
+  Wrapping:
+    active: false
+  NoWildcardImports:
+    active: false
   ImportOrdering:
+    active: false
+  Indentation:
+    active: false
+  MaximumLineLength:
+    active: false
+  AnnotationOnSeparateLine:
+    active: false
+  SpacingBetweenDeclarationsWithAnnotations:
+    active: false
+  SpacingBetweenDeclarationsWithComments:
+    active: false
+  BlockCommentInitialStarAlignment:
     active: false
 
 complexity:

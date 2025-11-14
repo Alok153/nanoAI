@@ -14,8 +14,8 @@ internal fun downloadStatusLabel(task: DownloadTask): String {
   val progressPercent = (task.progress * ModelLibraryUiConstants.PERCENTAGE_MULTIPLIER).toInt()
   return when (task.status) {
     DownloadStatus.QUEUED -> "Queued"
-    DownloadStatus.DOWNLOADING -> "Downloading ${progressPercent}%"
-    DownloadStatus.PAUSED -> "Paused at ${progressPercent}%"
+    DownloadStatus.DOWNLOADING -> "Downloading $progressPercent%"
+    DownloadStatus.PAUSED -> "Paused at $progressPercent%"
     DownloadStatus.COMPLETED -> "Completed"
     DownloadStatus.FAILED -> "Failed: ${task.errorMessage ?: "Unknown error"}"
     DownloadStatus.CANCELLED -> "Cancelled"

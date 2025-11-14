@@ -84,7 +84,7 @@ fun VisualDensityChips(
             )
           },
           modifier =
-            chipModifier(density).semantics { contentDescription = "${label} density coming soon" },
+            chipModifier(density).semantics { contentDescription = "$label density coming soon" },
         )
       }
     }

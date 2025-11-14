@@ -42,7 +42,7 @@ internal fun CapabilityRow(capabilities: Collection<String>) {
     }
     val remaining = displayTags.size - ModelLibraryUiConstants.MAX_CAPABILITY_CHIPS
     if (remaining > 0) {
-      AssistChip(onClick = {}, enabled = false, label = { Text("+${remaining}") })
+      AssistChip(onClick = {}, enabled = false, label = { Text("+$remaining") })
     }
   }
 }

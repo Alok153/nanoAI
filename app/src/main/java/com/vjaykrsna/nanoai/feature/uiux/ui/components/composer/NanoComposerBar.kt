@@ -126,8 +126,11 @@ private fun ComposerSendSection(isSending: Boolean, sendEnabled: Boolean, onSend
           imageVector = Icons.AutoMirrored.Filled.Send,
           contentDescription = "Send",
           tint =
-            if (sendEnabled) MaterialTheme.colorScheme.primary
-            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+            if (sendEnabled) {
+              MaterialTheme.colorScheme.primary
+            } else {
+              MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+            },
         )
       }
     }

@@ -287,7 +287,7 @@ private fun LinearDownloadIndicator(progress: Float) {
     modifier =
       Modifier.fillMaxWidth().semantics {
         val percent = (progress * PERCENTAGE_MULTIPLIER).toInt()
-        contentDescription = "Downloading ${percent}%"
+        contentDescription = "Downloading $percent%"
       },
     trackColor = MaterialTheme.colorScheme.surface,
   )

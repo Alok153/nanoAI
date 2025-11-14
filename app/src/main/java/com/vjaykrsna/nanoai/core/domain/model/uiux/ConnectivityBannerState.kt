@@ -17,7 +17,12 @@ data class ConnectivityBannerState(
   val headline: String
     get() =
       when (status) {
-        ConnectivityStatus.ONLINE -> if (queuedActionCount > 0) "Syncing" else "Back online"
+        ConnectivityStatus.ONLINE ->
+          if (queuedActionCount > 0) {
+            "Syncing"
+          } else {
+            "Back online"
+          }
         ConnectivityStatus.OFFLINE -> "Working offline"
         ConnectivityStatus.LIMITED -> "Connectivity limited"
       }
@@ -27,11 +32,17 @@ data class ConnectivityBannerState(
     get() =
       when (status) {
         ConnectivityStatus.ONLINE ->
-          if (queuedActionCount > 0) "Resuming ${queuedActionCount} queued action(s)"
-          else "All systems are back online"
+          if (queuedActionCount > 0) {
+            "Resuming $queuedActionCount queued action(s)"
+          } else {
+            "All systems are back online"
+          }
         ConnectivityStatus.OFFLINE ->
-          if (queuedActionCount > 0) "${queuedActionCount} action(s) will run when online"
-          else "Changes are saved locally"
+          if (queuedActionCount > 0) {
+            "$queuedActionCount action(s) will run when online"
+          } else {
+            "Changes are saved locally"
+          }
         ConnectivityStatus.LIMITED -> "Some requests may be delayed"
       }
 
@@ -42,7 +53,11 @@ data class ConnectivityBannerState(
   private fun defaultCtaLabel(): String? =
     when (status) {
       ConnectivityStatus.OFFLINE ->
-        if (queuedActionCount > 0) "View queue ($queuedActionCount)" else "View queue"
+        if (queuedActionCount > 0) {
+          "View queue ($queuedActionCount)"
+        } else {
+          "View queue"
+        }
       ConnectivityStatus.LIMITED -> "Retry now"
       ConnectivityStatus.ONLINE -> null
     }
