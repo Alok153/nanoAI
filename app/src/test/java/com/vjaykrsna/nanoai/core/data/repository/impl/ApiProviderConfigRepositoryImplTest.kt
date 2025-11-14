@@ -4,12 +4,15 @@ import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.data.db.daos.ApiProviderConfigDao
 import com.vjaykrsna.nanoai.core.data.db.entities.ApiProviderConfigEntity
 import com.vjaykrsna.nanoai.core.domain.model.ApiProviderConfig
+import com.vjaykrsna.nanoai.core.domain.model.ProviderCredentialMutation
 import com.vjaykrsna.nanoai.core.domain.repository.ApiProviderConfigRepository
 import com.vjaykrsna.nanoai.core.model.APIType
+import com.vjaykrsna.nanoai.core.security.ProviderCredentialStore
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -21,15 +24,18 @@ import org.junit.jupiter.api.extension.ExtendWith
 class ApiProviderConfigRepositoryImplTest {
 
   private lateinit var apiProviderConfigDao: ApiProviderConfigDao
+  private lateinit var credentialStore: ProviderCredentialStore
   private lateinit var repository: ApiProviderConfigRepositoryImpl
   private val testDispatcher = MainDispatcherExtension().dispatcher
 
   @BeforeEach
   fun setUp() {
     apiProviderConfigDao = mockk(relaxed = true)
+    credentialStore = mockk(relaxed = true)
     repository =
       ApiProviderConfigRepositoryImpl(
         apiProviderConfigDao = apiProviderConfigDao,
+        providerCredentialStore = credentialStore,
         ioDispatcher = testDispatcher,
       )
   }
@@ -39,9 +45,9 @@ class ApiProviderConfigRepositoryImplTest {
       providerId = id,
       providerName = "Test Provider",
       baseUrl = "https://test.com",
-      apiKey = "test_key",
       apiType = APIType.OPENAI_COMPATIBLE,
       isEnabled = true,
+      credentialId = "cred-$id",
     )
 
   private fun createTestEntity(id: String) =
@@ -49,9 +55,9 @@ class ApiProviderConfigRepositoryImplTest {
       providerId = id,
       providerName = "Test Provider",
       baseUrl = "https://test.com",
-      apiKey = "test_key",
       apiType = APIType.OPENAI_COMPATIBLE,
       isEnabled = true,
+      credentialId = "cred-$id",
     )
 
   @Test
@@ -88,7 +94,7 @@ class ApiProviderConfigRepositoryImplTest {
     val config = createTestConfig("1")
 
     // When
-    repository.addProvider(config)
+    repository.addProvider(config, ProviderCredentialMutation.None)
 
     // Then
     coVerify { apiProviderConfigDao.insert(any()) }
@@ -100,10 +106,28 @@ class ApiProviderConfigRepositoryImplTest {
     val config = createTestConfig("1")
 
     // When
-    repository.updateProvider(config)
+    repository.updateProvider(config, ProviderCredentialMutation.None)
 
     // Then
     coVerify { apiProviderConfigDao.update(any()) }
+  }
+
+  @Test
+  fun `addProvider with credential should persist secret`() = runTest {
+    val config = createTestConfig("1").copy(credentialId = null)
+
+    repository.addProvider(config, ProviderCredentialMutation.Replace("new-key"))
+
+    verify { credentialStore.save("1", "new-key", null) }
+  }
+
+  @Test
+  fun `updateProvider remove credential clears store`() = runTest {
+    val config = createTestConfig("1")
+
+    repository.updateProvider(config, ProviderCredentialMutation.Remove)
+
+    verify { credentialStore.delete(config.credentialId) }
   }
 
   @Test

@@ -15,12 +15,15 @@ data class ApiProviderConfig(
   val providerId: String,
   val providerName: String,
   val baseUrl: String,
-  val apiKey: String,
   val apiType: APIType,
   val isEnabled: Boolean = true,
   val quotaResetAt: Instant? = null,
   val lastStatus: ProviderStatus = ProviderStatus.UNKNOWN,
-)
+  val credentialId: String? = null,
+) {
+  val hasCredential: Boolean
+    get() = !credentialId.isNullOrBlank()
+}
 
 typealias APIProviderConfig = ApiProviderConfig
 
@@ -30,11 +33,11 @@ fun ApiProviderConfigEntity.toDomain(): ApiProviderConfig =
     providerId = providerId,
     providerName = providerName,
     baseUrl = baseUrl,
-    apiKey = apiKey,
     apiType = apiType,
     isEnabled = isEnabled,
     quotaResetAt = quotaResetAt,
     lastStatus = lastStatus,
+    credentialId = credentialId,
   )
 
 /** Extension function to convert domain model to entity. */
@@ -43,9 +46,9 @@ fun ApiProviderConfig.toEntity(): ApiProviderConfigEntity =
     providerId = providerId,
     providerName = providerName,
     baseUrl = baseUrl,
-    apiKey = apiKey,
     apiType = apiType,
     isEnabled = isEnabled,
     quotaResetAt = quotaResetAt,
     lastStatus = lastStatus,
+    credentialId = credentialId,
   )

@@ -1,6 +1,7 @@
 package com.vjaykrsna.nanoai.core.domain.settings
 
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
+import com.vjaykrsna.nanoai.core.domain.model.ProviderCredentialMutation
 import com.vjaykrsna.nanoai.core.domain.repository.ApiProviderConfigRepository
 import com.vjaykrsna.nanoai.core.model.APIType
 import com.vjaykrsna.nanoai.core.model.ProviderStatus
@@ -34,7 +35,6 @@ class ApiProviderConfigUseCaseTest {
           providerId = "openai",
           providerName = "OpenAI",
           baseUrl = "https://api.openai.com",
-          apiKey = "sk-test123",
           apiType = APIType.OPENAI_COMPATIBLE,
           isEnabled = true,
           quotaResetAt = Instant.parse("2024-01-01T00:00:00Z"),
@@ -67,7 +67,6 @@ class ApiProviderConfigUseCaseTest {
         providerId = providerId,
         providerName = "OpenAI",
         baseUrl = "https://api.openai.com",
-        apiKey = "sk-test123",
         apiType = APIType.OPENAI_COMPATIBLE,
       )
     coEvery { apiProviderConfigRepository.getProvider(providerId) } returns provider
@@ -107,12 +106,13 @@ class ApiProviderConfigUseCaseTest {
         providerId = "gemini",
         providerName = "Google Gemini",
         baseUrl = "https://generativelanguage.googleapis.com",
-        apiKey = "AIzaSyTest",
         apiType = APIType.GEMINI,
       )
-    coEvery { apiProviderConfigRepository.addProvider(config) } returns Unit
+    coEvery {
+      apiProviderConfigRepository.addProvider(config, ProviderCredentialMutation.None)
+    } returns Unit
 
-    val result = useCase.addProvider(config)
+    val result = useCase.addProvider(config, ProviderCredentialMutation.None)
 
     result.assertSuccess()
   }
@@ -124,13 +124,14 @@ class ApiProviderConfigUseCaseTest {
         providerId = "gemini",
         providerName = "Google Gemini",
         baseUrl = "https://generativelanguage.googleapis.com",
-        apiKey = "AIzaSyTest",
         apiType = APIType.GEMINI,
       )
     val exception = IllegalStateException("Database error")
-    coEvery { apiProviderConfigRepository.addProvider(config) } throws exception
+    coEvery {
+      apiProviderConfigRepository.addProvider(config, ProviderCredentialMutation.None)
+    } throws exception
 
-    val result = useCase.addProvider(config)
+    val result = useCase.addProvider(config, ProviderCredentialMutation.None)
 
     result.assertRecoverableError()
   }
@@ -142,12 +143,13 @@ class ApiProviderConfigUseCaseTest {
         providerId = "openai",
         providerName = "OpenAI Updated",
         baseUrl = "https://api.openai.com",
-        apiKey = "sk-updated123",
         apiType = APIType.OPENAI_COMPATIBLE,
       )
-    coEvery { apiProviderConfigRepository.updateProvider(config) } returns Unit
+    coEvery {
+      apiProviderConfigRepository.updateProvider(config, ProviderCredentialMutation.None)
+    } returns Unit
 
-    val result = useCase.updateProvider(config)
+    val result = useCase.updateProvider(config, ProviderCredentialMutation.None)
 
     result.assertSuccess()
   }
@@ -159,13 +161,14 @@ class ApiProviderConfigUseCaseTest {
         providerId = "openai",
         providerName = "OpenAI Updated",
         baseUrl = "https://api.openai.com",
-        apiKey = "sk-updated123",
         apiType = APIType.OPENAI_COMPATIBLE,
       )
     val exception = IllegalStateException("Database error")
-    coEvery { apiProviderConfigRepository.updateProvider(config) } throws exception
+    coEvery {
+      apiProviderConfigRepository.updateProvider(config, ProviderCredentialMutation.None)
+    } throws exception
 
-    val result = useCase.updateProvider(config)
+    val result = useCase.updateProvider(config, ProviderCredentialMutation.None)
 
     result.assertRecoverableError()
   }

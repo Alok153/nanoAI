@@ -20,7 +20,12 @@ class EncryptedSecretStoreTest {
     clock = FakeClock(Instant.fromEpochMilliseconds(1_000L))
     store =
       EncryptedSecretStore.createForTesting(
-        json = Json { encodeDefaults = true; ignoreUnknownKeys = true; explicitNulls = false },
+        json =
+          Json {
+            encodeDefaults = true
+            ignoreUnknownKeys = true
+            explicitNulls = false
+          },
         clock = clock,
       )
   }

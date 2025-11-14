@@ -60,6 +60,8 @@ private const val COMMAND_PALETTE_STATE_INDEX = 7
 private const val PROGRESS_JOBS_INDEX = 8
 private const val SHOW_COVERAGE_DASHBOARD_INDEX = 9
 private const val CHAT_STATE_INDEX = 10
+private const val CONNECTIVITY_BANNER_INDEX = 11
+private const val UI_PREFERENCES_INDEX = 12
 
 // Constants for flow sharing
 private const val UI_STATE_SUBSCRIPTION_TIMEOUT_MS = 5000L
@@ -293,6 +295,8 @@ constructor(
         progressViewModel.progressJobs,
         _showCoverageDashboard,
         _chatState,
+        connectivityViewModel.connectivityBannerState,
+        themeViewModel.uiPreferences,
       ) { values ->
         val windowSizeClass = values.requireValue<WindowSizeClass>(WINDOW_SIZE_CLASS_INDEX)
         val activeMode = values.requireValue<ModeId>(ACTIVE_MODE_INDEX)
@@ -306,6 +310,10 @@ constructor(
         val jobs = values.requireValue<List<ProgressJob>>(PROGRESS_JOBS_INDEX)
         val showCoverageDashboard = values.requireValue<Boolean>(SHOW_COVERAGE_DASHBOARD_INDEX)
         val chatState = values.requireValueOrNull<ChatState>(CHAT_STATE_INDEX)
+        val connectivityBanner =
+          values.requireValue<ConnectivityBannerState>(CONNECTIVITY_BANNER_INDEX)
+        val preferences = values.requireValue<UiPreferenceSnapshot>(UI_PREFERENCES_INDEX)
+        val isOnline = connectivityBanner.status == ConnectivityStatus.ONLINE
 
         val normalizedLayout =
           ShellLayoutState(
@@ -316,19 +324,18 @@ constructor(
             activeMode = activeMode,
             showCommandPalette = commandPaletteState.results.isNotEmpty(),
             showCoverageDashboard = showCoverageDashboard,
-            connectivity = ConnectivityStatus.ONLINE, // TODO: from connectivity
+            connectivity = connectivityBanner.status,
             pendingUndoAction = undoPayload,
             progressJobs = jobs,
             recentActivity = recentActivity,
           )
-        val normalizedBanner = ConnectivityBannerState(status = ConnectivityStatus.ONLINE) // TODO
 
         ShellUiState(
           layout = normalizedLayout,
           commandPalette = commandPaletteState,
-          connectivityBanner = normalizedBanner,
-          preferences = UiPreferenceSnapshot(), // TODO
-          modeCards = modeCardsForOnlineState(true), // TODO
+          connectivityBanner = connectivityBanner,
+          preferences = preferences,
+          modeCards = modeCardsForOnlineState(isOnline),
           quickActions = quickActionsForMode(activeMode),
           chatState = chatState,
         )

@@ -7,8 +7,10 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.CommandDestination
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityBannerState
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityStatus
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ProgressJob
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferencesSnapshot as DomainUiPreferencesSnapshot
 import com.vjaykrsna.nanoai.core.domain.repository.ConnectivityRepository
+import com.vjaykrsna.nanoai.core.domain.repository.ProgressRepository
 import com.vjaykrsna.nanoai.core.domain.repository.UserProfileRepository
 import com.vjaykrsna.nanoai.core.domain.uiux.navigation.Screen
 import javax.inject.Inject
@@ -29,6 +31,7 @@ class ConnectivityRepositoryImpl
 @Inject
 constructor(
   private val userProfileRepository: UserProfileRepository,
+  private val progressRepository: ProgressRepository,
   @IoDispatcher override val ioDispatcher: CoroutineDispatcher,
 ) : ConnectivityRepository {
 
@@ -42,13 +45,14 @@ constructor(
       .stateIn(scope, SharingStarted.Eagerly, DomainUiPreferencesSnapshot())
 
   override val connectivityBannerState: Flow<ConnectivityBannerState> =
-    combine(connectivity, preferences) {
+    combine(connectivity, preferences, progressRepository.progressJobs) {
         status: ConnectivityStatus,
-        prefs: DomainUiPreferencesSnapshot ->
+        prefs: DomainUiPreferencesSnapshot,
+        jobs: List<ProgressJob> ->
         ConnectivityBannerState(
           status = status,
           lastDismissedAt = prefs.connectivityBannerLastDismissed?.toJavaInstant(),
-          queuedActionCount = 0, // TODO: get from ProgressRepository
+          queuedActionCount = queuedJobCount(jobs),
           cta = modelLibraryCta(status),
         )
       }
@@ -74,5 +78,7 @@ constructor(
         category = CommandCategory.JOBS,
         destination = CommandDestination.Navigate(Screen.fromModeId(ModeId.LIBRARY).route),
       )
+
+    private fun queuedJobCount(jobs: List<ProgressJob>): Int = jobs.count { !it.isTerminal }
   }
 }

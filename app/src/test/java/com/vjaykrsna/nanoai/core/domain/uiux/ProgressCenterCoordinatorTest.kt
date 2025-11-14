@@ -134,6 +134,8 @@ class ProgressCenterCoordinatorTest {
 
     override suspend fun getActiveDownloads(): Flow<List<DownloadTask>> = activeFlow
 
+    override suspend fun getActiveDownloadsSnapshot(): List<DownloadTask> = activeFlow.value
+
     override fun getQueuedDownloads(): Flow<List<DownloadTask>> = queuedFlow
 
     override fun observeManagedDownloads(): Flow<List<DownloadTask>> = managedFlow

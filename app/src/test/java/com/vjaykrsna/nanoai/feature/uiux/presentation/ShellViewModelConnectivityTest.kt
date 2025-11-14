@@ -2,14 +2,14 @@ package com.vjaykrsna.nanoai.feature.uiux.presentation
 
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityStatus
-import com.vjaykrsna.nanoai.core.domain.uiux.ConnectivityOperationsUseCase
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.uiux.NavigationOperationsUseCase
 import com.vjaykrsna.nanoai.shared.ui.shell.ShellUiEvent
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
-import io.mockk.*
+import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -26,20 +26,13 @@ class ShellViewModelConnectivityTest {
   fun updateConnectivity_flushesQueuedJobsAndBanner() =
     runTest(dispatcher) {
       val fakeRepos = createFakeRepositories()
-      val navigationOperationsUseCase = mockk<NavigationOperationsUseCase>(relaxed = true)
-      val connectivityOperationsUseCase = mockk<ConnectivityOperationsUseCase>(relaxed = true)
+      val navigationOperationsUseCase =
+        NavigationOperationsUseCase(fakeRepos.navigationRepository, dispatcher)
 
-      // Mock sub-ViewModels
       val navigationViewModel = mockk<NavigationViewModel>(relaxed = true)
-      val connectivityViewModel = mockk<ConnectivityViewModel>(relaxed = true)
-      val progressViewModel = mockk<ProgressViewModel>(relaxed = true)
-      val themeViewModel = mockk<ThemeViewModel>(relaxed = true)
-
-      // Set up connectivity operations use case to actually call repository
-      coEvery { connectivityOperationsUseCase.updateConnectivity(any()) } coAnswers
-        {
-          runBlocking { fakeRepos.connectivityRepository.updateConnectivity(firstArg()) }
-        }
+      val connectivityViewModel = createConnectivityViewModel(fakeRepos, dispatcher)
+      val progressViewModel = createProgressViewModel(fakeRepos, dispatcher)
+      val themeViewModel = createThemeViewModel(fakeRepos, dispatcher)
 
       val viewModel =
         ShellViewModel(
@@ -58,5 +51,64 @@ class ShellViewModelConnectivityTest {
         viewModel.uiState.first { state -> state.layout.connectivity == ConnectivityStatus.ONLINE }
       assertThat(uiState.layout.connectivity).isEqualTo(ConnectivityStatus.ONLINE)
       assertThat(uiState.connectivityBanner.status).isEqualTo(ConnectivityStatus.ONLINE)
+    }
+
+  @Test
+  fun uiPreferences_flow_reflectsInShellState() =
+    runTest(dispatcher) {
+      val fakeRepos = createFakeRepositories()
+      val navigationOperationsUseCase =
+        NavigationOperationsUseCase(fakeRepos.navigationRepository, dispatcher)
+
+      val navigationViewModel = mockk<NavigationViewModel>(relaxed = true)
+      val connectivityViewModel = createConnectivityViewModel(fakeRepos, dispatcher)
+      val progressViewModel = createProgressViewModel(fakeRepos, dispatcher)
+      val themeViewModel = createThemeViewModel(fakeRepos, dispatcher)
+
+      val viewModel =
+        ShellViewModel(
+          navigationOperationsUseCase,
+          navigationViewModel,
+          connectivityViewModel,
+          progressViewModel,
+          themeViewModel,
+          dispatcher,
+        )
+
+      themeViewModel.updateThemePreference(ThemePreference.DARK)
+      advanceUntilIdle()
+
+      val uiState = viewModel.uiState.first { it.preferences.theme == ThemePreference.DARK }
+      assertThat(uiState.preferences.theme).isEqualTo(ThemePreference.DARK)
+    }
+
+  @Test
+  fun offlineConnectivity_filtersModeCards() =
+    runTest(dispatcher) {
+      val fakeRepos = createFakeRepositories()
+      val navigationOperationsUseCase =
+        NavigationOperationsUseCase(fakeRepos.navigationRepository, dispatcher)
+
+      val navigationViewModel = mockk<NavigationViewModel>(relaxed = true)
+      val connectivityViewModel = createConnectivityViewModel(fakeRepos, dispatcher)
+      val progressViewModel = createProgressViewModel(fakeRepos, dispatcher)
+      val themeViewModel = createThemeViewModel(fakeRepos, dispatcher)
+
+      val viewModel =
+        ShellViewModel(
+          navigationOperationsUseCase,
+          navigationViewModel,
+          connectivityViewModel,
+          progressViewModel,
+          themeViewModel,
+          dispatcher,
+        )
+
+      viewModel.onEvent(ShellUiEvent.ConnectivityChanged(ConnectivityStatus.OFFLINE))
+      advanceUntilIdle()
+
+      val uiState = viewModel.uiState.first { it.layout.connectivity == ConnectivityStatus.OFFLINE }
+      assertThat(uiState.layout.connectivity).isEqualTo(ConnectivityStatus.OFFLINE)
+      assertThat(uiState.modeCards.any { it.id == ModeId.IMAGE }).isFalse()
     }
 }

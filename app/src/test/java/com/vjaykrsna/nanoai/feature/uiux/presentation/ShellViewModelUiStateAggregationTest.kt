@@ -66,8 +66,8 @@ private fun createShellViewModel(
   val navigationOperationsUseCase =
     NavigationOperationsUseCase(repositories.navigationRepository, dispatcher)
   val navigationViewModel = mockk<NavigationViewModel>(relaxed = true)
-  val connectivityViewModel = mockk<ConnectivityViewModel>(relaxed = true)
-  val themeViewModel = mockk<ThemeViewModel>(relaxed = true)
+  val connectivityViewModel = createConnectivityViewModel(repositories, dispatcher)
+  val themeViewModel = createThemeViewModel(repositories, dispatcher)
   val progressViewModel = createProgressViewModel(repositories, dispatcher)
 
   return ShellViewModel(

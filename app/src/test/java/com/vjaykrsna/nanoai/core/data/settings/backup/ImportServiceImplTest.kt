@@ -6,6 +6,7 @@ import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreferenceStore
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
 import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
+import com.vjaykrsna.nanoai.core.domain.model.ProviderCredentialMutation
 import com.vjaykrsna.nanoai.core.domain.repository.ApiProviderConfigRepository
 import com.vjaykrsna.nanoai.core.domain.repository.PersonaRepository
 import com.vjaykrsna.nanoai.core.domain.settings.ImportService
@@ -122,7 +123,7 @@ class ImportServiceImplTest {
     val providers = providerRepository.getAllProviders()
     assertThat(providers).hasSize(1)
     val provider = providers.first()
-    assertThat(provider.apiKey).isEqualTo("sk-123")
+    assertThat(provider.hasCredential).isTrue()
     assertThat(provider.baseUrl).isEqualTo("https://api.openai.com/v1")
     assertThat(provider.apiType).isEqualTo(APIType.OPENAI_COMPATIBLE)
 
@@ -177,18 +178,27 @@ class ImportServiceImplTest {
   private class FakeApiProviderRepository : ApiProviderConfigRepository {
     private val providers = LinkedHashMap<String, APIProviderConfig>()
     private val providersFlow = MutableStateFlow<List<APIProviderConfig>>(emptyList())
+    private var aliasCounter = 0
 
     override suspend fun getAllProviders(): List<APIProviderConfig> = providers.values.toList()
 
     override suspend fun getProvider(providerId: String): APIProviderConfig? = providers[providerId]
 
-    override suspend fun addProvider(config: APIProviderConfig) {
-      providers[config.providerId] = config
+    override suspend fun addProvider(
+      config: APIProviderConfig,
+      credentialMutation: ProviderCredentialMutation,
+    ) {
+      val updated = applyCredentialMutation(config, credentialMutation)
+      providers[updated.providerId] = updated
       providersFlow.update { providers.values.toList() }
     }
 
-    override suspend fun updateProvider(config: APIProviderConfig) {
-      providers[config.providerId] = config
+    override suspend fun updateProvider(
+      config: APIProviderConfig,
+      credentialMutation: ProviderCredentialMutation,
+    ) {
+      val updated = applyCredentialMutation(config, credentialMutation)
+      providers[updated.providerId] = updated
       providersFlow.update { providers.values.toList() }
     }
 
@@ -201,6 +211,22 @@ class ImportServiceImplTest {
       providers.values.filter { it.isEnabled }
 
     override fun observeAllProviders(): Flow<List<APIProviderConfig>> = providersFlow
+
+    private fun applyCredentialMutation(
+      config: APIProviderConfig,
+      mutation: ProviderCredentialMutation,
+    ): APIProviderConfig =
+      when (mutation) {
+        ProviderCredentialMutation.None -> config
+        ProviderCredentialMutation.Remove -> config.copy(credentialId = null)
+        is ProviderCredentialMutation.Replace ->
+          config.copy(credentialId = config.credentialId ?: newAlias(config.providerId))
+      }
+
+    private fun newAlias(providerId: String): String {
+      aliasCounter += 1
+      return "$providerId-alias-$aliasCounter"
+    }
   }
 
   companion object {

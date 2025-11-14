@@ -166,7 +166,7 @@ object DomainTestBuilders {
     providerId: String = "openai",
     providerName: String = "OpenAI",
     baseUrl: String = "https://api.openai.com/v1",
-    apiKey: String = "sk-test",
+    credentialId: String? = "credential-$providerId",
     apiType: APIType = APIType.OPENAI_COMPATIBLE,
     isEnabled: Boolean = true,
     quotaResetAt: Instant? = null,
@@ -176,11 +176,11 @@ object DomainTestBuilders {
       providerId = providerId,
       providerName = providerName,
       baseUrl = baseUrl,
-      apiKey = apiKey,
       apiType = apiType,
       isEnabled = isEnabled,
       quotaResetAt = quotaResetAt,
       lastStatus = lastStatus,
+      credentialId = credentialId,
     )
 
   /** Creates a test [DownloadTask] with sensible defaults. */

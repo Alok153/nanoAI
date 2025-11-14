@@ -1,8 +1,8 @@
 package androidx.compose.ui.test
 
 /**
- * Temporary fallback implementations for missing Compose test assertion helpers on older
- * Compose BOMs. Remove when upgrading to a version that provides these helpers.
+ * Temporary fallback implementations for missing Compose test assertion helpers on older Compose
+ * BOMs. Remove when upgrading to a version that provides these helpers.
  */
 @OptIn(ExperimentalTestApi::class)
 fun SemanticsNodeInteraction.assertExists(message: String? = null): SemanticsNodeInteraction {

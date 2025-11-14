@@ -34,7 +34,12 @@ internal fun ApiProviderCard(
   NanoCard(
     title = provider.providerName,
     subtitle = provider.baseUrl,
-    supportingText = "Type: ${provider.apiType.name}",
+    supportingText =
+      buildString {
+        append("Type: ${provider.apiType.name}")
+        append(" • ")
+        append(if (provider.hasCredential) "Key stored securely" else "Key not provided")
+      },
     modifier = modifier,
     trailingContent = {
       Row {

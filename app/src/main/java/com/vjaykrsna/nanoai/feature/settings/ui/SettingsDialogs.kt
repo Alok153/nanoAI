@@ -34,7 +34,8 @@ internal fun SettingsDialogs(
   editingProvider: APIProviderConfig?,
   showExportDialog: Boolean,
   onProviderDismiss: () -> Unit,
-  onProviderSave: (name: String, baseUrl: String, apiKey: String?) -> Unit,
+  onProviderSave:
+    (name: String, baseUrl: String, apiKey: String?, removeCredential: Boolean) -> Unit,
   onExportDismiss: () -> Unit,
   onExportConfirm: (dontShowAgain: Boolean) -> Unit,
   showHuggingFaceLoginDialog: Boolean = false,
@@ -79,7 +80,7 @@ private fun ProviderDialogHost(
   isVisible: Boolean,
   provider: APIProviderConfig?,
   onDismiss: () -> Unit,
-  onSave: (name: String, baseUrl: String, apiKey: String?) -> Unit,
+  onSave: (name: String, baseUrl: String, apiKey: String?, removeCredential: Boolean) -> Unit,
 ) {
   if (isVisible) {
     ApiProviderDialog(provider = provider, onDismiss = onDismiss, onSave = onSave)
@@ -101,49 +102,41 @@ private fun ExportDialogHost(
 private fun ApiProviderDialog(
   provider: APIProviderConfig?,
   onDismiss: () -> Unit,
-  onSave: (name: String, baseUrl: String, apiKey: String?) -> Unit,
+  onSave: (name: String, baseUrl: String, apiKey: String?, removeCredential: Boolean) -> Unit,
   modifier: Modifier = Modifier,
 ) {
   var name by remember { mutableStateOf(provider?.providerName ?: "") }
   var baseUrl by remember { mutableStateOf(provider?.baseUrl ?: "") }
-  var apiKey by remember { mutableStateOf(provider?.apiKey ?: "") }
+  var apiKey by remember { mutableStateOf("") }
+  val hasStoredCredential = provider?.hasCredential == true
+  var removeCredential by remember { mutableStateOf(false) }
 
   AlertDialog(
     onDismissRequest = onDismiss,
     title = { Text(if (provider != null) "Edit API Provider" else "Add API Provider") },
     text = {
-      Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        OutlinedTextField(
-          value = name,
-          onValueChange = { name = it },
-          label = { Text("Name") },
-          singleLine = true,
-          modifier = Modifier.fillMaxWidth(),
-        )
-
-        OutlinedTextField(
-          value = baseUrl,
-          onValueChange = { baseUrl = it },
-          label = { Text("Base URL") },
-          placeholder = { Text("https://api.example.com") },
-          singleLine = true,
-          modifier = Modifier.fillMaxWidth(),
-        )
-
-        OutlinedTextField(
-          value = apiKey,
-          onValueChange = { apiKey = it },
-          label = { Text("API Key (Optional)") },
-          singleLine = true,
-          modifier = Modifier.fillMaxWidth(),
-        )
-      }
+      ApiProviderDialogContent(
+        name = name,
+        onNameChange = { name = it },
+        baseUrl = baseUrl,
+        onBaseUrlChange = { baseUrl = it },
+        apiKey = apiKey,
+        onApiKeyChange = { apiKey = it },
+        hasStoredCredential = hasStoredCredential,
+        removeCredential = removeCredential,
+        onRemoveCredentialChange = { checked ->
+          removeCredential = checked
+          if (checked) {
+            apiKey = ""
+          }
+        },
+      )
     },
     confirmButton = {
       TextButton(
         onClick = {
           if (name.isNotBlank() && baseUrl.isNotBlank()) {
-            onSave(name, baseUrl, apiKey.ifBlank { null })
+            onSave(name, baseUrl, apiKey.ifBlank { null }, removeCredential)
           }
         },
         enabled = name.isNotBlank() && baseUrl.isNotBlank(),
@@ -154,6 +147,75 @@ private fun ApiProviderDialog(
     dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
     modifier = modifier,
   )
+}
+
+@Composable
+private fun ApiProviderDialogContent(
+  name: String,
+  onNameChange: (String) -> Unit,
+  baseUrl: String,
+  onBaseUrlChange: (String) -> Unit,
+  apiKey: String,
+  onApiKeyChange: (String) -> Unit,
+  hasStoredCredential: Boolean,
+  removeCredential: Boolean,
+  onRemoveCredentialChange: (Boolean) -> Unit,
+) {
+  Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    OutlinedTextField(
+      value = name,
+      onValueChange = onNameChange,
+      label = { Text("Name") },
+      singleLine = true,
+      modifier = Modifier.fillMaxWidth(),
+    )
+
+    OutlinedTextField(
+      value = baseUrl,
+      onValueChange = onBaseUrlChange,
+      label = { Text("Base URL") },
+      placeholder = { Text("https://api.example.com") },
+      singleLine = true,
+      modifier = Modifier.fillMaxWidth(),
+    )
+
+    OutlinedTextField(
+      value = apiKey,
+      onValueChange = onApiKeyChange,
+      label = { Text("API Key (Optional)") },
+      singleLine = true,
+      modifier = Modifier.fillMaxWidth(),
+      enabled = !removeCredential,
+      supportingText = { ApiKeySupportingText(hasStoredCredential, removeCredential) },
+    )
+
+    if (hasStoredCredential) {
+      RemoveCredentialOption(
+        removeCredential = removeCredential,
+        onCheckedChange = onRemoveCredentialChange,
+      )
+    }
+  }
+}
+
+@Composable
+private fun ApiKeySupportingText(hasStoredCredential: Boolean, removeCredential: Boolean) {
+  val helper =
+    when {
+      removeCredential -> "Stored key will be removed"
+      hasStoredCredential -> "Leave blank to keep the stored key"
+      else -> "Key is saved securely and never shown"
+    }
+  Text(helper, style = MaterialTheme.typography.bodySmall)
+}
+
+@Composable
+private fun RemoveCredentialOption(removeCredential: Boolean, onCheckedChange: (Boolean) -> Unit) {
+  Row(verticalAlignment = Alignment.CenterVertically) {
+    Checkbox(checked = removeCredential, onCheckedChange = onCheckedChange)
+    Spacer(modifier = Modifier.width(8.dp))
+    Text("Remove stored API key", style = MaterialTheme.typography.bodyMedium)
+  }
 }
 
 @Composable

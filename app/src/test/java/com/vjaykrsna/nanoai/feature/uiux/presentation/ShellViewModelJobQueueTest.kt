@@ -38,10 +38,10 @@ class ShellViewModelJobQueueTest {
         NavigationOperationsUseCase(fakeRepos.navigationRepository, dispatcher)
       val progressViewModel = createProgressViewModel(fakeRepos, dispatcher)
 
-      // Mock sub-ViewModels unrelated to progress operations
+      // Mock navigation-only interactions; other sub-ViewModels are real to surface flows
       val navigationViewModel = mockk<NavigationViewModel>(relaxed = true)
-      val connectivityViewModel = mockk<ConnectivityViewModel>(relaxed = true)
-      val themeViewModel = mockk<ThemeViewModel>(relaxed = true)
+      val connectivityViewModel = createConnectivityViewModel(fakeRepos, dispatcher)
+      val themeViewModel = createThemeViewModel(fakeRepos, dispatcher)
 
       val viewModel =
         ShellViewModel(
@@ -83,10 +83,9 @@ class ShellViewModelJobQueueTest {
         NavigationOperationsUseCase(fakeRepos.navigationRepository, dispatcher)
       val progressViewModel = createProgressViewModel(fakeRepos, dispatcher)
 
-      // Mock sub-ViewModels unrelated to progress operations
       val navigationViewModel = mockk<NavigationViewModel>(relaxed = true)
-      val connectivityViewModel = mockk<ConnectivityViewModel>(relaxed = true)
-      val themeViewModel = mockk<ThemeViewModel>(relaxed = true)
+      val connectivityViewModel = createConnectivityViewModel(fakeRepos, dispatcher)
+      val themeViewModel = createThemeViewModel(fakeRepos, dispatcher)
 
       val viewModel =
         ShellViewModel(

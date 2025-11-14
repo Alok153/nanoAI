@@ -27,9 +27,7 @@ data class ApiProviderConfigEntity(
   @PrimaryKey @ColumnInfo(name = "provider_id") val providerId: String,
   @ColumnInfo(name = "provider_name") val providerName: String,
   @ColumnInfo(name = "base_url") val baseUrl: String,
-  // Encryption integration: use encrypted storage (e.g., Jetpack Security) before production
-  // rollout
-  @ColumnInfo(name = "api_key") val apiKey: String,
+  @ColumnInfo(name = "credential_id") val credentialId: String? = null,
   @ColumnInfo(name = "api_type") val apiType: APIType,
   @ColumnInfo(name = "is_enabled") val isEnabled: Boolean = true,
   @ColumnInfo(name = "quota_reset_at") val quotaResetAt: Instant? = null,

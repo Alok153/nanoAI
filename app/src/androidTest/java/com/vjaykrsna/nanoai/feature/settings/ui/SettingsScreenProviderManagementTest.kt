@@ -50,9 +50,9 @@ class SettingsScreenProviderManagementTest : BaseSettingsScreenTest() {
               providerId = "gemini-cloud",
               providerName = "Google Gemini",
               baseUrl = "https://gemini.googleapis.com",
-              apiKey = "test-key-123",
               apiType = APIType.OPENAI_COMPATIBLE,
               isEnabled = true,
+              credentialId = "test-credential-id",
             )
           )
       )
@@ -84,9 +84,9 @@ class SettingsScreenProviderManagementTest : BaseSettingsScreenTest() {
               providerId = "gemini-cloud",
               providerName = "Google Gemini",
               baseUrl = "https://gemini.googleapis.com",
-              apiKey = "test-key-123",
               apiType = APIType.OPENAI_COMPATIBLE,
               isEnabled = true,
+              credentialId = "test-credential-id",
             )
           )
       )

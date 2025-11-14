@@ -77,6 +77,7 @@ fun ImageGalleryScreen(
       when (event) {
         ImageGalleryEvent.ImageDeleted -> snackbarHostState.showSnackbar("Image deleted")
         ImageGalleryEvent.AllImagesDeleted -> snackbarHostState.showSnackbar("All images deleted")
+        is ImageGalleryEvent.Error -> snackbarHostState.showSnackbar(event.message)
       }
     }
   }

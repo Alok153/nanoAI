@@ -26,9 +26,11 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.UserProfile
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
 import com.vjaykrsna.nanoai.core.domain.repository.UserProfileRepository
 import com.vjaykrsna.nanoai.core.domain.uiux.CommandPaletteActionProvider
+import com.vjaykrsna.nanoai.core.domain.uiux.ConnectivityOperationsUseCase
 import com.vjaykrsna.nanoai.core.domain.uiux.JobOperationsUseCase
 import com.vjaykrsna.nanoai.core.domain.uiux.ProgressCenterCoordinator
 import com.vjaykrsna.nanoai.core.domain.uiux.QueueJobUseCase
+import com.vjaykrsna.nanoai.core.domain.uiux.ThemeOperationsUseCase
 import com.vjaykrsna.nanoai.core.domain.uiux.UndoActionUseCase
 import com.vjaykrsna.nanoai.core.domain.uiux.navigation.Screen
 import java.util.UUID
@@ -312,6 +314,22 @@ internal fun createProgressViewModel(
   )
 }
 
+internal fun createConnectivityViewModel(
+  repositories: FakeRepositories,
+  dispatcher: CoroutineDispatcher = Dispatchers.Unconfined,
+): ConnectivityViewModel {
+  val useCase = ConnectivityOperationsUseCase(repositories.connectivityRepository, dispatcher)
+  return ConnectivityViewModel(useCase, dispatcher)
+}
+
+internal fun createThemeViewModel(
+  repositories: FakeRepositories,
+  dispatcher: CoroutineDispatcher = Dispatchers.Unconfined,
+): ThemeViewModel {
+  val useCase = ThemeOperationsUseCase(repositories.themeRepository)
+  return ThemeViewModel(useCase, dispatcher)
+}
+
 internal class FakeDownloadManager : DownloadManager {
   override suspend fun startDownload(modelId: String): UUID = UUID.randomUUID()
 
@@ -348,6 +366,8 @@ internal class FakeDownloadManager : DownloadManager {
   override suspend fun getDownloadedChecksum(modelId: String): String? = null
 
   override suspend fun deletePartialFiles(modelId: String) = Unit
+
+  override suspend fun getActiveDownloadsSnapshot(): List<DownloadTask> = emptyList()
 }
 
 internal fun createFakeRepositories(): FakeRepositories {

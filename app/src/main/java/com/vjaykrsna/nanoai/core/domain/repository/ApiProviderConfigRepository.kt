@@ -1,6 +1,7 @@
 package com.vjaykrsna.nanoai.core.domain.repository
 
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
+import com.vjaykrsna.nanoai.core.domain.model.ProviderCredentialMutation
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -16,10 +17,16 @@ interface ApiProviderConfigRepository {
   suspend fun getProvider(providerId: String): APIProviderConfig?
 
   /** Add a new provider configuration. */
-  suspend fun addProvider(config: APIProviderConfig)
+  suspend fun addProvider(
+    config: APIProviderConfig,
+    credentialMutation: ProviderCredentialMutation = ProviderCredentialMutation.None,
+  )
 
   /** Update an existing provider configuration. */
-  suspend fun updateProvider(config: APIProviderConfig)
+  suspend fun updateProvider(
+    config: APIProviderConfig,
+    credentialMutation: ProviderCredentialMutation = ProviderCredentialMutation.None,
+  )
 
   /** Delete a provider configuration. */
   suspend fun deleteProvider(providerId: String)

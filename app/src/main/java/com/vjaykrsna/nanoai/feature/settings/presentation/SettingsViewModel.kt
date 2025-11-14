@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
 import com.vjaykrsna.nanoai.core.domain.library.ModelDownloadsAndExportUseCase
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
+import com.vjaykrsna.nanoai.core.domain.model.ProviderCredentialMutation
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.settings.ApiProviderConfigUseCase
 import com.vjaykrsna.nanoai.core.domain.settings.ImportService
@@ -112,9 +113,11 @@ constructor(
     observers.start()
   }
 
-  fun addApiProvider(config: APIProviderConfig) = providerActions.add(config)
+  fun addApiProvider(config: APIProviderConfig, credential: ProviderCredentialMutation) =
+    providerActions.add(config, credential)
 
-  fun updateApiProvider(config: APIProviderConfig) = providerActions.update(config)
+  fun updateApiProvider(config: APIProviderConfig, credential: ProviderCredentialMutation) =
+    providerActions.update(config, credential)
 
   fun deleteApiProvider(providerId: String) = providerActions.delete(providerId)
 

@@ -72,9 +72,6 @@ interface ApiProviderConfigStatusDao {
     "UPDATE api_provider_configs SET quota_reset_at = :resetAt WHERE provider_id = :providerId"
   )
   suspend fun updateQuotaReset(providerId: String, resetAt: Instant?)
-
-  @Query("UPDATE api_provider_configs SET api_key = :apiKey WHERE provider_id = :providerId")
-  suspend fun updateApiKey(providerId: String, apiKey: String)
 }
 
 /** Maintenance helpers for provider configuration state. */

@@ -112,11 +112,11 @@ constructor(
           putString("id", provider.providerId)
           putString("name", provider.providerName)
           putString("baseUrl", provider.baseUrl)
-          putString("apiKey", provider.apiKey)
           putString("apiType", provider.apiType.name)
           put("enabled", JsonPrimitive(provider.isEnabled))
           putString("quotaResetAt", provider.quotaResetAt?.toString())
           putString("lastStatus", provider.lastStatus.name)
+          put("hasCredential", JsonPrimitive(provider.hasCredential))
         }
       )
     }

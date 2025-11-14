@@ -40,9 +40,9 @@ class SettingsScreenContractTest {
       providerId = "provider-1",
       providerName = "Test Provider",
       baseUrl = "https://api.example.com",
-      apiKey = "key",
       apiType = APIType.OPENAI_COMPATIBLE,
       isEnabled = true,
+      credentialId = "dummy-credential-id",
     )
 
   private val defaultState =

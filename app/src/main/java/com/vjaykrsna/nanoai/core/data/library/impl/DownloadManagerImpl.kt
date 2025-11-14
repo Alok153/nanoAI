@@ -1,12 +1,12 @@
 package com.vjaykrsna.nanoai.core.data.library.impl
 
-import android.content.Context
 import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
+import com.vjaykrsna.nanoai.core.data.library.ModelArtifactStore
 import com.vjaykrsna.nanoai.core.data.library.daos.DownloadTaskDao
 import com.vjaykrsna.nanoai.core.data.library.workers.ModelDownloadWorker
 import com.vjaykrsna.nanoai.core.domain.library.DownloadManager
@@ -14,18 +14,12 @@ import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.core.domain.model.library.DownloadStatus
 import com.vjaykrsna.nanoai.core.domain.model.toDomain
 import com.vjaykrsna.nanoai.core.domain.model.toEntity
-import dagger.hilt.android.qualifiers.ApplicationContext
-import java.io.File
-import java.io.FileInputStream
-import java.security.MessageDigest
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
-
-private const val CHECKSUM_BUFFER_SIZE = 8_192
 
 /**
  * Implementation of DownloadManager.
@@ -38,7 +32,7 @@ class DownloadManagerImpl
 constructor(
   private val downloadTaskDao: DownloadTaskDao,
   private val workManager: WorkManager,
-  @ApplicationContext private val context: Context,
+  private val artifactStore: ModelArtifactStore,
 ) : DownloadManager {
   override suspend fun startDownload(modelId: String): UUID {
     val taskId = queueDownload(modelId)
@@ -109,6 +103,9 @@ constructor(
   override suspend fun getActiveDownloads(): Flow<List<DownloadTask>> =
     downloadTaskDao.observeActiveDownloads().map { tasks -> tasks.map { it.toDomain() } }
 
+  override suspend fun getActiveDownloadsSnapshot(): List<DownloadTask> =
+    downloadTaskDao.getActiveDownloads().map { it.toDomain() }
+
   override fun getQueuedDownloads(): Flow<List<DownloadTask>> =
     downloadTaskDao.observeQueuedDownloads().map { tasks -> tasks.map { it.toDomain() } }
 
@@ -128,23 +125,11 @@ constructor(
   override suspend fun getModelIdForTask(taskId: UUID): String? =
     downloadTaskDao.getModelIdForTask(taskId.toString())
 
-  override suspend fun getDownloadedChecksum(modelId: String): String? {
-    val file = File(context.filesDir, "models/$modelId.bin")
-    if (!file.exists()) return null
-    val digest = MessageDigest.getInstance("SHA-256")
-    FileInputStream(file).use { input ->
-      val buffer = ByteArray(CHECKSUM_BUFFER_SIZE)
-      var read: Int
-      while (input.read(buffer).also { read = it } != -1) {
-        digest.update(buffer, 0, read)
-      }
-    }
-    return digest.digest().joinToString(separator = "") { byte -> "%02x".format(byte) }
-  }
+  override suspend fun getDownloadedChecksum(modelId: String): String? =
+    artifactStore.checksumForModel(modelId)
 
   override suspend fun deletePartialFiles(modelId: String) {
-    val modelsDir = File(context.filesDir, "models")
-    modelsDir.listFiles { file -> file.name.startsWith(modelId) }?.forEach { file -> file.delete() }
+    artifactStore.deleteArtifacts(modelId)
   }
 
   private fun enqueueWorker(taskId: UUID, modelId: String, policy: ExistingWorkPolicy) {

@@ -4,6 +4,7 @@ import android.net.Uri
 import android.os.Environment
 import androidx.activity.compose.ManagedActivityResultLauncher
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
+import com.vjaykrsna.nanoai.core.domain.model.ProviderCredentialMutation
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
 import com.vjaykrsna.nanoai.core.domain.settings.model.PrivacyPreference
@@ -143,8 +144,8 @@ internal fun confirmExport(
 
 internal data class ProviderMutation(
   val editingProvider: APIProviderConfig?,
-  val onAdd: (APIProviderConfig) -> Unit,
-  val onUpdate: (APIProviderConfig) -> Unit,
+  val onAdd: (APIProviderConfig, ProviderCredentialMutation) -> Unit,
+  val onUpdate: (APIProviderConfig, ProviderCredentialMutation) -> Unit,
 )
 
 internal fun saveProvider(
@@ -152,19 +153,22 @@ internal fun saveProvider(
   name: String,
   baseUrl: String,
   apiKey: String?,
+  removeCredential: Boolean,
 ) {
+  val credentialMutation = ProviderCredentialMutation.fromInput(apiKey, removeCredential)
   mutation.editingProvider?.let { provider ->
-    mutation.onUpdate(provider.copy(providerName = name, baseUrl = baseUrl, apiKey = apiKey ?: ""))
+    val updated = provider.copy(providerName = name, baseUrl = baseUrl)
+    mutation.onUpdate(updated, credentialMutation)
   }
     ?: mutation.onAdd(
       APIProviderConfig(
         providerId = UUID.randomUUID().toString(),
         providerName = name,
         baseUrl = baseUrl,
-        apiKey = apiKey ?: "",
         apiType = APIType.OPENAI_COMPATIBLE,
         isEnabled = true,
-      )
+      ),
+      credentialMutation,
     )
 }
 

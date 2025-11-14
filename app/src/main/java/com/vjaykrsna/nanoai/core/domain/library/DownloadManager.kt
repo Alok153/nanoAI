@@ -51,6 +51,8 @@ interface DownloadTaskInspection {
 
   suspend fun getActiveDownloads(): Flow<List<DownloadTask>>
 
+  suspend fun getActiveDownloadsSnapshot(): List<DownloadTask>
+
   fun getQueuedDownloads(): Flow<List<DownloadTask>>
 
   fun observeManagedDownloads(): Flow<List<DownloadTask>>

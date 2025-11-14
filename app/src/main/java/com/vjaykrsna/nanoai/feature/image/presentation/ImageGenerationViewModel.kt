@@ -3,7 +3,7 @@ package com.vjaykrsna.nanoai.feature.image.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
-import com.vjaykrsna.nanoai.core.common.onFailure
+import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.domain.image.ImageGalleryUseCase
 import com.vjaykrsna.nanoai.core.domain.image.model.GeneratedImage
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -97,8 +97,16 @@ constructor(
           createdAt = Clock.System.now(),
         )
 
-      imageGalleryUseCase.saveImage(generatedImage).onFailure {
-        // TODO: Handle error
+      when (val saveResult = imageGalleryUseCase.saveImage(generatedImage)) {
+        is NanoAIResult.Success -> Unit
+        is NanoAIResult.RecoverableError -> {
+          handleGenerationFailure(saveResult.message)
+          return@launch
+        }
+        is NanoAIResult.FatalError -> {
+          handleGenerationFailure(saveResult.message)
+          return@launch
+        }
       }
 
       _uiState.value =
@@ -116,6 +124,16 @@ constructor(
 
   fun clearError() {
     _uiState.value = _uiState.value.copy(errorMessage = null)
+  }
+
+  private suspend fun handleGenerationFailure(message: String?) {
+    _uiState.value =
+      _uiState.value.copy(
+        isGenerating = false,
+        generatedImagePath = null,
+        errorMessage = message ?: "Failed to save image",
+      )
+    _errorEvents.emit(ImageGenerationError.GenerationError(message ?: "Failed to save image"))
   }
 }
 

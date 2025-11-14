@@ -34,10 +34,9 @@ class ShellViewModelJobUndoTest {
 
       val progressViewModel = createProgressViewModel(fakeRepos, dispatcher)
 
-      // Mock sub-ViewModels
       val navigationViewModel = mockk<NavigationViewModel>(relaxed = true)
-      val connectivityViewModel = mockk<ConnectivityViewModel>(relaxed = true)
-      val themeViewModel = mockk<ThemeViewModel>(relaxed = true)
+      val connectivityViewModel = createConnectivityViewModel(fakeRepos, dispatcher)
+      val themeViewModel = createThemeViewModel(fakeRepos, dispatcher)
 
       val viewModel =
         ShellViewModel(

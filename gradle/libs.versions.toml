@@ -1,5 +1,5 @@
 [versions]
-agp = "8.13.0"
+agp = "8.13.1"
 kotlin = "2.2.21"
 ksp = "2.3.1"
 coreKtx = "1.17.0"
@@ -134,6 +134,7 @@ androidx-compose-ui-test = { group = "androidx.compose.ui", name = "ui-test", ve
 
 # MediaPipe
 mediapipe-tasks-genai = { group = "com.google.mediapipe", name = "tasks-genai", version.ref = "mediapipe" }
+mediapipe-tasks-vision = { group = "com.google.mediapipe", name = "tasks-vision", version.ref = "mediapipe" }
 
 # Leap
 leap-sdk = { group = "ai.liquid.leap", name = "leap-sdk", version.ref = "leap" }

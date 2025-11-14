@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 8,
-    "identityHash": "e302490845d692327a13476cbffd7a86",
+    "identityHash": "69bb19ddde8cd971186f64fe7569172b",
     "entities": [
       {
         "tableName": "chat_threads",
@@ -523,7 +523,7 @@
       },
       {
         "tableName": "api_provider_configs",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`provider_id` TEXT NOT NULL, `provider_name` TEXT NOT NULL, `base_url` TEXT NOT NULL, `api_key` TEXT NOT NULL, `api_type` TEXT NOT NULL, `is_enabled` INTEGER NOT NULL, `quota_reset_at` INTEGER, `last_status` TEXT NOT NULL, PRIMARY KEY(`provider_id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`provider_id` TEXT NOT NULL, `provider_name` TEXT NOT NULL, `base_url` TEXT NOT NULL, `credential_id` TEXT, `api_type` TEXT NOT NULL, `is_enabled` INTEGER NOT NULL, `quota_reset_at` INTEGER, `last_status` TEXT NOT NULL, PRIMARY KEY(`provider_id`))",
         "fields": [
           {
             "fieldPath": "providerId",
@@ -544,10 +544,9 @@
             "notNull": true
           },
           {
-            "fieldPath": "apiKey",
-            "columnName": "api_key",
-            "affinity": "TEXT",
-            "notNull": true
+            "fieldPath": "credentialId",
+            "columnName": "credential_id",
+            "affinity": "TEXT"
           },
           {
             "fieldPath": "apiType",
@@ -1351,7 +1350,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e302490845d692327a13476cbffd7a86')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '69bb19ddde8cd971186f64fe7569172b')"
     ]
   }
 }

@@ -6,6 +6,7 @@ import com.vjaykrsna.nanoai.core.common.onFailure
 import com.vjaykrsna.nanoai.core.common.onSuccess
 import com.vjaykrsna.nanoai.core.domain.library.ModelDownloadsAndExportUseCase
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
+import com.vjaykrsna.nanoai.core.domain.model.ProviderCredentialMutation
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.settings.ApiProviderConfigUseCase
 import com.vjaykrsna.nanoai.core.domain.settings.ImportService
@@ -130,17 +131,17 @@ internal class SettingsApiProviderActions(
   private val setLoading: (Boolean) -> Unit,
   private val emitError: suspend (SettingsError) -> Unit,
 ) {
-  fun add(config: APIProviderConfig) {
+  fun add(config: APIProviderConfig, credential: ProviderCredentialMutation) {
     execute(
-      operation = { apiProviderConfigUseCase.addProvider(config) },
+      operation = { apiProviderConfigUseCase.addProvider(config, credential) },
       error = { message -> SettingsError.ProviderAddFailed(message) },
       defaultMessage = "Failed to add provider",
     )
   }
 
-  fun update(config: APIProviderConfig) {
+  fun update(config: APIProviderConfig, credential: ProviderCredentialMutation) {
     execute(
-      operation = { apiProviderConfigUseCase.updateProvider(config) },
+      operation = { apiProviderConfigUseCase.updateProvider(config, credential) },
       error = { message -> SettingsError.ProviderUpdateFailed(message) },
       defaultMessage = "Failed to update provider",
     )

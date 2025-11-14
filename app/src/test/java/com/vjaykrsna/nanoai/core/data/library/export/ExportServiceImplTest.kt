@@ -5,6 +5,7 @@ import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
 import com.vjaykrsna.nanoai.core.domain.model.ChatThread
 import com.vjaykrsna.nanoai.core.domain.model.Message
 import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
+import com.vjaykrsna.nanoai.core.domain.model.ProviderCredentialMutation
 import com.vjaykrsna.nanoai.core.domain.repository.ApiProviderConfigRepository
 import com.vjaykrsna.nanoai.core.domain.repository.ConversationRepository
 import com.vjaykrsna.nanoai.core.domain.repository.PersonaRepository
@@ -18,8 +19,10 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Clock
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.junit.Before
 import org.junit.Test
 
@@ -69,11 +72,11 @@ class ExportServiceImplTest {
         providerId = "openai",
         providerName = "OpenAI",
         baseUrl = "https://api.openai.com",
-        apiKey = "sk-test",
         apiType = APIType.OPENAI_COMPATIBLE,
         isEnabled = true,
         quotaResetAt = null,
         lastStatus = ProviderStatus.OK,
+        credentialId = "credential-openai",
       )
 
     personaRepository.personas = listOf(persona)
@@ -96,7 +99,9 @@ class ExportServiceImplTest {
     assertThat(payload["personas"]).isNotNull()
     assertThat(payload["personas"]!!.jsonArray).isNotEmpty()
     assertThat(payload["apiProviders"]).isNotNull()
-    assertThat(payload["apiProviders"]!!.jsonArray).isNotEmpty()
+    val providerJson = payload["apiProviders"]!!.jsonArray.first().jsonObject
+    assertThat(providerJson["hasCredential"]?.jsonPrimitive?.booleanOrNull).isTrue()
+    assertThat(providerJson.containsKey("apiKey")).isFalse()
   }
 
   private class FakePersonaRepository : PersonaRepository {
@@ -135,11 +140,17 @@ class ExportServiceImplTest {
     override suspend fun getProvider(providerId: String): APIProviderConfig? =
       providers.firstOrNull { it.providerId == providerId }
 
-    override suspend fun addProvider(config: APIProviderConfig) {
+    override suspend fun addProvider(
+      config: APIProviderConfig,
+      credentialMutation: ProviderCredentialMutation,
+    ) {
       throw UnsupportedOperationException("Not required for test")
     }
 
-    override suspend fun updateProvider(config: APIProviderConfig) {
+    override suspend fun updateProvider(
+      config: APIProviderConfig,
+      credentialMutation: ProviderCredentialMutation,
+    ) {
       throw UnsupportedOperationException("Not required for test")
     }
 

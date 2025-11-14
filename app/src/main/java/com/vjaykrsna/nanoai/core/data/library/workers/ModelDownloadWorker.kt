@@ -10,6 +10,8 @@ import androidx.work.workDataOf
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.common.NotificationHelper
 import com.vjaykrsna.nanoai.core.common.NotificationHelper.Companion.NOTIFICATION_ID_DOWNLOAD_PROGRESS
+import com.vjaykrsna.nanoai.core.data.db.entities.ModelPackageEntity
+import com.vjaykrsna.nanoai.core.data.library.ModelArtifactStore
 import com.vjaykrsna.nanoai.core.data.library.catalog.DownloadManifest
 import com.vjaykrsna.nanoai.core.data.library.catalog.VerificationOutcome
 import com.vjaykrsna.nanoai.core.data.library.daos.DownloadTaskDao
@@ -28,10 +30,8 @@ import java.io.InputStream
 import java.net.URL
 import java.security.GeneralSecurityException
 import java.security.KeyFactory
-import java.security.MessageDigest
 import java.security.Signature
 import java.security.spec.X509EncodedKeySpec
-import java.util.Locale
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -70,6 +70,7 @@ constructor(
   val modelManifestUseCase: ModelManifestUseCase,
   val telemetryReporter: TelemetryReporter,
   val notificationHelper: NotificationHelper,
+  val artifactStore: ModelArtifactStore,
 )
 
 @HiltWorker
@@ -88,6 +89,7 @@ constructor(
   private val modelManifestUseCase: ModelManifestUseCase = dependencies.modelManifestUseCase
   private val telemetryReporter: TelemetryReporter = dependencies.telemetryReporter
   private val notificationHelper: NotificationHelper = dependencies.notificationHelper
+  private val artifactStore: ModelArtifactStore = dependencies.artifactStore
   private var modelName: String = ""
 
   override suspend fun doWork(): WorkResult = withContext(Dispatchers.IO) { executeWork() }
@@ -102,7 +104,9 @@ constructor(
       modelId == null -> fatalFailureResult("Missing model id")
       modelPackage == null -> fatalFailureResult("Model not found: $modelId")
       else -> {
-        val modelName = modelId // TODO: Use proper model name from modelPackage
+        val resolvedModelName = resolveModelName(modelPackage, modelId)
+        modelName = resolvedModelName
+        val modelName = resolvedModelName
         markTaskStarting(downloadTaskDao, taskId)
         modelPackageWriteDao.updateInstallState(
           modelId,
@@ -130,8 +134,7 @@ constructor(
     modelId: String,
     manifest: DownloadManifest,
   ): WorkResult {
-    val downloadDir = File(applicationContext.filesDir, "models").apply { mkdirs() }
-    val outputFile = File(downloadDir, "${manifest.modelId}.bin")
+    val outputFile = artifactStore.modelFile(manifest.modelId)
 
     return when (val downloadOutcome = downloadModel(taskId, manifest, outputFile)) {
       is NanoAIResult.Success -> {
@@ -323,7 +326,7 @@ constructor(
     val result =
       sizeValidation
         ?: run {
-          val checksum = calculateSha256(file)
+          val checksum = artifactStore.checksumForFile(file)
           when {
             !checksum.equals(manifest.checksumSha256, ignoreCase = true) -> {
               file.delete()
@@ -512,6 +515,11 @@ constructor(
   }
 }
 
+internal fun resolveModelName(modelPackage: ModelPackageEntity?, fallbackId: String): String {
+  val explicitName = modelPackage?.displayName?.takeIf { it.isNotBlank() }
+  return explicitName ?: fallbackId
+}
+
 private fun fatalFailureResult(message: String): WorkResult =
   WorkResult.failure(workDataOf(KEY_ERROR_TYPE to ERROR_TYPE_FATAL, KEY_ERROR_MESSAGE to message))
 
@@ -543,18 +551,3 @@ private fun fatalResultData(error: NanoAIResult.FatalError) =
     KEY_ERROR_MESSAGE to error.message,
     KEY_ERROR_TELEMETRY to error.telemetryId,
   )
-
-private fun calculateSha256(file: File): String {
-  val digest = MessageDigest.getInstance("SHA-256")
-  file.inputStream().use { input ->
-    val buffer = ByteArray(DOWNLOAD_BUFFER_SIZE)
-    while (true) {
-      val read = input.read(buffer)
-      if (read == -1) break
-      digest.update(buffer, 0, read)
-    }
-  }
-  return digest.digest().joinToString(separator = "") { byte ->
-    String.format(Locale.US, "%02x", byte)
-  }
-}

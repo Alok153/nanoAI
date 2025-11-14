@@ -28,6 +28,7 @@ internal class ModelDownloadsAndExportUseCaseDownloadTest :
         DomainTestBuilders.buildDownloadTask(status = DownloadStatus.DOWNLOADING),
       )
     coEvery { downloadManager.getActiveDownloads() } returns flowOf(activeDownloads)
+    coEvery { downloadManager.getActiveDownloadsSnapshot() } returns activeDownloads
     coEvery { downloadManager.getMaxConcurrentDownloads() } returns 2
 
     val result = useCase.downloadModel("gemini-2.0-flash-lite")
@@ -45,6 +46,7 @@ internal class ModelDownloadsAndExportUseCaseDownloadTest :
     val activeDownloads =
       listOf(DomainTestBuilders.buildDownloadTask(status = DownloadStatus.DOWNLOADING))
     coEvery { downloadManager.getActiveDownloads() } returns flowOf(activeDownloads)
+    coEvery { downloadManager.getActiveDownloadsSnapshot() } returns activeDownloads
     coEvery { downloadManager.getMaxConcurrentDownloads() } returns 3
 
     val result = useCase.downloadModel("phi-3-mini-4k")
@@ -56,6 +58,7 @@ internal class ModelDownloadsAndExportUseCaseDownloadTest :
   @Test
   fun `downloadModel returns recoverable when manager fails`() = runTest {
     coEvery { downloadManager.getActiveDownloads() } throws IllegalStateException("down")
+    coEvery { downloadManager.getActiveDownloadsSnapshot() } throws IllegalStateException("down")
 
     val result = useCase.downloadModel("faulty-model")
 
@@ -65,6 +68,7 @@ internal class ModelDownloadsAndExportUseCaseDownloadTest :
   @Test
   fun `downloadModel rethrows cancellation`() = runTest {
     coEvery { downloadManager.getActiveDownloads() } throws CancellationException("cancel")
+    coEvery { downloadManager.getActiveDownloadsSnapshot() } throws CancellationException("cancel")
 
     assertFailsWith<CancellationException> { useCase.downloadModel("cancel-model") }
   }
@@ -155,7 +159,7 @@ internal class ModelDownloadsAndExportUseCaseDownloadTest :
   }
 
   @Test
-  fun `retryFailedDownload resets and restarts`() = runTest {
+  fun `retryFailedDownload retries existing task`() = runTest {
     val taskId = UUID.randomUUID()
     val modelId = "failed-model"
     coEvery { downloadManager.getTaskById(taskId) } returns
@@ -170,8 +174,7 @@ internal class ModelDownloadsAndExportUseCaseDownloadTest :
 
     useCase.retryFailedDownload(taskId)
 
-    coVerify { downloadManager.resetTask(taskId) }
-    coVerify { downloadManager.startDownload(modelId) }
+    coVerify { downloadManager.retryDownload(taskId) }
     coVerify { modelCatalogRepository.updateInstallState(modelId, InstallState.DOWNLOADING) }
   }
 

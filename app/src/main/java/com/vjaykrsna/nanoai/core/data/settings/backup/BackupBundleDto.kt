@@ -33,6 +33,7 @@ internal data class BackupApiProviderDto(
   val apiKey: String? = null,
   val apiType: String? = null,
   val enabled: Boolean? = null,
+  val hasCredential: Boolean? = null,
 )
 
 @Serializable

@@ -30,20 +30,18 @@ import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 
-/**
- * Keystore-backed credential store that persists provider secrets as encrypted JSON blobs.
- */
+/** Keystore-backed credential store that persists provider secrets as encrypted JSON blobs. */
 @Singleton
 class EncryptedSecretStore
-private constructor(
-  private val persistence: SecretPersistence,
-  private val suppliedClock: Clock?,
-) {
+private constructor(private val persistence: SecretPersistence, private val suppliedClock: Clock?) {
   private val clock: Clock = suppliedClock ?: Clock.System
   private val lock = ReentrantReadWriteLock()
 
   @Inject
-  constructor(@ApplicationContext context: Context, json: Json) : this(
+  constructor(
+    @ApplicationContext context: Context,
+    json: Json,
+  ) : this(
     persistence =
       KeystoreSecretPersistence(
         file = File(context.filesDir, PREFS_FILE_NAME),
@@ -83,8 +81,9 @@ private constructor(
   }
 
   /** Retrieve a stored credential if present. */
-  fun getCredential(providerId: String): SecretCredential? =
-    readStore { entries -> entries[providerId]?.toCredential(providerId) }
+  fun getCredential(providerId: String): SecretCredential? = readStore { entries ->
+    entries[providerId]?.toCredential(providerId)
+  }
 
   /** Remove a stored credential. */
   fun deleteCredential(providerId: String) {
@@ -92,8 +91,9 @@ private constructor(
   }
 
   /** Enumerate all stored credentials. */
-  fun listCredentials(): List<SecretCredential> =
-    readStore { entries -> entries.map { (id, payload) -> payload.toCredential(id) } }
+  fun listCredentials(): List<SecretCredential> = readStore { entries ->
+    entries.map { (id, payload) -> payload.toCredential(id) }
+  }
 
   private inline fun <T> readStore(transform: (Map<String, SecretPayload>) -> T): T =
     lock.read { persistence.read().let(transform) }
@@ -132,6 +132,7 @@ private constructor(
 
   private interface SecretPersistence {
     fun read(): Map<String, SecretPayload>
+
     fun write(entries: Map<String, SecretPayload>)
   }
 
@@ -187,53 +188,55 @@ private constructor(
 
   private interface SecretCrypto {
     fun encrypt(plaintext: ByteArray): ByteArray
+
     fun decrypt(ciphertext: ByteArray): ByteArray
   }
 
   private class KeystoreSecretCrypto(private val keyAlias: String) : SecretCrypto {
     private val keyStore: KeyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
 
-    override fun encrypt(plaintext: ByteArray): ByteArray = try {
-      val cipher = Cipher.getInstance(AES_MODE)
-      cipher.init(Cipher.ENCRYPT_MODE, getOrCreateKey())
-      val ciphertext = cipher.doFinal(plaintext)
-      val iv = cipher.iv
-      ByteBuffer.allocate(INT_BYTES + iv.size + ciphertext.size)
-        .putInt(iv.size)
-        .put(iv)
-        .put(ciphertext)
-        .array()
-    } catch (exception: GeneralSecurityException) {
-      throw IllegalStateException("Unable to encrypt credential", exception)
-    }
+    override fun encrypt(plaintext: ByteArray): ByteArray =
+      try {
+        val cipher = Cipher.getInstance(AES_MODE)
+        cipher.init(Cipher.ENCRYPT_MODE, getOrCreateKey())
+        val ciphertext = cipher.doFinal(plaintext)
+        val iv = cipher.iv
+        ByteBuffer.allocate(INT_BYTES + iv.size + ciphertext.size)
+          .putInt(iv.size)
+          .put(iv)
+          .put(ciphertext)
+          .array()
+      } catch (exception: GeneralSecurityException) {
+        throw IllegalStateException("Unable to encrypt credential", exception)
+      }
 
-    override fun decrypt(ciphertext: ByteArray): ByteArray = try {
-      val buffer = ByteBuffer.wrap(ciphertext)
-      val ivLength = buffer.int
-      require(ivLength in MIN_IV_LENGTH..MAX_IV_LENGTH) { "Invalid IV length: $ivLength" }
-      val iv = ByteArray(ivLength).also { buffer.get(it) }
-      val encryptedPayload = ByteArray(buffer.remaining()).also { buffer.get(it) }
-      val cipher = Cipher.getInstance(AES_MODE)
-      cipher.init(
-        Cipher.DECRYPT_MODE,
-        getOrCreateKey(),
-        GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv),
-      )
-      cipher.doFinal(encryptedPayload)
-    } catch (invalidated: KeyPermanentlyInvalidatedException) {
-      deleteKey()
-      throw IllegalStateException("Encryption key permanently invalidated", invalidated)
-    } catch (badTag: AEADBadTagException) {
-      throw IllegalStateException("Stored credential cannot be decrypted (bad tag)", badTag)
-    } catch (exception: GeneralSecurityException) {
-      throw IllegalStateException("Unable to decrypt credential", exception)
-    }
+    override fun decrypt(ciphertext: ByteArray): ByteArray =
+      try {
+        val buffer = ByteBuffer.wrap(ciphertext)
+        val ivLength = buffer.int
+        require(ivLength in MIN_IV_LENGTH..MAX_IV_LENGTH) { "Invalid IV length: $ivLength" }
+        val iv = ByteArray(ivLength).also { buffer.get(it) }
+        val encryptedPayload = ByteArray(buffer.remaining()).also { buffer.get(it) }
+        val cipher = Cipher.getInstance(AES_MODE)
+        cipher.init(
+          Cipher.DECRYPT_MODE,
+          getOrCreateKey(),
+          GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv),
+        )
+        cipher.doFinal(encryptedPayload)
+      } catch (invalidated: KeyPermanentlyInvalidatedException) {
+        deleteKey()
+        throw IllegalStateException("Encryption key permanently invalidated", invalidated)
+      } catch (badTag: AEADBadTagException) {
+        throw IllegalStateException("Stored credential cannot be decrypted (bad tag)", badTag)
+      } catch (exception: GeneralSecurityException) {
+        throw IllegalStateException("Unable to decrypt credential", exception)
+      }
 
     private fun getOrCreateKey(): SecretKey {
       val existing = (keyStore.getEntry(keyAlias, null) as? KeyStore.SecretKeyEntry)?.secretKey
       if (existing != null) return existing
-      val keyGenerator =
-        KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE)
+      val keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE)
       val spec =
         KeyGenParameterSpec.Builder(
             keyAlias,
@@ -241,7 +244,7 @@ private constructor(
           )
           .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
           .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
-          .setKeySize(256)
+          .setKeySize(AES_KEY_SIZE_BITS)
           .setUserAuthenticationRequired(false)
           .build()
       keyGenerator.init(spec)
@@ -258,6 +261,7 @@ private constructor(
     private const val MASTER_KEY_ALIAS = "nanoai.encrypted.master"
     private const val ANDROID_KEYSTORE = "AndroidKeyStore"
     private const val AES_MODE = "AES/GCM/NoPadding"
+    private const val AES_KEY_SIZE_BITS = 256
     private const val GCM_TAG_LENGTH_BITS = 128
     private const val INT_BYTES = 4
     private const val MIN_IV_LENGTH = 12

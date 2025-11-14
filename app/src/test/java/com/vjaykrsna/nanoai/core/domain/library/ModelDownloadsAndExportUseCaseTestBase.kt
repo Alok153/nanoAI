@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai.core.domain.library
 
+import io.mockk.coEvery
 import io.mockk.mockk
 import org.junit.Before
 
@@ -14,6 +15,8 @@ internal abstract class ModelDownloadsAndExportUseCaseTestBase {
     modelCatalogRepository = mockk(relaxed = true)
     downloadManager = mockk(relaxed = true)
     exportService = mockk(relaxed = true)
+
+    coEvery { downloadManager.getActiveDownloadsSnapshot() } returns emptyList()
 
     useCase =
       ModelDownloadsAndExportUseCase(

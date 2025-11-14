@@ -19,7 +19,8 @@ internal data class SettingsDialogState(
 
 internal data class SettingsDialogHandlers(
   val onProviderDismiss: () -> Unit,
-  val onProviderSave: (name: String, baseUrl: String, apiKey: String?) -> Unit,
+  val onProviderSave:
+    (name: String, baseUrl: String, apiKey: String?, removeCredential: Boolean) -> Unit,
   val onExportDismiss: () -> Unit,
   val onExportConfirm: (dontShowAgain: Boolean) -> Unit,
   val onHuggingFaceLoginDismiss: () -> Unit,
@@ -82,7 +83,7 @@ internal fun createDialogHandlers(
 
   return SettingsDialogHandlers(
     onProviderDismiss = { hideProviderDialog() },
-    onProviderSave = { name, baseUrl, apiKey ->
+    onProviderSave = { name, baseUrl, apiKey, removeCredential ->
       saveProvider(
         mutation =
           ProviderMutation(
@@ -93,6 +94,7 @@ internal fun createDialogHandlers(
         name = name,
         baseUrl = baseUrl,
         apiKey = apiKey,
+        removeCredential = removeCredential,
       )
       hideProviderDialog()
     },

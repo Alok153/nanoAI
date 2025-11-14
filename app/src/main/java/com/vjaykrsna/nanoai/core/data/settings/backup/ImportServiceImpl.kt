@@ -6,6 +6,7 @@ import android.util.Log
 import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreferenceStore
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
 import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
+import com.vjaykrsna.nanoai.core.domain.model.ProviderCredentialMutation
 import com.vjaykrsna.nanoai.core.domain.repository.ApiProviderConfigRepository
 import com.vjaykrsna.nanoai.core.domain.repository.PersonaRepository
 import com.vjaykrsna.nanoai.core.domain.settings.ImportService
@@ -168,16 +169,19 @@ constructor(
         existing?.copy(
           providerName = dto.name,
           baseUrl = dto.baseUrl,
-          apiKey = dto.apiKey ?: existing.apiKey,
           apiType = dto.apiType?.let(::parseApiType) ?: existing.apiType,
           isEnabled = dto.enabled ?: existing.isEnabled,
         ) ?: buildNewProvider(providerId, dto)
 
+      val credentialMutation =
+        dto.apiKey?.let { ProviderCredentialMutation.Replace(it) }
+          ?: ProviderCredentialMutation.None
+
       if (existing == null) {
-        apiProviderConfigRepository.addProvider(baseConfig)
+        apiProviderConfigRepository.addProvider(baseConfig, credentialMutation)
         imported += 1
       } else {
-        apiProviderConfigRepository.updateProvider(baseConfig)
+        apiProviderConfigRepository.updateProvider(baseConfig, credentialMutation)
         updated += 1
       }
     }
@@ -195,7 +199,6 @@ constructor(
       providerId = providerId,
       providerName = dto.name,
       baseUrl = dto.baseUrl,
-      apiKey = dto.apiKey.orEmpty(),
       apiType = dto.apiType?.let(::parseApiType) ?: APIType.OPENAI_COMPATIBLE,
       isEnabled = dto.enabled ?: true,
       quotaResetAt = null,

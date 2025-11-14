@@ -3,6 +3,7 @@ package com.vjaykrsna.nanoai.core.domain.settings
 import android.database.sqlite.SQLiteException
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
+import com.vjaykrsna.nanoai.core.domain.model.ProviderCredentialMutation
 import com.vjaykrsna.nanoai.core.domain.repository.ApiProviderConfigRepository
 import java.io.IOException
 import javax.inject.Inject
@@ -38,22 +39,28 @@ constructor(private val apiProviderConfigRepository: ApiProviderConfigRepository
     }
 
   /** Add a new API provider. */
-  override suspend fun addProvider(config: APIProviderConfig): NanoAIResult<Unit> =
+  override suspend fun addProvider(
+    config: APIProviderConfig,
+    credentialMutation: ProviderCredentialMutation,
+  ): NanoAIResult<Unit> =
     guardRepositoryCall(
       message = "Failed to add API provider ${config.providerId}",
       context = mapOf("providerId" to config.providerId, "providerName" to config.providerName),
     ) {
-      apiProviderConfigRepository.addProvider(config)
+      apiProviderConfigRepository.addProvider(config, credentialMutation)
       NanoAIResult.success(Unit)
     }
 
   /** Update an existing API provider. */
-  override suspend fun updateProvider(config: APIProviderConfig): NanoAIResult<Unit> =
+  override suspend fun updateProvider(
+    config: APIProviderConfig,
+    credentialMutation: ProviderCredentialMutation,
+  ): NanoAIResult<Unit> =
     guardRepositoryCall(
       message = "Failed to update API provider ${config.providerId}",
       context = mapOf("providerId" to config.providerId, "providerName" to config.providerName),
     ) {
-      apiProviderConfigRepository.updateProvider(config)
+      apiProviderConfigRepository.updateProvider(config, credentialMutation)
       NanoAIResult.success(Unit)
     }
 

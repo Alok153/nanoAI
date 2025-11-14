@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
+import com.vjaykrsna.nanoai.core.data.library.ModelArtifactStore
 import com.vjaykrsna.nanoai.core.data.library.daos.DownloadTaskDao
 import com.vjaykrsna.nanoai.core.data.library.entities.DownloadTaskEntity
 import com.vjaykrsna.nanoai.core.domain.model.library.DownloadStatus
@@ -43,6 +44,7 @@ class DownloadManagerImplTest {
 
   private lateinit var context: Context
   private lateinit var filesDir: File
+  private lateinit var artifactStore: ModelArtifactStore
   private lateinit var subject: DownloadManagerImpl
 
   @BeforeEach
@@ -51,7 +53,8 @@ class DownloadManagerImplTest {
     filesDir = createTempDirectory(prefix = "download-manager-test").toFile()
     context = mockk(relaxed = true)
     every { context.filesDir } returns filesDir
-    subject = DownloadManagerImpl(downloadTaskDao, workManager, context)
+    artifactStore = ModelArtifactStore(context)
+    subject = DownloadManagerImpl(downloadTaskDao, workManager, artifactStore)
   }
 
   @AfterEach

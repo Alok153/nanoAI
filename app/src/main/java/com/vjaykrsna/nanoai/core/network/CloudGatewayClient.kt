@@ -6,6 +6,7 @@ import com.vjaykrsna.nanoai.core.network.dto.CompletionRequestDto
 import com.vjaykrsna.nanoai.core.network.dto.CompletionResponseDto
 import com.vjaykrsna.nanoai.core.network.dto.GatewayErrorDto
 import com.vjaykrsna.nanoai.core.network.dto.ModelListResponseDto
+import com.vjaykrsna.nanoai.core.security.ProviderCredentialStore
 import java.net.HttpURLConnection
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -25,7 +26,11 @@ import retrofit2.converter.kotlinx.serialization.asConverterFactory
 @Singleton
 class CloudGatewayClient
 @Inject
-constructor(private val okHttpClient: OkHttpClient, private val json: Json) {
+constructor(
+  private val okHttpClient: OkHttpClient,
+  private val json: Json,
+  private val providerCredentialStore: ProviderCredentialStore,
+) {
   private val jsonMediaType = "application/json".toMediaType()
 
   /** Execute a text completion request against the configured provider. */
@@ -45,7 +50,11 @@ constructor(private val okHttpClient: OkHttpClient, private val json: Json) {
     block: suspend (CloudGatewayService) -> T,
   ): CloudGatewayResult<T> =
     withContext(Dispatchers.IO) {
-      val service = createService(provider)
+      val credentialValue = providerCredentialStore.resolve(provider.credentialId)
+      if (credentialValue.isNullOrBlank() && provider.requiresCredential()) {
+        return@withContext CloudGatewayResult.Unauthorized
+      }
+      val service = createService(provider, credentialValue)
       val timedResult = runCatching { measureTimedValue { block(service) } }
       timedResult.fold(
         onSuccess = { CloudGatewayResult.Success(it.value, it.duration.inWholeMilliseconds) },
@@ -53,17 +62,17 @@ constructor(private val okHttpClient: OkHttpClient, private val json: Json) {
       )
     }
 
-  private fun createService(provider: APIProviderConfig): CloudGatewayService {
+  private fun createService(provider: APIProviderConfig, credential: String?): CloudGatewayService {
     val retrofit =
       Retrofit.Builder()
         .baseUrl(normalizeBaseUrl(provider.baseUrl))
-        .client(buildClient(provider))
+        .client(buildClient(provider, credential))
         .addConverterFactory(json.asConverterFactory(jsonMediaType))
         .build()
     return retrofit.create(CloudGatewayService::class.java)
   }
 
-  private fun buildClient(provider: APIProviderConfig): OkHttpClient =
+  private fun buildClient(provider: APIProviderConfig, credential: String?): OkHttpClient =
     okHttpClient
       .newBuilder()
       .addInterceptor { chain ->
@@ -72,8 +81,8 @@ constructor(private val okHttpClient: OkHttpClient, private val json: Json) {
 
         when (provider.apiType) {
           APIType.OPENAI_COMPATIBLE,
-          APIType.GEMINI -> requestBuilder.header("Authorization", "Bearer ${provider.apiKey}")
-          APIType.CUSTOM -> requestBuilder.header("X-API-Key", provider.apiKey)
+          APIType.GEMINI -> credential?.let { requestBuilder.header("Authorization", "Bearer $it") }
+          APIType.CUSTOM -> credential?.let { requestBuilder.header("X-API-Key", it) }
         }
 
         // Explicit JSON content type for POST requests
@@ -87,6 +96,13 @@ constructor(private val okHttpClient: OkHttpClient, private val json: Json) {
 
   private fun normalizeBaseUrl(baseUrl: String): String =
     if (baseUrl.endsWith('/')) baseUrl else "$baseUrl/"
+
+  private fun APIProviderConfig.requiresCredential(): Boolean =
+    when (apiType) {
+      APIType.OPENAI_COMPATIBLE,
+      APIType.GEMINI,
+      APIType.CUSTOM -> true
+    }
 
   private fun mapError(throwable: Throwable): CloudGatewayResult<Nothing> =
     when (throwable) {

@@ -30,7 +30,7 @@ constructor(
       message = "Failed to start download for model $modelId",
       context = mapOf("modelId" to modelId),
     ) {
-      val activeDownloads = downloadManager.getActiveDownloads().first()
+      val activeDownloads = downloadManager.getActiveDownloadsSnapshot()
       val activeCount = activeDownloads.count { it.status == DownloadStatus.DOWNLOADING }
       val maxConcurrent = downloadManager.getMaxConcurrentDownloads()
 
@@ -201,10 +201,8 @@ constructor(
                   requireModelIdForTask(taskId)
                     .fold(
                       onSuccess = { modelId ->
-                        downloadManager.resetTask(taskId)
-                        downloadManager.startDownload(modelId)
+                        downloadManager.retryDownload(taskId)
                         modelCatalogRepository.updateInstallState(modelId, InstallState.DOWNLOADING)
-                        modelCatalogRepository.updateDownloadTaskId(modelId, taskId)
                         NanoAIResult.success(Unit)
                       },
                       onFailure = { error -> error },

@@ -6,9 +6,10 @@ plugins { id("com.vjaykrsna.nanoai.android.application") }
 val libsCatalog = extensions.getByType<VersionCatalogsExtension>().named("libs")
 
 fun version(alias: String): String =
-  libsCatalog.findVersion(alias).orElseThrow {
-    IllegalStateException("Missing version '$alias' in libs.versions.toml")
-  }.requiredVersion
+  libsCatalog
+    .findVersion(alias)
+    .orElseThrow { IllegalStateException("Missing version '$alias' in libs.versions.toml") }
+    .requiredVersion
 
 configurations.configureEach {
   resolutionStrategy.eachDependency {
@@ -92,6 +93,7 @@ android {
 dependencies {
   // MediaPipe
   implementation(libs.mediapipe.tasks.genai)
+  implementation(libs.mediapipe.tasks.vision)
 
   // Leap
   implementation(libs.leap.sdk)
