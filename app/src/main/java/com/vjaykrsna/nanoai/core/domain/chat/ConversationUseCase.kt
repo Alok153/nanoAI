@@ -2,6 +2,8 @@ package com.vjaykrsna.nanoai.core.domain.chat
 
 import android.database.sqlite.SQLiteException
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.common.annotations.OneShot
+import com.vjaykrsna.nanoai.core.common.annotations.ReactiveStream
 import com.vjaykrsna.nanoai.core.domain.model.ChatThread
 import com.vjaykrsna.nanoai.core.domain.model.Message
 import com.vjaykrsna.nanoai.core.domain.repository.ConversationRepository
@@ -19,16 +21,19 @@ class ConversationUseCase
 constructor(private val conversationRepository: ConversationRepository) :
   ConversationUseCaseInterface {
   /** Observe all threads (reactive stream - not wrapped in NanoAIResult). */
+  @ReactiveStream("Full chat thread catalog")
   override fun getAllThreadsFlow(): Flow<List<ChatThread>> {
     return conversationRepository.getAllThreadsFlow()
   }
 
   /** Observe messages for a specific thread (reactive stream - not wrapped in NanoAIResult). */
+  @ReactiveStream("Messages for an individual thread")
   override fun getMessagesFlow(threadId: UUID): Flow<List<Message>> {
     return conversationRepository.getMessagesFlow(threadId)
   }
 
   /** Create a new thread. */
+  @OneShot("Create a chat thread")
   override suspend fun createNewThread(personaId: UUID, title: String?): NanoAIResult<UUID> =
     guardConversationOperation(
       message = "Failed to create new thread",
@@ -39,6 +44,7 @@ constructor(private val conversationRepository: ConversationRepository) :
     }
 
   /** Archive a thread. */
+  @OneShot("Archive existing thread")
   override suspend fun archiveThread(threadId: UUID): NanoAIResult<Unit> =
     guardConversationOperation(
       message = "Failed to archive thread $threadId",
@@ -49,6 +55,7 @@ constructor(private val conversationRepository: ConversationRepository) :
     }
 
   /** Delete a thread. */
+  @OneShot("Delete existing thread")
   override suspend fun deleteThread(threadId: UUID): NanoAIResult<Unit> =
     guardConversationOperation(
       message = "Failed to delete thread $threadId",
@@ -59,6 +66,7 @@ constructor(private val conversationRepository: ConversationRepository) :
     }
 
   /** Save a message. */
+  @OneShot("Persist a chat message")
   override suspend fun saveMessage(message: Message): NanoAIResult<Unit> =
     guardConversationOperation(
       message = "Failed to save message ${message.messageId}",
@@ -74,6 +82,7 @@ constructor(private val conversationRepository: ConversationRepository) :
     }
 
   /** Get the current persona for a thread. */
+  @OneShot("Resolve persona for a thread")
   override suspend fun getCurrentPersonaForThread(threadId: UUID): NanoAIResult<UUID?> =
     guardConversationOperation(
       message = "Failed to get current persona for thread $threadId",
@@ -84,6 +93,7 @@ constructor(private val conversationRepository: ConversationRepository) :
     }
 
   /** Update a thread's persona. */
+  @OneShot("Update persona on a thread")
   override suspend fun updateThreadPersona(threadId: UUID, personaId: UUID?): NanoAIResult<Unit> =
     guardConversationOperation(
       message = "Failed to update persona for thread $threadId",
@@ -95,6 +105,7 @@ constructor(private val conversationRepository: ConversationRepository) :
     }
 
   /** Update a thread. */
+  @OneShot("Update thread metadata")
   suspend fun updateThread(thread: ChatThread): NanoAIResult<Unit> =
     guardConversationOperation(
       message = "Failed to update thread ${thread.threadId}",

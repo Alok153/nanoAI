@@ -1,18 +1,23 @@
 package com.vjaykrsna.nanoai.feature.image.presentation
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.common.error.NanoAIErrorEnvelope
+import com.vjaykrsna.nanoai.core.common.error.toErrorEnvelope
 import com.vjaykrsna.nanoai.core.domain.image.ImageGalleryUseCase
 import com.vjaykrsna.nanoai.core.domain.image.model.GeneratedImage
+import com.vjaykrsna.nanoai.shared.state.NanoAIViewEvent
+import com.vjaykrsna.nanoai.shared.state.NanoAIViewState
+import com.vjaykrsna.nanoai.shared.state.ViewModelStateHost
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.UUID
 import javax.inject.Inject
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toPersistentList
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 /**
@@ -23,56 +28,69 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class ImageGalleryViewModel
 @Inject
-constructor(private val imageGalleryUseCase: ImageGalleryUseCase) : ViewModel() {
+constructor(
+  private val imageGalleryUseCase: ImageGalleryUseCase,
+  @MainImmediateDispatcher mainDispatcher: CoroutineDispatcher,
+) :
+  ViewModelStateHost<ImageGalleryUiState, ImageGalleryUiEvent>(
+    initialState = ImageGalleryUiState(),
+    dispatcher = mainDispatcher,
+  ) {
 
   private companion object {
-    private const val STATE_FLOW_STOP_TIMEOUT_MS = 5000L
     private const val DELETE_IMAGE_ERROR = "Failed to delete image"
     private const val DELETE_ALL_ERROR = "Failed to delete all images"
   }
 
-  val images: StateFlow<List<GeneratedImage>> =
-    imageGalleryUseCase
-      .observeAllImages()
-      .stateIn(
-        viewModelScope,
-        SharingStarted.WhileSubscribed(STATE_FLOW_STOP_TIMEOUT_MS),
-        emptyList(),
-      )
+  init {
+    observeImages()
+  }
 
-  private val _events = MutableSharedFlow<ImageGalleryEvent>()
-  val events = _events.asSharedFlow()
+  private fun observeImages() {
+    viewModelScope.launch(dispatcher) {
+      imageGalleryUseCase.observeAllImages().collectLatest { images ->
+        updateState { copy(images = images.toPersistentList(), errorMessage = null) }
+      }
+    }
+  }
 
   fun deleteImage(id: UUID) {
-    viewModelScope.launch {
+    viewModelScope.launch(dispatcher) {
       when (val result = imageGalleryUseCase.deleteImage(id)) {
-        is NanoAIResult.Success -> _events.emit(ImageGalleryEvent.ImageDeleted)
+        is NanoAIResult.Success -> emitEvent(ImageGalleryUiEvent.ImageDeleted)
         is NanoAIResult.RecoverableError ->
-          _events.emit(ImageGalleryEvent.Error(result.message.ifBlank { DELETE_IMAGE_ERROR }))
-        is NanoAIResult.FatalError ->
-          _events.emit(ImageGalleryEvent.Error(result.message.ifBlank { DELETE_IMAGE_ERROR }))
+          emitGalleryError(result.toErrorEnvelope(DELETE_IMAGE_ERROR))
+        is NanoAIResult.FatalError -> emitGalleryError(result.toErrorEnvelope(DELETE_IMAGE_ERROR))
       }
     }
   }
 
   fun deleteAllImages() {
-    viewModelScope.launch {
+    viewModelScope.launch(dispatcher) {
       when (val result = imageGalleryUseCase.deleteAllImages()) {
-        is NanoAIResult.Success -> _events.emit(ImageGalleryEvent.AllImagesDeleted)
+        is NanoAIResult.Success -> emitEvent(ImageGalleryUiEvent.AllImagesDeleted)
         is NanoAIResult.RecoverableError ->
-          _events.emit(ImageGalleryEvent.Error(result.message.ifBlank { DELETE_ALL_ERROR }))
-        is NanoAIResult.FatalError ->
-          _events.emit(ImageGalleryEvent.Error(result.message.ifBlank { DELETE_ALL_ERROR }))
+          emitGalleryError(result.toErrorEnvelope(DELETE_ALL_ERROR))
+        is NanoAIResult.FatalError -> emitGalleryError(result.toErrorEnvelope(DELETE_ALL_ERROR))
       }
     }
   }
+
+  private suspend fun emitGalleryError(envelope: NanoAIErrorEnvelope) {
+    updateState { copy(errorMessage = envelope.userMessage) }
+    emitEvent(ImageGalleryUiEvent.ErrorRaised(envelope))
+  }
 }
 
-/** Events for image gallery screen. */
-sealed interface ImageGalleryEvent {
-  data object ImageDeleted : ImageGalleryEvent
+data class ImageGalleryUiState(
+  val images: PersistentList<GeneratedImage> = persistentListOf(),
+  val errorMessage: String? = null,
+) : NanoAIViewState
 
-  data object AllImagesDeleted : ImageGalleryEvent
+sealed interface ImageGalleryUiEvent : NanoAIViewEvent {
+  data object ImageDeleted : ImageGalleryUiEvent
 
-  data class Error(val message: String) : ImageGalleryEvent
+  data object AllImagesDeleted : ImageGalleryUiEvent
+
+  data class ErrorRaised(val envelope: NanoAIErrorEnvelope) : ImageGalleryUiEvent
 }

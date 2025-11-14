@@ -1,20 +1,20 @@
 package com.vjaykrsna.nanoai.feature.image.presentation
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.common.error.NanoAIErrorEnvelope
+import com.vjaykrsna.nanoai.core.common.error.toErrorEnvelope
 import com.vjaykrsna.nanoai.core.domain.image.ImageGalleryUseCase
 import com.vjaykrsna.nanoai.core.domain.image.model.GeneratedImage
+import com.vjaykrsna.nanoai.shared.state.NanoAIViewEvent
+import com.vjaykrsna.nanoai.shared.state.NanoAIViewState
+import com.vjaykrsna.nanoai.shared.state.ViewModelStateHost
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 
@@ -28,56 +28,57 @@ class ImageGenerationViewModel
 @Inject
 constructor(
   private val imageGalleryUseCase: ImageGalleryUseCase,
-  @MainImmediateDispatcher private val dispatcher: CoroutineDispatcher,
-) : ViewModel() {
+  @MainImmediateDispatcher mainDispatcher: CoroutineDispatcher,
+) :
+  ViewModelStateHost<ImageGenerationUiState, ImageGenerationUiEvent>(
+    initialState = ImageGenerationUiState(),
+    dispatcher = mainDispatcher,
+  ) {
 
   private companion object {
     private const val SIMULATION_DELAY_MS = 2000L
+    private const val PROMPT_VALIDATION_ERROR = "Prompt cannot be empty"
+    private const val SAVE_IMAGE_ERROR = "Failed to save image"
   }
 
-  private val _uiState = MutableStateFlow(ImageGenerationUiState())
-  val uiState: StateFlow<ImageGenerationUiState> = _uiState.asStateFlow()
-
-  private val _errorEvents = MutableSharedFlow<ImageGenerationError>()
-  val errorEvents = _errorEvents.asSharedFlow()
-
   fun updatePrompt(prompt: String) {
-    _uiState.value = _uiState.value.copy(prompt = prompt)
+    updateState { copy(prompt = prompt) }
   }
 
   fun updateNegativePrompt(negativePrompt: String) {
-    _uiState.value = _uiState.value.copy(negativePrompt = negativePrompt)
+    updateState { copy(negativePrompt = negativePrompt) }
   }
 
   fun updateWidth(width: Int) {
-    _uiState.value = _uiState.value.copy(width = width)
+    updateState { copy(width = width) }
   }
 
   fun updateHeight(height: Int) {
-    _uiState.value = _uiState.value.copy(height = height)
+    updateState { copy(height = height) }
   }
 
   fun updateSteps(steps: Int) {
-    _uiState.value = _uiState.value.copy(steps = steps)
+    updateState { copy(steps = steps) }
   }
 
   fun updateGuidanceScale(scale: Float) {
-    _uiState.value = _uiState.value.copy(guidanceScale = scale)
+    updateState { copy(guidanceScale = scale) }
   }
 
   fun generateImage() {
     viewModelScope.launch(dispatcher) {
-      val state = _uiState.value
-      if (state.prompt.isBlank()) {
-        _errorEvents.emit(ImageGenerationError.ValidationError("Prompt cannot be empty"))
+      val snapshot = state.value
+      if (snapshot.prompt.isBlank()) {
+        val envelope = NanoAIErrorEnvelope(userMessage = PROMPT_VALIDATION_ERROR)
+        publishError(ImageGenerationError.ValidationError(envelope.userMessage), envelope)
         return@launch
       }
 
-      _uiState.value = state.copy(isGenerating = true, errorMessage = null)
+      updateState { copy(isGenerating = true, errorMessage = null) }
 
       // TODO: Implement actual image generation logic
       // For now, simulate generation
-      kotlinx.coroutines.delay(SIMULATION_DELAY_MS)
+      delay(SIMULATION_DELAY_MS)
 
       // TODO: Replace with actual generated image path
       val imagePath = "simulated_path_${UUID.randomUUID()}.png"
@@ -86,54 +87,55 @@ constructor(
       val generatedImage =
         GeneratedImage(
           id = UUID.randomUUID(),
-          prompt = state.prompt,
-          negativePrompt = state.negativePrompt,
-          width = state.width,
-          height = state.height,
-          steps = state.steps,
-          guidanceScale = state.guidanceScale,
+          prompt = snapshot.prompt,
+          negativePrompt = snapshot.negativePrompt,
+          width = snapshot.width,
+          height = snapshot.height,
+          steps = snapshot.steps,
+          guidanceScale = snapshot.guidanceScale,
           filePath = imagePath,
           thumbnailPath = null, // TODO: Generate thumbnail
           createdAt = Clock.System.now(),
         )
 
       when (val saveResult = imageGalleryUseCase.saveImage(generatedImage)) {
-        is NanoAIResult.Success -> Unit
+        is NanoAIResult.Success -> {
+          updateState {
+            copy(
+              isGenerating = false,
+              generatedImagePath = imagePath,
+              errorMessage = "Image generation not yet implemented",
+            )
+          }
+          emitEvent(ImageGenerationUiEvent.ImageGenerated(imagePath))
+        }
         is NanoAIResult.RecoverableError -> {
-          handleGenerationFailure(saveResult.message)
+          val envelope = saveResult.toErrorEnvelope(SAVE_IMAGE_ERROR)
+          publishError(ImageGenerationError.GenerationError(envelope.userMessage), envelope)
           return@launch
         }
         is NanoAIResult.FatalError -> {
-          handleGenerationFailure(saveResult.message)
+          val envelope = saveResult.toErrorEnvelope(SAVE_IMAGE_ERROR)
+          publishError(ImageGenerationError.GenerationError(envelope.userMessage), envelope)
           return@launch
         }
       }
-
-      _uiState.value =
-        _uiState.value.copy(
-          isGenerating = false,
-          generatedImagePath = imagePath,
-          errorMessage = "Image generation not yet implemented",
-        )
     }
   }
 
   fun clearImage() {
-    _uiState.value = _uiState.value.copy(generatedImagePath = null)
+    updateState { copy(generatedImagePath = null) }
   }
 
   fun clearError() {
-    _uiState.value = _uiState.value.copy(errorMessage = null)
+    updateState { copy(errorMessage = null) }
   }
 
-  private suspend fun handleGenerationFailure(message: String?) {
-    _uiState.value =
-      _uiState.value.copy(
-        isGenerating = false,
-        generatedImagePath = null,
-        errorMessage = message ?: "Failed to save image",
-      )
-    _errorEvents.emit(ImageGenerationError.GenerationError(message ?: "Failed to save image"))
+  private suspend fun publishError(error: ImageGenerationError, envelope: NanoAIErrorEnvelope) {
+    updateState {
+      copy(isGenerating = false, generatedImagePath = null, errorMessage = envelope.userMessage)
+    }
+    emitEvent(ImageGenerationUiEvent.ErrorRaised(error, envelope))
   }
 }
 
@@ -148,11 +150,20 @@ data class ImageGenerationUiState(
   val isGenerating: Boolean = false,
   val generatedImagePath: String? = null,
   val errorMessage: String? = null,
-)
+) : NanoAIViewState
 
 /** Error states for image generation. */
 sealed interface ImageGenerationError {
-  data class ValidationError(val message: String) : ImageGenerationError
+  val message: String
 
-  data class GenerationError(val message: String) : ImageGenerationError
+  data class ValidationError(override val message: String) : ImageGenerationError
+
+  data class GenerationError(override val message: String) : ImageGenerationError
+}
+
+sealed interface ImageGenerationUiEvent : NanoAIViewEvent {
+  data class ErrorRaised(val error: ImageGenerationError, val envelope: NanoAIErrorEnvelope) :
+    ImageGenerationUiEvent
+
+  data class ImageGenerated(val path: String) : ImageGenerationUiEvent
 }

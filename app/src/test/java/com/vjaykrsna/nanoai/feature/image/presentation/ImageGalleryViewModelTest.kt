@@ -3,12 +3,15 @@ package com.vjaykrsna.nanoai.feature.image.presentation
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.domain.image.ImageGalleryUseCase
+import com.vjaykrsna.nanoai.core.domain.image.model.GeneratedImage
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
 import java.util.UUID
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -25,11 +28,14 @@ class ImageGalleryViewModelTest {
 
   private lateinit var imageGalleryUseCase: ImageGalleryUseCase
   private lateinit var viewModel: ImageGalleryViewModel
+  private lateinit var imagesFlow: MutableStateFlow<List<GeneratedImage>>
 
   @BeforeEach
   fun setup() {
     imageGalleryUseCase = mockk(relaxed = true)
-    viewModel = ImageGalleryViewModel(imageGalleryUseCase)
+    imagesFlow = MutableStateFlow(emptyList())
+    every { imageGalleryUseCase.observeAllImages() } returns imagesFlow
+    viewModel = ImageGalleryViewModel(imageGalleryUseCase, dispatcher)
   }
 
   @Test
@@ -41,7 +47,7 @@ class ImageGalleryViewModelTest {
       viewModel.deleteImage(UUID.randomUUID())
       advanceUntilIdle()
 
-      assertThat(eventDeferred.await()).isEqualTo(ImageGalleryEvent.ImageDeleted)
+      assertThat(eventDeferred.await()).isEqualTo(ImageGalleryUiEvent.ImageDeleted)
     }
 
   @Test
@@ -55,10 +61,9 @@ class ImageGalleryViewModelTest {
       viewModel.deleteImage(targetId)
       advanceUntilIdle()
 
-      val event = eventDeferred.await()
-      assertThat(event).isInstanceOf(ImageGalleryEvent.Error::class.java)
-      val error = event as ImageGalleryEvent.Error
-      assertThat(error.message).contains("Failed to delete image")
+      val event = eventDeferred.await() as ImageGalleryUiEvent.ErrorRaised
+      assertThat(event.envelope.userMessage).contains("Failed to delete image")
+      assertThat(viewModel.state.value.errorMessage).contains("Failed to delete image")
     }
 
   @Test
@@ -74,10 +79,8 @@ class ImageGalleryViewModelTest {
       viewModel.deleteAllImages()
       advanceUntilIdle()
 
-      val event = eventDeferred.await()
-      assertThat(event).isInstanceOf(ImageGalleryEvent.Error::class.java)
-      val error = event as ImageGalleryEvent.Error
-      assertThat(error.message).contains("Failed to delete all images")
+      val event = eventDeferred.await() as ImageGalleryUiEvent.ErrorRaised
+      assertThat(event.envelope.userMessage).contains("Failed to delete all images")
     }
 
   @Test
@@ -89,6 +92,6 @@ class ImageGalleryViewModelTest {
       viewModel.deleteAllImages()
       advanceUntilIdle()
 
-      assertThat(eventDeferred.await()).isEqualTo(ImageGalleryEvent.AllImagesDeleted)
+      assertThat(eventDeferred.await()).isEqualTo(ImageGalleryUiEvent.AllImagesDeleted)
     }
 }

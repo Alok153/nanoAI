@@ -2,6 +2,8 @@ package com.vjaykrsna.nanoai.core.domain.image
 
 import android.database.sqlite.SQLiteException
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.common.annotations.OneShot
+import com.vjaykrsna.nanoai.core.common.annotations.ReactiveStream
 import com.vjaykrsna.nanoai.core.data.image.ImageGalleryRepository
 import com.vjaykrsna.nanoai.core.domain.image.model.GeneratedImage
 import java.io.IOException
@@ -17,9 +19,11 @@ class ImageGalleryUseCase
 @Inject
 constructor(private val imageGalleryRepository: ImageGalleryRepository) {
   /** Observe all images (reactive stream - not wrapped in NanoAIResult). */
+  @ReactiveStream("Generated image catalog updates")
   fun observeAllImages(): Flow<List<GeneratedImage>> = imageGalleryRepository.observeAllImages()
 
   /** Get a specific image by ID. */
+  @OneShot("Fetch a single image by identifier")
   suspend fun getImageById(id: UUID): NanoAIResult<GeneratedImage?> =
     guardGalleryOperation(
       message = "Failed to get image $id",
@@ -30,6 +34,7 @@ constructor(private val imageGalleryRepository: ImageGalleryRepository) {
     }
 
   /** Save an image to the gallery. */
+  @OneShot("Persist a generated image to disk + DB")
   suspend fun saveImage(image: GeneratedImage): NanoAIResult<Unit> =
     guardGalleryOperation(
       message = "Failed to save image ${image.id}",
@@ -40,6 +45,7 @@ constructor(private val imageGalleryRepository: ImageGalleryRepository) {
     }
 
   /** Delete a specific image from the gallery. */
+  @OneShot("Delete a single generated image")
   suspend fun deleteImage(id: UUID): NanoAIResult<Unit> =
     guardGalleryOperation(
       message = "Failed to delete image $id",
@@ -50,6 +56,7 @@ constructor(private val imageGalleryRepository: ImageGalleryRepository) {
     }
 
   /** Delete all images from the gallery. */
+  @OneShot("Delete the entire gallery")
   suspend fun deleteAllImages(): NanoAIResult<Unit> =
     guardGalleryOperation(message = "Failed to delete all images") {
       imageGalleryRepository.deleteAllImages()

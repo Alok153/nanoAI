@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vjaykrsna.nanoai.feature.audio.presentation.AudioSessionState
+import com.vjaykrsna.nanoai.feature.audio.presentation.AudioUiEvent
 import com.vjaykrsna.nanoai.feature.audio.presentation.AudioUiState
 import com.vjaykrsna.nanoai.feature.audio.presentation.AudioViewModel
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoSpacing
@@ -54,19 +55,15 @@ import kotlinx.coroutines.flow.collectLatest
  */
 @Composable
 fun AudioScreen(modifier: Modifier = Modifier, viewModel: AudioViewModel = hiltViewModel()) {
-  val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+  val uiState by viewModel.state.collectAsStateWithLifecycle()
   val snackbarHostState = remember { SnackbarHostState() }
 
-  LaunchedEffect(Unit) {
-    viewModel.errorEvents.collectLatest { error ->
-      val message =
-        when (error) {
-          is com.vjaykrsna.nanoai.feature.audio.presentation.AudioError.SessionError ->
-            error.message
-          is com.vjaykrsna.nanoai.feature.audio.presentation.AudioError.PermissionError ->
-            error.message
-        }
-      snackbarHostState.showSnackbar(message)
+  LaunchedEffect(viewModel) {
+    viewModel.events.collectLatest { event ->
+      when (event) {
+        is AudioUiEvent.ErrorRaised -> snackbarHostState.showSnackbar(event.envelope.userMessage)
+        AudioUiEvent.SessionEnded -> snackbarHostState.showSnackbar("Session ended")
+      }
     }
   }
 

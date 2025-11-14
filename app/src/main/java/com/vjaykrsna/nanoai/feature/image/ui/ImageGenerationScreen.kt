@@ -32,6 +32,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.vjaykrsna.nanoai.feature.image.presentation.ImageGenerationUiEvent
 import com.vjaykrsna.nanoai.feature.image.presentation.ImageGenerationViewModel
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoSpacing
 import kotlinx.coroutines.flow.collectLatest
@@ -47,7 +48,7 @@ fun ImageGenerationScreen(
   onGalleryClick: () -> Unit = {},
   viewModel: ImageGenerationViewModel = hiltViewModel(),
 ) {
-  val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+  val uiState by viewModel.state.collectAsStateWithLifecycle()
   val snackbarHostState = remember { SnackbarHostState() }
   val actions =
     remember(viewModel) {
@@ -64,16 +65,14 @@ fun ImageGenerationScreen(
       )
     }
 
-  LaunchedEffect(Unit) {
-    viewModel.errorEvents.collectLatest { error ->
-      val message =
-        when (error) {
-          is com.vjaykrsna.nanoai.feature.image.presentation.ImageGenerationError.ValidationError ->
-            error.message
-          is com.vjaykrsna.nanoai.feature.image.presentation.ImageGenerationError.GenerationError ->
-            error.message
-        }
-      snackbarHostState.showSnackbar(message)
+  LaunchedEffect(viewModel) {
+    viewModel.events.collectLatest { event ->
+      when (event) {
+        is ImageGenerationUiEvent.ErrorRaised ->
+          snackbarHostState.showSnackbar(event.envelope.userMessage)
+        is ImageGenerationUiEvent.ImageGenerated ->
+          snackbarHostState.showSnackbar("Image saved: ${event.path}")
+      }
     }
   }
 

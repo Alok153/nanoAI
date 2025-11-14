@@ -48,7 +48,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vjaykrsna.nanoai.core.domain.image.model.GeneratedImage
-import com.vjaykrsna.nanoai.feature.image.presentation.ImageGalleryEvent
+import com.vjaykrsna.nanoai.feature.image.presentation.ImageGalleryUiEvent
+import com.vjaykrsna.nanoai.feature.image.presentation.ImageGalleryUiState
 import com.vjaykrsna.nanoai.feature.image.presentation.ImageGalleryViewModel
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoSpacing
 import kotlinx.coroutines.flow.collectLatest
@@ -67,23 +68,24 @@ fun ImageGalleryScreen(
   onImageClick: (GeneratedImage) -> Unit = {},
   viewModel: ImageGalleryViewModel = hiltViewModel(),
 ) {
-  val images by viewModel.images.collectAsStateWithLifecycle()
+  val uiState by viewModel.state.collectAsStateWithLifecycle()
   val snackbarHostState = remember { SnackbarHostState() }
   var selectedImage by remember { mutableStateOf<GeneratedImage?>(null) }
   var showDeleteDialog by remember { mutableStateOf(false) }
 
-  LaunchedEffect(Unit) {
+  LaunchedEffect(viewModel) {
     viewModel.events.collectLatest { event ->
       when (event) {
-        ImageGalleryEvent.ImageDeleted -> snackbarHostState.showSnackbar("Image deleted")
-        ImageGalleryEvent.AllImagesDeleted -> snackbarHostState.showSnackbar("All images deleted")
-        is ImageGalleryEvent.Error -> snackbarHostState.showSnackbar(event.message)
+        ImageGalleryUiEvent.ImageDeleted -> snackbarHostState.showSnackbar("Image deleted")
+        ImageGalleryUiEvent.AllImagesDeleted -> snackbarHostState.showSnackbar("All images deleted")
+        is ImageGalleryUiEvent.ErrorRaised ->
+          snackbarHostState.showSnackbar(event.envelope.userMessage)
       }
     }
   }
 
   ImageGalleryScreenContent(
-    images = images,
+    state = uiState,
     snackbarHostState = snackbarHostState,
     onNavigateBack = onNavigateBack,
     onImageClick = onImageClick,
@@ -108,7 +110,7 @@ fun ImageGalleryScreen(
 
 @Composable
 internal fun ImageGalleryScreenContent(
-  images: List<GeneratedImage>,
+  state: ImageGalleryUiState,
   snackbarHostState: SnackbarHostState,
   onNavigateBack: () -> Unit,
   onImageClick: (GeneratedImage) -> Unit,
@@ -121,10 +123,10 @@ internal fun ImageGalleryScreenContent(
 ) {
   Box(modifier = modifier.fillMaxSize().semantics { contentDescription = "Image gallery screen" }) {
     Column(modifier = Modifier.fillMaxSize().padding(NanoSpacing.lg)) {
-      ImageGalleryHeader(imageCount = images.size, onNavigateBack = onNavigateBack)
+      ImageGalleryHeader(imageCount = state.images.size, onNavigateBack = onNavigateBack)
       Spacer(modifier = Modifier.height(NanoSpacing.md))
       ImageGalleryGridContent(
-        images = images,
+        images = state.images,
         onImageClick = onImageClick,
         onDeleteRequest = onDeleteRequest,
       )

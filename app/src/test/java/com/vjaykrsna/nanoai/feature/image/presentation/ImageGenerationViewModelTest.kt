@@ -38,14 +38,15 @@ class ImageGenerationViewModelTest {
       coEvery { imageGalleryUseCase.saveImage(any()) } returns
         NanoAIResult.recoverable("Failed to save image", cause = IllegalStateException("disk full"))
       viewModel.updatePrompt("A photorealistic fox")
-      val eventDeferred = async { viewModel.errorEvents.first() }
+      val eventDeferred = async { viewModel.events.first() }
 
       viewModel.generateImage()
       advanceUntilIdle()
 
-      val event = eventDeferred.await() as ImageGenerationError.GenerationError
-      assertThat(event.message).contains("Failed to save image")
-      val uiState = viewModel.uiState.value
+      val event = eventDeferred.await() as ImageGenerationUiEvent.ErrorRaised
+      assertThat(event.error).isInstanceOf(ImageGenerationError.GenerationError::class.java)
+      assertThat(event.envelope.userMessage).contains("Failed to save image")
+      val uiState = viewModel.state.value
       assertThat(uiState.isGenerating).isFalse()
       assertThat(uiState.generatedImagePath).isNull()
       assertThat(uiState.errorMessage).contains("Failed to save image")
@@ -61,7 +62,7 @@ class ImageGenerationViewModelTest {
       viewModel.generateImage()
       advanceUntilIdle()
 
-      val uiState = viewModel.uiState.value
+      val uiState = viewModel.state.value
       assertThat(uiState.isGenerating).isFalse()
       assertThat(uiState.generatedImagePath).isNotNull()
       assertThat(uiState.errorMessage).isEqualTo("Image generation not yet implemented")

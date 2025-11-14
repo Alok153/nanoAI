@@ -10,10 +10,13 @@ import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-/** Repository for managing generated images with metadata. */
-interface ImageGalleryRepository {
+/** Reactive stream contract for generated images. */
+interface ImageGalleryStreamDataSource {
   fun observeAllImages(): Flow<List<GeneratedImage>>
+}
 
+/** Mutation contract for gallery operations that complete once. */
+interface ImageGalleryMutationDataSource {
   suspend fun getImageById(id: UUID): GeneratedImage?
 
   suspend fun saveImage(image: GeneratedImage)
@@ -22,6 +25,9 @@ interface ImageGalleryRepository {
 
   suspend fun deleteAllImages()
 }
+
+/** Repository for managing generated images with metadata. */
+interface ImageGalleryRepository : ImageGalleryStreamDataSource, ImageGalleryMutationDataSource
 
 @Singleton
 class ImageGalleryRepositoryImpl

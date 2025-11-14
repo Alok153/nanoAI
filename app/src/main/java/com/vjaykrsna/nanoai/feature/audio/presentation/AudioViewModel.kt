@@ -1,16 +1,16 @@
 package com.vjaykrsna.nanoai.feature.audio.presentation
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
+import com.vjaykrsna.nanoai.core.common.error.NanoAIErrorEnvelope
+import com.vjaykrsna.nanoai.core.common.error.toErrorEnvelope
+import com.vjaykrsna.nanoai.shared.state.NanoAIViewEvent
+import com.vjaykrsna.nanoai.shared.state.NanoAIViewState
+import com.vjaykrsna.nanoai.shared.state.ViewModelStateHost
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -21,45 +21,50 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class AudioViewModel
 @Inject
-constructor(@MainImmediateDispatcher private val dispatcher: CoroutineDispatcher) : ViewModel() {
+constructor(@MainImmediateDispatcher mainDispatcher: CoroutineDispatcher) :
+  ViewModelStateHost<AudioUiState, AudioUiEvent>(
+    initialState = AudioUiState(),
+    dispatcher = mainDispatcher,
+  ) {
 
   private companion object {
     private const val WAVEFORM_UPDATE_DELAY_MS = 100L
     private const val SIMULATED_WAVEFORM_SIZE = 50
+    private const val SESSION_INTERRUPTED_ERROR = "Audio session interrupted"
   }
-
-  private val _uiState = MutableStateFlow(AudioUiState())
-  val uiState: StateFlow<AudioUiState> = _uiState.asStateFlow()
-
-  private val _errorEvents = MutableSharedFlow<AudioError>()
-  val errorEvents = _errorEvents.asSharedFlow()
 
   fun startAudioSession() {
     viewModelScope.launch(dispatcher) {
-      _uiState.value =
-        _uiState.value.copy(sessionState = AudioSessionState.ACTIVE, errorMessage = null)
+      if (state.value.sessionState == AudioSessionState.ACTIVE) return@launch
+
+      updateState { copy(sessionState = AudioSessionState.ACTIVE, errorMessage = null) }
 
       // TODO: Implement actual audio session logic
       // Simulate waveform updates
-      while (_uiState.value.sessionState == AudioSessionState.ACTIVE) {
-        val waveform = generateSimulatedWaveform()
-        _uiState.value = _uiState.value.copy(waveformData = waveform)
-        kotlinx.coroutines.delay(WAVEFORM_UPDATE_DELAY_MS)
+      try {
+        while (state.value.sessionState == AudioSessionState.ACTIVE) {
+          val waveform = generateSimulatedWaveform()
+          updateState { copy(waveformData = waveform) }
+          delay(WAVEFORM_UPDATE_DELAY_MS)
+        }
+      } catch (throwable: Throwable) {
+        val envelope = throwable.toErrorEnvelope(SESSION_INTERRUPTED_ERROR)
+        publishError(AudioError.SessionError(envelope.userMessage), envelope)
       }
     }
   }
 
   fun toggleMute() {
-    _uiState.value = _uiState.value.copy(isMuted = !_uiState.value.isMuted)
+    updateState { copy(isMuted = !isMuted) }
   }
 
   fun toggleSpeaker() {
-    _uiState.value = _uiState.value.copy(isSpeakerOn = !_uiState.value.isSpeakerOn)
+    updateState { copy(isSpeakerOn = !isSpeakerOn) }
   }
 
   fun endSession() {
-    _uiState.value =
-      _uiState.value.copy(sessionState = AudioSessionState.ENDED, waveformData = emptyList())
+    updateState { copy(sessionState = AudioSessionState.ENDED, waveformData = emptyList()) }
+    viewModelScope.launch(dispatcher) { emitEvent(AudioUiEvent.SessionEnded) }
   }
 
   private fun generateSimulatedWaveform(): List<Float> {
@@ -67,7 +72,18 @@ constructor(@MainImmediateDispatcher private val dispatcher: CoroutineDispatcher
   }
 
   fun clearError() {
-    _uiState.value = _uiState.value.copy(errorMessage = null)
+    updateState { copy(errorMessage = null) }
+  }
+
+  private suspend fun publishError(error: AudioError, envelope: NanoAIErrorEnvelope) {
+    updateState {
+      copy(
+        sessionState = AudioSessionState.ENDED,
+        waveformData = emptyList(),
+        errorMessage = envelope.userMessage,
+      )
+    }
+    emitEvent(AudioUiEvent.ErrorRaised(error, envelope))
   }
 }
 
@@ -78,7 +94,7 @@ data class AudioUiState(
   val isSpeakerOn: Boolean = false,
   val waveformData: List<Float> = emptyList(),
   val errorMessage: String? = null,
-)
+) : NanoAIViewState
 
 /** Audio session state. */
 enum class AudioSessionState {
@@ -89,7 +105,15 @@ enum class AudioSessionState {
 
 /** Error states for audio session. */
 sealed interface AudioError {
-  data class SessionError(val message: String) : AudioError
+  val message: String
 
-  data class PermissionError(val message: String) : AudioError
+  data class SessionError(override val message: String) : AudioError
+
+  data class PermissionError(override val message: String) : AudioError
+}
+
+sealed interface AudioUiEvent : NanoAIViewEvent {
+  data class ErrorRaised(val error: AudioError, val envelope: NanoAIErrorEnvelope) : AudioUiEvent
+
+  data object SessionEnded : AudioUiEvent
 }

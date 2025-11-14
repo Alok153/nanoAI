@@ -36,19 +36,20 @@ class MessageComposerViewModelStateTest : MessageComposerViewModelTestBase() {
   fun `updateMessageText updates the message text state`() = runTest {
     viewModel.updateMessageText("Hello world")
 
-    assertThat(viewModel.messageText.value).isEqualTo("Hello world")
+    assertThat(viewModel.state.value.messageText).isEqualTo("Hello world")
   }
 
   @Test
   fun `sendMessage sets sending state during operation`() = runTest {
     viewModel.updateMessageText("Test")
 
-    viewModel.isSending.test {
-      assertThat(awaitItem()).isFalse()
+    viewModel.state.test {
+      assertThat(awaitItem().isSending).isFalse()
 
       viewModel.sendMessage(UUID.randomUUID(), UUID.randomUUID())
-      assertThat(awaitItem()).isTrue()
-      assertThat(awaitItem()).isFalse()
+      assertThat(awaitItem().isSending).isTrue()
+      assertThat(awaitItem().isSending).isFalse()
+      cancelAndIgnoreRemainingEvents()
     }
   }
 
@@ -57,7 +58,7 @@ class MessageComposerViewModelStateTest : MessageComposerViewModelTestBase() {
     viewModel.updateMessageText("Some text")
     viewModel.clearMessage()
 
-    assertThat(viewModel.messageText.value).isEmpty()
+    assertThat(viewModel.state.value.messageText).isEmpty()
   }
 }
 
@@ -67,29 +68,33 @@ class MessageComposerViewModelSendTest : MessageComposerViewModelTestBase() {
 
   @Test
   fun `sendMessage with empty text emits EmptyMessage error`() = runTest {
-    viewModel.errors.test {
+    viewModel.events.test {
       viewModel.sendMessage(UUID.randomUUID(), UUID.randomUUID())
 
-      val error = awaitItem()
-      assertThat(error).isInstanceOf(MessageComposerError.EmptyMessage::class.java)
+      val event = awaitItem() as MessageComposerUiEvent.ErrorRaised
+      assertThat(event.error).isInstanceOf(MessageComposerError.EmptyMessage::class.java)
+      assertThat(event.envelope.userMessage).isEqualTo("Message cannot be empty")
       cancelAndIgnoreRemainingEvents()
     }
 
-    assertThat(viewModel.isSending.value).isFalse()
+    val state = viewModel.state.value
+    assertThat(state.isSending).isFalse()
+    assertThat(state.sendError).isNull()
   }
 
   @Test
   fun `sendMessage with whitespace only text emits EmptyMessage error`() = runTest {
     viewModel.updateMessageText("   ")
-    viewModel.errors.test {
+    viewModel.events.test {
       viewModel.sendMessage(UUID.randomUUID(), UUID.randomUUID())
 
-      val error = awaitItem()
-      assertThat(error).isInstanceOf(MessageComposerError.EmptyMessage::class.java)
+      val event = awaitItem() as MessageComposerUiEvent.ErrorRaised
+      assertThat(event.error).isInstanceOf(MessageComposerError.EmptyMessage::class.java)
+      assertThat(event.envelope.userMessage).isEqualTo("Message cannot be empty")
       cancelAndIgnoreRemainingEvents()
     }
 
-    assertThat(viewModel.isSending.value).isFalse()
+    assertThat(viewModel.state.value.isSending).isFalse()
   }
 
   @Test
@@ -99,8 +104,8 @@ class MessageComposerViewModelSendTest : MessageComposerViewModelTestBase() {
     viewModel.sendMessage(UUID.randomUUID(), UUID.randomUUID())
     runCurrent()
 
-    assertThat(viewModel.messageText.value).isEmpty()
-    assertThat(viewModel.isSending.value).isFalse()
+    assertThat(viewModel.state.value.messageText).isEmpty()
+    assertThat(viewModel.state.value.isSending).isFalse()
   }
 
   @Test
@@ -110,14 +115,16 @@ class MessageComposerViewModelSendTest : MessageComposerViewModelTestBase() {
 
     viewModel.updateMessageText("Test message")
 
-    viewModel.errors.test {
+    viewModel.events.test {
       viewModel.sendMessage(UUID.randomUUID(), UUID.randomUUID())
 
-      val error = awaitItem()
-      assertThat(error).isInstanceOf(MessageComposerError.SendFailed::class.java)
-      assertThat((error as MessageComposerError.SendFailed).message).isEqualTo("Network error")
+      val event = awaitItem() as MessageComposerUiEvent.ErrorRaised
+      assertThat(event.error).isInstanceOf(MessageComposerError.SendFailed::class.java)
+      assertThat(event.envelope.userMessage).isEqualTo("Network error")
       cancelAndIgnoreRemainingEvents()
     }
+
+    assertThat(viewModel.state.value.sendError).isEqualTo("Network error")
   }
 
   @Test
@@ -127,13 +134,15 @@ class MessageComposerViewModelSendTest : MessageComposerViewModelTestBase() {
 
     viewModel.updateMessageText("Test message")
 
-    viewModel.errors.test {
+    viewModel.events.test {
       viewModel.sendMessage(UUID.randomUUID(), UUID.randomUUID())
 
-      val error = awaitItem()
-      assertThat(error).isInstanceOf(MessageComposerError.SendFailed::class.java)
-      assertThat((error as MessageComposerError.SendFailed).message).isEqualTo("")
+      val event = awaitItem() as MessageComposerUiEvent.ErrorRaised
+      assertThat(event.error).isInstanceOf(MessageComposerError.SendFailed::class.java)
+      assertThat(event.envelope.userMessage).isEqualTo("Failed to send message")
       cancelAndIgnoreRemainingEvents()
     }
+
+    assertThat(viewModel.state.value.sendError).isEqualTo("Failed to send message")
   }
 }
