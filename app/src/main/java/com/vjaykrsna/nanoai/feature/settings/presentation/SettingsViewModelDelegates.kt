@@ -2,6 +2,8 @@ package com.vjaykrsna.nanoai.feature.settings.presentation
 
 import android.net.Uri
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.common.error.NanoAIErrorEnvelope
+import com.vjaykrsna.nanoai.core.common.error.toErrorEnvelope
 import com.vjaykrsna.nanoai.core.common.onFailure
 import com.vjaykrsna.nanoai.core.common.onSuccess
 import com.vjaykrsna.nanoai.core.domain.library.ModelDownloadsAndExportUseCase
@@ -129,45 +131,39 @@ internal class SettingsApiProviderActions(
   private val scope: CoroutineScope,
   private val apiProviderConfigUseCase: ApiProviderConfigUseCase,
   private val setLoading: (Boolean) -> Unit,
-  private val emitError: suspend (SettingsError) -> Unit,
+  private val emitError: suspend (NanoAIErrorEnvelope) -> Unit,
 ) {
   fun add(config: APIProviderConfig, credential: ProviderCredentialMutation) {
     execute(
       operation = { apiProviderConfigUseCase.addProvider(config, credential) },
-      error = { message -> SettingsError.ProviderAddFailed(message) },
-      defaultMessage = "Failed to add provider",
+      fallbackMessage = PROVIDER_ADD_FAILURE,
     )
   }
 
   fun update(config: APIProviderConfig, credential: ProviderCredentialMutation) {
     execute(
       operation = { apiProviderConfigUseCase.updateProvider(config, credential) },
-      error = { message -> SettingsError.ProviderUpdateFailed(message) },
-      defaultMessage = "Failed to update provider",
+      fallbackMessage = PROVIDER_UPDATE_FAILURE,
     )
   }
 
   fun delete(providerId: String) {
     execute(
       operation = { apiProviderConfigUseCase.deleteProvider(providerId) },
-      error = { message -> SettingsError.ProviderDeleteFailed(message) },
-      defaultMessage = "Failed to delete provider",
+      fallbackMessage = PROVIDER_DELETE_FAILURE,
     )
   }
 
-  private fun execute(
-    operation: suspend () -> NanoAIResult<Unit>,
-    error: (String) -> SettingsError,
-    defaultMessage: String,
-  ) {
+  private fun execute(operation: suspend () -> NanoAIResult<Unit>, fallbackMessage: String) {
     scope.launch {
       setLoading(true)
       try {
-        runCatching { operation() }
-          .onSuccess { result ->
-            result.onFailure { failure -> emitError(error(failure.message ?: defaultMessage)) }
-          }
-          .onFailure { throwable -> emitError(error(throwable.message ?: defaultMessage)) }
+        when (val result = operation()) {
+          is NanoAIResult.Success -> Unit
+          else -> emitError(result.toErrorEnvelope(fallbackMessage))
+        }
+      } catch (throwable: Throwable) {
+        emitError(throwable.toErrorEnvelope(fallbackMessage))
       } finally {
         setLoading(false)
       }
@@ -181,18 +177,19 @@ internal class SettingsBackupActions(
   private val importService: ImportService,
   private val setLoading: (Boolean) -> Unit,
   private val emitEvent: suspend (SettingsUiEvent) -> Unit,
-  private val emitError: suspend (SettingsError) -> Unit,
+  private val emitError: suspend (NanoAIErrorEnvelope) -> Unit,
 ) {
   fun exportBackup(destinationPath: String, includeChatHistory: Boolean) {
     scope.launch {
       setLoading(true)
       try {
-        modelDownloadsAndExportUseCase
-          .exportBackup(destinationPath, includeChatHistory)
-          .onSuccess { path -> emitEvent(SettingsUiEvent.ExportCompleted(path)) }
-          .onFailure { error ->
-            emitError(SettingsError.ExportFailed(error.message ?: "Export failed"))
-          }
+        when (
+          val result =
+            modelDownloadsAndExportUseCase.exportBackup(destinationPath, includeChatHistory)
+        ) {
+          is NanoAIResult.Success -> emitEvent(SettingsUiEvent.ExportCompleted(result.value))
+          else -> emitError(result.toErrorEnvelope(EXPORT_FAILURE_MESSAGE))
+        }
       } finally {
         setLoading(false)
       }
@@ -207,13 +204,9 @@ internal class SettingsBackupActions(
           .onSuccess { result ->
             result
               .onSuccess { summary -> emitEvent(SettingsUiEvent.ImportCompleted(summary)) }
-              .onFailure { error ->
-                emitError(SettingsError.ImportFailed(error.message ?: "Import failed"))
-              }
+              .onFailure { error -> emitError(error.toErrorEnvelope(IMPORT_FAILURE_MESSAGE)) }
           }
-          .onFailure { throwable ->
-            emitError(SettingsError.UnexpectedError(throwable.message ?: "Unexpected error"))
-          }
+          .onFailure { throwable -> emitError(throwable.toErrorEnvelope(IMPORT_FAILURE_MESSAGE)) }
       } finally {
         setLoading(false)
       }
@@ -224,50 +217,34 @@ internal class SettingsBackupActions(
 internal class SettingsPrivacyActions(
   private val scope: CoroutineScope,
   private val updatePrivacyPreferencesUseCase: UpdatePrivacyPreferencesUseCase,
-  private val emitError: suspend (SettingsError) -> Unit,
+  private val emitError: suspend (NanoAIErrorEnvelope) -> Unit,
   private val clock: Clock,
 ) {
   fun setTelemetryOptIn(optIn: Boolean) {
     scope.launch {
       runCatching { updatePrivacyPreferencesUseCase.setTelemetryOptIn(optIn) }
-        .onFailure { error ->
-          emitError(
-            SettingsError.PreferenceUpdateFailed(error.message ?: "Failed to update preference")
-          )
-        }
+        .onFailure { error -> emitError(error.toErrorEnvelope(PRIVACY_UPDATE_FAILURE)) }
     }
   }
 
   fun acknowledgeConsent() {
     scope.launch {
       runCatching { updatePrivacyPreferencesUseCase.acknowledgeConsent(clock.now()) }
-        .onFailure { error ->
-          emitError(
-            SettingsError.PreferenceUpdateFailed(error.message ?: "Failed to acknowledge consent")
-          )
-        }
+        .onFailure { error -> emitError(error.toErrorEnvelope(CONSENT_ACK_FAILURE)) }
     }
   }
 
   fun setRetentionPolicy(policy: RetentionPolicy) {
     scope.launch {
       runCatching { updatePrivacyPreferencesUseCase.setRetentionPolicy(policy) }
-        .onFailure { error ->
-          emitError(
-            SettingsError.PreferenceUpdateFailed(error.message ?: "Failed to set retention policy")
-          )
-        }
+        .onFailure { error -> emitError(error.toErrorEnvelope(RETENTION_POLICY_FAILURE)) }
     }
   }
 
   fun dismissExportWarnings() {
     scope.launch {
       runCatching { updatePrivacyPreferencesUseCase.setExportWarningsDismissed(true) }
-        .onFailure { error ->
-          emitError(
-            SettingsError.PreferenceUpdateFailed(error.message ?: "Failed to dismiss warnings")
-          )
-        }
+        .onFailure { error -> emitError(error.toErrorEnvelope(EXPORT_WARNING_DISMISS_FAILURE)) }
     }
   }
 }
@@ -363,7 +340,7 @@ internal class SettingsHuggingFaceActions(
   private val huggingFaceAuthCoordinator: HuggingFaceAuthCoordinator,
   private val huggingFaceOAuthConfig: HuggingFaceOAuthConfig,
   private val updateState: (SettingsUiState.() -> SettingsUiState) -> Unit,
-  private val emitError: suspend (SettingsError) -> Unit,
+  private val emitError: suspend (NanoAIErrorEnvelope) -> Unit,
 ) {
   fun saveApiKey(apiKey: String) {
     scope.launch {
@@ -374,15 +351,11 @@ internal class SettingsHuggingFaceActions(
             authState.isAuthenticated ->
               updateState { copy(statusMessage = "Hugging Face connected", undoAvailable = false) }
             !authState.lastError.isNullOrBlank() ->
-              emitError(SettingsError.HuggingFaceAuthFailed(authState.lastError!!))
+              emitError(NanoAIErrorEnvelope(authState.lastError!!))
           }
         }
         .onFailure { throwable ->
-          emitError(
-            SettingsError.HuggingFaceAuthFailed(
-              throwable.message ?: "Failed to save Hugging Face API key"
-            )
-          )
+          emitError(throwable.toErrorEnvelope(HUGGING_FACE_API_KEY_FAILURE))
         }
     }
   }
@@ -397,20 +370,14 @@ internal class SettingsHuggingFaceActions(
       val scopeParam = huggingFaceOAuthConfig.scope.ifBlank { DEFAULT_OAUTH_SCOPE }
 
       if (clientId.isBlank()) {
-        emitError(
-          SettingsError.HuggingFaceAuthFailed("Hugging Face OAuth client ID is not configured")
-        )
+        emitError(NanoAIErrorEnvelope(HUGGING_FACE_MISSING_CLIENT_ID))
         return@launch
       }
 
       huggingFaceAuthCoordinator
         .beginDeviceAuthorization(clientId = clientId, scope = scopeParam)
         .onFailure { throwable ->
-          emitError(
-            SettingsError.HuggingFaceAuthFailed(
-              throwable.message ?: "Unable to start Hugging Face sign-in"
-            )
-          )
+          emitError(throwable.toErrorEnvelope(HUGGING_FACE_SIGN_IN_FAILURE))
         }
     }
   }
@@ -430,3 +397,16 @@ internal class SettingsHuggingFaceActions(
     private const val DEFAULT_OAUTH_SCOPE = "all offline_access"
   }
 }
+
+private const val PROVIDER_ADD_FAILURE = "Failed to add provider"
+private const val PROVIDER_UPDATE_FAILURE = "Failed to update provider"
+private const val PROVIDER_DELETE_FAILURE = "Failed to delete provider"
+private const val EXPORT_FAILURE_MESSAGE = "Failed to export backup"
+private const val IMPORT_FAILURE_MESSAGE = "Failed to import backup"
+private const val PRIVACY_UPDATE_FAILURE = "Failed to update preference"
+private const val CONSENT_ACK_FAILURE = "Failed to acknowledge consent"
+private const val RETENTION_POLICY_FAILURE = "Failed to set retention policy"
+private const val EXPORT_WARNING_DISMISS_FAILURE = "Failed to dismiss export warnings"
+private const val HUGGING_FACE_API_KEY_FAILURE = "Failed to save Hugging Face API key"
+private const val HUGGING_FACE_MISSING_CLIENT_ID = "Hugging Face OAuth client ID is not configured"
+private const val HUGGING_FACE_SIGN_IN_FAILURE = "Unable to start Hugging Face sign-in"

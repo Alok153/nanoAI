@@ -17,6 +17,7 @@ data class SettingsUiState(
   val highContrastEnabled: Boolean = false,
   val undoAvailable: Boolean = false,
   val statusMessage: String? = null,
+  val lastErrorMessage: String? = null,
   val showMigrationSuccessNotification: Boolean = false,
   val huggingFaceAuthState: HuggingFaceAuthState = HuggingFaceAuthState(),
   val huggingFaceDeviceAuthState: HuggingFaceDeviceAuthState? = null,

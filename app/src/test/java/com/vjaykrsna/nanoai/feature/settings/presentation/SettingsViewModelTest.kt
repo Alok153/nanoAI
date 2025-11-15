@@ -149,7 +149,10 @@ class SettingsViewModelTest {
         advanceUntilIdle()
 
         val event = awaitItem() as SettingsUiEvent.ErrorRaised
-        assertThat(event.error).isInstanceOf(SettingsError.PreferenceUpdateFailed::class.java)
+        assertThat(event.envelope.userMessage).isEqualTo("Store error")
+        val state =
+          harness.awaitState(predicate = { it.lastErrorMessage == event.envelope.userMessage })
+        assertThat(state.lastErrorMessage).isEqualTo("Store error")
       }
     }
 
@@ -179,7 +182,7 @@ class SettingsViewModelTest {
         advanceUntilIdle()
 
         val event = awaitItem() as SettingsUiEvent.ErrorRaised
-        assertThat(event.error).isInstanceOf(SettingsError.ExportFailed::class.java)
+        assertThat(event.envelope.userMessage).isEqualTo("disk full")
       }
     }
 
@@ -229,7 +232,7 @@ class SettingsViewModelTest {
         advanceUntilIdle()
 
         val event = awaitItem() as SettingsUiEvent.ErrorRaised
-        assertThat(event.error).isInstanceOf(SettingsError.HuggingFaceAuthFailed::class.java)
+        assertThat(event.envelope.userMessage).isEqualTo("invalid")
       }
     }
 
@@ -244,7 +247,8 @@ class SettingsViewModelTest {
         advanceUntilIdle()
 
         val event = awaitItem() as SettingsUiEvent.ErrorRaised
-        assertThat(event.error).isInstanceOf(SettingsError.HuggingFaceAuthFailed::class.java)
+        assertThat(event.envelope.userMessage)
+          .isEqualTo("Hugging Face OAuth client ID is not configured")
       }
     }
 

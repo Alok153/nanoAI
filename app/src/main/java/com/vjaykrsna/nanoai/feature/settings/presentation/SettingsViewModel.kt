@@ -3,6 +3,7 @@ package com.vjaykrsna.nanoai.feature.settings.presentation
 import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
+import com.vjaykrsna.nanoai.core.common.error.NanoAIErrorEnvelope
 import com.vjaykrsna.nanoai.core.domain.library.ModelDownloadsAndExportUseCase
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
 import com.vjaykrsna.nanoai.core.domain.model.ProviderCredentialMutation
@@ -69,7 +70,7 @@ constructor(
       scope = viewModelScope,
       apiProviderConfigUseCase = apiProviderConfigUseCase,
       setLoading = ::setLoading,
-      emitError = { error -> emitError(error) },
+      emitError = ::emitError,
     )
 
   private val backupActions =
@@ -79,14 +80,14 @@ constructor(
       importService = importService,
       setLoading = ::setLoading,
       emitEvent = { event -> emitEvent(event) },
-      emitError = { error -> emitError(error) },
+      emitError = ::emitError,
     )
 
   private val privacyActions =
     SettingsPrivacyActions(
       scope = viewModelScope,
       updatePrivacyPreferencesUseCase = updatePrivacyPreferencesUseCase,
-      emitError = { error -> emitError(error) },
+      emitError = ::emitError,
       clock = Clock.System,
     )
 
@@ -106,7 +107,7 @@ constructor(
       huggingFaceAuthCoordinator = huggingFaceAuthCoordinator,
       huggingFaceOAuthConfig = huggingFaceOAuthConfig,
       updateState = { reducer -> updateState(reducer) },
-      emitError = { error -> emitError(error) },
+      emitError = ::emitError,
     )
 
   init {
@@ -168,29 +169,16 @@ constructor(
     updateState { copy(statusMessage = null) }
   }
 
-  private suspend fun emitError(error: SettingsError) {
-    emitEvent(SettingsUiEvent.ErrorRaised(error))
+  fun clearErrorMessage() {
+    updateState { copy(lastErrorMessage = null) }
+  }
+
+  private suspend fun emitError(envelope: NanoAIErrorEnvelope) {
+    updateState { copy(lastErrorMessage = envelope.userMessage) }
+    emitEvent(SettingsUiEvent.ErrorRaised(envelope))
   }
 
   private fun setLoading(isLoading: Boolean) {
     updateState { copy(isLoading = isLoading) }
   }
-}
-
-sealed class SettingsError {
-  data class ProviderAddFailed(val message: String) : SettingsError()
-
-  data class ProviderUpdateFailed(val message: String) : SettingsError()
-
-  data class ProviderDeleteFailed(val message: String) : SettingsError()
-
-  data class ExportFailed(val message: String) : SettingsError()
-
-  data class ImportFailed(val message: String) : SettingsError()
-
-  data class PreferenceUpdateFailed(val message: String) : SettingsError()
-
-  data class UnexpectedError(val message: String) : SettingsError()
-
-  data class HuggingFaceAuthFailed(val message: String) : SettingsError()
 }

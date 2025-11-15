@@ -6,12 +6,15 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsViewModel
+import com.vjaykrsna.nanoai.feature.settings.presentation.model.SettingsUiEvent
+import kotlinx.coroutines.flow.collectLatest
 
 /**
  * Settings screen for configuring app preferences and API providers.
@@ -33,6 +36,19 @@ fun SettingsScreen(
   onNavigateToCoverageDashboard: () -> Unit = {},
 ) {
   val coordinator = rememberSettingsScreenState(viewModel, onNavigateToCoverageDashboard)
+
+  LaunchedEffect(viewModel) {
+    viewModel.events.collectLatest { event ->
+      when (event) {
+        is SettingsUiEvent.ErrorRaised ->
+          coordinator.snackbarHostState.showSnackbar(event.envelope.userMessage)
+        is SettingsUiEvent.ExportCompleted ->
+          coordinator.snackbarHostState.showSnackbar(exportSuccessMessage(event.destinationPath))
+        is SettingsUiEvent.ImportCompleted ->
+          coordinator.snackbarHostState.showSnackbar(buildImportSuccessMessage(event.summary))
+      }
+    }
+  }
 
   SettingsScreenContent(
     state = coordinator.uiState,
@@ -70,8 +86,6 @@ internal fun rememberSettingsScreenState(
   val dialogState = rememberMutableSettingsDialogState()
 
   val importBackupLauncher = rememberImportBackupLauncher(viewModel::importBackup)
-
-  CollectSettingsEvents(viewModel.events, snackbarHostState)
 
   val actions =
     createActions(

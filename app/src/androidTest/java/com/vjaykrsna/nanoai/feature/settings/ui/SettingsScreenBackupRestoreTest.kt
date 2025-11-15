@@ -3,8 +3,8 @@ package com.vjaykrsna.nanoai.feature.settings.ui
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import com.vjaykrsna.nanoai.core.common.error.NanoAIErrorEnvelope
 import com.vjaykrsna.nanoai.core.domain.settings.ImportSummary
-import com.vjaykrsna.nanoai.feature.settings.presentation.SettingsError
 import com.vjaykrsna.nanoai.feature.settings.presentation.model.SettingsUiEvent
 import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Test
@@ -96,21 +96,17 @@ class SettingsScreenBackupRestoreTest : BaseSettingsScreenTest() {
     renderSettingsScreen()
 
     composeTestRule.runOnIdle {
-      emitEvent(SettingsUiEvent.ErrorRaised(SettingsError.UnexpectedError("Test error")))
+      emitEvent(SettingsUiEvent.ErrorRaised(NanoAIErrorEnvelope("Test error")))
     }
 
     composeTestRule.waitUntil(timeoutMillis = 5_000) {
       composeTestRule
-        .onAllNodesWithText(
-          "Unexpected error: Test error",
-          substring = false,
-          useUnmergedTree = true,
-        )
+        .onAllNodesWithText("Test error", substring = false, useUnmergedTree = true)
         .fetchSemanticsNodes(false)
         .isNotEmpty()
     }
     composeTestRule
-      .onNodeWithText("Unexpected error: Test error", substring = false, useUnmergedTree = true)
+      .onNodeWithText("Test error", substring = false, useUnmergedTree = true)
       .assertExists()
   }
 }
