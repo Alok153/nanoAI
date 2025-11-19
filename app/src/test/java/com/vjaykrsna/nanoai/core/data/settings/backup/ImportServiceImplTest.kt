@@ -3,6 +3,7 @@ package com.vjaykrsna.nanoai.core.data.settings.backup
 import android.net.Uri
 import android.os.Build
 import com.google.common.truth.Truth.assertThat
+import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreferenceStore
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
 import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
@@ -66,6 +67,7 @@ class ImportServiceImplTest {
   }
 
   @Test
+  @Suppress("LongMethod")
   fun `importBackup applies personas providers and settings`() = runTest {
     val payload =
       """
@@ -104,7 +106,11 @@ class ImportServiceImplTest {
     val uri = Uri.parse("content://nanoai/backup.json")
     shadowContentResolver.registerInputStream(uri, ByteArrayInputStream(payload.toByteArray()))
 
-    val summary = importService.importBackup(uri).getOrThrow()
+    val summary =
+      when (val result = importService.importBackup(uri)) {
+        is NanoAIResult.Success -> result.value
+        else -> error("Expected success but was $result")
+      }
     advanceUntilIdle()
 
     assertThat(summary.personasImported).isEqualTo(1)
@@ -139,7 +145,7 @@ class ImportServiceImplTest {
 
     val result = importService.importBackup(uri)
 
-    assertThat(result.isFailure).isTrue()
+    assertThat(result).isInstanceOf(NanoAIResult.RecoverableError::class.java)
     assertThat(personaRepository.getAllPersonas()).isEmpty()
     assertThat(providerRepository.getAllProviders()).isEmpty()
   }

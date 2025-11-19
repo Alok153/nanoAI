@@ -1,6 +1,7 @@
 package com.vjaykrsna.nanoai.core.domain.library
 
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.common.annotations.OneShot
 import com.vjaykrsna.nanoai.core.data.library.catalog.*
 import com.vjaykrsna.nanoai.core.data.library.catalog.network.ModelCatalogService
 import com.vjaykrsna.nanoai.core.data.library.catalog.network.dto.ErrorEnvelopeDto
@@ -46,6 +47,7 @@ constructor(
   private val clock: Clock = Clock.System,
 ) : ModelManifestUseCaseInterface {
   /** Fetches the latest manifest for a model/version and caches it locally. */
+  @OneShot("Refresh model download manifest")
   override suspend fun refreshManifest(
     modelId: String,
     version: String,
@@ -121,6 +123,7 @@ constructor(
   }
 
   /** Reports verification result back to the catalog service. */
+  @OneShot("Report manifest verification result")
   override suspend fun reportVerification(
     modelId: String,
     version: String,

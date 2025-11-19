@@ -1,6 +1,7 @@
 package com.vjaykrsna.nanoai.core.domain.library
 
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.common.annotations.OneShot
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -10,6 +11,7 @@ import kotlin.coroutines.cancellation.CancellationException
 @Singleton
 class ExportBackupUseCase @Inject constructor(private val exportService: ExportService) {
   /** Export personas, provider configs, and optional chat history as bundle. */
+  @OneShot("Export backup bundle")
   suspend fun invoke(destinationPath: String, includeChatHistory: Boolean): NanoAIResult<String> {
     return try {
       val personas = exportService.gatherPersonas()

@@ -1,7 +1,10 @@
 package com.vjaykrsna.nanoai.core.coverage.presentation
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
+import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.common.error.NanoAIErrorEnvelope
+import com.vjaykrsna.nanoai.core.common.error.toErrorEnvelope
 import com.vjaykrsna.nanoai.core.coverage.domain.usecase.GetCoverageReportUseCase
 import com.vjaykrsna.nanoai.core.coverage.domain.usecase.GetCoverageReportUseCase.Result
 import com.vjaykrsna.nanoai.core.coverage.model.CoverageMetric
@@ -10,37 +13,74 @@ import com.vjaykrsna.nanoai.core.coverage.ui.CoverageDashboardBanner
 import com.vjaykrsna.nanoai.core.coverage.ui.CoverageDashboardUiState
 import com.vjaykrsna.nanoai.core.coverage.ui.LayerCoverageState
 import com.vjaykrsna.nanoai.core.coverage.ui.RiskChipState
+import com.vjaykrsna.nanoai.shared.state.NanoAIViewEvent
+import com.vjaykrsna.nanoai.shared.state.ViewModelStateHost
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @HiltViewModel
 class CoverageDashboardViewModel
 @Inject
-constructor(private val getCoverageReportUseCase: GetCoverageReportUseCase) : ViewModel() {
+constructor(
+  private val getCoverageReportUseCase: GetCoverageReportUseCase,
+  @MainImmediateDispatcher mainDispatcher: CoroutineDispatcher,
+) :
+  ViewModelStateHost<CoverageDashboardUiState, CoverageDashboardUiEvent>(
+    initialState = initialState(),
+    dispatcher = mainDispatcher,
+  ) {
 
-  private val _uiState = MutableStateFlow(initialState())
-  val uiState: StateFlow<CoverageDashboardUiState> = _uiState.asStateFlow()
+  companion object {
+    private const val REFRESH_ERROR = "Unable to refresh coverage dashboard"
+
+    fun initialState(): CoverageDashboardUiState =
+      CoverageDashboardUiState(
+        buildId = "--",
+        generatedAtIso = "",
+        isRefreshing = false,
+        layers =
+          TestLayer.entries.map { layer ->
+            LayerCoverageState(
+              layer = layer,
+              metric = CoverageMetric(coverage = 0.0, threshold = 0.0),
+            )
+          },
+        risks = emptyList(),
+        trendDelta = emptyMap(),
+        errorBanner = null,
+        lastErrorMessage = null,
+      )
+  }
+
+  val uiState: StateFlow<CoverageDashboardUiState> = state
 
   init {
     refresh()
   }
 
   fun refresh() {
-    viewModelScope.launch {
-      _uiState.update { current -> current.copy(isRefreshing = true, errorBanner = null) }
-      runCatching { getCoverageReportUseCase() }
-        .onSuccess { result -> _uiState.value = result.toUiState(isRefreshing = false) }
-        .onFailure { error ->
-          _uiState.update { current ->
-            current.copy(isRefreshing = false, errorBanner = CoverageDashboardBanner.offline(error))
-          }
-        }
+    viewModelScope.launch(dispatcher) {
+      updateState { copy(isRefreshing = true, errorBanner = null, lastErrorMessage = null) }
+      when (val result = getCoverageReportUseCase()) {
+        is NanoAIResult.Success -> setState(result.value.toUiState(isRefreshing = false))
+        else -> handleFailure(result)
+      }
     }
+  }
+
+  private suspend fun handleFailure(result: NanoAIResult<Result>) {
+    val envelope = result.toErrorEnvelope(REFRESH_ERROR).preferUserMessage(REFRESH_ERROR)
+    updateState {
+      copy(
+        isRefreshing = false,
+        errorBanner = CoverageDashboardBanner.offline(envelope.cause),
+        lastErrorMessage = envelope.userMessage,
+      )
+    }
+    emitEvent(CoverageDashboardUiEvent.ErrorRaised(envelope))
   }
 
   private fun Result.toUiState(isRefreshing: Boolean): CoverageDashboardUiState {
@@ -66,23 +106,15 @@ constructor(private val getCoverageReportUseCase: GetCoverageReportUseCase) : Vi
       risks = risks,
       trendDelta = trendDelta,
       errorBanner = null,
+      lastErrorMessage = null,
     )
   }
+}
 
-  private fun initialState(): CoverageDashboardUiState =
-    CoverageDashboardUiState(
-      buildId = "--",
-      generatedAtIso = "",
-      isRefreshing = false,
-      layers =
-        TestLayer.entries.map { layer ->
-          LayerCoverageState(
-            layer = layer,
-            metric = CoverageMetric(coverage = 0.0, threshold = 0.0),
-          )
-        },
-      risks = emptyList(),
-      trendDelta = emptyMap(),
-      errorBanner = null,
-    )
+sealed interface CoverageDashboardUiEvent : NanoAIViewEvent {
+  data class ErrorRaised(val envelope: NanoAIErrorEnvelope) : CoverageDashboardUiEvent
+}
+
+private fun NanoAIErrorEnvelope.preferUserMessage(fallback: String): NanoAIErrorEnvelope {
+  return if (userMessage.contains(fallback)) this else copy(userMessage = "$fallback: $userMessage")
 }

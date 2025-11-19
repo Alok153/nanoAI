@@ -32,6 +32,17 @@ constructor(private val conversationRepository: ConversationRepository) :
     return conversationRepository.getMessagesFlow(threadId)
   }
 
+  /** Fetch all threads once (not reactive). */
+  @OneShot("Snapshot all chat threads")
+  override suspend fun getAllThreads(): NanoAIResult<List<ChatThread>> =
+    guardConversationOperation(
+      message = "Failed to load chat history",
+      context = mapOf("operation" to "getAllThreads"),
+    ) {
+      val threads = conversationRepository.getAllThreads()
+      NanoAIResult.success(threads)
+    }
+
   /** Create a new thread. */
   @OneShot("Create a chat thread")
   override suspend fun createNewThread(personaId: UUID, title: String?): NanoAIResult<UUID> =

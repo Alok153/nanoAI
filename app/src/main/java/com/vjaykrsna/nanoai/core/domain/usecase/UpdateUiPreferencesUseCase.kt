@@ -1,9 +1,15 @@
 package com.vjaykrsna.nanoai.core.domain.usecase
 
+import com.vjaykrsna.nanoai.core.common.IoDispatcher
+import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.common.annotations.OneShot
 import com.vjaykrsna.nanoai.core.data.preferences.UiPreferencesStore
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.Instant
 
 /**
@@ -14,7 +20,10 @@ import kotlinx.datetime.Instant
  */
 class UpdateUiPreferencesUseCase
 @Inject
-constructor(private val uiPreferencesStore: UiPreferencesStore) {
+constructor(
+  private val uiPreferencesStore: UiPreferencesStore,
+  @IoDispatcher private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
+) {
   /** Updates theme preference. */
   suspend fun setThemePreference(themePreference: ThemePreference) =
     uiPreferencesStore.setThemePreference(themePreference)
@@ -24,8 +33,21 @@ constructor(private val uiPreferencesStore: UiPreferencesStore) {
     uiPreferencesStore.setVisualDensity(visualDensity)
 
   /** Updates high contrast enabled. */
-  suspend fun setHighContrastEnabled(enabled: Boolean) =
-    uiPreferencesStore.setHighContrastEnabled(enabled)
+  @OneShot("Persist high contrast preference toggle")
+  suspend fun setHighContrastEnabled(enabled: Boolean): NanoAIResult<Unit> =
+    withContext(dispatcher) {
+      runCatching { uiPreferencesStore.setHighContrastEnabled(enabled) }
+        .fold(
+          onSuccess = { NanoAIResult.success(Unit) },
+          onFailure = {
+            NanoAIResult.recoverable(
+              message = "Failed to update high contrast preference",
+              cause = it,
+              context = mapOf("highContrastEnabled" to enabled.toString()),
+            )
+          },
+        )
+    }
 
   /** Sets pinned tool IDs. */
   suspend fun setPinnedToolIds(pinnedToolIds: List<String>) =

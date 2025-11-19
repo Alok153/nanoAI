@@ -3,6 +3,9 @@ package com.vjaykrsna.nanoai.core.data.settings.backup
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.common.annotations.OneShot
+import com.vjaykrsna.nanoai.core.common.error.toErrorEnvelope
 import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreferenceStore
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
 import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
@@ -41,12 +44,23 @@ constructor(
   private val apiProviderConfigRepository: ApiProviderConfigRepository,
   private val privacyPreferenceStore: PrivacyPreferenceStore,
 ) : ImportService {
-  override suspend fun importBackup(uri: Uri): Result<ImportSummary> =
+  @OneShot("Import backup bundle from local storage")
+  override suspend fun importBackup(uri: Uri): NanoAIResult<ImportSummary> =
     runCatching {
         val bundle = readBundle(uri)
         applyBundle(bundle)
       }
-      .onFailure { error -> Log.e(TAG, "Failed to import backup", error) }
+      .fold(
+        onSuccess = { summary -> NanoAIResult.success(summary) },
+        onFailure = { throwable ->
+          Log.e(TAG, "Failed to import backup", throwable)
+          NanoAIResult.recoverable(
+            message = throwable.toErrorEnvelope(IMPORT_FAILURE_MESSAGE).userMessage,
+            cause = throwable,
+            context = mapOf("uri" to uri.toString()),
+          )
+        },
+      )
 
   private suspend fun readBundle(uri: Uri): BackupBundleDto =
     withContext(Dispatchers.IO) {
@@ -270,5 +284,6 @@ constructor(
     private const val ZIP_SIGNATURE_LENGTH = 2
     private const val ZIP_MAGIC_FIRST = 'P'.code
     private const val ZIP_MAGIC_SECOND = 'K'.code
+    private const val IMPORT_FAILURE_MESSAGE = "Failed to import backup"
   }
 }

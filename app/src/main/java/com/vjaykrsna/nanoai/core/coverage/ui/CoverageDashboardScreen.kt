@@ -32,6 +32,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.vjaykrsna.nanoai.core.coverage.model.CoverageMetric
 import com.vjaykrsna.nanoai.core.coverage.model.TestLayer
+import com.vjaykrsna.nanoai.shared.state.NanoAIViewState
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
@@ -46,7 +47,8 @@ data class CoverageDashboardUiState(
   val risks: List<RiskChipState>,
   val trendDelta: Map<TestLayer, Double>,
   val errorBanner: CoverageBanner? = null,
-)
+  val lastErrorMessage: String? = null,
+) : NanoAIViewState
 
 /** Simple value object describing coverage metrics per layer. */
 data class LayerCoverageState(val layer: TestLayer, val metric: CoverageMetric)

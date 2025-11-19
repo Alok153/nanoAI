@@ -4,6 +4,8 @@ import android.graphics.Bitmap
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.common.error.NanoAIErrorEnvelope
+import com.vjaykrsna.nanoai.core.common.error.toErrorEnvelope
 import com.vjaykrsna.nanoai.core.common.onFailure
 import com.vjaykrsna.nanoai.core.common.onSuccess
 import com.vjaykrsna.nanoai.core.domain.chat.ConversationUseCase
@@ -55,6 +57,16 @@ constructor(
     initialState = ChatUiState(),
     dispatcher = mainDispatcher,
   ) {
+  private companion object {
+    private const val SAVE_MESSAGE_ERROR = "Failed to save message"
+    private const val INFERENCE_ERROR = "Failed to start inference"
+    private const val PERSONA_SWITCH_ERROR = "Failed to switch persona"
+    private const val THREAD_CREATION_ERROR = "Failed to create thread"
+    private const val THREAD_ARCHIVE_ERROR = "Failed to archive conversation"
+    private const val THREAD_DELETE_ERROR = "Failed to delete conversation"
+    private const val MODEL_SELECTION_ERROR = "Failed to select model"
+  }
+
   private val currentThreadId = MutableStateFlow<UUID?>(null)
 
   init {
@@ -138,8 +150,9 @@ constructor(
     viewModelScope.launch(dispatcher) {
       conversationUseCase
         .updateThread(thread.copy(activeModelId = model.modelId))
-        .onFailure { error ->
-          emitError(ChatError.UnexpectedError(error.message ?: "Failed to select model"))
+        .onFailure { result ->
+          val envelope = result.toErrorEnvelope(MODEL_SELECTION_ERROR)
+          emitError(ChatError.UnexpectedError(envelope.userMessage), envelope)
         }
         .onSuccess {
           updateState { copy(isModelPickerVisible = false) }
@@ -179,8 +192,9 @@ constructor(
             setActiveThread(newThreadId)
           }
         }
-        .onFailure { error ->
-          emitError(ChatError.PersonaSwitchFailed(error.message ?: "Failed to switch persona"))
+        .onFailure { result ->
+          val envelope = result.toErrorEnvelope(PERSONA_SWITCH_ERROR)
+          emitError(ChatError.PersonaSwitchFailed(envelope.userMessage), envelope)
         }
     }
   }
@@ -191,8 +205,9 @@ constructor(
       conversationUseCase
         .createNewThread(defaultPersonaId, title)
         .onSuccess { threadId -> setActiveThread(threadId) }
-        .onFailure { error ->
-          emitError(ChatError.ThreadCreationFailed(error.message ?: "Failed to create thread"))
+        .onFailure { result ->
+          val envelope = result.toErrorEnvelope(THREAD_CREATION_ERROR)
+          emitError(ChatError.ThreadCreationFailed(envelope.userMessage), envelope)
         }
     }
   }
@@ -206,8 +221,9 @@ constructor(
             setActiveThread(null)
           }
         }
-        .onFailure { error ->
-          emitError(ChatError.ThreadArchiveFailed(error.message ?: "Failed to archive thread"))
+        .onFailure { result ->
+          val envelope = result.toErrorEnvelope(THREAD_ARCHIVE_ERROR)
+          emitError(ChatError.ThreadArchiveFailed(envelope.userMessage), envelope)
         }
     }
   }
@@ -221,8 +237,9 @@ constructor(
             setActiveThread(null)
           }
         }
-        .onFailure { error ->
-          emitError(ChatError.ThreadDeletionFailed(error.message ?: "Failed to delete thread"))
+        .onFailure { result ->
+          val envelope = result.toErrorEnvelope(THREAD_DELETE_ERROR)
+          emitError(ChatError.ThreadDeletionFailed(envelope.userMessage), envelope)
         }
     }
   }
@@ -278,9 +295,12 @@ constructor(
     }
   }
 
-  private suspend fun emitError(error: ChatError) {
-    updateState { copy(pendingErrorMessage = error.message) }
-    emitEvent(ChatUiEvent.ErrorRaised(error))
+  private suspend fun emitError(
+    error: ChatError,
+    envelope: NanoAIErrorEnvelope = NanoAIErrorEnvelope(error.message),
+  ) {
+    updateState { copy(pendingErrorMessage = envelope.userMessage) }
+    emitEvent(ChatUiEvent.ErrorRaised(error, envelope))
   }
 
   private fun resolveActiveThread(
@@ -298,12 +318,9 @@ constructor(
   ) {
     when (saveResult) {
       is NanoAIResult.Success -> handleInference(messageData)
-      is NanoAIResult.RecoverableError -> {
-        emitError(ChatError.UnexpectedError("Failed to save message: ${saveResult.message}"))
-        updateState { copy(isSendingMessage = false) }
-      }
-      is NanoAIResult.FatalError -> {
-        emitError(ChatError.UnexpectedError("Failed to save message: ${saveResult.message}"))
+      else -> {
+        val envelope = saveResult.toErrorEnvelope(SAVE_MESSAGE_ERROR)
+        emitError(ChatError.UnexpectedError(envelope.userMessage), envelope)
         updateState { copy(isSendingMessage = false) }
       }
     }
@@ -320,10 +337,10 @@ constructor(
       )
     when (inferenceResult) {
       is NanoAIResult.Success -> clearAttachments()
-      is NanoAIResult.RecoverableError ->
-        emitError(ChatError.InferenceFailed(inferenceResult.message ?: "Failed to start inference"))
-      is NanoAIResult.FatalError ->
-        emitError(ChatError.InferenceFailed(inferenceResult.message ?: "Failed to start inference"))
+      else -> {
+        val envelope = inferenceResult.toErrorEnvelope(INFERENCE_ERROR)
+        emitError(ChatError.InferenceFailed(envelope.userMessage), envelope)
+      }
     }
   }
 
@@ -337,7 +354,7 @@ constructor(
 }
 
 sealed interface ChatUiEvent : NanoAIViewEvent {
-  data class ErrorRaised(val error: ChatError) : ChatUiEvent
+  data class ErrorRaised(val error: ChatError, val envelope: NanoAIErrorEnvelope) : ChatUiEvent
 
   data class ModelSelected(val modelName: String) : ChatUiEvent
 }

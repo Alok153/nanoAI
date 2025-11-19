@@ -1,8 +1,13 @@
 package com.vjaykrsna.nanoai.feature.chat.ui
 
+import android.os.SystemClock
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performTextInput
@@ -62,7 +67,8 @@ class ChatScreenTest {
     observePersonasUseCase = ObservePersonasUseCase(personaRepository)
     getDefaultPersonaUseCase = GetDefaultPersonaUseCase(personaRepository)
 
-    coEvery { sendPromptUseCase(any(), any(), any()) } returns NanoAIResult.success(Unit)
+    coEvery { sendPromptUseCase(any(), any(), any(), any(), any()) } returns
+      NanoAIResult.success(Unit)
     coEvery { switchPersonaUseCase(any(), any(), any()) } returns
       NanoAIResult.success(UUID.randomUUID())
 
@@ -230,7 +236,7 @@ class ChatScreenTest {
     val thread = DomainTestBuilders.buildChatThread(threadId = threadId, personaId = personaId)
 
     conversationRepository.addThread(thread)
-    coEvery { sendPromptUseCase(any(), any(), any()) } returns
+    coEvery { sendPromptUseCase(any(), any(), any(), any(), any()) } returns
       NanoAIResult.recoverable("Failed to send prompt")
     viewModel.selectThread(threadId)
 
@@ -308,6 +314,59 @@ class ChatScreenTest {
   }
 
   @Test
+  fun chatScreen_errorEvent_showsInlineErrorAndSnackbar() {
+    val threadId = UUID.randomUUID()
+    val personaId = UUID.randomUUID()
+    val thread = DomainTestBuilders.buildChatThread(threadId = threadId, personaId = personaId)
+    val persona = DomainTestBuilders.buildPersona(personaId = personaId)
+
+    conversationRepository.addThread(thread)
+    personaRepository.setPersonas(listOf(persona))
+    conversationRepository.shouldFailOnSaveMessage = true
+    viewModel.selectThread(threadId)
+
+    renderScreen()
+
+    composeTestRule.onNodeWithText(COMPOSER_PLACEHOLDER).performTextInput("Hello error")
+    composeTestRule.runOnIdle { viewModel.onSendMessage() }
+
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+      composeTestRule
+        .onAllNodesWithContentDescription(
+          "Something went wrong error",
+          substring = false,
+          useUnmergedTree = true,
+        )
+        .fetchSemanticsNodes(false)
+        .isNotEmpty()
+    }
+    composeTestRule
+      .onNodeWithContentDescription(
+        "Something went wrong error",
+        substring = false,
+        useUnmergedTree = true,
+      )
+      .assertExists()
+
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+      composeTestRule
+        .onAllNodesWithText("Failed to save message", substring = true, useUnmergedTree = true)
+        .fetchSemanticsNodes(false)
+        .size >= 2
+    }
+    composeTestRule
+      .onNodeWithContentDescription(
+        "Chat notifications and messages",
+        substring = false,
+        useUnmergedTree = true,
+      )
+      .assertExists()
+    composeTestRule
+      .onAllNodesWithText("Failed to save message", substring = true, useUnmergedTree = true)
+      .assertCountEquals(2)
+  }
+
+  @Test
   fun chatScreen_assistantMessage_hasCorrectSemantics() {
     val threadId = UUID.randomUUID()
     val personaId = UUID.randomUUID()
@@ -333,6 +392,36 @@ class ChatScreenTest {
         substring = true,
         useUnmergedTree = true,
       )
+      .assertExists()
+  }
+
+  @Test
+  fun chatScreen_modelSelection_showsSnackbarFeedback() {
+    val threadId = UUID.randomUUID()
+    val personaId = UUID.randomUUID()
+    val thread = DomainTestBuilders.buildChatThread(threadId = threadId, personaId = personaId)
+    val persona = DomainTestBuilders.buildPersona(personaId = personaId)
+
+    conversationRepository.addThread(thread)
+    personaRepository.setPersonas(listOf(persona))
+    viewModel.selectThread(threadId)
+
+    renderScreen()
+
+    composeTestRule.runOnIdle {
+      viewModel.selectModel(
+        com.vjaykrsna.nanoai.core.domain.library.Model("test", "Test Model", 0, "n/a")
+      )
+    }
+
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+      composeTestRule
+        .onAllNodesWithText("Switched to Test Model", substring = false, useUnmergedTree = true)
+        .fetchSemanticsNodes(false)
+        .isNotEmpty()
+    }
+    composeTestRule
+      .onNodeWithText("Switched to Test Model", substring = false, useUnmergedTree = true)
       .assertExists()
   }
 
@@ -416,5 +505,15 @@ class ChatScreenTest {
     composeTestRule.onNodeWithText("Dark mode test message").assertExists().assertIsDisplayed()
 
     composeTestRule.onNodeWithText(COMPOSER_PLACEHOLDER).assertExists().assertIsDisplayed()
+  }
+}
+
+private fun ComposeTestRule.waitUntil(timeoutMillis: Long = 1_000, condition: () -> Boolean) {
+  val start = SystemClock.uptimeMillis()
+  while (!condition()) {
+    if (SystemClock.uptimeMillis() - start >= timeoutMillis) {
+      throw AssertionError("Condition still false after ${timeoutMillis}ms")
+    }
+    waitForIdle()
   }
 }

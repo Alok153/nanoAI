@@ -2,6 +2,8 @@ package com.vjaykrsna.nanoai.core.domain.library
 
 import android.database.sqlite.SQLiteException
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.common.annotations.OneShot
+import com.vjaykrsna.nanoai.core.common.annotations.ReactiveStream
 import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.core.domain.model.library.DownloadStatus
 import com.vjaykrsna.nanoai.core.domain.model.library.InstallState
@@ -22,6 +24,7 @@ constructor(
   private val downloadManager: DownloadManager,
 ) {
   /** Queue or start a download based on concurrency limits. */
+  @OneShot("Queue or start model download")
   suspend fun downloadModel(modelId: String): NanoAIResult<UUID> =
     guardDownloadOperation(
       message = "Failed to start download for model $modelId",
@@ -44,6 +47,7 @@ constructor(
     }
 
   /** Pause a download task and persist status. */
+  @OneShot("Pause download task")
   suspend fun pauseDownload(taskId: UUID): NanoAIResult<Unit> =
     guardDownloadOperation(
       message = "Failed to pause download $taskId",
@@ -55,6 +59,7 @@ constructor(
     }
 
   /** Resume a paused download. */
+  @OneShot("Resume download task")
   suspend fun resumeDownload(taskId: UUID): NanoAIResult<Unit> =
     guardDownloadOperation(
       message = "Failed to resume download $taskId",
@@ -81,6 +86,7 @@ constructor(
     }
 
   /** Cancel a download and cleanup associated files. */
+  @OneShot("Cancel download task")
   suspend fun cancelDownload(taskId: UUID): NanoAIResult<Unit> =
     guardDownloadOperation(
       message = "Failed to cancel download $taskId",
@@ -97,6 +103,7 @@ constructor(
     }
 
   /** Retry a failed download task. */
+  @OneShot("Retry failed download task")
   suspend fun retryFailedDownload(taskId: UUID): NanoAIResult<Unit> =
     guardDownloadOperation(
       message = "Failed to retry download $taskId",
@@ -132,13 +139,16 @@ constructor(
     }
 
   /** Observe download progress as a Flow. */
+  @ReactiveStream("Observe download progress")
   fun getDownloadProgress(taskId: UUID): Flow<Float> = downloadManager.observeProgress(taskId)
 
   /** Observe a specific download task for status or error updates. */
+  @ReactiveStream("Observe single download task updates")
   suspend fun observeDownloadTask(taskId: UUID): Flow<DownloadTask?> =
     downloadManager.getTaskById(taskId)
 
   /** Observe queued download tasks. */
+  @ReactiveStream("Observe managed download queue")
   fun observeDownloadTasks(): Flow<List<DownloadTask>> = downloadManager.observeManagedDownloads()
 
   private inline fun <T> guardDownloadOperation(

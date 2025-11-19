@@ -7,8 +7,10 @@ import androidx.compose.ui.test.assertExists
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import com.vjaykrsna.nanoai.core.domain.image.model.GeneratedImage
+import com.vjaykrsna.nanoai.feature.image.presentation.ImageGalleryUiState
 import com.vjaykrsna.nanoai.shared.testing.TestingTheme
 import java.util.UUID
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.datetime.Instant
 import org.junit.Rule
 import org.junit.Test
@@ -22,7 +24,7 @@ class ImageGalleryScreenContentTest {
       val snackbarHostState = remember { SnackbarHostState() }
       TestingTheme {
         ImageGalleryScreenContent(
-          images = emptyList(),
+          state = ImageGalleryUiState(),
           snackbarHostState = snackbarHostState,
           onNavigateBack = {},
           onImageClick = {},
@@ -44,14 +46,15 @@ class ImageGalleryScreenContentTest {
   fun showsDeleteDialogWhenRequested() {
     composeTestRule.setContent {
       val snackbarHostState = remember { SnackbarHostState() }
+      val image = sampleImage()
       TestingTheme {
         ImageGalleryScreenContent(
-          images = listOf(sampleImage()),
+          state = ImageGalleryUiState(images = persistentListOf(image)),
           snackbarHostState = snackbarHostState,
           onNavigateBack = {},
           onImageClick = {},
           onDeleteRequest = {},
-          selectedImage = sampleImage(),
+          selectedImage = image,
           showDeleteDialog = true,
           onConfirmDelete = {},
           onDismissDelete = {},

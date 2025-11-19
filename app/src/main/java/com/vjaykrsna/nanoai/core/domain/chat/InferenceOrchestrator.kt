@@ -132,30 +132,29 @@ constructor(
         audio = audio,
       )
 
-    return localModelRuntime
-      .generate(request)
-      .fold(
-        onSuccess = { result ->
-          NanoAIResult.success(
-            InferenceSuccessData(
-              text = result.text,
-              source = MessageSource.LOCAL_MODEL,
-              latencyMs = result.latencyMs,
-              metadata =
-                result.metadata +
-                  mapOf("modelId" to model.modelId, "providerType" to model.providerType.name),
-            )
+    return when (val result = localModelRuntime.generate(request)) {
+      is NanoAIResult.Success ->
+        NanoAIResult.success(
+          InferenceSuccessData(
+            text = result.value.text,
+            source = MessageSource.LOCAL_MODEL,
+            latencyMs = result.value.latencyMs,
+            metadata =
+              result.value.metadata +
+                mapOf("modelId" to model.modelId, "providerType" to model.providerType.name),
           )
-        },
-        onFailure = { throwable ->
-          NanoAIResult.recoverable(
-            message = throwable.message ?: "Local inference failed",
-            telemetryId = "LOCAL_INFERENCE_ERROR",
-            cause = throwable,
-            context = mapOf("modelId" to model.modelId),
-          )
-        },
-      )
+        )
+      is NanoAIResult.RecoverableError ->
+        result.copy(
+          message = result.message.ifBlank { LOCAL_INFERENCE_FAILURE },
+          context = result.context.withModelContext(model.modelId),
+        )
+      is NanoAIResult.FatalError ->
+        result.copy(
+          message = result.message.ifBlank { LOCAL_INFERENCE_FAILURE },
+          context = result.context.withModelContext(model.modelId),
+        )
+    }
   }
 
   private suspend fun runCloudInference(
@@ -351,5 +350,14 @@ constructor(
       is NanoAIResult.RecoverableError -> copy(context = context + extra)
       is NanoAIResult.FatalError -> this
     }
+  }
+
+  private fun Map<String, String>.withModelContext(modelId: String): Map<String, String> {
+    if (this["modelId"] == modelId) return this
+    return this + ("modelId" to modelId)
+  }
+
+  private companion object {
+    private const val LOCAL_INFERENCE_FAILURE = "Local inference failed"
   }
 }

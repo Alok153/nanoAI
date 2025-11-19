@@ -1,5 +1,7 @@
 package com.vjaykrsna.nanoai.core.runtime
 
+import com.vjaykrsna.nanoai.core.common.NanoAIResult
+
 /**
  * A generic interface for local model inference.
  *
@@ -20,7 +22,7 @@ interface InferenceService {
    * Generates a response from a given prompt.
    *
    * @param request The generation request.
-   * @return A [Result] containing the [LocalGenerationResult] or an exception.
+   * @return A [NanoAIResult] containing the [LocalGenerationResult] or a telemetry-aware error.
    */
-  suspend fun generate(request: LocalGenerationRequest): Result<LocalGenerationResult>
+  suspend fun generate(request: LocalGenerationRequest): NanoAIResult<LocalGenerationResult>
 }

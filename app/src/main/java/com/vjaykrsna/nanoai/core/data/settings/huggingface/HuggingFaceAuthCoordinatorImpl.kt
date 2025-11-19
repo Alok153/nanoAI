@@ -1,6 +1,7 @@
 package com.vjaykrsna.nanoai.core.data.settings.huggingface
 
 import com.vjaykrsna.nanoai.core.common.IoDispatcher
+import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.data.library.huggingface.network.HuggingFaceAccountService
 import com.vjaykrsna.nanoai.core.data.library.huggingface.network.HuggingFaceOAuthService
 import com.vjaykrsna.nanoai.core.data.library.huggingface.network.dto.HuggingFaceOAuthErrorResponse
@@ -57,6 +58,9 @@ private const val DEVICE_CODE_GENERIC_ERROR =
   "Failed to complete Hugging Face sign-in. Check your connection and try again."
 private const val OFFLINE_DEVICE_MESSAGE =
   "Device appears offline. Check your connection and try again before retrying the sign-in."
+private const val TOKEN_BLANK_ERROR = "Hugging Face API token must not be blank"
+private const val TOKEN_SAVE_FAILURE = "Unable to save Hugging Face API token"
+private const val CLIENT_ID_MISSING_ERROR = "Hugging Face OAuth client ID is not configured"
 
 /**
  * Central coordinator for Hugging Face authentication. Manages credential persistence,
@@ -89,64 +93,88 @@ constructor(
   }
 
   /** Persist a user-supplied personal access token and re-verify the account. */
-  override suspend fun savePersonalAccessToken(token: String): Result<HuggingFaceAuthState> =
+  override suspend fun savePersonalAccessToken(token: String): NanoAIResult<HuggingFaceAuthState> =
     withContext(ioDispatcher) {
       mutex.withLock {
         val normalized = token.trim()
         if (normalized.isEmpty()) {
-          return@withLock Result.failure(IllegalArgumentException("API token must not be blank"))
+          return@withLock NanoAIResult.recoverable(
+            message = TOKEN_BLANK_ERROR,
+            context = mapOf("source" to HuggingFaceTokenSource.API_TOKEN.id),
+          )
         }
 
-        credentialRepository.saveAccessToken(
-          token = normalized,
-          rotatesAfter = null,
-          metadata =
-            mapOf(
-              METADATA_KEY_ISSUER to DEFAULT_ISSUER,
-              METADATA_KEY_SOURCE to HuggingFaceTokenSource.API_TOKEN.id,
-            ),
-        )
-
-        Result.success(refreshAccountInternal())
+        runCatching {
+            credentialRepository.saveAccessToken(
+              token = normalized,
+              rotatesAfter = null,
+              metadata =
+                mapOf(
+                  METADATA_KEY_ISSUER to DEFAULT_ISSUER,
+                  METADATA_KEY_SOURCE to HuggingFaceTokenSource.API_TOKEN.id,
+                ),
+            )
+            refreshAccountInternal()
+          }
+          .fold(
+            onSuccess = { state -> NanoAIResult.success(state) },
+            onFailure = { throwable ->
+              credentialRepository.clearAccessToken()
+              NanoAIResult.recoverable(
+                message = throwable.message ?: TOKEN_SAVE_FAILURE,
+                cause = throwable,
+                context = mapOf("operation" to "savePersonalAccessToken"),
+              )
+            },
+          )
       }
     }
 
   override suspend fun beginDeviceAuthorization(
     clientId: String,
     scope: String,
-  ): Result<HuggingFaceDeviceAuthState> =
+  ): NanoAIResult<HuggingFaceDeviceAuthState> =
     withContext(ioDispatcher) {
       mutex.withLock {
         if (clientId.isBlank()) {
-          return@withLock Result.failure(IllegalStateException("OAuth client id is not configured"))
+          return@withLock NanoAIResult.recoverable(
+            message = CLIENT_ID_MISSING_ERROR,
+            context = mapOf("operation" to "beginDeviceAuthorization"),
+          )
         }
 
-        // Cancel any in-progress session before starting a new one.
         cancelDeviceSessionLocked()
 
-        val response = runCatching { oauthService.requestDeviceCode(clientId, scope) }
-        val deviceResponse =
-          response.getOrElse { error ->
-            return@withLock Result.failure(error)
-          }
+        runCatching { oauthService.requestDeviceCode(clientId, scope) }
+          .fold(
+            onSuccess = { deviceResponse ->
+              val interval =
+                deviceResponse.interval?.coerceAtLeast(1) ?: DEFAULT_DEVICE_POLL_SECONDS
+              val session =
+                DeviceFlowSession(
+                  clientId = clientId,
+                  deviceCode = deviceResponse.deviceCode,
+                  userCode = deviceResponse.userCode,
+                  verificationUri = deviceResponse.verificationUri,
+                  verificationUriComplete = deviceResponse.verificationUriComplete,
+                  expiresAt = clock.now().plus(deviceResponse.expiresIn.seconds),
+                  pollIntervalSeconds = interval,
+                )
 
-        val interval = deviceResponse.interval?.coerceAtLeast(1) ?: DEFAULT_DEVICE_POLL_SECONDS
-        val session =
-          DeviceFlowSession(
-            clientId = clientId,
-            deviceCode = deviceResponse.deviceCode,
-            userCode = deviceResponse.userCode,
-            verificationUri = deviceResponse.verificationUri,
-            verificationUriComplete = deviceResponse.verificationUriComplete,
-            expiresAt = clock.now().plus(deviceResponse.expiresIn.seconds),
-            pollIntervalSeconds = interval,
+              deviceSession = session
+              deviceAuthJob = startDevicePolling(session)
+              val uiState = session.toUiState(isPolling = true)
+              _deviceAuthState.value = uiState
+              NanoAIResult.success(uiState)
+            },
+            onFailure = { throwable ->
+              NanoAIResult.recoverable(
+                message = throwable.message ?: DEVICE_CODE_GENERIC_ERROR,
+                cause = throwable,
+                context = mapOf("operation" to "beginDeviceAuthorization"),
+              )
+            },
           )
-
-        deviceSession = session
-        deviceAuthJob = startDevicePolling(session)
-        val uiState = session.toUiState(isPolling = true)
-        _deviceAuthState.value = uiState
-        Result.success(uiState)
       }
     }
 

@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai.core.domain.library
 
+import com.vjaykrsna.nanoai.core.common.annotations.ReactiveStream
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.core.domain.model.library.InstallState
 import java.util.UUID
@@ -28,10 +29,10 @@ interface ModelCatalogReadRepository {
   suspend fun getModelsByState(state: InstallState): List<ModelPackage>
 
   /** Observe all models (reactive updates). */
-  fun observeAllModels(): Flow<List<ModelPackage>>
+  @ReactiveStream("Observe all catalog models") fun observeAllModels(): Flow<List<ModelPackage>>
 
   /** Observe installed models (reactive updates). */
-  fun observeInstalledModels(): Flow<List<ModelPackage>>
+  @ReactiveStream("Observe installed models") fun observeInstalledModels(): Flow<List<ModelPackage>>
 
   /** Check whether a model is currently active in any non-archived chat session. */
   suspend fun isModelActiveInSession(modelId: String): Boolean
@@ -68,6 +69,7 @@ interface ModelCatalogRefreshRepository {
    * Default implementation exposes an empty flow for repository fakes that do not track refresh
    * metadata.
    */
+  @ReactiveStream("Observe catalog refresh status")
   fun observeRefreshStatus(): Flow<ModelCatalogRefreshStatus> = flowOf(ModelCatalogRefreshStatus())
 
   /** Record a successful refresh with its source descriptor and model count. */

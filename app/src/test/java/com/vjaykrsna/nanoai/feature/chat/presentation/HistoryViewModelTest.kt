@@ -1,6 +1,7 @@
 package com.vjaykrsna.nanoai.feature.chat.presentation
 
 import com.google.common.truth.Truth.assertThat
+import com.vjaykrsna.nanoai.core.domain.chat.ConversationUseCase
 import com.vjaykrsna.nanoai.feature.chat.presentation.state.HistoryUiState
 import com.vjaykrsna.nanoai.shared.state.ViewModelStateHostTestHarness
 import com.vjaykrsna.nanoai.testing.DomainTestBuilders
@@ -19,13 +20,15 @@ class HistoryViewModelTest {
   @JvmField @RegisterExtension val mainDispatcherExtension = MainDispatcherExtension()
 
   private lateinit var conversationRepository: FakeConversationRepository
+  private lateinit var conversationUseCase: ConversationUseCase
   private lateinit var viewModel: HistoryViewModel
   private lateinit var harness: ViewModelStateHostTestHarness<HistoryUiState, HistoryUiEvent>
 
   @BeforeEach
   fun setup() {
     conversationRepository = FakeConversationRepository()
-    viewModel = HistoryViewModel(conversationRepository, mainDispatcherExtension.dispatcher)
+    conversationUseCase = ConversationUseCase(conversationRepository)
+    viewModel = HistoryViewModel(conversationUseCase, mainDispatcherExtension.dispatcher)
     harness = ViewModelStateHostTestHarness(viewModel)
   }
 
@@ -53,15 +56,21 @@ class HistoryViewModelTest {
   }
 
   @Test
-  fun `loadThreads surfaces errors`() = runTest {
+  fun `loadThreads surfaces errors with envelope`() = runTest {
     conversationRepository.shouldFailOnGetAllThreads = true
 
+    var emittedMessage: String? = null
     harness.testEvents {
       viewModel.loadThreads()
       val event = awaitItem()
-      val error = (event as HistoryUiEvent.ErrorRaised).error
-      assertThat(error).isInstanceOf(HistoryError.LoadFailed::class.java)
+      val envelope = (event as HistoryUiEvent.ErrorRaised).error
+      emittedMessage = envelope.userMessage
+      assertThat(envelope.userMessage).contains("Unable to load chat history")
+      assertThat(envelope.context["operation"]).isEqualTo("loadThreads")
     }
+
+    assertThat(emittedMessage).isNotNull()
+    assertThat(harness.currentState.lastErrorMessage).isEqualTo(emittedMessage)
   }
 
   @Test
@@ -73,25 +82,26 @@ class HistoryViewModelTest {
     viewModel.archiveThread(threadId)
     advanceUntilIdle()
 
-    val state =
-      harness.awaitState(
-        predicate = { state ->
-          state.threads.firstOrNull { it.threadId == threadId }?.isArchived == true
-        }
-      )
-    assertThat(state.threads.first { it.threadId == threadId }.isArchived).isTrue()
+    harness.awaitState(predicate = { state -> state.threads.none { it.threadId == threadId } })
   }
 
   @Test
-  fun `archiveThread surfaces ArchiveFailed`() = runTest {
+  fun `archiveThread surfaces ArchiveFailed envelope with context`() = runTest {
     conversationRepository.shouldFailOnArchiveThread = true
+    val threadId = UUID.randomUUID()
 
+    var emittedMessage: String? = null
     harness.testEvents {
-      viewModel.archiveThread(UUID.randomUUID())
+      viewModel.archiveThread(threadId)
       val event = awaitItem()
-      val error = (event as HistoryUiEvent.ErrorRaised).error
-      assertThat(error).isInstanceOf(HistoryError.ArchiveFailed::class.java)
+      val envelope = (event as HistoryUiEvent.ErrorRaised).error
+      emittedMessage = envelope.userMessage
+      assertThat(envelope.userMessage).contains("Failed to archive thread")
+      assertThat(envelope.context["threadId"]).isEqualTo(threadId.toString())
     }
+
+    assertThat(emittedMessage).isNotNull()
+    assertThat(harness.currentState.lastErrorMessage).isEqualTo(emittedMessage)
   }
 
   @Test
@@ -107,14 +117,21 @@ class HistoryViewModelTest {
   }
 
   @Test
-  fun `deleteThread surfaces DeleteFailed`() = runTest {
+  fun `deleteThread surfaces DeleteFailed envelope with context`() = runTest {
     conversationRepository.shouldFailOnDeleteThread = true
+    val threadId = UUID.randomUUID()
 
+    var emittedMessage: String? = null
     harness.testEvents {
-      viewModel.deleteThread(UUID.randomUUID())
+      viewModel.deleteThread(threadId)
       val event = awaitItem()
-      val error = (event as HistoryUiEvent.ErrorRaised).error
-      assertThat(error).isInstanceOf(HistoryError.DeleteFailed::class.java)
+      val envelope = (event as HistoryUiEvent.ErrorRaised).error
+      emittedMessage = envelope.userMessage
+      assertThat(envelope.userMessage).contains("Failed to delete thread")
+      assertThat(envelope.context["threadId"]).isEqualTo(threadId.toString())
     }
+
+    assertThat(emittedMessage).isNotNull()
+    assertThat(harness.currentState.lastErrorMessage).isEqualTo(emittedMessage)
   }
 }

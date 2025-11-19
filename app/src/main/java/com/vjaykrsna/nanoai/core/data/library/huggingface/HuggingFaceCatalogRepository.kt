@@ -1,6 +1,7 @@
 package com.vjaykrsna.nanoai.core.data.library.huggingface
 
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.common.annotations.OneShot
 import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceCatalogQuery
 import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceModelSummary
 
@@ -12,6 +13,7 @@ interface HuggingFaceCatalogRepository {
    * @param search Optional query to filter models by id or tags.
    * @param limit Maximum number of models to retrieve.
    */
+  @OneShot("Fetch Hugging Face catalog page")
   suspend fun listModels(
     query: HuggingFaceCatalogQuery
   ): NanoAIResult<List<HuggingFaceModelSummary>>

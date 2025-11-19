@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai.core.runtime
 
+import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.domain.library.ModelCatalogRepository
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.core.domain.model.library.ProviderType
@@ -35,17 +36,25 @@ constructor(
     return false
   }
 
-  override suspend fun generate(request: LocalGenerationRequest): Result<LocalGenerationResult> {
+  override suspend fun generate(
+    request: LocalGenerationRequest
+  ): NanoAIResult<LocalGenerationResult> {
     val model =
       modelCatalogRepository.getModel(request.modelId)
-        ?: return Result.failure(IllegalArgumentException("Model not found: ${request.modelId}"))
+        ?: return NanoAIResult.recoverable(
+          message = "Model ${request.modelId} is not installed",
+          telemetryId = "LOCAL_MODEL_NOT_FOUND",
+          context = mapOf("modelId" to request.modelId),
+        )
 
     return when (model.providerType) {
       ProviderType.MEDIA_PIPE -> mediaPipeInferenceService.generate(request)
       ProviderType.LEAP -> leapInferenceService.generate(request)
       else ->
-        Result.failure(
-          UnsupportedOperationException("Unsupported provider type: ${model.providerType}")
+        NanoAIResult.recoverable(
+          message = "Unsupported provider type: ${model.providerType}",
+          telemetryId = "UNSUPPORTED_PROVIDER",
+          context = mapOf("modelId" to request.modelId, "providerType" to model.providerType.name),
         )
     }
   }

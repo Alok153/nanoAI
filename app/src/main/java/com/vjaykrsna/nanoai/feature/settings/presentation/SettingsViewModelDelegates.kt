@@ -40,6 +40,13 @@ internal data class SettingsObserverDependencies(
   val huggingFaceAuthCoordinator: HuggingFaceAuthCoordinator,
 )
 
+internal data class SettingsUiPreferenceDependencies(
+  val settingsOperationsUseCase: SettingsOperationsUseCase,
+  val toggleCompactModeUseCase: ToggleCompactModeUseCase,
+  val updateUiPreferencesUseCase: UpdateUiPreferencesUseCase,
+  val emitError: suspend (NanoAIErrorEnvelope) -> Unit,
+)
+
 internal class SettingsStateObservers(
   private val scope: CoroutineScope,
   private val dependencies: SettingsObserverDependencies,
@@ -200,13 +207,12 @@ internal class SettingsBackupActions(
     scope.launch {
       setLoading(true)
       try {
-        runCatching { importService.importBackup(uri) }
-          .onSuccess { result ->
-            result
-              .onSuccess { summary -> emitEvent(SettingsUiEvent.ImportCompleted(summary)) }
-              .onFailure { error -> emitError(error.toErrorEnvelope(IMPORT_FAILURE_MESSAGE)) }
-          }
-          .onFailure { throwable -> emitError(throwable.toErrorEnvelope(IMPORT_FAILURE_MESSAGE)) }
+        when (val result = importService.importBackup(uri)) {
+          is NanoAIResult.Success -> emitEvent(SettingsUiEvent.ImportCompleted(result.value))
+          else -> emitError(result.toErrorEnvelope(IMPORT_FAILURE_MESSAGE))
+        }
+      } catch (error: Throwable) {
+        emitError(error.toErrorEnvelope(IMPORT_FAILURE_MESSAGE))
       } finally {
         setLoading(false)
       }
@@ -253,10 +259,12 @@ internal class SettingsUiPreferenceActions(
   private val scope: CoroutineScope,
   private val state: StateFlow<SettingsUiState>,
   private val updateState: (SettingsUiState.() -> SettingsUiState) -> Unit,
-  private val settingsOperationsUseCase: SettingsOperationsUseCase,
-  private val toggleCompactModeUseCase: ToggleCompactModeUseCase,
-  private val updateUiPreferencesUseCase: UpdateUiPreferencesUseCase,
+  dependencies: SettingsUiPreferenceDependencies,
 ) {
+  private val settingsOperationsUseCase = dependencies.settingsOperationsUseCase
+  private val toggleCompactModeUseCase = dependencies.toggleCompactModeUseCase
+  private val updateUiPreferencesUseCase = dependencies.updateUiPreferencesUseCase
+  private val emitError: suspend (NanoAIErrorEnvelope) -> Unit = dependencies.emitError
   private var previousSnapshot: UiSnapshot? = null
 
   fun setThemePreference(themePreference: ThemePreference) {
@@ -265,7 +273,9 @@ internal class SettingsUiPreferenceActions(
     updateState {
       copy(themePreference = themePreference, undoAvailable = true, statusMessage = "Theme updated")
     }
-    scope.launch { settingsOperationsUseCase.updateTheme(themePreference) }
+    launchPreferenceUpdate(THEME_UPDATE_FAILURE) {
+      settingsOperationsUseCase.updateTheme(themePreference)
+    }
   }
 
   fun setCompactMode(enabled: Boolean) {
@@ -278,7 +288,9 @@ internal class SettingsUiPreferenceActions(
         statusMessage = if (enabled) "Compact mode enabled" else "Compact mode disabled",
       )
     }
-    scope.launch { toggleCompactModeUseCase.toggle(enabled) }
+    launchPreferenceUpdate(COMPACT_MODE_UPDATE_FAILURE) {
+      toggleCompactModeUseCase.setCompactMode(enabled)
+    }
   }
 
   fun setHighContrastEnabled(enabled: Boolean) {
@@ -291,7 +303,9 @@ internal class SettingsUiPreferenceActions(
         statusMessage = if (enabled) "High contrast enabled" else "High contrast disabled",
       )
     }
-    scope.launch { updateUiPreferencesUseCase.setHighContrastEnabled(enabled) }
+    launchPreferenceUpdate(HIGH_CONTRAST_UPDATE_FAILURE) {
+      updateUiPreferencesUseCase.setHighContrastEnabled(enabled)
+    }
   }
 
   fun undoUiPreferenceChange() {
@@ -307,9 +321,15 @@ internal class SettingsUiPreferenceActions(
       )
     }
     scope.launch {
-      settingsOperationsUseCase.updateTheme(snapshot.themePreference)
-      toggleCompactModeUseCase.toggle(snapshot.compactModeEnabled)
-      updateUiPreferencesUseCase.setHighContrastEnabled(snapshot.highContrastEnabled)
+      executePreferenceUpdate(THEME_UPDATE_FAILURE) {
+        settingsOperationsUseCase.updateTheme(snapshot.themePreference)
+      }
+      executePreferenceUpdate(COMPACT_MODE_UPDATE_FAILURE) {
+        toggleCompactModeUseCase.setCompactMode(snapshot.compactModeEnabled)
+      }
+      executePreferenceUpdate(HIGH_CONTRAST_UPDATE_FAILURE) {
+        updateUiPreferencesUseCase.setHighContrastEnabled(snapshot.highContrastEnabled)
+      }
     }
   }
 
@@ -333,6 +353,26 @@ internal class SettingsUiPreferenceActions(
     val compactModeEnabled: Boolean,
     val highContrastEnabled: Boolean,
   )
+
+  private fun launchPreferenceUpdate(
+    fallbackMessage: String,
+    operation: suspend () -> NanoAIResult<Unit>,
+  ) {
+    scope.launch { executePreferenceUpdate(fallbackMessage, operation) }
+  }
+
+  private suspend fun executePreferenceUpdate(
+    fallbackMessage: String,
+    operation: suspend () -> NanoAIResult<Unit>,
+  ) {
+    runCatching { operation() }
+      .onSuccess { result ->
+        if (result !is NanoAIResult.Success) {
+          emitError(result.toErrorEnvelope(fallbackMessage))
+        }
+      }
+      .onFailure { error -> emitError(error.toErrorEnvelope(fallbackMessage)) }
+  }
 }
 
 internal class SettingsHuggingFaceActions(
@@ -344,9 +384,9 @@ internal class SettingsHuggingFaceActions(
 ) {
   fun saveApiKey(apiKey: String) {
     scope.launch {
-      huggingFaceAuthCoordinator
-        .savePersonalAccessToken(apiKey)
-        .onSuccess { authState ->
+      when (val result = huggingFaceAuthCoordinator.savePersonalAccessToken(apiKey)) {
+        is NanoAIResult.Success -> {
+          val authState = result.value
           when {
             authState.isAuthenticated ->
               updateState { copy(statusMessage = "Hugging Face connected", undoAvailable = false) }
@@ -354,9 +394,8 @@ internal class SettingsHuggingFaceActions(
               emitError(NanoAIErrorEnvelope(authState.lastError!!))
           }
         }
-        .onFailure { throwable ->
-          emitError(throwable.toErrorEnvelope(HUGGING_FACE_API_KEY_FAILURE))
-        }
+        else -> emitError(result.toErrorEnvelope(HUGGING_FACE_API_KEY_FAILURE))
+      }
     }
   }
 
@@ -374,11 +413,16 @@ internal class SettingsHuggingFaceActions(
         return@launch
       }
 
-      huggingFaceAuthCoordinator
-        .beginDeviceAuthorization(clientId = clientId, scope = scopeParam)
-        .onFailure { throwable ->
-          emitError(throwable.toErrorEnvelope(HUGGING_FACE_SIGN_IN_FAILURE))
-        }
+      when (
+        val result =
+          huggingFaceAuthCoordinator.beginDeviceAuthorization(
+            clientId = clientId,
+            scope = scopeParam,
+          )
+      ) {
+        is NanoAIResult.Success -> Unit
+        else -> emitError(result.toErrorEnvelope(HUGGING_FACE_SIGN_IN_FAILURE))
+      }
     }
   }
 
@@ -407,6 +451,9 @@ private const val PRIVACY_UPDATE_FAILURE = "Failed to update preference"
 private const val CONSENT_ACK_FAILURE = "Failed to acknowledge consent"
 private const val RETENTION_POLICY_FAILURE = "Failed to set retention policy"
 private const val EXPORT_WARNING_DISMISS_FAILURE = "Failed to dismiss export warnings"
+private const val THEME_UPDATE_FAILURE = "Failed to update theme preference"
+private const val COMPACT_MODE_UPDATE_FAILURE = "Failed to update compact mode preference"
+private const val HIGH_CONTRAST_UPDATE_FAILURE = "Failed to update high contrast preference"
 private const val HUGGING_FACE_API_KEY_FAILURE = "Failed to save Hugging Face API key"
 private const val HUGGING_FACE_MISSING_CLIENT_ID = "Hugging Face OAuth client ID is not configured"
 private const val HUGGING_FACE_SIGN_IN_FAILURE = "Unable to start Hugging Face sign-in"

@@ -1,6 +1,7 @@
 package com.vjaykrsna.nanoai.core.domain.settings.huggingface
 
 import com.google.common.truth.Truth.assertThat
+import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.data.library.huggingface.network.HuggingFaceAccountService
 import com.vjaykrsna.nanoai.core.data.library.huggingface.network.HuggingFaceOAuthService
 import com.vjaykrsna.nanoai.core.data.library.huggingface.network.dto.HuggingFaceDeviceCodeResponse
@@ -36,7 +37,7 @@ class HuggingFaceAuthCoordinatorTest {
     val harness = createHarness()
     harness.accountService.response = Result.success(testUser())
 
-    val state = harness.coordinator.savePersonalAccessToken("hf_test").getOrThrow()
+    val state = harness.coordinator.savePersonalAccessToken("hf_test").requireSuccess()
 
     assertThat(state.isAuthenticated).isTrue()
     assertThat(state.username).isEqualTo("tester")
@@ -51,7 +52,8 @@ class HuggingFaceAuthCoordinatorTest {
 
     val result = harness.coordinator.savePersonalAccessToken("hf_invalid")
 
-    assertThat(result.getOrThrow().isAuthenticated).isFalse()
+    val state = result.requireSuccess()
+    assertThat(state.isAuthenticated).isFalse()
     assertThat(harness.coordinator.state.value.lastError).contains("no longer valid")
     assertThat(harness.credentialRepository.hasAccessToken()).isFalse()
   }
@@ -72,7 +74,7 @@ class HuggingFaceAuthCoordinatorTest {
     harness.oauthService.tokenResponses +=
       Result.success(HuggingFaceTokenResponse(accessToken = "oauth-token"))
 
-    val deviceState = harness.coordinator.beginDeviceAuthorization("client", "all").getOrThrow()
+    val deviceState = harness.coordinator.beginDeviceAuthorization("client", "all").requireSuccess()
 
     assertThat(deviceState.userCode).isEqualTo("USER-CODE")
     assertThat(harness.coordinator.deviceAuthState.value?.isPolling).isTrue()
@@ -91,8 +93,7 @@ class HuggingFaceAuthCoordinatorTest {
 
     val result = harness.coordinator.beginDeviceAuthorization("", "all")
 
-    assertThat(result.isFailure).isTrue()
-    assertThat(result.exceptionOrNull()).isInstanceOf(IllegalStateException::class.java)
+    assertThat(result).isInstanceOf(NanoAIResult.RecoverableError::class.java)
   }
 
   @Test
@@ -101,7 +102,7 @@ class HuggingFaceAuthCoordinatorTest {
     harness.oauthService.tokenResponses +=
       Result.failure(IllegalStateException("authorization_pending"))
 
-    harness.coordinator.beginDeviceAuthorization("client", "all").getOrThrow()
+    harness.coordinator.beginDeviceAuthorization("client", "all").requireSuccess()
     assertThat(harness.coordinator.deviceAuthState.value).isNotNull()
 
     harness.coordinator.cancelDeviceAuthorization()
@@ -119,7 +120,7 @@ class HuggingFaceAuthCoordinatorTest {
     harness.oauthService.tokenResponses +=
       Result.success(HuggingFaceTokenResponse(accessToken = "oauth-token"))
 
-    harness.coordinator.beginDeviceAuthorization("client", "all").getOrThrow()
+    harness.coordinator.beginDeviceAuthorization("client", "all").requireSuccess()
 
     advanceTimeBy(1_000)
     runCurrent()
@@ -154,7 +155,7 @@ class HuggingFaceAuthCoordinatorTest {
     harness.oauthService.deviceResponse = harness.oauthService.deviceResponse.copy(interval = 2)
     harness.oauthService.tokenResponses += Result.failure(slowDownException())
 
-    harness.coordinator.beginDeviceAuthorization("client", "all").getOrThrow()
+    harness.coordinator.beginDeviceAuthorization("client", "all").requireSuccess()
 
     advanceTimeBy(2_000)
     runCurrent()
@@ -171,7 +172,7 @@ class HuggingFaceAuthCoordinatorTest {
     harness.accountService.response = Result.success(testUser())
     harness.oauthService.tokenResponses += Result.failure(IOException("failed to connect"))
 
-    harness.coordinator.beginDeviceAuthorization("client", "all").getOrThrow()
+    harness.coordinator.beginDeviceAuthorization("client", "all").requireSuccess()
 
     advanceTimeBy(1_000)
     advanceUntilIdle()
@@ -312,4 +313,10 @@ class HuggingFaceAuthCoordinatorTest {
   private class TestClock(private val scheduler: TestCoroutineScheduler) : Clock {
     override fun now(): Instant = Instant.fromEpochMilliseconds(scheduler.currentTime)
   }
+
+  private fun <T> NanoAIResult<T>.requireSuccess(): T =
+    when (this) {
+      is NanoAIResult.Success -> value
+      else -> error("Expected NanoAIResult.Success but was $this")
+    }
 }

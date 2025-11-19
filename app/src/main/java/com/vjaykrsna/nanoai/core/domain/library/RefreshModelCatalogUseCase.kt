@@ -2,6 +2,7 @@ package com.vjaykrsna.nanoai.core.domain.library
 
 import android.util.Log
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.common.annotations.OneShot
 import com.vjaykrsna.nanoai.core.data.library.catalog.ModelCatalogSource
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -14,6 +15,7 @@ constructor(
   private val modelCatalogSource: ModelCatalogSource,
   private val modelCatalogRepository: ModelCatalogRepository,
 ) {
+  @OneShot("Refresh model catalog from source")
   suspend operator fun invoke(): NanoAIResult<Unit> {
     val context = mutableMapOf<String, String>()
     val models =

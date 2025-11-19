@@ -2,6 +2,7 @@ package com.vjaykrsna.nanoai.core.domain.library
 
 import android.database.sqlite.SQLiteException
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.common.annotations.OneShot
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.core.domain.model.library.DownloadStatus
 import com.vjaykrsna.nanoai.core.domain.model.library.InstallState
@@ -20,6 +21,7 @@ constructor(
   private val downloadManager: DownloadManager,
 ) {
   /** Validate downloaded checksum and update install state accordingly. */
+  @OneShot("Verify download checksum")
   suspend fun invoke(modelId: String): NanoAIResult<Boolean> =
     guardVerificationOperation(
       message = "Failed to verify checksum for model $modelId",

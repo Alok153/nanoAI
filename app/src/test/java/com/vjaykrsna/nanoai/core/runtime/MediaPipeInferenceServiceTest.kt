@@ -4,6 +4,8 @@ import android.content.Context
 import android.graphics.Bitmap
 import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
+import com.google.common.truth.Truth.assertWithMessage
+import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.testing.MainDispatcherRule
 import java.io.File
 import kotlinx.coroutines.test.runTest
@@ -45,12 +47,7 @@ class MediaPipeInferenceServiceTest {
     val result = service.generate(request)
 
     // Then
-    // In test environment, MediaPipe libs may not be available, so expect failure
-    if (result.isFailure) {
-      assertThat(result.exceptionOrNull()?.message).contains("MediaPipe")
-    } else {
-      assertThat(result.isSuccess).isTrue()
-    }
+    assertResult(result)
   }
 
   @Test
@@ -65,11 +62,7 @@ class MediaPipeInferenceServiceTest {
     val result = service.generate(request)
 
     // Then
-    if (result.isFailure) {
-      assertThat(result.exceptionOrNull()?.message).contains("MediaPipe")
-    } else {
-      assertThat(result.isSuccess).isTrue()
-    }
+    assertResult(result)
   }
 
   @Test
@@ -84,10 +77,16 @@ class MediaPipeInferenceServiceTest {
     val result = service.generate(request)
 
     // Then
-    if (result.isFailure) {
-      assertThat(result.exceptionOrNull()?.message).contains("MediaPipe")
-    } else {
-      assertThat(result.isSuccess).isTrue()
+    assertResult(result)
+  }
+
+  private fun assertResult(result: NanoAIResult<LocalGenerationResult>) {
+    when (result) {
+      is NanoAIResult.Success -> assertThat(result.value.text).isNotEmpty()
+      is NanoAIResult.RecoverableError -> assertThat(result.message).contains("MediaPipe")
+      is NanoAIResult.FatalError ->
+        assertWithMessage("Expected success or recoverable error but was fatal: ${result.message}")
+          .fail()
     }
   }
 }

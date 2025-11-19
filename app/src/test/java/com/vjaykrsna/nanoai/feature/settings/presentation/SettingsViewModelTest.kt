@@ -104,7 +104,8 @@ class SettingsViewModelTest {
   @Test
   fun setHighContrastEnabledPersistsPreference() =
     runTest(dispatcher) {
-      coEvery { updateUiPreferencesUseCase.setHighContrastEnabled(true) } returns Unit
+      coEvery { updateUiPreferencesUseCase.setHighContrastEnabled(true) } returns
+        NanoAIResult.success(Unit)
 
       viewModel.setHighContrastEnabled(true)
       advanceUntilIdle()
@@ -120,8 +121,9 @@ class SettingsViewModelTest {
   fun undoUiPreferenceChangeRestoresSnapshot() =
     runTest(dispatcher) {
       coEvery { settingsOperationsUseCase.updateTheme(any()) } returns NanoAIResult.success(Unit)
-      coEvery { toggleCompactModeUseCase.toggle(any()) } returns Unit
-      coEvery { updateUiPreferencesUseCase.setHighContrastEnabled(any()) } returns Unit
+      coEvery { toggleCompactModeUseCase.setCompactMode(any()) } returns NanoAIResult.success(Unit)
+      coEvery { updateUiPreferencesUseCase.setHighContrastEnabled(any()) } returns
+        NanoAIResult.success(Unit)
 
       viewModel.setThemePreference(ThemePreference.DARK)
       viewModel.setCompactMode(true)
@@ -197,7 +199,7 @@ class SettingsViewModelTest {
           providersUpdated = 0,
         )
       val importUri = mockk<Uri>()
-      coEvery { importService.importBackup(importUri) } returns Result.success(summary)
+      coEvery { importService.importBackup(importUri) } returns NanoAIResult.success(summary)
 
       harness.testEvents {
         viewModel.importBackup(importUri)
@@ -212,7 +214,7 @@ class SettingsViewModelTest {
   fun saveHuggingFaceApiKeyUpdatesStatusMessage() =
     runTest(dispatcher) {
       coEvery { huggingFaceAuthCoordinator.savePersonalAccessToken(any()) } returns
-        Result.success(HuggingFaceAuthState(isAuthenticated = true))
+        NanoAIResult.success(HuggingFaceAuthState(isAuthenticated = true))
 
       viewModel.saveHuggingFaceApiKey("hf_token")
       advanceUntilIdle()
@@ -225,7 +227,7 @@ class SettingsViewModelTest {
   fun saveHuggingFaceApiKeyFailureEmitsError() =
     runTest(dispatcher) {
       coEvery { huggingFaceAuthCoordinator.savePersonalAccessToken(any()) } returns
-        Result.success(HuggingFaceAuthState(isAuthenticated = false, lastError = "invalid"))
+        NanoAIResult.success(HuggingFaceAuthState(isAuthenticated = false, lastError = "invalid"))
 
       harness.testEvents {
         viewModel.saveHuggingFaceApiKey("bad")
@@ -249,6 +251,54 @@ class SettingsViewModelTest {
         val event = awaitItem() as SettingsUiEvent.ErrorRaised
         assertThat(event.envelope.userMessage)
           .isEqualTo("Hugging Face OAuth client ID is not configured")
+      }
+    }
+
+  @Test
+  fun setThemePreferenceFailureEmitsError() =
+    runTest(dispatcher) {
+      coEvery { settingsOperationsUseCase.updateTheme(ThemePreference.DARK) } returns
+        NanoAIResult.recoverable("")
+
+      harness.testEvents {
+        viewModel.setThemePreference(ThemePreference.DARK)
+        advanceUntilIdle()
+
+        val event = awaitItem() as SettingsUiEvent.ErrorRaised
+        assertThat(event.envelope.userMessage).isEqualTo("Failed to update theme preference")
+        val state =
+          harness.awaitState(predicate = { it.lastErrorMessage == event.envelope.userMessage })
+        assertThat(state.lastErrorMessage).isEqualTo("Failed to update theme preference")
+      }
+    }
+
+  @Test
+  fun setCompactModeFailureEmitsError() =
+    runTest(dispatcher) {
+      coEvery { toggleCompactModeUseCase.setCompactMode(true) } returns NanoAIResult.recoverable("")
+
+      harness.testEvents {
+        viewModel.setCompactMode(true)
+        advanceUntilIdle()
+
+        val event = awaitItem() as SettingsUiEvent.ErrorRaised
+        assertThat(event.envelope.userMessage).isEqualTo("Failed to update compact mode preference")
+      }
+    }
+
+  @Test
+  fun setHighContrastEnabledFailureEmitsError() =
+    runTest(dispatcher) {
+      coEvery { updateUiPreferencesUseCase.setHighContrastEnabled(true) } returns
+        NanoAIResult.recoverable("")
+
+      harness.testEvents {
+        viewModel.setHighContrastEnabled(true)
+        advanceUntilIdle()
+
+        val event = awaitItem() as SettingsUiEvent.ErrorRaised
+        assertThat(event.envelope.userMessage)
+          .isEqualTo("Failed to update high contrast preference")
       }
     }
 
@@ -306,15 +356,17 @@ class SettingsViewModelTest {
     coEvery { updatePrivacyPreferencesUseCase.setRetentionPolicy(any()) } returns Unit
     coEvery { updatePrivacyPreferencesUseCase.setExportWarningsDismissed(any()) } returns Unit
     coEvery { settingsOperationsUseCase.updateTheme(any()) } returns NanoAIResult.success(Unit)
-    coEvery { toggleCompactModeUseCase.toggle(any()) } returns Unit
-    coEvery { updateUiPreferencesUseCase.setHighContrastEnabled(any()) } returns Unit
+    coEvery { toggleCompactModeUseCase.setCompactMode(any()) } returns NanoAIResult.success(Unit)
+    coEvery { updateUiPreferencesUseCase.setHighContrastEnabled(any()) } returns
+      NanoAIResult.success(Unit)
     coEvery { modelDownloadsAndExportUseCase.exportBackup(any(), any()) } returns
       NanoAIResult.success("/tmp/backup.json")
-    coEvery { importService.importBackup(any()) } returns Result.success(ImportSummary(0, 0, 0, 0))
+    coEvery { importService.importBackup(any()) } returns
+      NanoAIResult.success(ImportSummary(0, 0, 0, 0))
     coEvery { huggingFaceAuthCoordinator.savePersonalAccessToken(any()) } returns
-      Result.success(HuggingFaceAuthState(isAuthenticated = false))
+      NanoAIResult.success(HuggingFaceAuthState(isAuthenticated = false))
     coEvery { huggingFaceAuthCoordinator.beginDeviceAuthorization(any(), any()) } returns
-      Result.success(
+      NanoAIResult.success(
         HuggingFaceDeviceAuthState(
           userCode = "CODE",
           verificationUri = "https://huggingface.co/login",

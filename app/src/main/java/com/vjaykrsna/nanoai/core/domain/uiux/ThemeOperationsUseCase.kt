@@ -2,6 +2,8 @@ package com.vjaykrsna.nanoai.core.domain.uiux
 
 import android.database.sqlite.SQLiteException
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.common.annotations.OneShot
+import com.vjaykrsna.nanoai.core.common.annotations.ReactiveStream
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferenceSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
@@ -19,9 +21,11 @@ import kotlinx.coroutines.flow.Flow
 class ThemeOperationsUseCase @Inject constructor(private val themeRepository: ThemeRepository) {
 
   /** Observes UI preference snapshot with reactive updates. */
+  @ReactiveStream("Observe UI preference snapshot changes")
   fun observeUiPreferences(): Flow<UiPreferenceSnapshot> = themeRepository.uiPreferenceSnapshot
 
   /** Updates theme preference. */
+  @OneShot("Update theme preference")
   suspend fun updateTheme(theme: ThemePreference): NanoAIResult<Unit> =
     guardThemeOperation(
       message = "Failed to update theme",
@@ -32,6 +36,7 @@ class ThemeOperationsUseCase @Inject constructor(private val themeRepository: Th
     }
 
   /** Updates visual density. */
+  @OneShot("Update visual density preference")
   suspend fun updateVisualDensity(density: VisualDensity): NanoAIResult<Unit> =
     guardThemeOperation(
       message = "Failed to update visual density",
@@ -42,6 +47,7 @@ class ThemeOperationsUseCase @Inject constructor(private val themeRepository: Th
     }
 
   /** Updates high contrast enabled. */
+  @OneShot("Toggle high contrast accessibility")
   suspend fun updateHighContrastEnabled(enabled: Boolean): NanoAIResult<Unit> =
     guardThemeOperation(
       message = "Failed to update high contrast",

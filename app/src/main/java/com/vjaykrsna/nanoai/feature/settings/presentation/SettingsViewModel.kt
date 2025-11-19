@@ -96,9 +96,13 @@ constructor(
       scope = viewModelScope,
       state = state,
       updateState = { reducer -> updateState(reducer) },
-      settingsOperationsUseCase = settingsOperationsUseCase,
-      toggleCompactModeUseCase = toggleCompactModeUseCase,
-      updateUiPreferencesUseCase = updateUiPreferencesUseCase,
+      dependencies =
+        SettingsUiPreferenceDependencies(
+          settingsOperationsUseCase = settingsOperationsUseCase,
+          toggleCompactModeUseCase = toggleCompactModeUseCase,
+          updateUiPreferencesUseCase = updateUiPreferencesUseCase,
+          emitError = { envelope -> emitError(envelope) },
+        ),
     )
 
   private val huggingFaceActions =

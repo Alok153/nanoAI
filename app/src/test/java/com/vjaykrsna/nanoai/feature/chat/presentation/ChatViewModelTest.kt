@@ -102,6 +102,7 @@ class ChatViewModelTest {
       assertThat(event).isInstanceOf(ChatUiEvent.ErrorRaised::class.java)
       val error = (event as ChatUiEvent.ErrorRaised).error
       assertThat(error).isInstanceOf(ChatError.ThreadCreationFailed::class.java)
+      assertEnvelopeMirrorsPendingState(event)
       cancelAndIgnoreRemainingEvents()
     }
 
@@ -168,6 +169,7 @@ class ChatViewModelTest {
       assertThat(event).isInstanceOf(ChatUiEvent.ErrorRaised::class.java)
       val error = (event as ChatUiEvent.ErrorRaised).error
       assertThat(error).isInstanceOf(ChatError.InferenceFailed::class.java)
+      assertEnvelopeMirrorsPendingState(event)
     }
   }
 
@@ -205,9 +207,10 @@ class ChatViewModelTest {
       viewModel.switchPersona(UUID.randomUUID(), PersonaSwitchAction.START_NEW_THREAD)
       advanceUntilIdle()
 
-      val event = awaitItem()
-      val error = (event as ChatUiEvent.ErrorRaised).error
+      val event = awaitItem() as ChatUiEvent.ErrorRaised
+      val error = event.error
       assertThat(error).isInstanceOf(ChatError.PersonaSwitchFailed::class.java)
+      assertEnvelopeMirrorsPendingState(event)
     }
   }
 
@@ -225,9 +228,10 @@ class ChatViewModelTest {
       viewModel.onSendMessage()
       advanceUntilIdle()
 
-      val event = awaitItem()
-      val error = (event as ChatUiEvent.ErrorRaised).error
+      val event = awaitItem() as ChatUiEvent.ErrorRaised
+      val error = event.error
       assertThat(error).isInstanceOf(ChatError.PersonaSelectionFailed::class.java)
+      assertEnvelopeMirrorsPendingState(event)
     }
   }
 
@@ -319,9 +323,10 @@ class ChatViewModelTest {
       viewModel.onSendMessage()
       advanceUntilIdle()
 
-      val event = awaitItem()
-      val error = (event as ChatUiEvent.ErrorRaised).error
+      val event = awaitItem() as ChatUiEvent.ErrorRaised
+      val error = event.error
       assertThat(error).isInstanceOf(ChatError.UnexpectedError::class.java)
+      assertEnvelopeMirrorsPendingState(event)
       cancelAndIgnoreRemainingEvents()
     }
 
@@ -352,9 +357,10 @@ class ChatViewModelTest {
       viewModel.archiveThread(threadId)
       advanceUntilIdle()
 
-      val event = awaitItem()
-      val error = (event as ChatUiEvent.ErrorRaised).error
+      val event = awaitItem() as ChatUiEvent.ErrorRaised
+      val error = event.error
       assertThat(error).isInstanceOf(ChatError.ThreadArchiveFailed::class.java)
+      assertEnvelopeMirrorsPendingState(event)
     }
   }
 
@@ -390,5 +396,9 @@ class ChatViewModelTest {
       val event = awaitItem()
       assertThat(event).isInstanceOf(ChatUiEvent.ModelSelected::class.java)
     }
+  }
+
+  private fun assertEnvelopeMirrorsPendingState(event: ChatUiEvent.ErrorRaised) {
+    assertThat(event.envelope.userMessage).isEqualTo(harness.currentState.pendingErrorMessage)
   }
 }

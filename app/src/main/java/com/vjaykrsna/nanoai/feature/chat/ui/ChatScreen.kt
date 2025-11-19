@@ -44,8 +44,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.vjaykrsna.nanoai.core.common.error.NanoAIErrorEnvelope
 import com.vjaykrsna.nanoai.core.domain.library.Model
 import com.vjaykrsna.nanoai.core.domain.model.Message
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
 import com.vjaykrsna.nanoai.core.model.MessageRole
 import com.vjaykrsna.nanoai.feature.chat.presentation.ChatError
 import com.vjaykrsna.nanoai.feature.chat.presentation.ChatUiEvent
@@ -85,7 +87,7 @@ fun ChatScreen(
   modifier: Modifier = Modifier,
   viewModel: ChatViewModel = hiltViewModel(),
   onUpdateChatState: ((ChatState?) -> Unit)? = null,
-  onNavigate: (com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId) -> Unit = {},
+  onNavigate: (ModeId) -> Unit = {},
 ) {
   val uiState by viewModel.state.collectAsStateWithLifecycle()
   val sheetState = rememberModalBottomSheetState()
@@ -95,34 +97,39 @@ fun ChatScreen(
   val launchImagePicker = rememberChatImagePicker { bitmap -> viewModel.onImageSelected(bitmap) }
 
   HandleChatStateUpdates(uiState, onUpdateChatState)
-  HandleChatEvents(
+  ChatScreenEventCollector(
     events = viewModel.events,
     snackbarHostState = snackbarHostState,
     onError = { activeError = it },
   )
 
+  val actions =
+    remember(viewModel, launchImagePicker, onNavigate) {
+      ChatScreenActions(
+        onComposerTextChange = viewModel::onComposerTextChanged,
+        onSendMessage = {
+          viewModel.onSendMessage()
+          activeError = null
+        },
+        onImageSelect = launchImagePicker,
+        onDismissError = {
+          activeError = null
+          viewModel.clearPendingError()
+        },
+        onDismissModelPicker = viewModel::dismissModelPicker,
+        onModelSelect = viewModel::selectModel,
+        onManageModels = {
+          viewModel.dismissModelPicker()
+          onNavigate(ModeId.LIBRARY)
+        },
+      )
+    }
+
   ChatScreenScaffold(
     uiState = uiState,
     snackbarHostState = snackbarHostState,
     activeError = activeError,
-    onDismissError = {
-      activeError = null
-      viewModel.clearPendingError()
-    },
-    onComposerTextChange = viewModel::onComposerTextChanged,
-    onSendMessage = {
-      if (uiState.composerText.isNotBlank()) {
-        viewModel.onSendMessage()
-        activeError = null
-      }
-    },
-    onImageSelect = launchImagePicker,
-    onDismissModelPicker = viewModel::dismissModelPicker,
-    onModelSelect = viewModel::selectModel,
-    onManageModels = {
-      viewModel.dismissModelPicker()
-      onNavigate(com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId.LIBRARY)
-    },
+    actions = actions,
     sheetState = sheetState,
     modifier = modifier,
   )
@@ -145,7 +152,7 @@ private fun HandleChatStateUpdates(
 }
 
 @Composable
-private fun HandleChatEvents(
+private fun ChatScreenEventCollector(
   events: Flow<ChatUiEvent>,
   snackbarHostState: SnackbarHostState,
   onError: (NanoError) -> Unit,
@@ -154,7 +161,10 @@ private fun HandleChatEvents(
   LaunchedEffect(events, snackbarHostState) {
     events.collectLatest { event ->
       when (event) {
-        is ChatUiEvent.ErrorRaised -> latestOnError(event.error.toNanoError())
+        is ChatUiEvent.ErrorRaised -> {
+          latestOnError(event.error.toNanoError(event.envelope))
+          snackbarHostState.showSnackbar(event.envelope.userMessage)
+        }
         is ChatUiEvent.ModelSelected ->
           snackbarHostState.showSnackbar("Switched to ${event.modelName}")
       }
@@ -168,13 +178,7 @@ private fun ChatScreenScaffold(
   uiState: ChatUiState,
   snackbarHostState: SnackbarHostState,
   activeError: NanoError?,
-  onDismissError: () -> Unit,
-  onComposerTextChange: (String) -> Unit,
-  onSendMessage: () -> Unit,
-  onImageSelect: () -> Unit,
-  onDismissModelPicker: () -> Unit,
-  onModelSelect: (Model) -> Unit,
-  onManageModels: () -> Unit,
+  actions: ChatScreenActions,
   sheetState: SheetState,
   modifier: Modifier = Modifier,
 ) {
@@ -188,10 +192,7 @@ private fun ChatScreenScaffold(
       uiState = uiState,
       snackbarHostState = snackbarHostState,
       activeError = activeError,
-      onDismissError = onDismissError,
-      onComposerTextChange = onComposerTextChange,
-      onSendMessage = onSendMessage,
-      onImageSelect = onImageSelect,
+      actions = actions,
     )
 
     SnackbarHost(
@@ -203,12 +204,12 @@ private fun ChatScreenScaffold(
     )
 
     if (uiState.isModelPickerVisible) {
-      ModalBottomSheet(onDismissRequest = onDismissModelPicker, sheetState = sheetState) {
+      ModalBottomSheet(onDismissRequest = actions.onDismissModelPicker, sheetState = sheetState) {
         ModelPicker(
           models = uiState.installedModels,
           selectedModelId = uiState.activeThread?.activeModelId,
-          onModelSelect = onModelSelect,
-          onManageModelsClick = onManageModels,
+          onModelSelect = actions.onModelSelect,
+          onManageModelsClick = actions.onManageModels,
           modifier = Modifier.fillMaxWidth(),
         )
       }
@@ -221,10 +222,7 @@ private fun ChatMessageContent(
   uiState: ChatUiState,
   snackbarHostState: SnackbarHostState,
   activeError: NanoError?,
-  onDismissError: () -> Unit,
-  onComposerTextChange: (String) -> Unit,
-  onSendMessage: () -> Unit,
-  onImageSelect: () -> Unit,
+  actions: ChatScreenActions,
 ) {
   Column(
     modifier =
@@ -241,7 +239,7 @@ private fun ChatMessageContent(
       error = activeError,
       snackbarHostState = snackbarHostState,
       modifier = Modifier.fillMaxWidth(),
-      onDismiss = onDismissError,
+      onDismiss = actions.onDismissError,
     )
 
     uiState.attachments.image?.let { attachment ->
@@ -252,35 +250,25 @@ private fun ChatMessageContent(
       )
     }
 
-    ChatComposerBar(
-      uiState = uiState,
-      onValueChange = onComposerTextChange,
-      onSendMessage = onSendMessage,
-      onImageSelect = onImageSelect,
-    )
+    ChatComposerBar(uiState = uiState, actions = actions)
   }
 }
 
 @Composable
-private fun ChatComposerBar(
-  uiState: ChatUiState,
-  onValueChange: (String) -> Unit,
-  onSendMessage: () -> Unit,
-  onImageSelect: () -> Unit,
-) {
+private fun ChatComposerBar(uiState: ChatUiState, actions: ChatScreenActions) {
   NanoComposerBar(
     value = uiState.composerText,
-    onValueChange = onValueChange,
+    onValueChange = actions.onComposerTextChange,
     modifier = Modifier.fillMaxWidth(),
     placeholder = "Type a message…",
     enabled = !uiState.isSendingMessage && uiState.activeThread != null,
-    onSend = onSendMessage,
+    onSend = actions.onSendMessage,
     sendEnabled =
       uiState.composerText.isNotBlank() &&
         uiState.activeThread != null &&
         !uiState.isSendingMessage,
     isSending = uiState.isSendingMessage,
-    onImageSelect = { onImageSelect() },
+    onImageSelect = { actions.onImageSelect() },
     onAudioRecord = { /* TODO: Implement audio recording */ },
   )
 }
@@ -371,21 +359,32 @@ private fun MessageBubble(message: Message, modifier: Modifier = Modifier) {
   }
 }
 
-private fun ChatError.toNanoError(): NanoError {
+private data class ChatScreenActions(
+  val onComposerTextChange: (String) -> Unit,
+  val onSendMessage: () -> Unit,
+  val onImageSelect: () -> Unit,
+  val onDismissError: () -> Unit,
+  val onDismissModelPicker: () -> Unit,
+  val onModelSelect: (Model) -> Unit,
+  val onManageModels: () -> Unit,
+)
+
+private fun ChatError.toNanoError(envelope: NanoAIErrorEnvelope): NanoError {
+  val description = envelope.userMessage
   return when (this) {
     is ChatError.InferenceFailed ->
-      NanoError.Inline(title = "Couldn't complete inference", description = message)
+      NanoError.Inline(title = "Couldn't complete inference", description = description)
     is ChatError.PersonaSwitchFailed ->
-      NanoError.Inline(title = "Persona switch failed", description = message)
+      NanoError.Inline(title = "Persona switch failed", description = description)
     is ChatError.PersonaSelectionFailed ->
-      NanoError.Inline(title = "No persona selected", description = message)
+      NanoError.Inline(title = "No persona selected", description = description)
     is ChatError.ThreadCreationFailed ->
-      NanoError.Inline(title = "Couldn't start conversation", description = message)
+      NanoError.Inline(title = "Couldn't start conversation", description = description)
     is ChatError.ThreadArchiveFailed ->
-      NanoError.Inline(title = "Couldn't archive conversation", description = message)
+      NanoError.Inline(title = "Couldn't archive conversation", description = description)
     is ChatError.ThreadDeletionFailed ->
-      NanoError.Inline(title = "Couldn't delete conversation", description = message)
+      NanoError.Inline(title = "Couldn't delete conversation", description = description)
     is ChatError.UnexpectedError ->
-      NanoError.Inline(title = "Something went wrong", description = message)
+      NanoError.Inline(title = "Something went wrong", description = description)
   }
 }

@@ -12,6 +12,8 @@ interface ConversationUseCaseInterface {
 
   fun getMessagesFlow(threadId: UUID): Flow<List<Message>>
 
+  suspend fun getAllThreads(): NanoAIResult<List<ChatThread>>
+
   suspend fun createNewThread(personaId: UUID, title: String? = null): NanoAIResult<UUID>
 
   suspend fun archiveThread(threadId: UUID): NanoAIResult<Unit>

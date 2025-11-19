@@ -2,6 +2,7 @@ package com.vjaykrsna.nanoai.core.domain.uiux
 
 import com.vjaykrsna.nanoai.core.common.IoDispatcher
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.common.annotations.OneShot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
 import com.vjaykrsna.nanoai.core.domain.repository.UserProfileRepository
@@ -19,6 +20,7 @@ constructor(
 ) {
 
   /** Updates theme preference for the active user. */
+  @OneShot("Update saved theme preference")
   suspend fun updateTheme(
     themePreference: ThemePreference,
     userId: String = UIUX_DEFAULT_USER_ID,
@@ -39,6 +41,7 @@ constructor(
   }
 
   /** Updates visual density preference for the active user. */
+  @OneShot("Update saved visual density")
   suspend fun updateVisualDensity(
     density: VisualDensity,
     userId: String = UIUX_DEFAULT_USER_ID,

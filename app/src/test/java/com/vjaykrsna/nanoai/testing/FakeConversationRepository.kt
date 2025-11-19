@@ -99,7 +99,8 @@ class FakeConversationRepository @Inject constructor() : ConversationRepository 
   override fun getMessagesFlow(threadId: UUID): Flow<List<Message>> =
     _messages.map { it[threadId] ?: emptyList() }
 
-  override fun getAllThreadsFlow(): Flow<List<ChatThread>> = _threads
+  override fun getAllThreadsFlow(): Flow<List<ChatThread>> =
+    _threads.map { threads -> threads.filter { !it.isArchived } }
 
   override suspend fun getCurrentPersonaForThread(threadId: UUID): UUID? =
     getThread(threadId)?.personaId

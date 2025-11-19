@@ -37,7 +37,7 @@ class ToggleCompactModeUseCaseTest {
         dispatcher = dispatcher,
       )
 
-    invokeToggle(useCase, enabled = true)
+    useCase.setCompactMode(true)
 
     advanceUntilIdle()
 
@@ -53,7 +53,7 @@ class ToggleCompactModeUseCaseTest {
       )
       .isTrue()
 
-    invokeToggle(useCase, enabled = false)
+    useCase.setCompactMode(false)
 
     advanceUntilIdle()
 
@@ -76,7 +76,7 @@ class ToggleCompactModeUseCaseTest {
     className: String,
     repository: Any,
     dispatcher: CoroutineDispatcher,
-  ): Any {
+  ): ToggleCompactModeUseCase {
     val clazz = UiUxDomainTestHelper.loadClass(className)
     val constructors = clazz.constructors.sortedBy { it.parameterCount }
     constructors.forEach { constructor ->
@@ -94,22 +94,9 @@ class ToggleCompactModeUseCaseTest {
         }
       }
       if (supported && args.size == constructor.parameterCount) {
-        return constructor.newInstance(*args.toTypedArray())
+        return constructor.newInstance(*args.toTypedArray()) as ToggleCompactModeUseCase
       }
     }
     throw AssertionError("Unable to instantiate $className with repository/dispatcher test doubles")
   }
-
-  private fun invokeToggle(instance: Any, enabled: Boolean) {
-    val method =
-      instance.javaClass.methods.firstOrNull { method ->
-        method.parameterTypes.none { it.name.contains("Continuation") } &&
-          method.parameterCount == 1 &&
-          isBooleanType(method.parameterTypes[0])
-      } ?: fail("Expected single-boolean toggle method on ${instance.javaClass.name}")
-    method.invoke(instance, enabled)
-  }
-
-  private fun isBooleanType(type: Class<*>): Boolean =
-    type == java.lang.Boolean.TYPE || type == java.lang.Boolean::class.java
 }

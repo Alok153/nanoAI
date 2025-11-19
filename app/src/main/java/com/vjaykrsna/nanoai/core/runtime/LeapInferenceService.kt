@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai.core.runtime
 
+import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import java.io.IOException
 import javax.inject.Inject
@@ -21,31 +22,45 @@ class LeapInferenceService @Inject constructor() : InferenceService {
   }
 
   @OptIn(ExperimentalTime::class)
-  override suspend fun generate(request: LocalGenerationRequest): Result<LocalGenerationResult> {
+  override suspend fun generate(
+    request: LocalGenerationRequest
+  ): NanoAIResult<LocalGenerationResult> {
     if (!loadedModels.contains(request.modelId)) {
-      return Result.failure(IllegalStateException("Model not loaded: ${request.modelId}"))
+      return NanoAIResult.recoverable(
+        message = "Model ${request.modelId} is not loaded",
+        telemetryId = "LEAP_MODEL_NOT_LOADED",
+        context = mapOf("modelId" to request.modelId),
+      )
     }
 
     return withContext(Dispatchers.Default) {
-      // TODO: Implement actual Leap inference once API is available
-      val prompt =
-        if (request.systemPrompt.isNullOrBlank()) {
-          request.prompt
-        } else {
-          "${request.systemPrompt}\n\n${request.prompt}"
+      try {
+        val prompt =
+          if (request.systemPrompt.isNullOrBlank()) {
+            request.prompt
+          } else {
+            "${request.systemPrompt}\n\n${request.prompt}"
+          }
+
+        val latency = measureTime {
+          // Placeholder for actual inference
         }
 
-      val latency = measureTime {
-        // Placeholder for actual inference
-      }
-
-      Result.success(
-        LocalGenerationResult(
-          text = "Leap inference not yet implemented",
-          latencyMs = latency.inWholeMilliseconds,
-          metadata = mapOf("modelId" to request.modelId),
+        NanoAIResult.success(
+          LocalGenerationResult(
+            text = "Leap inference not yet implemented",
+            latencyMs = latency.inWholeMilliseconds,
+            metadata =
+              mapOf("modelId" to request.modelId, "prompt" to prompt.take(PROMPT_PREVIEW_LENGTH)),
+          )
         )
-      )
+      } catch (cancelled: CancellationException) {
+        throw cancelled
+      } catch (io: IOException) {
+        io.toLeapFailure(request.modelId, "LEAP_INFERENCE_IO")
+      } catch (error: Throwable) {
+        error.toLeapFailure(request.modelId, "LEAP_INFERENCE_ERROR")
+      }
     }
   }
 
@@ -80,5 +95,21 @@ class LeapInferenceService @Inject constructor() : InferenceService {
    */
   fun unloadModel(modelId: String) {
     loadedModels.remove(modelId)
+  }
+
+  private fun Throwable.toLeapFailure(
+    modelId: String,
+    telemetryId: String,
+  ): NanoAIResult<LocalGenerationResult> =
+    NanoAIResult.recoverable(
+      message = message ?: LEAP_INFERENCE_FAILURE,
+      telemetryId = telemetryId,
+      cause = this,
+      context = mapOf("modelId" to modelId),
+    )
+
+  private companion object {
+    private const val PROMPT_PREVIEW_LENGTH = 32
+    private const val LEAP_INFERENCE_FAILURE = "Leap inference failed"
   }
 }

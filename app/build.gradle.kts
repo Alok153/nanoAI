@@ -31,6 +31,10 @@ configurations.configureEach {
         useVersion(version("junitVersion"))
         because("Ensure consistent AndroidX Test JUnit extensions across configurations")
       }
+      "com.google.guava:guava" -> {
+        useVersion(version("guavaAndroid"))
+        because("Align Guava across MediaPipe runtime and test libraries")
+      }
     }
   }
 }
@@ -176,6 +180,7 @@ dependencies {
   androidTestImplementation(libs.junit.vintage.engine)
   androidTestImplementation(libs.mockk.android)
   androidTestImplementation(libs.truth)
+  androidTestImplementation(libs.guava.android)
   androidTestImplementation(libs.kotlinx.coroutines.test)
   androidTestImplementation(libs.androidx.room.testing)
   androidTestImplementation(libs.androidx.work.testing)

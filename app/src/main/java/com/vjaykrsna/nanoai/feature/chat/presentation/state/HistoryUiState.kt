@@ -9,5 +9,5 @@ import kotlinx.collections.immutable.persistentListOf
 data class HistoryUiState(
   val threads: PersistentList<ChatThread> = persistentListOf(),
   val isLoading: Boolean = false,
-  val pendingErrorMessage: String? = null,
+  val lastErrorMessage: String? = null,
 ) : NanoAIViewState

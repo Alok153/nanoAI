@@ -2,6 +2,8 @@ package com.vjaykrsna.nanoai.core.domain.library
 
 import android.database.sqlite.SQLiteException
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.common.annotations.OneShot
+import com.vjaykrsna.nanoai.core.common.annotations.ReactiveStream
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import java.io.IOException
 import javax.inject.Inject
@@ -15,13 +17,16 @@ class ModelCatalogUseCase
 @Inject
 constructor(private val modelCatalogRepository: ModelCatalogRepository) {
   /** Observe all models in the catalog. */
+  @ReactiveStream("All catalog models")
   fun observeAllModels(): Flow<List<ModelPackage>> = modelCatalogRepository.observeAllModels()
 
   /** Observe installed models in the catalog. */
+  @ReactiveStream("Installed models")
   fun observeInstalledModels(): Flow<List<ModelPackage>> =
     modelCatalogRepository.observeInstalledModels()
 
   /** Get all models in the catalog. */
+  @OneShot("Fetch catalog snapshot")
   suspend fun getAllModels(): NanoAIResult<List<ModelPackage>> =
     guardRepositoryCall(message = "Failed to get all models") {
       val models = modelCatalogRepository.getAllModels()
@@ -29,6 +34,7 @@ constructor(private val modelCatalogRepository: ModelCatalogRepository) {
     }
 
   /** Get a specific model by ID. */
+  @OneShot("Fetch model by identifier")
   suspend fun getModel(modelId: String): NanoAIResult<ModelPackage?> =
     guardRepositoryCall(
       message = "Failed to get model $modelId",
@@ -39,6 +45,7 @@ constructor(private val modelCatalogRepository: ModelCatalogRepository) {
     }
 
   /** Insert or update a model in the catalog. */
+  @OneShot("Insert or update model metadata")
   suspend fun upsertModel(model: ModelPackage): NanoAIResult<Unit> =
     guardRepositoryCall(
       message = "Failed to upsert model ${model.modelId}",
@@ -49,6 +56,7 @@ constructor(private val modelCatalogRepository: ModelCatalogRepository) {
     }
 
   /** Record an offline fallback scenario. */
+  @OneShot("Record offline catalog fallback")
   suspend fun recordOfflineFallback(
     reason: String,
     cachedCount: Int,

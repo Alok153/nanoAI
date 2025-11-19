@@ -1,5 +1,7 @@
 package com.vjaykrsna.nanoai.core.coverage.domain.usecase
 
+import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.common.annotations.OneShot
 import com.vjaykrsna.nanoai.core.coverage.data.CoverageDashboardPayload
 import com.vjaykrsna.nanoai.core.coverage.data.CoverageDashboardRepository
 import com.vjaykrsna.nanoai.core.coverage.domain.usecase.GetCoverageReportUseCase.Result
@@ -13,28 +15,46 @@ class GetCoverageReportUseCase
 @Inject
 constructor(private val repository: CoverageDashboardRepository) {
 
-  suspend operator fun invoke(): Result {
-    val payload = repository.loadSnapshot()
-    val layerMetrics = buildLayerMetrics(payload)
-    val trendByLayer = buildTrendMap(payload)
-    val risks =
-      payload.risks.map { risk ->
-        RiskChip(
-          riskId = risk.riskId,
-          title = risk.title.trim(),
-          severity = risk.severity.trim().uppercase(Locale.US),
-          status = risk.status.trim().uppercase(Locale.US),
+  @OneShot("Load coverage dashboard snapshot")
+  suspend operator fun invoke(): NanoAIResult<Result> =
+    when (val payloadResult = repository.loadSnapshot()) {
+      is NanoAIResult.Success -> mapPayload(payloadResult.value)
+      is NanoAIResult.RecoverableError -> payloadResult
+      is NanoAIResult.FatalError -> payloadResult
+    }
+
+  private fun mapPayload(payload: CoverageDashboardPayload): NanoAIResult<Result> =
+    runCatching {
+        val layerMetrics = buildLayerMetrics(payload)
+        val trendByLayer = buildTrendMap(payload)
+        val risks =
+          payload.risks.map { risk ->
+            RiskChip(
+              riskId = risk.riskId,
+              title = risk.title.trim(),
+              severity = risk.severity.trim().uppercase(Locale.US),
+              status = risk.status.trim().uppercase(Locale.US),
+            )
+          }
+
+        Result(
+          buildId = payload.buildId,
+          generatedAtIso = payload.generatedAt,
+          layerMetrics = layerMetrics,
+          trendDelta = trendByLayer,
+          risks = risks,
         )
       }
-
-    return Result(
-      buildId = payload.buildId,
-      generatedAtIso = payload.generatedAt,
-      layerMetrics = layerMetrics,
-      trendDelta = trendByLayer,
-      risks = risks,
-    )
-  }
+      .fold(
+        onSuccess = { result -> NanoAIResult.success(result) },
+        onFailure = { error ->
+          NanoAIResult.recoverable(
+            message = error.message ?: INVALID_PAYLOAD_ERROR,
+            cause = error,
+            context = mapOf("buildId" to payload.buildId),
+          )
+        },
+      )
 
   private fun buildLayerMetrics(payload: CoverageDashboardPayload): Map<TestLayer, CoverageMetric> {
     require(payload.layers.isNotEmpty()) { "Coverage dashboard payload must contain layers" }
@@ -74,5 +94,6 @@ constructor(private val repository: CoverageDashboardRepository) {
 
   private companion object {
     private const val DEFAULT_TREND_DELTA = 0.0
+    private const val INVALID_PAYLOAD_ERROR = "Coverage dashboard payload invalid"
   }
 }

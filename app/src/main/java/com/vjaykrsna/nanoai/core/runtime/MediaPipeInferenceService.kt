@@ -6,11 +6,13 @@ import com.google.mediapipe.tasks.genai.llminference.AudioModelOptions
 import com.google.mediapipe.tasks.genai.llminference.GraphOptions
 import com.google.mediapipe.tasks.genai.llminference.LlmInference
 import com.google.mediapipe.tasks.genai.llminference.LlmInferenceSession
+import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import java.io.FileNotFoundException
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.coroutines.resume
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
@@ -34,13 +36,18 @@ constructor(@ApplicationContext private val context: Context) : InferenceService
     withContext(Dispatchers.IO) { modelFile(modelId).exists() }
 
   @OptIn(ExperimentalTime::class)
-  override suspend fun generate(request: LocalGenerationRequest): Result<LocalGenerationResult> {
-    return withContext(Dispatchers.Default) {
+  override suspend fun generate(
+    request: LocalGenerationRequest
+  ): NanoAIResult<LocalGenerationResult> =
+    withContext(Dispatchers.Default) {
       try {
         val file = modelFile(request.modelId)
         if (!file.exists()) {
-          return@withContext Result.failure(
-            FileNotFoundException("Local model ${request.modelId} is not installed")
+          return@withContext NanoAIResult.recoverable(
+            message = "Local model ${request.modelId} is not installed",
+            telemetryId = LOCAL_MODEL_MISSING,
+            cause = FileNotFoundException("Model ${request.modelId} missing"),
+            context = mapOf("modelId" to request.modelId),
           )
         }
 
@@ -48,7 +55,7 @@ constructor(@ApplicationContext private val context: Context) : InferenceService
         val prompt = buildPrompt(request)
         val resultText = generateWithSession(request, prompt)
 
-        Result.success(
+        NanoAIResult.success(
           LocalGenerationResult(
             text = resultText.first,
             latencyMs = resultText.second,
@@ -60,15 +67,15 @@ constructor(@ApplicationContext private val context: Context) : InferenceService
               ),
           )
         )
-      } catch (e: RuntimeException) {
-        if (e.message?.contains("MediaPipe") == true) {
-          Result.failure(e)
-        } else {
-          throw e
-        }
+      } catch (cancelled: CancellationException) {
+        throw cancelled
+      } catch (runtime: RuntimeException) {
+        if (runtime.message?.contains("MediaPipe") != true) throw runtime
+        runtime.toMediaPipeFailure(request.modelId)
+      } catch (error: Throwable) {
+        error.toMediaPipeFailure(request.modelId)
       }
     }
-  }
 
   private fun buildPrompt(request: LocalGenerationRequest): String {
     return if (request.systemPrompt.isNullOrBlank()) {
@@ -150,4 +157,18 @@ constructor(@ApplicationContext private val context: Context) : InferenceService
       }
     }
   }
+
+  private companion object {
+    private const val LOCAL_MODEL_MISSING = "MEDIAPIPE_MODEL_MISSING"
+    private const val MEDIAPIPE_INFERENCE_ERROR = "MEDIAPIPE_INFERENCE_ERROR"
+    private const val GENERIC_MEDIAPIPE_ERROR = "Local MediaPipe inference failed"
+  }
+
+  private fun Throwable.toMediaPipeFailure(modelId: String): NanoAIResult<LocalGenerationResult> =
+    NanoAIResult.recoverable(
+      message = message ?: GENERIC_MEDIAPIPE_ERROR,
+      telemetryId = MEDIAPIPE_INFERENCE_ERROR,
+      cause = this,
+      context = mapOf("modelId" to modelId),
+    )
 }

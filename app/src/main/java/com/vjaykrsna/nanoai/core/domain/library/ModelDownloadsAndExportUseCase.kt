@@ -2,6 +2,8 @@ package com.vjaykrsna.nanoai.core.domain.library
 
 import android.database.sqlite.SQLiteException
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.common.annotations.OneShot
+import com.vjaykrsna.nanoai.core.common.annotations.ReactiveStream
 import com.vjaykrsna.nanoai.core.common.fold
 import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
@@ -25,6 +27,7 @@ constructor(
   private val exportService: ExportService,
 ) : ModelDownloadsAndExportUseCaseInterface {
   /** Queue or start a download based on concurrency limits. */
+  @OneShot("Queue or start model download")
   override suspend fun downloadModel(modelId: String): NanoAIResult<UUID> =
     guardOperation(
       message = "Failed to start download for model $modelId",
@@ -47,6 +50,7 @@ constructor(
     }
 
   /** Validate downloaded checksum and update install state accordingly. */
+  @OneShot("Verify download checksum")
   override suspend fun verifyDownloadChecksum(modelId: String): NanoAIResult<Boolean> =
     guardOperation(
       message = "Failed to verify checksum for model $modelId",
@@ -72,6 +76,7 @@ constructor(
     }
 
   /** Pause a download task and persist status. */
+  @OneShot("Pause download task")
   override suspend fun pauseDownload(taskId: UUID): NanoAIResult<Unit> =
     guardOperation(
       message = "Failed to pause download $taskId",
@@ -83,6 +88,7 @@ constructor(
     }
 
   /** Resume a paused download. */
+  @OneShot("Resume download task")
   override suspend fun resumeDownload(taskId: UUID): NanoAIResult<Unit> =
     guardOperation(
       message = "Failed to resume download $taskId",
@@ -111,6 +117,7 @@ constructor(
     }
 
   /** Cancel a download and cleanup associated files. */
+  @OneShot("Cancel download task")
   override suspend fun cancelDownload(taskId: UUID): NanoAIResult<Unit> =
     guardOperation(
       message = "Failed to cancel download $taskId",
@@ -127,6 +134,7 @@ constructor(
     }
 
   /** Delete a model if not active in any chat session. */
+  @OneShot("Delete installed model")
   override suspend fun deleteModel(modelId: String): NanoAIResult<Unit> =
     guardOperation(
       message = "Failed to delete model $modelId",
@@ -147,6 +155,7 @@ constructor(
     }
 
   /** Export personas, provider configs, and optional chat history as bundle. */
+  @OneShot("Export backup bundle")
   override suspend fun exportBackup(
     destinationPath: String,
     includeChatHistory: Boolean,
@@ -170,18 +179,22 @@ constructor(
     }
 
   /** Observe download progress as a Flow. */
+  @ReactiveStream("Observe download progress")
   override fun getDownloadProgress(taskId: UUID): Flow<Float> =
     downloadManager.observeProgress(taskId)
 
   /** Observe a specific download task for status or error updates. */
+  @ReactiveStream("Observe single download task updates")
   override suspend fun observeDownloadTask(taskId: UUID): Flow<DownloadTask?> =
     downloadManager.getTaskById(taskId)
 
   /** Observe queued download tasks. */
+  @ReactiveStream("Observe managed download queue")
   override fun observeDownloadTasks(): Flow<List<DownloadTask>> =
     downloadManager.observeManagedDownloads()
 
   /** Retry a failed download task. */
+  @OneShot("Retry failed download task")
   override suspend fun retryFailedDownload(taskId: UUID): NanoAIResult<Unit> =
     guardOperation(
       message = "Failed to retry download $taskId",
