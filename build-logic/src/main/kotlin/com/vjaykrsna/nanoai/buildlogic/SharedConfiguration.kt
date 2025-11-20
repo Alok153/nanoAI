@@ -235,13 +235,11 @@ internal object SharedConfiguration {
 
     private fun ApplicationExtension.enableComposeCommon(project: Project) {
         buildFeatures.compose = true
-        composeOptions.kotlinCompilerExtensionVersion = project.libs.versionString("composeCompiler")
         project.configureComposeCompilerReports()
     }
 
     private fun LibraryExtension.enableComposeCommon(project: Project) {
         buildFeatures.compose = true
-        composeOptions.kotlinCompilerExtensionVersion = project.libs.versionString("composeCompiler")
         project.configureComposeCompilerReports()
     }
 
