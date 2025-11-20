@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai.feature.library.presentation.model
 
+import com.vjaykrsna.nanoai.core.common.error.NanoAIErrorEnvelope
 import com.vjaykrsna.nanoai.shared.state.NanoAIViewEvent
 
 sealed class LibraryError {
@@ -21,7 +22,8 @@ sealed class LibraryError {
 }
 
 sealed interface ModelLibraryUiEvent : NanoAIViewEvent {
-  data class ErrorRaised(val error: LibraryError) : ModelLibraryUiEvent
+  data class ErrorRaised(val error: LibraryError, val envelope: NanoAIErrorEnvelope) :
+    ModelLibraryUiEvent
 
   data class Message(val message: String) : ModelLibraryUiEvent
 

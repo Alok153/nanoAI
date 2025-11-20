@@ -3,6 +3,8 @@ package com.vjaykrsna.nanoai.feature.library.presentation
 import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
+import com.vjaykrsna.nanoai.core.common.error.NanoAIErrorEnvelope
+import com.vjaykrsna.nanoai.core.common.error.withFallbackMessage
 import com.vjaykrsna.nanoai.core.common.fold
 import com.vjaykrsna.nanoai.core.common.onFailure
 import com.vjaykrsna.nanoai.core.domain.library.DownloadModelUseCase
@@ -85,7 +87,7 @@ constructor(
 
   fun refreshCatalog() {
     if (!refreshing.compareAndSet(false, true)) return
-    updateState { copy(isRefreshing = true, isLoading = true) }
+    updateState { copy(isRefreshing = true, isLoading = true, lastErrorMessage = null) }
 
     viewModelScope.launch(mainDispatcher) {
       try {
@@ -277,14 +279,19 @@ constructor(
         when (event) {
           is HuggingFaceLibraryUiEvent.DownloadRequested ->
             huggingFaceCoordinator.process(event.model)
-          is HuggingFaceLibraryUiEvent.ErrorRaised -> emitError(event.error)
+          is HuggingFaceLibraryUiEvent.ErrorRaised -> emitError(event.error, event.envelope)
         }
       }
     }
   }
 
-  private suspend fun emitError(error: LibraryError) {
-    emitEvent(ModelLibraryUiEvent.ErrorRaised(error))
+  private suspend fun emitError(
+    error: LibraryError,
+    envelopeOverride: NanoAIErrorEnvelope? = null,
+  ) {
+    val envelope = envelopeOverride ?: error.toEnvelope()
+    updateState { copy(lastErrorMessage = envelope.userMessage) }
+    emitEvent(ModelLibraryUiEvent.ErrorRaised(error, envelope))
   }
 
   private fun updateFilters(transform: (LibraryFilterState) -> LibraryFilterState) {
@@ -331,3 +338,44 @@ private suspend fun handleRefreshFailure(
     message = rawMessage,
   )
 }
+
+private fun LibraryError.toEnvelope(): NanoAIErrorEnvelope {
+  val (fallback, context, resolvedMessage) =
+    when (this) {
+      is LibraryError.DownloadFailed ->
+        Triple(
+          DOWNLOAD_FAILURE_MESSAGE,
+          mapOf("operation" to "download", "modelId" to modelId),
+          message,
+        )
+      is LibraryError.PauseFailed ->
+        Triple(PAUSE_FAILURE_MESSAGE, mapOf("operation" to "pause", "taskId" to taskId), message)
+      is LibraryError.ResumeFailed ->
+        Triple(RESUME_FAILURE_MESSAGE, mapOf("operation" to "resume", "taskId" to taskId), message)
+      is LibraryError.CancelFailed ->
+        Triple(CANCEL_FAILURE_MESSAGE, mapOf("operation" to "cancel", "taskId" to taskId), message)
+      is LibraryError.RetryFailed ->
+        Triple(RETRY_FAILURE_MESSAGE, mapOf("operation" to "retry", "taskId" to taskId), message)
+      is LibraryError.DeleteFailed ->
+        Triple(
+          DELETE_FAILURE_MESSAGE,
+          mapOf("operation" to "delete", "modelId" to modelId),
+          message,
+        )
+      is LibraryError.UnexpectedError -> Triple(MODEL_LIBRARY_ERROR, emptyMap(), message)
+      is LibraryError.HuggingFaceLoadFailed ->
+        Triple(HUGGING_FACE_LOAD_ERROR, mapOf("operation" to "huggingFaceFetch"), message)
+    }
+
+  return NanoAIErrorEnvelope(userMessage = resolvedMessage, context = context)
+    .withFallbackMessage(fallback)
+}
+
+private const val DOWNLOAD_FAILURE_MESSAGE = "Unable to download model"
+private const val PAUSE_FAILURE_MESSAGE = "Unable to pause download"
+private const val RESUME_FAILURE_MESSAGE = "Unable to resume download"
+private const val CANCEL_FAILURE_MESSAGE = "Unable to cancel download"
+private const val RETRY_FAILURE_MESSAGE = "Unable to retry download"
+private const val DELETE_FAILURE_MESSAGE = "Unable to delete model"
+private const val HUGGING_FACE_LOAD_ERROR = "Unable to load Hugging Face catalog"
+private const val MODEL_LIBRARY_ERROR = "Model library error"

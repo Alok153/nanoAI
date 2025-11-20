@@ -60,8 +60,8 @@ import com.vjaykrsna.nanoai.feature.uiux.ui.components.composer.NanoComposerBar
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.feedback.NanoErrorHandler
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoRadii
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoSpacing
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
@@ -93,15 +93,37 @@ fun ChatScreen(
   val sheetState = rememberModalBottomSheetState()
   val snackbarHostState = remember { SnackbarHostState() }
   var activeError by remember { mutableStateOf<NanoError?>(null) }
+  val latestOnUpdateChatState = rememberUpdatedState(onUpdateChatState)
 
   val launchImagePicker = rememberChatImagePicker { bitmap -> viewModel.onImageSelected(bitmap) }
 
-  HandleChatStateUpdates(uiState, onUpdateChatState)
-  ChatScreenEventCollector(
-    events = viewModel.events,
-    snackbarHostState = snackbarHostState,
-    onError = { activeError = it },
-  )
+  LaunchedEffect(viewModel) {
+    launch {
+      viewModel.events.collectLatest { event ->
+        when (event) {
+          is ChatUiEvent.ErrorRaised -> {
+            activeError = event.error.toNanoError(event.envelope)
+            snackbarHostState.showSnackbar(event.envelope.userMessage)
+          }
+          is ChatUiEvent.ModelSelected ->
+            snackbarHostState.showSnackbar("Switched to ${event.modelName}")
+        }
+      }
+    }
+
+    latestOnUpdateChatState.value?.let { update ->
+      launch {
+        viewModel.state.collectLatest { state ->
+          update(
+            ChatState(
+              availablePersonas = state.personas,
+              currentPersonaId = state.activeThread?.personaId,
+            )
+          )
+        }
+      }
+    }
+  }
 
   val actions =
     remember(viewModel, launchImagePicker, onNavigate) {
@@ -133,43 +155,6 @@ fun ChatScreen(
     sheetState = sheetState,
     modifier = modifier,
   )
-}
-
-@Composable
-private fun HandleChatStateUpdates(
-  uiState: ChatUiState,
-  onUpdateChatState: ((ChatState?) -> Unit)?,
-) {
-  val latestUpdateChatState by rememberUpdatedState(onUpdateChatState)
-  LaunchedEffect(uiState.personas, uiState.activeThread, latestUpdateChatState) {
-    latestUpdateChatState?.invoke(
-      ChatState(
-        availablePersonas = uiState.personas,
-        currentPersonaId = uiState.activeThread?.personaId,
-      )
-    )
-  }
-}
-
-@Composable
-private fun ChatScreenEventCollector(
-  events: Flow<ChatUiEvent>,
-  snackbarHostState: SnackbarHostState,
-  onError: (NanoError) -> Unit,
-) {
-  val latestOnError by rememberUpdatedState(onError)
-  LaunchedEffect(events, snackbarHostState) {
-    events.collectLatest { event ->
-      when (event) {
-        is ChatUiEvent.ErrorRaised -> {
-          latestOnError(event.error.toNanoError(event.envelope))
-          snackbarHostState.showSnackbar(event.envelope.userMessage)
-        }
-        is ChatUiEvent.ModelSelected ->
-          snackbarHostState.showSnackbar("Switched to ${event.modelName}")
-      }
-    }
-  }
 }
 
 @Composable

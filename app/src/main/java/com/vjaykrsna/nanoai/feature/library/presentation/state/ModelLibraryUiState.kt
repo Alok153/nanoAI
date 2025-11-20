@@ -29,4 +29,5 @@ data class ModelLibraryUiState(
   val isLoading: Boolean = false,
   val isRefreshing: Boolean = false,
   val isHuggingFaceLoading: Boolean = false,
+  val lastErrorMessage: String? = null,
 ) : NanoAIViewState

@@ -5,6 +5,7 @@ import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.common.error.NanoAIErrorEnvelope
 import com.vjaykrsna.nanoai.core.common.error.toErrorEnvelope
+import com.vjaykrsna.nanoai.core.common.error.withFallbackMessage
 import com.vjaykrsna.nanoai.core.domain.chat.ConversationUseCaseInterface
 import com.vjaykrsna.nanoai.feature.chat.presentation.state.HistoryUiState
 import com.vjaykrsna.nanoai.shared.state.NanoAIViewEvent
@@ -51,7 +52,9 @@ constructor(
     viewModelScope.launch(dispatcher) {
       val result = refreshThreadsSnapshot()
       if (result !is NanoAIResult.Success) {
-        emitError(result.toErrorEnvelope(LOAD_THREADS_ERROR).preferUserMessage(LOAD_THREADS_ERROR))
+        emitError(
+          result.toErrorEnvelope(LOAD_THREADS_ERROR).withFallbackMessage(LOAD_THREADS_ERROR)
+        )
       }
       updateState { copy(isLoading = false) }
     }
@@ -63,7 +66,7 @@ constructor(
         is NanoAIResult.Success -> Unit
         else ->
           emitError(
-            result.toErrorEnvelope(ARCHIVE_THREAD_ERROR).preferUserMessage(ARCHIVE_THREAD_ERROR)
+            result.toErrorEnvelope(ARCHIVE_THREAD_ERROR).withFallbackMessage(ARCHIVE_THREAD_ERROR)
           )
       }
     }
@@ -75,7 +78,7 @@ constructor(
         is NanoAIResult.Success -> Unit
         else ->
           emitError(
-            result.toErrorEnvelope(DELETE_THREAD_ERROR).preferUserMessage(DELETE_THREAD_ERROR)
+            result.toErrorEnvelope(DELETE_THREAD_ERROR).withFallbackMessage(DELETE_THREAD_ERROR)
           )
       }
     }
@@ -125,10 +128,6 @@ constructor(
 
 sealed interface HistoryUiEvent : NanoAIViewEvent {
   data class ErrorRaised(val error: NanoAIErrorEnvelope) : HistoryUiEvent
-}
-
-private fun NanoAIErrorEnvelope.preferUserMessage(fallback: String): NanoAIErrorEnvelope {
-  return if (userMessage.contains(fallback)) this else copy(userMessage = "$fallback: $userMessage")
 }
 
 private fun Map<String, String>.withOperationFallback(operation: String): Map<String, String> {

@@ -28,11 +28,11 @@ See `gradle/libs.versions.toml` for version details and updates.
 - **Wake-up Call**: Java patterns slow development and miss Kotlin's null-safety advantages.
 
 ### Security First
-**ALWAYS** encrypt sensitive data:
-- API keys: Use `EncryptedSecretStore`
-- User preferences: Respect DataStore encryption
-- Exports: Warn about unencrypted data via `notifyUnencryptedExport()`
-- **Wake-up Call**: Unencrypted storage risks user privacy - the core value proposition.
+**ALWAYS** classify and protect data according to sensitivity:
+- **Secrets** (API Keys): MUST use `EncryptedSecretStore`.
+- **Sensitive** (PII, Chat Content): SHOULD be encrypted (e.g., Encrypted Room DB).
+- **Non-Sensitive** (UI State, App Config): Can be plaintext (e.g., `ui_preferences`, `privacy_preferences`).
+- **Wake-up Call**: Unencrypted storage of secrets or PII risks user privacy - the core value proposition.
 
 ### Performance Budgets
 **RESPECT** targets:

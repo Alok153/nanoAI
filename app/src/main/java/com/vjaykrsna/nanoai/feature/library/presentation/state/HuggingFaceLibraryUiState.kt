@@ -17,4 +17,5 @@ data class HuggingFaceLibraryUiState(
   val libraryOptions: List<String> = emptyList(),
   val downloadableModelIds: Set<String> = emptySet(),
   val isLoading: Boolean = false,
+  val lastErrorMessage: String? = null,
 ) : NanoAIViewState

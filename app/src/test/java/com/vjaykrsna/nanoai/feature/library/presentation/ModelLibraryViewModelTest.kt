@@ -189,8 +189,8 @@ class ModelLibraryViewModelTest {
       harness.testEvents {
         harness.viewModel.refreshCatalog()
         advanceUntilIdle()
-        val event = awaitItem()
-        assertThat(event).isInstanceOf(ModelLibraryUiEvent.ErrorRaised::class.java)
+        val event = awaitItem() as ModelLibraryUiEvent.ErrorRaised
+        assertThat(event.envelope.userMessage).contains("Failed to refresh model catalog")
       }
 
       coVerify { modelCatalogUseCase.recordOfflineFallback(any(), any(), any()) }

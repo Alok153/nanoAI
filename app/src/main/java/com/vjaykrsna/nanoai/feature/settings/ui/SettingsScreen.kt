@@ -35,74 +35,60 @@ fun SettingsScreen(
   viewModel: SettingsViewModel = hiltViewModel(),
   onNavigateToCoverageDashboard: () -> Unit = {},
 ) {
-  val coordinator = rememberSettingsScreenState(viewModel, onNavigateToCoverageDashboard)
+  val uiState by viewModel.state.collectAsStateWithLifecycle()
+  val snackbarHostState = remember { SnackbarHostState() }
+  val dialogState = rememberMutableSettingsDialogState()
+  val importBackupLauncher = rememberImportBackupLauncher(viewModel::importBackup)
+
+  val actions =
+    remember(viewModel, uiState.privacyPreference, dialogState, importBackupLauncher) {
+      createActions(
+        viewModel = viewModel,
+        privacyPreferences = uiState.privacyPreference,
+        importBackupLauncher = importBackupLauncher,
+        dialogState = dialogState,
+        onNavigateToCoverageDashboard = onNavigateToCoverageDashboard,
+      )
+    }
+  val dialogHandlers =
+    remember(viewModel, dialogState) { createDialogHandlers(viewModel, dialogState) }
 
   LaunchedEffect(viewModel) {
     viewModel.events.collectLatest { event ->
       when (event) {
-        is SettingsUiEvent.ErrorRaised ->
-          coordinator.snackbarHostState.showSnackbar(event.envelope.userMessage)
+        is SettingsUiEvent.ErrorRaised -> snackbarHostState.showSnackbar(event.envelope.userMessage)
         is SettingsUiEvent.ExportCompleted ->
-          coordinator.snackbarHostState.showSnackbar(exportSuccessMessage(event.destinationPath))
+          snackbarHostState.showSnackbar(exportSuccessMessage(event.destinationPath))
         is SettingsUiEvent.ImportCompleted ->
-          coordinator.snackbarHostState.showSnackbar(buildImportSuccessMessage(event.summary))
+          snackbarHostState.showSnackbar(buildImportSuccessMessage(event.summary))
       }
     }
   }
 
   SettingsScreenContent(
-    state = coordinator.uiState,
-    snackbarHostState = coordinator.snackbarHostState,
-    actions = coordinator.actions,
+    state = uiState,
+    snackbarHostState = snackbarHostState,
+    actions = actions,
     modifier = modifier,
   )
 
+  val dialogs = dialogState.snapshot()
+
   SettingsDialogs(
-    showAddProviderDialog = coordinator.dialogState.showAddProviderDialog,
-    editingProvider = coordinator.dialogState.editingProvider,
-    showExportDialog = coordinator.dialogState.showExportDialog,
-    onProviderDismiss = coordinator.dialogHandlers.onProviderDismiss,
-    onProviderSave = coordinator.dialogHandlers.onProviderSave,
-    onExportDismiss = coordinator.dialogHandlers.onExportDismiss,
-    onExportConfirm = coordinator.dialogHandlers.onExportConfirm,
-    showHuggingFaceLoginDialog = coordinator.dialogState.showHuggingFaceLoginDialog,
-    showHuggingFaceApiKeyDialog = coordinator.dialogState.showHuggingFaceApiKeyDialog,
-    huggingFaceDeviceAuthState = coordinator.uiState.huggingFaceDeviceAuthState,
-    onHuggingFaceLoginDismiss = coordinator.dialogHandlers.onHuggingFaceLoginDismiss,
-    onHuggingFaceLoginConfirm = coordinator.dialogHandlers.onHuggingFaceLoginConfirm,
-    onHuggingFaceApiKeyDismiss = coordinator.dialogHandlers.onHuggingFaceApiKeyDismiss,
-    onHuggingFaceApiKeySave = coordinator.dialogHandlers.onHuggingFaceApiKeySave,
-  )
-}
-
-@Composable
-internal fun rememberSettingsScreenState(
-  viewModel: SettingsViewModel,
-  onNavigateToCoverageDashboard: () -> Unit = {},
-): SettingsScreenCoordinator {
-  val uiState by viewModel.state.collectAsStateWithLifecycle()
-
-  val snackbarHostState = remember { SnackbarHostState() }
-  val dialogState = rememberMutableSettingsDialogState()
-
-  val importBackupLauncher = rememberImportBackupLauncher(viewModel::importBackup)
-
-  val actions =
-    createActions(
-      viewModel,
-      uiState.privacyPreference,
-      importBackupLauncher,
-      dialogState,
-      onNavigateToCoverageDashboard,
-    )
-  val dialogHandlers = createDialogHandlers(viewModel, dialogState)
-
-  return SettingsScreenCoordinator(
-    uiState = uiState,
-    snackbarHostState = snackbarHostState,
-    actions = actions,
-    dialogState = dialogState.snapshot(),
-    dialogHandlers = dialogHandlers,
+    showAddProviderDialog = dialogs.showAddProviderDialog,
+    editingProvider = dialogs.editingProvider,
+    showExportDialog = dialogs.showExportDialog,
+    onProviderDismiss = dialogHandlers.onProviderDismiss,
+    onProviderSave = dialogHandlers.onProviderSave,
+    onExportDismiss = dialogHandlers.onExportDismiss,
+    onExportConfirm = dialogHandlers.onExportConfirm,
+    showHuggingFaceLoginDialog = dialogs.showHuggingFaceLoginDialog,
+    showHuggingFaceApiKeyDialog = dialogs.showHuggingFaceApiKeyDialog,
+    huggingFaceDeviceAuthState = uiState.huggingFaceDeviceAuthState,
+    onHuggingFaceLoginDismiss = dialogHandlers.onHuggingFaceLoginDismiss,
+    onHuggingFaceLoginConfirm = dialogHandlers.onHuggingFaceLoginConfirm,
+    onHuggingFaceApiKeyDismiss = dialogHandlers.onHuggingFaceApiKeyDismiss,
+    onHuggingFaceApiKeySave = dialogHandlers.onHuggingFaceApiKeySave,
   )
 }
 

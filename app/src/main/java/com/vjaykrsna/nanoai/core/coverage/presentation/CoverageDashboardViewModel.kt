@@ -5,6 +5,7 @@ import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.common.error.NanoAIErrorEnvelope
 import com.vjaykrsna.nanoai.core.common.error.toErrorEnvelope
+import com.vjaykrsna.nanoai.core.common.error.withFallbackMessage
 import com.vjaykrsna.nanoai.core.coverage.domain.usecase.GetCoverageReportUseCase
 import com.vjaykrsna.nanoai.core.coverage.domain.usecase.GetCoverageReportUseCase.Result
 import com.vjaykrsna.nanoai.core.coverage.model.CoverageMetric
@@ -72,7 +73,7 @@ constructor(
   }
 
   private suspend fun handleFailure(result: NanoAIResult<Result>) {
-    val envelope = result.toErrorEnvelope(REFRESH_ERROR).preferUserMessage(REFRESH_ERROR)
+    val envelope = result.toErrorEnvelope(REFRESH_ERROR).withFallbackMessage(REFRESH_ERROR)
     updateState {
       copy(
         isRefreshing = false,
@@ -113,8 +114,4 @@ constructor(
 
 sealed interface CoverageDashboardUiEvent : NanoAIViewEvent {
   data class ErrorRaised(val envelope: NanoAIErrorEnvelope) : CoverageDashboardUiEvent
-}
-
-private fun NanoAIErrorEnvelope.preferUserMessage(fallback: String): NanoAIErrorEnvelope {
-  return if (userMessage.contains(fallback)) this else copy(userMessage = "$fallback: $userMessage")
 }

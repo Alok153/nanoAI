@@ -3,6 +3,9 @@ package com.vjaykrsna.nanoai.feature.library.presentation
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.common.error.NanoAIErrorEnvelope
+import com.vjaykrsna.nanoai.core.common.error.toErrorEnvelope
+import com.vjaykrsna.nanoai.core.common.error.withFallbackMessage
 import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceCatalogUseCase
 import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceModelCompatibilityChecker
 import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceModelSummary
@@ -22,6 +25,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 private const val HUGGING_FACE_SEARCH_DEBOUNCE_MS = 350L
+private const val HUGGING_FACE_LOAD_ERROR = "Unable to load Hugging Face catalog"
 
 class HuggingFaceLibraryViewModel
 @Inject
@@ -59,7 +63,7 @@ constructor(
     lastFilters = filters
 
     viewModelScope.launch(mainDispatcher) {
-      updateState { copy(isLoading = true) }
+      updateState { copy(isLoading = true, lastErrorMessage = null) }
       val query = filters.toQuery()
       val result = huggingFaceCatalogUseCase.listModels(query)
       when (result) {
@@ -72,22 +76,15 @@ constructor(
               libraryOptions = models.libraryOptions(),
               downloadableModelIds = models.downloadableIds(compatibilityChecker),
               filters = filters,
+              lastErrorMessage = null,
             )
           }
         }
         is NanoAIResult.RecoverableError -> {
-          emitEvent(
-            HuggingFaceLibraryUiEvent.ErrorRaised(
-              LibraryError.HuggingFaceLoadFailed(result.message)
-            )
-          )
+          emitHuggingFaceError(result.message, result.toErrorEnvelope(HUGGING_FACE_LOAD_ERROR))
         }
         is NanoAIResult.FatalError -> {
-          emitEvent(
-            HuggingFaceLibraryUiEvent.ErrorRaised(
-              LibraryError.HuggingFaceLoadFailed(result.message)
-            )
-          )
+          emitHuggingFaceError(result.message, result.toErrorEnvelope(HUGGING_FACE_LOAD_ERROR))
         }
       }
       updateState { copy(isLoading = false) }
@@ -123,6 +120,13 @@ constructor(
     viewModelScope.launch(mainDispatcher) {
       emitEvent(HuggingFaceLibraryUiEvent.DownloadRequested(model))
     }
+  }
+
+  private suspend fun emitHuggingFaceError(message: String, rawEnvelope: NanoAIErrorEnvelope) {
+    val error = LibraryError.HuggingFaceLoadFailed(message)
+    val envelope = rawEnvelope.withFallbackMessage(HUGGING_FACE_LOAD_ERROR)
+    updateState { copy(lastErrorMessage = envelope.userMessage) }
+    emitEvent(HuggingFaceLibraryUiEvent.ErrorRaised(error, envelope))
   }
 }
 

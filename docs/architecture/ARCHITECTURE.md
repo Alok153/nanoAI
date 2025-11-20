@@ -213,7 +213,7 @@ All entities include proper foreign key relationships and indexing for performan
 
 ### ViewModel Architecture
 
-Distributed responsibility pattern ensures clean separation and testability across feature modules. All feature ViewModels extend the shared `ViewModelStateHost`, exposing a single immutable `StateFlow<UiState>` plus a typed `SharedFlow` of one-off events. Reducers run on injected dispatchers to keep UI → ViewModel → UseCase interactions predictable and fully testable. ViewModels now exclusively use UseCases for business logic, never calling repositories directly.
+Distributed responsibility pattern ensures clean separation and testability across feature modules. Feature ViewModels must extend the shared `ViewModelStateHost`, exposing a single immutable `StateFlow<UiState>` plus a typed `SharedFlow` of one-off events. Shell or Container ViewModels (e.g., AppViewModel) may be plain ViewModels to handle high-level orchestration. Reducers run on injected dispatchers to keep UI → ViewModel → UseCase interactions predictable and fully testable. ViewModels now exclusively use UseCases for business logic, never calling repositories directly.
 
 ### Core Feature ViewModels
 - **ChatViewModel**: Manages conversation state and AI interactions

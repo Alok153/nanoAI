@@ -104,11 +104,9 @@ class HuggingFaceLibraryViewModelTest {
       harness.testEvents {
         advanceTimeBy(DEBOUNCE_MS)
         advanceUntilIdle()
-        val event = awaitItem()
-        assertThat(event)
-          .isEqualTo(
-            HuggingFaceLibraryUiEvent.ErrorRaised(LibraryError.HuggingFaceLoadFailed("offline"))
-          )
+        val event = awaitItem() as HuggingFaceLibraryUiEvent.ErrorRaised
+        assertThat(event.error).isInstanceOf(LibraryError.HuggingFaceLoadFailed::class.java)
+        assertThat(event.envelope.userMessage).contains("Unable to load Hugging Face catalog")
       }
     }
 

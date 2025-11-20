@@ -36,7 +36,6 @@ import com.vjaykrsna.nanoai.core.domain.model.library.ProviderType
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryTab
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryViewModel
 import com.vjaykrsna.nanoai.feature.library.presentation.model.HuggingFaceSortOption
-import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryError
 import com.vjaykrsna.nanoai.feature.library.presentation.model.ModelLibraryUiEvent
 import com.vjaykrsna.nanoai.feature.library.presentation.model.ModelSort
 import com.vjaykrsna.nanoai.feature.library.presentation.state.ModelLibraryUiState
@@ -72,7 +71,7 @@ fun ModelLibraryScreen(
     viewModel.events.collectLatest { event ->
       when (event) {
         is ModelLibraryUiEvent.ErrorRaised ->
-          snackbarHostState.showSnackbar(event.error.toDisplayMessage())
+          snackbarHostState.showSnackbar(event.envelope.userMessage)
         is ModelLibraryUiEvent.Message -> snackbarHostState.showSnackbar(event.message)
         ModelLibraryUiEvent.RequestLocalModelImport ->
           documentLauncher.launch(
@@ -268,18 +267,6 @@ private fun ModelLibraryLoadingIndicator(
     )
   }
 }
-
-private fun LibraryError.toDisplayMessage(): String =
-  when (this) {
-    is LibraryError.DownloadFailed -> "Download failed for $modelId: $message"
-    is LibraryError.DeleteFailed -> "Delete failed for $modelId: $message"
-    is LibraryError.PauseFailed -> "Pause failed: $message"
-    is LibraryError.ResumeFailed -> "Resume failed: $message"
-    is LibraryError.CancelFailed -> "Cancel failed: $message"
-    is LibraryError.RetryFailed -> "Retry failed: $message"
-    is LibraryError.UnexpectedError -> "Error: $message"
-    is LibraryError.HuggingFaceLoadFailed -> "Hugging Face error: $message"
-  }
 
 private data class ModelLibraryActions(
   val onRefresh: () -> Unit,
