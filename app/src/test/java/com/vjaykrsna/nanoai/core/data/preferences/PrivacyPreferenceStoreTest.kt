@@ -137,6 +137,20 @@ class PrivacyPreferenceStoreTest {
   }
 
   @Test
+  fun `setExportWarningsDismissed toggles preference`() = runTest {
+    store.reset()
+    advanceUntilIdle()
+
+    store.setExportWarningsDismissed(true)
+    advanceUntilIdle()
+    assertThat(store.privacyPreference.first().exportWarningsDismissed).isTrue()
+
+    store.setExportWarningsDismissed(false)
+    advanceUntilIdle()
+    assertThat(store.privacyPreference.first().exportWarningsDismissed).isFalse()
+  }
+
+  @Test
   fun `setRetentionPolicy saves and restores selection`() = runTest {
     store.reset()
     advanceUntilIdle()

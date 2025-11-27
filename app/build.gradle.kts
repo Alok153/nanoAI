@@ -189,4 +189,13 @@ dependencies {
 apply(from = "coverage.gradle.kts")
 
 // TODO: Re-enable lint when newer versions fix the FIR symbol resolution bug
-afterEvaluate { tasks.findByName("lintVitalAnalyzeRelease")?.enabled = false }
+afterEvaluate {
+  listOf(
+      "lintAnalyzeDebug",
+      "lintAnalyzeDebugAndroidTest",
+      "lintAnalyzeRelease",
+      "lintAnalyzeReleaseAndroidTest",
+      "lintVitalAnalyzeRelease",
+    )
+    .forEach { taskName -> tasks.findByName(taskName)?.enabled = false }
+}

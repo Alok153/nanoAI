@@ -1,14 +1,17 @@
 package com.vjaykrsna.nanoai.core.common
 
+import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import com.vjaykrsna.nanoai.MainActivity
 import com.vjaykrsna.nanoai.R
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -144,18 +147,30 @@ class NotificationHelper @Inject constructor(@ApplicationContext private val con
   }
 
   fun notifyProgress(notification: Notification) {
+    if (!canPostNotifications()) return
     notificationManager.notify(NOTIFICATION_ID_DOWNLOAD_PROGRESS, notification)
   }
 
   fun notifyCompletion(notification: Notification) {
+    if (!canPostNotifications()) return
     notificationManager.notify(NOTIFICATION_ID_DOWNLOAD_COMPLETE, notification)
   }
 
   fun notifyFailure(notification: Notification) {
+    if (!canPostNotifications()) return
     notificationManager.notify(NOTIFICATION_ID_DOWNLOAD_FAILED, notification)
   }
 
   fun cancelProgressNotification() {
     notificationManager.cancel(NOTIFICATION_ID_DOWNLOAD_PROGRESS)
+  }
+
+  private fun canPostNotifications(): Boolean {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+      return true
+    }
+    val permissionState =
+      ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+    return permissionState == PackageManager.PERMISSION_GRANTED
   }
 }

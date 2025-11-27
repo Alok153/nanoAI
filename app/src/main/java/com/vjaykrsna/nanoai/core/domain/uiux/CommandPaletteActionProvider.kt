@@ -239,7 +239,8 @@ class CommandPaletteActionProvider @Inject constructor() {
     if (query.isBlank()) return actions
     val lowerQuery = query.lowercase()
     return actions.filter { action ->
-      action.title.lowercase().contains(lowerQuery) ||
+      action.id.lowercase().contains(lowerQuery) ||
+        action.title.lowercase().contains(lowerQuery) ||
         action.subtitle?.lowercase()?.contains(lowerQuery) == true ||
         action.category.name.lowercase().contains(lowerQuery)
     }

@@ -42,7 +42,19 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.datetime.Instant as KtxInstant
 
 internal class NoopUserProfileRepository : UserProfileRepository {
-  private val profileFlow = MutableStateFlow<UserProfile?>(null)
+  private val profileFlow =
+    MutableStateFlow<UserProfile?>(
+      UserProfile(
+        id = "default",
+        displayName = "User",
+        themePreference = ThemePreference.SYSTEM,
+        visualDensity = VisualDensity.DEFAULT,
+        lastOpenedScreen = com.vjaykrsna.nanoai.core.domain.model.uiux.ScreenType.HOME,
+        compactMode = false,
+        pinnedTools = emptyList(),
+        savedLayouts = emptyList(),
+      )
+    )
   private val preferencesFlow = MutableStateFlow(UiPreferencesSnapshot())
   private val uiStateFlow = MutableStateFlow<UIStateSnapshot?>(null)
   private val offlineFlow = MutableStateFlow(false)
@@ -51,13 +63,21 @@ internal class NoopUserProfileRepository : UserProfileRepository {
 
   override fun observeOfflineStatus(): Flow<Boolean> = offlineFlow
 
-  override suspend fun getUserProfile(userId: String): UserProfile? = null
+  override suspend fun getUserProfile(userId: String): UserProfile? = profileFlow.value
 
   override fun observePreferences(): Flow<UiPreferencesSnapshot> = preferencesFlow
 
-  override suspend fun updateThemePreference(userId: String, themePreferenceName: String) = Unit
+  override suspend fun updateThemePreference(userId: String, themePreferenceName: String) {
+    val theme = ThemePreference.valueOf(themePreferenceName)
+    preferencesFlow.value = preferencesFlow.value.copy(themePreference = theme)
+    profileFlow.value = profileFlow.value?.copy(themePreference = theme)
+  }
 
-  override suspend fun updateVisualDensity(userId: String, visualDensityName: String) = Unit
+  override suspend fun updateVisualDensity(userId: String, visualDensityName: String) {
+    val density = VisualDensity.valueOf(visualDensityName)
+    preferencesFlow.value = preferencesFlow.value.copy(visualDensity = density)
+    profileFlow.value = profileFlow.value?.copy(visualDensity = density)
+  }
 
   override suspend fun updateCompactMode(userId: String, enabled: Boolean) = Unit
 
@@ -207,8 +227,9 @@ internal class FakeNavigationRepository(
   }
 }
 
-internal class FakeConnectivityRepository :
-  com.vjaykrsna.nanoai.core.domain.repository.ConnectivityRepository {
+internal class FakeConnectivityRepository(
+  private val userProfileRepository: UserProfileRepository? = null
+) : com.vjaykrsna.nanoai.core.domain.repository.ConnectivityRepository {
   override val ioDispatcher: kotlinx.coroutines.CoroutineDispatcher =
     kotlinx.coroutines.Dispatchers.Unconfined
 
@@ -221,10 +242,13 @@ internal class FakeConnectivityRepository :
 
   override suspend fun updateConnectivity(status: ConnectivityStatus) {
     connectivityBannerStateFlow.value = ConnectivityBannerState(status = status)
+    userProfileRepository?.setOfflineOverride(status == ConnectivityStatus.OFFLINE)
   }
 }
 
-internal class FakeThemeRepository : com.vjaykrsna.nanoai.core.domain.repository.ThemeRepository {
+internal class FakeThemeRepository(
+  private val userProfileRepository: UserProfileRepository? = null
+) : com.vjaykrsna.nanoai.core.domain.repository.ThemeRepository {
   override val ioDispatcher: kotlinx.coroutines.CoroutineDispatcher =
     kotlinx.coroutines.Dispatchers.Unconfined
 
@@ -235,10 +259,12 @@ internal class FakeThemeRepository : com.vjaykrsna.nanoai.core.domain.repository
 
   override suspend fun updateThemePreference(theme: ThemePreference) {
     uiPreferenceSnapshotFlow.value = uiPreferenceSnapshotFlow.value.copy(theme = theme)
+    userProfileRepository?.updateThemePreference("default", theme.name)
   }
 
   override suspend fun updateVisualDensity(density: VisualDensity) {
     uiPreferenceSnapshotFlow.value = uiPreferenceSnapshotFlow.value.copy(density = density)
+    userProfileRepository?.updateVisualDensity("default", density.name)
   }
 
   override suspend fun updateHighContrastEnabled(enabled: Boolean) {
@@ -374,8 +400,8 @@ internal fun createFakeRepositories(): FakeRepositories {
   val userProfileRepository = NoopUserProfileRepository()
   return FakeRepositories(
     navigationRepository = FakeNavigationRepository(userProfileRepository),
-    connectivityRepository = FakeConnectivityRepository(),
-    themeRepository = FakeThemeRepository(),
+    connectivityRepository = FakeConnectivityRepository(userProfileRepository),
+    themeRepository = FakeThemeRepository(userProfileRepository),
     progressRepository = FakeProgressRepository(),
     userProfileRepository = userProfileRepository,
   )

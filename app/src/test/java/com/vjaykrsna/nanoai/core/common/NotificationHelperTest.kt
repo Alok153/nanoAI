@@ -1,26 +1,36 @@
 package com.vjaykrsna.nanoai.core.common
 
+import android.Manifest
+import android.app.Application
 import android.app.Notification
+import android.app.NotificationManager
 import android.content.Context
+import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.google.common.truth.Truth.assertThat
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.Shadows
+import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowApplication
 
 @RunWith(AndroidJUnit4::class)
 class NotificationHelperTest {
 
   private lateinit var context: Context
+  private lateinit var application: Application
   private lateinit var notificationHelper: NotificationHelper
 
   @Before
   fun setUp() {
-    context = ApplicationProvider.getApplicationContext()
+    application = ApplicationProvider.getApplicationContext()
+    context = application
     notificationHelper = NotificationHelper(context)
   }
 
@@ -75,5 +85,33 @@ class NotificationHelperTest {
     @Suppress("DEPRECATION") val priority = notification.priority
     assertEquals(NotificationCompat.PRIORITY_DEFAULT, priority)
     assertTrue(notification.flags and Notification.FLAG_AUTO_CANCEL != 0)
+  }
+
+  @Test
+  @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
+  fun notifyProgress_skipsWhenPermissionDenied() {
+    val shadowApplication: ShadowApplication = Shadows.shadowOf(application)
+    shadowApplication.denyPermissions(Manifest.permission.POST_NOTIFICATIONS)
+    val notification = notificationHelper.buildProgressNotification("Model", 5, "task", "id")
+
+    notificationHelper.notifyProgress(notification)
+
+    val manager = context.getSystemService(NotificationManager::class.java)
+    val shadowManager = Shadows.shadowOf(manager)
+    assertThat(shadowManager.allNotifications).isEmpty()
+  }
+
+  @Test
+  @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
+  fun notifyCompletion_postsWhenPermissionGranted() {
+    val shadowApplication: ShadowApplication = Shadows.shadowOf(application)
+    shadowApplication.grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
+    val notification = notificationHelper.buildCompletionNotification("Model")
+
+    notificationHelper.notifyCompletion(notification)
+
+    val manager = context.getSystemService(NotificationManager::class.java)
+    val shadowManager = Shadows.shadowOf(manager)
+    assertThat(shadowManager.allNotifications).hasSize(1)
   }
 }

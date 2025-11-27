@@ -4,6 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RightPanel
 import com.vjaykrsna.nanoai.core.domain.uiux.NavigationOperationsUseCase
+import com.vjaykrsna.nanoai.core.domain.uiux.ObserveUserProfileUseCase
 import com.vjaykrsna.nanoai.shared.ui.shell.ShellUiEvent
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import io.mockk.mockk
@@ -28,6 +29,9 @@ class ShellViewModelNavigationTest {
       val navigationOperationsUseCase =
         NavigationOperationsUseCase(fakeRepos.navigationRepository, dispatcher)
 
+      val observeUserProfileUseCase =
+        ObserveUserProfileUseCase(fakeRepos.userProfileRepository, dispatcher)
+
       val navigationViewModel = mockk<NavigationViewModel>(relaxed = true)
       val connectivityViewModel = createConnectivityViewModel(fakeRepos, dispatcher)
       val themeViewModel = createThemeViewModel(fakeRepos, dispatcher)
@@ -36,6 +40,7 @@ class ShellViewModelNavigationTest {
       val viewModel =
         ShellViewModel(
           navigationOperationsUseCase,
+          observeUserProfileUseCase,
           navigationViewModel,
           connectivityViewModel,
           progressViewModel,
@@ -59,6 +64,9 @@ class ShellViewModelNavigationTest {
       val navigationOperationsUseCase =
         NavigationOperationsUseCase(fakeRepos.navigationRepository, dispatcher)
 
+      val observeUserProfileUseCase =
+        ObserveUserProfileUseCase(fakeRepos.userProfileRepository, dispatcher)
+
       val navigationViewModel = mockk<NavigationViewModel>(relaxed = true)
       val connectivityViewModel = createConnectivityViewModel(fakeRepos, dispatcher)
       val themeViewModel = createThemeViewModel(fakeRepos, dispatcher)
@@ -67,6 +75,7 @@ class ShellViewModelNavigationTest {
       val viewModel =
         ShellViewModel(
           navigationOperationsUseCase,
+          observeUserProfileUseCase,
           navigationViewModel,
           connectivityViewModel,
           progressViewModel,

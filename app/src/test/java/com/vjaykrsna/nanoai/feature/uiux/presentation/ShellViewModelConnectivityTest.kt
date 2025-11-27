@@ -5,6 +5,7 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityStatus
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.uiux.NavigationOperationsUseCase
+import com.vjaykrsna.nanoai.core.domain.uiux.ObserveUserProfileUseCase
 import com.vjaykrsna.nanoai.shared.ui.shell.ShellUiEvent
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import io.mockk.mockk
@@ -29,6 +30,9 @@ class ShellViewModelConnectivityTest {
       val navigationOperationsUseCase =
         NavigationOperationsUseCase(fakeRepos.navigationRepository, dispatcher)
 
+      val observeUserProfileUseCase =
+        ObserveUserProfileUseCase(fakeRepos.userProfileRepository, dispatcher)
+
       val navigationViewModel = mockk<NavigationViewModel>(relaxed = true)
       val connectivityViewModel = createConnectivityViewModel(fakeRepos, dispatcher)
       val progressViewModel = createProgressViewModel(fakeRepos, dispatcher)
@@ -37,6 +41,7 @@ class ShellViewModelConnectivityTest {
       val viewModel =
         ShellViewModel(
           navigationOperationsUseCase,
+          observeUserProfileUseCase,
           navigationViewModel,
           connectivityViewModel,
           progressViewModel,
@@ -60,6 +65,9 @@ class ShellViewModelConnectivityTest {
       val navigationOperationsUseCase =
         NavigationOperationsUseCase(fakeRepos.navigationRepository, dispatcher)
 
+      val observeUserProfileUseCase =
+        ObserveUserProfileUseCase(fakeRepos.userProfileRepository, dispatcher)
+
       val navigationViewModel = mockk<NavigationViewModel>(relaxed = true)
       val connectivityViewModel = createConnectivityViewModel(fakeRepos, dispatcher)
       val progressViewModel = createProgressViewModel(fakeRepos, dispatcher)
@@ -68,6 +76,7 @@ class ShellViewModelConnectivityTest {
       val viewModel =
         ShellViewModel(
           navigationOperationsUseCase,
+          observeUserProfileUseCase,
           navigationViewModel,
           connectivityViewModel,
           progressViewModel,
@@ -89,6 +98,9 @@ class ShellViewModelConnectivityTest {
       val navigationOperationsUseCase =
         NavigationOperationsUseCase(fakeRepos.navigationRepository, dispatcher)
 
+      val observeUserProfileUseCase =
+        ObserveUserProfileUseCase(fakeRepos.userProfileRepository, dispatcher)
+
       val navigationViewModel = mockk<NavigationViewModel>(relaxed = true)
       val connectivityViewModel = createConnectivityViewModel(fakeRepos, dispatcher)
       val progressViewModel = createProgressViewModel(fakeRepos, dispatcher)
@@ -97,6 +109,7 @@ class ShellViewModelConnectivityTest {
       val viewModel =
         ShellViewModel(
           navigationOperationsUseCase,
+          observeUserProfileUseCase,
           navigationViewModel,
           connectivityViewModel,
           progressViewModel,

@@ -8,7 +8,10 @@ import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.domain.audio.AudioRepository
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 
 /**
  * Implementation of audio repository.
@@ -17,18 +20,27 @@ import kotlinx.coroutines.flow.flow
  */
 class AudioRepositoryImpl @Inject constructor(private val context: Context) : AudioRepository {
 
+  private val isRecording = MutableStateFlow(false)
+
   companion object {
     private const val WAVEFORM_SAMPLE_COUNT = 50
     private const val WAVEFORM_UPDATE_DELAY_MS = 100L
+    private const val PHASE_INCREMENT = 0.2
+    private const val NORMALIZATION_FACTOR = 1.7f
+    private const val SECOND_HARMONIC_WEIGHT = 0.5
+    private const val SECOND_HARMONIC_MULTIPLIER = 2.0
+    private const val SECOND_HARMONIC_OFFSET = 1.0
+    private const val NOISE_SCALE = 0.2f
+    private const val CYCLE_MULTIPLIER = 2.0
   }
 
   override suspend fun startRecording(): NanoAIResult<Unit> {
-    // TODO: Implement actual recording start
+    isRecording.value = true
     return NanoAIResult.Success(Unit)
   }
 
   override suspend fun stopRecording(): NanoAIResult<Unit> {
-    // TODO: Implement actual recording stop
+    isRecording.value = false
     return NanoAIResult.Success(Unit)
   }
 
@@ -42,14 +54,34 @@ class AudioRepositoryImpl @Inject constructor(private val context: Context) : Au
     return NanoAIResult.Success(true)
   }
 
+  @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
   override fun getWaveformData(): Flow<List<Float>> {
-    // TODO: Implement actual waveform data from audio input
-    return flow {
-      // Simulate waveform data
-      while (true) {
-        val waveform = List(WAVEFORM_SAMPLE_COUNT) { kotlin.random.Random.nextFloat() }
-        emit(waveform)
-        kotlinx.coroutines.delay(WAVEFORM_UPDATE_DELAY_MS)
+    return isRecording.flatMapLatest { recording ->
+      if (recording) {
+        flow {
+          var phase = 0.0
+          while (true) {
+            val waveform =
+              List(WAVEFORM_SAMPLE_COUNT) { index ->
+                // Generate a smooth wave: sin(t) + 0.5*sin(2t) + small noise
+                val t =
+                  phase + (index.toDouble() / WAVEFORM_SAMPLE_COUNT) * CYCLE_MULTIPLIER * Math.PI
+                val value =
+                  (Math.sin(t) +
+                      SECOND_HARMONIC_WEIGHT *
+                        Math.sin(SECOND_HARMONIC_MULTIPLIER * t + SECOND_HARMONIC_OFFSET) +
+                      kotlin.random.Random.nextFloat() * NOISE_SCALE)
+                    .toFloat()
+                // Normalize roughly to -1..1 range
+                value / NORMALIZATION_FACTOR
+              }
+            emit(waveform)
+            phase += PHASE_INCREMENT // Advance phase for animation
+            kotlinx.coroutines.delay(WAVEFORM_UPDATE_DELAY_MS)
+          }
+        }
+      } else {
+        flowOf(emptyList())
       }
     }
   }

@@ -28,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -60,6 +61,7 @@ import com.vjaykrsna.nanoai.feature.uiux.ui.components.composer.NanoComposerBar
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.feedback.NanoErrorHandler
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoRadii
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoSpacing
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
@@ -97,33 +99,13 @@ fun ChatScreen(
 
   val launchImagePicker = rememberChatImagePicker { bitmap -> viewModel.onImageSelected(bitmap) }
 
-  LaunchedEffect(viewModel) {
-    launch {
-      viewModel.events.collectLatest { event ->
-        when (event) {
-          is ChatUiEvent.ErrorRaised -> {
-            activeError = event.error.toNanoError(event.envelope)
-            snackbarHostState.showSnackbar(event.envelope.userMessage)
-          }
-          is ChatUiEvent.ModelSelected ->
-            snackbarHostState.showSnackbar("Switched to ${event.modelName}")
-        }
-      }
-    }
-
-    latestOnUpdateChatState.value?.let { update ->
-      launch {
-        viewModel.state.collectLatest { state ->
-          update(
-            ChatState(
-              availablePersonas = state.personas,
-              currentPersonaId = state.activeThread?.personaId,
-            )
-          )
-        }
-      }
-    }
-  }
+  ChatScreenEffects(
+    events = viewModel.events,
+    uiStateFlow = viewModel.state,
+    snackbarHostState = snackbarHostState,
+    latestOnUpdateChatState = latestOnUpdateChatState,
+    onError = { activeError = it },
+  )
 
   val actions =
     remember(viewModel, launchImagePicker, onNavigate) {
@@ -155,6 +137,45 @@ fun ChatScreen(
     sheetState = sheetState,
     modifier = modifier,
   )
+}
+
+@Composable
+private fun ChatScreenEffects(
+  events: Flow<ChatUiEvent>,
+  uiStateFlow: Flow<ChatUiState>,
+  snackbarHostState: SnackbarHostState,
+  latestOnUpdateChatState: State<((ChatState?) -> Unit)?>,
+  onError: (NanoError?) -> Unit,
+) {
+  val latestOnError by rememberUpdatedState(onError)
+
+  LaunchedEffect(Unit) {
+    launch {
+      events.collectLatest { event ->
+        when (event) {
+          is ChatUiEvent.ErrorRaised -> {
+            latestOnError(event.error.toNanoError(event.envelope))
+            snackbarHostState.showSnackbar(event.envelope.userMessage)
+          }
+          is ChatUiEvent.ModelSelected ->
+            snackbarHostState.showSnackbar("Switched to ${event.modelName}")
+        }
+      }
+    }
+
+    latestOnUpdateChatState.value?.let { update ->
+      launch {
+        uiStateFlow.collectLatest { state ->
+          update(
+            ChatState(
+              availablePersonas = state.personas,
+              currentPersonaId = state.activeThread?.personaId,
+            )
+          )
+        }
+      }
+    }
+  }
 }
 
 @Composable

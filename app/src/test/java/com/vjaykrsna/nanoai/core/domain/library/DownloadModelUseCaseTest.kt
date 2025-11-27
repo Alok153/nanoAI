@@ -142,6 +142,59 @@ class DownloadModelUseCaseTest {
     coVerify { modelCatalogRepository.updateDownloadTaskId(modelId, null) }
   }
 
+  @Test
+  fun `cancelDownload succeeds when model id missing`() = runTest {
+    coEvery { downloadManager.getModelIdForTask(taskId) } returns null
+
+    val result = useCase.cancelDownload(taskId)
+
+    result.assertSuccess()
+    coVerify { downloadManager.cancelDownload(taskId) }
+    coVerify(exactly = 0) { downloadManager.deletePartialFiles(any()) }
+    coVerify(exactly = 0) { modelCatalogRepository.updateInstallState(any(), any()) }
+    coVerify(exactly = 0) { modelCatalogRepository.updateDownloadTaskId(any(), any()) }
+  }
+
+  @Test
+  fun `retryFailedDownload restarts download when task failed`() = runTest {
+    val failedTask = createDownloadTask(DownloadStatus.FAILED, taskId)
+    coEvery { downloadManager.getTaskById(taskId) } returns flowOf(failedTask)
+    coEvery { downloadManager.getModelIdForTask(taskId) } returns modelId
+    coEvery { downloadManager.startDownload(modelId) } returns taskId
+
+    val result = useCase.retryFailedDownload(taskId)
+
+    result.assertSuccess()
+    coVerify { downloadManager.resetTask(taskId) }
+    coVerify { downloadManager.startDownload(modelId) }
+    coVerify { modelCatalogRepository.updateInstallState(modelId, InstallState.DOWNLOADING) }
+    coVerify { modelCatalogRepository.updateDownloadTaskId(modelId, taskId) }
+  }
+
+  @Test
+  fun `retryFailedDownload requires failed status`() = runTest {
+    val pausedTask = createDownloadTask(DownloadStatus.PAUSED, taskId)
+    coEvery { downloadManager.getTaskById(taskId) } returns flowOf(pausedTask)
+    coEvery { downloadManager.getModelIdForTask(taskId) } returns modelId
+
+    val result = useCase.retryFailedDownload(taskId)
+
+    result.assertRecoverableError()
+    coVerify(exactly = 0) { downloadManager.resetTask(any()) }
+  }
+
+  @Test
+  fun `retryFailedDownload returns recoverable when model id missing`() = runTest {
+    val failedTask = createDownloadTask(DownloadStatus.FAILED, taskId)
+    coEvery { downloadManager.getTaskById(taskId) } returns flowOf(failedTask)
+    coEvery { downloadManager.getModelIdForTask(taskId) } returns null
+
+    val result = useCase.retryFailedDownload(taskId)
+
+    result.assertRecoverableError()
+    coVerify(exactly = 0) { downloadManager.resetTask(any()) }
+  }
+
   private fun createDownloadTask(status: DownloadStatus, id: UUID = UUID.randomUUID()) =
     DownloadTask(
       taskId = id,

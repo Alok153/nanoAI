@@ -30,7 +30,9 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.RecentActivityItem
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RightPanel
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferenceSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UndoPayload
+import com.vjaykrsna.nanoai.core.domain.model.uiux.toUiPreferenceSnapshot
 import com.vjaykrsna.nanoai.core.domain.uiux.NavigationOperationsUseCase
+import com.vjaykrsna.nanoai.core.domain.uiux.ObserveUserProfileUseCase
 import com.vjaykrsna.nanoai.shared.ui.shell.ShellUiEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -61,7 +63,7 @@ private const val PROGRESS_JOBS_INDEX = 8
 private const val SHOW_COVERAGE_DASHBOARD_INDEX = 9
 private const val CHAT_STATE_INDEX = 10
 private const val CONNECTIVITY_BANNER_INDEX = 11
-private const val UI_PREFERENCES_INDEX = 12
+private const val USER_PROFILE_RESULT_INDEX = 12
 
 // Constants for flow sharing
 private const val UI_STATE_SUBSCRIPTION_TIMEOUT_MS = 5000L
@@ -224,6 +226,7 @@ class ShellViewModel
 @Inject
 constructor(
   private val navigationOperationsUseCase: NavigationOperationsUseCase,
+  private val observeUserProfileUseCase: ObserveUserProfileUseCase,
   // Sub-ViewModels for focused responsibilities
   private val navigationViewModel: NavigationViewModel,
   private val connectivityViewModel: ConnectivityViewModel,
@@ -296,7 +299,7 @@ constructor(
         _showCoverageDashboard,
         _chatState,
         connectivityViewModel.connectivityBannerState,
-        themeViewModel.uiPreferences,
+        observeUserProfileUseCase(),
       ) { values ->
         val windowSizeClass = values.requireValue<WindowSizeClass>(WINDOW_SIZE_CLASS_INDEX)
         val activeMode = values.requireValue<ModeId>(ACTIVE_MODE_INDEX)
@@ -312,8 +315,12 @@ constructor(
         val chatState = values.requireValueOrNull<ChatState>(CHAT_STATE_INDEX)
         val connectivityBanner =
           values.requireValue<ConnectivityBannerState>(CONNECTIVITY_BANNER_INDEX)
-        val preferences = values.requireValue<UiPreferenceSnapshot>(UI_PREFERENCES_INDEX)
-        val isOnline = connectivityBanner.status == ConnectivityStatus.ONLINE
+        val userProfileResult =
+          values.requireValue<ObserveUserProfileUseCase.Result>(USER_PROFILE_RESULT_INDEX)
+
+        val preferences =
+          userProfileResult.userProfile?.toUiPreferenceSnapshot() ?: UiPreferenceSnapshot()
+        val isOnline = !userProfileResult.offline
 
         val normalizedLayout =
           ShellLayoutState(

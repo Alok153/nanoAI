@@ -11,9 +11,14 @@ import com.vjaykrsna.nanoai.core.domain.model.ProviderCredentialMutation
 import com.vjaykrsna.nanoai.core.domain.repository.ApiProviderConfigRepository
 import com.vjaykrsna.nanoai.core.domain.repository.PersonaRepository
 import com.vjaykrsna.nanoai.core.domain.settings.ImportService
+import com.vjaykrsna.nanoai.core.domain.settings.ImportSummary
 import com.vjaykrsna.nanoai.core.model.APIType
 import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.util.Base64
 import java.util.UUID
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -22,6 +27,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.Instant
 import kotlinx.serialization.json.Json
 import org.junit.Before
 import org.junit.Test
@@ -150,6 +156,116 @@ class ImportServiceImplTest {
     assertThat(providerRepository.getAllProviders()).isEmpty()
   }
 
+  @Test
+  fun `importBackup decodes zipped payloads`() = runTest {
+    val payload =
+      """
+                {
+                  "personas": [
+                    {
+                      "personaId": "${KNOWN_PERSONA_ID}",
+                      "name": "Zip Persona",
+                      "description": "from zip",
+                      "systemPrompt": "Zip it",
+                      "createdAt": "2024-02-01T00:00:00Z",
+                      "updatedAt": "2024-02-02T00:00:00Z"
+                    }
+                  ],
+                  "apiProviders": [
+                    {
+                      "providerId": "openai",
+                      "name": "Zip Provider",
+                      "endpoint": "https://api.openai.com/v1",
+                      "apiKey": "zip-key",
+                      "apiType": "OPENAI_COMPATIBLE",
+                      "enabled": true
+                    }
+                  ]
+                }
+            """
+        .trimIndent()
+
+    val uri = Uri.parse("content://nanoai/backup.zip")
+    shadowContentResolver.registerInputStream(uri, ByteArrayInputStream(zipPayload(payload)))
+
+    val summary = importBundle(uri)
+    advanceUntilIdle()
+
+    assertThat(summary.personasImported).isEqualTo(1)
+    assertThat(summary.providersImported).isEqualTo(1)
+    assertThat(personaRepository.getAllPersonas()).hasSize(1)
+    assertThat(providerRepository.getAllProviders().first().providerName).isEqualTo("Zip Provider")
+  }
+
+  @Test
+  @Suppress("LongMethod")
+  fun `importBackup decodes base64 payloads and updates existing data`() = runTest {
+    val existingPersona =
+      PersonaProfile(
+        personaId = UUID.fromString(KNOWN_PERSONA_ID),
+        name = "Initial",
+        description = "seed",
+        systemPrompt = "Prompt",
+        createdAt = Instant.fromEpochMilliseconds(0),
+        updatedAt = Instant.fromEpochMilliseconds(0),
+      )
+    personaRepository.createPersona(existingPersona)
+
+    val existingProvider =
+      APIProviderConfig(
+        providerId = "openai",
+        providerName = "Legacy",
+        baseUrl = "https://api.openai.com/v1",
+        apiType = APIType.OPENAI_COMPATIBLE,
+      )
+    providerRepository.addProvider(existingProvider, ProviderCredentialMutation.None)
+
+    val payload =
+      """
+                {
+                  "personas": [
+                    {
+                      "personaId": "${KNOWN_PERSONA_ID}",
+                      "name": "Updated",
+                      "description": "Updated description",
+                      "systemPrompt": "Prompt",
+                      "updatedAt": "2024-03-01T00:00:00Z"
+                    }
+                  ],
+                  "apiProviders": [
+                    {
+                      "providerId": "openai",
+                      "name": "Updated Provider",
+                      "endpoint": "https://api.openai.com/v1",
+                      "apiType": "OPENAI_COMPATIBLE",
+                      "enabled": false
+                    }
+                  ]
+                }
+            """
+        .trimIndent()
+
+    val base64Payload = Base64.getEncoder().encodeToString(payload.toByteArray())
+    val uri = Uri.parse("content://nanoai/backup.b64")
+    shadowContentResolver.registerInputStream(
+      uri,
+      ByteArrayInputStream(base64Payload.toByteArray()),
+    )
+
+    val summary = importBundle(uri)
+    advanceUntilIdle()
+
+    assertThat(summary.personasImported).isEqualTo(0)
+    assertThat(summary.personasUpdated).isEqualTo(1)
+    assertThat(summary.providersUpdated).isEqualTo(1)
+
+    val persona = personaRepository.getPersona(UUID.fromString(KNOWN_PERSONA_ID))
+    assertThat(persona?.description).isEqualTo("Updated description")
+    val provider = providerRepository.getProvider("openai")
+    assertThat(provider?.providerName).isEqualTo("Updated Provider")
+    assertThat(provider?.isEnabled).isFalse()
+  }
+
   private class FakePersonaRepository : PersonaRepository {
     private val personas = LinkedHashMap<UUID, PersonaProfile>()
     private val personasFlow = MutableStateFlow<List<PersonaProfile>>(emptyList())
@@ -237,5 +353,20 @@ class ImportServiceImplTest {
 
   companion object {
     private const val KNOWN_PERSONA_ID = "b6b94d0b-7f3f-4e69-9f44-519c0d53a9f3"
+  }
+
+  private suspend fun importBundle(uri: Uri): ImportSummary {
+    val result = importService.importBackup(uri)
+    return (result as? NanoAIResult.Success)?.value ?: error("Expected success but was $result")
+  }
+
+  private fun zipPayload(json: String): ByteArray {
+    val output = ByteArrayOutputStream()
+    ZipOutputStream(output).use { zip ->
+      zip.putNextEntry(ZipEntry("bundle.json"))
+      zip.write(json.toByteArray())
+      zip.closeEntry()
+    }
+    return output.toByteArray()
   }
 }

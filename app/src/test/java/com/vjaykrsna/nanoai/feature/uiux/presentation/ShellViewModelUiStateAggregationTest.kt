@@ -10,6 +10,7 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.RecentActivityItem
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RecentStatus
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UndoPayload
 import com.vjaykrsna.nanoai.core.domain.uiux.NavigationOperationsUseCase
+import com.vjaykrsna.nanoai.core.domain.uiux.ObserveUserProfileUseCase
 import com.vjaykrsna.nanoai.shared.ui.shell.ShellUiEvent
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import io.mockk.mockk
@@ -65,6 +66,8 @@ private fun createShellViewModel(
 ): ShellViewModel {
   val navigationOperationsUseCase =
     NavigationOperationsUseCase(repositories.navigationRepository, dispatcher)
+  val observeUserProfileUseCase =
+    ObserveUserProfileUseCase(repositories.userProfileRepository, dispatcher)
   val navigationViewModel = mockk<NavigationViewModel>(relaxed = true)
   val connectivityViewModel = createConnectivityViewModel(repositories, dispatcher)
   val themeViewModel = createThemeViewModel(repositories, dispatcher)
@@ -72,6 +75,7 @@ private fun createShellViewModel(
 
   return ShellViewModel(
     navigationOperationsUseCase,
+    observeUserProfileUseCase,
     navigationViewModel,
     connectivityViewModel,
     progressViewModel,

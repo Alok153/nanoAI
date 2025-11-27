@@ -6,6 +6,7 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.JobStatus
 import com.vjaykrsna.nanoai.core.domain.model.uiux.JobType
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ProgressJob
 import com.vjaykrsna.nanoai.core.domain.uiux.NavigationOperationsUseCase
+import com.vjaykrsna.nanoai.core.domain.uiux.ObserveUserProfileUseCase
 import com.vjaykrsna.nanoai.shared.ui.shell.ShellUiEvent
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import io.mockk.mockk
@@ -36,6 +37,8 @@ class ShellViewModelJobQueueTest {
       }
       val navigationOperationsUseCase =
         NavigationOperationsUseCase(fakeRepos.navigationRepository, dispatcher)
+      val observeUserProfileUseCase =
+        ObserveUserProfileUseCase(fakeRepos.userProfileRepository, dispatcher)
       val progressViewModel = createProgressViewModel(fakeRepos, dispatcher)
 
       // Mock navigation-only interactions; other sub-ViewModels are real to surface flows
@@ -46,6 +49,7 @@ class ShellViewModelJobQueueTest {
       val viewModel =
         ShellViewModel(
           navigationOperationsUseCase,
+          observeUserProfileUseCase,
           navigationViewModel,
           connectivityViewModel,
           progressViewModel,
@@ -81,6 +85,8 @@ class ShellViewModelJobQueueTest {
       val fakeRepos = createFakeRepositories()
       val navigationOperationsUseCase =
         NavigationOperationsUseCase(fakeRepos.navigationRepository, dispatcher)
+      val observeUserProfileUseCase =
+        ObserveUserProfileUseCase(fakeRepos.userProfileRepository, dispatcher)
       val progressViewModel = createProgressViewModel(fakeRepos, dispatcher)
 
       val navigationViewModel = mockk<NavigationViewModel>(relaxed = true)
@@ -90,6 +96,7 @@ class ShellViewModelJobQueueTest {
       val viewModel =
         ShellViewModel(
           navigationOperationsUseCase,
+          observeUserProfileUseCase,
           navigationViewModel,
           connectivityViewModel,
           progressViewModel,
