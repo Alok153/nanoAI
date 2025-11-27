@@ -507,13 +507,3 @@ class ChatScreenTest {
     composeTestRule.onNodeWithText(COMPOSER_PLACEHOLDER).assertExists().assertIsDisplayed()
   }
 }
-
-private fun ComposeTestRule.waitUntil(timeoutMillis: Long = 1_000, condition: () -> Boolean) {
-  val start = SystemClock.uptimeMillis()
-  while (!condition()) {
-    if (SystemClock.uptimeMillis() - start >= timeoutMillis) {
-      throw AssertionError("Condition still false after ${timeoutMillis}ms")
-    }
-    waitForIdle()
-  }
-}
