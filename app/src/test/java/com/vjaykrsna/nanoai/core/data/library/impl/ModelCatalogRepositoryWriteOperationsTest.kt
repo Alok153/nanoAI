@@ -1,11 +1,11 @@
 package com.vjaykrsna.nanoai.core.data.library.impl
 
 import com.google.common.truth.Truth.assertThat
+import com.vjaykrsna.nanoai.core.data.db.mappers.toEntity
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.core.domain.model.library.DeliveryType
 import com.vjaykrsna.nanoai.core.domain.model.library.InstallState
 import com.vjaykrsna.nanoai.core.domain.model.library.ProviderType
-import com.vjaykrsna.nanoai.core.domain.model.toEntity
 import io.mockk.coEvery
 import io.mockk.coVerify
 import java.io.File

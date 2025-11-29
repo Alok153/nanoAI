@@ -1,6 +1,5 @@
 package com.vjaykrsna.nanoai.core.domain.model
 
-import com.vjaykrsna.nanoai.core.data.library.entities.DownloadTaskEntity
 import com.vjaykrsna.nanoai.core.domain.model.library.DownloadStatus
 import java.util.UUID
 import kotlinx.datetime.Instant
@@ -9,7 +8,8 @@ import kotlinx.datetime.Instant
  * Domain model for a download task.
  *
  * Clean architecture: Separate from database entities. Used by repositories, use cases, ViewModels,
- * and UI.
+ * and UI. Mapping to/from entities is handled by
+ * [com.vjaykrsna.nanoai.core.data.library.mappers.DownloadTaskMapper].
  */
 data class DownloadTask(
   val taskId: UUID,
@@ -21,29 +21,3 @@ data class DownloadTask(
   val finishedAt: Instant? = null,
   val errorMessage: String? = null,
 )
-
-/** Extension function to convert entity to domain model. */
-fun DownloadTaskEntity.toDomain(): DownloadTask =
-  DownloadTask(
-    taskId = UUID.fromString(taskId),
-    modelId = modelId,
-    progress = progress,
-    status = status,
-    bytesDownloaded = bytesDownloaded,
-    startedAt = startedAt,
-    finishedAt = finishedAt,
-    errorMessage = errorMessage,
-  )
-
-/** Extension function to convert domain model to entity. */
-fun DownloadTask.toEntity(): DownloadTaskEntity =
-  DownloadTaskEntity(
-    taskId = taskId.toString(),
-    modelId = modelId,
-    progress = progress,
-    status = status,
-    bytesDownloaded = bytesDownloaded,
-    startedAt = startedAt,
-    finishedAt = finishedAt,
-    errorMessage = errorMessage,
-  )

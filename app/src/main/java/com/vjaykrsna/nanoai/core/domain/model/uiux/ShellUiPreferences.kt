@@ -35,5 +35,5 @@ fun UserProfile.toShellUiPreferences(): ShellUiPreferences =
     density = visualDensity,
     fontScale = 1f, // UserProfile does not track font scale; default to normal
     dismissedTooltips = emptySet(), // Tooltips stored separately in DataStore
-    highContrastEnabled = false, // TODO: add to UserProfile if needed
+    highContrastEnabled = highContrastEnabled,
   )

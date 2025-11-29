@@ -12,6 +12,7 @@ data class UserProfile(
   val compactMode: Boolean,
   var pinnedTools: List<String>,
   var savedLayouts: List<LayoutSnapshot>,
+  val highContrastEnabled: Boolean,
 ) {
   init {
     require(id.isNotBlank()) { "UserProfile id cannot be blank." }
@@ -47,6 +48,7 @@ data class UserProfile(
       visualDensity = normalized.visualDensity,
       pinnedTools = normalized.pinnedTools,
       compactMode = normalized.visualDensity == VisualDensity.COMPACT,
+      highContrastEnabled = normalized.highContrastEnabled,
     )
   }
 
@@ -72,6 +74,7 @@ data class UserProfile(
         compactMode = normalized.visualDensity == VisualDensity.COMPACT,
         pinnedTools = normalized.pinnedTools,
         savedLayouts = sanitizeSavedLayouts(savedLayouts),
+        highContrastEnabled = normalized.highContrastEnabled,
       )
     }
   }
@@ -87,6 +90,7 @@ data class UserProfileRecord(
   val compactMode: Boolean,
   val pinnedTools: List<String>,
   val savedLayouts: List<LayoutSnapshot>,
+  val highContrastEnabled: Boolean,
 )
 
 fun UserProfileRecord.toDomain(): UserProfile =
@@ -99,6 +103,7 @@ fun UserProfileRecord.toDomain(): UserProfile =
     compactMode = compactMode,
     pinnedTools = pinnedTools,
     savedLayouts = savedLayouts,
+    highContrastEnabled = highContrastEnabled,
   )
 
 fun UserProfile.toRecord(): UserProfileRecord =
@@ -111,6 +116,7 @@ fun UserProfile.toRecord(): UserProfileRecord =
     compactMode = compactMode,
     pinnedTools = pinnedTools,
     savedLayouts = savedLayouts,
+    highContrastEnabled = highContrastEnabled,
   )
 
 /**
@@ -142,5 +148,5 @@ fun UserProfile.toDataStoreUiPreferences(): DataStoreUiPreferences =
     pinnedTools = pinnedTools,
     commandPaletteRecents = emptyList(),
     connectivityBannerLastDismissed = null,
-    highContrastEnabled = false, // TODO: add to UserProfile if needed
+    highContrastEnabled = highContrastEnabled,
   )

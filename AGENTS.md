@@ -23,7 +23,8 @@ See `gradle/libs.versions.toml` for version details and updates.
 ### Kotlin-First Purity
 **ONLY use Kotlin**. **No Java** interop unless absolutely necessary.
 - Use coroutines, not threads
-- Use sealed classes, not enums for states
+- Use sealed classes for runtime states with associated data (e.g., `NanoAIResult<T>`, UI state hierarchies)
+- Use enums for fixed constant sets (e.g., `ModelSort`, `CredentialScope`, database enum columns)
 - Use data classes for immutable models
 - **Wake-up Call**: Java patterns slow development and miss Kotlin's null-safety advantages.
 

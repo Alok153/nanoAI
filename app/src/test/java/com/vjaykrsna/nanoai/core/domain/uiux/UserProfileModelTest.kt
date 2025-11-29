@@ -74,6 +74,7 @@ class UserProfileModelTest {
       false,
       listOf("tool-1", "tool-2"),
       listOf(UiUxDomainReflection.newLayoutSnapshot(id = "layout-default")),
+      false, // highContrastEnabled
     )
   }
 }

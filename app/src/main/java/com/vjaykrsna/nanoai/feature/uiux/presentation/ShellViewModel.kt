@@ -33,6 +33,8 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.UndoPayload
 import com.vjaykrsna.nanoai.core.domain.model.uiux.toShellUiPreferences
 import com.vjaykrsna.nanoai.core.domain.uiux.NavigationOperationsUseCase
 import com.vjaykrsna.nanoai.core.domain.uiux.ObserveUserProfileUseCase
+import com.vjaykrsna.nanoai.core.domain.usecase.FeatureFlagsProvider
+import com.vjaykrsna.nanoai.core.telemetry.ShellTelemetry
 import com.vjaykrsna.nanoai.shared.ui.shell.ShellUiEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -45,8 +47,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-
-// import com.vjaykrsna.telemetry.ShellTelemetry
 
 /** ViewModel coordinating shell layout state and user intents. */
 
@@ -77,6 +77,8 @@ private data class ModeCardDefinition(
   val actionTitle: String,
   val actionCategory: CommandCategory,
   val requiresOnline: Boolean = false,
+  /** True for features with simulated/placeholder backends. */
+  val isExperimental: Boolean = false,
 )
 
 private val MODE_CARD_DEFINITIONS =
@@ -93,21 +95,23 @@ private val MODE_CARD_DEFINITIONS =
     ModeCardDefinition(
       id = ModeId.IMAGE,
       title = "Image",
-      subtitle = "Generate images from text",
+      subtitle = "Generate images from text (Preview)",
       icon = Icons.Default.Image,
       actionId = "new_image",
       actionTitle = "Generate",
       actionCategory = CommandCategory.MODES,
       requiresOnline = true,
+      isExperimental = true,
     ),
     ModeCardDefinition(
       id = ModeId.AUDIO,
       title = "Audio",
-      subtitle = "Voice and audio processing",
+      subtitle = "Voice and audio processing (Preview)",
       icon = Icons.Default.Mic,
       actionId = "new_audio",
       actionTitle = "Record",
       actionCategory = CommandCategory.MODES,
+      isExperimental = true,
     ),
     ModeCardDefinition(
       id = ModeId.CODE,
@@ -117,6 +121,7 @@ private val MODE_CARD_DEFINITIONS =
       actionId = "new_code",
       actionTitle = "Code",
       actionCategory = CommandCategory.MODES,
+      isExperimental = true,
     ),
     ModeCardDefinition(
       id = ModeId.HISTORY,
@@ -164,8 +169,14 @@ private fun buildInitialShellUiState(): ShellUiState {
   )
 }
 
-private fun modeCardsForOnlineState(isOnline: Boolean): List<ModeCard> =
-  MODE_CARD_DEFINITIONS.filter { !it.requiresOnline || isOnline }
+private fun modeCardsForOnlineState(isOnline: Boolean, showExperimental: Boolean): List<ModeCard> =
+  MODE_CARD_DEFINITIONS.filter { definition ->
+      // Filter by online requirement
+      val passesOnlineCheck = !definition.requiresOnline || isOnline
+      // Filter by experimental status
+      val passesExperimentalCheck = !definition.isExperimental || showExperimental
+      passesOnlineCheck && passesExperimentalCheck
+    }
     .map { definition ->
       ModeCard(
         id = definition.id,
@@ -232,10 +243,9 @@ constructor(
   private val connectivityCoordinator: ConnectivityCoordinator,
   private val progressCoordinator: ProgressCoordinator,
   private val themeCoordinator: ThemeCoordinator,
-  // private val telemetry: ShellTelemetry,
-  @Suppress("UnusedPrivateProperty")
-  @MainImmediateDispatcher
-  private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
+  private val telemetry: ShellTelemetry,
+  private val featureFlagsProvider: FeatureFlagsProvider,
+  @MainImmediateDispatcher private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
 ) : ViewModel() {
 
   private val _activeMode = MutableStateFlow(ModeId.HOME)
@@ -344,7 +354,11 @@ constructor(
           commandPalette = commandPaletteState,
           connectivityBanner = connectivityBanner,
           preferences = preferences,
-          modeCards = modeCardsForOnlineState(isOnline),
+          modeCards =
+            modeCardsForOnlineState(
+              isOnline = isOnline,
+              showExperimental = featureFlagsProvider.getFeatureFlags().experimentalFeaturesEnabled,
+            ),
           quickActions = quickActionsForMode(activeMode),
           chatState = chatState,
         )
@@ -356,15 +370,15 @@ constructor(
       )
 
   /** Records telemetry for command invocations to understand palette usage. */
-  @Suppress("UnusedParameter")
   fun onCommandInvoked(action: CommandAction, source: CommandInvocationSource) {
     val layout = uiState.value.layout
-    /*
-    // // telemetry.trackCommandInvocation(action, source, layout.activeMode)
-    if (source == CommandInvocationSource.PALETTE && layout.isPaletteVisible) {
-      // // telemetry.trackCommandPaletteDismissed(PaletteDismissReason.EXECUTED, layout.activeMode)
+    telemetry.trackCommandInvocation(action, source, layout.activeMode)
+    if (source == CommandInvocationSource.PALETTE && layout.showCommandPalette) {
+      telemetry.trackCommandPaletteDismissed(
+        com.vjaykrsna.nanoai.core.domain.model.uiux.PaletteDismissReason.EXECUTED,
+        layout.activeMode,
+      )
     }
-    */
   }
 
   /** Updates the current window size class so adaptive layouts respond to device changes. */

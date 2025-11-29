@@ -4,11 +4,8 @@ import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.domain.model.uiux.JobStatus
 import com.vjaykrsna.nanoai.core.domain.model.uiux.JobType
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ProgressJob
-import com.vjaykrsna.nanoai.core.domain.uiux.NavigationOperationsUseCase
-import com.vjaykrsna.nanoai.core.domain.uiux.ObserveUserProfileUseCase
 import com.vjaykrsna.nanoai.shared.ui.shell.ShellUiEvent
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
-import io.mockk.mockk
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
@@ -43,26 +40,7 @@ class ShellViewModelJobCompletionTest {
         )
       )
 
-      val navigationOperationsUseCase =
-        NavigationOperationsUseCase(fakeRepos.navigationRepository, dispatcher)
-      val observeUserProfileUseCase =
-        ObserveUserProfileUseCase(fakeRepos.userProfileRepository, dispatcher)
-      val progressCoordinator = createProgressCoordinator(fakeRepos, dispatcher)
-
-      val navigationCoordinator = mockk<NavigationCoordinator>(relaxed = true)
-      val connectivityCoordinator = createConnectivityCoordinator(fakeRepos, dispatcher)
-      val themeCoordinator = createThemeCoordinator(fakeRepos, dispatcher)
-
-      val viewModel =
-        ShellViewModel(
-          navigationOperationsUseCase,
-          observeUserProfileUseCase,
-          navigationCoordinator,
-          connectivityCoordinator,
-          progressCoordinator,
-          themeCoordinator,
-          dispatcher,
-        )
+      val viewModel = createShellViewModelForTest(fakeRepos, dispatcher)
 
       viewModel.onEvent(ShellUiEvent.CompleteJob(jobId))
       advanceUntilIdle()

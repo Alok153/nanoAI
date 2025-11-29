@@ -91,6 +91,7 @@ class ShellUiPreferencesTest {
         compactMode = true,
         pinnedTools = listOf("tool1"),
         savedLayouts = emptyList(),
+        highContrastEnabled = false,
       )
 
     val snapshot = userProfile.toShellUiPreferences()

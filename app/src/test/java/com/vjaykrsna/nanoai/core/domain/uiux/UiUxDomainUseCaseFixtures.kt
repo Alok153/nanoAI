@@ -124,6 +124,7 @@ internal object UiUxDomainReflection {
     compactMode: Boolean = false,
     pinnedTools: List<String> = emptyList(),
     savedLayouts: List<Any> = emptyList(),
+    highContrastEnabled: Boolean = false,
   ): Any {
     val ctor = primaryConstructor(loadClass(USER_PROFILE))
     return ctor.newInstance(
@@ -135,6 +136,7 @@ internal object UiUxDomainReflection {
       compactMode,
       pinnedTools,
       savedLayouts,
+      highContrastEnabled,
     )
   }
 

@@ -1,6 +1,5 @@
 package com.vjaykrsna.nanoai.core.domain.model
 
-import com.vjaykrsna.nanoai.core.data.db.entities.MessageEntity
 import com.vjaykrsna.nanoai.core.model.MessageRole
 import com.vjaykrsna.nanoai.core.model.MessageSource
 import java.util.UUID
@@ -10,7 +9,8 @@ import kotlinx.datetime.Instant
  * Domain model for a chat message.
  *
  * Clean architecture: Separate from database entities. Used by repositories, use cases, ViewModels,
- * and UI.
+ * and UI. Mapping to/from entities is handled by
+ * [com.vjaykrsna.nanoai.core.data.db.mappers.MessageMapper].
  */
 data class Message(
   val messageId: UUID,
@@ -24,33 +24,3 @@ data class Message(
   val createdAt: Instant,
   val errorCode: String? = null,
 )
-
-/** Extension function to convert entity to domain model. */
-fun MessageEntity.toDomain(): Message =
-  Message(
-    messageId = UUID.fromString(messageId),
-    threadId = UUID.fromString(threadId),
-    role = role,
-    text = text,
-    audioUri = audioUri,
-    imageUri = imageUri,
-    source = source,
-    latencyMs = latencyMs,
-    createdAt = createdAt,
-    errorCode = errorCode,
-  )
-
-/** Extension function to convert domain model to entity. */
-fun Message.toEntity(): MessageEntity =
-  MessageEntity(
-    messageId = messageId.toString(),
-    threadId = threadId.toString(),
-    role = role,
-    text = text,
-    audioUri = audioUri,
-    imageUri = imageUri,
-    source = source,
-    latencyMs = latencyMs,
-    createdAt = createdAt,
-    errorCode = errorCode,
-  )

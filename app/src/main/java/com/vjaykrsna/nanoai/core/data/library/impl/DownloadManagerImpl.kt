@@ -8,12 +8,12 @@ import androidx.work.WorkManager
 import androidx.work.workDataOf
 import com.vjaykrsna.nanoai.core.data.library.ModelArtifactStore
 import com.vjaykrsna.nanoai.core.data.library.daos.DownloadTaskDao
+import com.vjaykrsna.nanoai.core.data.library.mappers.toDomain
+import com.vjaykrsna.nanoai.core.data.library.mappers.toEntity
 import com.vjaykrsna.nanoai.core.data.library.workers.ModelDownloadWorker
 import com.vjaykrsna.nanoai.core.domain.library.DownloadManager
 import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.core.domain.model.library.DownloadStatus
-import com.vjaykrsna.nanoai.core.domain.model.toDomain
-import com.vjaykrsna.nanoai.core.domain.model.toEntity
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton

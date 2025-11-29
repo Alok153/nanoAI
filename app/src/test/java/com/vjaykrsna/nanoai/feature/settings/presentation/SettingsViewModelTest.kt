@@ -319,6 +319,7 @@ class SettingsViewModelTest {
               compactMode = false,
               pinnedTools = emptyList(),
               savedLayouts = emptyList(),
+              highContrastEnabled = false,
             ),
           layoutSnapshots = emptyList(),
           uiState = null,

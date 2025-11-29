@@ -2,6 +2,7 @@ package com.vjaykrsna.nanoai.core.data.audio
 
 import android.content.Context
 import com.google.common.truth.Truth.assertThat
+import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -58,6 +59,36 @@ class AudioRepositoryImplTest {
       assertThat(emissions.last()).isEmpty()
 
       job.cancel()
+    }
+
+  @Test
+  fun toggleMute_togglesState() =
+    runTest(dispatcher) {
+      // Initial state should be false (unmuted)
+      // First toggle -> true
+      val result1 = repository.toggleMute()
+      assertThat(result1).isInstanceOf(NanoAIResult.Success::class.java)
+      assertThat((result1 as NanoAIResult.Success).value).isTrue()
+
+      // Second toggle -> false
+      val result2 = repository.toggleMute()
+      assertThat(result2).isInstanceOf(NanoAIResult.Success::class.java)
+      assertThat((result2 as NanoAIResult.Success).value).isFalse()
+    }
+
+  @Test
+  fun toggleSpeaker_togglesState() =
+    runTest(dispatcher) {
+      // Initial state should be false (speaker off)
+      // First toggle -> true
+      val result1 = repository.toggleSpeaker()
+      assertThat(result1).isInstanceOf(NanoAIResult.Success::class.java)
+      assertThat((result1 as NanoAIResult.Success).value).isTrue()
+
+      // Second toggle -> false
+      val result2 = repository.toggleSpeaker()
+      assertThat(result2).isInstanceOf(NanoAIResult.Success::class.java)
+      assertThat((result2 as NanoAIResult.Success).value).isFalse()
     }
 }
 

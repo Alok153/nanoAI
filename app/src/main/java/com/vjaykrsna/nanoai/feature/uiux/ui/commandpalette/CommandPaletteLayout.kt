@@ -40,6 +40,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.vjaykrsna.nanoai.core.domain.model.uiux.CommandAction
 import com.vjaykrsna.nanoai.core.domain.model.uiux.PaletteDismissReason
+import com.vjaykrsna.nanoai.shared.ui.TestTags
 
 @Composable
 internal fun CommandPaletteLayout(
@@ -55,7 +56,7 @@ internal fun CommandPaletteLayout(
   modifier: Modifier = Modifier,
   keyHandler: (KeyEvent) -> Boolean,
 ) {
-  Box(modifier = modifier.fillMaxSize().testTag("command_palette")) {
+  Box(modifier = modifier.fillMaxSize().testTag(TestTags.Shell.COMMAND_PALETTE)) {
     CommandPaletteScrim(interactionSource = interactionSource, onDismissRequest = onDismissRequest)
 
     Surface(
@@ -145,7 +146,9 @@ private fun CommandPaletteSearchBar(
       value = query,
       onValueChange = onQueryChange,
       modifier =
-        Modifier.weight(1f).focusRequester(focusRequester).testTag("command_palette_search"),
+        Modifier.weight(1f)
+          .focusRequester(focusRequester)
+          .testTag(TestTags.Shell.COMMAND_PALETTE_SEARCH),
       placeholder = { Text("Search commands…") },
       singleLine = true,
       leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
@@ -206,7 +209,7 @@ private fun CommandPaletteResultList(
       Modifier.fillMaxWidth()
         .heightIn(max = 360.dp)
         .selectableGroup()
-        .testTag("command_palette_list")
+        .testTag(TestTags.Shell.COMMAND_PALETTE_LIST)
         .onPreviewKeyEvent(keyHandler),
     verticalArrangement = Arrangement.spacedBy(6.dp),
   ) {

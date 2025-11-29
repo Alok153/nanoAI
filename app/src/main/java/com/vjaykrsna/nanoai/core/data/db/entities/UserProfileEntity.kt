@@ -19,6 +19,7 @@ data class UserProfileEntity(
   @ColumnInfo(name = "last_opened_screen") val lastOpenedScreen: ScreenType,
   @ColumnInfo(name = "compact_mode") val compactMode: Boolean,
   @ColumnInfo(name = "pinned_tools") val pinnedTools: List<String>,
+  @ColumnInfo(name = "high_contrast_enabled") val highContrastEnabled: Boolean = false,
 )
 
 fun UserProfileEntity.toDomain(savedLayouts: List<LayoutSnapshot> = emptyList()): UserProfile =
@@ -31,6 +32,7 @@ fun UserProfileEntity.toDomain(savedLayouts: List<LayoutSnapshot> = emptyList())
     compactMode = compactMode,
     pinnedTools = pinnedTools,
     savedLayouts = savedLayouts,
+    highContrastEnabled = highContrastEnabled,
   )
 
 fun UserProfile.toEntity(): UserProfileEntity =
@@ -42,4 +44,5 @@ fun UserProfile.toEntity(): UserProfileEntity =
     lastOpenedScreen = lastOpenedScreen,
     compactMode = compactMode,
     pinnedTools = pinnedTools,
+    highContrastEnabled = highContrastEnabled,
   )

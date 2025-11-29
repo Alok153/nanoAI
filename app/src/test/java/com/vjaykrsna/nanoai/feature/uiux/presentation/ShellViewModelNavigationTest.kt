@@ -3,11 +3,8 @@ package com.vjaykrsna.nanoai.feature.uiux.presentation
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RightPanel
-import com.vjaykrsna.nanoai.core.domain.uiux.NavigationOperationsUseCase
-import com.vjaykrsna.nanoai.core.domain.uiux.ObserveUserProfileUseCase
 import com.vjaykrsna.nanoai.shared.ui.shell.ShellUiEvent
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
-import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -26,27 +23,7 @@ class ShellViewModelNavigationTest {
   fun openMode_closesDrawersAndHidesPalette() =
     runTest(dispatcher) {
       val fakeRepos = createFakeRepositories()
-      val navigationOperationsUseCase =
-        NavigationOperationsUseCase(fakeRepos.navigationRepository, dispatcher)
-
-      val observeUserProfileUseCase =
-        ObserveUserProfileUseCase(fakeRepos.userProfileRepository, dispatcher)
-
-      val navigationCoordinator = mockk<NavigationCoordinator>(relaxed = true)
-      val connectivityCoordinator = createConnectivityCoordinator(fakeRepos, dispatcher)
-      val themeCoordinator = createThemeCoordinator(fakeRepos, dispatcher)
-      val progressCoordinator = createProgressCoordinator(fakeRepos, dispatcher)
-
-      val viewModel =
-        ShellViewModel(
-          navigationOperationsUseCase,
-          observeUserProfileUseCase,
-          navigationCoordinator,
-          connectivityCoordinator,
-          progressCoordinator,
-          themeCoordinator,
-          dispatcher,
-        )
+      val viewModel = createShellViewModelForTest(fakeRepos, dispatcher)
 
       viewModel.onEvent(ShellUiEvent.ModeSelected(ModeId.CHAT))
       advanceUntilIdle()
@@ -61,27 +38,7 @@ class ShellViewModelNavigationTest {
   fun toggleRightDrawer_setsPanelAndReflectsInState() =
     runTest(dispatcher) {
       val fakeRepos = createFakeRepositories()
-      val navigationOperationsUseCase =
-        NavigationOperationsUseCase(fakeRepos.navigationRepository, dispatcher)
-
-      val observeUserProfileUseCase =
-        ObserveUserProfileUseCase(fakeRepos.userProfileRepository, dispatcher)
-
-      val navigationCoordinator = mockk<NavigationCoordinator>(relaxed = true)
-      val connectivityCoordinator = createConnectivityCoordinator(fakeRepos, dispatcher)
-      val themeCoordinator = createThemeCoordinator(fakeRepos, dispatcher)
-      val progressCoordinator = createProgressCoordinator(fakeRepos, dispatcher)
-
-      val viewModel =
-        ShellViewModel(
-          navigationOperationsUseCase,
-          observeUserProfileUseCase,
-          navigationCoordinator,
-          connectivityCoordinator,
-          progressCoordinator,
-          themeCoordinator,
-          dispatcher,
-        )
+      val viewModel = createShellViewModelForTest(fakeRepos, dispatcher)
 
       viewModel.onEvent(ShellUiEvent.ToggleRightDrawer(RightPanel.MODEL_SELECTOR))
       advanceUntilIdle()

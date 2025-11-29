@@ -3,10 +3,10 @@ package com.vjaykrsna.nanoai.core.data.repository.impl
 import com.vjaykrsna.nanoai.core.common.IoDispatcher
 import com.vjaykrsna.nanoai.core.data.db.daos.ChatThreadDao
 import com.vjaykrsna.nanoai.core.data.db.daos.MessageDao
+import com.vjaykrsna.nanoai.core.data.db.mappers.toDomain
+import com.vjaykrsna.nanoai.core.data.db.mappers.toEntity
 import com.vjaykrsna.nanoai.core.domain.model.ChatThread
 import com.vjaykrsna.nanoai.core.domain.model.Message
-import com.vjaykrsna.nanoai.core.domain.model.toDomain
-import com.vjaykrsna.nanoai.core.domain.model.toEntity
 import com.vjaykrsna.nanoai.core.domain.repository.ConversationRepository
 import java.util.UUID
 import javax.inject.Inject

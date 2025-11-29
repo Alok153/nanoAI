@@ -53,6 +53,7 @@ internal class NoopUserProfileRepository : UserProfileRepository {
         compactMode = false,
         pinnedTools = emptyList(),
         savedLayouts = emptyList(),
+        highContrastEnabled = false,
       )
     )
   private val preferencesFlow = MutableStateFlow(DataStoreUiPreferences())
@@ -413,3 +414,42 @@ internal data class FakeRepositories(
   val progressRepository: com.vjaykrsna.nanoai.core.domain.repository.ProgressRepository,
   val userProfileRepository: com.vjaykrsna.nanoai.core.domain.repository.UserProfileRepository,
 )
+
+/**
+ * Creates a ShellViewModel with all dependencies for testing. Uses MockK for ShellTelemetry and a
+ * development FeatureFlagsProvider by default.
+ */
+internal fun createShellViewModelForTest(
+  fakeRepos: FakeRepositories,
+  dispatcher: kotlinx.coroutines.CoroutineDispatcher,
+  navigationCoordinator: NavigationCoordinator = io.mockk.mockk(relaxed = true),
+  telemetry: com.vjaykrsna.nanoai.core.telemetry.ShellTelemetry = io.mockk.mockk(relaxed = true),
+  featureFlagsProvider: com.vjaykrsna.nanoai.core.domain.usecase.FeatureFlagsProvider =
+    com.vjaykrsna.nanoai.core.domain.usecase.FeatureFlagsProvider(),
+): ShellViewModel {
+  val navigationOperationsUseCase =
+    com.vjaykrsna.nanoai.core.domain.uiux.NavigationOperationsUseCase(
+      fakeRepos.navigationRepository,
+      dispatcher,
+    )
+  val observeUserProfileUseCase =
+    com.vjaykrsna.nanoai.core.domain.uiux.ObserveUserProfileUseCase(
+      fakeRepos.userProfileRepository,
+      dispatcher,
+    )
+  val connectivityCoordinator = createConnectivityCoordinator(fakeRepos, dispatcher)
+  val progressCoordinator = createProgressCoordinator(fakeRepos, dispatcher)
+  val themeCoordinator = createThemeCoordinator(fakeRepos, dispatcher)
+
+  return ShellViewModel(
+    navigationOperationsUseCase = navigationOperationsUseCase,
+    observeUserProfileUseCase = observeUserProfileUseCase,
+    navigationCoordinator = navigationCoordinator,
+    connectivityCoordinator = connectivityCoordinator,
+    progressCoordinator = progressCoordinator,
+    themeCoordinator = themeCoordinator,
+    telemetry = telemetry,
+    featureFlagsProvider = featureFlagsProvider,
+    dispatcher = dispatcher,
+  )
+}

@@ -14,8 +14,8 @@ class CleanArchitectureRule(config: Config) : Rule(config) {
       id = "CleanArchitectureLayering",
       severity = Severity.CodeSmell,
       description =
-        "Enforces Clean Architecture boundaries so UI features cannot depend directly on data layers " +
-          "and core layers never reference feature code.",
+        "Enforces Clean Architecture boundaries so UI features cannot depend directly on data layers, " +
+          "domain models cannot import data entities, and core layers never reference feature code.",
       debt = io.gitlab.arturbosch.detekt.api.Debt.TWENTY_MINS,
     )
 
@@ -32,6 +32,9 @@ class CleanArchitectureRule(config: Config) : Rule(config) {
             CodeSmell(issue, entity, featureDependsOnDataMessage(packageName, importPath))
           packageName.startsWith("com.vjaykrsna.nanoai.core") && importPath.contains(".feature.") ->
             CodeSmell(issue, entity, coreDependsOnFeatureMessage(packageName, importPath))
+          // Domain models should not import data entities (mappers belong in data layer)
+          packageName.contains(".domain.model") && importPath.contains(".data.db.entities") ->
+            CodeSmell(issue, entity, domainImportsDataEntityMessage(packageName, importPath))
           else -> null
         }
       }
@@ -45,4 +48,8 @@ class CleanArchitectureRule(config: Config) : Rule(config) {
   private fun coreDependsOnFeatureMessage(packageName: String, importPath: String): String =
     "Core layer '$packageName' must not reference feature package '$importPath'. " +
       "Move shared functionality into a core module."
+
+  private fun domainImportsDataEntityMessage(packageName: String, importPath: String): String =
+    "Domain model '$packageName' should not import data entity '$importPath'. " +
+      "Move mapping functions (toDomain/toEntity) to the data layer mappers."
 }

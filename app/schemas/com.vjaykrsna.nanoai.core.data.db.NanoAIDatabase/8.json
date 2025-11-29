@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 8,
-    "identityHash": "69bb19ddde8cd971186f64fe7569172b",
+    "identityHash": "b69dd0da2af38063d803927f8b699c2c",
     "entities": [
       {
         "tableName": "chat_threads",
@@ -581,7 +581,7 @@
       },
       {
         "tableName": "user_profiles",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`user_id` TEXT NOT NULL, `display_name` TEXT, `theme_preference` TEXT NOT NULL, `visual_density` TEXT NOT NULL, `last_opened_screen` TEXT NOT NULL, `compact_mode` INTEGER NOT NULL, `pinned_tools` TEXT NOT NULL, PRIMARY KEY(`user_id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`user_id` TEXT NOT NULL, `display_name` TEXT, `theme_preference` TEXT NOT NULL, `visual_density` TEXT NOT NULL, `last_opened_screen` TEXT NOT NULL, `compact_mode` INTEGER NOT NULL, `pinned_tools` TEXT NOT NULL, `high_contrast_enabled` INTEGER NOT NULL, PRIMARY KEY(`user_id`))",
         "fields": [
           {
             "fieldPath": "userId",
@@ -622,6 +622,12 @@
             "fieldPath": "pinnedTools",
             "columnName": "pinned_tools",
             "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "highContrastEnabled",
+            "columnName": "high_contrast_enabled",
+            "affinity": "INTEGER",
             "notNull": true
           }
         ],
@@ -1350,7 +1356,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '69bb19ddde8cd971186f64fe7569172b')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b69dd0da2af38063d803927f8b699c2c')"
     ]
   }
 }

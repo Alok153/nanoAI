@@ -2,9 +2,9 @@ package com.vjaykrsna.nanoai.core.data.repository.impl
 
 import com.vjaykrsna.nanoai.core.common.IoDispatcher
 import com.vjaykrsna.nanoai.core.data.db.daos.PersonaSwitchLogDao
+import com.vjaykrsna.nanoai.core.data.db.mappers.PersonaSwitchLogMapper
+import com.vjaykrsna.nanoai.core.data.db.mappers.toEntity
 import com.vjaykrsna.nanoai.core.domain.model.PersonaSwitchLog
-import com.vjaykrsna.nanoai.core.domain.model.toDomain
-import com.vjaykrsna.nanoai.core.domain.model.toEntity
 import com.vjaykrsna.nanoai.core.domain.repository.PersonaSwitchLogRepository
 import java.util.UUID
 import javax.inject.Inject
@@ -32,13 +32,17 @@ constructor(
   }
 
   override suspend fun getSwitchHistory(threadId: UUID): List<PersonaSwitchLog> =
-    personaSwitchLogDao.getByThreadId(threadId.toString()).map { it.toDomain() }
+    personaSwitchLogDao.getByThreadId(threadId.toString()).map {
+      PersonaSwitchLogMapper.toDomain(it)
+    }
 
   override suspend fun getLatestSwitch(threadId: UUID): PersonaSwitchLog? =
-    personaSwitchLogDao.getLatestForThread(threadId.toString())?.toDomain()
+    personaSwitchLogDao.getLatestForThread(threadId.toString())?.let {
+      PersonaSwitchLogMapper.toDomain(it)
+    }
 
   override suspend fun getLogsByThreadId(threadId: UUID): Flow<List<PersonaSwitchLog>> =
     personaSwitchLogDao.observeByThreadId(threadId.toString()).map { logs ->
-      logs.map { it.toDomain() }
+      logs.map { PersonaSwitchLogMapper.toDomain(it) }
     }
 }

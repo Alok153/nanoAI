@@ -3,6 +3,8 @@ package com.vjaykrsna.nanoai.core.data.library.impl
 import android.content.Context
 import com.vjaykrsna.nanoai.core.data.db.daos.ChatThreadDao
 import com.vjaykrsna.nanoai.core.data.db.entities.ModelPackageEntity
+import com.vjaykrsna.nanoai.core.data.db.mappers.toDomain
+import com.vjaykrsna.nanoai.core.data.db.mappers.toEntity
 import com.vjaykrsna.nanoai.core.data.library.daos.ModelPackageReadDao
 import com.vjaykrsna.nanoai.core.data.library.daos.ModelPackageWriteDao
 import com.vjaykrsna.nanoai.core.data.library.leap.LeapModelRemoteDataSource
@@ -10,8 +12,6 @@ import com.vjaykrsna.nanoai.core.domain.library.ModelCatalogRefreshStatus
 import com.vjaykrsna.nanoai.core.domain.library.ModelCatalogRepository
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.core.domain.model.library.InstallState
-import com.vjaykrsna.nanoai.core.domain.model.toDomain
-import com.vjaykrsna.nanoai.core.domain.model.toEntity
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import java.util.UUID

@@ -1,0 +1,25 @@
+{
+  "_documentation": "Centralized performance budgets for macrobenchmark assertions and CI gates",
+  "_reference": "AGENTS.md, docs/development/QUALITY_GATES.md",
+  "startup": {
+    "coldStartMaxMs": 1500,
+    "firstMeaningfulPaintP75MaxMs": 300,
+    "compilationMode": "Partial",
+    "description": "Cold start target <1.5s; FMP p75 <= 300ms with partial compilation"
+  },
+  "navigation": {
+    "homeToSettingsP95MaxMs": 100,
+    "screenTransitionP90MaxMs": 600,
+    "description": "Navigation latency p95 <= 100ms; screen transitions p90 <= 600ms"
+  },
+  "frameMetrics": {
+    "jankThresholdPercent": 5,
+    "themeToggleP90MaxMs": 100,
+    "queueFlushMaxMs": 500,
+    "description": "Frame jank <= 5%; theme toggle p90 <= 100ms; queue flush <= 500ms"
+  },
+  "localInference": {
+    "medianResponseMs": 2000,
+    "description": "Local model inference median response ~2s"
+  }
+}

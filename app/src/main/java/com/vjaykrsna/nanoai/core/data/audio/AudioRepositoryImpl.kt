@@ -21,6 +21,8 @@ import kotlinx.coroutines.flow.flowOf
 class AudioRepositoryImpl @Inject constructor(private val context: Context) : AudioRepository {
 
   private val isRecording = MutableStateFlow(false)
+  private var isMuted = false
+  private var isSpeakerOn = false
 
   companion object {
     private const val WAVEFORM_SAMPLE_COUNT = 50
@@ -45,13 +47,13 @@ class AudioRepositoryImpl @Inject constructor(private val context: Context) : Au
   }
 
   override suspend fun toggleMute(): NanoAIResult<Boolean> {
-    // TODO: Implement actual mute toggle
-    return NanoAIResult.Success(true)
+    isMuted = !isMuted
+    return NanoAIResult.Success(isMuted)
   }
 
   override suspend fun toggleSpeaker(): NanoAIResult<Boolean> {
-    // TODO: Implement actual speaker toggle
-    return NanoAIResult.Success(true)
+    isSpeakerOn = !isSpeakerOn
+    return NanoAIResult.Success(isSpeakerOn)
   }
 
   @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)

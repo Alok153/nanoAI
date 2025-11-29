@@ -9,11 +9,8 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.ProgressJob
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RecentActivityItem
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RecentStatus
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UndoPayload
-import com.vjaykrsna.nanoai.core.domain.uiux.NavigationOperationsUseCase
-import com.vjaykrsna.nanoai.core.domain.uiux.ObserveUserProfileUseCase
 import com.vjaykrsna.nanoai.shared.ui.shell.ShellUiEvent
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
-import io.mockk.mockk
 import java.time.Instant
 import java.util.UUID
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -36,7 +33,7 @@ class ShellViewModelUiStateAggregationTest {
   fun uiStateReflectsCombinedSources() =
     runTest(dispatcher) {
       val repositories = createFakeRepositories()
-      val viewModel = createShellViewModel(repositories, dispatcher)
+      val viewModel = createShellViewModelForTest(repositories, dispatcher)
       val fixtures = uiAggregationFixtures()
 
       viewModel.applyInitialState(fixtures)
@@ -58,30 +55,6 @@ class ShellViewModelUiStateAggregationTest {
       assertThat(uiState.chatState).isEqualTo(fixtures.chatState)
       assertThat(uiState.quickActions).isNotEmpty()
     }
-}
-
-private fun createShellViewModel(
-  repositories: FakeRepositories,
-  dispatcher: TestDispatcher,
-): ShellViewModel {
-  val navigationOperationsUseCase =
-    NavigationOperationsUseCase(repositories.navigationRepository, dispatcher)
-  val observeUserProfileUseCase =
-    ObserveUserProfileUseCase(repositories.userProfileRepository, dispatcher)
-  val navigationCoordinator = mockk<NavigationCoordinator>(relaxed = true)
-  val connectivityCoordinator = createConnectivityCoordinator(repositories, dispatcher)
-  val themeCoordinator = createThemeCoordinator(repositories, dispatcher)
-  val progressCoordinator = createProgressCoordinator(repositories, dispatcher)
-
-  return ShellViewModel(
-    navigationOperationsUseCase,
-    observeUserProfileUseCase,
-    navigationCoordinator,
-    connectivityCoordinator,
-    progressCoordinator,
-    themeCoordinator,
-    dispatcher,
-  )
 }
 
 private data class UiAggregationFixtures(

@@ -2,9 +2,9 @@ package com.vjaykrsna.nanoai.core.data.repository.impl
 
 import com.vjaykrsna.nanoai.core.common.IoDispatcher
 import com.vjaykrsna.nanoai.core.data.db.daos.PersonaProfileDao
+import com.vjaykrsna.nanoai.core.data.db.mappers.toDomain
+import com.vjaykrsna.nanoai.core.data.db.mappers.toEntity
 import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
-import com.vjaykrsna.nanoai.core.domain.model.toDomain
-import com.vjaykrsna.nanoai.core.domain.model.toEntity
 import com.vjaykrsna.nanoai.core.domain.repository.PersonaRepository
 import java.util.UUID
 import javax.inject.Inject

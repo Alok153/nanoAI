@@ -2,6 +2,7 @@ package com.vjaykrsna.nanoai.feature.settings.ui
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -40,7 +41,7 @@ class SettingsScreenStructureTest : BaseSettingsScreenTest() {
 
     composeTestRule.onNodeWithText("Appearance").performClick()
     composeTestRule.waitForIdle()
-    // TODO: add assertions when appearance content exposes test tags
+    composeTestRule.onNodeWithTag("appearance_theme_card").assertExists()
   }
 
   @Test

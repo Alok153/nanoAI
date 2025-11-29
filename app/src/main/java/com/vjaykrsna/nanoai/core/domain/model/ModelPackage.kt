@@ -1,6 +1,5 @@
 package com.vjaykrsna.nanoai.core.domain.model
 
-import com.vjaykrsna.nanoai.core.data.db.entities.ModelPackageEntity
 import com.vjaykrsna.nanoai.core.domain.model.library.DeliveryType
 import com.vjaykrsna.nanoai.core.domain.model.library.InstallState
 import com.vjaykrsna.nanoai.core.domain.model.library.ProviderType
@@ -11,7 +10,8 @@ import kotlinx.datetime.Instant
  * Domain model for a model package in the catalog.
  *
  * Clean architecture: Separate from database entities. Used by repositories, use cases, ViewModels,
- * and UI.
+ * and UI. Mapping to/from entities is handled by
+ * [com.vjaykrsna.nanoai.core.data.db.mappers.ModelPackageMapper].
  */
 data class ModelPackage(
   val modelId: String,
@@ -39,43 +39,3 @@ data class ModelPackage(
   val summary: String? = null,
   val description: String? = null,
 )
-
-/** Extension function to convert entity to domain model. */
-fun ModelPackageEntity.toDomain(): ModelPackage =
-  ModelPackage(
-    modelId = modelId,
-    displayName = displayName,
-    version = version,
-    providerType = providerType,
-    deliveryType = deliveryType,
-    minAppVersion = minAppVersion,
-    sizeBytes = sizeBytes,
-    capabilities = capabilities,
-    installState = installState,
-    downloadTaskId = downloadTaskId?.let(UUID::fromString),
-    manifestUrl = manifestUrl,
-    checksumSha256 = checksumSha256,
-    signature = signature,
-    createdAt = createdAt,
-    updatedAt = updatedAt,
-  )
-
-/** Extension function to convert domain model to entity. */
-fun ModelPackage.toEntity(): ModelPackageEntity =
-  ModelPackageEntity(
-    modelId = modelId,
-    displayName = displayName,
-    version = version,
-    providerType = providerType,
-    deliveryType = deliveryType,
-    minAppVersion = minAppVersion,
-    sizeBytes = sizeBytes,
-    capabilities = capabilities,
-    installState = installState,
-    downloadTaskId = downloadTaskId?.toString(),
-    manifestUrl = manifestUrl,
-    checksumSha256 = checksumSha256,
-    signature = signature,
-    createdAt = createdAt,
-    updatedAt = updatedAt,
-  )
