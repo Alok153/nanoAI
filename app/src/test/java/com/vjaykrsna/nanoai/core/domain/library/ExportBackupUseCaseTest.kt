@@ -8,8 +8,8 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import java.io.IOException
 import kotlinx.coroutines.test.runTest
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 class ExportBackupUseCaseTest {
   private lateinit var useCase: ExportBackupUseCase
@@ -18,7 +18,7 @@ class ExportBackupUseCaseTest {
   private val destinationPath = "/path/to/backup"
   private val bundlePath = "/path/to/bundle.zip"
 
-  @Before
+  @BeforeEach
   fun setup() {
     exportService = mockk(relaxed = true)
 

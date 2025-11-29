@@ -20,14 +20,14 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Instant
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 class ConversationUseCaseTest {
   private lateinit var useCase: ConversationUseCase
   private lateinit var conversationRepository: ConversationRepository
 
-  @Before
+  @BeforeEach
   fun setup() {
     conversationRepository = mockk(relaxed = true)
 

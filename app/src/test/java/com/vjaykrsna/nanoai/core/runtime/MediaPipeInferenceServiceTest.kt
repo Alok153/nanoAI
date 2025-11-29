@@ -15,10 +15,17 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
+/**
+ * Robolectric tests for [MediaPipeInferenceService].
+ *
+ * Uses JUnit 4 with [MainDispatcherRule] because Robolectric requires `@RunWith`.
+ */
 @RunWith(RobolectricTestRunner::class)
 class MediaPipeInferenceServiceTest {
 
-  @get:Rule val mainDispatcherRule = MainDispatcherRule()
+  @Suppress("DEPRECATION") // MainDispatcherRule required for JUnit 4 / Robolectric
+  @get:Rule
+  val mainDispatcherRule = MainDispatcherRule()
 
   private lateinit var context: Context
   private lateinit var service: MediaPipeInferenceService

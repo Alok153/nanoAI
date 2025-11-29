@@ -19,6 +19,7 @@ import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -27,13 +28,13 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalMaterial3WindowSizeClassApi::class)
-class NavigationViewModelTest {
+class NavigationCoordinatorTest {
   private val dispatcher = StandardTestDispatcher()
 
   @JvmField @RegisterExtension val mainDispatcherExtension = MainDispatcherExtension(dispatcher)
 
   private lateinit var navigationOperationsUseCase: NavigationOperationsUseCase
-  private lateinit var viewModel: NavigationViewModel
+  private lateinit var coordinator: NavigationCoordinator
 
   private val windowSizeClassFlow =
     MutableStateFlow(WindowSizeClass.calculateFromSize(DpSize(400.dp, 800.dp)))
@@ -49,114 +50,132 @@ class NavigationViewModelTest {
     every { navigationOperationsUseCase.recentActivity } returns recentActivityFlow
     every { navigationOperationsUseCase.undoPayload } returns undoPayloadFlow
 
-    viewModel = NavigationViewModel(navigationOperationsUseCase)
+    coordinator = NavigationCoordinator(navigationOperationsUseCase)
   }
 
   @Test
   fun `openMode updates activeMode to chat`() =
     runTest(dispatcher) {
-      viewModel.openMode(ModeId.CHAT)
+      backgroundScope.launch {
+        val stateFlow = coordinator.navigationState(this)
+        coordinator.openMode(ModeId.CHAT)
+        val state = stateFlow.first { it.activeMode == ModeId.CHAT }
+        assertThat(state.activeMode).isEqualTo(ModeId.CHAT)
+      }
       advanceUntilIdle()
-
-      val state = viewModel.navigationState.first()
-      assertThat(state.activeMode).isEqualTo(ModeId.CHAT)
     }
 
   @Test
   fun `openMode updates activeMode to image`() =
     runTest(dispatcher) {
-      viewModel.openMode(ModeId.IMAGE)
+      backgroundScope.launch {
+        val stateFlow = coordinator.navigationState(this)
+        coordinator.openMode(ModeId.IMAGE)
+        val state = stateFlow.first { it.activeMode == ModeId.IMAGE }
+        assertThat(state.activeMode).isEqualTo(ModeId.IMAGE)
+      }
       advanceUntilIdle()
-
-      val state = viewModel.navigationState.first()
-      assertThat(state.activeMode).isEqualTo(ModeId.IMAGE)
     }
 
   @Test
   fun `toggleLeftDrawer opens closed drawer`() =
     runTest(dispatcher) {
-      viewModel.toggleLeftDrawer()
+      backgroundScope.launch {
+        val stateFlow = coordinator.navigationState(this)
+        coordinator.toggleLeftDrawer()
+        val state = stateFlow.first { it.leftDrawerState.isOpen }
+        assertThat(state.leftDrawerState.isOpen).isTrue()
+      }
       advanceUntilIdle()
-
-      val state = viewModel.navigationState.first()
-      assertThat(state.leftDrawerState.isOpen).isTrue()
     }
 
   @Test
   fun `toggleLeftDrawer closes open drawer`() =
     runTest(dispatcher) {
-      viewModel.setLeftDrawer(true)
+      backgroundScope.launch {
+        val stateFlow = coordinator.navigationState(this)
+        coordinator.setLeftDrawer(true)
+        stateFlow.first { it.leftDrawerState.isOpen }
+        coordinator.toggleLeftDrawer()
+        val state = stateFlow.first { !it.leftDrawerState.isOpen }
+        assertThat(state.leftDrawerState.isOpen).isFalse()
+      }
       advanceUntilIdle()
-      viewModel.toggleLeftDrawer()
-      advanceUntilIdle()
-
-      val state = viewModel.navigationState.first()
-      assertThat(state.leftDrawerState.isOpen).isFalse()
     }
 
   @Test
   fun `setLeftDrawer opens drawer when true`() =
     runTest(dispatcher) {
-      viewModel.setLeftDrawer(true)
+      backgroundScope.launch {
+        val stateFlow = coordinator.navigationState(this)
+        coordinator.setLeftDrawer(true)
+        val state = stateFlow.first { it.leftDrawerState.isOpen }
+        assertThat(state.leftDrawerState.isOpen).isTrue()
+      }
       advanceUntilIdle()
-
-      val state = viewModel.navigationState.first()
-      assertThat(state.leftDrawerState.isOpen).isTrue()
     }
 
   @Test
   fun `setLeftDrawer closes drawer when false`() =
     runTest(dispatcher) {
-      viewModel.setLeftDrawer(true)
+      backgroundScope.launch {
+        val stateFlow = coordinator.navigationState(this)
+        coordinator.setLeftDrawer(true)
+        stateFlow.first { it.leftDrawerState.isOpen }
+        coordinator.setLeftDrawer(false)
+        val state = stateFlow.first { !it.leftDrawerState.isOpen }
+        assertThat(state.leftDrawerState.isOpen).isFalse()
+      }
       advanceUntilIdle()
-      viewModel.setLeftDrawer(false)
-      advanceUntilIdle()
-
-      val state = viewModel.navigationState.first()
-      assertThat(state.leftDrawerState.isOpen).isFalse()
     }
 
   @Test
   fun `toggleRightDrawer opens drawer and sets panel`() =
     runTest(dispatcher) {
-      viewModel.toggleRightDrawer(RightPanel.MODEL_SELECTOR)
+      backgroundScope.launch {
+        val stateFlow = coordinator.navigationState(this)
+        coordinator.toggleRightDrawer(RightPanel.MODEL_SELECTOR)
+        val state = stateFlow.first { it.rightDrawerState.isOpen }
+        assertThat(state.rightDrawerState.isOpen).isTrue()
+        assertThat(state.activeRightPanel).isEqualTo(RightPanel.MODEL_SELECTOR)
+      }
       advanceUntilIdle()
-
-      val state = viewModel.navigationState.first()
-      assertThat(state.rightDrawerState.isOpen).isTrue()
-      assertThat(state.activeRightPanel).isEqualTo(RightPanel.MODEL_SELECTOR)
     }
 
   @Test
   fun `toggleRightDrawer closes open drawer and clears panel`() =
     runTest(dispatcher) {
-      viewModel.toggleRightDrawer(RightPanel.MODEL_SELECTOR)
+      backgroundScope.launch {
+        val stateFlow = coordinator.navigationState(this)
+        coordinator.toggleRightDrawer(RightPanel.MODEL_SELECTOR)
+        stateFlow.first { it.rightDrawerState.isOpen }
+        coordinator.toggleRightDrawer(RightPanel.MODEL_SELECTOR)
+        val state = stateFlow.first { !it.rightDrawerState.isOpen }
+        assertThat(state.rightDrawerState.isOpen).isFalse()
+        assertThat(state.activeRightPanel).isNull()
+      }
       advanceUntilIdle()
-      viewModel.toggleRightDrawer(RightPanel.MODEL_SELECTOR)
-      advanceUntilIdle()
-
-      val state = viewModel.navigationState.first()
-      assertThat(state.rightDrawerState.isOpen).isFalse()
-      assertThat(state.activeRightPanel).isNull()
     }
 
   @Test
   fun `toggleRightDrawer with different panel keeps drawer open`() =
     runTest(dispatcher) {
-      viewModel.toggleRightDrawer(RightPanel.MODEL_SELECTOR)
+      backgroundScope.launch {
+        val stateFlow = coordinator.navigationState(this)
+        coordinator.toggleRightDrawer(RightPanel.MODEL_SELECTOR)
+        stateFlow.first { it.rightDrawerState.isOpen }
+        coordinator.toggleRightDrawer(RightPanel.SETTINGS_SHORTCUT)
+        val state = stateFlow.first { !it.rightDrawerState.isOpen }
+        assertThat(state.rightDrawerState.isOpen).isFalse()
+        assertThat(state.activeRightPanel).isNull()
+      }
       advanceUntilIdle()
-      viewModel.toggleRightDrawer(RightPanel.SETTINGS_SHORTCUT)
-      advanceUntilIdle()
-
-      val state = viewModel.navigationState.first()
-      assertThat(state.rightDrawerState.isOpen).isFalse()
-      assertThat(state.activeRightPanel).isNull()
     }
 
   @Test
   fun `showCommandPalette delegates to use case`() =
     runTest(dispatcher) {
-      viewModel.showCommandPalette(PaletteSource.KEYBOARD_SHORTCUT)
+      coordinator.showCommandPalette(PaletteSource.KEYBOARD_SHORTCUT)
       advanceUntilIdle()
 
       verify { navigationOperationsUseCase.showCommandPalette(PaletteSource.KEYBOARD_SHORTCUT) }
@@ -165,7 +184,7 @@ class NavigationViewModelTest {
   @Test
   fun `hideCommandPalette delegates to use case`() =
     runTest(dispatcher) {
-      viewModel.hideCommandPalette()
+      coordinator.hideCommandPalette()
       advanceUntilIdle()
 
       verify { navigationOperationsUseCase.hideCommandPalette() }
@@ -175,7 +194,7 @@ class NavigationViewModelTest {
   fun `updateWindowSizeClass delegates to use case`() =
     runTest(dispatcher) {
       val newSizeClass = WindowSizeClass.calculateFromSize(DpSize(1200.dp, 800.dp))
-      viewModel.updateWindowSizeClass(newSizeClass)
+      coordinator.updateWindowSizeClass(newSizeClass)
       advanceUntilIdle()
 
       verify { navigationOperationsUseCase.updateWindowSizeClass(newSizeClass) }
@@ -197,22 +216,26 @@ class NavigationViewModelTest {
   @Test
   fun `command palette state reflects use case flow`() =
     runTest(dispatcher) {
-      val updatedPalette = CommandPaletteState(query = "test query")
-      commandPaletteFlow.value = updatedPalette
+      backgroundScope.launch {
+        val stateFlow = coordinator.navigationState(this)
+        val updatedPalette = CommandPaletteState(query = "test query")
+        commandPaletteFlow.value = updatedPalette
+        val state = stateFlow.first { it.commandPalette == updatedPalette }
+        assertThat(state.commandPalette).isEqualTo(updatedPalette)
+      }
       advanceUntilIdle()
-
-      val state = viewModel.navigationState.first()
-      assertThat(state.commandPalette).isEqualTo(updatedPalette)
     }
 
   @Test
   fun `window size class reflects use case flow`() =
     runTest(dispatcher) {
-      val newSizeClass = WindowSizeClass.calculateFromSize(DpSize(1000.dp, 600.dp))
-      windowSizeClassFlow.value = newSizeClass
+      backgroundScope.launch {
+        val stateFlow = coordinator.navigationState(this)
+        val newSizeClass = WindowSizeClass.calculateFromSize(DpSize(1000.dp, 600.dp))
+        windowSizeClassFlow.value = newSizeClass
+        val state = stateFlow.first { it.windowState == newSizeClass }
+        assertThat(state.windowState).isEqualTo(newSizeClass)
+      }
       advanceUntilIdle()
-
-      val state = viewModel.navigationState.first()
-      assertThat(state.windowState).isEqualTo(newSizeClass)
     }
 }

@@ -2,7 +2,7 @@ package com.vjaykrsna.nanoai.core.domain.library
 
 import io.mockk.coEvery
 import io.mockk.mockk
-import org.junit.Before
+import org.junit.jupiter.api.BeforeEach
 
 internal abstract class ModelDownloadsAndExportUseCaseTestBase {
   protected lateinit var useCase: ModelDownloadsAndExportUseCase
@@ -10,7 +10,7 @@ internal abstract class ModelDownloadsAndExportUseCaseTestBase {
   protected lateinit var downloadManager: DownloadManager
   protected lateinit var exportService: ExportService
 
-  @Before
+  @BeforeEach
   fun setupBase() {
     modelCatalogRepository = mockk(relaxed = true)
     downloadManager = mockk(relaxed = true)

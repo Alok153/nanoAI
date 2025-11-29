@@ -12,9 +12,10 @@ import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okio.Buffer
-import org.junit.After
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 
@@ -27,7 +28,7 @@ class HuggingFaceManifestFetcherTest {
   private lateinit var service: HuggingFaceService
   private lateinit var fetcher: HuggingFaceManifestFetcher
 
-  @Before
+  @BeforeEach
   fun setUp() {
     server = MockWebServer()
     server.start()
@@ -43,7 +44,7 @@ class HuggingFaceManifestFetcherTest {
     fetcher = HuggingFaceManifestFetcher(service, FixedClock)
   }
 
-  @After
+  @AfterEach
   fun tearDown() {
     server.shutdown()
   }
@@ -126,7 +127,7 @@ class HuggingFaceManifestFetcherTest {
     assertThat(server.requestCount).isEqualTo(2)
   }
 
-  @Test(expected = IllegalArgumentException::class)
+  @Test
   fun `fetchManifest throws when checksum missing`() = runTest {
     enqueueJson("[]")
     enqueueJson(
@@ -154,7 +155,7 @@ class HuggingFaceManifestFetcherTest {
         version = "main",
       )
 
-    fetcher.fetchManifest(request)
+    assertThrows<IllegalArgumentException> { fetcher.fetchManifest(request) }
   }
 
   private fun enqueueJson(body: String, status: Int = HttpURLConnection.HTTP_OK) {

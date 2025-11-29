@@ -93,4 +93,17 @@
     <string name="progress_center_panel_clear_content_description">Clear %s job</string>
     <string name="progress_center_panel_clear_completed">Job completed; clear from queue</string>
     <string name="progress_center_panel_clear_failed">Job failed; clear from queue</string>
+
+    <!-- Notification Strings -->
+    <string name="notification_channel_background_tasks">Background Tasks</string>
+    <string name="notification_channel_background_tasks_description">Notifications for background tasks like model downloads</string>
+    <string name="notification_download_title">Downloading %s</string>
+    <string name="notification_download_progress">%d%% complete</string>
+    <string name="notification_download_complete_title">Download Complete</string>
+    <string name="notification_download_complete_message">%s downloaded successfully</string>
+    <string name="notification_download_failed_title">Download Failed</string>
+    <string name="notification_download_failed_message">%1$s: %2$s</string>
+    <string name="notification_action_resume">Resume</string>
+    <string name="notification_action_pause">Pause</string>
+    <string name="notification_action_cancel">Cancel</string>
 </resources>

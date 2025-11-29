@@ -9,6 +9,7 @@ import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import java.util.UUID
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -17,7 +18,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class ProgressViewModelTest {
+class ProgressCoordinatorTest {
   private val dispatcher = StandardTestDispatcher()
 
   @JvmField @RegisterExtension val mainDispatcherExtension = MainDispatcherExtension(dispatcher)
@@ -29,7 +30,7 @@ class ProgressViewModelTest {
       runBlocking {
         fakeRepos.connectivityRepository.updateConnectivity(ConnectivityStatus.OFFLINE)
       }
-      val viewModel = createProgressViewModel(fakeRepos, dispatcher)
+      val coordinator = createProgressCoordinator(fakeRepos, dispatcher)
 
       val job =
         ProgressJob(
@@ -42,11 +43,14 @@ class ProgressViewModelTest {
           subtitle = "Test job",
         )
 
-      viewModel.queueGeneration(job)
+      backgroundScope.launch {
+        // Create the StateFlow in background scope to start observing
+        val progressJobsFlow = coordinator.progressJobs(this)
+        coordinator.queueGeneration(job)
+        val jobs = progressJobsFlow.first { it.isNotEmpty() }
+        assertThat(jobs).hasSize(1)
+        assertThat(jobs.first().jobId).isEqualTo(job.jobId)
+      }
       advanceUntilIdle()
-
-      val jobs = viewModel.progressJobs.first { it.isNotEmpty() }
-      assertThat(jobs).hasSize(1)
-      assertThat(jobs.first().jobId).isEqualTo(job.jobId)
     }
 }

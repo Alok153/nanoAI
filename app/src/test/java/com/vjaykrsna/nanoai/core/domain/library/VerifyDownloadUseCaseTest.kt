@@ -13,8 +13,8 @@ import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 class VerifyDownloadUseCaseTest {
   private lateinit var useCase: VerifyDownloadUseCase
@@ -24,7 +24,7 @@ class VerifyDownloadUseCaseTest {
   private val modelId = "test-model"
   private val checksum = "abc123"
 
-  @Before
+  @BeforeEach
   fun setup() {
     modelCatalogRepository = mockk(relaxed = true)
     downloadManager = mockk(relaxed = true)

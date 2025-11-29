@@ -39,21 +39,21 @@ class ShellViewModelJobQueueTest {
         NavigationOperationsUseCase(fakeRepos.navigationRepository, dispatcher)
       val observeUserProfileUseCase =
         ObserveUserProfileUseCase(fakeRepos.userProfileRepository, dispatcher)
-      val progressViewModel = createProgressViewModel(fakeRepos, dispatcher)
+      val progressCoordinator = createProgressCoordinator(fakeRepos, dispatcher)
 
-      // Mock navigation-only interactions; other sub-ViewModels are real to surface flows
-      val navigationViewModel = mockk<NavigationViewModel>(relaxed = true)
-      val connectivityViewModel = createConnectivityViewModel(fakeRepos, dispatcher)
-      val themeViewModel = createThemeViewModel(fakeRepos, dispatcher)
+      // Mock navigation-only interactions; other sub-coordinators are real to surface flows
+      val navigationCoordinator = mockk<NavigationCoordinator>(relaxed = true)
+      val connectivityCoordinator = createConnectivityCoordinator(fakeRepos, dispatcher)
+      val themeCoordinator = createThemeCoordinator(fakeRepos, dispatcher)
 
       val viewModel =
         ShellViewModel(
           navigationOperationsUseCase,
           observeUserProfileUseCase,
-          navigationViewModel,
-          connectivityViewModel,
-          progressViewModel,
-          themeViewModel,
+          navigationCoordinator,
+          connectivityCoordinator,
+          progressCoordinator,
+          themeCoordinator,
           dispatcher,
         )
 
@@ -87,20 +87,20 @@ class ShellViewModelJobQueueTest {
         NavigationOperationsUseCase(fakeRepos.navigationRepository, dispatcher)
       val observeUserProfileUseCase =
         ObserveUserProfileUseCase(fakeRepos.userProfileRepository, dispatcher)
-      val progressViewModel = createProgressViewModel(fakeRepos, dispatcher)
+      val progressCoordinator = createProgressCoordinator(fakeRepos, dispatcher)
 
-      val navigationViewModel = mockk<NavigationViewModel>(relaxed = true)
-      val connectivityViewModel = createConnectivityViewModel(fakeRepos, dispatcher)
-      val themeViewModel = createThemeViewModel(fakeRepos, dispatcher)
+      val navigationCoordinator = mockk<NavigationCoordinator>(relaxed = true)
+      val connectivityCoordinator = createConnectivityCoordinator(fakeRepos, dispatcher)
+      val themeCoordinator = createThemeCoordinator(fakeRepos, dispatcher)
 
       val viewModel =
         ShellViewModel(
           navigationOperationsUseCase,
           observeUserProfileUseCase,
-          navigationViewModel,
-          connectivityViewModel,
-          progressViewModel,
-          themeViewModel,
+          navigationCoordinator,
+          connectivityCoordinator,
+          progressCoordinator,
+          themeCoordinator,
           dispatcher,
         )
 

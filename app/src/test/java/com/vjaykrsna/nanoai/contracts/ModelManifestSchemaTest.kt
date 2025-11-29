@@ -7,8 +7,8 @@ import com.networknt.schema.ValidationMessage
 import com.vjaykrsna.nanoai.core.common.Capability
 import com.vjaykrsna.nanoai.core.common.RuntimeType
 import java.io.File
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 /**
  * JSON Schema validation test for model-manifest.json. Ensures downloadable model manifests conform
@@ -20,7 +20,7 @@ import org.junit.Test
 class ModelManifestSchemaTest {
   private lateinit var schemaFile: File
 
-  @Before
+  @BeforeEach
   fun setup() {
     // Schema is in test resources
     val classLoader = javaClass.classLoader

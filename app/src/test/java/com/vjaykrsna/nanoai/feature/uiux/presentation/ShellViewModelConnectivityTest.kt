@@ -33,19 +33,19 @@ class ShellViewModelConnectivityTest {
       val observeUserProfileUseCase =
         ObserveUserProfileUseCase(fakeRepos.userProfileRepository, dispatcher)
 
-      val navigationViewModel = mockk<NavigationViewModel>(relaxed = true)
-      val connectivityViewModel = createConnectivityViewModel(fakeRepos, dispatcher)
-      val progressViewModel = createProgressViewModel(fakeRepos, dispatcher)
-      val themeViewModel = createThemeViewModel(fakeRepos, dispatcher)
+      val navigationCoordinator = mockk<NavigationCoordinator>(relaxed = true)
+      val connectivityCoordinator = createConnectivityCoordinator(fakeRepos, dispatcher)
+      val progressCoordinator = createProgressCoordinator(fakeRepos, dispatcher)
+      val themeCoordinator = createThemeCoordinator(fakeRepos, dispatcher)
 
       val viewModel =
         ShellViewModel(
           navigationOperationsUseCase,
           observeUserProfileUseCase,
-          navigationViewModel,
-          connectivityViewModel,
-          progressViewModel,
-          themeViewModel,
+          navigationCoordinator,
+          connectivityCoordinator,
+          progressCoordinator,
+          themeCoordinator,
           dispatcher,
         )
 
@@ -68,23 +68,23 @@ class ShellViewModelConnectivityTest {
       val observeUserProfileUseCase =
         ObserveUserProfileUseCase(fakeRepos.userProfileRepository, dispatcher)
 
-      val navigationViewModel = mockk<NavigationViewModel>(relaxed = true)
-      val connectivityViewModel = createConnectivityViewModel(fakeRepos, dispatcher)
-      val progressViewModel = createProgressViewModel(fakeRepos, dispatcher)
-      val themeViewModel = createThemeViewModel(fakeRepos, dispatcher)
+      val navigationCoordinator = mockk<NavigationCoordinator>(relaxed = true)
+      val connectivityCoordinator = createConnectivityCoordinator(fakeRepos, dispatcher)
+      val progressCoordinator = createProgressCoordinator(fakeRepos, dispatcher)
+      val themeCoordinator = createThemeCoordinator(fakeRepos, dispatcher)
 
       val viewModel =
         ShellViewModel(
           navigationOperationsUseCase,
           observeUserProfileUseCase,
-          navigationViewModel,
-          connectivityViewModel,
-          progressViewModel,
-          themeViewModel,
+          navigationCoordinator,
+          connectivityCoordinator,
+          progressCoordinator,
+          themeCoordinator,
           dispatcher,
         )
 
-      themeViewModel.updateThemePreference(ThemePreference.DARK)
+      themeCoordinator.updateThemePreference(this, ThemePreference.DARK)
       advanceUntilIdle()
 
       val uiState = viewModel.uiState.first { it.preferences.theme == ThemePreference.DARK }
@@ -101,19 +101,19 @@ class ShellViewModelConnectivityTest {
       val observeUserProfileUseCase =
         ObserveUserProfileUseCase(fakeRepos.userProfileRepository, dispatcher)
 
-      val navigationViewModel = mockk<NavigationViewModel>(relaxed = true)
-      val connectivityViewModel = createConnectivityViewModel(fakeRepos, dispatcher)
-      val progressViewModel = createProgressViewModel(fakeRepos, dispatcher)
-      val themeViewModel = createThemeViewModel(fakeRepos, dispatcher)
+      val navigationCoordinator = mockk<NavigationCoordinator>(relaxed = true)
+      val connectivityCoordinator = createConnectivityCoordinator(fakeRepos, dispatcher)
+      val progressCoordinator = createProgressCoordinator(fakeRepos, dispatcher)
+      val themeCoordinator = createThemeCoordinator(fakeRepos, dispatcher)
 
       val viewModel =
         ShellViewModel(
           navigationOperationsUseCase,
           observeUserProfileUseCase,
-          navigationViewModel,
-          connectivityViewModel,
-          progressViewModel,
-          themeViewModel,
+          navigationCoordinator,
+          connectivityCoordinator,
+          progressCoordinator,
+          themeCoordinator,
           dispatcher,
         )
 

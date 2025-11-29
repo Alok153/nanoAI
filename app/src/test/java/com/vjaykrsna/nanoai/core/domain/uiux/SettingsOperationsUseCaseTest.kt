@@ -9,15 +9,15 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 class SettingsOperationsUseCaseTest {
   private lateinit var useCase: SettingsOperationsUseCase
   private lateinit var repository: UserProfileRepository
   private val dispatcher = StandardTestDispatcher()
 
-  @Before
+  @BeforeEach
   fun setup() {
     repository = mockk<UserProfileRepository>(relaxed = true)
 

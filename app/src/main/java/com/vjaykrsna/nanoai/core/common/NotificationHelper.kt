@@ -55,10 +55,13 @@ class NotificationHelper @Inject constructor(@ApplicationContext private val con
       val channel =
         NotificationChannel(
             CHANNEL_ID_BACKGROUND_TASKS,
-            "Background Tasks",
+            context.getString(R.string.notification_channel_background_tasks),
             NotificationManager.IMPORTANCE_DEFAULT,
           )
-          .apply { description = "Notifications for background tasks like model downloads" }
+          .apply {
+            description =
+              context.getString(R.string.notification_channel_background_tasks_description)
+          }
       val manager = context.getSystemService(NotificationManager::class.java)
       manager.createNotificationChannel(channel)
     }
@@ -111,14 +114,26 @@ class NotificationHelper @Inject constructor(@ApplicationContext private val con
 
     return NotificationCompat.Builder(context, CHANNEL_ID_BACKGROUND_TASKS)
       .setSmallIcon(android.R.drawable.stat_sys_download)
-      .setContentTitle("Downloading $modelName")
-      .setContentText("$progress% complete")
+      .setContentTitle(context.getString(R.string.notification_download_title, modelName))
+      .setContentText(context.getString(R.string.notification_download_progress, progress))
       .setProgress(PROGRESS_MAX_VALUE, progress, false)
       .setOngoing(true)
       .setContentIntent(openAppPendingIntent)
-      .addAction(android.R.drawable.ic_media_play, "Resume", resumePendingIntent)
-      .addAction(android.R.drawable.ic_media_pause, "Pause", pausePendingIntent)
-      .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Cancel", cancelPendingIntent)
+      .addAction(
+        android.R.drawable.ic_media_play,
+        context.getString(R.string.notification_action_resume),
+        resumePendingIntent,
+      )
+      .addAction(
+        android.R.drawable.ic_media_pause,
+        context.getString(R.string.notification_action_pause),
+        pausePendingIntent,
+      )
+      .addAction(
+        android.R.drawable.ic_menu_close_clear_cancel,
+        context.getString(R.string.notification_action_cancel),
+        cancelPendingIntent,
+      )
       .build()
   }
 
@@ -127,8 +142,8 @@ class NotificationHelper @Inject constructor(@ApplicationContext private val con
 
     return NotificationCompat.Builder(context, CHANNEL_ID_BACKGROUND_TASKS)
       .setSmallIcon(android.R.drawable.stat_sys_download_done)
-      .setContentTitle("Download Complete")
-      .setContentText("$modelName downloaded successfully")
+      .setContentTitle(context.getString(R.string.notification_download_complete_title))
+      .setContentText(context.getString(R.string.notification_download_complete_message, modelName))
       .setAutoCancel(true)
       .setContentIntent(openAppPendingIntent)
       .build()
@@ -139,8 +154,10 @@ class NotificationHelper @Inject constructor(@ApplicationContext private val con
 
     return NotificationCompat.Builder(context, CHANNEL_ID_BACKGROUND_TASKS)
       .setSmallIcon(android.R.drawable.stat_notify_error)
-      .setContentTitle("Download Failed")
-      .setContentText("$modelName: $errorMessage")
+      .setContentTitle(context.getString(R.string.notification_download_failed_title))
+      .setContentText(
+        context.getString(R.string.notification_download_failed_message, modelName, errorMessage)
+      )
       .setAutoCancel(true)
       .setContentIntent(openAppPendingIntent)
       .build()

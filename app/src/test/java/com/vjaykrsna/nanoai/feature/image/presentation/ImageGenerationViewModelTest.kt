@@ -65,7 +65,7 @@ class ImageGenerationViewModelTest {
       val uiState = viewModel.state.value
       assertThat(uiState.isGenerating).isFalse()
       assertThat(uiState.generatedImagePath).isNotNull()
-      assertThat(uiState.errorMessage).isEqualTo("Image generation not yet implemented")
+      assertThat(uiState.errorMessage).contains("Preview mode")
       coVerify { imageGalleryUseCase.saveImage(any()) }
     }
 }

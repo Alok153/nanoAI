@@ -7,7 +7,7 @@ import com.vjaykrsna.nanoai.core.coverage.model.TestLayer
 import com.vjaykrsna.nanoai.core.coverage.verification.CoverageThresholdVerifier
 import java.time.Instant
 import kotlin.test.assertFailsWith
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class VerifyCoverageThresholdsTaskTest {
 

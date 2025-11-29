@@ -1,7 +1,5 @@
 package com.vjaykrsna.nanoai.feature.uiux.presentation
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ProgressJob
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UndoPayload
@@ -9,32 +7,38 @@ import com.vjaykrsna.nanoai.core.domain.uiux.JobOperationsUseCase
 import com.vjaykrsna.nanoai.core.domain.uiux.ProgressCenterCoordinator
 import com.vjaykrsna.nanoai.core.domain.uiux.QueueJobUseCase
 import com.vjaykrsna.nanoai.core.domain.uiux.UndoActionUseCase
-import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.UUID
 import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-/** ViewModel responsible for background job progress management and coordination. */
-@HiltViewModel
-class ProgressViewModel
+/**
+ * Coordinator responsible for background job progress management and coordination.
+ *
+ * This is a regular injectable class (not a ViewModel) because it's composed into ShellViewModel
+ * rather than used independently with ViewModelProvider.
+ */
+@Singleton
+class ProgressCoordinator
 @Inject
 constructor(
-  private val progressCoordinator: ProgressCenterCoordinator,
+  private val progressCenterCoordinator: ProgressCenterCoordinator,
   private val queueJobUseCase: QueueJobUseCase,
   private val jobOperationsUseCase: JobOperationsUseCase,
   private val undoActionUseCase: UndoActionUseCase,
   @MainImmediateDispatcher private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
-) : ViewModel() {
+) {
 
   /** Flow of all active progress jobs for display in progress center. */
-  val progressJobs: StateFlow<List<ProgressJob>> =
-    progressCoordinator.progressJobs.stateIn(
-      scope = viewModelScope,
+  fun progressJobs(scope: CoroutineScope): StateFlow<List<ProgressJob>> =
+    progressCenterCoordinator.progressJobs.stateIn(
+      scope = scope,
       started = SharingStarted.Eagerly,
       initialValue = emptyList(),
     )
@@ -55,18 +59,18 @@ constructor(
   }
 
   /** Cancels an active job. */
-  fun cancelJob(jobId: UUID) {
-    viewModelScope.launch(dispatcher) { progressCoordinator.cancelJob(jobId) }
+  fun cancelJob(scope: CoroutineScope, jobId: UUID) {
+    scope.launch(dispatcher) { progressCenterCoordinator.cancelJob(jobId) }
   }
 
   /** Pauses a running job. */
-  fun pauseJob(jobId: UUID) {
-    viewModelScope.launch(dispatcher) { progressCoordinator.pauseJob(jobId) }
+  fun pauseJob(scope: CoroutineScope, jobId: UUID) {
+    scope.launch(dispatcher) { progressCenterCoordinator.pauseJob(jobId) }
   }
 
   /** Resumes a paused job. */
-  fun resumeJob(jobId: UUID) {
-    viewModelScope.launch(dispatcher) { progressCoordinator.resumeJob(jobId) }
+  fun resumeJob(scope: CoroutineScope, jobId: UUID) {
+    scope.launch(dispatcher) { progressCenterCoordinator.resumeJob(jobId) }
   }
 
   /** Executes an undo action based on the provided payload. */

@@ -10,8 +10,8 @@ import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 class HuggingFaceModelCacheDataSourceTest {
 
@@ -19,7 +19,7 @@ class HuggingFaceModelCacheDataSourceTest {
   private lateinit var dataSource: HuggingFaceModelCacheDataSource
   private lateinit var fixedClock: Clock
 
-  @Before
+  @BeforeEach
   fun setup() {
     dao = mockk(relaxed = true)
     fixedClock = mockk()

@@ -2,7 +2,7 @@ package com.vjaykrsna.nanoai.contracts
 
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.common.Capability
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 /**
  * Contract test for GET /v1/models endpoint. Validates response schema conforms to

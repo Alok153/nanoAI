@@ -13,15 +13,15 @@ import java.io.IOException
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 class ThemeOperationsUseCaseTest {
 
   private lateinit var repository: ThemeRepository
   private lateinit var useCase: ThemeOperationsUseCase
 
-  @Before
+  @BeforeEach
   fun setUp() {
     repository = mockk(relaxed = true)
     useCase = ThemeOperationsUseCase(repository)

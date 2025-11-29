@@ -23,8 +23,8 @@ import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 class ExportServiceImplTest {
   private val json = Json { prettyPrint = true }
@@ -35,7 +35,7 @@ class ExportServiceImplTest {
 
   private lateinit var exportService: ExportServiceImpl
 
-  @Before
+  @BeforeEach
   fun setup() {
     personaRepository = FakePersonaRepository()
     apiProviderRepository = FakeApiProviderConfigRepository()

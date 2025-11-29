@@ -1,7 +1,7 @@
 package com.vjaykrsna.nanoai.core.data.library.catalog
 
 import com.google.common.truth.Truth.assertThat
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class ModelManifestLocatorTest {
   @Test

@@ -28,7 +28,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.json.Json
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 /**
  * Regression coverage for manifest integrity handling. Verifies manifests must be signed, use

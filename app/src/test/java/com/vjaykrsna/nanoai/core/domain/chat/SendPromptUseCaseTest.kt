@@ -14,8 +14,8 @@ import kotlin.test.assertIs
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Instant
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 class SendPromptUseCaseTest {
   private lateinit var useCase: SendPromptUseCase
@@ -28,7 +28,7 @@ class SendPromptUseCaseTest {
   private val personaId = UUID.randomUUID()
   private val prompt = "Test prompt"
 
-  @Before
+  @BeforeEach
   fun setup() {
     conversationRepository = mockk(relaxed = true)
     personaRepository = mockk(relaxed = true)

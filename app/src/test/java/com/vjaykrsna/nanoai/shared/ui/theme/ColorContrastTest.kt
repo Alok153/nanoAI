@@ -5,7 +5,7 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import com.vjaykrsna.nanoai.shared.ui.theme.ColorContrastUtil.calculateContrastRatio
 import org.junit.Assert.assertTrue
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 /**
  * Tests for color contrast ratios to ensure WCAG AA compliance.

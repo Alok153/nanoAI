@@ -15,7 +15,7 @@ import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 internal class ModelDownloadsAndExportUseCaseDownloadTest :
   ModelDownloadsAndExportUseCaseTestBase() {

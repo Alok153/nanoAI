@@ -8,8 +8,8 @@ import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 class ModelManifestRepositoryHuggingFaceTest {
   private val modelManifestUseCase: ModelManifestUseCase = mockk(relaxed = true)
@@ -17,7 +17,7 @@ class ModelManifestRepositoryHuggingFaceTest {
 
   private lateinit var repository: ModelManifestRepository
 
-  @Before
+  @BeforeEach
   fun setUp() {
     repository = ModelManifestRepositoryImpl(modelManifestUseCase = modelManifestUseCase)
   }

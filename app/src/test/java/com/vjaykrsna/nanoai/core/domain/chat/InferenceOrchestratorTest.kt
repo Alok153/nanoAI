@@ -35,8 +35,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Instant
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class InferenceOrchestratorTest {
@@ -50,7 +50,7 @@ class InferenceOrchestratorTest {
   private lateinit var orchestrator: InferenceOrchestrator
   private lateinit var inferencePreferenceFlow: MutableStateFlow<InferencePreference>
 
-  @Before
+  @BeforeEach
   fun setup() {
     MockKAnnotations.init(this)
     inferencePreferenceFlow = MutableStateFlow(InferencePreference(InferenceMode.LOCAL_FIRST))

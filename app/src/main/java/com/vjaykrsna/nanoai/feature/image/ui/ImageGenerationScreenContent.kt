@@ -9,10 +9,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.filled.Science
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -70,7 +72,7 @@ private fun ImageGenerationBody(
     modifier = modifier.padding(NanoSpacing.lg).verticalScroll(rememberScrollState()),
     verticalArrangement = Arrangement.spacedBy(NanoSpacing.md),
   ) {
-    ImageGenerationHeader(onGalleryClick = onGalleryClick)
+    ImageGenerationHeader(onGalleryClick = onGalleryClick, isPreviewMode = state.isPreviewMode)
     ImageDisplayArea(
       generatedImagePath = state.generatedImagePath,
       isGenerating = state.isGenerating,
@@ -88,22 +90,54 @@ private fun ImageGenerationBody(
 }
 
 @Composable
-private fun ImageGenerationHeader(onGalleryClick: () -> Unit) {
-  Row(
-    modifier = Modifier.fillMaxWidth(),
-    horizontalArrangement = Arrangement.SpaceBetween,
-    verticalAlignment = Alignment.CenterVertically,
+private fun ImageGenerationHeader(onGalleryClick: () -> Unit, isPreviewMode: Boolean = true) {
+  Column(verticalArrangement = Arrangement.spacedBy(NanoSpacing.sm)) {
+    Row(
+      modifier = Modifier.fillMaxWidth(),
+      horizontalArrangement = Arrangement.SpaceBetween,
+      verticalAlignment = Alignment.CenterVertically,
+    ) {
+      Text(
+        text = "Image Generation",
+        style = MaterialTheme.typography.headlineMedium,
+        fontWeight = FontWeight.Bold,
+      )
+      IconButton(onClick = onGalleryClick, modifier = Modifier.testTag("gallery_button")) {
+        Icon(
+          Icons.Default.PhotoLibrary,
+          contentDescription = "Open gallery",
+          tint = MaterialTheme.colorScheme.primary,
+        )
+      }
+    }
+    if (isPreviewMode) {
+      PreviewModeBadge()
+    }
+  }
+}
+
+@Composable
+private fun PreviewModeBadge() {
+  Surface(
+    color = MaterialTheme.colorScheme.tertiaryContainer,
+    shape = RoundedCornerShape(NanoSpacing.sm),
+    modifier = Modifier.testTag("preview_mode_badge"),
   ) {
-    Text(
-      text = "Image Generation",
-      style = MaterialTheme.typography.headlineMedium,
-      fontWeight = FontWeight.Bold,
-    )
-    IconButton(onClick = onGalleryClick, modifier = Modifier.testTag("gallery_button")) {
+    Row(
+      modifier = Modifier.padding(horizontal = NanoSpacing.md, vertical = NanoSpacing.sm),
+      horizontalArrangement = Arrangement.spacedBy(NanoSpacing.sm),
+      verticalAlignment = Alignment.CenterVertically,
+    ) {
       Icon(
-        Icons.Default.PhotoLibrary,
-        contentDescription = "Open gallery",
-        tint = MaterialTheme.colorScheme.primary,
+        Icons.Default.Science,
+        contentDescription = null,
+        modifier = Modifier.size(16.dp),
+        tint = MaterialTheme.colorScheme.onTertiaryContainer,
+      )
+      Text(
+        text = "Preview Mode – Simulated generation",
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onTertiaryContainer,
       )
     }
   }

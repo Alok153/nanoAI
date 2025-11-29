@@ -301,10 +301,10 @@ internal fun createFakeProgressCenterCoordinator(
 ): ProgressCenterCoordinator =
   ProgressCenterCoordinator(downloadManager = downloadManager, progressRepository, dispatcher)
 
-internal fun createProgressViewModel(
+internal fun createProgressCoordinator(
   repositories: FakeRepositories,
   dispatcher: CoroutineDispatcher = Dispatchers.Unconfined,
-): ProgressViewModel {
+): ProgressCoordinator {
   val coordinator =
     createFakeProgressCenterCoordinator(
       progressRepository = repositories.progressRepository,
@@ -330,7 +330,7 @@ internal fun createProgressViewModel(
       repositories.navigationRepository,
       dispatcher,
     )
-  return ProgressViewModel(
+  return ProgressCoordinator(
     coordinator,
     queueJobUseCase,
     jobOperationsUseCase,
@@ -339,20 +339,20 @@ internal fun createProgressViewModel(
   )
 }
 
-internal fun createConnectivityViewModel(
+internal fun createConnectivityCoordinator(
   repositories: FakeRepositories,
   dispatcher: CoroutineDispatcher = Dispatchers.Unconfined,
-): ConnectivityViewModel {
+): ConnectivityCoordinator {
   val useCase = ConnectivityOperationsUseCase(repositories.connectivityRepository, dispatcher)
-  return ConnectivityViewModel(useCase, dispatcher)
+  return ConnectivityCoordinator(useCase, dispatcher)
 }
 
-internal fun createThemeViewModel(
+internal fun createThemeCoordinator(
   repositories: FakeRepositories,
   dispatcher: CoroutineDispatcher = Dispatchers.Unconfined,
-): ThemeViewModel {
+): ThemeCoordinator {
   val useCase = ThemeOperationsUseCase(repositories.themeRepository)
-  return ThemeViewModel(useCase, dispatcher)
+  return ThemeCoordinator(useCase, dispatcher)
 }
 
 internal class FakeDownloadManager : DownloadManager {

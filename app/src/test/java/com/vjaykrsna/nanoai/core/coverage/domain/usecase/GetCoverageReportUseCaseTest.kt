@@ -8,15 +8,15 @@ import com.vjaykrsna.nanoai.core.coverage.data.RiskPayload
 import com.vjaykrsna.nanoai.core.coverage.model.TestLayer
 import com.vjaykrsna.nanoai.testing.FakeCoverageDashboardRepository
 import kotlinx.coroutines.test.runTest
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 class GetCoverageReportUseCaseTest {
 
   private lateinit var repository: FakeCoverageDashboardRepository
   private lateinit var useCase: GetCoverageReportUseCase
 
-  @Before
+  @BeforeEach
   fun setUp() {
     repository = FakeCoverageDashboardRepository()
     useCase = GetCoverageReportUseCase(repository)

@@ -7,8 +7,8 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 /**
  * Contract guard rails for the import/export backup format defined in test resources
@@ -23,7 +23,7 @@ class ImportExportContractTest {
   private lateinit var contractsDir: File
   private lateinit var sampleBackup: JsonObject
 
-  @Before
+  @BeforeEach
   fun setup() {
     // Contract files are in test resources
     val classLoader = javaClass.classLoader

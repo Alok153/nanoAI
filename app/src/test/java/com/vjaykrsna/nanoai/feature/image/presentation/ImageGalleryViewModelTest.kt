@@ -62,6 +62,7 @@ class ImageGalleryViewModelTest {
       advanceUntilIdle()
 
       val event = eventDeferred.await() as ImageGalleryUiEvent.ErrorRaised
+      assertThat(event.error).isInstanceOf(ImageGalleryError.DeleteFailed::class.java)
       assertThat(event.envelope.userMessage).contains("Failed to delete image")
       assertThat(viewModel.state.value.errorMessage).contains("Failed to delete image")
     }
@@ -80,6 +81,7 @@ class ImageGalleryViewModelTest {
       advanceUntilIdle()
 
       val event = eventDeferred.await() as ImageGalleryUiEvent.ErrorRaised
+      assertThat(event.error).isInstanceOf(ImageGalleryError.DeleteAllFailed::class.java)
       assertThat(event.envelope.userMessage).contains("Failed to delete all images")
     }
 

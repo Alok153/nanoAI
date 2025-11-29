@@ -1,7 +1,7 @@
 package com.vjaykrsna.nanoai.core.common
 
 import com.google.common.truth.Truth.assertThat
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 /**
  * TDD contract for the upcoming NanoAIResult sealed hierarchy.

@@ -2,7 +2,7 @@ package com.vjaykrsna.nanoai.contracts
 
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.common.StatusCode
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 /**
  * Contract tests for POST /catalog/models/{modelId}/verify responses.

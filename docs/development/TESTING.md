@@ -15,12 +15,25 @@ Use this guide when you need to run nanoAI’s automated checks, add new tests, 
 | UI / Compose | ≥ 65 % | Managed + connected instrumentation coverage |
 | Data / repositories | ≥ 70 % | JVM + instrumentation merged coverage |
 
-### JUnit 5 Migration Complete ✅
-The project has been fully migrated to JUnit 5 (Jupiter):
+### JUnit 5 Migration Status ✅
+The project uses JUnit 5 (Jupiter) for all tests except those requiring Robolectric/AndroidJUnit4:
+
+**JUnit 5 Tests (~112 test files):**
+- All pure unit tests (UseCases, ViewModels, repositories without Android dependencies)
+- All contract tests and schema validation tests
+- Tests without Android runtime requirements
+
+**JUnit 4 Tests (~15 test files, intentionally retained):**
+- Tests using `@RunWith(RobolectricTestRunner::class)` for Android runtime emulation
+- Tests using `@RunWith(AndroidJUnit4::class)` for instrumentation
+- Tests requiring Room database operations with in-memory databases
+- Tests accessing Android Context, SharedPreferences, or DataStore
+
+**Migration pattern applied:**
 - ✅ `@Before` → `@BeforeEach`
-- ✅ `@After` → `@AfterEach`
-- ✅ `@get:Rule` → `@RegisterExtension` (with `@JvmStatic` for TestEnvironmentRule)
-- ✅ JUnit Vintage Engine included for backward compatibility
+- ✅ `@After` → `@AfterEach`  
+- ✅ `org.junit.Test` → `org.junit.jupiter.api.Test`
+- ✅ JUnit Vintage Engine included for backward compatibility with Robolectric tests
 
 ## 2. Test Suite Matrix
 | Suite | Path | Default Command | Notes |

@@ -11,9 +11,9 @@ import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
-import org.junit.After
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import retrofit2.http.GET
@@ -30,7 +30,7 @@ class UserProfileContractTest {
 
   private val json = Json { ignoreUnknownKeys = false }
 
-  @Before
+  @BeforeEach
   fun setUp() {
     server = MockWebServer().apply { start() }
     service =
@@ -42,7 +42,7 @@ class UserProfileContractTest {
         .create(UserProfileService::class.java)
   }
 
-  @After
+  @AfterEach
   fun tearDown() {
     server.shutdown()
   }

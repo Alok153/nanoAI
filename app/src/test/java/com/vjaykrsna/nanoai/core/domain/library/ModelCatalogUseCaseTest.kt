@@ -12,8 +12,8 @@ import io.mockk.mockk
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 class ModelCatalogUseCaseTest {
   private lateinit var useCase: ModelCatalogUseCase
@@ -21,7 +21,7 @@ class ModelCatalogUseCaseTest {
 
   private val modelId = "test-model"
 
-  @Before
+  @BeforeEach
   fun setup() {
     modelCatalogRepository = mockk(relaxed = true)
 

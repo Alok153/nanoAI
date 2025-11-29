@@ -1,7 +1,7 @@
 package com.vjaykrsna.nanoai.contracts
 
 import com.google.common.truth.Truth.assertThat
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 /**
  * Contract test for GET /catalog/models/{modelId}/manifest response body.

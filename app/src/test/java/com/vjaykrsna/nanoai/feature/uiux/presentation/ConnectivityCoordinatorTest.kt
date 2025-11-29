@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class ConnectivityViewModelTest {
+class ConnectivityCoordinatorTest {
   private val dispatcher = StandardTestDispatcher()
 
   @JvmField @RegisterExtension val mainDispatcherExtension = MainDispatcherExtension(dispatcher)
@@ -23,9 +23,9 @@ class ConnectivityViewModelTest {
     runTest(dispatcher) {
       val connectivityOperationsUseCase = mockk<ConnectivityOperationsUseCase>(relaxed = true)
 
-      val viewModel = ConnectivityViewModel(connectivityOperationsUseCase, dispatcher)
+      val coordinator = ConnectivityCoordinator(connectivityOperationsUseCase, dispatcher)
 
-      viewModel.updateConnectivity(ConnectivityStatus.ONLINE)
+      coordinator.updateConnectivity(this, ConnectivityStatus.ONLINE)
       advanceUntilIdle()
 
       coVerify(exactly = 1) {

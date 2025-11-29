@@ -227,11 +227,11 @@ class ShellViewModel
 constructor(
   private val navigationOperationsUseCase: NavigationOperationsUseCase,
   private val observeUserProfileUseCase: ObserveUserProfileUseCase,
-  // Sub-ViewModels for focused responsibilities
-  private val navigationViewModel: NavigationViewModel,
-  private val connectivityViewModel: ConnectivityViewModel,
-  private val progressViewModel: ProgressViewModel,
-  private val themeViewModel: ThemeViewModel,
+  // Sub-coordinators for focused responsibilities
+  private val navigationCoordinator: NavigationCoordinator,
+  private val connectivityCoordinator: ConnectivityCoordinator,
+  private val progressCoordinator: ProgressCoordinator,
+  private val themeCoordinator: ThemeCoordinator,
   // private val telemetry: ShellTelemetry,
   @Suppress("UnusedPrivateProperty")
   @MainImmediateDispatcher
@@ -251,33 +251,35 @@ constructor(
     viewModelScope.launch(dispatcher) {
       when (event) {
         is ShellUiEvent.ModeSelected -> {
-          navigationViewModel.openMode(event.modeId)
+          navigationCoordinator.openMode(event.modeId)
           _activeMode.value = event.modeId
         }
         is ShellUiEvent.ToggleLeftDrawer -> {
-          navigationViewModel.toggleLeftDrawer()
+          navigationCoordinator.toggleLeftDrawer()
           _isLeftDrawerOpen.value = !_isLeftDrawerOpen.value
         }
         is ShellUiEvent.SetLeftDrawer -> {
-          navigationViewModel.setLeftDrawer(event.open)
+          navigationCoordinator.setLeftDrawer(event.open)
           _isLeftDrawerOpen.value = event.open
         }
         is ShellUiEvent.ToggleRightDrawer -> {
-          navigationViewModel.toggleRightDrawer(event.panel)
+          navigationCoordinator.toggleRightDrawer(event.panel)
           _isRightDrawerOpen.value = !_isRightDrawerOpen.value
           _activeRightPanel.value = if (_isRightDrawerOpen.value) event.panel else null
         }
-        is ShellUiEvent.ShowCommandPalette -> navigationViewModel.showCommandPalette(event.source)
-        is ShellUiEvent.HideCommandPalette -> navigationViewModel.hideCommandPalette()
+        is ShellUiEvent.ShowCommandPalette -> navigationCoordinator.showCommandPalette(event.source)
+        is ShellUiEvent.HideCommandPalette -> navigationCoordinator.hideCommandPalette()
         is ShellUiEvent.CommandInvoked -> onCommandInvoked(event.action, event.source)
-        is ShellUiEvent.QueueJob -> progressViewModel.queueGeneration(event.job)
-        is ShellUiEvent.RetryJob -> progressViewModel.retryJob(event.job)
-        is ShellUiEvent.CompleteJob -> progressViewModel.completeJob(event.jobId)
-        is ShellUiEvent.Undo -> progressViewModel.undoAction(event.payload)
+        is ShellUiEvent.QueueJob -> progressCoordinator.queueGeneration(event.job)
+        is ShellUiEvent.RetryJob -> progressCoordinator.retryJob(event.job)
+        is ShellUiEvent.CompleteJob -> progressCoordinator.completeJob(event.jobId)
+        is ShellUiEvent.Undo -> progressCoordinator.undoAction(event.payload)
         is ShellUiEvent.ConnectivityChanged ->
-          connectivityViewModel.updateConnectivity(event.status)
-        is ShellUiEvent.UpdateTheme -> themeViewModel.updateThemePreference(event.theme)
-        is ShellUiEvent.UpdateDensity -> themeViewModel.updateVisualDensity(event.density)
+          connectivityCoordinator.updateConnectivity(viewModelScope, event.status)
+        is ShellUiEvent.UpdateTheme ->
+          themeCoordinator.updateThemePreference(viewModelScope, event.theme)
+        is ShellUiEvent.UpdateDensity ->
+          themeCoordinator.updateVisualDensity(viewModelScope, event.density)
         ShellUiEvent.ShowCoverageDashboard -> _showCoverageDashboard.value = true
         ShellUiEvent.HideCoverageDashboard -> _showCoverageDashboard.value = false
         else -> Unit
@@ -295,10 +297,10 @@ constructor(
         navigationOperationsUseCase.recentActivity,
         navigationOperationsUseCase.undoPayload,
         navigationOperationsUseCase.commandPaletteState,
-        progressViewModel.progressJobs,
+        progressCoordinator.progressJobs(viewModelScope),
         _showCoverageDashboard,
         _chatState,
-        connectivityViewModel.connectivityBannerState,
+        connectivityCoordinator.connectivityBannerState(viewModelScope),
         observeUserProfileUseCase(),
       ) { values ->
         val windowSizeClass = values.requireValue<WindowSizeClass>(WINDOW_SIZE_CLASS_INDEX)

@@ -4,7 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.data.library.huggingface.entities.HuggingFaceModelCacheEntity
 import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceModelSummary
 import kotlinx.datetime.Instant
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class HuggingFaceModelCacheMapperTest {
 

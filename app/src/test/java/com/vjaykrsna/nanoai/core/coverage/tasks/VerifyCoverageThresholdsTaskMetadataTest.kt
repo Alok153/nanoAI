@@ -5,19 +5,19 @@ import com.vjaykrsna.nanoai.core.coverage.model.TestLayer
 import kotlin.io.path.createTempFile
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.writeText
-import org.junit.After
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 class VerifyCoverageThresholdsTaskMetadataTest {
   private lateinit var metadataFile: java.nio.file.Path
 
-  @Before
+  @BeforeEach
   fun setUp() {
     metadataFile = createTempFile(suffix = ".json")
   }
 
-  @After
+  @AfterEach
   fun tearDown() {
     metadataFile.deleteIfExists()
   }

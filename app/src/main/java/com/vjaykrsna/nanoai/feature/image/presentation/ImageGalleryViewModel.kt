@@ -58,9 +58,14 @@ constructor(
     viewModelScope.launch(dispatcher) {
       when (val result = imageGalleryUseCase.deleteImage(id)) {
         is NanoAIResult.Success -> emitEvent(ImageGalleryUiEvent.ImageDeleted)
-        is NanoAIResult.RecoverableError ->
-          emitGalleryError(result.toErrorEnvelope(DELETE_IMAGE_ERROR))
-        is NanoAIResult.FatalError -> emitGalleryError(result.toErrorEnvelope(DELETE_IMAGE_ERROR))
+        is NanoAIResult.RecoverableError -> {
+          val envelope = result.toErrorEnvelope(DELETE_IMAGE_ERROR)
+          emitGalleryError(ImageGalleryError.DeleteFailed(envelope.userMessage), envelope)
+        }
+        is NanoAIResult.FatalError -> {
+          val envelope = result.toErrorEnvelope(DELETE_IMAGE_ERROR)
+          emitGalleryError(ImageGalleryError.DeleteFailed(envelope.userMessage), envelope)
+        }
       }
     }
   }
@@ -69,16 +74,21 @@ constructor(
     viewModelScope.launch(dispatcher) {
       when (val result = imageGalleryUseCase.deleteAllImages()) {
         is NanoAIResult.Success -> emitEvent(ImageGalleryUiEvent.AllImagesDeleted)
-        is NanoAIResult.RecoverableError ->
-          emitGalleryError(result.toErrorEnvelope(DELETE_ALL_ERROR))
-        is NanoAIResult.FatalError -> emitGalleryError(result.toErrorEnvelope(DELETE_ALL_ERROR))
+        is NanoAIResult.RecoverableError -> {
+          val envelope = result.toErrorEnvelope(DELETE_ALL_ERROR)
+          emitGalleryError(ImageGalleryError.DeleteAllFailed(envelope.userMessage), envelope)
+        }
+        is NanoAIResult.FatalError -> {
+          val envelope = result.toErrorEnvelope(DELETE_ALL_ERROR)
+          emitGalleryError(ImageGalleryError.DeleteAllFailed(envelope.userMessage), envelope)
+        }
       }
     }
   }
 
-  private suspend fun emitGalleryError(envelope: NanoAIErrorEnvelope) {
+  private suspend fun emitGalleryError(error: ImageGalleryError, envelope: NanoAIErrorEnvelope) {
     updateState { copy(errorMessage = envelope.userMessage) }
-    emitEvent(ImageGalleryUiEvent.ErrorRaised(envelope))
+    emitEvent(ImageGalleryUiEvent.ErrorRaised(error, envelope))
   }
 }
 
@@ -87,10 +97,22 @@ data class ImageGalleryUiState(
   val errorMessage: String? = null,
 ) : NanoAIViewState
 
+/** Error states for image gallery operations. */
+sealed interface ImageGalleryError {
+  val message: String
+
+  data class DeleteFailed(override val message: String) : ImageGalleryError
+
+  data class DeleteAllFailed(override val message: String) : ImageGalleryError
+
+  data class LoadFailed(override val message: String) : ImageGalleryError
+}
+
 sealed interface ImageGalleryUiEvent : NanoAIViewEvent {
   data object ImageDeleted : ImageGalleryUiEvent
 
   data object AllImagesDeleted : ImageGalleryUiEvent
 
-  data class ErrorRaised(val envelope: NanoAIErrorEnvelope) : ImageGalleryUiEvent
+  data class ErrorRaised(val error: ImageGalleryError, val envelope: NanoAIErrorEnvelope) :
+    ImageGalleryUiEvent
 }

@@ -22,6 +22,19 @@ import kotlinx.datetime.Clock
  * ViewModel for image generation feature.
  *
  * Manages prompt input, positive/negative prompts, image generation state, and error handling.
+ *
+ * **Status: Experimental Preview**
+ *
+ * This feature is currently in preview mode with simulated image generation. The UI and state
+ * management are fully implemented, but actual AI-powered image generation requires integration
+ * with an on-device diffusion model (e.g., Stable Diffusion via MediaPipe or ONNX runtime).
+ *
+ * Current limitations:
+ * - Image generation is simulated with a delay
+ * - Generated images are placeholder paths only
+ * - Thumbnail generation is not implemented
+ *
+ * @see ImageGalleryUseCase for image persistence
  */
 @HiltViewModel
 class ImageGenerationViewModel
@@ -39,6 +52,8 @@ constructor(
     private const val SIMULATION_DELAY_MS = 2000L
     private const val PROMPT_VALIDATION_ERROR = "Prompt cannot be empty"
     private const val SAVE_IMAGE_ERROR = "Failed to save image"
+    private const val PREVIEW_MODE_MESSAGE =
+      "Preview mode: Image generation is simulated. Full implementation coming soon."
   }
 
   fun updatePrompt(prompt: String) {
@@ -104,7 +119,7 @@ constructor(
             copy(
               isGenerating = false,
               generatedImagePath = imagePath,
-              errorMessage = "Image generation not yet implemented",
+              errorMessage = PREVIEW_MODE_MESSAGE,
             )
           }
           emitEvent(ImageGenerationUiEvent.ImageGenerated(imagePath))
@@ -150,6 +165,8 @@ data class ImageGenerationUiState(
   val isGenerating: Boolean = false,
   val generatedImagePath: String? = null,
   val errorMessage: String? = null,
+  /** Indicates this feature is in preview/experimental mode with simulated generation. */
+  val isPreviewMode: Boolean = true,
 ) : NanoAIViewState
 
 /** Error states for image generation. */

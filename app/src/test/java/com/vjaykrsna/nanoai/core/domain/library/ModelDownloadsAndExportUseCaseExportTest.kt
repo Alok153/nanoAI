@@ -9,7 +9,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import java.io.IOException
 import kotlinx.coroutines.test.runTest
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 internal class ModelDownloadsAndExportUseCaseExportTest : ModelDownloadsAndExportUseCaseTestBase() {
 

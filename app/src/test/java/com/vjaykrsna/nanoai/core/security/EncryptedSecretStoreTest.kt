@@ -8,14 +8,14 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.plus
 import kotlinx.serialization.json.Json
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 class EncryptedSecretStoreTest {
   private lateinit var store: EncryptedSecretStore
   private lateinit var clock: FakeClock
 
-  @Before
+  @BeforeEach
   fun setUp() {
     clock = FakeClock(Instant.fromEpochMilliseconds(1_000L))
     store =

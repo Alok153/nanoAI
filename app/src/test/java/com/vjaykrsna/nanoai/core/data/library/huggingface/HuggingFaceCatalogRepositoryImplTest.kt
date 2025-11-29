@@ -20,8 +20,8 @@ import kotlinx.serialization.json.JsonPrimitive
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 class HuggingFaceCatalogRepositoryImplTest {
 
@@ -31,7 +31,7 @@ class HuggingFaceCatalogRepositoryImplTest {
   private lateinit var connectivityStatusProvider: ConnectivityStatusProvider
   private lateinit var fixedClock: Clock
 
-  @Before
+  @BeforeEach
   fun setup() {
     service = mockk()
     cacheDataSource = mockk(relaxed = true)

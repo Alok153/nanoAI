@@ -13,14 +13,14 @@ import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Instant
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 class ApiProviderConfigUseCaseTest {
   private lateinit var useCase: ApiProviderConfigUseCase
   private lateinit var apiProviderConfigRepository: ApiProviderConfigRepository
 
-  @Before
+  @BeforeEach
   fun setup() {
     apiProviderConfigRepository = mockk(relaxed = true)
 

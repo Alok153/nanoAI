@@ -5,24 +5,29 @@
 package com.vjaykrsna.nanoai.feature.uiux.presentation
 
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.domain.model.uiux.CommandPaletteState
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
 import com.vjaykrsna.nanoai.core.domain.model.uiux.PaletteSource
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RightPanel
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UndoPayload
 import com.vjaykrsna.nanoai.core.domain.uiux.NavigationOperationsUseCase
-import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 
-/** ViewModel handling navigation state and operations. */
+/**
+ * Coordinator handling navigation state and operations.
+ *
+ * This is a regular injectable class (not a ViewModel) because it's composed into ShellViewModel
+ * rather than used independently with ViewModelProvider.
+ */
 private const val WINDOW_STATE_INDEX = 0
 private const val ACTIVE_MODE_INDEX = 1
 private const val LEFT_DRAWER_INDEX = 2
@@ -31,10 +36,10 @@ private const val ACTIVE_PANEL_INDEX = 4
 private const val UNDO_STATE_INDEX = 5
 private const val COMMAND_PALETTE_INDEX = 6
 
-@HiltViewModel
-class NavigationViewModel
+@Singleton
+class NavigationCoordinator
 @Inject
-constructor(private val navigationOperationsUseCase: NavigationOperationsUseCase) : ViewModel() {
+constructor(private val navigationOperationsUseCase: NavigationOperationsUseCase) {
 
   private val _activeMode = MutableStateFlow<ModeId>(ModeId.HOME)
   private val _leftDrawerState = MutableStateFlow<DrawerState>(DrawerState(false))
@@ -42,7 +47,7 @@ constructor(private val navigationOperationsUseCase: NavigationOperationsUseCase
   private val _activeRightPanel = MutableStateFlow<RightPanel?>(null)
   private val _undoState = MutableStateFlow<UndoState>(UndoState(null))
 
-  val navigationState: StateFlow<NavigationState> =
+  fun navigationState(scope: CoroutineScope): StateFlow<NavigationState> =
     combine(
         navigationOperationsUseCase.windowSizeClass,
         _activeMode,
@@ -70,7 +75,7 @@ constructor(private val navigationOperationsUseCase: NavigationOperationsUseCase
           commandPalette = commandPalette,
         )
       }
-      .stateIn(viewModelScope, SharingStarted.Eagerly, NavigationState.default())
+      .stateIn(scope, SharingStarted.Eagerly, NavigationState.default())
 
   fun openMode(modeId: ModeId) {
     _activeMode.value = modeId
@@ -116,10 +121,7 @@ data class NavigationState(
   companion object {
     fun default(): NavigationState =
       NavigationState(
-        windowState =
-          WindowSizeClass.calculateFromSize(
-            androidx.compose.ui.unit.DpSize(width = 640.dp, height = 360.dp)
-          ),
+        windowState = WindowSizeClass.calculateFromSize(DpSize(width = 640.dp, height = 360.dp)),
         activeMode = ModeId.HOME,
         leftDrawerState = DrawerState(false),
         rightDrawerState = DrawerState(false),

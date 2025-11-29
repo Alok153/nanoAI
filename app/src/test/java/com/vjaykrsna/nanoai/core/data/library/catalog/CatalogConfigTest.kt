@@ -7,7 +7,8 @@ import com.vjaykrsna.nanoai.core.domain.model.library.ProviderType
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.json.Json
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 class CatalogConfigTest {
   private val json = Json { ignoreUnknownKeys = true }
@@ -53,7 +54,7 @@ class CatalogConfigTest {
     assertThat(model.updatedAt).isEqualTo(Instant.parse("2024-02-02T00:00:00Z"))
   }
 
-  @Test(expected = IllegalArgumentException::class)
+  @Test
   fun `invalid provider type throws descriptive exception`() {
     val payload =
       """
@@ -72,7 +73,7 @@ class CatalogConfigTest {
         .trimIndent()
 
     val config = json.decodeFromString(ModelConfig.serializer(), payload)
-    config.toModelPackage(FixedClock)
+    assertThrows<IllegalArgumentException> { config.toModelPackage(FixedClock) }
   }
 
   @Test
@@ -126,7 +127,7 @@ class CatalogConfigTest {
     assertThat(model.updatedAt).isEqualTo(FixedClock.now())
   }
 
-  @Test(expected = IllegalArgumentException::class)
+  @Test
   fun `invalid delivery type throws descriptive exception`() {
     val payload =
       """
@@ -145,7 +146,7 @@ class CatalogConfigTest {
         .trimIndent()
 
     val config = json.decodeFromString(ModelConfig.serializer(), payload)
-    config.toModelPackage(FixedClock)
+    assertThrows<IllegalArgumentException> { config.toModelPackage(FixedClock) }
   }
 
   @Test

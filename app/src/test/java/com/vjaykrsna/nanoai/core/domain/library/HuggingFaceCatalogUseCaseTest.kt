@@ -7,14 +7,14 @@ import com.vjaykrsna.nanoai.testing.assertSuccess
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 class HuggingFaceCatalogUseCaseTest {
   private lateinit var useCase: HuggingFaceCatalogUseCase
   private lateinit var huggingFaceCatalogRepository: HuggingFaceCatalogRepository
 
-  @Before
+  @BeforeEach
   fun setup() {
     huggingFaceCatalogRepository = mockk(relaxed = true)
 

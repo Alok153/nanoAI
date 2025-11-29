@@ -9,6 +9,17 @@ import kotlinx.coroutines.test.setMain
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 
+/**
+ * JUnit 4 test rule for replacing [Dispatchers.Main] with a test dispatcher.
+ *
+ * @deprecated Use [MainDispatcherExtension] for JUnit 5 tests. This rule is retained only for
+ *   Robolectric tests that require JUnit 4 (`@RunWith(RobolectricTestRunner::class)`).
+ */
+@Deprecated(
+  message = "Use MainDispatcherExtension for JUnit 5 tests",
+  replaceWith =
+    ReplaceWith("MainDispatcherExtension", "com.vjaykrsna.nanoai.testing.MainDispatcherExtension"),
+)
 @OptIn(ExperimentalCoroutinesApi::class)
 class MainDispatcherRule(val testDispatcher: TestDispatcher = UnconfinedTestDispatcher()) :
   TestWatcher() {

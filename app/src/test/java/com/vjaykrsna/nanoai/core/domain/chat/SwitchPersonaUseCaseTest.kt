@@ -11,8 +11,8 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import java.util.UUID
 import kotlinx.coroutines.test.runTest
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 class SwitchPersonaUseCaseTest {
   private lateinit var useCase: SwitchPersonaUseCase
@@ -23,7 +23,7 @@ class SwitchPersonaUseCaseTest {
   private val newPersonaId = UUID.randomUUID()
   private val previousPersonaId = UUID.randomUUID()
 
-  @Before
+  @BeforeEach
   fun setup() {
     conversationRepository = mockk<ConversationRepository>(relaxed = true)
     personaSwitchLogRepository = mockk<PersonaSwitchLogRepository>(relaxed = true)

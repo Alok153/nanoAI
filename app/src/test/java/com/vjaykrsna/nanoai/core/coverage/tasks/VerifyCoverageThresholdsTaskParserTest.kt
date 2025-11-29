@@ -3,7 +3,7 @@ package com.vjaykrsna.nanoai.core.coverage.tasks
 import com.google.common.truth.Truth.assertThat
 import kotlin.io.path.createTempFile
 import kotlin.io.path.writeText
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class VerifyCoverageThresholdsTaskParserTest {
 

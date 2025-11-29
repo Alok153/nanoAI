@@ -14,14 +14,14 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Instant
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 class ImageGalleryUseCaseTest {
   private lateinit var useCase: ImageGalleryUseCase
   private lateinit var imageGalleryRepository: ImageGalleryRepository
 
-  @Before
+  @BeforeEach
   fun setup() {
     imageGalleryRepository = mockk(relaxed = true)
 
