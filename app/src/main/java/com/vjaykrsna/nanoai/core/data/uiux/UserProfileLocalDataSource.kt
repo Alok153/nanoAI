@@ -7,11 +7,11 @@ import com.vjaykrsna.nanoai.core.data.db.entities.toDomain
 import com.vjaykrsna.nanoai.core.data.db.entities.toEntity
 import com.vjaykrsna.nanoai.core.data.preferences.UiPreferencesStore
 import com.vjaykrsna.nanoai.core.data.preferences.toDomainSnapshot
+import com.vjaykrsna.nanoai.core.domain.model.uiux.DataStoreUiPreferences
 import com.vjaykrsna.nanoai.core.domain.model.uiux.LayoutSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ScreenType
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UIStateSnapshot
-import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferencesSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UserProfile
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
 import java.time.Instant as JavaInstant
@@ -281,7 +281,7 @@ constructor(
   suspend fun getCachedPreferences() = uiPreferencesStore.uiPreferences.first()
 
   /** Observe UiPreferences as domain snapshots for repository consumers. */
-  fun observePreferences(): Flow<UiPreferencesSnapshot> =
+  fun observePreferences(): Flow<DataStoreUiPreferences> =
     uiPreferencesStore.uiPreferences.map { it.toDomainSnapshot() }
 
   /** Record command palette usage for recents tracking. */

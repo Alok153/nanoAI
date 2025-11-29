@@ -28,9 +28,9 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ProgressJob
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RecentActivityItem
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RightPanel
-import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferenceSnapshot
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ShellUiPreferences
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UndoPayload
-import com.vjaykrsna.nanoai.core.domain.model.uiux.toUiPreferenceSnapshot
+import com.vjaykrsna.nanoai.core.domain.model.uiux.toShellUiPreferences
 import com.vjaykrsna.nanoai.core.domain.uiux.NavigationOperationsUseCase
 import com.vjaykrsna.nanoai.core.domain.uiux.ObserveUserProfileUseCase
 import com.vjaykrsna.nanoai.shared.ui.shell.ShellUiEvent
@@ -160,7 +160,7 @@ private fun buildInitialShellUiState(): ShellUiState {
       ),
     commandPalette = CommandPaletteState.Empty,
     connectivityBanner = ConnectivityBannerState(status = ConnectivityStatus.ONLINE),
-    preferences = UiPreferenceSnapshot(),
+    preferences = ShellUiPreferences(),
   )
 }
 
@@ -319,7 +319,7 @@ constructor(
           values.requireValue<ObserveUserProfileUseCase.Result>(USER_PROFILE_RESULT_INDEX)
 
         val preferences =
-          userProfileResult.userProfile?.toUiPreferenceSnapshot() ?: UiPreferenceSnapshot()
+          userProfileResult.userProfile?.toShellUiPreferences() ?: ShellUiPreferences()
         val isOnline = !userProfileResult.offline
 
         val normalizedLayout =
@@ -381,7 +381,7 @@ data class ShellUiState(
   val layout: ShellLayoutState,
   val commandPalette: CommandPaletteState,
   val connectivityBanner: ConnectivityBannerState,
-  val preferences: UiPreferenceSnapshot,
+  val preferences: ShellUiPreferences,
   val modeCards: List<ModeCard> = emptyList(),
   val quickActions: List<CommandAction> = emptyList(),
   val chatState: ChatState? = null,

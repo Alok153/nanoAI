@@ -1,7 +1,7 @@
 package com.vjaykrsna.nanoai.core.data.preferences
 
+import com.vjaykrsna.nanoai.core.domain.model.uiux.DataStoreUiPreferences
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
-import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferencesSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
 import kotlinx.datetime.Instant
 
@@ -35,13 +35,13 @@ data class UiPreferences(
 }
 
 /**
- * Convert DataStore UiPreferences to domain UiPreferencesSnapshot.
+ * Convert DataStore UiPreferences to domain DataStoreUiPreferences.
  *
  * This mapper bridges the persistence layer (DataStore) to the domain layer, allowing preferences
  * to be merged with database-backed UserProfile records.
  */
-fun UiPreferences.toDomainSnapshot(): UiPreferencesSnapshot =
-  UiPreferencesSnapshot(
+fun UiPreferences.toDomainSnapshot(): DataStoreUiPreferences =
+  DataStoreUiPreferences(
     themePreference = themePreference,
     visualDensity = visualDensity,
     pinnedTools = pinnedToolIds,
@@ -51,11 +51,11 @@ fun UiPreferences.toDomainSnapshot(): UiPreferencesSnapshot =
   )
 
 /**
- * Convert domain UiPreferencesSnapshot to DataStore UiPreferences.
+ * Convert domain DataStoreUiPreferences to DataStore UiPreferences.
  *
  * This reverse mapper allows domain preferences to be persisted to DataStore.
  */
-fun UiPreferencesSnapshot.toDataStorePreferences(): UiPreferences =
+fun DataStoreUiPreferences.toDataStorePreferences(): UiPreferences =
   UiPreferences(
     themePreference = themePreference,
     visualDensity = visualDensity,

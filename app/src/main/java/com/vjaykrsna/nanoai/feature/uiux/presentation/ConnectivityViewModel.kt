@@ -6,6 +6,7 @@ import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityBannerState
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityStatus
 import com.vjaykrsna.nanoai.core.domain.uiux.ConnectivityOperationsUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /** ViewModel responsible for connectivity status and banner management. */
+@HiltViewModel
 class ConnectivityViewModel
 @Inject
 constructor(

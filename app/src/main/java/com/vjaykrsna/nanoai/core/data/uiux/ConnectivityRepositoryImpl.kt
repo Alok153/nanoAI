@@ -6,9 +6,9 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.CommandCategory
 import com.vjaykrsna.nanoai.core.domain.model.uiux.CommandDestination
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityBannerState
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityStatus
+import com.vjaykrsna.nanoai.core.domain.model.uiux.DataStoreUiPreferences
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ProgressJob
-import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferencesSnapshot as DomainUiPreferencesSnapshot
 import com.vjaykrsna.nanoai.core.domain.repository.ConnectivityRepository
 import com.vjaykrsna.nanoai.core.domain.repository.ProgressRepository
 import com.vjaykrsna.nanoai.core.domain.repository.UserProfileRepository
@@ -39,15 +39,15 @@ constructor(
 
   private val connectivity = MutableStateFlow(ConnectivityStatus.ONLINE)
 
-  private val preferences: StateFlow<DomainUiPreferencesSnapshot> =
+  private val preferences: StateFlow<DataStoreUiPreferences> =
     userProfileRepository
       .observePreferences()
-      .stateIn(scope, SharingStarted.Eagerly, DomainUiPreferencesSnapshot())
+      .stateIn(scope, SharingStarted.Eagerly, DataStoreUiPreferences())
 
   override val connectivityBannerState: Flow<ConnectivityBannerState> =
     combine(connectivity, preferences, progressRepository.progressJobs) {
         status: ConnectivityStatus,
-        prefs: DomainUiPreferencesSnapshot,
+        prefs: DataStoreUiPreferences,
         jobs: List<ProgressJob> ->
         ConnectivityBannerState(
           status = status,

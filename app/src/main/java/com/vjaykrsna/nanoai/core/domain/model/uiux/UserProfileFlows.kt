@@ -10,8 +10,8 @@ fun Flow<UserProfileRecord?>.mapToUserProfile(): Flow<UserProfile?> = map { reco
 }
 
 fun Flow<UserProfileRecord?>.mergeWithPreferences(
-  preferences: Flow<UiPreferencesSnapshot>,
-  fallback: (UiPreferencesSnapshot) -> UserProfile? = { null },
+  preferences: Flow<DataStoreUiPreferences>,
+  fallback: (DataStoreUiPreferences) -> UserProfile? = { null },
 ): Flow<UserProfile?> {
   return combine(this, preferences) { record, prefs ->
     val normalized = prefs.normalized()
@@ -21,8 +21,8 @@ fun Flow<UserProfileRecord?>.mergeWithPreferences(
 }
 
 fun Flow<UserProfileRecord?>.requireUserProfile(
-  preferences: Flow<UiPreferencesSnapshot>,
-  fallback: (UiPreferencesSnapshot) -> UserProfile,
+  preferences: Flow<DataStoreUiPreferences>,
+  fallback: (DataStoreUiPreferences) -> UserProfile,
 ): Flow<UserProfile> {
   return mergeWithPreferences(preferences, fallback).mapNotNull { it }
 }

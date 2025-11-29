@@ -2,10 +2,10 @@ package com.vjaykrsna.nanoai.core.data.uiux
 
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityStatus
+import com.vjaykrsna.nanoai.core.domain.model.uiux.DataStoreUiPreferences
 import com.vjaykrsna.nanoai.core.domain.model.uiux.JobStatus
 import com.vjaykrsna.nanoai.core.domain.model.uiux.JobType
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ProgressJob
-import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferencesSnapshot
 import com.vjaykrsna.nanoai.core.domain.repository.ConnectivityRepository
 import com.vjaykrsna.nanoai.core.domain.repository.ProgressRepository
 import com.vjaykrsna.nanoai.core.domain.repository.UserProfileRepository
@@ -36,7 +36,7 @@ class ConnectivityRepositoryImplTest {
   @BeforeEach
   fun setUp() {
     userProfileRepository = mockk(relaxed = true)
-    coEvery { userProfileRepository.observePreferences() } returns flowOf(UiPreferencesSnapshot())
+    coEvery { userProfileRepository.observePreferences() } returns flowOf(DataStoreUiPreferences())
     progressRepository = TestProgressRepository(mainDispatcherExtension.dispatcher)
 
     repository =

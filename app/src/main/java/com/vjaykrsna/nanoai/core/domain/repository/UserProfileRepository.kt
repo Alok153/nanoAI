@@ -1,8 +1,8 @@
 package com.vjaykrsna.nanoai.core.domain.repository
 
+import com.vjaykrsna.nanoai.core.domain.model.uiux.DataStoreUiPreferences
 import com.vjaykrsna.nanoai.core.domain.model.uiux.LayoutSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UIStateSnapshot
-import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferencesSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UserProfile
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.Instant
@@ -29,7 +29,7 @@ interface UserProfileObservationRepository {
 
   suspend fun getUserProfile(userId: String): UserProfile?
 
-  fun observePreferences(): Flow<UiPreferencesSnapshot>
+  fun observePreferences(): Flow<DataStoreUiPreferences>
 
   fun observeUIStateSnapshot(userId: String): Flow<UIStateSnapshot?>
 }

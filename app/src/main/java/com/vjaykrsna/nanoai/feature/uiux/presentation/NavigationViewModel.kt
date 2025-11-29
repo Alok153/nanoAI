@@ -14,6 +14,7 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.PaletteSource
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RightPanel
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UndoPayload
 import com.vjaykrsna.nanoai.core.domain.uiux.NavigationOperationsUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -30,6 +31,7 @@ private const val ACTIVE_PANEL_INDEX = 4
 private const val UNDO_STATE_INDEX = 5
 private const val COMMAND_PALETTE_INDEX = 6
 
+@HiltViewModel
 class NavigationViewModel
 @Inject
 constructor(private val navigationOperationsUseCase: NavigationOperationsUseCase) : ViewModel() {

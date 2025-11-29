@@ -4,8 +4,8 @@ import android.database.sqlite.SQLiteException
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.common.annotations.OneShot
 import com.vjaykrsna.nanoai.core.common.annotations.ReactiveStream
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ShellUiPreferences
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
-import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferenceSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
 import com.vjaykrsna.nanoai.core.domain.repository.ThemeRepository
 import java.io.IOException
@@ -22,7 +22,7 @@ class ThemeOperationsUseCase @Inject constructor(private val themeRepository: Th
 
   /** Observes UI preference snapshot with reactive updates. */
   @ReactiveStream("Observe UI preference snapshot changes")
-  fun observeUiPreferences(): Flow<UiPreferenceSnapshot> = themeRepository.uiPreferenceSnapshot
+  fun observeUiPreferences(): Flow<ShellUiPreferences> = themeRepository.shellUiPreferences
 
   /** Updates theme preference. */
   @OneShot("Update theme preference")

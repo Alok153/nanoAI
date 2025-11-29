@@ -3,10 +3,11 @@ package com.vjaykrsna.nanoai.feature.uiux.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ShellUiPreferences
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
-import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferenceSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
 import com.vjaykrsna.nanoai.core.domain.uiux.ThemeOperationsUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /** ViewModel responsible for theme and UI preference management. */
+@HiltViewModel
 class ThemeViewModel
 @Inject
 constructor(
@@ -23,13 +25,13 @@ constructor(
   @MainImmediateDispatcher private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
 ) : ViewModel() {
   /** Current UI preferences including theme, density, and other display settings. */
-  val uiPreferences: StateFlow<UiPreferenceSnapshot> =
+  val uiPreferences: StateFlow<ShellUiPreferences> =
     themeOperationsUseCase
       .observeUiPreferences()
       .stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
-        initialValue = UiPreferenceSnapshot(),
+        initialValue = ShellUiPreferences(),
       )
 
   /** Updates the theme preference for the active user. */

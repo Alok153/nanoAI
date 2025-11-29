@@ -24,7 +24,7 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityBannerState
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityStatus
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RightPanel
-import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferenceSnapshot
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ShellUiPreferences
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UndoPayload
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellLayoutState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellUiState
@@ -113,7 +113,7 @@ class AdaptiveShellTest {
       layout = layout.copy(showCoverageDashboard = false),
       commandPalette = palette,
       connectivityBanner = banner,
-      preferences = UiPreferenceSnapshot(),
+      preferences = ShellUiPreferences(),
     )
   }
 }

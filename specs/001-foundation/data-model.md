@@ -105,7 +105,7 @@ This model consolidates core entities for chat, models, privacy, and quality met
 - disclaimerShownCount (Int)
 - retentionPolicy (INDEFINITE, MANUAL_PURGE_ONLY)
 
-### UiPreferenceSnapshot
+### ShellUiPreferences
 - preferenceId (Int = 1)
 - theme (LIGHT, DARK, SYSTEM)
 - density (COMPACT, COMFORTABLE)

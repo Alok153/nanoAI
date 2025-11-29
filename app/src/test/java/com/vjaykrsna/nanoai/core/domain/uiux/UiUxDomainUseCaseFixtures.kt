@@ -22,7 +22,7 @@ internal object UiUxDomainReflection {
   private const val UI_STATE_SNAPSHOT =
     "com.vjaykrsna.nanoai.core.domain.model.uiux.UIStateSnapshot"
   private const val UI_PREFERENCES =
-    "com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferencesSnapshot"
+    "com.vjaykrsna.nanoai.core.domain.model.uiux.DataStoreUiPreferences"
   private const val THEME_ENUM = "com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference"
   private const val VISUAL_DENSITY_ENUM =
     "com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity"
@@ -111,7 +111,7 @@ internal object UiUxDomainReflection {
           connectivityBannerLastDismissed,
           voiceInputEnabled,
         )
-      else -> error("Unsupported UiPreferencesSnapshot constructor arity ${ctor.parameterCount}")
+      else -> error("Unsupported DataStoreUiPreferences constructor arity ${ctor.parameterCount}")
     }
   }
 
@@ -204,7 +204,7 @@ internal object UiUxDomainReflection {
           resolvedConnectivityDismissed,
           false, // voiceInputEnabled defaults to false
         )
-      else -> error("Unsupported UiPreferencesSnapshot constructor arity ${ctor.parameterCount}")
+      else -> error("Unsupported DataStoreUiPreferences constructor arity ${ctor.parameterCount}")
     }
   }
 
@@ -266,7 +266,7 @@ internal object UiUxDomainReflection {
     val method =
       baseline.javaClass.methods.firstOrNull { method ->
         method.name == "copy" && method.parameterCount >= 5
-      } ?: error("UiPreferencesSnapshot copy method not found")
+      } ?: error("DataStoreUiPreferences copy method not found")
     return when (method.parameterCount) {
       5 ->
         method.invoke(
@@ -287,7 +287,7 @@ internal object UiUxDomainReflection {
           connectivityBannerLastDismissed,
           voiceInputEnabled,
         )
-      else -> error("Unsupported UiPreferencesSnapshot#copy arity ${method.parameterCount}")
+      else -> error("Unsupported DataStoreUiPreferences#copy arity ${method.parameterCount}")
     }
   }
 }

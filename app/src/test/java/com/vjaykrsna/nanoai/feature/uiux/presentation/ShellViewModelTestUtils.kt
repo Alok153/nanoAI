@@ -11,16 +11,16 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.CommandCategory
 import com.vjaykrsna.nanoai.core.domain.model.uiux.CommandPaletteState
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityBannerState
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityStatus
+import com.vjaykrsna.nanoai.core.domain.model.uiux.DataStoreUiPreferences
 import com.vjaykrsna.nanoai.core.domain.model.uiux.LayoutSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
 import com.vjaykrsna.nanoai.core.domain.model.uiux.PaletteSource
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ProgressJob
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RecentActivityItem
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RightPanel
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ShellUiPreferences
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UIStateSnapshot
-import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferenceSnapshot
-import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferencesSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UndoPayload
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UserProfile
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
@@ -55,7 +55,7 @@ internal class NoopUserProfileRepository : UserProfileRepository {
         savedLayouts = emptyList(),
       )
     )
-  private val preferencesFlow = MutableStateFlow(UiPreferencesSnapshot())
+  private val preferencesFlow = MutableStateFlow(DataStoreUiPreferences())
   private val uiStateFlow = MutableStateFlow<UIStateSnapshot?>(null)
   private val offlineFlow = MutableStateFlow(false)
 
@@ -65,7 +65,7 @@ internal class NoopUserProfileRepository : UserProfileRepository {
 
   override suspend fun getUserProfile(userId: String): UserProfile? = profileFlow.value
 
-  override fun observePreferences(): Flow<UiPreferencesSnapshot> = preferencesFlow
+  override fun observePreferences(): Flow<DataStoreUiPreferences> = preferencesFlow
 
   override suspend fun updateThemePreference(userId: String, themePreferenceName: String) {
     val theme = ThemePreference.valueOf(themePreferenceName)
@@ -252,24 +252,23 @@ internal class FakeThemeRepository(
   override val ioDispatcher: kotlinx.coroutines.CoroutineDispatcher =
     kotlinx.coroutines.Dispatchers.Unconfined
 
-  private val uiPreferenceSnapshotFlow =
-    kotlinx.coroutines.flow.MutableStateFlow(UiPreferenceSnapshot())
-  override val uiPreferenceSnapshot: kotlinx.coroutines.flow.Flow<UiPreferenceSnapshot> =
-    uiPreferenceSnapshotFlow
+  private val shellUiPreferencesFlow =
+    kotlinx.coroutines.flow.MutableStateFlow(ShellUiPreferences())
+  override val shellUiPreferences: kotlinx.coroutines.flow.Flow<ShellUiPreferences> =
+    shellUiPreferencesFlow
 
   override suspend fun updateThemePreference(theme: ThemePreference) {
-    uiPreferenceSnapshotFlow.value = uiPreferenceSnapshotFlow.value.copy(theme = theme)
+    shellUiPreferencesFlow.value = shellUiPreferencesFlow.value.copy(theme = theme)
     userProfileRepository?.updateThemePreference("default", theme.name)
   }
 
   override suspend fun updateVisualDensity(density: VisualDensity) {
-    uiPreferenceSnapshotFlow.value = uiPreferenceSnapshotFlow.value.copy(density = density)
+    shellUiPreferencesFlow.value = shellUiPreferencesFlow.value.copy(density = density)
     userProfileRepository?.updateVisualDensity("default", density.name)
   }
 
   override suspend fun updateHighContrastEnabled(enabled: Boolean) {
-    uiPreferenceSnapshotFlow.value =
-      uiPreferenceSnapshotFlow.value.copy(highContrastEnabled = enabled)
+    shellUiPreferencesFlow.value = shellUiPreferencesFlow.value.copy(highContrastEnabled = enabled)
   }
 }
 

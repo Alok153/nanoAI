@@ -39,7 +39,7 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.ProgressJob
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RecentActivityItem
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RecentStatus
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RightPanel
-import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferenceSnapshot
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ShellUiPreferences
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellLayoutState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellUiState
 import com.vjaykrsna.nanoai.shared.testing.TestingTheme
@@ -305,7 +305,7 @@ class OfflineProgressTest {
       layout = layout.copy(showCoverageDashboard = false),
       commandPalette = palette,
       connectivityBanner = banner,
-      preferences = UiPreferenceSnapshot(),
+      preferences = ShellUiPreferences(),
     )
   }
 

@@ -36,7 +36,7 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RecentActivityItem
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RecentStatus
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RightPanel
-import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferenceSnapshot
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ShellUiPreferences
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ModeCard
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellLayoutState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellUiState
@@ -171,7 +171,7 @@ class HomeHubFlowTest {
       layout = layout,
       commandPalette = palette,
       connectivityBanner = banner,
-      preferences = UiPreferenceSnapshot(),
+      preferences = ShellUiPreferences(),
       modeCards = modeCards,
       quickActions = modeCards.map(ModeCard::primaryAction),
     )

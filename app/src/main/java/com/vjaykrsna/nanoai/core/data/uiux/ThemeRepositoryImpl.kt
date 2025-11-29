@@ -2,9 +2,9 @@ package com.vjaykrsna.nanoai.core.data.uiux
 
 import com.vjaykrsna.nanoai.core.common.IoDispatcher
 import com.vjaykrsna.nanoai.core.data.preferences.UiPreferencesStore
+import com.vjaykrsna.nanoai.core.domain.model.uiux.DataStoreUiPreferences
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ShellUiPreferences
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
-import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferenceSnapshot
-import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferencesSnapshot as DomainUiPreferencesSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
 import com.vjaykrsna.nanoai.core.domain.repository.ThemeRepository
 import com.vjaykrsna.nanoai.core.domain.repository.UserProfileRepository
@@ -35,12 +35,12 @@ constructor(
   private val preferences =
     userProfileRepository
       .observePreferences()
-      .stateIn(scope, SharingStarted.Eagerly, DomainUiPreferencesSnapshot())
+      .stateIn(scope, SharingStarted.Eagerly, DataStoreUiPreferences())
 
-  override val uiPreferenceSnapshot: Flow<UiPreferenceSnapshot> =
+  override val shellUiPreferences: Flow<ShellUiPreferences> =
     preferences
-      .map { snapshot -> snapshot.toUiPreferenceSnapshot() }
-      .stateIn(scope, SharingStarted.Eagerly, UiPreferenceSnapshot())
+      .map { snapshot -> snapshot.toShellUiPreferences() }
+      .stateIn(scope, SharingStarted.Eagerly, ShellUiPreferences())
 
   override suspend fun updateThemePreference(theme: ThemePreference) {
     withContext(ioDispatcher) { userProfileRepository.updateThemePreference(userId, theme.name) }
@@ -54,8 +54,8 @@ constructor(
     withContext(ioDispatcher) { uiPreferencesStore.setHighContrastEnabled(enabled) }
   }
 
-  private fun DomainUiPreferencesSnapshot.toUiPreferenceSnapshot(): UiPreferenceSnapshot =
-    UiPreferenceSnapshot(
+  private fun DataStoreUiPreferences.toShellUiPreferences(): ShellUiPreferences =
+    ShellUiPreferences(
       theme = themePreference,
       density = visualDensity,
       fontScale = 1f,

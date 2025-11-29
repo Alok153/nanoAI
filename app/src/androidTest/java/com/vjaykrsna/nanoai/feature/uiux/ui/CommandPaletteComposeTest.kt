@@ -53,7 +53,7 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.ProgressJob
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RecentActivityItem
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RecentStatus
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RightPanel
-import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferenceSnapshot
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ShellUiPreferences
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UndoPayload
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ModeCard
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellLayoutState
@@ -451,7 +451,7 @@ private fun sampleState(
     layout = layout,
     commandPalette = commandPalette,
     connectivityBanner = banner,
-    preferences = UiPreferenceSnapshot(),
+    preferences = ShellUiPreferences(),
     modeCards = sampleModeCards(),
     quickActions = sampleQuickActions(),
   )

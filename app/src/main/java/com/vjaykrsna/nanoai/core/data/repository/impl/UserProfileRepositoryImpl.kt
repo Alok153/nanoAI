@@ -2,10 +2,10 @@ package com.vjaykrsna.nanoai.core.data.repository.impl
 
 import com.vjaykrsna.nanoai.core.common.IoDispatcher
 import com.vjaykrsna.nanoai.core.data.uiux.UserProfileLocalDataSource
+import com.vjaykrsna.nanoai.core.domain.model.uiux.DataStoreUiPreferences
 import com.vjaykrsna.nanoai.core.domain.model.uiux.LayoutSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UIStateSnapshot
-import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferencesSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UserProfile
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
 import com.vjaykrsna.nanoai.core.domain.repository.UserProfileRepository
@@ -36,7 +36,7 @@ constructor(
       withContext(ioDispatcher) {
         if (local.getUserProfile(userId) == null) {
           val defaultProfile =
-            UserProfile.fromPreferences(id = userId, preferences = UiPreferencesSnapshot())
+            UserProfile.fromPreferences(id = userId, preferences = DataStoreUiPreferences())
           local.saveUserProfile(defaultProfile)
         }
       }
@@ -51,7 +51,7 @@ constructor(
   override suspend fun getUserProfile(userId: String): UserProfile? =
     withContext(ioDispatcher) { local.getUserProfile(userId) }
 
-  override fun observePreferences(): Flow<UiPreferencesSnapshot> = local.observePreferences()
+  override fun observePreferences(): Flow<DataStoreUiPreferences> = local.observePreferences()
 
   override suspend fun updateThemePreference(userId: String, themePreferenceName: String) {
     val theme = ThemePreference.fromName(themePreferenceName)
@@ -70,7 +70,7 @@ constructor(
   }
 
   override suspend fun updatePinnedTools(userId: String, pinnedTools: List<String>) {
-    val sanitizedPinnedTools = UiPreferencesSnapshot(pinnedTools = pinnedTools).pinnedTools
+    val sanitizedPinnedTools = DataStoreUiPreferences(pinnedTools = pinnedTools).pinnedTools
     withContext(ioDispatcher) { local.updatePinnedTools(userId, sanitizedPinnedTools) }
   }
 

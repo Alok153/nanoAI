@@ -7,9 +7,9 @@ import com.vjaykrsna.nanoai.core.data.db.daos.UserProfileDao
 import com.vjaykrsna.nanoai.core.data.db.entities.UIStateSnapshotEntity
 import com.vjaykrsna.nanoai.core.data.preferences.UiPreferences
 import com.vjaykrsna.nanoai.core.data.preferences.UiPreferencesStore
+import com.vjaykrsna.nanoai.core.domain.model.uiux.DataStoreUiPreferences
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ScreenType
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
-import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferencesSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UserProfile
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
@@ -55,7 +55,7 @@ class UserProfileLocalDataSourceTest {
   @Test
   fun `saveUserProfile should insert both the profile and layout snapshots`() = runTest {
     // Given
-    val profile = UserProfile.fromPreferences("testUser", UiPreferencesSnapshot())
+    val profile = UserProfile.fromPreferences("testUser", DataStoreUiPreferences())
 
     // When
     dataSource.saveUserProfile(profile)

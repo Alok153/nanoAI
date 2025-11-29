@@ -2,8 +2,8 @@ package com.vjaykrsna.nanoai.core.data.uiux
 
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.data.preferences.UiPreferencesStore
+import com.vjaykrsna.nanoai.core.domain.model.uiux.DataStoreUiPreferences
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
-import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferencesSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
 import com.vjaykrsna.nanoai.core.domain.repository.ThemeRepository
 import com.vjaykrsna.nanoai.core.domain.repository.UserProfileRepository
@@ -33,7 +33,7 @@ class ThemeRepositoryImplTest {
     uiPreferencesStore = mockk(relaxed = true)
   }
 
-  private fun createRepository(initialState: UiPreferencesSnapshot): ThemeRepositoryImpl {
+  private fun createRepository(initialState: DataStoreUiPreferences): ThemeRepositoryImpl {
     coEvery { userProfileRepository.observePreferences() } returns flowOf(initialState)
     return ThemeRepositoryImpl(
       userProfileRepository = userProfileRepository,
@@ -45,7 +45,7 @@ class ThemeRepositoryImplTest {
   @Test
   fun `updateThemePreference should call user profile repository`() = runTest {
     // Given
-    repository = createRepository(UiPreferencesSnapshot())
+    repository = createRepository(DataStoreUiPreferences())
     val theme = ThemePreference.DARK
 
     // When
@@ -59,7 +59,7 @@ class ThemeRepositoryImplTest {
   @Test
   fun `updateVisualDensity should call user profile repository`() = runTest {
     // Given
-    repository = createRepository(UiPreferencesSnapshot())
+    repository = createRepository(DataStoreUiPreferences())
     val density = VisualDensity.COMPACT
 
     // When
@@ -71,14 +71,14 @@ class ThemeRepositoryImplTest {
   }
 
   @Test
-  fun `uiPreferenceSnapshot should reflect the latest preferences`() = runTest {
+  fun `shellUiPreferences should reflect the latest preferences`() = runTest {
     // Given
-    val preferences = UiPreferencesSnapshot(themePreference = ThemePreference.DARK)
+    val preferences = DataStoreUiPreferences(themePreference = ThemePreference.DARK)
     repository = createRepository(preferences)
 
     // When
     advanceUntilIdle()
-    val snapshot = repository.uiPreferenceSnapshot.first()
+    val snapshot = repository.shellUiPreferences.first()
 
     // Then
     assertThat(snapshot.theme).isEqualTo(ThemePreference.DARK)
@@ -87,7 +87,7 @@ class ThemeRepositoryImplTest {
   @Test
   fun `repository should implement ThemeRepository interface`() {
     // Given
-    repository = createRepository(UiPreferencesSnapshot())
+    repository = createRepository(DataStoreUiPreferences())
 
     // Then
     assertThat(repository).isInstanceOf(ThemeRepository::class.java)
@@ -96,7 +96,7 @@ class ThemeRepositoryImplTest {
   @Test
   fun `repository should have ioDispatcher property`() {
     // Given
-    repository = createRepository(UiPreferencesSnapshot())
+    repository = createRepository(DataStoreUiPreferences())
 
     // Then
     assertThat(repository.ioDispatcher).isNotNull()

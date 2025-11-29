@@ -40,7 +40,7 @@ data class UserProfile(
     copy(pinnedTools = sanitizePinnedTools(tools))
 
   /** Applies the supplied UI preferences snapshot to this profile. */
-  fun withPreferences(preferences: UiPreferencesSnapshot): UserProfile {
+  fun withPreferences(preferences: DataStoreUiPreferences): UserProfile {
     val normalized = preferences.normalized()
     return copy(
       themePreference = normalized.themePreference,
@@ -57,7 +57,7 @@ data class UserProfile(
     /** Builds a domain profile directly from preference state when Room has not hydrated yet. */
     fun fromPreferences(
       id: String,
-      preferences: UiPreferencesSnapshot,
+      preferences: DataStoreUiPreferences,
       lastOpenedScreen: ScreenType = ScreenType.HOME,
       savedLayouts: List<LayoutSnapshot> = emptyList(),
       displayName: String? = null,
@@ -113,8 +113,13 @@ fun UserProfile.toRecord(): UserProfileRecord =
     savedLayouts = savedLayouts,
   )
 
-/** Snapshot of preference state emitted by DataStore before merging into the domain profile. */
-data class UiPreferencesSnapshot(
+/**
+ * Snapshot of preference state emitted by DataStore before merging into the domain profile.
+ *
+ * This model is used for persistence and data layer operations. For the lightweight UI model used
+ * by the shell, see [ShellUiPreferences].
+ */
+data class DataStoreUiPreferences(
   val themePreference: ThemePreference = ThemePreference.SYSTEM,
   val visualDensity: VisualDensity = VisualDensity.DEFAULT,
   var pinnedTools: List<String> = emptyList(),
@@ -128,10 +133,10 @@ data class UiPreferencesSnapshot(
   }
 }
 
-fun UiPreferencesSnapshot.normalized(): UiPreferencesSnapshot = copy()
+fun DataStoreUiPreferences.normalized(): DataStoreUiPreferences = copy()
 
-fun UserProfile.toPreferencesSnapshot(): UiPreferencesSnapshot =
-  UiPreferencesSnapshot(
+fun UserProfile.toDataStoreUiPreferences(): DataStoreUiPreferences =
+  DataStoreUiPreferences(
     themePreference = themePreference,
     visualDensity = visualDensity,
     pinnedTools = pinnedTools,

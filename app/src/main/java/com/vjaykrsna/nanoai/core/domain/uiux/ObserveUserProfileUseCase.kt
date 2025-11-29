@@ -3,9 +3,9 @@ package com.vjaykrsna.nanoai.core.domain.uiux
 import com.vjaykrsna.nanoai.core.common.IoDispatcher
 import com.vjaykrsna.nanoai.core.data.preferences.UiPreferences
 import com.vjaykrsna.nanoai.core.data.preferences.toDomainSnapshot
+import com.vjaykrsna.nanoai.core.domain.model.uiux.DataStoreUiPreferences
 import com.vjaykrsna.nanoai.core.domain.model.uiux.LayoutSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UIStateSnapshot
-import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferencesSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UserProfile
 import com.vjaykrsna.nanoai.core.domain.repository.UserProfileRepository
 import javax.inject.Inject
@@ -70,11 +70,11 @@ constructor(
       }
       .flowOn(dispatcher)
 
-  private fun Any?.toSnapshot(): UiPreferencesSnapshot =
+  private fun Any?.toSnapshot(): DataStoreUiPreferences =
     when (this) {
-      null -> UiPreferencesSnapshot()
-      is UiPreferencesSnapshot -> this
+      null -> DataStoreUiPreferences()
+      is DataStoreUiPreferences -> this
       is UiPreferences -> this.toDomainSnapshot()
-      else -> UiPreferencesSnapshot()
+      else -> DataStoreUiPreferences()
     }
 }

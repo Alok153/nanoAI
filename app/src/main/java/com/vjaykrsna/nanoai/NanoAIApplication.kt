@@ -1,6 +1,5 @@
 package com.vjaykrsna.nanoai
 
-import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import dagger.hilt.android.HiltAndroidApp
@@ -9,11 +8,12 @@ import javax.inject.Inject
 /**
  * Application class for nanoAI.
  *
- * Annotated with @HiltAndroidApp to enable Hilt dependency injection throughout the app, including
- * WorkManager workers.
+ * Extends [BaseApplication] to enable notification receiver registration for download actions
+ * (Resume/Pause/Cancel). Annotated with @HiltAndroidApp to enable Hilt dependency injection
+ * throughout the app, including WorkManager workers.
  */
 @HiltAndroidApp
-class NanoAIApplication : Application(), Configuration.Provider {
+class NanoAIApplication : BaseApplication(), Configuration.Provider {
   @Inject lateinit var workerFactory: HiltWorkerFactory
 
   override val workManagerConfiguration: Configuration
@@ -21,6 +21,6 @@ class NanoAIApplication : Application(), Configuration.Provider {
 
   override fun onCreate() {
     super.onCreate()
-    // Notification receiver registration is handled by BaseApplication
+    // Notification receiver registration is handled by BaseApplication.onCreate()
   }
 }

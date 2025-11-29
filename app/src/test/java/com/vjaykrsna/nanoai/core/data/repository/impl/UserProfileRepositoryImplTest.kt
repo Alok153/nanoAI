@@ -2,10 +2,10 @@ package com.vjaykrsna.nanoai.core.data.repository.impl
 
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.data.uiux.UserProfileLocalDataSource
+import com.vjaykrsna.nanoai.core.domain.model.uiux.DataStoreUiPreferences
 import com.vjaykrsna.nanoai.core.domain.model.uiux.LayoutSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UIStateSnapshot
-import com.vjaykrsna.nanoai.core.domain.model.uiux.UiPreferencesSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UserProfile
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
@@ -33,7 +33,7 @@ class UserProfileRepositoryImplTest {
   private lateinit var repository: UserProfileRepositoryImpl
 
   private val userProfileFlow = MutableStateFlow<UserProfile?>(null)
-  private val preferencesFlow = MutableStateFlow(UiPreferencesSnapshot())
+  private val preferencesFlow = MutableStateFlow(DataStoreUiPreferences())
   private val uiStateFlow = MutableStateFlow<UIStateSnapshot?>(null)
 
   @BeforeEach
@@ -178,7 +178,7 @@ class UserProfileRepositoryImplTest {
   fun `getUserProfile should call local data source`() =
     runTest(dispatcher) {
       val userId = "testUser"
-      val expectedProfile = UserProfile.fromPreferences(userId, UiPreferencesSnapshot())
+      val expectedProfile = UserProfile.fromPreferences(userId, DataStoreUiPreferences())
       coEvery { localDataSource.getUserProfile(userId) } returns expectedProfile
 
       val result = repository.getUserProfile(userId)
@@ -190,7 +190,7 @@ class UserProfileRepositoryImplTest {
   @Test
   fun `observePreferences should return flow from local data source`() =
     runTest(dispatcher) {
-      val expectedPrefs = UiPreferencesSnapshot(themePreference = ThemePreference.DARK)
+      val expectedPrefs = DataStoreUiPreferences(themePreference = ThemePreference.DARK)
       preferencesFlow.value = expectedPrefs
 
       val result = repository.observePreferences().first()
