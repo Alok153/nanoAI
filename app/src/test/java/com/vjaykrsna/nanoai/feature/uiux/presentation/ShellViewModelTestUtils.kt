@@ -1,9 +1,5 @@
 package com.vjaykrsna.nanoai.feature.uiux.presentation
 
-import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
-import androidx.compose.material3.windowsizeclass.WindowSizeClass
-import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.unit.dp
 import com.vjaykrsna.nanoai.core.domain.library.DownloadManager
 import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.core.domain.model.library.DownloadStatus
@@ -19,6 +15,7 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.ProgressJob
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RecentActivityItem
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RightPanel
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ShellUiPreferences
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ShellWindowSizeClass
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UIStateSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UndoPayload
@@ -167,12 +164,10 @@ internal class FakeNavigationRepository(
   override val recentActivity: kotlinx.coroutines.flow.Flow<List<RecentActivityItem>> =
     recentActivityFlow
 
-  @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
   private val windowSizeClassFlow =
-    kotlinx.coroutines.flow.MutableStateFlow(
-      WindowSizeClass.calculateFromSize(DpSize(800.dp, 600.dp))
-    )
-  override val windowSizeClass: kotlinx.coroutines.flow.Flow<WindowSizeClass> = windowSizeClassFlow
+    kotlinx.coroutines.flow.MutableStateFlow(ShellWindowSizeClass.Default)
+  override val windowSizeClass: kotlinx.coroutines.flow.Flow<ShellWindowSizeClass> =
+    windowSizeClassFlow
 
   internal val undoPayloadFlow =
     kotlinx.coroutines.flow.MutableStateFlow<
@@ -184,7 +179,7 @@ internal class FakeNavigationRepository(
     kotlinx.coroutines.flow.Flow<com.vjaykrsna.nanoai.core.domain.model.uiux.UndoPayload?> =
     undoPayloadFlow
 
-  override fun updateWindowSizeClass(sizeClass: WindowSizeClass) {
+  override fun updateWindowSizeClass(sizeClass: ShellWindowSizeClass) {
     windowSizeClassFlow.value = sizeClass
   }
 

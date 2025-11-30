@@ -1,7 +1,7 @@
 package com.vjaykrsna.nanoai.core.domain.usecase
 
-import com.vjaykrsna.nanoai.core.data.preferences.UiPreferences
-import com.vjaykrsna.nanoai.core.data.preferences.UiPreferencesStore
+import com.vjaykrsna.nanoai.core.domain.model.uiux.DataStoreUiPreferences
+import com.vjaykrsna.nanoai.core.domain.repository.UiPreferencesRepository
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 
@@ -13,11 +13,11 @@ import kotlinx.coroutines.flow.Flow
  */
 class ObserveUiPreferencesUseCase
 @Inject
-constructor(private val uiPreferencesStore: UiPreferencesStore) {
+constructor(private val repository: UiPreferencesRepository) {
   /**
    * Observes UI preferences with reactive updates.
    *
    * @return Flow of UI preferences that emits whenever preferences change
    */
-  operator fun invoke(): Flow<UiPreferences> = uiPreferencesStore.uiPreferences
+  operator fun invoke(): Flow<DataStoreUiPreferences> = repository.preferences
 }

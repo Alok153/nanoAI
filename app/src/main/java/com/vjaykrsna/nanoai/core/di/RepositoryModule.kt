@@ -9,6 +9,8 @@ import com.vjaykrsna.nanoai.core.data.library.huggingface.HuggingFaceCatalogRepo
 import com.vjaykrsna.nanoai.core.data.library.huggingface.HuggingFaceCatalogRepositoryImpl
 import com.vjaykrsna.nanoai.core.data.library.impl.DownloadManagerImpl
 import com.vjaykrsna.nanoai.core.data.library.impl.ModelCatalogRepositoryImpl
+import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreferenceRepositoryImpl
+import com.vjaykrsna.nanoai.core.data.preferences.UiPreferencesRepositoryImpl
 import com.vjaykrsna.nanoai.core.data.repository.impl.ApiProviderConfigRepositoryImpl
 import com.vjaykrsna.nanoai.core.data.repository.impl.ConversationRepositoryImpl
 import com.vjaykrsna.nanoai.core.data.repository.impl.InferencePreferenceRepositoryImpl
@@ -29,6 +31,8 @@ import com.vjaykrsna.nanoai.core.domain.repository.ConversationRepository
 import com.vjaykrsna.nanoai.core.domain.repository.InferencePreferenceRepository
 import com.vjaykrsna.nanoai.core.domain.repository.PersonaRepository
 import com.vjaykrsna.nanoai.core.domain.repository.PersonaSwitchLogRepository
+import com.vjaykrsna.nanoai.core.domain.repository.PrivacyPreferenceRepository
+import com.vjaykrsna.nanoai.core.domain.repository.UiPreferencesRepository
 import com.vjaykrsna.nanoai.core.domain.repository.UserProfileRepository
 import com.vjaykrsna.nanoai.core.domain.settings.ImportService
 import com.vjaykrsna.nanoai.core.domain.uiux.ProgressCenterCoordinator
@@ -74,6 +78,18 @@ abstract class PreferenceRepositoryModule {
   abstract fun bindApiProviderConfigRepository(
     impl: ApiProviderConfigRepositoryImpl
   ): ApiProviderConfigRepository
+
+  @Binds
+  @Singleton
+  abstract fun bindUiPreferencesRepository(
+    impl: UiPreferencesRepositoryImpl
+  ): UiPreferencesRepository
+
+  @Binds
+  @Singleton
+  abstract fun bindPrivacyPreferenceRepository(
+    impl: PrivacyPreferenceRepositoryImpl
+  ): PrivacyPreferenceRepository
 }
 
 /** Binds repositories serving the model catalog and download flows. */

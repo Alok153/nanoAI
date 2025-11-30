@@ -3,9 +3,9 @@ package com.vjaykrsna.nanoai.core.domain.usecase
 import com.vjaykrsna.nanoai.core.common.IoDispatcher
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.common.annotations.OneShot
-import com.vjaykrsna.nanoai.core.data.preferences.UiPreferencesStore
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
+import com.vjaykrsna.nanoai.core.domain.repository.UiPreferencesRepository
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -21,22 +21,22 @@ import kotlinx.datetime.Instant
 class UpdateUiPreferencesUseCase
 @Inject
 constructor(
-  private val uiPreferencesStore: UiPreferencesStore,
+  private val repository: UiPreferencesRepository,
   @IoDispatcher private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
   /** Updates theme preference. */
   suspend fun setThemePreference(themePreference: ThemePreference) =
-    uiPreferencesStore.setThemePreference(themePreference)
+    repository.setThemePreference(themePreference)
 
   /** Updates visual density. */
   suspend fun setVisualDensity(visualDensity: VisualDensity) =
-    uiPreferencesStore.setVisualDensity(visualDensity)
+    repository.setVisualDensity(visualDensity)
 
   /** Updates high contrast enabled. */
   @OneShot("Persist high contrast preference toggle")
   suspend fun setHighContrastEnabled(enabled: Boolean): NanoAIResult<Unit> =
     withContext(dispatcher) {
-      runCatching { uiPreferencesStore.setHighContrastEnabled(enabled) }
+      runCatching { repository.setHighContrastEnabled(enabled) }
         .fold(
           onSuccess = { NanoAIResult.success(Unit) },
           onFailure = {
@@ -51,27 +51,27 @@ constructor(
 
   /** Sets pinned tool IDs. */
   suspend fun setPinnedToolIds(pinnedToolIds: List<String>) =
-    uiPreferencesStore.setPinnedToolIds(pinnedToolIds)
+    repository.setPinnedToolIds(pinnedToolIds)
 
   /** Adds a pinned tool. */
-  suspend fun addPinnedTool(toolId: String) = uiPreferencesStore.addPinnedTool(toolId)
+  suspend fun addPinnedTool(toolId: String) = repository.addPinnedTool(toolId)
 
   /** Removes a pinned tool. */
-  suspend fun removePinnedTool(toolId: String) = uiPreferencesStore.removePinnedTool(toolId)
+  suspend fun removePinnedTool(toolId: String) = repository.removePinnedTool(toolId)
 
   /** Reorders pinned tools. */
   suspend fun reorderPinnedTools(orderedToolIds: List<String>) =
-    uiPreferencesStore.reorderPinnedTools(orderedToolIds)
+    repository.reorderPinnedTools(orderedToolIds)
 
   /** Sets command palette recents. */
   suspend fun setCommandPaletteRecents(commandIds: List<String>) =
-    uiPreferencesStore.setCommandPaletteRecents(commandIds)
+    repository.setCommandPaletteRecents(commandIds)
 
   /** Records a command palette recent. */
   suspend fun recordCommandPaletteRecent(commandId: String) =
-    uiPreferencesStore.recordCommandPaletteRecent(commandId)
+    repository.recordCommandPaletteRecent(commandId)
 
   /** Sets connectivity banner dismissed. */
   suspend fun setConnectivityBannerDismissed(dismissedAt: Instant?) =
-    uiPreferencesStore.setConnectivityBannerDismissed(dismissedAt)
+    repository.setConnectivityBannerDismissed(dismissedAt)
 }

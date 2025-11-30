@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,6 +29,7 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.CommandDestination
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ProgressJob
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RecentActivityItem
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ShellWindowWidthClass
 import com.vjaykrsna.nanoai.core.domain.uiux.navigation.toModeIdOrNull
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ModeCard
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellLayoutState
@@ -232,8 +232,7 @@ private fun ModeCardItem(card: ModeCard, onClick: () -> Unit) {
 
 private fun columnsForLayout(layout: ShellLayoutState): Int =
   when (layout.windowSizeClass.widthSizeClass) {
-    WindowWidthSizeClass.Compact -> MODE_COLUMNS_COMPACT
-    WindowWidthSizeClass.Medium -> MODE_COLUMNS_MEDIUM
-    WindowWidthSizeClass.Expanded -> MODE_COLUMNS_EXPANDED
-    else -> MODE_COLUMNS_COMPACT
+    ShellWindowWidthClass.COMPACT -> MODE_COLUMNS_COMPACT
+    ShellWindowWidthClass.MEDIUM -> MODE_COLUMNS_MEDIUM
+    ShellWindowWidthClass.EXPANDED -> MODE_COLUMNS_EXPANDED
   }

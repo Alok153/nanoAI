@@ -1,7 +1,3 @@
-@file:OptIn(
-  androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi::class
-)
-
 package com.vjaykrsna.nanoai.feature.uiux.presentation
 
 import androidx.compose.material.icons.Icons
@@ -11,10 +7,7 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
@@ -29,6 +22,7 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.ProgressJob
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RecentActivityItem
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RightPanel
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ShellUiPreferences
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ShellWindowSizeClass
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UndoPayload
 import com.vjaykrsna.nanoai.core.domain.model.uiux.toShellUiPreferences
 import com.vjaykrsna.nanoai.core.domain.uiux.NavigationOperationsUseCase
@@ -144,10 +138,7 @@ private val MODE_CARD_DEFINITIONS =
   )
 
 private fun buildInitialShellUiState(): ShellUiState {
-  val defaultWindowSize =
-    androidx.compose.material3.windowsizeclass.WindowSizeClass.calculateFromSize(
-      androidx.compose.ui.unit.DpSize(width = 640.dp, height = 360.dp)
-    )
+  val defaultWindowSize = ShellWindowSizeClass.Default
   return ShellUiState(
     layout =
       ShellLayoutState(
@@ -313,7 +304,7 @@ constructor(
         connectivityCoordinator.connectivityBannerState(viewModelScope),
         observeUserProfileUseCase(),
       ) { values ->
-        val windowSizeClass = values.requireValue<WindowSizeClass>(WINDOW_SIZE_CLASS_INDEX)
+        val windowSizeClass = values.requireValue<ShellWindowSizeClass>(WINDOW_SIZE_CLASS_INDEX)
         val activeMode = values.requireValue<ModeId>(ACTIVE_MODE_INDEX)
         val isLeftDrawerOpen = values.requireValue<Boolean>(LEFT_DRAWER_OPEN_INDEX)
         val isRightDrawerOpen = values.requireValue<Boolean>(RIGHT_DRAWER_OPEN_INDEX)
@@ -382,7 +373,7 @@ constructor(
   }
 
   /** Updates the current window size class so adaptive layouts respond to device changes. */
-  fun updateWindowSizeClass(sizeClass: WindowSizeClass) {
+  fun updateWindowSizeClass(sizeClass: ShellWindowSizeClass) {
     navigationOperationsUseCase.updateWindowSizeClass(sizeClass)
   }
 

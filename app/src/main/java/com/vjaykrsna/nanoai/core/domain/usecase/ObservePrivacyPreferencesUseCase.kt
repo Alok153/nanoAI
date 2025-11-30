@@ -1,6 +1,6 @@
 package com.vjaykrsna.nanoai.core.domain.usecase
 
-import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreferenceStore
+import com.vjaykrsna.nanoai.core.domain.repository.PrivacyPreferenceRepository
 import com.vjaykrsna.nanoai.core.domain.settings.model.PrivacyPreference
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
@@ -13,11 +13,11 @@ import kotlinx.coroutines.flow.Flow
  */
 class ObservePrivacyPreferencesUseCase
 @Inject
-constructor(private val privacyPreferenceStore: PrivacyPreferenceStore) {
+constructor(private val repository: PrivacyPreferenceRepository) {
   /**
    * Observes privacy preferences with reactive updates.
    *
    * @return Flow of privacy preferences that emits whenever preferences change
    */
-  operator fun invoke(): Flow<PrivacyPreference> = privacyPreferenceStore.privacyPreference
+  operator fun invoke(): Flow<PrivacyPreference> = repository.privacyPreference
 }

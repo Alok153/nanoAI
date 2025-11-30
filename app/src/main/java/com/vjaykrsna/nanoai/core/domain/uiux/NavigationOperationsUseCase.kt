@@ -1,13 +1,12 @@
 package com.vjaykrsna.nanoai.core.domain.uiux
 
-import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
-import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import com.vjaykrsna.nanoai.core.common.IoDispatcher
 import com.vjaykrsna.nanoai.core.domain.model.uiux.CommandPaletteState
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
 import com.vjaykrsna.nanoai.core.domain.model.uiux.PaletteSource
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RecentActivityItem
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RightPanel
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ShellWindowSizeClass
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UndoPayload
 import com.vjaykrsna.nanoai.core.domain.repository.NavigationRepository
 import javax.inject.Inject
@@ -31,7 +30,7 @@ constructor(
 
   val recentActivity: Flow<List<RecentActivityItem>> = repository.recentActivity
 
-  val windowSizeClass: Flow<WindowSizeClass> = repository.windowSizeClass
+  val windowSizeClass: Flow<ShellWindowSizeClass> = repository.windowSizeClass
 
   val undoPayload: Flow<UndoPayload?> = repository.undoPayload
 
@@ -66,8 +65,7 @@ constructor(
   }
 
   /** Updates the current window size class for responsive layouts. */
-  @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
-  fun updateWindowSizeClass(sizeClass: WindowSizeClass) {
+  fun updateWindowSizeClass(sizeClass: ShellWindowSizeClass) {
     scope.launch { repository.updateWindowSizeClass(sizeClass) }
   }
 }

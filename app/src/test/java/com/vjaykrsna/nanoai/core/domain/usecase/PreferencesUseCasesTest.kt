@@ -2,11 +2,11 @@ package com.vjaykrsna.nanoai.core.domain.usecase
 
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
-import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreferenceStore
-import com.vjaykrsna.nanoai.core.data.preferences.UiPreferences
-import com.vjaykrsna.nanoai.core.data.preferences.UiPreferencesStore
+import com.vjaykrsna.nanoai.core.domain.model.uiux.DataStoreUiPreferences
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
+import com.vjaykrsna.nanoai.core.domain.repository.PrivacyPreferenceRepository
+import com.vjaykrsna.nanoai.core.domain.repository.UiPreferencesRepository
 import com.vjaykrsna.nanoai.core.domain.settings.model.DisclaimerExposureState
 import com.vjaykrsna.nanoai.core.domain.settings.model.PrivacyPreference
 import com.vjaykrsna.nanoai.core.domain.settings.model.RetentionPolicy
@@ -30,8 +30,8 @@ import org.junit.jupiter.api.extension.ExtendWith
 @ExtendWith(MockKExtension::class)
 class PreferencesUseCasesTest {
 
-  @MockK lateinit var uiPreferencesStore: UiPreferencesStore
-  @MockK lateinit var privacyPreferenceStore: PrivacyPreferenceStore
+  @MockK lateinit var uiPreferencesRepository: UiPreferencesRepository
+  @MockK lateinit var privacyPreferenceRepository: PrivacyPreferenceRepository
 
   private lateinit var updateUiPreferencesUseCase: UpdateUiPreferencesUseCase
   private lateinit var observeUiPreferencesUseCase: ObserveUiPreferencesUseCase
@@ -43,16 +43,16 @@ class PreferencesUseCasesTest {
   @BeforeEach
   fun setUp() {
     dispatcher = UnconfinedTestDispatcher()
-    updateUiPreferencesUseCase = UpdateUiPreferencesUseCase(uiPreferencesStore, dispatcher)
-    observeUiPreferencesUseCase = ObserveUiPreferencesUseCase(uiPreferencesStore)
-    observePrivacyPreferencesUseCase = ObservePrivacyPreferencesUseCase(privacyPreferenceStore)
-    observeDisclaimerExposureUseCase = ObserveDisclaimerExposureUseCase(privacyPreferenceStore)
-    updatePrivacyPreferencesUseCase = UpdatePrivacyPreferencesUseCase(privacyPreferenceStore)
+    updateUiPreferencesUseCase = UpdateUiPreferencesUseCase(uiPreferencesRepository, dispatcher)
+    observeUiPreferencesUseCase = ObserveUiPreferencesUseCase(uiPreferencesRepository)
+    observePrivacyPreferencesUseCase = ObservePrivacyPreferencesUseCase(privacyPreferenceRepository)
+    observeDisclaimerExposureUseCase = ObserveDisclaimerExposureUseCase(privacyPreferenceRepository)
+    updatePrivacyPreferencesUseCase = UpdatePrivacyPreferencesUseCase(privacyPreferenceRepository)
   }
 
   @Test
   fun `observe preference use cases expose underlying flows`() {
-    val uiFlow = flowOf(UiPreferences())
+    val uiFlow = flowOf(DataStoreUiPreferences())
     val privacyFlow =
       flowOf(
         PrivacyPreference(
@@ -73,9 +73,9 @@ class PreferencesUseCasesTest {
         )
       )
 
-    every { uiPreferencesStore.uiPreferences } returns uiFlow
-    every { privacyPreferenceStore.privacyPreference } returns privacyFlow
-    every { privacyPreferenceStore.disclaimerExposure } returns disclaimerFlow
+    every { uiPreferencesRepository.preferences } returns uiFlow
+    every { privacyPreferenceRepository.privacyPreference } returns privacyFlow
+    every { privacyPreferenceRepository.disclaimerExposure } returns disclaimerFlow
 
     assertThat(observeUiPreferencesUseCase()).isEqualTo(uiFlow)
     assertThat(observePrivacyPreferencesUseCase()).isEqualTo(privacyFlow)
@@ -85,15 +85,15 @@ class PreferencesUseCasesTest {
   @Test
   fun `updateUiPreferences delegates to store setters`() =
     runTest(dispatcher) {
-      coJustRun { uiPreferencesStore.setThemePreference(any()) }
-      coJustRun { uiPreferencesStore.setVisualDensity(any()) }
-      coJustRun { uiPreferencesStore.setPinnedToolIds(any()) }
-      coJustRun { uiPreferencesStore.addPinnedTool(any()) }
-      coJustRun { uiPreferencesStore.removePinnedTool(any()) }
-      coJustRun { uiPreferencesStore.reorderPinnedTools(any()) }
-      coJustRun { uiPreferencesStore.setCommandPaletteRecents(any()) }
-      coJustRun { uiPreferencesStore.recordCommandPaletteRecent(any()) }
-      coJustRun { uiPreferencesStore.setConnectivityBannerDismissed(any()) }
+      coJustRun { uiPreferencesRepository.setThemePreference(any()) }
+      coJustRun { uiPreferencesRepository.setVisualDensity(any()) }
+      coJustRun { uiPreferencesRepository.setPinnedToolIds(any()) }
+      coJustRun { uiPreferencesRepository.addPinnedTool(any()) }
+      coJustRun { uiPreferencesRepository.removePinnedTool(any()) }
+      coJustRun { uiPreferencesRepository.reorderPinnedTools(any()) }
+      coJustRun { uiPreferencesRepository.setCommandPaletteRecents(any()) }
+      coJustRun { uiPreferencesRepository.recordCommandPaletteRecent(any()) }
+      coJustRun { uiPreferencesRepository.setConnectivityBannerDismissed(any()) }
 
       updateUiPreferencesUseCase.setThemePreference(ThemePreference.DARK)
       updateUiPreferencesUseCase.setVisualDensity(VisualDensity.COMPACT)
@@ -105,32 +105,32 @@ class PreferencesUseCasesTest {
       updateUiPreferencesUseCase.recordCommandPaletteRecent("cmd-2")
       updateUiPreferencesUseCase.setConnectivityBannerDismissed(null)
 
-      coVerify { uiPreferencesStore.setThemePreference(ThemePreference.DARK) }
-      coVerify { uiPreferencesStore.setVisualDensity(VisualDensity.COMPACT) }
-      coVerify { uiPreferencesStore.setPinnedToolIds(listOf("a", "b")) }
-      coVerify { uiPreferencesStore.addPinnedTool("c") }
-      coVerify { uiPreferencesStore.removePinnedTool("a") }
-      coVerify { uiPreferencesStore.reorderPinnedTools(listOf("b", "c")) }
-      coVerify { uiPreferencesStore.setCommandPaletteRecents(listOf("cmd")) }
-      coVerify { uiPreferencesStore.recordCommandPaletteRecent("cmd-2") }
-      coVerify { uiPreferencesStore.setConnectivityBannerDismissed(null) }
+      coVerify { uiPreferencesRepository.setThemePreference(ThemePreference.DARK) }
+      coVerify { uiPreferencesRepository.setVisualDensity(VisualDensity.COMPACT) }
+      coVerify { uiPreferencesRepository.setPinnedToolIds(listOf("a", "b")) }
+      coVerify { uiPreferencesRepository.addPinnedTool("c") }
+      coVerify { uiPreferencesRepository.removePinnedTool("a") }
+      coVerify { uiPreferencesRepository.reorderPinnedTools(listOf("b", "c")) }
+      coVerify { uiPreferencesRepository.setCommandPaletteRecents(listOf("cmd")) }
+      coVerify { uiPreferencesRepository.recordCommandPaletteRecent("cmd-2") }
+      coVerify { uiPreferencesRepository.setConnectivityBannerDismissed(null) }
     }
 
   @Test
   fun `setHighContrastEnabled reports success on completion`() =
     runTest(dispatcher) {
-      coJustRun { uiPreferencesStore.setHighContrastEnabled(true) }
+      coJustRun { uiPreferencesRepository.setHighContrastEnabled(true) }
 
       val result = updateUiPreferencesUseCase.setHighContrastEnabled(true)
 
       assertThat(result).isInstanceOf(NanoAIResult.Success::class.java)
-      coVerify { uiPreferencesStore.setHighContrastEnabled(true) }
+      coVerify { uiPreferencesRepository.setHighContrastEnabled(true) }
     }
 
   @Test
   fun `setHighContrastEnabled surfaces recoverable errors`() =
     runTest(dispatcher) {
-      coEvery { uiPreferencesStore.setHighContrastEnabled(true) } throws
+      coEvery { uiPreferencesRepository.setHighContrastEnabled(true) } throws
         IllegalStateException("boom")
 
       val result = updateUiPreferencesUseCase.setHighContrastEnabled(true)
@@ -140,11 +140,11 @@ class PreferencesUseCasesTest {
 
   @Test
   fun `updatePrivacyPreferences delegates to store`() = runTest {
-    coJustRun { privacyPreferenceStore.setTelemetryOptIn(any()) }
-    coJustRun { privacyPreferenceStore.acknowledgeConsent(any()) }
-    coJustRun { privacyPreferenceStore.setRetentionPolicy(any()) }
-    coJustRun { privacyPreferenceStore.setExportWarningsDismissed(any()) }
-    coJustRun { privacyPreferenceStore.incrementDisclaimerShown() }
+    coJustRun { privacyPreferenceRepository.setTelemetryOptIn(any()) }
+    coJustRun { privacyPreferenceRepository.acknowledgeConsent(any()) }
+    coJustRun { privacyPreferenceRepository.setRetentionPolicy(any()) }
+    coJustRun { privacyPreferenceRepository.setExportWarningsDismissed(any()) }
+    coJustRun { privacyPreferenceRepository.incrementDisclaimerShown() }
 
     val timestamp = Instant.fromEpochMilliseconds(1_700_000_000_000)
 
@@ -154,10 +154,10 @@ class PreferencesUseCasesTest {
     updatePrivacyPreferencesUseCase.setExportWarningsDismissed(true)
     updatePrivacyPreferencesUseCase.incrementDisclaimerShown()
 
-    coVerify { privacyPreferenceStore.setTelemetryOptIn(true) }
-    coVerify { privacyPreferenceStore.acknowledgeConsent(timestamp) }
-    coVerify { privacyPreferenceStore.setRetentionPolicy(RetentionPolicy.MANUAL_PURGE_ONLY) }
-    coVerify { privacyPreferenceStore.setExportWarningsDismissed(true) }
-    coVerify { privacyPreferenceStore.incrementDisclaimerShown() }
+    coVerify { privacyPreferenceRepository.setTelemetryOptIn(true) }
+    coVerify { privacyPreferenceRepository.acknowledgeConsent(timestamp) }
+    coVerify { privacyPreferenceRepository.setRetentionPolicy(RetentionPolicy.MANUAL_PURGE_ONLY) }
+    coVerify { privacyPreferenceRepository.setExportWarningsDismissed(true) }
+    coVerify { privacyPreferenceRepository.incrementDisclaimerShown() }
   }
 }

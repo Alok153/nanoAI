@@ -1,18 +1,18 @@
 package com.vjaykrsna.nanoai.feature.uiux.presentation
 
-import androidx.compose.material3.windowsizeclass.WindowHeightSizeClass
-import androidx.compose.material3.windowsizeclass.WindowSizeClass
-import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityStatus
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ProgressJob
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RecentActivityItem
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RightPanel
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ShellWindowHeightClass
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ShellWindowSizeClass
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ShellWindowWidthClass
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UndoPayload
 
 /** Aggregated layout state consumed by the unified shell scaffold. */
 data class ShellLayoutState(
-  val windowSizeClass: WindowSizeClass,
+  val windowSizeClass: ShellWindowSizeClass,
   val isLeftDrawerOpen: Boolean,
   val isRightDrawerOpen: Boolean,
   val activeRightPanel: RightPanel?,
@@ -26,15 +26,25 @@ data class ShellLayoutState(
 ) {
   /** True when the current width class maps to a compact experience (phones, portrait). */
   val isCompactWidth: Boolean
-    get() = windowSizeClass.widthSizeClass == WindowWidthSizeClass.Compact
+    get() = windowSizeClass.widthSizeClass == ShellWindowWidthClass.COMPACT
 
   /** True when the device has enough width for a medium/expanded layout. */
   val isMediumOrWider: Boolean
-    get() = windowSizeClass.widthSizeClass >= WindowWidthSizeClass.Medium
+    get() =
+      when (windowSizeClass.widthSizeClass) {
+        ShellWindowWidthClass.COMPACT -> false
+        ShellWindowWidthClass.MEDIUM,
+        ShellWindowWidthClass.EXPANDED -> true
+      }
 
   /** True when vertical height can comfortably host persistent rails. */
   val isTallLayout: Boolean
-    get() = windowSizeClass.heightSizeClass >= WindowHeightSizeClass.Medium
+    get() =
+      when (windowSizeClass.heightSizeClass) {
+        ShellWindowHeightClass.COMPACT -> false
+        ShellWindowHeightClass.MEDIUM,
+        ShellWindowHeightClass.EXPANDED -> true
+      }
 
   /** True when the left navigation should be rendered as a permanent drawer. */
   val usesPermanentLeftDrawer: Boolean
@@ -101,7 +111,7 @@ data class ShellLayoutState(
     copy(isLeftDrawerOpen = false, isRightDrawerOpen = false, activeRightPanel = null)
 
   companion object {
-    fun empty(windowSizeClass: WindowSizeClass): ShellLayoutState =
+    fun empty(windowSizeClass: ShellWindowSizeClass): ShellLayoutState =
       ShellLayoutState(
         windowSizeClass = windowSizeClass,
         isLeftDrawerOpen = false,

@@ -1,6 +1,6 @@
 package com.vjaykrsna.nanoai.core.domain.usecase
 
-import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreferenceStore
+import com.vjaykrsna.nanoai.core.domain.repository.PrivacyPreferenceRepository
 import com.vjaykrsna.nanoai.core.domain.settings.model.DisclaimerExposureState
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
@@ -13,11 +13,11 @@ import kotlinx.coroutines.flow.Flow
  */
 class ObserveDisclaimerExposureUseCase
 @Inject
-constructor(private val privacyPreferenceStore: PrivacyPreferenceStore) {
+constructor(private val repository: PrivacyPreferenceRepository) {
   /**
    * Observes the privacy disclaimer exposure state.
    *
    * @return Flow emitting the latest disclaimer exposure information.
    */
-  operator fun invoke(): Flow<DisclaimerExposureState> = privacyPreferenceStore.disclaimerExposure
+  operator fun invoke(): Flow<DisclaimerExposureState> = repository.disclaimerExposure
 }

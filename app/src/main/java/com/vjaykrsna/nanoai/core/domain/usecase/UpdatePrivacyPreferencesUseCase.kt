@@ -1,6 +1,6 @@
 package com.vjaykrsna.nanoai.core.domain.usecase
 
-import com.vjaykrsna.nanoai.core.data.preferences.PrivacyPreferenceStore
+import com.vjaykrsna.nanoai.core.domain.repository.PrivacyPreferenceRepository
 import com.vjaykrsna.nanoai.core.domain.settings.model.RetentionPolicy
 import javax.inject.Inject
 import kotlinx.datetime.Instant
@@ -13,22 +13,20 @@ import kotlinx.datetime.Instant
  */
 class UpdatePrivacyPreferencesUseCase
 @Inject
-constructor(private val privacyPreferenceStore: PrivacyPreferenceStore) {
+constructor(private val repository: PrivacyPreferenceRepository) {
   /** Updates telemetry opt-in preference. */
-  suspend fun setTelemetryOptIn(optIn: Boolean) = privacyPreferenceStore.setTelemetryOptIn(optIn)
+  suspend fun setTelemetryOptIn(optIn: Boolean) = repository.setTelemetryOptIn(optIn)
 
   /** Acknowledges consent with timestamp. */
-  suspend fun acknowledgeConsent(timestamp: Instant) =
-    privacyPreferenceStore.acknowledgeConsent(timestamp)
+  suspend fun acknowledgeConsent(timestamp: Instant) = repository.acknowledgeConsent(timestamp)
 
   /** Updates retention policy. */
-  suspend fun setRetentionPolicy(policy: RetentionPolicy) =
-    privacyPreferenceStore.setRetentionPolicy(policy)
+  suspend fun setRetentionPolicy(policy: RetentionPolicy) = repository.setRetentionPolicy(policy)
 
   /** Dismisses export warnings. */
   suspend fun setExportWarningsDismissed(dismissed: Boolean) =
-    privacyPreferenceStore.setExportWarningsDismissed(dismissed)
+    repository.setExportWarningsDismissed(dismissed)
 
   /** Records that the disclaimer dialog was shown to the user. */
-  suspend fun incrementDisclaimerShown() = privacyPreferenceStore.incrementDisclaimerShown()
+  suspend fun incrementDisclaimerShown() = repository.incrementDisclaimerShown()
 }

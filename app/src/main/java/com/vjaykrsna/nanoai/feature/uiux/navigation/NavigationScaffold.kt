@@ -53,6 +53,7 @@ import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellViewModel
 import com.vjaykrsna.nanoai.shared.ui.components.DisclaimerDialog
 import com.vjaykrsna.nanoai.shared.ui.shell.NanoShellScaffold
 import com.vjaykrsna.nanoai.shared.ui.shell.ShellUiEvent
+import com.vjaykrsna.nanoai.shared.ui.window.toShellWindowSizeClass
 
 // Welcome / onboarding UI removed — onboarding is no longer part of the shell flow.
 // Welcome UI imports removed
@@ -73,7 +74,9 @@ fun NavigationScaffold(
   val view = LocalView.current
   val metricsHolder = remember(view) { PerformanceMetricsState.getHolderForHierarchy(view) }
 
-  LaunchedEffect(windowSizeClass) { shellViewModel.updateWindowSizeClass(windowSizeClass) }
+  LaunchedEffect(windowSizeClass) {
+    shellViewModel.updateWindowSizeClass(windowSizeClass.toShellWindowSizeClass())
+  }
 
   LaunchedEffect(appState.offline) {
     val status = if (appState.offline) ConnectivityStatus.OFFLINE else ConnectivityStatus.ONLINE

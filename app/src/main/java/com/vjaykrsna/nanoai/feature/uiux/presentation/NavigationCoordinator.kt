@@ -1,16 +1,10 @@
-@file:OptIn(
-  androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi::class
-)
-
 package com.vjaykrsna.nanoai.feature.uiux.presentation
 
-import androidx.compose.material3.windowsizeclass.WindowSizeClass
-import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.unit.dp
 import com.vjaykrsna.nanoai.core.domain.model.uiux.CommandPaletteState
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
 import com.vjaykrsna.nanoai.core.domain.model.uiux.PaletteSource
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RightPanel
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ShellWindowSizeClass
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UndoPayload
 import com.vjaykrsna.nanoai.core.domain.uiux.NavigationOperationsUseCase
 import javax.inject.Inject
@@ -57,7 +51,7 @@ constructor(private val navigationOperationsUseCase: NavigationOperationsUseCase
         _undoState,
         navigationOperationsUseCase.commandPaletteState,
       ) { values ->
-        val windowState = values[WINDOW_STATE_INDEX] as WindowSizeClass
+        val windowState = values[WINDOW_STATE_INDEX] as ShellWindowSizeClass
         val activeMode = values[ACTIVE_MODE_INDEX] as ModeId
         val leftDrawerState = values[LEFT_DRAWER_INDEX] as DrawerState
         val rightDrawerState = values[RIGHT_DRAWER_INDEX] as DrawerState
@@ -103,14 +97,14 @@ constructor(private val navigationOperationsUseCase: NavigationOperationsUseCase
     navigationOperationsUseCase.hideCommandPalette()
   }
 
-  fun updateWindowSizeClass(sizeClass: WindowSizeClass) {
+  fun updateWindowSizeClass(sizeClass: ShellWindowSizeClass) {
     navigationOperationsUseCase.updateWindowSizeClass(sizeClass)
   }
 }
 
 /** Navigation-specific state extracted from ShellLayoutState. */
 data class NavigationState(
-  val windowState: WindowSizeClass,
+  val windowState: ShellWindowSizeClass,
   val activeMode: ModeId,
   val leftDrawerState: DrawerState,
   val rightDrawerState: DrawerState,
@@ -121,7 +115,7 @@ data class NavigationState(
   companion object {
     fun default(): NavigationState =
       NavigationState(
-        windowState = WindowSizeClass.calculateFromSize(DpSize(width = 640.dp, height = 360.dp)),
+        windowState = ShellWindowSizeClass.Default,
         activeMode = ModeId.HOME,
         leftDrawerState = DrawerState(false),
         rightDrawerState = DrawerState(false),

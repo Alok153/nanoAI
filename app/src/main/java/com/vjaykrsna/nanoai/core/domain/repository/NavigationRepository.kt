@@ -1,11 +1,11 @@
 package com.vjaykrsna.nanoai.core.domain.repository
 
-import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import com.vjaykrsna.nanoai.core.domain.model.uiux.CommandPaletteState
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
 import com.vjaykrsna.nanoai.core.domain.model.uiux.PaletteSource
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RecentActivityItem
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RightPanel
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ShellWindowSizeClass
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UndoPayload
 import kotlinx.coroutines.flow.Flow
 
@@ -14,11 +14,11 @@ interface NavigationRepository : BaseRepository {
 
   val recentActivity: Flow<List<RecentActivityItem>>
 
-  val windowSizeClass: Flow<WindowSizeClass>
+  val windowSizeClass: Flow<ShellWindowSizeClass>
 
   val undoPayload: Flow<UndoPayload?>
 
-  fun updateWindowSizeClass(sizeClass: WindowSizeClass)
+  fun updateWindowSizeClass(sizeClass: ShellWindowSizeClass)
 
   suspend fun openMode(modeId: ModeId)
 

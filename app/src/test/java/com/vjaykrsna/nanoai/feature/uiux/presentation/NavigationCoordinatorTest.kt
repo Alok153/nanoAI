@@ -1,15 +1,14 @@
 package com.vjaykrsna.nanoai.feature.uiux.presentation
 
-import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
-import androidx.compose.material3.windowsizeclass.WindowSizeClass
-import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.unit.dp
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.domain.model.uiux.CommandPaletteState
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
 import com.vjaykrsna.nanoai.core.domain.model.uiux.PaletteSource
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RecentActivityItem
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RightPanel
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ShellWindowHeightClass
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ShellWindowSizeClass
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ShellWindowWidthClass
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UndoPayload
 import com.vjaykrsna.nanoai.core.domain.uiux.NavigationOperationsUseCase
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
@@ -27,7 +26,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
-@OptIn(ExperimentalCoroutinesApi::class, ExperimentalMaterial3WindowSizeClassApi::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 class NavigationCoordinatorTest {
   private val dispatcher = StandardTestDispatcher()
 
@@ -36,8 +35,7 @@ class NavigationCoordinatorTest {
   private lateinit var navigationOperationsUseCase: NavigationOperationsUseCase
   private lateinit var coordinator: NavigationCoordinator
 
-  private val windowSizeClassFlow =
-    MutableStateFlow(WindowSizeClass.calculateFromSize(DpSize(400.dp, 800.dp)))
+  private val windowSizeClassFlow = MutableStateFlow(ShellWindowSizeClass.Default)
   private val commandPaletteFlow = MutableStateFlow(CommandPaletteState.Empty)
   private val recentActivityFlow = MutableStateFlow<List<RecentActivityItem>>(emptyList())
   private val undoPayloadFlow = MutableStateFlow<UndoPayload?>(null)
@@ -193,7 +191,11 @@ class NavigationCoordinatorTest {
   @Test
   fun `updateWindowSizeClass delegates to use case`() =
     runTest(dispatcher) {
-      val newSizeClass = WindowSizeClass.calculateFromSize(DpSize(1200.dp, 800.dp))
+      val newSizeClass =
+        ShellWindowSizeClass(
+          widthSizeClass = ShellWindowWidthClass.EXPANDED,
+          heightSizeClass = ShellWindowHeightClass.MEDIUM,
+        )
       coordinator.updateWindowSizeClass(newSizeClass)
       advanceUntilIdle()
 
@@ -231,7 +233,11 @@ class NavigationCoordinatorTest {
     runTest(dispatcher) {
       backgroundScope.launch {
         val stateFlow = coordinator.navigationState(this)
-        val newSizeClass = WindowSizeClass.calculateFromSize(DpSize(1000.dp, 600.dp))
+        val newSizeClass =
+          ShellWindowSizeClass(
+            widthSizeClass = ShellWindowWidthClass.MEDIUM,
+            heightSizeClass = ShellWindowHeightClass.COMPACT,
+          )
         windowSizeClassFlow.value = newSizeClass
         val state = stateFlow.first { it.windowState == newSizeClass }
         assertThat(state.windowState).isEqualTo(newSizeClass)

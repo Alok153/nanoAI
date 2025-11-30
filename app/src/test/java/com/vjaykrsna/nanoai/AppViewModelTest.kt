@@ -2,7 +2,7 @@ package com.vjaykrsna.nanoai
 
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
-import com.vjaykrsna.nanoai.core.data.preferences.UiPreferences
+import com.vjaykrsna.nanoai.core.domain.model.uiux.DataStoreUiPreferences
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.settings.model.DisclaimerExposureState
 import com.vjaykrsna.nanoai.core.domain.uiux.ObserveUserProfileUseCase
@@ -40,7 +40,7 @@ class AppViewModelTest {
   @Before
   fun setUp() {
     MockKAnnotations.init(this, relaxed = true)
-    val uiPrefs = UiPreferences()
+    val uiPrefs = DataStoreUiPreferences()
     every { observeUiPreferencesUseCase() } returns MutableStateFlow(uiPrefs)
     every { observeDisclaimerExposureUseCase() } returns
       MutableStateFlow(

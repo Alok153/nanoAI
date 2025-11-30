@@ -1,9 +1,5 @@
 package com.vjaykrsna.nanoai.core.data.uiux
 
-import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
-import androidx.compose.material3.windowsizeclass.WindowSizeClass
-import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.unit.dp
 import com.vjaykrsna.nanoai.core.common.IoDispatcher
 import com.vjaykrsna.nanoai.core.domain.model.uiux.CommandCategory
 import com.vjaykrsna.nanoai.core.domain.model.uiux.CommandPaletteState
@@ -11,6 +7,7 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
 import com.vjaykrsna.nanoai.core.domain.model.uiux.PaletteSource
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RecentActivityItem
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RightPanel
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ShellWindowSizeClass
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UIStateSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UndoPayload
 import com.vjaykrsna.nanoai.core.domain.repository.NavigationRepository
@@ -60,11 +57,11 @@ constructor(
 
   override val recentActivity: Flow<List<RecentActivityItem>> = _recentActivity.asStateFlow()
 
-  override val windowSizeClass: Flow<WindowSizeClass> = _windowSizeClass.asStateFlow()
+  override val windowSizeClass: Flow<ShellWindowSizeClass> = _windowSizeClass.asStateFlow()
 
   override val undoPayload: Flow<UndoPayload?> = _undoPayload.asStateFlow()
 
-  override fun updateWindowSizeClass(sizeClass: WindowSizeClass) {
+  override fun updateWindowSizeClass(sizeClass: ShellWindowSizeClass) {
     _windowSizeClass.value = sizeClass
   }
 
@@ -131,9 +128,7 @@ constructor(
     _undoPayload.value = payload
   }
 
-  @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
-  private fun defaultWindowSizeClass(): WindowSizeClass =
-    WindowSizeClass.calculateFromSize(DpSize(width = 640.dp, height = 360.dp))
+  private fun defaultWindowSizeClass(): ShellWindowSizeClass = ShellWindowSizeClass.Default
 
   private fun coerceInitialActiveMode(snapshot: UIStateSnapshot): UIStateSnapshot {
     if (hasAppliedHomeStartup.compareAndSet(false, true)) {

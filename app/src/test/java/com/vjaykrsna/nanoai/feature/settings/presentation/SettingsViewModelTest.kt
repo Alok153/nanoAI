@@ -6,6 +6,7 @@ import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.domain.library.ModelDownloadsAndExportUseCase
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
+import com.vjaykrsna.nanoai.core.domain.model.uiux.DataStoreUiPreferences
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ScreenType
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UserProfile
@@ -69,8 +70,7 @@ class SettingsViewModelTest {
 
   private lateinit var providersFlow: MutableStateFlow<List<APIProviderConfig>>
   private lateinit var privacyFlow: MutableStateFlow<PrivacyPreference>
-  private lateinit var uiPrefsFlow:
-    MutableStateFlow<com.vjaykrsna.nanoai.core.data.preferences.UiPreferences>
+  private lateinit var uiPrefsFlow: MutableStateFlow<DataStoreUiPreferences>
   private lateinit var profileFlow: MutableStateFlow<ObserveUserProfileUseCase.Result>
   private lateinit var authStateFlow: MutableStateFlow<HuggingFaceAuthState>
   private lateinit var deviceAuthFlow: MutableStateFlow<HuggingFaceDeviceAuthState?>
@@ -305,7 +305,7 @@ class SettingsViewModelTest {
   private fun initialiseFlows() {
     providersFlow = MutableStateFlow(emptyList())
     privacyFlow = MutableStateFlow(PrivacyPreference())
-    uiPrefsFlow = MutableStateFlow(com.vjaykrsna.nanoai.core.data.preferences.UiPreferences())
+    uiPrefsFlow = MutableStateFlow(DataStoreUiPreferences())
     profileFlow =
       MutableStateFlow(
         ObserveUserProfileUseCase.Result(

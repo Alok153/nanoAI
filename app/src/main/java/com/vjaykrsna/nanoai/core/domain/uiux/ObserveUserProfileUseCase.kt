@@ -1,8 +1,6 @@
 package com.vjaykrsna.nanoai.core.domain.uiux
 
 import com.vjaykrsna.nanoai.core.common.IoDispatcher
-import com.vjaykrsna.nanoai.core.data.preferences.UiPreferences
-import com.vjaykrsna.nanoai.core.data.preferences.toDomainSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.DataStoreUiPreferences
 import com.vjaykrsna.nanoai.core.domain.model.uiux.LayoutSnapshot
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UIStateSnapshot
@@ -74,7 +72,6 @@ constructor(
     when (this) {
       null -> DataStoreUiPreferences()
       is DataStoreUiPreferences -> this
-      is UiPreferences -> this.toDomainSnapshot()
       else -> DataStoreUiPreferences()
     }
 }
