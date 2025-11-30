@@ -6,6 +6,7 @@ import com.vjaykrsna.nanoai.core.common.error.NanoAIErrorEnvelope
 import com.vjaykrsna.nanoai.core.common.error.toErrorEnvelope
 import com.vjaykrsna.nanoai.core.common.onFailure
 import com.vjaykrsna.nanoai.core.common.onSuccess
+import com.vjaykrsna.nanoai.core.domain.chat.PromptAttachments
 import com.vjaykrsna.nanoai.core.domain.chat.SendPromptUseCase
 import com.vjaykrsna.nanoai.shared.state.NanoAIViewEvent
 import com.vjaykrsna.nanoai.shared.state.NanoAIViewState
@@ -55,7 +56,7 @@ constructor(
 
     updateState { copy(isSending = true, sendError = null) }
     viewModelScope.launch(mainDispatcher) {
-      sendPromptUseCase(threadId, text, personaId)
+      sendPromptUseCase(threadId, text, personaId, PromptAttachments())
         .onSuccess {
           updateState { copy(messageText = "", isSending = false, sendError = null) }
           emitEvent(MessageComposerUiEvent.MessageSent)

@@ -1,6 +1,5 @@
 package com.vjaykrsna.nanoai.core.domain.usecase
 
-import com.vjaykrsna.nanoai.BuildConfig
 import com.vjaykrsna.nanoai.core.domain.model.FeatureFlags
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -15,7 +14,9 @@ import javax.inject.Singleton
  * Future enhancement: Allow user opt-in to experimental features via developer settings.
  */
 @Singleton
-class FeatureFlagsProvider @Inject constructor() {
+class FeatureFlagsProvider
+@Inject
+constructor(private val featureFlagEnvironment: FeatureFlagEnvironment) {
 
   /**
    * Returns the current feature flags configuration.
@@ -24,7 +25,7 @@ class FeatureFlagsProvider @Inject constructor() {
    * production-ready features visible (Production mode)
    */
   fun getFeatureFlags(): FeatureFlags {
-    return if (BuildConfig.DEBUG) {
+    return if (featureFlagEnvironment.isDevelopmentBuild) {
       FeatureFlags.Development
     } else {
       FeatureFlags.Production

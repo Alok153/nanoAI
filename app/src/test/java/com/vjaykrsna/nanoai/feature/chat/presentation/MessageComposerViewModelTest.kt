@@ -23,7 +23,7 @@ abstract class MessageComposerViewModelTestBase {
   @BeforeEach
   fun setUpBase() {
     sendPromptUseCase = mockk(relaxed = true)
-    coEvery { sendPromptUseCase(any(), any(), any()) } returns NanoAIResult.success(Unit)
+    coEvery { sendPromptUseCase(any(), any(), any(), any()) } returns NanoAIResult.success(Unit)
     viewModel = MessageComposerViewModel(sendPromptUseCase, dispatcherExtension.dispatcher)
   }
 }
@@ -110,7 +110,7 @@ class MessageComposerViewModelSendTest : MessageComposerViewModelTestBase() {
 
   @Test
   fun `sendMessage emits SendFailed error on use case failure`() = runTest {
-    coEvery { sendPromptUseCase(any(), any(), any()) } returns
+    coEvery { sendPromptUseCase(any(), any(), any(), any()) } returns
       NanoAIResult.recoverable(message = "Network error")
 
     viewModel.updateMessageText("Test message")
@@ -129,7 +129,7 @@ class MessageComposerViewModelSendTest : MessageComposerViewModelTestBase() {
 
   @Test
   fun `sendMessage emits SendFailed with unknown error on failure without message`() = runTest {
-    coEvery { sendPromptUseCase(any(), any(), any()) } returns
+    coEvery { sendPromptUseCase(any(), any(), any(), any()) } returns
       NanoAIResult.recoverable(message = "")
 
     viewModel.updateMessageText("Test message")

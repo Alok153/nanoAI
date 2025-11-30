@@ -1,6 +1,5 @@
 package com.vjaykrsna.nanoai.core.domain.usecase
 
-import android.database.sqlite.SQLiteException
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.domain.model.ChatThread
 import com.vjaykrsna.nanoai.core.domain.repository.ConversationRepository
@@ -30,12 +29,6 @@ constructor(private val conversationRepository: ConversationRepository) {
       NanoAIResult.success(threads)
     } catch (cancellationException: CancellationException) {
       throw cancellationException
-    } catch (sqliteException: SQLiteException) {
-      NanoAIResult.recoverable(
-        message = "Failed to load conversation history",
-        cause = sqliteException,
-        context = emptyMap(),
-      )
     } catch (ioException: IOException) {
       NanoAIResult.recoverable(
         message = "Failed to load conversation history",
@@ -46,6 +39,12 @@ constructor(private val conversationRepository: ConversationRepository) {
       NanoAIResult.recoverable(
         message = "Failed to load conversation history",
         cause = illegalStateException,
+        context = emptyMap(),
+      )
+    } catch (exception: Exception) {
+      NanoAIResult.recoverable(
+        message = "Failed to load conversation history",
+        cause = exception,
         context = emptyMap(),
       )
     }

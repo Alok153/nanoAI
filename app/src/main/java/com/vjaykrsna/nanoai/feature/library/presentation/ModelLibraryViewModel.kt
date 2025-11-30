@@ -40,7 +40,7 @@ class ModelLibraryViewModel
 constructor(
   private val modelCatalogUseCase: ModelCatalogUseCase,
   private val refreshModelCatalogUseCase: RefreshModelCatalogUseCase,
-  private val downloadManager: DownloadManager,
+  private val downloadCoordinator: DownloadUiCoordinator,
   private val downloadModelUseCase: DownloadModelUseCase,
   private val hfToModelConverter: HuggingFaceToModelPackageConverter,
   private val huggingFaceCatalogUseCase: HuggingFaceCatalogUseCase,
@@ -63,7 +63,7 @@ constructor(
   private val downloadActions =
     ModelDownloadActionHandler(
       downloadModelUseCase = downloadModelUseCase,
-      downloadManager = downloadManager,
+      downloadCoordinator = downloadCoordinator,
       dispatcher = mainDispatcher,
       scope = viewModelScope,
       emitError = { error -> emitError(error) },
@@ -98,7 +98,7 @@ constructor(
         }
       } finally {
         refreshing.set(false)
-        updateState { copy(isRefreshing = false, isLoading = downloadManager.isLoading.value) }
+        updateState { copy(isRefreshing = false, isLoading = downloadCoordinator.isLoading.value) }
       }
     }
   }
@@ -226,7 +226,7 @@ constructor(
       combine(
           modelCatalogUseCase.observeAllModels(),
           modelCatalogUseCase.observeInstalledModels(),
-          downloadManager.observeDownloadTasks(),
+          downloadCoordinator.observeDownloadTasks(),
           filtersFlow,
         ) { allModels, installedModels, downloadTasks, filters ->
           deriveModelLibraryContent(allModels, installedModels, downloadTasks, filters)
@@ -247,7 +247,7 @@ constructor(
 
   private fun observeDownloadLoading() {
     viewModelScope.launch(mainDispatcher) {
-      downloadManager.isLoading.collect { isDownloading ->
+      downloadCoordinator.isLoading.collect { isDownloading ->
         updateState { copy(isLoading = isDownloading || isRefreshing) }
       }
     }
@@ -255,7 +255,7 @@ constructor(
 
   private fun observeDownloadErrors() {
     viewModelScope.launch(mainDispatcher) {
-      downloadManager.errorEvents.collect { error -> emitError(error) }
+      downloadCoordinator.errorEvents.collect { error -> emitError(error) }
     }
   }
 

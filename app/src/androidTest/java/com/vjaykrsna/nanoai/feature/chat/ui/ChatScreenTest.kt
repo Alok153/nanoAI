@@ -65,8 +65,7 @@ class ChatScreenTest {
     observePersonasUseCase = ObservePersonasUseCase(personaRepository)
     getDefaultPersonaUseCase = GetDefaultPersonaUseCase(personaRepository)
 
-    coEvery { sendPromptUseCase(any(), any(), any(), any(), any()) } returns
-      NanoAIResult.success(Unit)
+    coEvery { sendPromptUseCase(any(), any(), any(), any()) } returns NanoAIResult.success(Unit)
     coEvery { switchPersonaUseCase(any(), any(), any()) } returns
       NanoAIResult.success(UUID.randomUUID())
 
@@ -234,7 +233,7 @@ class ChatScreenTest {
     val thread = DomainTestBuilders.buildChatThread(threadId = threadId, personaId = personaId)
 
     conversationRepository.addThread(thread)
-    coEvery { sendPromptUseCase(any(), any(), any(), any(), any()) } returns
+    coEvery { sendPromptUseCase(any(), any(), any(), any()) } returns
       NanoAIResult.recoverable("Failed to send prompt")
     viewModel.selectThread(threadId)
 

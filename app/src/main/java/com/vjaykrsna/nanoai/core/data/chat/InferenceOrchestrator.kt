@@ -1,7 +1,15 @@
-package com.vjaykrsna.nanoai.core.domain.chat
+package com.vjaykrsna.nanoai.core.data.chat
 
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.data.chat.InferenceOrchestrator.Companion.LOCAL_INFERENCE_FAILURE
+import com.vjaykrsna.nanoai.core.domain.chat.InferenceConfiguration
+import com.vjaykrsna.nanoai.core.domain.chat.InferenceResult
+import com.vjaykrsna.nanoai.core.domain.chat.InferenceSuccessData
+import com.vjaykrsna.nanoai.core.domain.chat.PromptAttachments
+import com.vjaykrsna.nanoai.core.domain.chat.PromptImage
+import com.vjaykrsna.nanoai.core.domain.chat.PromptInferenceGateway
 import com.vjaykrsna.nanoai.core.domain.library.ModelCatalogRepository
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
@@ -19,6 +27,7 @@ import com.vjaykrsna.nanoai.core.network.dto.CompletionResponseDto
 import com.vjaykrsna.nanoai.core.network.dto.CompletionRole
 import com.vjaykrsna.nanoai.core.runtime.LocalGenerationRequest
 import com.vjaykrsna.nanoai.core.runtime.LocalModelRuntime
+import java.io.ByteArrayInputStream
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -35,29 +44,23 @@ constructor(
   private val localModelRuntime: LocalModelRuntime,
   private val cloudGatewayClient: CloudGatewayClient,
   private val connectivityStatusProvider: ConnectivityStatusProvider,
-) {
+) : PromptInferenceGateway {
   /** True when the device currently has validated internet connectivity. */
-  suspend fun isOnline(): Boolean = connectivityStatusProvider.isOnline()
+  override suspend fun isOnline(): Boolean = connectivityStatusProvider.isOnline()
 
   /** True when any installed local model is ready for inference. */
-  suspend fun hasLocalModelAvailable(): Boolean {
+  override suspend fun hasLocalModelAvailable(): Boolean {
     val installed = modelCatalogRepository.getInstalledModels()
     val localCandidates = installed.filterNot { it.providerType == ProviderType.CLOUD_API }
     if (localCandidates.isEmpty()) return false
     return localModelRuntime.hasReadyModel(localCandidates)
   }
 
-  /**
-   * Generate a response using either the local runtime or the cloud gateway based on [preferLocal]
-   * and availability. The returned [InferenceResult] captures success or failure codes for
-   * downstream use cases.
-   */
-  suspend fun generateResponse(
+  override suspend fun generateResponse(
     prompt: String,
     personaId: UUID?,
-    options: InferenceConfiguration = InferenceConfiguration(),
-    image: Bitmap? = null,
-    audio: ByteArray? = null,
+    configuration: InferenceConfiguration,
+    attachments: PromptAttachments,
   ): InferenceResult {
     val installedModels = modelCatalogRepository.getInstalledModels()
     val localCandidates = installedModels.filterNot { it.providerType == ProviderType.CLOUD_API }
@@ -65,27 +68,28 @@ constructor(
     val userPrefersLocal = inferencePreference.mode == InferenceMode.LOCAL_FIRST
     val isOnline = isOnline()
     val preferLocal = resolvePreference(localCandidates.isNotEmpty(), isOnline, userPrefersLocal)
-    val preferredLocalModel = selectLocalModel(localCandidates, options.localModelPreference)
+    val preferredLocalModel = selectLocalModel(localCandidates, configuration.localModelPreference)
 
     val result =
       if (preferLocal) {
-        val localResult = runLocalInference(preferredLocalModel!!, prompt, options, image, audio)
+        val localResult =
+          runLocalInference(preferredLocalModel!!, prompt, configuration, attachments)
         if (localResult is NanoAIResult.Success) {
           localResult
         } else if (!isOnline) {
           localResult
         } else {
-          runCloudInference(prompt, options)
+          runCloudInference(prompt, configuration)
         }
       } else {
         if (!isOnline) {
           offlineError()
         } else {
-          val cloudResult = runCloudInference(prompt, options)
+          val cloudResult = runCloudInference(prompt, configuration)
           if (cloudResult is NanoAIResult.Success) {
             cloudResult
           } else if (preferredLocalModel != null) {
-            runLocalInference(preferredLocalModel, prompt, options, image, audio)
+            runLocalInference(preferredLocalModel, prompt, configuration, attachments)
           } else {
             cloudResult
           }
@@ -93,6 +97,9 @@ constructor(
       }
     return result.withPersona(personaId)
   }
+
+  suspend fun generateResponse(prompt: String, personaId: UUID?): InferenceResult =
+    generateResponse(prompt, personaId, InferenceConfiguration(), PromptAttachments())
 
   private fun resolvePreference(
     hasLocalCandidate: Boolean,
@@ -109,8 +116,7 @@ constructor(
     model: ModelPackage,
     prompt: String,
     options: InferenceConfiguration,
-    image: Bitmap? = null,
-    audio: ByteArray? = null,
+    attachments: PromptAttachments,
   ): InferenceResult {
     if (!localModelRuntime.isModelReady(model.modelId)) {
       return NanoAIResult.recoverable(
@@ -128,8 +134,8 @@ constructor(
         temperature = options.temperature,
         topP = options.topP,
         maxOutputTokens = options.maxOutputTokens,
-        image = image,
-        audio = audio,
+        image = attachments.image.toBitmap(),
+        audio = attachments.audio?.bytes,
       )
 
     return when (val result = localModelRuntime.generate(request)) {
@@ -357,7 +363,12 @@ constructor(
     return this + ("modelId" to modelId)
   }
 
-  private companion object {
+  private fun PromptImage?.toBitmap(): Bitmap? {
+    this ?: return null
+    return runCatching { BitmapFactory.decodeStream(ByteArrayInputStream(bytes)) }.getOrNull()
+  }
+
+  companion object {
     private const val LOCAL_INFERENCE_FAILURE = "Local inference failed"
   }
 }

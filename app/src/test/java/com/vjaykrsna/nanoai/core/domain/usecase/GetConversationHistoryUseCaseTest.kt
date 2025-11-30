@@ -1,12 +1,12 @@
 package com.vjaykrsna.nanoai.core.domain.usecase
 
-import android.database.sqlite.SQLiteException
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.domain.repository.ConversationRepository
 import com.vjaykrsna.nanoai.testing.DomainTestBuilders
 import io.mockk.coEvery
 import io.mockk.mockk
+import java.io.IOException
 import java.util.UUID
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
@@ -39,8 +39,8 @@ class GetConversationHistoryUseCaseTest {
   }
 
   @Test
-  fun `returns recoverable error when sqlite exception thrown`() = runTest {
-    val exception = SQLiteException("database unavailable")
+  fun `returns recoverable error when repository throws io exception`() = runTest {
+    val exception = IOException("database unavailable")
     coEvery { conversationRepository.getAllThreads() } throws exception
 
     val result = useCase.invoke()

@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 /** Handles local download lifecycle operations. */
 internal class ModelDownloadActionHandler(
   private val downloadModelUseCase: DownloadModelUseCase,
-  private val downloadManager: DownloadManager,
+  private val downloadCoordinator: DownloadUiCoordinator,
   private val dispatcher: CoroutineDispatcher,
   private val scope: CoroutineScope,
   private val emitError: suspend (LibraryError) -> Unit,
@@ -50,7 +50,7 @@ internal class ModelDownloadActionHandler(
   }
 
   fun deleteModel(modelId: String) {
-    downloadManager.deleteModel(modelId)
+    downloadCoordinator.deleteModel(modelId)
   }
 
   fun observeDownloadProgress(taskId: UUID): StateFlow<Float> =

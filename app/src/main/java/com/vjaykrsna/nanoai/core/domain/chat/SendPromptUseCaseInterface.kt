@@ -1,6 +1,5 @@
 package com.vjaykrsna.nanoai.core.domain.chat
 
-import android.graphics.Bitmap
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import java.util.UUID
 
@@ -10,7 +9,6 @@ interface SendPromptUseCaseInterface {
     threadId: UUID,
     prompt: String,
     personaId: UUID,
-    image: Bitmap? = null,
-    audio: ByteArray? = null,
+    attachments: PromptAttachments,
   ): NanoAIResult<Unit>
 }

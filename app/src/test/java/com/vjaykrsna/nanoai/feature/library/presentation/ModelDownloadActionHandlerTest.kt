@@ -25,12 +25,12 @@ import org.junit.jupiter.api.Test
 class ModelDownloadActionHandlerTest {
 
   private lateinit var downloadModelUseCase: DownloadModelUseCase
-  private lateinit var downloadManager: DownloadManager
+  private lateinit var downloadCoordinator: DownloadUiCoordinator
 
   @BeforeEach
   fun setUp() {
     downloadModelUseCase = mockk(relaxed = true)
-    downloadManager = mockk(relaxed = true)
+    downloadCoordinator = mockk(relaxed = true)
     every { downloadModelUseCase.getDownloadProgress(any()) } returns MutableStateFlow(0f)
   }
 
@@ -109,12 +109,12 @@ class ModelDownloadActionHandlerTest {
   }
 
   @Test
-  fun deleteModelDelegatesToDownloadManager() = runTest {
+  fun deleteModelDelegatesToDownloadCoordinator() = runTest {
     val handler = createHandler()
 
     handler.deleteModel("model-555")
 
-    verify { downloadManager.deleteModel("model-555") }
+    verify { downloadCoordinator.deleteModel("model-555") }
   }
 
   @Test
@@ -137,7 +137,7 @@ class ModelDownloadActionHandlerTest {
   private fun TestScope.createHandler(errors: MutableList<LibraryError> = mutableListOf()) =
     ModelDownloadActionHandler(
       downloadModelUseCase = downloadModelUseCase,
-      downloadManager = downloadManager,
+      downloadCoordinator = downloadCoordinator,
       dispatcher = StandardTestDispatcher(testScheduler),
       scope = this,
       emitError = { error -> errors.add(error) },

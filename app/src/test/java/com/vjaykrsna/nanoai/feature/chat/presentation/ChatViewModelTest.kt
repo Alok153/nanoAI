@@ -52,8 +52,7 @@ class ChatViewModelTest {
     sendPromptUseCase = mockk(relaxed = true)
     switchPersonaUseCase = mockk(relaxed = true)
 
-    coEvery { sendPromptUseCase(any(), any(), any(), any(), any()) } returns
-      NanoAIResult.success(Unit)
+    coEvery { sendPromptUseCase(any(), any(), any(), any()) } returns NanoAIResult.success(Unit)
     coEvery { switchPersonaUseCase(any(), any(), any()) } returns
       NanoAIResult.success(UUID.randomUUID())
 
@@ -106,7 +105,7 @@ class ChatViewModelTest {
       cancelAndIgnoreRemainingEvents()
     }
 
-    coVerify(exactly = 0) { sendPromptUseCase(any(), any(), any(), any(), any()) }
+    coVerify(exactly = 0) { sendPromptUseCase(any(), any(), any(), any()) }
     assertThat(harness.currentState.isSendingMessage).isFalse()
   }
 
@@ -127,7 +126,7 @@ class ChatViewModelTest {
     val messages = conversationRepository.getMessages(threadId)
     assertThat(messages).hasSize(1)
     assertThat(messages.first().text).isEqualTo("Test prompt")
-    coVerify { sendPromptUseCase(threadId, "Test prompt", personaId, any(), any()) }
+    coVerify { sendPromptUseCase(threadId, "Test prompt", personaId, any()) }
   }
 
   @Test
@@ -154,7 +153,7 @@ class ChatViewModelTest {
     val personaId = UUID.randomUUID()
     val thread = DomainTestBuilders.buildChatThread(threadId = threadId, personaId = personaId)
     conversationRepository.addThread(thread)
-    coEvery { sendPromptUseCase(any(), any(), any(), any(), any()) } returns
+    coEvery { sendPromptUseCase(any(), any(), any(), any()) } returns
       NanoAIResult.recoverable(message = "Failed")
 
     viewModel.selectThread(threadId)

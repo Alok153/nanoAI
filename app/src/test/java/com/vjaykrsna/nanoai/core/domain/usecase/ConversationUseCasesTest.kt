@@ -1,6 +1,5 @@
 package com.vjaykrsna.nanoai.core.domain.usecase
 
-import android.database.sqlite.SQLiteException
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.domain.model.ChatThread
@@ -61,11 +60,11 @@ class ConversationUseCasesTest {
 
   @Test
   fun `getConversationHistory wraps data exceptions as recoverable`() = runTest {
-    coEvery { conversationRepository.getAllThreads() } throws SQLiteException("boom")
+    coEvery { conversationRepository.getAllThreads() } throws IllegalStateException("boom")
 
-    val sqliteResult = getConversationHistoryUseCase()
+    val illegalStateResult = getConversationHistoryUseCase()
 
-    assertThat(sqliteResult).isInstanceOf(NanoAIResult.RecoverableError::class.java)
+    assertThat(illegalStateResult).isInstanceOf(NanoAIResult.RecoverableError::class.java)
 
     coEvery { conversationRepository.getAllThreads() } throws IOException("offline")
 

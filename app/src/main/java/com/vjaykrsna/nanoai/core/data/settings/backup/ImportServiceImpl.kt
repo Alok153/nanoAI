@@ -12,6 +12,7 @@ import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
 import com.vjaykrsna.nanoai.core.domain.model.ProviderCredentialMutation
 import com.vjaykrsna.nanoai.core.domain.repository.ApiProviderConfigRepository
 import com.vjaykrsna.nanoai.core.domain.repository.PersonaRepository
+import com.vjaykrsna.nanoai.core.domain.settings.BackupLocation
 import com.vjaykrsna.nanoai.core.domain.settings.ImportService
 import com.vjaykrsna.nanoai.core.domain.settings.ImportSummary
 import com.vjaykrsna.nanoai.core.model.APIType
@@ -45,9 +46,9 @@ constructor(
   private val privacyPreferenceStore: PrivacyPreferenceStore,
 ) : ImportService {
   @OneShot("Import backup bundle from local storage")
-  override suspend fun importBackup(uri: Uri): NanoAIResult<ImportSummary> =
+  override suspend fun importBackup(location: BackupLocation): NanoAIResult<ImportSummary> =
     runCatching {
-        val bundle = readBundle(uri)
+        val bundle = readBundle(location)
         applyBundle(bundle)
       }
       .fold(
@@ -57,13 +58,14 @@ constructor(
           NanoAIResult.recoverable(
             message = throwable.toErrorEnvelope(IMPORT_FAILURE_MESSAGE).userMessage,
             cause = throwable,
-            context = mapOf("uri" to uri.toString()),
+            context = mapOf("descriptor" to location.value),
           )
         },
       )
 
-  private suspend fun readBundle(uri: Uri): BackupBundleDto =
+  private suspend fun readBundle(location: BackupLocation): BackupBundleDto =
     withContext(Dispatchers.IO) {
+      val uri = location.toUri()
       val resolver = context.contentResolver
       val rawBytes =
         resolver.openInputStream(uri)?.use { input -> input.readBytes() }
@@ -268,6 +270,8 @@ constructor(
     }
     return this[0].toInt() == ZIP_MAGIC_FIRST && this[1].toInt() == ZIP_MAGIC_SECOND
   }
+
+  private fun BackupLocation.toUri(): Uri = Uri.parse(value)
 
   private sealed class ImportException(message: String, cause: Throwable? = null) :
     IOException(message, cause) {

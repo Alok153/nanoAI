@@ -12,7 +12,7 @@ import com.vjaykrsna.nanoai.core.domain.library.ModelCatalogUseCase
 import com.vjaykrsna.nanoai.core.domain.library.RefreshModelCatalogUseCase
 import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
-import com.vjaykrsna.nanoai.feature.library.presentation.DownloadManager
+import com.vjaykrsna.nanoai.feature.library.presentation.DownloadUiCoordinator
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryViewModel
 import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryError
 import com.vjaykrsna.nanoai.shared.testing.FakeModelCatalogRepository
@@ -38,7 +38,7 @@ abstract class BaseModelLibraryScreenTest {
   protected lateinit var refreshUseCase: RefreshModelCatalogUseCase
   protected lateinit var huggingFaceCatalogUseCase: HuggingFaceCatalogUseCase
   protected lateinit var viewModel: ModelLibraryViewModel
-  protected lateinit var downloadManager: DownloadManager
+  protected lateinit var downloadCoordinator: DownloadUiCoordinator
   protected lateinit var downloadModelUseCase: DownloadModelUseCase
   protected lateinit var hfToModelConverter: HuggingFaceToModelPackageConverter
   protected lateinit var compatibilityChecker: HuggingFaceModelCompatibilityChecker
@@ -53,7 +53,7 @@ abstract class BaseModelLibraryScreenTest {
     modelCatalogUseCase = mockk(relaxed = true)
     refreshUseCase = mockk(relaxed = true)
     huggingFaceCatalogUseCase = mockk(relaxed = true)
-    downloadManager = mockk(relaxed = true)
+    downloadCoordinator = mockk(relaxed = true)
     downloadModelUseCase = mockk(relaxed = true)
     hfToModelConverter = mockk(relaxed = true)
     compatibilityChecker = mockk(relaxed = true)
@@ -65,15 +65,15 @@ abstract class BaseModelLibraryScreenTest {
     every { modelCatalogUseCase.observeAllModels() } returns catalogRepository.observeAllModels()
     every { modelCatalogUseCase.observeInstalledModels() } returns
       catalogRepository.observeInstalledModels()
-    every { downloadManager.isLoading } returns downloadLoadingFlow
-    every { downloadManager.observeDownloadTasks() } returns downloadTasksFlow
-    every { downloadManager.errorEvents } returns downloadErrorFlow
+    every { downloadCoordinator.isLoading } returns downloadLoadingFlow
+    every { downloadCoordinator.observeDownloadTasks() } returns downloadTasksFlow
+    every { downloadCoordinator.errorEvents } returns downloadErrorFlow
 
     viewModel =
       ModelLibraryViewModel(
         modelCatalogUseCase = modelCatalogUseCase,
         refreshModelCatalogUseCase = refreshUseCase,
-        downloadManager = downloadManager,
+        downloadCoordinator = downloadCoordinator,
         downloadModelUseCase = downloadModelUseCase,
         hfToModelConverter = hfToModelConverter,
         huggingFaceCatalogUseCase = huggingFaceCatalogUseCase,

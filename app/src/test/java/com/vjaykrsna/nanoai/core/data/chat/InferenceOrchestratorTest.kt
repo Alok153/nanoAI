@@ -1,6 +1,7 @@
-package com.vjaykrsna.nanoai.core.domain.chat
+package com.vjaykrsna.nanoai.core.data.chat
 
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.domain.chat.InferenceSuccessData
 import com.vjaykrsna.nanoai.core.domain.library.ModelCatalogRepository
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
 import com.vjaykrsna.nanoai.core.domain.model.InferencePreference

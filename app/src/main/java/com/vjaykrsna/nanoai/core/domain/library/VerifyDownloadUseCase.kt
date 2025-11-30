@@ -1,6 +1,5 @@
 package com.vjaykrsna.nanoai.core.domain.library
 
-import android.database.sqlite.SQLiteException
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.common.annotations.OneShot
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
@@ -98,8 +97,6 @@ constructor(
       block()
     } catch (cancellation: CancellationException) {
       throw cancellation
-    } catch (sqliteException: SQLiteException) {
-      NanoAIResult.recoverable(message = message, cause = sqliteException, context = context)
     } catch (ioException: IOException) {
       NanoAIResult.recoverable(message = message, cause = ioException, context = context)
     } catch (illegalStateException: IllegalStateException) {
@@ -110,6 +107,8 @@ constructor(
         cause = illegalArgumentException,
         context = context,
       )
+    } catch (exception: Exception) {
+      NanoAIResult.recoverable(message = message, cause = exception, context = context)
     }
   }
 }

@@ -45,7 +45,7 @@ class ModelLibraryViewModelTest {
 
   private lateinit var modelCatalogUseCase: ModelCatalogUseCase
   private lateinit var refreshModelCatalogUseCase: RefreshModelCatalogUseCase
-  private lateinit var downloadManager: DownloadManager
+  private lateinit var downloadCoordinator: DownloadUiCoordinator
   private lateinit var downloadModelUseCase: DownloadModelUseCase
   private lateinit var converter: HuggingFaceToModelPackageConverter
   private lateinit var huggingFaceCatalogUseCase: HuggingFaceCatalogUseCase
@@ -63,7 +63,7 @@ class ModelLibraryViewModelTest {
 
     modelCatalogUseCase = mockk()
     refreshModelCatalogUseCase = mockk()
-    downloadManager = mockk(relaxed = true)
+    downloadCoordinator = mockk(relaxed = true)
     downloadModelUseCase = mockk()
     converter = mockk(relaxed = true)
     huggingFaceCatalogUseCase = mockk()
@@ -81,15 +81,15 @@ class ModelLibraryViewModelTest {
     coEvery { modelCatalogUseCase.recordOfflineFallback(any(), any(), any()) } returns
       NanoAIResult.success(Unit)
 
-    every { downloadManager.observeDownloadTasks() } returns downloadTasksFlow
-    every { downloadManager.isLoading } returns downloadManagerLoading
-    every { downloadManager.errorEvents } returns downloadManagerErrors
-    justRun { downloadManager.downloadModel(any()) }
-    justRun { downloadManager.pauseDownload(any()) }
-    justRun { downloadManager.resumeDownload(any()) }
-    justRun { downloadManager.cancelDownload(any()) }
-    justRun { downloadManager.retryDownload(any()) }
-    justRun { downloadManager.deleteModel(any()) }
+    every { downloadCoordinator.observeDownloadTasks() } returns downloadTasksFlow
+    every { downloadCoordinator.isLoading } returns downloadManagerLoading
+    every { downloadCoordinator.errorEvents } returns downloadManagerErrors
+    justRun { downloadCoordinator.downloadModel(any()) }
+    justRun { downloadCoordinator.pauseDownload(any()) }
+    justRun { downloadCoordinator.resumeDownload(any()) }
+    justRun { downloadCoordinator.cancelDownload(any()) }
+    justRun { downloadCoordinator.retryDownload(any()) }
+    justRun { downloadCoordinator.deleteModel(any()) }
 
     coEvery { downloadModelUseCase.downloadModel(any()) } returns
       NanoAIResult.success(UUID.randomUUID())
@@ -208,13 +208,13 @@ class ModelLibraryViewModelTest {
     }
 
   @Test
-  fun deleteModelDelegatesToDownloadManager() =
+  fun deleteModelDelegatesToDownloadCoordinator() =
     runTest(dispatcher) {
       val harness = createHarness()
 
       harness.viewModel.deleteModel("model-456")
 
-      verify { downloadManager.deleteModel("model-456") }
+      verify { downloadCoordinator.deleteModel("model-456") }
     }
 
   private fun createHarness(): ModelLibraryHarness {
@@ -222,7 +222,7 @@ class ModelLibraryViewModelTest {
       ModelLibraryViewModel(
         modelCatalogUseCase = modelCatalogUseCase,
         refreshModelCatalogUseCase = refreshModelCatalogUseCase,
-        downloadManager = downloadManager,
+        downloadCoordinator = downloadCoordinator,
         downloadModelUseCase = downloadModelUseCase,
         hfToModelConverter = converter,
         huggingFaceCatalogUseCase = huggingFaceCatalogUseCase,

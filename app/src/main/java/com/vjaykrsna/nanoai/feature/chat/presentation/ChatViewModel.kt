@@ -9,6 +9,9 @@ import com.vjaykrsna.nanoai.core.common.error.toErrorEnvelope
 import com.vjaykrsna.nanoai.core.common.onFailure
 import com.vjaykrsna.nanoai.core.common.onSuccess
 import com.vjaykrsna.nanoai.core.domain.chat.ConversationUseCase
+import com.vjaykrsna.nanoai.core.domain.chat.PromptAttachments
+import com.vjaykrsna.nanoai.core.domain.chat.PromptAudio
+import com.vjaykrsna.nanoai.core.domain.chat.PromptImage
 import com.vjaykrsna.nanoai.core.domain.chat.SendPromptUseCase
 import com.vjaykrsna.nanoai.core.domain.chat.SwitchPersonaUseCase
 import com.vjaykrsna.nanoai.core.domain.library.Model
@@ -29,6 +32,7 @@ import com.vjaykrsna.nanoai.feature.chat.presentation.state.ChatUiState
 import com.vjaykrsna.nanoai.shared.state.NanoAIViewEvent
 import com.vjaykrsna.nanoai.shared.state.ViewModelStateHost
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.io.ByteArrayOutputStream
 import java.util.UUID
 import javax.inject.Inject
 import kotlinx.collections.immutable.toPersistentList
@@ -40,6 +44,8 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
+
+private const val PNG_COMPRESSION_QUALITY = 100
 
 @HiltViewModel
 class ChatViewModel
@@ -103,6 +109,7 @@ constructor(
       }
       else -> {
         val attachmentsSnapshot = latestState.attachments
+        val promptAttachments = attachmentsSnapshot.toPromptAttachments()
 
         viewModelScope.launch(dispatcher) {
           updateState {
@@ -125,8 +132,7 @@ constructor(
               threadId = threadId,
               text = trimmed,
               personaId = personaId,
-              image = attachmentsSnapshot.image?.bitmap,
-              audio = attachmentsSnapshot.audio?.data,
+              attachments = promptAttachments,
             )
 
           val saveResult = conversationUseCase.saveMessage(userMessage)
@@ -332,8 +338,7 @@ constructor(
         messageData.threadId,
         messageData.text,
         messageData.personaId,
-        messageData.image,
-        messageData.audio,
+        messageData.attachments,
       )
     when (inferenceResult) {
       is NanoAIResult.Success -> clearAttachments()
@@ -348,9 +353,35 @@ constructor(
     val threadId: UUID,
     val text: String,
     val personaId: UUID,
-    val image: Bitmap?,
-    val audio: ByteArray?,
+    val attachments: PromptAttachments,
   )
+}
+
+private fun ChatComposerAttachments.toPromptAttachments(): PromptAttachments {
+  val promptImage =
+    image?.let { attachment ->
+      val bytes = attachment.bitmap.toCompressedPng()
+      bytes?.let {
+        PromptImage(
+          bytes = it,
+          mimeType = "image/png",
+          width = attachment.bitmap.width,
+          height = attachment.bitmap.height,
+        )
+      }
+    }
+  val promptAudio = audio?.let { PromptAudio(bytes = it.data, mimeType = it.mimeType) }
+  return PromptAttachments(image = promptImage, audio = promptAudio)
+}
+
+private fun Bitmap.toCompressedPng(): ByteArray? {
+  return runCatching {
+      ByteArrayOutputStream().use { stream ->
+        compress(Bitmap.CompressFormat.PNG, PNG_COMPRESSION_QUALITY, stream)
+        stream.toByteArray()
+      }
+    }
+    .getOrNull()
 }
 
 sealed interface ChatUiEvent : NanoAIViewEvent {

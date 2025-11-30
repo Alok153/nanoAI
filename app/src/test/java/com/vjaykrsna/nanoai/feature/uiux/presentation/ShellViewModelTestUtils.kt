@@ -420,7 +420,11 @@ internal fun createShellViewModelForTest(
   navigationCoordinator: NavigationCoordinator = io.mockk.mockk(relaxed = true),
   telemetry: com.vjaykrsna.nanoai.core.telemetry.ShellTelemetry = io.mockk.mockk(relaxed = true),
   featureFlagsProvider: com.vjaykrsna.nanoai.core.domain.usecase.FeatureFlagsProvider =
-    com.vjaykrsna.nanoai.core.domain.usecase.FeatureFlagsProvider(),
+    com.vjaykrsna.nanoai.core.domain.usecase.FeatureFlagsProvider(
+      object : com.vjaykrsna.nanoai.core.domain.usecase.FeatureFlagEnvironment {
+        override val isDevelopmentBuild: Boolean = true
+      }
+    ),
 ): ShellViewModel {
   val navigationOperationsUseCase =
     com.vjaykrsna.nanoai.core.domain.uiux.NavigationOperationsUseCase(

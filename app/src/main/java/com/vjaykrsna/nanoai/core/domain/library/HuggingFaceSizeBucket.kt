@@ -1,14 +1,11 @@
 package com.vjaykrsna.nanoai.core.domain.library
 
-import androidx.compose.runtime.Immutable
-
 /**
  * Buckets for approximate Hugging Face model sizes based on total artifact footprint.
  *
  * The ranges are intentionally coarse so we can group models for faceted filtering without
  * requiring exact parameter counts from metadata.
  */
-@Immutable
 enum class HuggingFaceSizeBucket(val label: String, val minBytes: Long?, val maxBytes: Long?) {
   TINY(label = "< 1 GB", minBytes = null, maxBytes = 1073741824L),
   SMALL(label = "1 - 4 GB", minBytes = 1073741824L, maxBytes = 4294967296L),

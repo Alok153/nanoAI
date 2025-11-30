@@ -1,6 +1,5 @@
 package com.vjaykrsna.nanoai.core.domain.library
 
-import android.util.Log
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.common.annotations.OneShot
 import com.vjaykrsna.nanoai.core.data.library.catalog.ModelCatalogSource
@@ -28,8 +27,6 @@ constructor(
         return handleFetchFailure(context, error)
       }
 
-    Log.i(TAG, "catalogRefresh success context=${context.toLog()}")
-
     return try {
       modelCatalogRepository.replaceCatalog(models)
       modelCatalogRepository.recordRefreshSuccess(
@@ -39,7 +36,6 @@ constructor(
       NanoAIResult.success(Unit)
     } catch (error: Throwable) {
       val wrapped = IllegalStateException("Failed to replace model catalog", error)
-      Log.e(TAG, "catalogRefresh failure context=${context.toLog()}", wrapped)
       NanoAIResult.recoverable(
         message = "Failed to replace model catalog",
         cause = wrapped,
@@ -58,7 +54,6 @@ constructor(
     val cachedModels =
       runCatching { modelCatalogRepository.getAllModels() }.getOrDefault(emptyList())
     context["cachedCount"] = cachedModels.size.toString()
-    Log.w(TAG, "catalogRefresh fallback context=${context.toLog()}", error)
     modelCatalogRepository.recordOfflineFallback(
       reason = error.javaClass.simpleName,
       cachedCount = cachedModels.size,
@@ -66,15 +61,5 @@ constructor(
     )
     // Even though fetch failed, we're falling back to cached data, so this is still a success
     return NanoAIResult.success(Unit)
-  }
-
-  private fun Map<String, String>.toLog(): String = buildString {
-    append('{')
-    entries.joinToString(separator = ",") { (key, value) -> "$key=$value" }.let(this::append)
-    append('}')
-  }
-
-  companion object {
-    private const val TAG = "RefreshModelCatalogUseCase"
   }
 }

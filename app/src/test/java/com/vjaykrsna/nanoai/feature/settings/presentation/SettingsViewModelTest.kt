@@ -12,6 +12,7 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UserProfile
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
 import com.vjaykrsna.nanoai.core.domain.settings.ApiProviderConfigUseCase
+import com.vjaykrsna.nanoai.core.domain.settings.BackupLocation
 import com.vjaykrsna.nanoai.core.domain.settings.ImportService
 import com.vjaykrsna.nanoai.core.domain.settings.ImportSummary
 import com.vjaykrsna.nanoai.core.domain.settings.huggingface.HuggingFaceAuthCoordinator
@@ -199,7 +200,8 @@ class SettingsViewModelTest {
           providersUpdated = 0,
         )
       val importUri = mockk<Uri>()
-      coEvery { importService.importBackup(importUri) } returns NanoAIResult.success(summary)
+      coEvery { importService.importBackup(BackupLocation(importUri.toString())) } returns
+        NanoAIResult.success(summary)
 
       harness.testEvents {
         viewModel.importBackup(importUri)

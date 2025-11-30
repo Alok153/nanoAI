@@ -11,6 +11,7 @@ import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
 import com.vjaykrsna.nanoai.core.domain.model.ProviderCredentialMutation
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.settings.ApiProviderConfigUseCase
+import com.vjaykrsna.nanoai.core.domain.settings.BackupLocation
 import com.vjaykrsna.nanoai.core.domain.settings.ImportService
 import com.vjaykrsna.nanoai.core.domain.settings.huggingface.HuggingFaceAuthCoordinator
 import com.vjaykrsna.nanoai.core.domain.settings.huggingface.HuggingFaceDeviceAuthState
@@ -207,7 +208,8 @@ internal class SettingsBackupActions(
     scope.launch {
       setLoading(true)
       try {
-        when (val result = importService.importBackup(uri)) {
+        val location = BackupLocation(uri.toString())
+        when (val result = importService.importBackup(location)) {
           is NanoAIResult.Success -> emitEvent(SettingsUiEvent.ImportCompleted(result.value))
           else -> emitError(result.toErrorEnvelope(IMPORT_FAILURE_MESSAGE))
         }

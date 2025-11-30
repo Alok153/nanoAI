@@ -10,6 +10,7 @@ import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
 import com.vjaykrsna.nanoai.core.domain.model.ProviderCredentialMutation
 import com.vjaykrsna.nanoai.core.domain.repository.ApiProviderConfigRepository
 import com.vjaykrsna.nanoai.core.domain.repository.PersonaRepository
+import com.vjaykrsna.nanoai.core.domain.settings.BackupLocation
 import com.vjaykrsna.nanoai.core.domain.settings.ImportService
 import com.vjaykrsna.nanoai.core.domain.settings.ImportSummary
 import com.vjaykrsna.nanoai.core.model.APIType
@@ -113,7 +114,7 @@ class ImportServiceImplTest {
     shadowContentResolver.registerInputStream(uri, ByteArrayInputStream(payload.toByteArray()))
 
     val summary =
-      when (val result = importService.importBackup(uri)) {
+      when (val result = importService.importBackup(BackupLocation(uri.toString()))) {
         is NanoAIResult.Success -> result.value
         else -> error("Expected success but was $result")
       }
@@ -149,7 +150,7 @@ class ImportServiceImplTest {
     val uri = Uri.parse("content://nanoai/invalid.json")
     shadowContentResolver.registerInputStream(uri, ByteArrayInputStream("not-json".toByteArray()))
 
-    val result = importService.importBackup(uri)
+    val result = importService.importBackup(BackupLocation(uri.toString()))
 
     assertThat(result).isInstanceOf(NanoAIResult.RecoverableError::class.java)
     assertThat(personaRepository.getAllPersonas()).isEmpty()
@@ -356,7 +357,7 @@ class ImportServiceImplTest {
   }
 
   private suspend fun importBundle(uri: Uri): ImportSummary {
-    val result = importService.importBackup(uri)
+    val result = importService.importBackup(BackupLocation(uri.toString()))
     return (result as? NanoAIResult.Success)?.value ?: error("Expected success but was $result")
   }
 

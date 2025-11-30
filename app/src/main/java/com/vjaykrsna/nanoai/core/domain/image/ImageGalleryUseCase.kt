@@ -1,6 +1,5 @@
 package com.vjaykrsna.nanoai.core.domain.image
 
-import android.database.sqlite.SQLiteException
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.common.annotations.OneShot
 import com.vjaykrsna.nanoai.core.common.annotations.ReactiveStream
@@ -71,8 +70,6 @@ constructor(private val imageGalleryRepository: ImageGalleryRepository) {
       block()
     } catch (cancellation: CancellationException) {
       throw cancellation
-    } catch (sqliteException: SQLiteException) {
-      NanoAIResult.recoverable(message = message, cause = sqliteException, context = context)
     } catch (ioException: IOException) {
       NanoAIResult.recoverable(message = message, cause = ioException, context = context)
     } catch (illegalStateException: IllegalStateException) {
@@ -85,6 +82,8 @@ constructor(private val imageGalleryRepository: ImageGalleryRepository) {
       )
     } catch (securityException: SecurityException) {
       NanoAIResult.recoverable(message = message, cause = securityException, context = context)
+    } catch (exception: Exception) {
+      NanoAIResult.recoverable(message = message, cause = exception, context = context)
     }
   }
 }

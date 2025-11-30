@@ -22,7 +22,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class DownloadManager
+class DownloadUiCoordinator
 @Inject
 constructor(
   private val downloadModelUseCase: DownloadModelUseCase,

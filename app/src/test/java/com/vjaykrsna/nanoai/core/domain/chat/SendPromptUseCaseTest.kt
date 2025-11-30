@@ -21,7 +21,7 @@ class SendPromptUseCaseTest {
   private lateinit var useCase: SendPromptUseCase
   private lateinit var conversationRepository: ConversationRepository
   private lateinit var personaRepository: PersonaRepository
-  private lateinit var inferenceOrchestrator: InferenceOrchestrator
+  private lateinit var inferenceGateway: PromptInferenceGateway
   private lateinit var inferencePreferenceRepository: InferencePreferenceRepository
 
   private val threadId = UUID.randomUUID()
@@ -32,28 +32,28 @@ class SendPromptUseCaseTest {
   fun setup() {
     conversationRepository = mockk(relaxed = true)
     personaRepository = mockk(relaxed = true)
-    inferenceOrchestrator = mockk<InferenceOrchestrator>(relaxed = true)
+    inferenceGateway = mockk(relaxed = true)
     inferencePreferenceRepository = mockk(relaxed = true)
 
     coEvery { personaRepository.getPersonaById(any()) } returns flowOf(null)
     every { inferencePreferenceRepository.observeInferencePreference() } returns
       flowOf(InferencePreference())
-    coEvery { inferenceOrchestrator.isOnline() } returns true
-    coEvery { inferenceOrchestrator.hasLocalModelAvailable() } returns true
+    coEvery { inferenceGateway.isOnline() } returns true
+    coEvery { inferenceGateway.hasLocalModelAvailable() } returns true
 
     useCase =
       SendPromptUseCase(
         conversationRepository = conversationRepository,
         personaRepository = personaRepository,
-        inferenceOrchestrator = inferenceOrchestrator,
+        promptInferenceGateway = inferenceGateway,
         inferencePreferenceRepository = inferencePreferenceRepository,
       )
   }
 
   @Test
   fun `returns recoverable error when offline with no local model`() = runTest {
-    coEvery { inferenceOrchestrator.isOnline() } returns false
-    coEvery { inferenceOrchestrator.hasLocalModelAvailable() } returns false
+    coEvery { inferenceGateway.isOnline() } returns false
+    coEvery { inferenceGateway.hasLocalModelAvailable() } returns false
 
     val result = useCase(threadId, prompt, personaId)
 
@@ -86,12 +86,11 @@ class SendPromptUseCaseTest {
       )
 
     coEvery {
-      inferenceOrchestrator.generateResponse(
+      inferenceGateway.generateResponse(
         prompt = prompt,
         personaId = personaId,
-        options = any(),
-        image = any(),
-        audio = any(),
+        configuration = any(),
+        attachments = any(),
       )
     } returns orchestratorResult
 

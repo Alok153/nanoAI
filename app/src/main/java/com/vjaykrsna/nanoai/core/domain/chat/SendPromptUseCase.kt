@@ -1,6 +1,5 @@
 package com.vjaykrsna.nanoai.core.domain.chat
 
-import android.graphics.Bitmap
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.domain.model.Message
 import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
@@ -30,21 +29,20 @@ class SendPromptUseCase
 constructor(
   private val conversationRepository: ConversationRepository,
   private val personaRepository: PersonaRepository,
-  private val inferenceOrchestrator: InferenceOrchestrator,
+  private val promptInferenceGateway: PromptInferenceGateway,
   private val inferencePreferenceRepository: InferencePreferenceRepository,
 ) : SendPromptUseCaseInterface {
   override suspend operator fun invoke(
     threadId: UUID,
     prompt: String,
     personaId: UUID,
-    image: Bitmap?,
-    audio: ByteArray?,
+    attachments: PromptAttachments,
   ): NanoAIResult<Unit> {
     val availability = checkInferenceAvailability(threadId, personaId)
     if (availability is NanoAIResult.RecoverableError) return availability
 
     val options = prepareInferenceConfiguration(personaId)
-    val inferenceResult = performInference(prompt, personaId, options, image, audio)
+    val inferenceResult = performInference(prompt, personaId, options, attachments)
 
     return handleInferenceResult(
       result = inferenceResult,
@@ -55,12 +53,15 @@ constructor(
     )
   }
 
+  suspend operator fun invoke(threadId: UUID, prompt: String, personaId: UUID): NanoAIResult<Unit> =
+    invoke(threadId, prompt, personaId, PromptAttachments())
+
   private suspend fun checkInferenceAvailability(
     threadId: UUID,
     personaId: UUID,
   ): NanoAIResult<Unit> {
-    val isOnline = inferenceOrchestrator.isOnline()
-    val hasLocalModel = inferenceOrchestrator.hasLocalModelAvailable()
+    val isOnline = promptInferenceGateway.isOnline()
+    val hasLocalModel = promptInferenceGateway.hasLocalModelAvailable()
 
     return if (!isOnline && !hasLocalModel) {
       NanoAIResult.recoverable(
@@ -85,8 +86,8 @@ constructor(
       } ?: InferenceConfiguration()
 
     val userPreference = inferencePreferenceRepository.observeInferencePreference().first()
-    val isOnline = inferenceOrchestrator.isOnline()
-    val hasLocalModel = inferenceOrchestrator.hasLocalModelAvailable()
+    val isOnline = promptInferenceGateway.isOnline()
+    val hasLocalModel = promptInferenceGateway.hasLocalModelAvailable()
     val preferLocal =
       shouldPreferLocal(hasLocalModel, isOnline, userPreference.mode == InferenceMode.LOCAL_FIRST)
 
@@ -101,15 +102,13 @@ constructor(
     prompt: String,
     personaId: UUID,
     options: InferenceConfigurationData,
-    image: Bitmap? = null,
-    audio: ByteArray? = null,
+    attachments: PromptAttachments,
   ): InferenceResult =
-    inferenceOrchestrator.generateResponse(
+    promptInferenceGateway.generateResponse(
       prompt = prompt,
       personaId = personaId,
-      options = options.options,
-      image = image,
-      audio = audio,
+      configuration = options.options,
+      attachments = attachments,
     )
 
   private suspend fun handleInferenceResult(
