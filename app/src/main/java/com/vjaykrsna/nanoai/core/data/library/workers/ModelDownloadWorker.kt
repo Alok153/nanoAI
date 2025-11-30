@@ -14,14 +14,14 @@ import com.vjaykrsna.nanoai.core.common.NotificationHelper
 import com.vjaykrsna.nanoai.core.common.NotificationHelper.Companion.NOTIFICATION_ID_DOWNLOAD_PROGRESS
 import com.vjaykrsna.nanoai.core.data.db.entities.ModelPackageEntity
 import com.vjaykrsna.nanoai.core.data.library.ModelArtifactStore
-import com.vjaykrsna.nanoai.core.data.library.catalog.DownloadManifest
-import com.vjaykrsna.nanoai.core.data.library.catalog.VerificationOutcome
 import com.vjaykrsna.nanoai.core.data.library.daos.DownloadTaskDao
 import com.vjaykrsna.nanoai.core.data.library.daos.ModelPackageReadDao
 import com.vjaykrsna.nanoai.core.data.library.daos.ModelPackageWriteDao
 import com.vjaykrsna.nanoai.core.domain.library.ModelManifestUseCase
+import com.vjaykrsna.nanoai.core.domain.model.library.DownloadManifest
 import com.vjaykrsna.nanoai.core.domain.model.library.DownloadStatus
 import com.vjaykrsna.nanoai.core.domain.model.library.InstallState
+import com.vjaykrsna.nanoai.core.domain.model.library.VerificationOutcome
 import com.vjaykrsna.nanoai.core.telemetry.TelemetryReporter
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject

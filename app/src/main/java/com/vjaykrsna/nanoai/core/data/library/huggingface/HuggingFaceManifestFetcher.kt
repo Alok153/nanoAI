@@ -1,11 +1,11 @@
 package com.vjaykrsna.nanoai.core.data.library.huggingface
 
-import com.vjaykrsna.nanoai.core.data.library.catalog.DownloadManifest
 import com.vjaykrsna.nanoai.core.data.library.huggingface.network.HuggingFaceService
 import com.vjaykrsna.nanoai.core.data.library.huggingface.network.dto.HuggingFaceModelDto
 import com.vjaykrsna.nanoai.core.data.library.huggingface.network.dto.HuggingFacePathInfoDto
 import com.vjaykrsna.nanoai.core.data.library.huggingface.network.dto.HuggingFaceSiblingDto
 import com.vjaykrsna.nanoai.core.data.library.huggingface.network.dto.HuggingFaceTreeEntryDto
+import com.vjaykrsna.nanoai.core.domain.model.library.DownloadManifest
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.datetime.Clock

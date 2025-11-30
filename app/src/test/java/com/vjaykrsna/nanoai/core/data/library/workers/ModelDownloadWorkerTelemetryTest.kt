@@ -7,9 +7,9 @@ import com.vjaykrsna.nanoai.core.data.db.entities.ModelPackageEntity
 import com.vjaykrsna.nanoai.core.data.db.entities.ModelPackageWithManifests
 import com.vjaykrsna.nanoai.core.data.library.catalog.DownloadManifestDao
 import com.vjaykrsna.nanoai.core.data.library.catalog.ModelCatalogLocalDataSource
+import com.vjaykrsna.nanoai.core.data.library.catalog.ModelManifestRepositoryImpl
 import com.vjaykrsna.nanoai.core.data.library.catalog.ModelPackageRelationsDao
 import com.vjaykrsna.nanoai.core.data.library.catalog.ModelPackageWriteDao
-import com.vjaykrsna.nanoai.core.data.library.catalog.VerificationOutcome
 import com.vjaykrsna.nanoai.core.data.library.catalog.network.ModelCatalogService
 import com.vjaykrsna.nanoai.core.data.library.catalog.network.dto.ManifestVerificationRequestDto
 import com.vjaykrsna.nanoai.core.data.library.catalog.network.dto.ManifestVerificationResponseDto
@@ -19,6 +19,7 @@ import com.vjaykrsna.nanoai.core.data.library.huggingface.HuggingFaceManifestFet
 import com.vjaykrsna.nanoai.core.device.DeviceIdentityProvider
 import com.vjaykrsna.nanoai.core.domain.library.ModelManifestUseCase
 import com.vjaykrsna.nanoai.core.domain.model.library.InstallState
+import com.vjaykrsna.nanoai.core.domain.model.library.VerificationOutcome
 import com.vjaykrsna.nanoai.core.network.ConnectivityStatusProvider
 import com.vjaykrsna.nanoai.core.telemetry.TelemetryReporter
 import io.mockk.coEvery
@@ -75,8 +76,8 @@ class ModelDownloadWorkerTelemetryTest {
   @BeforeEach
   fun setUp() {
     coEvery { connectivityStatusProvider.isOnline() } returns true
-    modelManifestUseCase =
-      ModelManifestUseCase(
+    val repository =
+      ModelManifestRepositoryImpl(
         service = fakeService,
         localDataSource = localDataSource,
         json = json,
@@ -86,6 +87,7 @@ class ModelDownloadWorkerTelemetryTest {
         connectivityStatusProvider = connectivityStatusProvider,
         clock = clock,
       )
+    modelManifestUseCase = ModelManifestUseCase(repository)
   }
 
   @Nested

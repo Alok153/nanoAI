@@ -3,31 +3,13 @@ package com.vjaykrsna.nanoai.core.data.image
 import com.vjaykrsna.nanoai.core.data.image.db.GeneratedImageDao
 import com.vjaykrsna.nanoai.core.data.image.db.toDomain
 import com.vjaykrsna.nanoai.core.data.image.db.toEntity
+import com.vjaykrsna.nanoai.core.domain.image.ImageGalleryRepository
 import com.vjaykrsna.nanoai.core.domain.image.model.GeneratedImage
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-
-/** Reactive stream contract for generated images. */
-interface ImageGalleryStreamDataSource {
-  fun observeAllImages(): Flow<List<GeneratedImage>>
-}
-
-/** Mutation contract for gallery operations that complete once. */
-interface ImageGalleryMutationDataSource {
-  suspend fun getImageById(id: UUID): GeneratedImage?
-
-  suspend fun saveImage(image: GeneratedImage)
-
-  suspend fun deleteImage(id: UUID)
-
-  suspend fun deleteAllImages()
-}
-
-/** Repository for managing generated images with metadata. */
-interface ImageGalleryRepository : ImageGalleryStreamDataSource, ImageGalleryMutationDataSource
 
 @Singleton
 class ImageGalleryRepositoryImpl

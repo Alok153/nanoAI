@@ -1,4 +1,4 @@
-package com.vjaykrsna.nanoai.core.domain.repository
+package com.vjaykrsna.nanoai.core.data.library.catalog
 
 import android.util.Log
 import androidx.datastore.core.DataStore

@@ -1,4 +1,4 @@
-package com.vjaykrsna.nanoai.core.domain.repository
+package com.vjaykrsna.nanoai.core.data.library.catalog
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.edit

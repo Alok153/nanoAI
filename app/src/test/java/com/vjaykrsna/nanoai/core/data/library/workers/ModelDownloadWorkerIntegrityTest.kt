@@ -7,6 +7,7 @@ import com.vjaykrsna.nanoai.core.data.db.entities.ModelPackageEntity
 import com.vjaykrsna.nanoai.core.data.db.entities.ModelPackageWithManifests
 import com.vjaykrsna.nanoai.core.data.library.catalog.DownloadManifestDao
 import com.vjaykrsna.nanoai.core.data.library.catalog.ModelCatalogLocalDataSource
+import com.vjaykrsna.nanoai.core.data.library.catalog.ModelManifestRepositoryImpl
 import com.vjaykrsna.nanoai.core.data.library.catalog.ModelPackageRelationsDao
 import com.vjaykrsna.nanoai.core.data.library.catalog.ModelPackageWriteDao
 import com.vjaykrsna.nanoai.core.data.library.catalog.network.ModelCatalogService
@@ -16,7 +17,6 @@ import com.vjaykrsna.nanoai.core.data.library.catalog.network.dto.ManifestVerifi
 import com.vjaykrsna.nanoai.core.data.library.catalog.network.dto.ModelManifestDto
 import com.vjaykrsna.nanoai.core.data.library.huggingface.HuggingFaceManifestFetcher
 import com.vjaykrsna.nanoai.core.device.DeviceIdentityProvider
-import com.vjaykrsna.nanoai.core.domain.library.ModelManifestUseCase
 import com.vjaykrsna.nanoai.core.domain.model.library.InstallState
 import com.vjaykrsna.nanoai.core.network.ConnectivityStatusProvider
 import com.vjaykrsna.nanoai.core.telemetry.TelemetryReporter
@@ -59,7 +59,7 @@ class ModelDownloadWorkerIntegrityTest {
   private val huggingFaceManifestFetcher = mockk<HuggingFaceManifestFetcher>(relaxed = true)
   private val connectivityStatusProvider = mockk<ConnectivityStatusProvider>(relaxed = true)
   private val repository =
-    ModelManifestUseCase(
+    ModelManifestRepositoryImpl(
       service = fakeService,
       localDataSource = localDataSource,
       json = json,

@@ -4,7 +4,6 @@ import android.database.sqlite.SQLiteException
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.common.annotations.OneShot
 import com.vjaykrsna.nanoai.core.common.annotations.ReactiveStream
-import com.vjaykrsna.nanoai.core.data.image.ImageGalleryRepository
 import com.vjaykrsna.nanoai.core.domain.image.model.GeneratedImage
 import java.io.IOException
 import java.util.UUID

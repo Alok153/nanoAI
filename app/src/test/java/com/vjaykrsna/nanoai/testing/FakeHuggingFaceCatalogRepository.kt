@@ -1,8 +1,8 @@
 package com.vjaykrsna.nanoai.testing
 
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
-import com.vjaykrsna.nanoai.core.data.library.huggingface.HuggingFaceCatalogRepository
 import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceCatalogQuery
+import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceCatalogRepository
 import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceModelSummary
 
 /** Fake implementation of [HuggingFaceCatalogRepository] for testing. */

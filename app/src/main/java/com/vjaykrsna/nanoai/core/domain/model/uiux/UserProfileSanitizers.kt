@@ -1,6 +1,6 @@
 package com.vjaykrsna.nanoai.core.domain.model.uiux
 
-import com.vjaykrsna.nanoai.core.data.preferences.UiPreferencesStore
+import com.vjaykrsna.nanoai.core.domain.model.uiux.UserPreferencesConstraints.MAX_RECENT_COMMANDS
 
 internal fun sanitizePinnedTools(tools: List<String>): List<String> {
   val sanitized = tools.filter { it.isNotBlank() }
@@ -16,7 +16,7 @@ internal fun sanitizePinnedTools(tools: List<String>): List<String> {
 internal fun sanitizeCommandPaletteRecents(commands: List<String>): List<String> {
   val sanitized = commands.filter { it.isNotBlank() }
   require(sanitized.size == commands.size) { "Command palette recents must be non-blank." }
-  return sanitized.distinct().take(UiPreferencesStore.MAX_RECENT_COMMANDS)
+  return sanitized.distinct().take(MAX_RECENT_COMMANDS)
 }
 
 internal fun sanitizeSavedLayouts(layouts: List<LayoutSnapshot>): List<LayoutSnapshot> =

@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
+import com.vjaykrsna.nanoai.core.domain.model.uiux.UserPreferencesConstraints
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -38,7 +39,6 @@ constructor(
       stringPreferencesKey("connectivity_banner_last_dismissed")
     private val KEY_HIGH_CONTRAST_ENABLED = stringPreferencesKey("high_contrast_enabled")
     private const val MAX_PINNED_TOOLS = 10
-    const val MAX_RECENT_COMMANDS = 12
   }
 
   /** Flow of current UI preferences. Emits whenever preferences change. */
@@ -154,7 +154,7 @@ constructor(
    */
   suspend fun setCommandPaletteRecents(commandIds: List<String>) {
     context.dataStore.edit { preferences ->
-      val trimmed = commandIds.distinct().take(MAX_RECENT_COMMANDS)
+      val trimmed = commandIds.distinct().take(UserPreferencesConstraints.MAX_RECENT_COMMANDS)
       preferences[KEY_COMMAND_PALETTE_RECENTS] = converters.encodeStringList(trimmed)
     }
   }
@@ -173,7 +173,7 @@ constructor(
             add(commandId)
             current.filterTo(this) { it != commandId }
           }
-          .take(MAX_RECENT_COMMANDS)
+          .take(UserPreferencesConstraints.MAX_RECENT_COMMANDS)
       preferences[KEY_COMMAND_PALETTE_RECENTS] = converters.encodeStringList(updated)
     }
   }

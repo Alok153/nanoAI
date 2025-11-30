@@ -1,6 +1,5 @@
 package com.vjaykrsna.nanoai.core.domain.image
 
-import com.vjaykrsna.nanoai.core.data.image.ImageGalleryRepository
 import com.vjaykrsna.nanoai.core.domain.image.model.GeneratedImage
 import com.vjaykrsna.nanoai.testing.assertRecoverableError
 import com.vjaykrsna.nanoai.testing.assertSuccess

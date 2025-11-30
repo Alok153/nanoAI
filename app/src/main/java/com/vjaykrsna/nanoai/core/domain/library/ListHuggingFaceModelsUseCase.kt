@@ -2,7 +2,6 @@ package com.vjaykrsna.nanoai.core.domain.library
 
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.common.annotations.OneShot
-import com.vjaykrsna.nanoai.core.data.library.huggingface.HuggingFaceCatalogRepository
 import javax.inject.Inject
 import javax.inject.Singleton
 

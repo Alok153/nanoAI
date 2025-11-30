@@ -2,10 +2,8 @@ package com.vjaykrsna.nanoai.core.di
 
 import com.vjaykrsna.nanoai.core.common.IoDispatcher
 import com.vjaykrsna.nanoai.core.data.audio.AudioRepositoryImpl
-import com.vjaykrsna.nanoai.core.data.library.catalog.ModelManifestRepository
 import com.vjaykrsna.nanoai.core.data.library.catalog.ModelManifestRepositoryImpl
 import com.vjaykrsna.nanoai.core.data.library.export.ExportServiceImpl
-import com.vjaykrsna.nanoai.core.data.library.huggingface.HuggingFaceCatalogRepository
 import com.vjaykrsna.nanoai.core.data.library.huggingface.HuggingFaceCatalogRepositoryImpl
 import com.vjaykrsna.nanoai.core.data.library.impl.DownloadManagerImpl
 import com.vjaykrsna.nanoai.core.data.library.impl.ModelCatalogRepositoryImpl
@@ -25,7 +23,9 @@ import com.vjaykrsna.nanoai.core.data.uiux.ThemeRepositoryImpl
 import com.vjaykrsna.nanoai.core.domain.audio.AudioRepository
 import com.vjaykrsna.nanoai.core.domain.library.DownloadManager
 import com.vjaykrsna.nanoai.core.domain.library.ExportService
+import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceCatalogRepository
 import com.vjaykrsna.nanoai.core.domain.library.ModelCatalogRepository
+import com.vjaykrsna.nanoai.core.domain.library.ModelManifestRepository
 import com.vjaykrsna.nanoai.core.domain.repository.ApiProviderConfigRepository
 import com.vjaykrsna.nanoai.core.domain.repository.ConversationRepository
 import com.vjaykrsna.nanoai.core.domain.repository.InferencePreferenceRepository

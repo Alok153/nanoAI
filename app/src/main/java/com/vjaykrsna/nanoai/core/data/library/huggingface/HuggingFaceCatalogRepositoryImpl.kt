@@ -6,6 +6,7 @@ import com.vjaykrsna.nanoai.core.data.library.huggingface.network.dto.HuggingFac
 import com.vjaykrsna.nanoai.core.data.library.huggingface.network.dto.ModelCardDataDto
 import com.vjaykrsna.nanoai.core.data.library.huggingface.network.dto.ModelConfigDto
 import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceCatalogQuery
+import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceCatalogRepository
 import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceModelSummary
 import com.vjaykrsna.nanoai.core.network.ConnectivityStatusProvider
 import java.io.IOException

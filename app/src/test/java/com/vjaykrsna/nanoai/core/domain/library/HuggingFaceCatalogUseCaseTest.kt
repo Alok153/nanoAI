@@ -1,7 +1,6 @@
 package com.vjaykrsna.nanoai.core.domain.library
 
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
-import com.vjaykrsna.nanoai.core.data.library.huggingface.HuggingFaceCatalogRepository
 import com.vjaykrsna.nanoai.testing.assertRecoverableError
 import com.vjaykrsna.nanoai.testing.assertSuccess
 import io.mockk.coEvery

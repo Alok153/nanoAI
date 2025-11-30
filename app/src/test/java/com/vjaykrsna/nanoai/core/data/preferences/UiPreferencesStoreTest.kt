@@ -5,6 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
+import com.vjaykrsna.nanoai.core.domain.model.uiux.UserPreferencesConstraints
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -87,14 +88,15 @@ class UiPreferencesStoreTest {
     assertThat(prefs.commandPaletteRecents[1]).isEqualTo("cmd-2")
     assertThat(prefs.commandPaletteRecents).hasSize(4)
 
-    repeat(UiPreferencesStore.MAX_RECENT_COMMANDS) { index ->
+    repeat(UserPreferencesConstraints.MAX_RECENT_COMMANDS) { index ->
       store.recordCommandPaletteRecent("cmd-extra-$index")
     }
 
     prefs = store.uiPreferences.first()
     assertThat(prefs.commandPaletteRecents.first())
-      .isEqualTo("cmd-extra-${UiPreferencesStore.MAX_RECENT_COMMANDS - 1}")
-    assertThat(prefs.commandPaletteRecents.size).isEqualTo(UiPreferencesStore.MAX_RECENT_COMMANDS)
+      .isEqualTo("cmd-extra-${UserPreferencesConstraints.MAX_RECENT_COMMANDS - 1}")
+    assertThat(prefs.commandPaletteRecents.size)
+      .isEqualTo(UserPreferencesConstraints.MAX_RECENT_COMMANDS)
   }
 
   @Test

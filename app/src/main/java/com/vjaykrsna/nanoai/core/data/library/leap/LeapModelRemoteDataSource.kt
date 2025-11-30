@@ -1,8 +1,8 @@
 package com.vjaykrsna.nanoai.core.data.library.leap
 
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.data.library.catalog.ModelCatalogDataSource
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
-import com.vjaykrsna.nanoai.core.domain.repository.ModelCatalogDataSource
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.datetime.Instant
