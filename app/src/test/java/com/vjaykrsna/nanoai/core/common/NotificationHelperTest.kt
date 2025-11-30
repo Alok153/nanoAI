@@ -53,6 +53,34 @@ class NotificationHelperTest {
   }
 
   @Test
+  fun buildProgressNotification_showsSizeWhenTotalBytesProvided() {
+    val modelName = "Test Model"
+    val progress = 50
+    val taskId = "task-123"
+    val modelId = "model-456"
+    val bytesDownloaded = 250_000_000L // 250 MB
+    val totalBytes = 500_000_000L // 500 MB
+
+    val notification =
+      notificationHelper.buildProgressNotification(
+        modelName,
+        progress,
+        taskId,
+        modelId,
+        bytesDownloaded,
+        totalBytes,
+      )
+
+    assertNotNull(notification)
+    assertEquals("Downloading $modelName", notification.extras.getString(Notification.EXTRA_TITLE))
+    // Notification text should contain size info: "50% • 250.0 / 500.0 MB"
+    val contentText = notification.extras.getString(Notification.EXTRA_TEXT)
+    assertNotNull(contentText)
+    assertTrue("Content should contain percentage", contentText!!.contains("50%"))
+    assertTrue("Content should contain MB units", contentText.contains("MB"))
+  }
+
+  @Test
   fun buildCompletionNotification_createsNotificationWithCorrectDetails() {
     val modelName = "Test Model"
 

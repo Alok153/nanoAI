@@ -65,6 +65,8 @@ class FakeModelDownloadsAndExportUseCase : ModelDownloadsAndExportUseCaseInterfa
           modelId = modelId,
           status = DownloadStatus.QUEUED,
           progress = 0f,
+          bytesDownloaded = 0L,
+          totalBytes = 0L,
           errorMessage = null,
         )
       addDownloadTask(task)

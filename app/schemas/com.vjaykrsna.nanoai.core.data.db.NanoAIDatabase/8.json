@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 8,
-    "identityHash": "b69dd0da2af38063d803927f8b699c2c",
+    "identityHash": "b98b4d94972991332422cf8354400a26",
     "entities": [
       {
         "tableName": "chat_threads",
@@ -433,7 +433,7 @@
       },
       {
         "tableName": "download_tasks",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`task_id` TEXT NOT NULL, `model_id` TEXT NOT NULL, `progress` REAL NOT NULL, `status` TEXT NOT NULL, `bytes_downloaded` INTEGER NOT NULL, `started_at` INTEGER, `finished_at` INTEGER, `error_message` TEXT, PRIMARY KEY(`task_id`), FOREIGN KEY(`model_id`) REFERENCES `model_packages`(`model_id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`task_id` TEXT NOT NULL, `model_id` TEXT NOT NULL, `progress` REAL NOT NULL, `status` TEXT NOT NULL, `bytes_downloaded` INTEGER NOT NULL, `total_bytes` INTEGER NOT NULL DEFAULT 0, `started_at` INTEGER, `finished_at` INTEGER, `error_message` TEXT, PRIMARY KEY(`task_id`), FOREIGN KEY(`model_id`) REFERENCES `model_packages`(`model_id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "taskId",
@@ -464,6 +464,13 @@
             "columnName": "bytes_downloaded",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "totalBytes",
+            "columnName": "total_bytes",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
           },
           {
             "fieldPath": "startedAt",
@@ -1356,7 +1363,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b69dd0da2af38063d803927f8b699c2c')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b98b4d94972991332422cf8354400a26')"
     ]
   }
 }

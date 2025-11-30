@@ -110,6 +110,20 @@ interface DownloadTaskStatusDao {
         """
   )
   suspend fun updateProgress(taskId: String, progress: Float, bytesDownloaded: Long)
+
+  @Query(
+    """
+        UPDATE download_tasks
+        SET progress = :progress, bytes_downloaded = :bytesDownloaded, total_bytes = :totalBytes
+        WHERE task_id = :taskId
+        """
+  )
+  suspend fun updateProgressWithTotal(
+    taskId: String,
+    progress: Float,
+    bytesDownloaded: Long,
+    totalBytes: Long,
+  )
 }
 
 /** Maintenance helpers for download tasks. */

@@ -12,10 +12,18 @@ import kotlinx.datetime.toJavaInstant
 
 internal fun downloadStatusLabel(task: DownloadTask): String {
   val progressPercent = (task.progress * ModelLibraryUiConstants.PERCENTAGE_MULTIPLIER).toInt()
+  val sizeInfo =
+    if (task.totalBytes > 0L) {
+      val downloadedMb = task.bytesDownloaded / ModelLibraryUiConstants.BYTES_PER_MIB
+      val totalMb = task.totalBytes / ModelLibraryUiConstants.BYTES_PER_MIB
+      " • ${String.format(Locale.US, "%.1f", downloadedMb)} / ${String.format(Locale.US, "%.1f", totalMb)} MB"
+    } else {
+      ""
+    }
   return when (task.status) {
     DownloadStatus.QUEUED -> "Queued"
-    DownloadStatus.DOWNLOADING -> "Downloading $progressPercent%"
-    DownloadStatus.PAUSED -> "Paused at $progressPercent%"
+    DownloadStatus.DOWNLOADING -> "Downloading $progressPercent%$sizeInfo"
+    DownloadStatus.PAUSED -> "Paused at $progressPercent%$sizeInfo"
     DownloadStatus.COMPLETED -> "Completed"
     DownloadStatus.FAILED -> "Failed: ${task.errorMessage ?: "Unknown error"}"
     DownloadStatus.CANCELLED -> "Cancelled"

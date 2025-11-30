@@ -191,6 +191,7 @@ object DomainTestBuilders {
     progress: Float = 0f,
     errorMessage: String? = null,
     bytesDownloaded: Long = 0,
+    totalBytes: Long = 0,
   ): DownloadTask =
     DownloadTask(
       taskId = taskId,
@@ -199,5 +200,6 @@ object DomainTestBuilders {
       progress = progress,
       errorMessage = errorMessage,
       bytesDownloaded = bytesDownloaded,
+      totalBytes = totalBytes,
     )
 }

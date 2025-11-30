@@ -99,6 +99,7 @@
     <string name="notification_channel_background_tasks_description">Notifications for background tasks like model downloads</string>
     <string name="notification_download_title">Downloading %s</string>
     <string name="notification_download_progress">%d%% complete</string>
+    <string name="notification_download_progress_with_size">%1$d%% • %2$.1f / %3$.1f MB</string>
     <string name="notification_download_complete_title">Download Complete</string>
     <string name="notification_download_complete_message">%s downloaded successfully</string>
     <string name="notification_download_failed_title">Download Failed</string>

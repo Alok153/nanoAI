@@ -17,6 +17,7 @@ data class DownloadTask(
   val progress: Float = 0f,
   val status: DownloadStatus,
   val bytesDownloaded: Long = 0L,
+  val totalBytes: Long = 0L,
   val startedAt: Instant? = null,
   val finishedAt: Instant? = null,
   val errorMessage: String? = null,

@@ -1,6 +1,8 @@
 package com.vjaykrsna.nanoai.core.data.library.workers
 
 import android.content.Context
+import android.content.pm.ServiceInfo
+import android.os.Build
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
@@ -94,6 +96,18 @@ constructor(
 
   override suspend fun doWork(): WorkResult = withContext(Dispatchers.IO) { executeWork() }
 
+  private fun createForegroundInfo(notification: android.app.Notification): ForegroundInfo {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+      ForegroundInfo(
+        NOTIFICATION_ID_DOWNLOAD_PROGRESS,
+        notification,
+        ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC,
+      )
+    } else {
+      ForegroundInfo(NOTIFICATION_ID_DOWNLOAD_PROGRESS, notification)
+    }
+  }
+
   private suspend fun executeWork(): WorkResult {
     val taskId = inputData.getString(KEY_TASK_ID)
     val modelId = inputData.getString(KEY_MODEL_ID)
@@ -115,7 +129,7 @@ constructor(
         )
         val initialNotification =
           notificationHelper.buildProgressNotification(modelName, 0, taskId, modelId)
-        setForeground(ForegroundInfo(NOTIFICATION_ID_DOWNLOAD_PROGRESS, initialNotification))
+        setForeground(createForegroundInfo(initialNotification))
 
         when (
           val manifestResult = modelManifestUseCase.refreshManifest(modelId, modelPackage.version)
@@ -210,7 +224,7 @@ constructor(
               manifest = manifest,
               taskId = taskId,
               onProgress = { progress, downloaded, total ->
-                downloadTaskDao.updateProgress(taskId, progress, downloaded)
+                downloadTaskDao.updateProgressWithTotal(taskId, progress, downloaded, total)
                 setProgress(
                   workDataOf(
                     "PROGRESS" to progress,
@@ -288,6 +302,8 @@ constructor(
             (progress * PROGRESS_PERCENTAGE_MULTIPLIER).toInt(),
             taskId,
             manifest.modelId,
+            downloaded,
+            totalBytes,
           )
         notificationHelper.notifyProgress(progressNotification)
         onProgress(progress, downloaded, totalBytes)

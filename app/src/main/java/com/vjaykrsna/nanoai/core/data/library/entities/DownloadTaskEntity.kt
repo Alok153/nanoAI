@@ -19,6 +19,7 @@ import kotlinx.datetime.Instant
  * @property progress Download progress (0.0 to 1.0)
  * @property status Current download status
  * @property bytesDownloaded Number of bytes downloaded so far
+ * @property totalBytes Total file size in bytes (0 if unknown)
  * @property startedAt Timestamp when download started (nullable if queued)
  * @property finishedAt Timestamp when download completed/failed (nullable if in progress)
  * @property errorMessage Error message if status is FAILED
@@ -42,6 +43,7 @@ data class DownloadTaskEntity(
   @ColumnInfo(name = "progress") val progress: Float = 0f,
   @ColumnInfo(name = "status") val status: DownloadStatus,
   @ColumnInfo(name = "bytes_downloaded") val bytesDownloaded: Long = 0L,
+  @ColumnInfo(name = "total_bytes", defaultValue = "0") val totalBytes: Long = 0L,
   @ColumnInfo(name = "started_at") val startedAt: Instant? = null,
   @ColumnInfo(name = "finished_at") val finishedAt: Instant? = null,
   @ColumnInfo(name = "error_message") val errorMessage: String? = null,

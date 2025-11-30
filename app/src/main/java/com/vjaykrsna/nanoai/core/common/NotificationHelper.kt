@@ -42,6 +42,9 @@ class NotificationHelper @Inject constructor(@ApplicationContext private val con
 
     // Progress notification constants
     private const val PROGRESS_MAX_VALUE = 100
+
+    // Size formatting constants
+    private const val BYTES_PER_MB = 1_000_000.0
   }
 
   private val notificationManager = NotificationManagerCompat.from(context)
@@ -99,6 +102,8 @@ class NotificationHelper @Inject constructor(@ApplicationContext private val con
     progress: Int,
     taskId: String,
     modelId: String,
+    bytesDownloaded: Long = 0L,
+    totalBytes: Long = 0L,
   ): Notification {
     val resumeIntent = createActionIntent(ACTION_RESUME_DOWNLOAD, taskId, modelId)
     val pauseIntent = createActionIntent(ACTION_PAUSE_DOWNLOAD, taskId, modelId)
@@ -112,10 +117,25 @@ class NotificationHelper @Inject constructor(@ApplicationContext private val con
       createPendingIntent(cancelIntent, taskId.hashCode() + REQUEST_CODE_CANCEL_OFFSET)
     val openAppPendingIntent = createActivityPendingIntent()
 
+    // Build progress text with size info if available
+    val progressText =
+      if (totalBytes > 0L) {
+        val downloadedMb = bytesDownloaded / BYTES_PER_MB
+        val totalMb = totalBytes / BYTES_PER_MB
+        context.getString(
+          R.string.notification_download_progress_with_size,
+          progress,
+          downloadedMb,
+          totalMb,
+        )
+      } else {
+        context.getString(R.string.notification_download_progress, progress)
+      }
+
     return NotificationCompat.Builder(context, CHANNEL_ID_BACKGROUND_TASKS)
       .setSmallIcon(android.R.drawable.stat_sys_download)
       .setContentTitle(context.getString(R.string.notification_download_title, modelName))
-      .setContentText(context.getString(R.string.notification_download_progress, progress))
+      .setContentText(progressText)
       .setProgress(PROGRESS_MAX_VALUE, progress, false)
       .setOngoing(true)
       .setContentIntent(openAppPendingIntent)
