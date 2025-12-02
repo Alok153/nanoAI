@@ -5,9 +5,9 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.data.db.NanoAIDatabase
-import com.vjaykrsna.nanoai.core.data.library.catalog.ModelCatalogSource
 import com.vjaykrsna.nanoai.core.data.library.impl.ModelCatalogRepositoryImpl
 import com.vjaykrsna.nanoai.core.data.library.leap.LeapModelRemoteDataSource
+import com.vjaykrsna.nanoai.core.domain.library.ModelCatalogSource
 import com.vjaykrsna.nanoai.core.domain.library.RefreshModelCatalogUseCase
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.core.domain.model.library.DeliveryType

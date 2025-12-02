@@ -95,6 +95,9 @@ android {
 }
 
 dependencies {
+  implementation(project(":core:common"))
+  implementation(project(":core:domain"))
+
   // MediaPipe
   implementation(libs.mediapipe.tasks.genai)
   implementation(libs.mediapipe.tasks.vision)

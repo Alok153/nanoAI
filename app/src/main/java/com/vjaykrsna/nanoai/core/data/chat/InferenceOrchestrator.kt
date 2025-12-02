@@ -1,14 +1,10 @@
 package com.vjaykrsna.nanoai.core.data.chat
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
-import com.vjaykrsna.nanoai.core.data.chat.InferenceOrchestrator.Companion.LOCAL_INFERENCE_FAILURE
 import com.vjaykrsna.nanoai.core.domain.chat.InferenceConfiguration
 import com.vjaykrsna.nanoai.core.domain.chat.InferenceResult
 import com.vjaykrsna.nanoai.core.domain.chat.InferenceSuccessData
 import com.vjaykrsna.nanoai.core.domain.chat.PromptAttachments
-import com.vjaykrsna.nanoai.core.domain.chat.PromptImage
 import com.vjaykrsna.nanoai.core.domain.chat.PromptInferenceGateway
 import com.vjaykrsna.nanoai.core.domain.library.ModelCatalogRepository
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
@@ -27,7 +23,6 @@ import com.vjaykrsna.nanoai.core.network.dto.CompletionResponseDto
 import com.vjaykrsna.nanoai.core.network.dto.CompletionRole
 import com.vjaykrsna.nanoai.core.runtime.LocalGenerationRequest
 import com.vjaykrsna.nanoai.core.runtime.LocalModelRuntime
-import java.io.ByteArrayInputStream
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -134,7 +129,7 @@ constructor(
         temperature = options.temperature,
         topP = options.topP,
         maxOutputTokens = options.maxOutputTokens,
-        image = attachments.image.toBitmap(),
+        image = attachments.image,
         audio = attachments.audio?.bytes,
       )
 
@@ -361,11 +356,6 @@ constructor(
   private fun Map<String, String>.withModelContext(modelId: String): Map<String, String> {
     if (this["modelId"] == modelId) return this
     return this + ("modelId" to modelId)
-  }
-
-  private fun PromptImage?.toBitmap(): Bitmap? {
-    this ?: return null
-    return runCatching { BitmapFactory.decodeStream(ByteArrayInputStream(bytes)) }.getOrNull()
   }
 
   companion object {

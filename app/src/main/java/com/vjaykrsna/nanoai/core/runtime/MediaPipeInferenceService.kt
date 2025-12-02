@@ -1,12 +1,15 @@
 package com.vjaykrsna.nanoai.core.runtime
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import com.google.mediapipe.framework.image.BitmapImageBuilder
 import com.google.mediapipe.tasks.genai.llminference.AudioModelOptions
 import com.google.mediapipe.tasks.genai.llminference.GraphOptions
 import com.google.mediapipe.tasks.genai.llminference.LlmInference
 import com.google.mediapipe.tasks.genai.llminference.LlmInferenceSession
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.domain.chat.PromptImage
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import java.io.FileNotFoundException
@@ -108,7 +111,9 @@ constructor(@ApplicationContext private val context: Context) : InferenceService
         resultText = suspendCancellableCoroutine { continuation ->
           val resultBuilder = StringBuilder()
           session.addQueryChunk(prompt)
-          request.image?.let { session.addImage(BitmapImageBuilder(it).build()) }
+          request.image?.toBitmap()?.let { bitmap ->
+            session.addImage(BitmapImageBuilder(bitmap).build())
+          }
           request.audio?.let { session.addAudio(it) }
 
           session.generateResponseAsync { partialResult, done ->
@@ -162,6 +167,10 @@ constructor(@ApplicationContext private val context: Context) : InferenceService
     private const val LOCAL_MODEL_MISSING = "MEDIAPIPE_MODEL_MISSING"
     private const val MEDIAPIPE_INFERENCE_ERROR = "MEDIAPIPE_INFERENCE_ERROR"
     private const val GENERIC_MEDIAPIPE_ERROR = "Local MediaPipe inference failed"
+  }
+
+  private fun PromptImage.toBitmap(): Bitmap? {
+    return runCatching { BitmapFactory.decodeByteArray(bytes, 0, bytes.size) }.getOrNull()
   }
 
   private fun Throwable.toMediaPipeFailure(modelId: String): NanoAIResult<LocalGenerationResult> =

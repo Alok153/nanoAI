@@ -1,7 +1,6 @@
 package com.vjaykrsna.nanoai.core.domain.library
 
 import com.google.common.truth.Truth.assertThat
-import com.vjaykrsna.nanoai.core.data.library.catalog.ModelCatalogSource
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.core.domain.model.library.DeliveryType
 import com.vjaykrsna.nanoai.core.domain.model.library.InstallState

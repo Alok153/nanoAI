@@ -6,7 +6,9 @@ import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
+import com.vjaykrsna.nanoai.core.domain.chat.PromptImage
 import com.vjaykrsna.nanoai.testing.MainDispatcherRule
+import java.io.ByteArrayOutputStream
 import java.io.File
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -63,7 +65,7 @@ class MediaPipeInferenceServiceTest {
     val modelId = "test_model"
     createTestModelFile(modelId)
     val bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
-    val request = LocalGenerationRequest(modelId, "test prompt", image = bitmap)
+    val request = LocalGenerationRequest(modelId, "test prompt", image = bitmap.toPromptImage())
 
     // When
     val result = service.generate(request)
@@ -95,5 +97,16 @@ class MediaPipeInferenceServiceTest {
         assertWithMessage("Expected success or recoverable error but was fatal: ${result.message}")
           .fail()
     }
+  }
+
+  private fun Bitmap.toPromptImage(): PromptImage {
+    val buffer = ByteArrayOutputStream()
+    compress(Bitmap.CompressFormat.PNG, 100, buffer)
+    return PromptImage(
+      bytes = buffer.toByteArray(),
+      width = width,
+      height = height,
+      mimeType = "image/png",
+    )
   }
 }

@@ -9,7 +9,7 @@ nanoAI/
 └── [build infrastructure]  # Gradle, config, scripts
 ```
 
-**Active Modules:** `:app`, `:macrobenchmark`
+**Active Modules:** `:app`, `:core:common`, `:core:domain`, `:macrobenchmark`, `:config:quality:detekt:custom-rules`
 
 ## App Module Structure
 
@@ -29,15 +29,20 @@ nanoAI/
 
 ### Features (`feature/`)
 
-Features use clean architecture with 4 layers:
+Features currently focus on presentation logic and composables, while business logic and
+data orchestration for each feature live under `core/domain` and `core/data`. The present
+layout looks like:
 
 ```
 feature/{name}/
-├── data/           # Feature repositories & DAOs
-├── domain/         # Feature models & use cases
-├── presentation/   # ViewModels & UI state
-└── ui/             # Compose components & screens
+├── presentation/   # ViewModels & UI state containers
+└── ui/             # Compose components & screen graphs
 ```
+
+This structure keeps UI code close together during the transition toward fully layered
+features. The medium-term goal is to re-introduce feature-scoped `domain/` and `data/`
+packages that wrap the shared `core` services; see the [modularization roadmap](./modularization-roadmap.md)
+for the planned milestones.
 
 **Active Features:** `audio/`, `chat/`, `image/`, `library/`, `settings/`, `uiux/`
 

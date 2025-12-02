@@ -19,7 +19,7 @@ enum class HuggingFaceSizeBucket(val label: String, val minBytes: Long?, val max
   }
 }
 
-internal fun Long?.belongsTo(bucket: HuggingFaceSizeBucket?): Boolean {
+fun Long?.belongsTo(bucket: HuggingFaceSizeBucket?): Boolean {
   return bucket == null ||
     this?.let { bytes ->
       val min = bucket.minBytes

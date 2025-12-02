@@ -1,6 +1,7 @@
 package com.vjaykrsna.nanoai.core.data.library.catalog
 
 import android.content.Context
+import com.vjaykrsna.nanoai.core.domain.library.ModelCatalogSource
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -9,11 +10,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import kotlinx.serialization.json.Json
-
-/** Abstraction for loading model catalog definitions from an external source. */
-interface ModelCatalogSource {
-  suspend fun fetchCatalog(): List<ModelPackage>
-}
 
 /** Asset-backed implementation that reads `model-catalog.json` from bundled assets. */
 @Singleton

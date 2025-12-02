@@ -72,6 +72,7 @@ mockwebserver = "4.12.0"
 androidxTestCore = "1.7.0"
 junitVintage = "5.10.0"
 guavaAndroid = "33.2.1-android"
+javaxInject = "1"
 
 # Macrobenchmark
 benchmark = "1.3.2"
@@ -198,6 +199,7 @@ truth = { group = "com.google.truth", name = "truth", version.ref = "truth" }
 guava-android = { group = "com.google.guava", name = "guava", version.ref = "guavaAndroid" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutinesTest" }
 mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver", version.ref = "mockwebserver" }
+javaxInjectLib = { group = "javax.inject", name = "javax.inject", version.ref = "javaxInject" }
 
 # Testing - Instrumentation
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }

@@ -1,6 +1,6 @@
 package com.vjaykrsna.nanoai.core.runtime
 
-import android.graphics.Bitmap
+import com.vjaykrsna.nanoai.core.domain.chat.PromptImage
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 
 /** Abstraction for local on-device model execution. */
@@ -17,7 +17,7 @@ data class LocalGenerationRequest(
   val temperature: Float? = null,
   val topP: Float? = null,
   val maxOutputTokens: Int? = null,
-  val image: Bitmap? = null,
+  val image: PromptImage? = null,
   val audio: ByteArray? = null,
 )
 

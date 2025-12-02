@@ -343,6 +343,8 @@ constructor(
       sizeValidation
         ?: run {
           val checksum = artifactStore.checksumForFile(file)
+          val signature = manifest.signature
+          val publicKeyUrl = manifest.publicKeyUrl
           when {
             !checksum.equals(manifest.checksumSha256, ignoreCase = true) -> {
               file.delete()
@@ -353,9 +355,9 @@ constructor(
                   mapOf("expectedChecksum" to manifest.checksumSha256, "actualChecksum" to checksum),
               )
             }
-            manifest.signature != null &&
-              manifest.publicKeyUrl != null &&
-              !verifySignature(file, manifest.signature, manifest.publicKeyUrl) -> {
+            signature != null &&
+              publicKeyUrl != null &&
+              !verifySignature(file, signature, publicKeyUrl) -> {
               file.delete()
               NanoAIResult.recoverable(
                 message = "Signature verification failed",

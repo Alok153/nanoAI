@@ -23,6 +23,8 @@ dependencyResolutionManagement {
 
 rootProject.name = "NanoAI"
 include(":app")
+include(":core:common")
+include(":core:domain")
 include(":macrobenchmark")
 include(":config:quality:detekt:custom-rules")
 

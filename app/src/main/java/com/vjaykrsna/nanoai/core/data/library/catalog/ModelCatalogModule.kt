@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai.core.data.library.catalog
 
+import com.vjaykrsna.nanoai.core.domain.library.ModelCatalogSource
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
