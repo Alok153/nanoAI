@@ -116,7 +116,7 @@ constructor(private val conversationRepository: ConversationRepository) :
 
   /** Update a thread. */
   @OneShot("Update thread metadata")
-  suspend fun updateThread(thread: ChatThread): NanoAIResult<Unit> =
+  override suspend fun updateThread(thread: ChatThread): NanoAIResult<Unit> =
     guardConversationOperation(
       message = "Failed to update thread ${thread.threadId}",
       context = mapOf("threadId" to thread.threadId.toString()),

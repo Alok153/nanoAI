@@ -54,6 +54,7 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.RecentActivityItem
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RecentStatus
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RightPanel
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ShellUiPreferences
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ShellWindowSizeClass
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UndoPayload
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ModeCard
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellLayoutState
@@ -61,6 +62,7 @@ import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellUiState
 import com.vjaykrsna.nanoai.shared.testing.TestingTheme
 import com.vjaykrsna.nanoai.shared.ui.shell.NanoShellScaffold
 import com.vjaykrsna.nanoai.shared.ui.shell.ShellUiEvent
+import com.vjaykrsna.nanoai.shared.ui.window.toShellWindowSizeClass
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
@@ -425,7 +427,8 @@ private fun sampleState(
   connectivity: ConnectivityStatus = ConnectivityStatus.ONLINE,
   rightPanel: RightPanel? = RightPanel.MODEL_SELECTOR,
 ): ShellUiState {
-  val windowSizeClass = WindowSizeClass.calculateFromSize(DpSize(600.dp, 800.dp))
+  val windowSizeClass: ShellWindowSizeClass =
+    WindowSizeClass.calculateFromSize(DpSize(600.dp, 800.dp)).toShellWindowSizeClass()
   val layout =
     ShellLayoutState(
       windowSizeClass = windowSizeClass,

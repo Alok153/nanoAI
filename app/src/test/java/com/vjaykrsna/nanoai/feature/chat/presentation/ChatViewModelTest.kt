@@ -3,6 +3,7 @@ package com.vjaykrsna.nanoai.feature.chat.presentation
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.domain.chat.ConversationUseCase
+import com.vjaykrsna.nanoai.core.domain.chat.PromptAttachments
 import com.vjaykrsna.nanoai.core.domain.chat.SendPromptUseCase
 import com.vjaykrsna.nanoai.core.domain.chat.SwitchPersonaUseCase
 import com.vjaykrsna.nanoai.core.domain.library.Model
@@ -22,6 +23,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import java.util.UUID
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -73,7 +75,11 @@ class ChatViewModelTest {
       )
 
     viewModel =
-      ChatViewModel(chatFeatureCoordinator, mainDispatcher = mainDispatcherExtension.dispatcher)
+      ChatViewModel(
+        chatFeatureCoordinator,
+        mainDispatcher = mainDispatcherExtension.dispatcher,
+        ioDispatcher = mainDispatcherExtension.dispatcher,
+      )
     harness = ViewModelStateHostTestHarness(viewModel)
   }
 
@@ -299,6 +305,45 @@ class ChatViewModelTest {
     val attachments = harness.currentState.attachments
     assertThat(attachments.image).isNull()
     assertThat(attachments.audio).isNull()
+  }
+
+  @Test
+  fun `sendMessage converts attachments before sending`() = runTest {
+    val threadId = UUID.randomUUID()
+    val personaId = UUID.randomUUID()
+    val thread = DomainTestBuilders.buildChatThread(threadId = threadId, personaId = personaId)
+    conversationRepository.addThread(thread)
+    viewModel.selectThread(threadId)
+    advanceUntilIdle()
+
+    val attachmentsSlot = slot<PromptAttachments>()
+    coEvery { sendPromptUseCase(any(), any(), any(), capture(attachmentsSlot)) } returns
+      NanoAIResult.success(Unit)
+
+    val bitmap = mockk<android.graphics.Bitmap>(relaxed = true)
+    every { bitmap.width } returns 4
+    every { bitmap.height } returns 4
+    every { bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, any(), any()) } answers
+      {
+        val stream = thirdArg<java.io.OutputStream>()
+        stream.write(byteArrayOf(1, 2, 3, 4))
+        true
+      }
+
+    val audioData = byteArrayOf(9, 9, 9)
+    viewModel.onImageSelected(bitmap)
+    viewModel.onAudioRecorded(audioData, "audio/wav")
+    viewModel.onComposerTextChanged("Prompt with media")
+
+    viewModel.onSendMessage()
+    advanceUntilIdle()
+
+    val captured = attachmentsSlot.captured
+    assertThat(captured.image).isNotNull()
+    assertThat(captured.image?.bytes).isNotEmpty()
+    assertThat(captured.image?.mimeType).isEqualTo("image/png")
+    assertThat(captured.audio?.bytes).isEqualTo(audioData)
+    assertThat(captured.audio?.mimeType).isEqualTo("audio/wav")
   }
 
   @Test

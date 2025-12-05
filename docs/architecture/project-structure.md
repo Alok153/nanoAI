@@ -4,12 +4,16 @@
 
 ```
 nanoAI/
-├── app/                    # Main Android application
+├── app/                    # Main Android application (features + presentation)
+├── core/common             # Shared utilities and annotations
+├── core/domain             # Business logic and contracts
+├── core/data               # Data implementations (Room, Retrofit, DataStore, Hilt bindings)
+├── core/testing            # Test utilities and fakes
 ├── macrobenchmark/         # Performance testing module
-└── [build infrastructure]  # Gradle, config, scripts
+└── config/quality/detekt/custom-rules # Detekt custom rules
 ```
 
-**Active Modules:** `:app`, `:core:common`, `:core:domain`, `:macrobenchmark`, `:config:quality:detekt:custom-rules`
+**Active Modules:** `:app`, `:core:common`, `:core:domain`, `:core:data`, `:core:testing`, `:macrobenchmark`, `:config:quality:detekt:custom-rules`
 
 ## App Module Structure
 
@@ -41,8 +45,7 @@ feature/{name}/
 
 This structure keeps UI code close together during the transition toward fully layered
 features. The medium-term goal is to re-introduce feature-scoped `domain/` and `data/`
-packages that wrap the shared `core` services; see the [modularization roadmap](./modularization-roadmap.md)
-for the planned milestones.
+packages that wrap the shared `core` services once feature modules are split out of `:app`.
 
 **Active Features:** `audio/`, `chat/`, `image/`, `library/`, `settings/`, `uiux/`
 

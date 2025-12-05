@@ -1,6 +1,6 @@
 package com.vjaykrsna.nanoai.core.data.di
 
-import com.vjaykrsna.nanoai.core.data.usecase.BuildConfigFeatureFlagEnvironment
+import com.vjaykrsna.nanoai.core.data.config.BuildConfigFeatureFlagEnvironment
 import com.vjaykrsna.nanoai.core.domain.usecase.FeatureFlagEnvironment
 import dagger.Binds
 import dagger.Module

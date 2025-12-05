@@ -2,6 +2,7 @@ package com.vjaykrsna.nanoai.feature.chat.presentation
 
 import android.graphics.Bitmap
 import androidx.lifecycle.viewModelScope
+import com.vjaykrsna.nanoai.core.common.IoDispatcher
 import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.common.error.NanoAIErrorEnvelope
@@ -35,6 +36,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 
 private const val PNG_COMPRESSION_QUALITY = 100
@@ -45,6 +47,7 @@ class ChatViewModel
 constructor(
   private val chatFeatureCoordinator: ChatFeatureCoordinator,
   @MainImmediateDispatcher mainDispatcher: CoroutineDispatcher,
+  @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) :
   ViewModelStateHost<ChatUiState, ChatUiEvent>(
     initialState = ChatUiState(),
@@ -96,9 +99,11 @@ constructor(
       }
       else -> {
         val attachmentsSnapshot = latestState.attachments
-        val promptAttachments = attachmentsSnapshot.toPromptAttachments()
 
         viewModelScope.launch(dispatcher) {
+          val promptAttachments =
+            withContext(ioDispatcher) { attachmentsSnapshot.toPromptAttachments() }
+
           updateState {
             copy(isSendingMessage = true, pendingErrorMessage = null, composerText = "")
           }

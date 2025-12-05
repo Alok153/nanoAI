@@ -25,11 +25,13 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityStatus
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
 import com.vjaykrsna.nanoai.core.domain.model.uiux.RightPanel
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ShellUiPreferences
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ShellWindowSizeClass
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UndoPayload
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellLayoutState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellUiState
 import com.vjaykrsna.nanoai.shared.testing.TestingTheme
 import com.vjaykrsna.nanoai.shared.ui.shell.NanoShellScaffold
+import com.vjaykrsna.nanoai.shared.ui.window.toShellWindowSizeClass
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Rule
 import org.junit.Test
@@ -79,7 +81,8 @@ class AdaptiveShellTest {
     width: WindowWidthSizeClass,
     height: WindowHeightSizeClass,
   ): ShellUiState {
-    val windowSizeClass = fakeWindowSizeClass(width, height)
+    val windowSizeClass: ShellWindowSizeClass =
+      fakeWindowSizeClass(width, height).toShellWindowSizeClass()
     val layout =
       ShellLayoutState(
         windowSizeClass = windowSizeClass,

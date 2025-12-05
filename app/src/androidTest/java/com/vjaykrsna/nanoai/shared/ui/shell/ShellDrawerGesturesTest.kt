@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ShellLayoutState
+import com.vjaykrsna.nanoai.shared.ui.window.toShellWindowSizeClass
 import kotlin.test.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -37,6 +38,7 @@ class ShellDrawerGesturesTest {
       mutableStateOf(
         ShellLayoutState.empty(
           WindowSizeClass.calculateFromSize(DpSize(width = 360.dp, height = 780.dp))
+            .toShellWindowSizeClass()
         )
       )
 

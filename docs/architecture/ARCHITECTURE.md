@@ -41,7 +41,7 @@ nanoAI implements **Clean Architecture** with strict separation of concerns acro
 ```
 🎯 Application Module (:app)
 ├── MainActivity - Single activity architecture
-├── Feature Modules (6 features with clean separation)
+├── Feature folders (presentation + UI only; domain/data live in :core)
 └── Core Infrastructure (Cross-cutting services)
 
 ⚡ Benchmark Module (:macrobenchmark)
@@ -52,23 +52,19 @@ nanoAI implements **Clean Architecture** with strict separation of concerns acro
 
 ### Feature Organization
 
-Each feature follows clean architecture with strict layer separation:
+Feature folders currently host UI and presentation only:
 
 ```
 feature/{name}/
 ├── ui/ - Compose screens & components (Presentation Layer)
-├── presentation/ - ViewModels & UI state (Presentation Layer)
-├── domain/ - UseCases & business models (Domain Layer)
-└── data/ - Repositories & DAOs (Data Layer)
+└── presentation/ - ViewModels & UI state (Presentation Layer)
 ```
 
-**Active Features:**
-- `chat/` - AI conversation management
-- `library/` - Model catalog & downloads
-- `settings/` - Configuration & preferences
-- `image/` - Image generation & gallery
-- `uiux/` - Shared UI components
-- `audio/` - Audio processing (future)
+Domain and data concerns for all features live in `:core:domain` and `:core:data` and are
+exposed through coordinators (for example `ChatFeatureCoordinator`) to keep presentation
+decoupled while feature Gradle modules are introduced incrementally.
+
+**Active Feature Folders:** `chat/`, `library/`, `settings/`, `image/`, `uiux/`, `audio/`
 
 ## Domain Layer: UseCases
 

@@ -154,7 +154,19 @@ tasks.register<JavaExec>("verifyCoverageThresholds") {
   classpath(
     layout.buildDirectory.dir("tmp/kotlin-classes/debug"),
     layout.buildDirectory.dir("intermediates/javac/debug/classes"),
-    configurations.named("debugRuntimeClasspath"),
+    // Limit to class artifacts to avoid AGP/Gradle variant ambiguity when resolving
+    configurations.named("debugRuntimeClasspath").map { configuration ->
+      configuration.incoming
+        .artifactView {
+          attributes {
+            attribute(
+              org.gradle.api.attributes.Attribute.of("artifactType", String::class.java),
+              "android-classes-jar",
+            )
+          }
+        }
+        .files
+    },
   )
 
   doFirst {

@@ -3,7 +3,11 @@ plugins { id("com.vjaykrsna.nanoai.android.library") }
 android {
   namespace = "com.vjaykrsna.nanoai.core.data"
 
-  defaultConfig { testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }
+  defaultConfig {
+    testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    buildConfigField("String", "MODEL_CATALOG_BASE_URL", "\"https://api.nanoai.app/\"")
+    buildConfigField("String", "HUGGING_FACE_BASE_URL", "\"https://huggingface.co/\"")
+  }
 }
 
 ksp { arg("room.generateKotlin", "true") }

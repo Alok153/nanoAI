@@ -1,5 +1,6 @@
 package com.vjaykrsna.nanoai.core.data.di
 
+import com.vjaykrsna.nanoai.core.data.BuildConfig
 import com.vjaykrsna.nanoai.core.data.library.catalog.network.ModelCatalogService
 import com.vjaykrsna.nanoai.core.data.library.huggingface.network.HuggingFaceAccountService
 import com.vjaykrsna.nanoai.core.data.library.huggingface.network.HuggingFaceOAuthService
@@ -30,8 +31,6 @@ abstract class NetworkModule {
   ): ConnectivityStatusProvider
 
   companion object {
-    private const val MODEL_CATALOG_BASE_URL = "https://api.nanoai.app/"
-    private const val HUGGING_FACE_BASE_URL = "https://huggingface.co/"
     private val jsonMediaType = "application/json".toMediaType()
 
     @Provides
@@ -47,7 +46,7 @@ abstract class NetworkModule {
     @Named("ModelCatalog")
     fun provideModelCatalogRetrofit(json: Json, okHttpClient: OkHttpClient): Retrofit =
       Retrofit.Builder()
-        .baseUrl(MODEL_CATALOG_BASE_URL)
+        .baseUrl(BuildConfig.MODEL_CATALOG_BASE_URL)
         .client(okHttpClient)
         .addConverterFactory(json.asConverterFactory(jsonMediaType))
         .build()
@@ -62,7 +61,7 @@ abstract class NetworkModule {
     @Named("HuggingFace")
     fun provideHuggingFaceRetrofit(json: Json, okHttpClient: OkHttpClient): Retrofit =
       Retrofit.Builder()
-        .baseUrl(HUGGING_FACE_BASE_URL)
+        .baseUrl(BuildConfig.HUGGING_FACE_BASE_URL)
         .client(okHttpClient)
         .addConverterFactory(json.asConverterFactory(jsonMediaType))
         .build()

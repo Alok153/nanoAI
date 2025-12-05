@@ -17,6 +17,7 @@ import com.vjaykrsna.nanoai.core.domain.library.ModelCatalogRepository
 import com.vjaykrsna.nanoai.core.domain.library.ModelCatalogUseCase
 import com.vjaykrsna.nanoai.core.domain.usecase.GetDefaultPersonaUseCase
 import com.vjaykrsna.nanoai.core.domain.usecase.ObservePersonasUseCase
+import com.vjaykrsna.nanoai.feature.chat.domain.DefaultChatFeatureCoordinator
 import com.vjaykrsna.nanoai.feature.chat.presentation.ChatViewModel
 import com.vjaykrsna.nanoai.shared.testing.ComposeTestHarness
 import com.vjaykrsna.nanoai.shared.testing.DomainTestBuilders
@@ -69,16 +70,17 @@ class ChatScreenTest {
     coEvery { switchPersonaUseCase(any(), any(), any()) } returns
       NanoAIResult.success(UUID.randomUUID())
 
-    viewModel =
-      ChatViewModel(
-        sendPromptUseCase,
-        switchPersonaUseCase,
-        conversationUseCase,
-        observePersonasUseCase,
-        getDefaultPersonaUseCase,
-        modelCatalogUseCase,
-        testDispatcher,
+    val chatFeatureCoordinator =
+      DefaultChatFeatureCoordinator(
+        sendPromptUseCase = sendPromptUseCase,
+        switchPersonaUseCase = switchPersonaUseCase,
+        conversationUseCase = conversationUseCase,
+        observePersonasUseCase = observePersonasUseCase,
+        getDefaultPersonaUseCase = getDefaultPersonaUseCase,
+        modelCatalogUseCase = modelCatalogUseCase,
       )
+
+    viewModel = ChatViewModel(chatFeatureCoordinator, testDispatcher, testDispatcher)
     harness = ComposeTestHarness(composeTestRule)
   }
 

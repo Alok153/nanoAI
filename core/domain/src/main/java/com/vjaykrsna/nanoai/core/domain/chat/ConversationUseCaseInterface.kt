@@ -32,4 +32,7 @@ interface ConversationUseCaseInterface {
 
   @OneShot("Update thread persona association")
   suspend fun updateThreadPersona(threadId: UUID, personaId: UUID?): NanoAIResult<Unit>
+
+  @OneShot("Update thread metadata")
+  suspend fun updateThread(thread: ChatThread): NanoAIResult<Unit>
 }
