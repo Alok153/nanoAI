@@ -1,6 +1,6 @@
 package com.vjaykrsna.nanoai.core.data.usecase
 
-import com.vjaykrsna.nanoai.BuildConfig
+import com.vjaykrsna.nanoai.core.data.BuildConfig
 import com.vjaykrsna.nanoai.core.domain.usecase.FeatureFlagEnvironment
 import javax.inject.Inject
 import javax.inject.Singleton

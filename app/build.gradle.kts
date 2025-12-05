@@ -97,6 +97,7 @@ android {
 dependencies {
   implementation(project(":core:common"))
   implementation(project(":core:domain"))
+  implementation(project(":core:data"))
 
   // MediaPipe
   implementation(libs.mediapipe.tasks.genai)
@@ -105,17 +106,9 @@ dependencies {
   // Leap
   implementation(libs.leap.sdk)
 
-  // Networking
-  implementation(libs.retrofit)
-  implementation(libs.retrofit.kotlin.serialization)
+  // Serialization
   implementation(libs.kotlinx.serialization.core)
   implementation(libs.kotlinx.serialization.json)
-  implementation(libs.okhttp)
-
-  // Database
-  implementation(libs.androidx.room.runtime)
-  implementation(libs.androidx.room.ktx)
-  ksp(libs.androidx.room.compiler)
 
   // Coroutines
   implementation(libs.kotlinx.coroutines.core)
@@ -124,18 +117,6 @@ dependencies {
 
   // Date and time utilities
   implementation(libs.kotlinx.datetime)
-
-  // WorkManager
-  implementation(libs.androidx.work.runtime.ktx)
-
-  // Security
-  implementation(libs.androidx.security.crypto)
-
-  // DataStore
-  implementation(libs.androidx.datastore.preferences)
-  implementation(libs.androidx.datastore)
-  implementation(libs.androidx.datastore.core)
-  implementation(libs.androidx.datastore.preferences.core)
 
   // Hilt
   implementation(libs.hilt.android)
@@ -156,14 +137,16 @@ dependencies {
   // Unit Testing
   testImplementation(kotlin("test-junit5"))
   testImplementation(kotlin("reflect"))
+  testImplementation(project(":core:testing"))
+  testImplementation(libs.retrofit)
+  testImplementation(libs.retrofit.kotlin.serialization)
+  testImplementation(libs.okhttp)
   testImplementation(libs.junit.jupiter.params)
   testImplementation(libs.mockk)
   testImplementation(libs.robolectric)
   testImplementation(libs.truth)
-  testImplementation(libs.androidx.room.testing)
   testImplementation(libs.networknt.json.schema.validator)
   testImplementation(libs.mockwebserver)
-  testImplementation(libs.androidx.work.testing)
   testImplementation(libs.androidx.junit)
   testImplementation(libs.androidx.test.core)
   testImplementation(libs.androidx.navigation.testing)
@@ -173,6 +156,7 @@ dependencies {
   testRuntimeOnly(libs.junit.vintage.engine)
 
   // Instrumentation Testing
+  androidTestImplementation(project(":core:testing"))
   androidTestImplementation(libs.androidx.uiautomator)
   androidTestImplementation(kotlin("test-junit5"))
   androidTestImplementation(libs.junit.jupiter.api)
@@ -181,9 +165,6 @@ dependencies {
   androidTestImplementation(libs.mockk.android)
   androidTestImplementation(libs.truth)
   androidTestImplementation(libs.guava.android)
-  androidTestImplementation(libs.androidx.room.testing)
-  androidTestImplementation(libs.androidx.work.testing)
-  androidTestImplementation(libs.mockwebserver)
   androidTestImplementation(libs.androidx.navigation.testing)
   androidTestImplementation(libs.hilt.android.testing)
   kspAndroidTest(libs.hilt.compiler)

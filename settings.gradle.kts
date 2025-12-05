@@ -25,6 +25,8 @@ rootProject.name = "NanoAI"
 include(":app")
 include(":core:common")
 include(":core:domain")
+include(":core:testing")
+include(":core:data")
 include(":macrobenchmark")
 include(":config:quality:detekt:custom-rules")
 

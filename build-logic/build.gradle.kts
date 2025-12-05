@@ -51,6 +51,11 @@ gradlePlugin {
             implementationClass =
                 "com.vjaykrsna.nanoai.buildlogic.AndroidLibraryComposeConventionPlugin"
         }
+        register("androidLibraryConvention") {
+            id = "com.vjaykrsna.nanoai.android.library"
+            implementationClass =
+                "com.vjaykrsna.nanoai.buildlogic.AndroidLibraryConventionPlugin"
+        }
         register("androidTestingConvention") {
             id = "com.vjaykrsna.nanoai.android.testing"
             implementationClass =

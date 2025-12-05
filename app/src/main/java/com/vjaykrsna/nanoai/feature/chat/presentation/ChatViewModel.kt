@@ -8,23 +8,16 @@ import com.vjaykrsna.nanoai.core.common.error.NanoAIErrorEnvelope
 import com.vjaykrsna.nanoai.core.common.error.toErrorEnvelope
 import com.vjaykrsna.nanoai.core.common.onFailure
 import com.vjaykrsna.nanoai.core.common.onSuccess
-import com.vjaykrsna.nanoai.core.domain.chat.ConversationUseCase
 import com.vjaykrsna.nanoai.core.domain.chat.PromptAttachments
 import com.vjaykrsna.nanoai.core.domain.chat.PromptAudio
 import com.vjaykrsna.nanoai.core.domain.chat.PromptImage
-import com.vjaykrsna.nanoai.core.domain.chat.SendPromptUseCase
-import com.vjaykrsna.nanoai.core.domain.chat.SwitchPersonaUseCase
 import com.vjaykrsna.nanoai.core.domain.library.Model
-import com.vjaykrsna.nanoai.core.domain.library.ModelCatalogUseCase
-import com.vjaykrsna.nanoai.core.domain.library.toModel
 import com.vjaykrsna.nanoai.core.domain.model.ChatThread
 import com.vjaykrsna.nanoai.core.domain.model.Message
-import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
-import com.vjaykrsna.nanoai.core.domain.usecase.GetDefaultPersonaUseCase
-import com.vjaykrsna.nanoai.core.domain.usecase.ObservePersonasUseCase
 import com.vjaykrsna.nanoai.core.model.MessageRole
 import com.vjaykrsna.nanoai.core.model.MessageSource
 import com.vjaykrsna.nanoai.core.model.PersonaSwitchAction
+import com.vjaykrsna.nanoai.feature.chat.domain.ChatFeatureCoordinator
 import com.vjaykrsna.nanoai.feature.chat.presentation.state.ChatAudioAttachment
 import com.vjaykrsna.nanoai.feature.chat.presentation.state.ChatComposerAttachments
 import com.vjaykrsna.nanoai.feature.chat.presentation.state.ChatImageAttachment
@@ -41,7 +34,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 
@@ -51,12 +43,7 @@ private const val PNG_COMPRESSION_QUALITY = 100
 class ChatViewModel
 @Inject
 constructor(
-  private val sendPromptUseCase: SendPromptUseCase,
-  private val switchPersonaUseCase: SwitchPersonaUseCase,
-  private val conversationUseCase: ConversationUseCase,
-  private val observePersonasUseCase: ObservePersonasUseCase,
-  private val getDefaultPersonaUseCase: GetDefaultPersonaUseCase,
-  private val modelCatalogUseCase: ModelCatalogUseCase,
+  private val chatFeatureCoordinator: ChatFeatureCoordinator,
   @MainImmediateDispatcher mainDispatcher: CoroutineDispatcher,
 ) :
   ViewModelStateHost<ChatUiState, ChatUiEvent>(
@@ -135,7 +122,7 @@ constructor(
               attachments = promptAttachments,
             )
 
-          val saveResult = conversationUseCase.saveMessage(userMessage)
+          val saveResult = chatFeatureCoordinator.saveMessage(userMessage)
           handleSaveMessageResult(saveResult, messageData)
           updateState { copy(isSendingMessage = false) }
         }
@@ -154,7 +141,7 @@ constructor(
   fun selectModel(model: Model) {
     val thread = state.value.activeThread ?: return
     viewModelScope.launch(dispatcher) {
-      conversationUseCase
+      chatFeatureCoordinator
         .updateThread(thread.copy(activeModelId = model.modelId))
         .onFailure { result ->
           val envelope = result.toErrorEnvelope(MODEL_SELECTION_ERROR)
@@ -192,7 +179,8 @@ constructor(
   fun switchPersona(newPersonaId: UUID, action: PersonaSwitchAction) {
     val threadId = state.value.activeThreadId ?: return
     viewModelScope.launch(dispatcher) {
-      switchPersonaUseCase(threadId, newPersonaId, action)
+      chatFeatureCoordinator
+        .switchPersona(threadId, newPersonaId, action)
         .onSuccess { newThreadId ->
           if (action == PersonaSwitchAction.START_NEW_THREAD) {
             setActiveThread(newThreadId)
@@ -207,9 +195,10 @@ constructor(
 
   fun createNewThread(personaId: UUID?, title: String? = null) {
     viewModelScope.launch(dispatcher) {
-      val defaultPersonaId = personaId ?: getDefaultPersonaUseCase()?.personaId ?: UUID.randomUUID()
-      conversationUseCase
-        .createNewThread(defaultPersonaId, title)
+      val defaultPersonaId =
+        personaId ?: chatFeatureCoordinator.getDefaultPersona()?.personaId ?: UUID.randomUUID()
+      chatFeatureCoordinator
+        .createThread(defaultPersonaId, title)
         .onSuccess { threadId -> setActiveThread(threadId) }
         .onFailure { result ->
           val envelope = result.toErrorEnvelope(THREAD_CREATION_ERROR)
@@ -220,7 +209,7 @@ constructor(
 
   fun archiveThread(threadId: UUID) {
     viewModelScope.launch(dispatcher) {
-      conversationUseCase
+      chatFeatureCoordinator
         .archiveThread(threadId)
         .onSuccess {
           if (state.value.activeThreadId == threadId) {
@@ -236,7 +225,7 @@ constructor(
 
   fun deleteThread(threadId: UUID) {
     viewModelScope.launch(dispatcher) {
-      conversationUseCase
+      chatFeatureCoordinator
         .deleteThread(threadId)
         .onSuccess {
           if (state.value.activeThreadId == threadId) {
@@ -252,7 +241,7 @@ constructor(
 
   private fun observeThreads() {
     viewModelScope.launch(dispatcher) {
-      conversationUseCase.getAllThreadsFlow().collect { threads ->
+      chatFeatureCoordinator.observeThreads().collect { threads ->
         val (resolvedId, resolvedThread) = resolveActiveThread(threads, currentThreadId.value)
         currentThreadId.value = resolvedId
         updateState {
@@ -270,7 +259,7 @@ constructor(
     viewModelScope.launch(dispatcher) {
       currentThreadId
         .flatMapLatest { threadId ->
-          threadId?.let { conversationUseCase.getMessagesFlow(it) } ?: flowOf(emptyList())
+          threadId?.let { chatFeatureCoordinator.observeMessages(it) } ?: flowOf(emptyList())
         }
         .collect { messages -> updateState { copy(messages = messages.toPersistentList()) } }
     }
@@ -278,7 +267,7 @@ constructor(
 
   private fun observePersonas() {
     viewModelScope.launch(dispatcher) {
-      observePersonasUseCase().collect { personas ->
+      chatFeatureCoordinator.observePersonas().collect { personas ->
         updateState { copy(personas = personas.toPersistentList()) }
       }
     }
@@ -286,10 +275,9 @@ constructor(
 
   private fun observeInstalledModels() {
     viewModelScope.launch(dispatcher) {
-      modelCatalogUseCase
-        .observeInstalledModels()
-        .map { list: List<ModelPackage> -> list.map { it.toModel() } }
-        .collect { models -> updateState { copy(installedModels = models.toPersistentList()) } }
+      chatFeatureCoordinator.observeInstalledModels().collect { models ->
+        updateState { copy(installedModels = models.toPersistentList()) }
+      }
     }
   }
 
@@ -334,7 +322,7 @@ constructor(
 
   private suspend fun handleInference(messageData: MessageData) {
     val inferenceResult =
-      sendPromptUseCase(
+      chatFeatureCoordinator.sendPrompt(
         messageData.threadId,
         messageData.text,
         messageData.personaId,

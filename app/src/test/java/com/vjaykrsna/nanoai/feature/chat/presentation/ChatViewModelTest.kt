@@ -10,6 +10,8 @@ import com.vjaykrsna.nanoai.core.domain.library.ModelCatalogUseCase
 import com.vjaykrsna.nanoai.core.domain.usecase.GetDefaultPersonaUseCase
 import com.vjaykrsna.nanoai.core.domain.usecase.ObservePersonasUseCase
 import com.vjaykrsna.nanoai.core.model.PersonaSwitchAction
+import com.vjaykrsna.nanoai.feature.chat.domain.ChatFeatureCoordinator
+import com.vjaykrsna.nanoai.feature.chat.domain.DefaultChatFeatureCoordinator
 import com.vjaykrsna.nanoai.feature.chat.presentation.state.ChatUiState
 import com.vjaykrsna.nanoai.shared.state.ViewModelStateHostTestHarness
 import com.vjaykrsna.nanoai.testing.DomainTestBuilders
@@ -18,8 +20,10 @@ import com.vjaykrsna.nanoai.testing.FakePersonaRepository
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import java.util.UUID
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
@@ -38,6 +42,7 @@ class ChatViewModelTest {
   private lateinit var modelCatalogUseCase: ModelCatalogUseCase
   private lateinit var sendPromptUseCase: SendPromptUseCase
   private lateinit var switchPersonaUseCase: SwitchPersonaUseCase
+  private lateinit var chatFeatureCoordinator: ChatFeatureCoordinator
   private lateinit var viewModel: ChatViewModel
   private lateinit var harness: ViewModelStateHostTestHarness<ChatUiState, ChatUiEvent>
 
@@ -49,6 +54,7 @@ class ChatViewModelTest {
     observePersonasUseCase = ObservePersonasUseCase(personaRepository)
     getDefaultPersonaUseCase = GetDefaultPersonaUseCase(personaRepository)
     modelCatalogUseCase = mockk(relaxed = true)
+    every { modelCatalogUseCase.observeInstalledModels() } returns flowOf(emptyList())
     sendPromptUseCase = mockk(relaxed = true)
     switchPersonaUseCase = mockk(relaxed = true)
 
@@ -56,16 +62,18 @@ class ChatViewModelTest {
     coEvery { switchPersonaUseCase(any(), any(), any()) } returns
       NanoAIResult.success(UUID.randomUUID())
 
-    viewModel =
-      ChatViewModel(
+    chatFeatureCoordinator =
+      DefaultChatFeatureCoordinator(
         sendPromptUseCase,
         switchPersonaUseCase,
         conversationUseCase,
         observePersonasUseCase,
         getDefaultPersonaUseCase,
         modelCatalogUseCase,
-        mainDispatcher = mainDispatcherExtension.dispatcher,
       )
+
+    viewModel =
+      ChatViewModel(chatFeatureCoordinator, mainDispatcher = mainDispatcherExtension.dispatcher)
     harness = ViewModelStateHostTestHarness(viewModel)
   }
 

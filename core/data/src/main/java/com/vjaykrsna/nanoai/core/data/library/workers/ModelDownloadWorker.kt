@@ -10,13 +10,12 @@ import androidx.work.ListenableWorker.Result as WorkResult
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
-import com.vjaykrsna.nanoai.core.common.NotificationHelper
-import com.vjaykrsna.nanoai.core.common.NotificationHelper.Companion.NOTIFICATION_ID_DOWNLOAD_PROGRESS
 import com.vjaykrsna.nanoai.core.data.db.entities.ModelPackageEntity
 import com.vjaykrsna.nanoai.core.data.library.ModelArtifactStore
 import com.vjaykrsna.nanoai.core.data.library.daos.DownloadTaskDao
 import com.vjaykrsna.nanoai.core.data.library.daos.ModelPackageReadDao
 import com.vjaykrsna.nanoai.core.data.library.daos.ModelPackageWriteDao
+import com.vjaykrsna.nanoai.core.data.library.workers.DownloadNotificationHelper.Companion.NOTIFICATION_ID_DOWNLOAD_PROGRESS
 import com.vjaykrsna.nanoai.core.domain.library.ModelManifestUseCase
 import com.vjaykrsna.nanoai.core.domain.model.library.DownloadManifest
 import com.vjaykrsna.nanoai.core.domain.model.library.DownloadStatus
@@ -71,7 +70,7 @@ constructor(
   val okHttpClient: OkHttpClient,
   val modelManifestUseCase: ModelManifestUseCase,
   val telemetryReporter: TelemetryReporter,
-  val notificationHelper: NotificationHelper,
+  val notificationHelper: DownloadNotificationHelper,
   val artifactStore: ModelArtifactStore,
 )
 
@@ -90,7 +89,7 @@ constructor(
   private val okHttpClient: OkHttpClient = dependencies.okHttpClient
   private val modelManifestUseCase: ModelManifestUseCase = dependencies.modelManifestUseCase
   private val telemetryReporter: TelemetryReporter = dependencies.telemetryReporter
-  private val notificationHelper: NotificationHelper = dependencies.notificationHelper
+  private val notificationHelper: DownloadNotificationHelper = dependencies.notificationHelper
   private val artifactStore: ModelArtifactStore = dependencies.artifactStore
   private var modelName: String = ""
 

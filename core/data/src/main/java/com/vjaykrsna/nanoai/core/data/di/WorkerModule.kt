@@ -1,4 +1,4 @@
-package com.vjaykrsna.nanoai.core.di
+package com.vjaykrsna.nanoai.core.data.di
 
 import android.content.Context
 import androidx.work.WorkManager

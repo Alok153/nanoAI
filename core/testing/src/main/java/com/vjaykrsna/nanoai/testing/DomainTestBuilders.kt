@@ -20,6 +20,8 @@ import kotlinx.datetime.Instant
 
 /** Test data builders for domain models. */
 object DomainTestBuilders {
+  private const val ONE_KB = 1024
+  private const val ONE_MB = ONE_KB * ONE_KB
 
   /** Creates a test [PersonaProfile] with sensible defaults. */
   fun buildPersona(
@@ -133,7 +135,7 @@ object DomainTestBuilders {
     providerType: ProviderType = ProviderType.MEDIA_PIPE,
     deliveryType: DeliveryType = DeliveryType.LOCAL_ARCHIVE,
     minAppVersion: Int = 1,
-    sizeBytes: Long = 1024 * 1024, // 1MB
+    sizeBytes: Long = ONE_MB.toLong(), // 1MB
     capabilities: Set<String> = setOf("text"),
     installState: InstallState = InstallState.NOT_INSTALLED,
     downloadTaskId: UUID? = null,

@@ -14,16 +14,19 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.vjaykrsna.nanoai.MainActivity
 import com.vjaykrsna.nanoai.R
+import com.vjaykrsna.nanoai.core.data.library.workers.DownloadNotificationHelper
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class NotificationHelper @Inject constructor(@ApplicationContext private val context: Context) {
+class NotificationHelper @Inject constructor(@ApplicationContext private val context: Context) :
+  DownloadNotificationHelper {
 
   companion object {
     const val CHANNEL_ID_BACKGROUND_TASKS = "work_manager_channel"
-    const val NOTIFICATION_ID_DOWNLOAD_PROGRESS = 1001
+    const val NOTIFICATION_ID_DOWNLOAD_PROGRESS =
+      DownloadNotificationHelper.NOTIFICATION_ID_DOWNLOAD_PROGRESS
     const val NOTIFICATION_ID_DOWNLOAD_COMPLETE = 1002
     const val NOTIFICATION_ID_DOWNLOAD_FAILED = 1003
 
@@ -97,13 +100,13 @@ class NotificationHelper @Inject constructor(@ApplicationContext private val con
     )
   }
 
-  fun buildProgressNotification(
+  override fun buildProgressNotification(
     modelName: String,
     progress: Int,
     taskId: String,
     modelId: String,
-    bytesDownloaded: Long = 0L,
-    totalBytes: Long = 0L,
+    bytesDownloaded: Long,
+    totalBytes: Long,
   ): Notification {
     val resumeIntent = createActionIntent(ACTION_RESUME_DOWNLOAD, taskId, modelId)
     val pauseIntent = createActionIntent(ACTION_PAUSE_DOWNLOAD, taskId, modelId)
@@ -157,7 +160,7 @@ class NotificationHelper @Inject constructor(@ApplicationContext private val con
       .build()
   }
 
-  fun buildCompletionNotification(modelName: String): Notification {
+  override fun buildCompletionNotification(modelName: String): Notification {
     val openAppPendingIntent = createActivityPendingIntent()
 
     return NotificationCompat.Builder(context, CHANNEL_ID_BACKGROUND_TASKS)
@@ -169,7 +172,7 @@ class NotificationHelper @Inject constructor(@ApplicationContext private val con
       .build()
   }
 
-  fun buildFailureNotification(modelName: String, errorMessage: String): Notification {
+  override fun buildFailureNotification(modelName: String, errorMessage: String): Notification {
     val openAppPendingIntent = createActivityPendingIntent()
 
     return NotificationCompat.Builder(context, CHANNEL_ID_BACKGROUND_TASKS)
@@ -183,22 +186,22 @@ class NotificationHelper @Inject constructor(@ApplicationContext private val con
       .build()
   }
 
-  fun notifyProgress(notification: Notification) {
+  override fun notifyProgress(notification: Notification) {
     if (!canPostNotifications()) return
     notificationManager.notify(NOTIFICATION_ID_DOWNLOAD_PROGRESS, notification)
   }
 
-  fun notifyCompletion(notification: Notification) {
+  override fun notifyCompletion(notification: Notification) {
     if (!canPostNotifications()) return
     notificationManager.notify(NOTIFICATION_ID_DOWNLOAD_COMPLETE, notification)
   }
 
-  fun notifyFailure(notification: Notification) {
+  override fun notifyFailure(notification: Notification) {
     if (!canPostNotifications()) return
     notificationManager.notify(NOTIFICATION_ID_DOWNLOAD_FAILED, notification)
   }
 
-  fun cancelProgressNotification() {
+  override fun cancelProgressNotification() {
     notificationManager.cancel(NOTIFICATION_ID_DOWNLOAD_PROGRESS)
   }
 

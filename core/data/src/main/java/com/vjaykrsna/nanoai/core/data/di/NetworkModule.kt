@@ -1,4 +1,4 @@
-package com.vjaykrsna.nanoai.core.di
+package com.vjaykrsna.nanoai.core.data.di
 
 import com.vjaykrsna.nanoai.core.data.library.catalog.network.ModelCatalogService
 import com.vjaykrsna.nanoai.core.data.library.huggingface.network.HuggingFaceAccountService

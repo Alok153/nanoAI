@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.flowOf
  * Fake implementation of ModelDownloadsAndExportUseCase for testing. Provides controllable behavior
  * for download and export operations.
  */
+@Suppress("TooManyFunctions")
 class FakeModelDownloadsAndExportUseCase : ModelDownloadsAndExportUseCaseInterface {
   private val _queuedDownloads = MutableStateFlow<List<DownloadTask>>(emptyList())
   private val _downloadProgress = mutableMapOf<UUID, MutableStateFlow<Float>>()
