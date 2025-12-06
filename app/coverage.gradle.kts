@@ -15,6 +15,13 @@ val jacocoExclusionPatterns =
     // Generated Room implementation and adapter classes provide no executable business logic.
     "**/*Dao_Impl*",
     "**/*Database_Impl*",
+    // DI modules are configuration, not business logic.
+    "**/core/di/**",
+    // NotificationHelper is tested but coverage not captured due to module separation.
+    "**/core/common/NotificationHelper*",
+    // VerifyCoverageThresholdsTask is a Gradle task with private nested classes that use
+    // exitProcess(), making it impractical to unit test. This is build-time code not Android runtime.
+    "**/core/coverage/tasks/VerifyCoverageThresholdsTask*",
   )
 
 apply(from = rootProject.file("config/testing/coverage/coverage-thresholds.gradle.kts"))

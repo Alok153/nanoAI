@@ -10,6 +10,7 @@
   ],
   "UI": [
     "^com/vjaykrsna/nanoai/feature/.*/ui/.*$",
+    "^com/vjaykrsna/nanoai/feature/.*/navigation/.*$",
     "^com/vjaykrsna/nanoai/shared/ui/.*$",
     "^com/vjaykrsna/nanoai/coverage/ui/.*$",
     "^com/vjaykrsna/nanoai/MainActivity.*$"

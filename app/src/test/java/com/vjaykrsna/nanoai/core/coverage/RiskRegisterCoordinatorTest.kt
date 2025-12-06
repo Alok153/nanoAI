@@ -230,4 +230,212 @@ class RiskRegisterCoordinatorTest {
 
     assertThat(coordinator.requiresAttention(now)).isTrue()
   }
+
+  @Test
+  fun `requiresAttention handles release style target with invalid week number`() {
+    val risks =
+      listOf(
+        RiskRegisterItem(
+          riskId = "risk-invalid-week",
+          layer = TestLayer.DATA,
+          description = "Invalid week in release target",
+          severity = RiskRegisterItem.Severity.HIGH,
+          targetBuild = "r2025.99",
+          status = RiskRegisterItem.Status.OPEN,
+          mitigation = null,
+        )
+      )
+
+    val coordinator = RiskRegisterCoordinator(risks, emptyList())
+
+    val now = Instant.parse("2025-10-12T00:00:00Z")
+
+    assertThat(coordinator.requiresAttention(now)).isTrue()
+  }
+
+  @Test
+  fun `requiresAttention handles release style target with week zero`() {
+    val risks =
+      listOf(
+        RiskRegisterItem(
+          riskId = "risk-week-zero",
+          layer = TestLayer.DATA,
+          description = "Week zero in release target",
+          severity = RiskRegisterItem.Severity.HIGH,
+          targetBuild = "r2025.0",
+          status = RiskRegisterItem.Status.IN_PROGRESS,
+          mitigation = null,
+        )
+      )
+
+    val coordinator = RiskRegisterCoordinator(risks, emptyList())
+
+    val now = Instant.parse("2025-01-05T00:00:00Z")
+
+    assertThat(coordinator.requiresAttention(now)).isTrue()
+  }
+
+  @Test
+  fun `requiresAttention handles malformed release style target`() {
+    val risks =
+      listOf(
+        RiskRegisterItem(
+          riskId = "risk-malformed",
+          layer = TestLayer.UI,
+          description = "Malformed release target",
+          severity = RiskRegisterItem.Severity.HIGH,
+          targetBuild = "r2025.abc",
+          status = RiskRegisterItem.Status.IN_PROGRESS,
+          mitigation = null,
+        )
+      )
+
+    val coordinator = RiskRegisterCoordinator(risks, emptyList())
+
+    val now = Instant.parse("2025-10-12T00:00:00Z")
+
+    assertThat(coordinator.requiresAttention(now)).isTrue()
+  }
+
+  @Test
+  fun `requiresAttention handles null target build`() {
+    val risks =
+      listOf(
+        RiskRegisterItem(
+          riskId = "risk-null-target",
+          layer = TestLayer.DATA,
+          description = "No target build specified",
+          severity = RiskRegisterItem.Severity.HIGH,
+          targetBuild = null,
+          status = RiskRegisterItem.Status.OPEN,
+          mitigation = null,
+        )
+      )
+
+    val coordinator = RiskRegisterCoordinator(risks, emptyList())
+
+    val now = Instant.parse("2025-10-12T00:00:00Z")
+
+    assertThat(coordinator.requiresAttention(now)).isTrue()
+  }
+
+  @Test
+  fun `mitigationsFor returns empty list for non-existent risk`() {
+    val coordinator = RiskRegisterCoordinator(emptyList(), emptyList())
+
+    assertThat(coordinator.mitigationsFor("non-existent-risk")).isEmpty()
+  }
+
+  @Test
+  fun `mitigationsFor handles empty and whitespace risk ids`() {
+    val catalog =
+      listOf(
+        TestSuiteCatalogEntry(
+          suiteId = "suite-empty-tag",
+          owner = "quality-engineering",
+          layer = TestLayer.DATA,
+          journey = "Empty tag test",
+          coverageContribution = 1.0,
+          riskTags = setOf("valid-tag"),
+        )
+      )
+
+    val coordinator = RiskRegisterCoordinator(emptyList(), catalog)
+
+    // Empty and whitespace risk IDs should return empty list
+    assertThat(coordinator.mitigationsFor("")).isEmpty()
+    assertThat(coordinator.mitigationsFor("   ")).isEmpty()
+  }
+
+  @Test
+  fun `normalizes risk keys with special characters`() {
+    val catalog =
+      listOf(
+        TestSuiteCatalogEntry(
+          suiteId = "suite-special-chars",
+          owner = "quality-engineering",
+          layer = TestLayer.DATA,
+          journey = "Special char handling",
+          coverageContribution = 1.0,
+          riskTags = setOf("risk!@#high$%^data&*()", "risk___multiple___underscores"),
+        )
+      )
+
+    val coordinator = RiskRegisterCoordinator(emptyList(), catalog)
+
+    assertThat(coordinator.mitigationsFor("risk-high-data").map { it.suiteId })
+      .containsExactly("suite-special-chars")
+    assertThat(coordinator.mitigationsFor("risk_multiple_underscores").map { it.suiteId })
+      .containsExactly("suite-special-chars")
+  }
+
+  @Test
+  fun `deduplicates mitigation entries when same suite has multiple matching tags`() {
+    val catalog =
+      listOf(
+        TestSuiteCatalogEntry(
+          suiteId = "suite-duplicate",
+          owner = "quality-engineering",
+          layer = TestLayer.UI,
+          journey = "Duplicate tag test",
+          coverageContribution = 2.0,
+          riskTags = setOf("risk-high-ui", "RISK-HIGH-UI", "risk_high_ui"),
+        )
+      )
+
+    val coordinator = RiskRegisterCoordinator(emptyList(), catalog)
+
+    val mitigations = coordinator.mitigationsFor("risk-high-ui")
+    assertThat(mitigations).hasSize(1)
+    assertThat(mitigations[0].suiteId).isEqualTo("suite-duplicate")
+  }
+
+  @Test
+  fun `requiresAttention returns false for empty risk list`() {
+    val coordinator = RiskRegisterCoordinator(emptyList(), emptyList())
+
+    assertThat(coordinator.requiresAttention(Instant.now())).isFalse()
+  }
+
+  @Test
+  fun `requiresAttention returns false when risk is not actionable`() {
+    val risks =
+      listOf(
+        RiskRegisterItem(
+          riskId = "risk-resolved",
+          layer = TestLayer.DATA,
+          description = "Resolved risk",
+          severity = RiskRegisterItem.Severity.CRITICAL,
+          targetBuild = "build-2024-01-01",
+          status = RiskRegisterItem.Status.RESOLVED,
+          mitigation = "Fixed",
+        )
+      )
+
+    val coordinator = RiskRegisterCoordinator(risks, emptyList())
+
+    assertThat(coordinator.requiresAttention(Instant.now())).isFalse()
+  }
+
+  @Test
+  fun `requiresAttention returns false when future deadline not reached`() {
+    val risks =
+      listOf(
+        RiskRegisterItem(
+          riskId = "risk-future",
+          layer = TestLayer.DATA,
+          description = "Future deadline",
+          severity = RiskRegisterItem.Severity.HIGH,
+          targetBuild = "r2030.52",
+          status = RiskRegisterItem.Status.OPEN,
+          mitigation = null,
+        )
+      )
+
+    val coordinator = RiskRegisterCoordinator(risks, emptyList())
+
+    val now = Instant.parse("2025-10-12T00:00:00Z")
+
+    assertThat(coordinator.requiresAttention(now)).isFalse()
+  }
 }
