@@ -2,8 +2,10 @@ package com.vjaykrsna.nanoai.core.di
 
 import com.vjaykrsna.nanoai.core.device.AndroidDeviceIdentityProvider
 import com.vjaykrsna.nanoai.core.device.DeviceIdentityProvider
+import com.vjaykrsna.nanoai.core.runtime.DefaultLocalRuntimeGateway
 import com.vjaykrsna.nanoai.core.runtime.LocalModelRuntime
 import com.vjaykrsna.nanoai.core.runtime.LocalModelRuntimeImpl
+import com.vjaykrsna.nanoai.core.runtime.LocalRuntimeGateway
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -19,6 +21,10 @@ abstract class RuntimeModule {
   @Binds
   @Singleton
   abstract fun bindLocalModelRuntime(impl: LocalModelRuntimeImpl): LocalModelRuntime
+
+  @Binds
+  @Singleton
+  abstract fun bindLocalRuntimeGateway(impl: DefaultLocalRuntimeGateway): LocalRuntimeGateway
 
   @Binds
   @Singleton

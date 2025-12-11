@@ -172,11 +172,7 @@ class LeapInferenceServiceTest {
     val model = createTestModel("test-model")
     service.loadModel(model)
     val request =
-      LocalGenerationRequest(
-        modelId = "test-model",
-        prompt = "user prompt",
-        systemPrompt = "   ",
-      )
+      LocalGenerationRequest(modelId = "test-model", prompt = "user prompt", systemPrompt = "   ")
 
     val result = service.generate(request)
 

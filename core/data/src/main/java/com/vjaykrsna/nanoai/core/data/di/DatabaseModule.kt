@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.vjaykrsna.nanoai.core.data.db.NanoAIDatabase
+import com.vjaykrsna.nanoai.core.data.db.NanoAIDatabaseMigrations
 import com.vjaykrsna.nanoai.core.data.db.daos.ApiProviderConfigDao
 import com.vjaykrsna.nanoai.core.data.db.daos.ChatThreadDao
 import com.vjaykrsna.nanoai.core.data.db.daos.LayoutSnapshotDao
@@ -37,7 +38,7 @@ object DatabaseModule {
   fun provideNanoAIDatabase(@ApplicationContext context: Context): NanoAIDatabase =
     Room.databaseBuilder(context, NanoAIDatabase::class.java, NanoAIDatabase.DATABASE_NAME)
       .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
-      .fallbackToDestructiveMigration(true)
+      .apply { NanoAIDatabaseMigrations.ALL.forEach { addMigrations(it) } }
       .build()
 }
 

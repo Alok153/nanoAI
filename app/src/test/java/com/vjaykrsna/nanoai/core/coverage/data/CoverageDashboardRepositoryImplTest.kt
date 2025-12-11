@@ -211,8 +211,7 @@ class CoverageDashboardRepositoryImplTest {
 
     @Test
     fun `returns error when asset file not found`() = runTest {
-      every { assetManager.open("coverage/dashboard.json") } throws
-        IOException("Asset not found")
+      every { assetManager.open("coverage/dashboard.json") } throws IOException("Asset not found")
 
       val result = repository.loadSnapshot()
 

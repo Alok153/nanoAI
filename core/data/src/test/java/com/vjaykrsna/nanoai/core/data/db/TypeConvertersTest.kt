@@ -252,7 +252,8 @@ class TypeConvertersTest {
   inner class MaintenanceTypeConvertersTest {
     @Test
     fun `fromMaintenanceCategory converts to name`() {
-      val result = MaintenanceTypeConverters.fromMaintenanceCategory(MaintenanceCategory.STATIC_ANALYSIS)
+      val result =
+        MaintenanceTypeConverters.fromMaintenanceCategory(MaintenanceCategory.STATIC_ANALYSIS)
       assertThat(result).isEqualTo("STATIC_ANALYSIS")
     }
 

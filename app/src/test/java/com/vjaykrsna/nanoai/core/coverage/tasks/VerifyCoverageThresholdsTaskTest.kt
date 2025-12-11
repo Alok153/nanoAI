@@ -2,11 +2,8 @@ package com.vjaykrsna.nanoai.core.coverage.tasks
 
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.coverage.model.TestLayer
-import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.createTempDirectory
-import kotlin.io.path.createTempFile
-import kotlin.io.path.deleteIfExists
 import kotlin.io.path.writeText
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -428,7 +425,8 @@ class VerifyCoverageThresholdsTaskTest {
       var lineCounter: org.w3c.dom.Node? = null
       for (i in 0 until counters.length) {
         val node = counters.item(i)
-        if (node is org.w3c.dom.Element &&
+        if (
+          node is org.w3c.dom.Element &&
             node.tagName == "counter" &&
             node.getAttribute("type") == "LINE"
         ) {

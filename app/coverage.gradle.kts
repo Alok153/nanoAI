@@ -20,7 +20,8 @@ val jacocoExclusionPatterns =
     // NotificationHelper is tested but coverage not captured due to module separation.
     "**/core/common/NotificationHelper*",
     // VerifyCoverageThresholdsTask is a Gradle task with private nested classes that use
-    // exitProcess(), making it impractical to unit test. This is build-time code not Android runtime.
+    // exitProcess(), making it impractical to unit test. This is build-time code not Android
+    // runtime.
     "**/core/coverage/tasks/VerifyCoverageThresholdsTask*",
   )
 

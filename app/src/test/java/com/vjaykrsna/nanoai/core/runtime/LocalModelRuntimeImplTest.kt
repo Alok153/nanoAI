@@ -28,11 +28,7 @@ class LocalModelRuntimeImplTest {
     mediaPipeInferenceService = mockk()
     leapInferenceService = mockk()
     runtime =
-      LocalModelRuntimeImpl(
-        modelCatalogRepository,
-        mediaPipeInferenceService,
-        leapInferenceService,
-      )
+      LocalModelRuntimeImpl(modelCatalogRepository, mediaPipeInferenceService, leapInferenceService)
   }
 
   @Test
@@ -128,8 +124,7 @@ class LocalModelRuntimeImplTest {
   fun `generate delegates to MediaPipe for MEDIA_PIPE provider`() = runTest {
     val model = createTestModel(ProviderType.MEDIA_PIPE)
     val request = LocalGenerationRequest("test-model", "test prompt")
-    val expectedResult =
-      NanoAIResult.success(LocalGenerationResult("response", 100L, emptyMap()))
+    val expectedResult = NanoAIResult.success(LocalGenerationResult("response", 100L, emptyMap()))
 
     coEvery { modelCatalogRepository.getModel("test-model") } returns model
     coEvery { mediaPipeInferenceService.generate(request) } returns expectedResult
@@ -144,8 +139,7 @@ class LocalModelRuntimeImplTest {
   fun `generate delegates to Leap for LEAP provider`() = runTest {
     val model = createTestModel(ProviderType.LEAP)
     val request = LocalGenerationRequest("test-model", "test prompt")
-    val expectedResult =
-      NanoAIResult.success(LocalGenerationResult("response", 100L, emptyMap()))
+    val expectedResult = NanoAIResult.success(LocalGenerationResult("response", 100L, emptyMap()))
 
     coEvery { modelCatalogRepository.getModel("test-model") } returns model
     coEvery { leapInferenceService.generate(request) } returns expectedResult

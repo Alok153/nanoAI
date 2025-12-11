@@ -185,11 +185,7 @@ class CoverageTrendPointTest {
     fun `fromSummary creates point with threshold from summary`() {
       val timestamp = Instant.parse("2025-10-10T12:00:00Z")
       val thresholds =
-        mapOf(
-          TestLayer.VIEW_MODEL to 75.0,
-          TestLayer.UI to 65.0,
-          TestLayer.DATA to 70.0,
-        )
+        mapOf(TestLayer.VIEW_MODEL to 75.0, TestLayer.UI to 65.0, TestLayer.DATA to 70.0)
       val summary =
         CoverageSummary(
           buildId = "build-1",

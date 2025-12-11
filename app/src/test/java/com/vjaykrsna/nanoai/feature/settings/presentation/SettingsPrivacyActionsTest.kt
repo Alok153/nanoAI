@@ -38,100 +38,109 @@ class SettingsPrivacyActionsTest {
         override fun now(): Instant = Instant.parse("2025-01-01T00:00:00Z")
       }
 
-    actions = SettingsPrivacyActions(
-      scope = testScope,
-      updatePrivacyPreferencesUseCase = updatePrivacyPreferencesUseCase,
-      emitError = { error -> errors.add(error) },
-      clock = clock,
-    )
+    actions =
+      SettingsPrivacyActions(
+        scope = testScope,
+        updatePrivacyPreferencesUseCase = updatePrivacyPreferencesUseCase,
+        emitError = { error -> errors.add(error) },
+        clock = clock,
+      )
   }
 
   @Test
-  fun `setTelemetryOptIn calls use case`() = testScope.runTest {
-    coEvery { updatePrivacyPreferencesUseCase.setTelemetryOptIn(true) } just Runs
+  fun `setTelemetryOptIn calls use case`() =
+    testScope.runTest {
+      coEvery { updatePrivacyPreferencesUseCase.setTelemetryOptIn(true) } just Runs
 
-    actions.setTelemetryOptIn(true)
-    advanceUntilIdle()
+      actions.setTelemetryOptIn(true)
+      advanceUntilIdle()
 
-    coVerify { updatePrivacyPreferencesUseCase.setTelemetryOptIn(true) }
-    assertThat(errors).isEmpty()
-  }
-
-  @Test
-  fun `setTelemetryOptIn emits error on failure`() = testScope.runTest {
-    coEvery { updatePrivacyPreferencesUseCase.setTelemetryOptIn(any()) } throws
-      RuntimeException("Failed")
-
-    actions.setTelemetryOptIn(true)
-    advanceUntilIdle()
-
-    assertThat(errors).hasSize(1)
-  }
+      coVerify { updatePrivacyPreferencesUseCase.setTelemetryOptIn(true) }
+      assertThat(errors).isEmpty()
+    }
 
   @Test
-  fun `acknowledgeConsent calls use case with current time`() = testScope.runTest {
-    coEvery { updatePrivacyPreferencesUseCase.acknowledgeConsent(any()) } just Runs
+  fun `setTelemetryOptIn emits error on failure`() =
+    testScope.runTest {
+      coEvery { updatePrivacyPreferencesUseCase.setTelemetryOptIn(any()) } throws
+        RuntimeException("Failed")
 
-    actions.acknowledgeConsent()
-    advanceUntilIdle()
+      actions.setTelemetryOptIn(true)
+      advanceUntilIdle()
 
-    coVerify { updatePrivacyPreferencesUseCase.acknowledgeConsent(clock.now()) }
-    assertThat(errors).isEmpty()
-  }
-
-  @Test
-  fun `acknowledgeConsent emits error on failure`() = testScope.runTest {
-    coEvery { updatePrivacyPreferencesUseCase.acknowledgeConsent(any()) } throws
-      RuntimeException("Failed")
-
-    actions.acknowledgeConsent()
-    advanceUntilIdle()
-
-    assertThat(errors).hasSize(1)
-  }
+      assertThat(errors).hasSize(1)
+    }
 
   @Test
-  fun `setRetentionPolicy calls use case`() = testScope.runTest {
-    val policy = RetentionPolicy.MANUAL_PURGE_ONLY
-    coEvery { updatePrivacyPreferencesUseCase.setRetentionPolicy(policy) } just Runs
+  fun `acknowledgeConsent calls use case with current time`() =
+    testScope.runTest {
+      coEvery { updatePrivacyPreferencesUseCase.acknowledgeConsent(any()) } just Runs
 
-    actions.setRetentionPolicy(policy)
-    advanceUntilIdle()
+      actions.acknowledgeConsent()
+      advanceUntilIdle()
 
-    coVerify { updatePrivacyPreferencesUseCase.setRetentionPolicy(policy) }
-    assertThat(errors).isEmpty()
-  }
-
-  @Test
-  fun `setRetentionPolicy emits error on failure`() = testScope.runTest {
-    coEvery { updatePrivacyPreferencesUseCase.setRetentionPolicy(any()) } throws
-      RuntimeException("Failed")
-
-    actions.setRetentionPolicy(RetentionPolicy.INDEFINITE)
-    advanceUntilIdle()
-
-    assertThat(errors).hasSize(1)
-  }
+      coVerify { updatePrivacyPreferencesUseCase.acknowledgeConsent(clock.now()) }
+      assertThat(errors).isEmpty()
+    }
 
   @Test
-  fun `dismissExportWarnings calls use case`() = testScope.runTest {
-    coEvery { updatePrivacyPreferencesUseCase.setExportWarningsDismissed(true) } just Runs
+  fun `acknowledgeConsent emits error on failure`() =
+    testScope.runTest {
+      coEvery { updatePrivacyPreferencesUseCase.acknowledgeConsent(any()) } throws
+        RuntimeException("Failed")
 
-    actions.dismissExportWarnings()
-    advanceUntilIdle()
+      actions.acknowledgeConsent()
+      advanceUntilIdle()
 
-    coVerify { updatePrivacyPreferencesUseCase.setExportWarningsDismissed(true) }
-    assertThat(errors).isEmpty()
-  }
+      assertThat(errors).hasSize(1)
+    }
 
   @Test
-  fun `dismissExportWarnings emits error on failure`() = testScope.runTest {
-    coEvery { updatePrivacyPreferencesUseCase.setExportWarningsDismissed(any()) } throws
-      RuntimeException("Failed")
+  fun `setRetentionPolicy calls use case`() =
+    testScope.runTest {
+      val policy = RetentionPolicy.MANUAL_PURGE_ONLY
+      coEvery { updatePrivacyPreferencesUseCase.setRetentionPolicy(policy) } just Runs
 
-    actions.dismissExportWarnings()
-    advanceUntilIdle()
+      actions.setRetentionPolicy(policy)
+      advanceUntilIdle()
 
-    assertThat(errors).hasSize(1)
-  }
+      coVerify { updatePrivacyPreferencesUseCase.setRetentionPolicy(policy) }
+      assertThat(errors).isEmpty()
+    }
+
+  @Test
+  fun `setRetentionPolicy emits error on failure`() =
+    testScope.runTest {
+      coEvery { updatePrivacyPreferencesUseCase.setRetentionPolicy(any()) } throws
+        RuntimeException("Failed")
+
+      actions.setRetentionPolicy(RetentionPolicy.INDEFINITE)
+      advanceUntilIdle()
+
+      assertThat(errors).hasSize(1)
+    }
+
+  @Test
+  fun `dismissExportWarnings calls use case`() =
+    testScope.runTest {
+      coEvery { updatePrivacyPreferencesUseCase.setExportWarningsDismissed(true) } just Runs
+
+      actions.dismissExportWarnings()
+      advanceUntilIdle()
+
+      coVerify { updatePrivacyPreferencesUseCase.setExportWarningsDismissed(true) }
+      assertThat(errors).isEmpty()
+    }
+
+  @Test
+  fun `dismissExportWarnings emits error on failure`() =
+    testScope.runTest {
+      coEvery { updatePrivacyPreferencesUseCase.setExportWarningsDismissed(any()) } throws
+        RuntimeException("Failed")
+
+      actions.dismissExportWarnings()
+      advanceUntilIdle()
+
+      assertThat(errors).hasSize(1)
+    }
 }

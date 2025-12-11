@@ -64,8 +64,7 @@ class HuggingFaceDownloadCoordinatorTest {
     val summary = createSummary("model-123")
     val modelPackage = createModelPackage("model-123")
     coEvery { converter.convertIfCompatible(summary) } returns modelPackage
-    coEvery { modelCatalogUseCase.getModel("model-123") } returns
-      NanoAIResult.success(modelPackage)
+    coEvery { modelCatalogUseCase.getModel("model-123") } returns NanoAIResult.success(modelPackage)
 
     coordinator.process(summary)
 
@@ -121,8 +120,7 @@ class HuggingFaceDownloadCoordinatorTest {
     coEvery { modelCatalogUseCase.getModel("model-123") } returns
       NanoAIResult.recoverable(message = "not found")
     coEvery { modelCatalogUseCase.upsertModel(modelPackage) } returns NanoAIResult.success(Unit)
-    coEvery { downloadModelUseCase.downloadModel("model-123") } returns
-      NanoAIResult.success(taskId)
+    coEvery { downloadModelUseCase.downloadModel("model-123") } returns NanoAIResult.success(taskId)
 
     coordinator.process(summary)
 

@@ -1,0 +1,31 @@
+package com.vjaykrsna.nanoai.feature.settings.domain
+
+import com.vjaykrsna.nanoai.core.model.NanoAIResult
+import javax.inject.Inject
+
+/** Repository contract for backup and restore flows in Settings. */
+interface BackupRepository {
+  suspend fun exportBackup(
+    destinationPath: String,
+    includeChatHistory: Boolean,
+  ): NanoAIResult<String>
+
+  suspend fun importBackup(sourcePath: String): NanoAIResult<Unit>
+
+  suspend fun validateBackup(sourcePath: String): NanoAIResult<Boolean>
+}
+
+/** Use case wrapper that keeps Settings ViewModels decoupled from data sources. */
+class BackupUseCase @Inject constructor(private val repository: BackupRepository) {
+
+  suspend fun exportBackup(
+    destinationPath: String,
+    includeChatHistory: Boolean,
+  ): NanoAIResult<String> = repository.exportBackup(destinationPath, includeChatHistory)
+
+  suspend fun importBackup(sourcePath: String): NanoAIResult<Unit> =
+    repository.importBackup(sourcePath)
+
+  suspend fun validateBackup(sourcePath: String): NanoAIResult<Boolean> =
+    repository.validateBackup(sourcePath)
+}
