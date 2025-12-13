@@ -26,6 +26,9 @@
     <string name="offline_banner_disabled_actions">Actions will resume when you\'re back online.</string>
     <string name="offline_banner_queue_status">Queued: %d</string>
     <string name="offline_banner_retry">Retry now</string>
+    <string name="chat_offline_ready">Using %1$s offline</string>
+    <string name="chat_offline_missing_no_model">Install an on-device model to stay offline.</string>
+    <string name="chat_offline_missing_not_ready">Finish preparing your on-device model to chat offline.</string>
 
     <!-- Primary Action Card -->
     <string name="primary_action_card_run">Run</string>

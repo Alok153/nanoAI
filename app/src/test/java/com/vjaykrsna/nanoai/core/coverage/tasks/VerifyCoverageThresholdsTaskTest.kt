@@ -487,7 +487,7 @@ class VerifyCoverageThresholdsTaskTest {
     }
 
     @Test
-    fun `handles class with 100% coverage`() {
+    fun `handles class with full coverage`() {
       val builder = VerifyCoverageThresholdsTask.newDocumentBuilderForTest()
 
       reportXml.writeText(

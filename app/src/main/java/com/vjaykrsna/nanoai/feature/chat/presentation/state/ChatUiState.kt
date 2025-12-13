@@ -5,6 +5,9 @@ import com.vjaykrsna.nanoai.core.domain.library.Model
 import com.vjaykrsna.nanoai.core.domain.model.ChatThread
 import com.vjaykrsna.nanoai.core.domain.model.Message
 import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityBannerState
+import com.vjaykrsna.nanoai.feature.chat.model.ChatPersonaSummary
+import com.vjaykrsna.nanoai.feature.chat.model.LocalInferenceUiState
 import com.vjaykrsna.nanoai.shared.state.NanoAIViewState
 import java.util.UUID
 import kotlinx.collections.immutable.PersistentList
@@ -22,11 +25,14 @@ data class ChatUiState(
   val messages: PersistentList<Message> = persistentListOf(),
   val personas: PersistentList<PersonaProfile> = persistentListOf(),
   val installedModels: PersistentList<Model> = persistentListOf(),
+  val activePersonaSummary: ChatPersonaSummary? = null,
   val composerText: String = "",
   val isModelPickerVisible: Boolean = false,
   val isSendingMessage: Boolean = false,
   val attachments: ChatComposerAttachments = ChatComposerAttachments(),
   val pendingErrorMessage: String? = null,
+  val connectivityBanner: ConnectivityBannerState? = null,
+  val localInferenceUi: LocalInferenceUiState = LocalInferenceUiState(),
 ) : NanoAIViewState
 
 /** Container for composer attachments so we can track image/audio selections atomically. */

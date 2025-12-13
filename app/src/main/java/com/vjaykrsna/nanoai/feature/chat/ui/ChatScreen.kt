@@ -38,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
@@ -45,11 +46,15 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.vjaykrsna.nanoai.R
 import com.vjaykrsna.nanoai.core.common.error.NanoAIErrorEnvelope
 import com.vjaykrsna.nanoai.core.domain.library.Model
 import com.vjaykrsna.nanoai.core.domain.model.Message
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
 import com.vjaykrsna.nanoai.core.model.MessageRole
+import com.vjaykrsna.nanoai.feature.chat.model.LocalInferenceMissingReason
+import com.vjaykrsna.nanoai.feature.chat.model.LocalInferenceUiState
+import com.vjaykrsna.nanoai.feature.chat.model.LocalInferenceUiStatus
 import com.vjaykrsna.nanoai.feature.chat.presentation.ChatError
 import com.vjaykrsna.nanoai.feature.chat.presentation.ChatUiEvent
 import com.vjaykrsna.nanoai.feature.chat.presentation.ChatViewModel
@@ -57,6 +62,7 @@ import com.vjaykrsna.nanoai.feature.chat.presentation.state.ChatUiState
 import com.vjaykrsna.nanoai.feature.chat.ui.components.ModelPicker
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ChatState
 import com.vjaykrsna.nanoai.feature.uiux.presentation.NanoError
+import com.vjaykrsna.nanoai.feature.uiux.ui.components.ConnectivityBanner
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.composer.NanoComposerBar
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.feedback.NanoErrorHandler
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoRadii
@@ -126,6 +132,7 @@ fun ChatScreen(
           viewModel.dismissModelPicker()
           onNavigate(ModeId.LIBRARY)
         },
+        onDismissConnectivityBanner = viewModel::dismissConnectivityBanner,
       )
     }
 
@@ -235,6 +242,17 @@ private fun ChatMessageContent(
       Modifier.fillMaxSize().padding(horizontal = NanoSpacing.lg, vertical = NanoSpacing.md),
     verticalArrangement = Arrangement.spacedBy(NanoSpacing.md),
   ) {
+    uiState.connectivityBanner?.let { banner ->
+      ConnectivityBanner(
+        state = banner,
+        onCtaClick = actions.onManageModels,
+        onDismiss = actions.onDismissConnectivityBanner,
+        modifier = Modifier.fillMaxWidth(),
+      )
+    }
+
+    LocalInferenceIndicator(uiState = uiState.localInferenceUi, modifier = Modifier.fillMaxWidth())
+
     MessagesList(
       messages = uiState.messages,
       isLoading = uiState.isSendingMessage,
@@ -373,7 +391,41 @@ private data class ChatScreenActions(
   val onDismissModelPicker: () -> Unit,
   val onModelSelect: (Model) -> Unit,
   val onManageModels: () -> Unit,
+  val onDismissConnectivityBanner: () -> Unit,
 )
+
+@Composable
+private fun LocalInferenceIndicator(uiState: LocalInferenceUiState, modifier: Modifier = Modifier) {
+  when (val status = uiState.status) {
+    LocalInferenceUiStatus.Idle -> Unit
+    is LocalInferenceUiStatus.OfflineReady -> {
+      val modelName = uiState.modelName ?: stringResource(R.string.nano_shell_select_model)
+      val text = stringResource(R.string.chat_offline_ready, modelName)
+      Text(
+        text = text,
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier.padding(bottom = NanoSpacing.xs).semantics { contentDescription = text },
+      )
+    }
+    is LocalInferenceUiStatus.OfflineMissing -> {
+      val message =
+        when (status.reason) {
+          LocalInferenceMissingReason.NO_LOCAL_MODEL ->
+            stringResource(R.string.chat_offline_missing_no_model)
+          LocalInferenceMissingReason.MODEL_NOT_READY ->
+            stringResource(R.string.chat_offline_missing_not_ready)
+        }
+      Text(
+        text = message,
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier =
+          modifier.padding(bottom = NanoSpacing.xs).semantics { contentDescription = message },
+      )
+    }
+  }
+}
 
 private fun ChatError.toNanoError(envelope: NanoAIErrorEnvelope): NanoError {
   val description = envelope.userMessage

@@ -8,11 +8,21 @@ import com.vjaykrsna.nanoai.core.domain.chat.SendPromptUseCase
 import com.vjaykrsna.nanoai.core.domain.chat.SwitchPersonaUseCase
 import com.vjaykrsna.nanoai.core.domain.library.Model
 import com.vjaykrsna.nanoai.core.domain.library.ModelCatalogUseCase
+import com.vjaykrsna.nanoai.core.domain.model.library.InstallState
+import com.vjaykrsna.nanoai.core.domain.model.library.ProviderType
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityBannerState
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityStatus
+import com.vjaykrsna.nanoai.core.domain.repository.ConnectivityRepository
+import com.vjaykrsna.nanoai.core.domain.uiux.ConnectivityOperationsUseCase
 import com.vjaykrsna.nanoai.core.domain.usecase.GetDefaultPersonaUseCase
 import com.vjaykrsna.nanoai.core.domain.usecase.ObservePersonasUseCase
 import com.vjaykrsna.nanoai.core.model.PersonaSwitchAction
 import com.vjaykrsna.nanoai.feature.chat.domain.ChatFeatureCoordinator
 import com.vjaykrsna.nanoai.feature.chat.domain.DefaultChatFeatureCoordinator
+import com.vjaykrsna.nanoai.feature.chat.domain.LocalInferenceUseCase
+import com.vjaykrsna.nanoai.feature.chat.domain.LocalModelCandidate
+import com.vjaykrsna.nanoai.feature.chat.domain.LocalModelReadiness
+import com.vjaykrsna.nanoai.feature.chat.model.LocalInferenceUiStatus
 import com.vjaykrsna.nanoai.feature.chat.presentation.state.ChatUiState
 import com.vjaykrsna.nanoai.shared.state.ViewModelStateHostTestHarness
 import com.vjaykrsna.nanoai.testing.DomainTestBuilders
@@ -25,6 +35,8 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import java.util.UUID
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -45,6 +57,9 @@ class ChatViewModelTest {
   private lateinit var sendPromptUseCase: SendPromptUseCase
   private lateinit var switchPersonaUseCase: SwitchPersonaUseCase
   private lateinit var chatFeatureCoordinator: ChatFeatureCoordinator
+  private lateinit var connectivityRepository: FakeConnectivityRepository
+  private lateinit var connectivityOperationsUseCase: ConnectivityOperationsUseCase
+  private lateinit var localInferenceUseCase: LocalInferenceUseCase
   private lateinit var viewModel: ChatViewModel
   private lateinit var harness: ViewModelStateHostTestHarness<ChatUiState, ChatUiEvent>
 
@@ -59,6 +74,10 @@ class ChatViewModelTest {
     every { modelCatalogUseCase.observeInstalledModels() } returns flowOf(emptyList())
     sendPromptUseCase = mockk(relaxed = true)
     switchPersonaUseCase = mockk(relaxed = true)
+    connectivityRepository = FakeConnectivityRepository(mainDispatcherExtension.dispatcher)
+    connectivityOperationsUseCase =
+      ConnectivityOperationsUseCase(connectivityRepository, mainDispatcherExtension.dispatcher)
+    localInferenceUseCase = mockk(relaxed = true)
 
     coEvery { sendPromptUseCase(any(), any(), any(), any()) } returns NanoAIResult.success(Unit)
     coEvery { switchPersonaUseCase(any(), any(), any()) } returns
@@ -77,6 +96,8 @@ class ChatViewModelTest {
     viewModel =
       ChatViewModel(
         chatFeatureCoordinator,
+        connectivityOperationsUseCase,
+        localInferenceUseCase,
         mainDispatcher = mainDispatcherExtension.dispatcher,
         ioDispatcher = mainDispatcherExtension.dispatcher,
       )
@@ -450,7 +471,90 @@ class ChatViewModelTest {
     }
   }
 
+  @Test
+  fun `offline connectivity selects ready local model`() = runTest {
+    val threadId = UUID.randomUUID()
+    val personaId = UUID.randomUUID()
+    val thread =
+      DomainTestBuilders.buildChatThread(
+        threadId = threadId,
+        personaId = personaId,
+        activeModelId = "cloud-only",
+      )
+    val persona = DomainTestBuilders.buildPersona(personaId = personaId, name = "Analyst")
+    conversationRepository.addThread(thread)
+    personaRepository.setPersonas(listOf(persona))
+
+    val readiness =
+      LocalModelReadiness.Ready(
+        candidate =
+          LocalModelCandidate(
+            modelId = "local-ready",
+            displayName = "Phoenix",
+            providerType = ProviderType.MEDIA_PIPE,
+            installState = InstallState.INSTALLED,
+            sizeBytes = 0,
+          ),
+        autoSelected = true,
+      )
+    coEvery { localInferenceUseCase.prepareForOffline(any(), any()) } returns readiness
+
+    viewModel.selectThread(threadId)
+    advanceUntilIdle()
+
+    connectivityRepository.emit(ConnectivityStatus.OFFLINE)
+    advanceUntilIdle()
+
+    val updatedThread = conversationRepository.getAllThreads().first()
+    assertThat(updatedThread.activeModelId).isEqualTo("local-ready")
+    val localState = harness.currentState.localInferenceUi
+    assertThat(localState.status).isInstanceOf(LocalInferenceUiStatus.OfflineReady::class.java)
+    assertThat(harness.currentState.connectivityBanner?.status)
+      .isEqualTo(ConnectivityStatus.OFFLINE)
+  }
+
+  @Test
+  fun `offline connectivity without local model surfaces missing state`() = runTest {
+    val threadId = UUID.randomUUID()
+    val personaId = UUID.randomUUID()
+    val thread = DomainTestBuilders.buildChatThread(threadId = threadId, personaId = personaId)
+    val persona = DomainTestBuilders.buildPersona(personaId = personaId, name = "Creator")
+    conversationRepository.addThread(thread)
+    personaRepository.setPersonas(listOf(persona))
+
+    coEvery { localInferenceUseCase.prepareForOffline(any(), any()) } returns
+      LocalModelReadiness.Missing(LocalModelReadiness.MissingReason.NO_LOCAL_MODELS)
+
+    viewModel.selectThread(threadId)
+    advanceUntilIdle()
+
+    connectivityRepository.emit(ConnectivityStatus.OFFLINE)
+    advanceUntilIdle()
+
+    val localState = harness.currentState.localInferenceUi
+    assertThat(localState.status).isInstanceOf(LocalInferenceUiStatus.OfflineMissing::class.java)
+    assertThat(conversationRepository.getAllThreads().first().activeModelId)
+      .isEqualTo(thread.activeModelId)
+  }
+
   private fun assertEnvelopeMirrorsPendingState(event: ChatUiEvent.ErrorRaised) {
     assertThat(event.envelope.userMessage).isEqualTo(harness.currentState.pendingErrorMessage)
+  }
+}
+
+private class FakeConnectivityRepository(
+  override val ioDispatcher: kotlinx.coroutines.CoroutineDispatcher
+) : ConnectivityRepository {
+  private val bannerState =
+    MutableStateFlow(ConnectivityBannerState(status = ConnectivityStatus.ONLINE))
+
+  override val connectivityBannerState: Flow<ConnectivityBannerState> = bannerState
+
+  override suspend fun updateConnectivity(status: ConnectivityStatus) {
+    bannerState.value = ConnectivityBannerState(status = status)
+  }
+
+  fun emit(status: ConnectivityStatus) {
+    bannerState.value = ConnectivityBannerState(status = status)
   }
 }

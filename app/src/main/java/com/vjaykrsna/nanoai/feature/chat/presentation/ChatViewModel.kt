@@ -15,10 +15,19 @@ import com.vjaykrsna.nanoai.core.domain.chat.PromptImage
 import com.vjaykrsna.nanoai.core.domain.library.Model
 import com.vjaykrsna.nanoai.core.domain.model.ChatThread
 import com.vjaykrsna.nanoai.core.domain.model.Message
+import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityStatus
+import com.vjaykrsna.nanoai.core.domain.uiux.ConnectivityOperationsUseCase
 import com.vjaykrsna.nanoai.core.model.MessageRole
 import com.vjaykrsna.nanoai.core.model.MessageSource
 import com.vjaykrsna.nanoai.core.model.PersonaSwitchAction
 import com.vjaykrsna.nanoai.feature.chat.domain.ChatFeatureCoordinator
+import com.vjaykrsna.nanoai.feature.chat.domain.LocalInferenceUseCase
+import com.vjaykrsna.nanoai.feature.chat.domain.LocalModelReadiness
+import com.vjaykrsna.nanoai.feature.chat.model.ChatPersonaSummary
+import com.vjaykrsna.nanoai.feature.chat.model.LocalInferenceUiState
+import com.vjaykrsna.nanoai.feature.chat.model.toPersonaSummary
+import com.vjaykrsna.nanoai.feature.chat.model.toUiState
 import com.vjaykrsna.nanoai.feature.chat.presentation.state.ChatAudioAttachment
 import com.vjaykrsna.nanoai.feature.chat.presentation.state.ChatComposerAttachments
 import com.vjaykrsna.nanoai.feature.chat.presentation.state.ChatImageAttachment
@@ -46,6 +55,8 @@ class ChatViewModel
 @Inject
 constructor(
   private val chatFeatureCoordinator: ChatFeatureCoordinator,
+  private val connectivityOperationsUseCase: ConnectivityOperationsUseCase,
+  private val localInferenceUseCase: LocalInferenceUseCase,
   @MainImmediateDispatcher mainDispatcher: CoroutineDispatcher,
   @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) :
@@ -64,12 +75,14 @@ constructor(
   }
 
   private val currentThreadId = MutableStateFlow<UUID?>(null)
+  private val isConnectivityBannerDismissed = MutableStateFlow(false)
 
   init {
     observeThreads()
     observeMessages()
     observePersonas()
     observeInstalledModels()
+    observeConnectivity()
   }
 
   fun onComposerTextChanged(newText: String) {
@@ -143,6 +156,11 @@ constructor(
     updateState { copy(isModelPickerVisible = false) }
   }
 
+  fun dismissConnectivityBanner() {
+    isConnectivityBannerDismissed.value = true
+    updateState { copy(connectivityBanner = null) }
+  }
+
   fun selectModel(model: Model) {
     val thread = state.value.activeThread ?: return
     viewModelScope.launch(dispatcher) {
@@ -189,6 +207,8 @@ constructor(
         .onSuccess { newThreadId ->
           if (action == PersonaSwitchAction.START_NEW_THREAD) {
             setActiveThread(newThreadId)
+          } else {
+            setActiveThread(threadId)
           }
         }
         .onFailure { result ->
@@ -273,7 +293,9 @@ constructor(
   private fun observePersonas() {
     viewModelScope.launch(dispatcher) {
       chatFeatureCoordinator.observePersonas().collect { personas ->
-        updateState { copy(personas = personas.toPersistentList()) }
+        val summary = resolvePersonaSummary(state.value.activeThread?.personaId, personas)
+        updateState { copy(personas = personas.toPersistentList(), activePersonaSummary = summary) }
+        refreshLocalInferenceStatusIfOffline()
       }
     }
   }
@@ -282,16 +304,109 @@ constructor(
     viewModelScope.launch(dispatcher) {
       chatFeatureCoordinator.observeInstalledModels().collect { models ->
         updateState { copy(installedModels = models.toPersistentList()) }
+        refreshLocalInferenceStatusIfOffline()
       }
     }
   }
+
+  private fun observeConnectivity() {
+    viewModelScope.launch(dispatcher) {
+      connectivityOperationsUseCase.connectivityBannerState.collect { banner ->
+        if (banner.status == ConnectivityStatus.ONLINE) {
+          isConnectivityBannerDismissed.value = false
+        }
+        val shouldShow = banner.isVisible && !isConnectivityBannerDismissed.value
+        updateState { copy(connectivityBanner = if (shouldShow) banner else null) }
+        when (banner.status) {
+          ConnectivityStatus.OFFLINE -> refreshLocalInferenceStatus()
+          ConnectivityStatus.ONLINE ->
+            updateState {
+              copy(
+                localInferenceUi =
+                  LocalInferenceUiState(personaName = activePersonaSummary?.displayName)
+              )
+            }
+          ConnectivityStatus.LIMITED -> Unit
+        }
+      }
+    }
+  }
+
+  private fun refreshLocalInferenceStatusIfOffline() {
+    val status = state.value.connectivityBanner?.status ?: return
+    if (status == ConnectivityStatus.OFFLINE) {
+      refreshLocalInferenceStatus()
+    }
+  }
+
+  private fun refreshLocalInferenceStatus() {
+    val snapshot = state.value
+    val thread = snapshot.activeThread ?: return
+    val personaSummary = snapshot.activePersonaSummary
+    if (personaSummary == null) {
+      updateState { copy(localInferenceUi = LocalInferenceUiState()) }
+      return
+    }
+    viewModelScope.launch(dispatcher) {
+      val readiness =
+        runCatching {
+            localInferenceUseCase.prepareForOffline(
+              currentModelId = thread.activeModelId,
+              personaModelPreference = personaSummary.preferredModelId,
+            )
+          }
+          .getOrElse {
+            updateState {
+              copy(
+                localInferenceUi = LocalInferenceUiState(personaName = personaSummary.displayName)
+              )
+            }
+            return@launch
+          }
+      if (readiness is LocalModelReadiness.Ready) {
+        maybeUpdateThreadModel(readiness, thread.threadId)
+      }
+      updateState { copy(localInferenceUi = readiness.toUiState(personaSummary)) }
+    }
+  }
+
+  private suspend fun maybeUpdateThreadModel(readiness: LocalModelReadiness.Ready, threadId: UUID) {
+    val latestThread =
+      state.value.threads.firstOrNull { it.threadId == threadId } ?: state.value.activeThread
+    val activeThread = latestThread ?: return
+    if (activeThread.activeModelId == readiness.candidate.modelId) {
+      return
+    }
+    chatFeatureCoordinator
+      .updateThread(activeThread.copy(activeModelId = readiness.candidate.modelId))
+      .onFailure { result ->
+        val envelope = result.toErrorEnvelope(MODEL_SELECTION_ERROR)
+        emitError(ChatError.UnexpectedError(envelope.userMessage), envelope)
+      }
+  }
+
+  private fun resolvePersonaSummary(
+    personaId: UUID?,
+    personas: List<PersonaProfile>,
+  ): ChatPersonaSummary? =
+    personaId?.let { id -> personas.firstOrNull { it.personaId == id }?.toPersonaSummary() }
 
   private fun setActiveThread(threadId: UUID?) {
     currentThreadId.value = threadId
     updateState {
       val activeThread = threadId?.let { id -> threads.firstOrNull { it.threadId == id } }
-      copy(activeThreadId = threadId, activeThread = activeThread)
+      val personaSummary = resolvePersonaSummary(activeThread?.personaId, personas)
+      copy(
+        activeThreadId = threadId,
+        activeThread = activeThread,
+        activePersonaSummary = personaSummary,
+      )
     }
+    if (threadId == null) {
+      updateState { copy(localInferenceUi = LocalInferenceUiState()) }
+      return
+    }
+    refreshLocalInferenceStatusIfOffline()
   }
 
   private suspend fun emitError(

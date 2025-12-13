@@ -3,7 +3,6 @@ package com.vjaykrsna.nanoai.core.network
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-import android.os.Build
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -29,10 +28,6 @@ constructor(@ApplicationContext private val context: Context) : ConnectivityStat
       val capabilities =
         connectivityManager.getNetworkCapabilities(activeNetwork) ?: return@withContext false
       capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
-        (capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) ||
-          !requiresValidatedCapability())
+        capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
     }
-
-  private fun requiresValidatedCapability(): Boolean =
-    Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
 }

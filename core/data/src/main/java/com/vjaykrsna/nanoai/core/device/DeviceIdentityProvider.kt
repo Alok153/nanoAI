@@ -20,6 +20,7 @@ class AndroidDeviceIdentityProvider
 @Inject
 constructor(@ApplicationContext private val context: Context) : DeviceIdentityProvider {
   override fun deviceId(): String {
+    @Suppress("HardwareIds")
     val androidId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
     val seed =
       if (androidId.isNullOrBlank()) {

@@ -15,9 +15,18 @@ import com.vjaykrsna.nanoai.core.domain.chat.SendPromptUseCase
 import com.vjaykrsna.nanoai.core.domain.chat.SwitchPersonaUseCase
 import com.vjaykrsna.nanoai.core.domain.library.ModelCatalogRepository
 import com.vjaykrsna.nanoai.core.domain.library.ModelCatalogUseCase
+import com.vjaykrsna.nanoai.core.domain.model.library.InstallState
+import com.vjaykrsna.nanoai.core.domain.model.library.ProviderType
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityBannerState
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityStatus
+import com.vjaykrsna.nanoai.core.domain.repository.ConnectivityRepository
+import com.vjaykrsna.nanoai.core.domain.uiux.ConnectivityOperationsUseCase
 import com.vjaykrsna.nanoai.core.domain.usecase.GetDefaultPersonaUseCase
 import com.vjaykrsna.nanoai.core.domain.usecase.ObservePersonasUseCase
 import com.vjaykrsna.nanoai.feature.chat.domain.DefaultChatFeatureCoordinator
+import com.vjaykrsna.nanoai.feature.chat.domain.LocalInferenceUseCase
+import com.vjaykrsna.nanoai.feature.chat.domain.LocalModelCandidate
+import com.vjaykrsna.nanoai.feature.chat.domain.LocalModelReadiness
 import com.vjaykrsna.nanoai.feature.chat.presentation.ChatViewModel
 import com.vjaykrsna.nanoai.shared.testing.ComposeTestHarness
 import com.vjaykrsna.nanoai.shared.testing.DomainTestBuilders
@@ -27,6 +36,8 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import java.util.UUID
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.Before
 import org.junit.Rule
@@ -50,6 +61,9 @@ class ChatScreenTest {
   private lateinit var modelCatalogUseCase: ModelCatalogUseCase
   private lateinit var observePersonasUseCase: ObservePersonasUseCase
   private lateinit var getDefaultPersonaUseCase: GetDefaultPersonaUseCase
+  private lateinit var connectivityRepository: FakeConnectivityRepository
+  private lateinit var connectivityOperationsUseCase: ConnectivityOperationsUseCase
+  private lateinit var localInferenceUseCase: LocalInferenceUseCase
   private lateinit var viewModel: ChatViewModel
   private lateinit var harness: ComposeTestHarness
   private val testDispatcher = UnconfinedTestDispatcher()
@@ -65,6 +79,10 @@ class ChatScreenTest {
     modelCatalogUseCase = ModelCatalogUseCase(modelCatalogRepository)
     observePersonasUseCase = ObservePersonasUseCase(personaRepository)
     getDefaultPersonaUseCase = GetDefaultPersonaUseCase(personaRepository)
+    connectivityRepository = FakeConnectivityRepository(testDispatcher)
+    connectivityOperationsUseCase =
+      ConnectivityOperationsUseCase(connectivityRepository, testDispatcher)
+    localInferenceUseCase = mockk(relaxed = true)
 
     coEvery { sendPromptUseCase(any(), any(), any(), any()) } returns NanoAIResult.success(Unit)
     coEvery { switchPersonaUseCase(any(), any(), any()) } returns
@@ -80,7 +98,14 @@ class ChatScreenTest {
         modelCatalogUseCase = modelCatalogUseCase,
       )
 
-    viewModel = ChatViewModel(chatFeatureCoordinator, testDispatcher, testDispatcher)
+    viewModel =
+      ChatViewModel(
+        chatFeatureCoordinator,
+        connectivityOperationsUseCase,
+        localInferenceUseCase,
+        mainDispatcher = testDispatcher,
+        ioDispatcher = testDispatcher,
+      )
     harness = ComposeTestHarness(composeTestRule)
   }
 
@@ -104,6 +129,51 @@ class ChatScreenTest {
 
     composeTestRule
       .onNodeWithContentDescription("Chat screen with message history and input")
+      .assertIsDisplayed()
+  }
+
+  @Test
+  fun chatScreen_offlineBanner_announcesOfflineState() {
+    val threadId = UUID.randomUUID()
+    val personaId = UUID.randomUUID()
+    val thread = DomainTestBuilders.buildChatThread(threadId = threadId, personaId = personaId)
+    val persona = DomainTestBuilders.buildPersona(personaId = personaId, name = "Researcher")
+    conversationRepository.addThread(thread)
+    personaRepository.setPersonas(listOf(persona))
+
+    val readiness =
+      LocalModelReadiness.Ready(
+        candidate =
+          LocalModelCandidate(
+            modelId = "phoenix",
+            displayName = "Phoenix",
+            providerType = ProviderType.MEDIA_PIPE,
+            installState = InstallState.INSTALLED,
+            sizeBytes = 0,
+          ),
+        autoSelected = true,
+      )
+    coEvery { localInferenceUseCase.prepareForOffline(any(), any()) } returns readiness
+
+    viewModel.selectThread(threadId)
+    renderScreen()
+
+    composeTestRule.runOnIdle { connectivityRepository.emit(ConnectivityStatus.OFFLINE) }
+
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+      composeTestRule
+        .onAllNodesWithContentDescription(
+          "Working offline",
+          substring = true,
+          useUnmergedTree = true,
+        )
+        .fetchSemanticsNodes(false)
+        .isNotEmpty()
+    }
+
+    composeTestRule
+      .onNodeWithText("Using Phoenix offline", substring = true, useUnmergedTree = true)
+      .assertExists()
       .assertIsDisplayed()
   }
 
@@ -504,5 +574,22 @@ class ChatScreenTest {
     composeTestRule.onNodeWithText("Dark mode test message").assertExists().assertIsDisplayed()
 
     composeTestRule.onNodeWithText(COMPOSER_PLACEHOLDER).assertExists().assertIsDisplayed()
+  }
+}
+
+private class FakeConnectivityRepository(
+  override val ioDispatcher: kotlinx.coroutines.CoroutineDispatcher
+) : ConnectivityRepository {
+  private val bannerState =
+    MutableStateFlow(ConnectivityBannerState(status = ConnectivityStatus.ONLINE))
+
+  override val connectivityBannerState: Flow<ConnectivityBannerState> = bannerState
+
+  override suspend fun updateConnectivity(status: ConnectivityStatus) {
+    bannerState.value = ConnectivityBannerState(status = status)
+  }
+
+  fun emit(status: ConnectivityStatus) {
+    bannerState.value = ConnectivityBannerState(status = status)
   }
 }

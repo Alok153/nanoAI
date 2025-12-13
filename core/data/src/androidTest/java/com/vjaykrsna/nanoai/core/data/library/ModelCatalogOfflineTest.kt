@@ -13,7 +13,7 @@ import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.core.domain.model.library.DeliveryType
 import com.vjaykrsna.nanoai.core.domain.model.library.InstallState
 import com.vjaykrsna.nanoai.core.domain.model.library.ProviderType
-import com.vjaykrsna.nanoai.shared.testing.assertSuccess
+import com.vjaykrsna.nanoai.testing.assertSuccess
 import io.mockk.mockk
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers

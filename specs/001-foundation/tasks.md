@@ -22,15 +22,15 @@
 ## Phase 3: User Story 1 - Local-first Private Assistant (Priority: P1) 🎯
 
 ### Tests
-- [ ] T011 [P] [US1] Add failing offline chat ViewModel tests covering local model selection and banner in [app/src/test/java/com/vjaykrsna/nanoai/feature/chat/ChatViewModelTest.kt](app/src/test/java/com/vjaykrsna/nanoai/feature/chat/ChatViewModelTest.kt) (depends on T005, T009, T010)
-- [ ] T012 [P] [US1] Add repository/use case unit tests for local inference in [app/src/test/java/com/vjaykrsna/nanoai/feature/chat/domain/LocalInferenceUseCaseTest.kt](app/src/test/java/com/vjaykrsna/nanoai/feature/chat/domain/LocalInferenceUseCaseTest.kt) (depends on T005, T009)
-- [ ] T013 [US1] Add Compose UI test for offline chat flow and accessibility labels in [app/src/androidTest/java/com/vjaykrsna/nanoai/feature/chat/ChatScreenTest.kt](app/src/androidTest/java/com/vjaykrsna/nanoai/feature/chat/ChatScreenTest.kt) (depends on T011)
+- [x] T011 [P] [US1] Add failing offline chat ViewModel tests covering local model selection and banner in [app/src/test/java/com/vjaykrsna/nanoai/feature/chat/ChatViewModelTest.kt](app/src/test/java/com/vjaykrsna/nanoai/feature/chat/ChatViewModelTest.kt) (depends on T005, T009, T010)
+- [x] T012 [P] [US1] Add repository/use case unit tests for local inference in [app/src/test/java/com/vjaykrsna/nanoai/feature/chat/domain/LocalInferenceUseCaseTest.kt](app/src/test/java/com/vjaykrsna/nanoai/feature/chat/domain/LocalInferenceUseCaseTest.kt) (depends on T005, T009)
+- [x] T013 [US1] Add Compose UI test for offline chat flow and accessibility labels in [app/src/androidTest/java/com/vjaykrsna/nanoai/feature/chat/ChatScreenTest.kt](app/src/androidTest/java/com/vjaykrsna/nanoai/feature/chat/ChatScreenTest.kt) (depends on T011)
 
 ### Implementation
-- [ ] T014 [P] [US1] Implement `LocalInferenceUseCase` and repository using MediaPipe runtime in [app/src/main/java/com/vjaykrsna/nanoai/feature/chat/domain](app/src/main/java/com/vjaykrsna/nanoai/feature/chat/domain) (depends on T009)
-- [ ] T015 [P] [US1] Add persona-aware chat state models and mappers in [app/src/main/java/com/vjaykrsna/nanoai/feature/chat/model](app/src/main/java/com/vjaykrsna/nanoai/feature/chat/model) (depends on T005)
-- [ ] T016 [US1] Update `ChatViewModel` to route through use case and surface offline indicator in [app/src/main/java/com/vjaykrsna/nanoai/feature/chat/presentation/ChatViewModel.kt](app/src/main/java/com/vjaykrsna/nanoai/feature/chat/presentation/ChatViewModel.kt) (depends on T014, T015, T010)
-- [ ] T017 [US1] Add chat screen UI for offline banner and error envelopes in [app/src/main/java/com/vjaykrsna/nanoai/feature/chat/presentation/ChatScreen.kt](app/src/main/java/com/vjaykrsna/nanoai/feature/chat/presentation/ChatScreen.kt) (depends on T016)
+- [x] T014 [P] [US1] Implement `LocalInferenceUseCase` and repository using MediaPipe runtime in [app/src/main/java/com/vjaykrsna/nanoai/feature/chat/domain](app/src/main/java/com/vjaykrsna/nanoai/feature/chat/domain) (depends on T009)
+- [x] T015 [P] [US1] Add persona-aware chat state models and mappers in [app/src/main/java/com/vjaykrsna/nanoai/feature/chat/model](app/src/main/java/com/vjaykrsna/nanoai/feature/chat/model) (depends on T005)
+- [x] T016 [US1] Update `ChatViewModel` to route through use case and surface offline indicator in [app/src/main/java/com/vjaykrsna/nanoai/feature/chat/presentation/ChatViewModel.kt](app/src/main/java/com/vjaykrsna/nanoai/feature/chat/presentation/ChatViewModel.kt) (depends on T014, T015, T010)
+- [x] T017 [US1] Add chat screen UI for offline banner and error envelopes in [app/src/main/java/com/vjaykrsna/nanoai/feature/chat/presentation/ChatScreen.kt](app/src/main/java/com/vjaykrsna/nanoai/feature/chat/presentation/ChatScreen.kt) (depends on T016)
 
 ## Phase 4: User Story 2 - Model Library Management (Priority: P1)
 

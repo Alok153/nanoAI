@@ -76,5 +76,7 @@ dependencies {
   androidTestImplementation(libs.androidx.junit)
   androidTestImplementation(libs.androidx.test.runner)
   androidTestImplementation(libs.hilt.android.testing)
+  androidTestImplementation(project(":core:testing"))
+  androidTestImplementation(libs.kotlinx.coroutines.test)
   kspAndroidTest(libs.hilt.compiler)
 }

@@ -79,7 +79,7 @@ class CoreBackupDataSourceTest {
       return destinationPath
     }
 
-    override suspend fun notifyUnencryptedExport(path: String) = Unit
+    override suspend fun notifyUnencryptedExport(destinationPath: String) = Unit
   }
 
   private class FakeImportService : ImportService {
