@@ -1,8 +1,6 @@
 package com.vjaykrsna.nanoai.feature.library.presentation
 
 import com.google.common.truth.Truth.assertThat
-import com.vjaykrsna.nanoai.core.common.NanoAIResult
-import com.vjaykrsna.nanoai.core.domain.library.DownloadModelUseCase
 import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceModelSummary
 import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceToModelPackageConverter
 import com.vjaykrsna.nanoai.core.domain.library.ModelCatalogUseCase
@@ -10,6 +8,8 @@ import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.core.domain.model.library.DeliveryType
 import com.vjaykrsna.nanoai.core.domain.model.library.InstallState
 import com.vjaykrsna.nanoai.core.domain.model.library.ProviderType
+import com.vjaykrsna.nanoai.core.model.NanoAIResult
+import com.vjaykrsna.nanoai.feature.library.domain.QueueModelDownloadUseCase
 import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryError
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -27,7 +27,7 @@ class HuggingFaceDownloadCoordinatorTest {
 
   private lateinit var converter: HuggingFaceToModelPackageConverter
   private lateinit var modelCatalogUseCase: ModelCatalogUseCase
-  private lateinit var downloadModelUseCase: DownloadModelUseCase
+  private lateinit var queueModelDownloadUseCase: QueueModelDownloadUseCase
   private lateinit var errors: MutableList<LibraryError>
   private lateinit var coordinator: HuggingFaceDownloadCoordinator
 
@@ -35,13 +35,13 @@ class HuggingFaceDownloadCoordinatorTest {
   fun setUp() {
     converter = mockk()
     modelCatalogUseCase = mockk()
-    downloadModelUseCase = mockk()
+    queueModelDownloadUseCase = mockk()
     errors = mutableListOf()
     coordinator =
       HuggingFaceDownloadCoordinator(
         converter = converter,
         modelCatalogUseCase = modelCatalogUseCase,
-        downloadModelUseCase = downloadModelUseCase,
+        queueModelDownloadUseCase = queueModelDownloadUseCase,
         emitError = { error -> errors.add(error) },
       )
   }
@@ -100,7 +100,7 @@ class HuggingFaceDownloadCoordinatorTest {
     coEvery { modelCatalogUseCase.getModel("model-123") } returns
       NanoAIResult.recoverable(message = "not found")
     coEvery { modelCatalogUseCase.upsertModel(modelPackage) } returns NanoAIResult.success(Unit)
-    coEvery { downloadModelUseCase.downloadModel("model-123") } returns
+    coEvery { queueModelDownloadUseCase("model-123") } returns
       NanoAIResult.recoverable(message = "download failed")
 
     coordinator.process(summary)
@@ -120,12 +120,12 @@ class HuggingFaceDownloadCoordinatorTest {
     coEvery { modelCatalogUseCase.getModel("model-123") } returns
       NanoAIResult.recoverable(message = "not found")
     coEvery { modelCatalogUseCase.upsertModel(modelPackage) } returns NanoAIResult.success(Unit)
-    coEvery { downloadModelUseCase.downloadModel("model-123") } returns NanoAIResult.success(taskId)
+    coEvery { queueModelDownloadUseCase("model-123") } returns NanoAIResult.success(taskId)
 
     coordinator.process(summary)
 
     assertThat(errors).isEmpty()
-    coVerify { downloadModelUseCase.downloadModel("model-123") }
+    coVerify { queueModelDownloadUseCase("model-123") }
   }
 
   @Test

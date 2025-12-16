@@ -2,11 +2,18 @@ package com.vjaykrsna.nanoai.feature.library.presentation
 
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
-import com.vjaykrsna.nanoai.core.common.NanoAIResult
-import com.vjaykrsna.nanoai.core.domain.library.DownloadModelUseCase
-import com.vjaykrsna.nanoai.core.domain.library.ManageModelUseCase
 import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.core.domain.model.library.DownloadStatus
+import com.vjaykrsna.nanoai.core.model.NanoAIResult
+import com.vjaykrsna.nanoai.feature.library.domain.CancelModelDownloadUseCase
+import com.vjaykrsna.nanoai.feature.library.domain.DeleteModelUseCase
+import com.vjaykrsna.nanoai.feature.library.domain.ObserveDownloadProgressUseCase
+import com.vjaykrsna.nanoai.feature.library.domain.ObserveDownloadTaskUseCase
+import com.vjaykrsna.nanoai.feature.library.domain.ObserveDownloadTasksUseCase
+import com.vjaykrsna.nanoai.feature.library.domain.PauseModelDownloadUseCase
+import com.vjaykrsna.nanoai.feature.library.domain.QueueModelDownloadUseCase
+import com.vjaykrsna.nanoai.feature.library.domain.ResumeModelDownloadUseCase
+import com.vjaykrsna.nanoai.feature.library.domain.RetryModelDownloadUseCase
 import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryError
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -22,7 +29,6 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import kotlinx.datetime.Clock
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -31,20 +37,46 @@ import org.junit.jupiter.api.Test
 class DownloadUiCoordinatorTest {
 
   private val testDispatcher = StandardTestDispatcher()
-  private lateinit var downloadModelUseCase: DownloadModelUseCase
-  private lateinit var manageModelUseCase: ManageModelUseCase
+  private lateinit var queueModelDownloadUseCase: QueueModelDownloadUseCase
+  private lateinit var pauseModelDownloadUseCase: PauseModelDownloadUseCase
+  private lateinit var resumeModelDownloadUseCase: ResumeModelDownloadUseCase
+  private lateinit var cancelModelDownloadUseCase: CancelModelDownloadUseCase
+  private lateinit var retryModelDownloadUseCase: RetryModelDownloadUseCase
+  private lateinit var deleteModelUseCase: DeleteModelUseCase
+  private lateinit var observeDownloadTaskUseCase: ObserveDownloadTaskUseCase
+  private lateinit var observeDownloadTasksUseCase: ObserveDownloadTasksUseCase
+  private lateinit var observeDownloadProgressUseCase: ObserveDownloadProgressUseCase
   private lateinit var coordinator: DownloadUiCoordinator
 
   @BeforeEach
   fun setUp() {
     Dispatchers.setMain(testDispatcher)
-    downloadModelUseCase = mockk(relaxed = true)
-    manageModelUseCase = mockk(relaxed = true)
-    every { downloadModelUseCase.getDownloadProgress(any()) } returns MutableStateFlow(0f)
-    every { downloadModelUseCase.observeDownloadTasks() } returns flowOf(emptyList())
-    coEvery { downloadModelUseCase.observeDownloadTask(any()) } returns flowOf(null)
+    queueModelDownloadUseCase = mockk(relaxed = true)
+    pauseModelDownloadUseCase = mockk(relaxed = true)
+    resumeModelDownloadUseCase = mockk(relaxed = true)
+    cancelModelDownloadUseCase = mockk(relaxed = true)
+    retryModelDownloadUseCase = mockk(relaxed = true)
+    deleteModelUseCase = mockk(relaxed = true)
+    observeDownloadTaskUseCase = mockk(relaxed = true)
+    observeDownloadTasksUseCase = mockk(relaxed = true)
+    observeDownloadProgressUseCase = mockk(relaxed = true)
 
-    coordinator = DownloadUiCoordinator(downloadModelUseCase, manageModelUseCase)
+    every { observeDownloadProgressUseCase.invoke(any()) } returns MutableStateFlow(0f)
+    every { observeDownloadTasksUseCase.invoke() } returns flowOf(emptyList())
+    coEvery { observeDownloadTaskUseCase.invoke(any()) } returns flowOf(null)
+
+    coordinator =
+      DownloadUiCoordinator(
+        queueModelDownloadUseCase,
+        pauseModelDownloadUseCase,
+        resumeModelDownloadUseCase,
+        cancelModelDownloadUseCase,
+        retryModelDownloadUseCase,
+        deleteModelUseCase,
+        observeDownloadTaskUseCase,
+        observeDownloadTasksUseCase,
+        observeDownloadProgressUseCase,
+      )
   }
 
   @AfterEach
@@ -55,17 +87,17 @@ class DownloadUiCoordinatorTest {
   @Test
   fun `downloadModel calls use case with model id`() = runTest {
     val taskId = UUID.randomUUID()
-    coEvery { downloadModelUseCase.downloadModel("model-123") } returns NanoAIResult.success(taskId)
+    coEvery { queueModelDownloadUseCase("model-123") } returns NanoAIResult.success(taskId)
 
     coordinator.downloadModel("model-123")
     advanceUntilIdle()
 
-    coVerify { downloadModelUseCase.downloadModel("model-123") }
+    coVerify { queueModelDownloadUseCase("model-123") }
   }
 
   @Test
   fun `downloadModel emits error on failure`() = runTest {
-    coEvery { downloadModelUseCase.downloadModel("model-123") } returns
+    coEvery { queueModelDownloadUseCase("model-123") } returns
       NanoAIResult.recoverable(message = "Download failed")
 
     coordinator.downloadModel("model-123")
@@ -87,13 +119,14 @@ class DownloadUiCoordinatorTest {
     coordinator.pauseDownload(taskId)
     advanceUntilIdle()
 
-    coVerify { downloadModelUseCase.pauseDownload(taskId) }
+    coVerify { pauseModelDownloadUseCase(taskId) }
   }
 
   @Test
   fun `pauseDownload emits error on failure`() = runTest {
     val taskId = UUID.randomUUID()
-    coEvery { downloadModelUseCase.pauseDownload(taskId) } throws RuntimeException("Pause failed")
+    coEvery { pauseModelDownloadUseCase(taskId) } returns
+      NanoAIResult.recoverable(message = "Pause failed")
 
     coordinator.pauseDownload(taskId)
 
@@ -112,13 +145,14 @@ class DownloadUiCoordinatorTest {
     coordinator.resumeDownload(taskId)
     advanceUntilIdle()
 
-    coVerify { downloadModelUseCase.resumeDownload(taskId) }
+    coVerify { resumeModelDownloadUseCase(taskId) }
   }
 
   @Test
   fun `resumeDownload emits error on failure`() = runTest {
     val taskId = UUID.randomUUID()
-    coEvery { downloadModelUseCase.resumeDownload(taskId) } throws RuntimeException("Resume failed")
+    coEvery { resumeModelDownloadUseCase(taskId) } returns
+      NanoAIResult.recoverable(message = "Resume failed")
 
     coordinator.resumeDownload(taskId)
 
@@ -137,13 +171,14 @@ class DownloadUiCoordinatorTest {
     coordinator.cancelDownload(taskId)
     advanceUntilIdle()
 
-    coVerify { downloadModelUseCase.cancelDownload(taskId) }
+    coVerify { cancelModelDownloadUseCase(taskId) }
   }
 
   @Test
   fun `cancelDownload emits error on failure`() = runTest {
     val taskId = UUID.randomUUID()
-    coEvery { downloadModelUseCase.cancelDownload(taskId) } throws RuntimeException("Cancel failed")
+    coEvery { cancelModelDownloadUseCase(taskId) } returns
+      NanoAIResult.recoverable(message = "Cancel failed")
 
     coordinator.cancelDownload(taskId)
 
@@ -162,14 +197,14 @@ class DownloadUiCoordinatorTest {
     coordinator.retryDownload(taskId)
     advanceUntilIdle()
 
-    coVerify { downloadModelUseCase.retryFailedDownload(taskId) }
+    coVerify { retryModelDownloadUseCase(taskId) }
   }
 
   @Test
   fun `retryDownload emits error on failure`() = runTest {
     val taskId = UUID.randomUUID()
-    coEvery { downloadModelUseCase.retryFailedDownload(taskId) } throws
-      RuntimeException("Retry failed")
+    coEvery { retryModelDownloadUseCase(taskId) } returns
+      NanoAIResult.recoverable(message = "Retry failed")
 
     coordinator.retryDownload(taskId)
 
@@ -182,18 +217,18 @@ class DownloadUiCoordinatorTest {
   }
 
   @Test
-  fun `deleteModel calls manage model use case`() = runTest {
-    coEvery { manageModelUseCase.deleteModel("model-123") } returns NanoAIResult.success(Unit)
+  fun `deleteModel calls delete use case`() = runTest {
+    coEvery { deleteModelUseCase("model-123") } returns NanoAIResult.success(Unit)
 
     coordinator.deleteModel("model-123")
     advanceUntilIdle()
 
-    coVerify { manageModelUseCase.deleteModel("model-123") }
+    coVerify { deleteModelUseCase("model-123") }
   }
 
   @Test
   fun `deleteModel emits error on failure`() = runTest {
-    coEvery { manageModelUseCase.deleteModel("model-123") } returns
+    coEvery { deleteModelUseCase("model-123") } returns
       NanoAIResult.recoverable(message = "Delete failed")
 
     coordinator.deleteModel("model-123")
@@ -212,7 +247,7 @@ class DownloadUiCoordinatorTest {
   fun `observeDownloadProgress returns state flow from use case`() = runTest {
     val taskId = UUID.randomUUID()
     val progressFlow = MutableStateFlow(0.5f)
-    every { downloadModelUseCase.getDownloadProgress(taskId) } returns progressFlow
+    every { observeDownloadProgressUseCase.invoke(taskId) } returns progressFlow
 
     val stateFlow = coordinator.observeDownloadProgress(taskId)
     advanceUntilIdle()
@@ -223,7 +258,6 @@ class DownloadUiCoordinatorTest {
   @Test
   fun `observeDownloadTasks returns state flow from use case`() = runTest {
     val taskId = UUID.randomUUID()
-    val now = Clock.System.now()
     val task =
       DownloadTask(
         taskId = taskId,
@@ -231,9 +265,12 @@ class DownloadUiCoordinatorTest {
         status = DownloadStatus.DOWNLOADING,
         progress = 0.5f,
         errorMessage = null,
-        startedAt = now,
+        startedAt = null,
+        finishedAt = null,
+        bytesDownloaded = 0L,
+        totalBytes = 100L,
       )
-    every { downloadModelUseCase.observeDownloadTasks() } returns flowOf(listOf(task))
+    every { observeDownloadTasksUseCase.invoke() } returns flowOf(listOf(task))
 
     val stateFlow = coordinator.observeDownloadTasks()
     advanceUntilIdle()

@@ -321,7 +321,7 @@ class DownloadManagerImplTest {
 
   @Test
   fun getMaxConcurrentDownloads_returnsDefault() = runTest {
-    assertEquals(2, subject.getMaxConcurrentDownloads())
+    assertEquals(1, subject.getMaxConcurrentDownloads())
   }
 
   @Test

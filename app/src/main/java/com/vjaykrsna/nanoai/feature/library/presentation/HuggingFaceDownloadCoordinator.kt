@@ -2,11 +2,11 @@ package com.vjaykrsna.nanoai.feature.library.presentation
 
 import com.vjaykrsna.nanoai.core.common.fold
 import com.vjaykrsna.nanoai.core.common.onFailure
-import com.vjaykrsna.nanoai.core.domain.library.DownloadModelUseCase
 import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceModelSummary
 import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceToModelPackageConverter
 import com.vjaykrsna.nanoai.core.domain.library.ModelCatalogUseCase
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
+import com.vjaykrsna.nanoai.feature.library.domain.QueueModelDownloadUseCase
 import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryError
 import java.io.IOException
 import kotlinx.coroutines.CancellationException
@@ -15,7 +15,7 @@ import kotlinx.coroutines.CancellationException
 internal class HuggingFaceDownloadCoordinator(
   private val converter: HuggingFaceToModelPackageConverter,
   private val modelCatalogUseCase: ModelCatalogUseCase,
-  private val downloadModelUseCase: DownloadModelUseCase,
+  private val queueModelDownloadUseCase: QueueModelDownloadUseCase,
   private val emitError: suspend (LibraryError) -> Unit,
 ) {
 
@@ -104,7 +104,7 @@ internal class HuggingFaceDownloadCoordinator(
   }
 
   private suspend fun startDownloadOrEmit(modelId: String) {
-    downloadModelUseCase.downloadModel(modelId).onFailure { error ->
+    queueModelDownloadUseCase(modelId).onFailure { error ->
       emitError(
         LibraryError.DownloadFailed(
           modelId = modelId,

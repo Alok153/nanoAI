@@ -2,12 +2,18 @@ package com.vjaykrsna.nanoai.feature.library.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.vjaykrsna.nanoai.core.common.onFailure
-import com.vjaykrsna.nanoai.core.common.onSuccess
-import com.vjaykrsna.nanoai.core.domain.library.DownloadModelUseCase
-import com.vjaykrsna.nanoai.core.domain.library.ManageModelUseCase
+import com.vjaykrsna.nanoai.core.common.NanoAIResult as CommonNanoAIResult
 import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.core.domain.model.library.DownloadStatus
+import com.vjaykrsna.nanoai.feature.library.domain.CancelModelDownloadUseCase
+import com.vjaykrsna.nanoai.feature.library.domain.DeleteModelUseCase
+import com.vjaykrsna.nanoai.feature.library.domain.ObserveDownloadProgressUseCase
+import com.vjaykrsna.nanoai.feature.library.domain.ObserveDownloadTaskUseCase
+import com.vjaykrsna.nanoai.feature.library.domain.ObserveDownloadTasksUseCase
+import com.vjaykrsna.nanoai.feature.library.domain.PauseModelDownloadUseCase
+import com.vjaykrsna.nanoai.feature.library.domain.QueueModelDownloadUseCase
+import com.vjaykrsna.nanoai.feature.library.domain.ResumeModelDownloadUseCase
+import com.vjaykrsna.nanoai.feature.library.domain.RetryModelDownloadUseCase
 import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryError
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
@@ -25,8 +31,15 @@ import kotlinx.coroutines.launch
 class DownloadUiCoordinator
 @Inject
 constructor(
-  private val downloadModelUseCase: DownloadModelUseCase,
-  private val manageModelUseCase: ManageModelUseCase,
+  private val queueModelDownloadUseCase: QueueModelDownloadUseCase,
+  private val pauseModelDownloadUseCase: PauseModelDownloadUseCase,
+  private val resumeModelDownloadUseCase: ResumeModelDownloadUseCase,
+  private val cancelModelDownloadUseCase: CancelModelDownloadUseCase,
+  private val retryModelDownloadUseCase: RetryModelDownloadUseCase,
+  private val deleteModelUseCase: DeleteModelUseCase,
+  private val observeDownloadTaskUseCase: ObserveDownloadTaskUseCase,
+  private val observeDownloadTasksUseCase: ObserveDownloadTasksUseCase,
+  private val observeDownloadProgressUseCase: ObserveDownloadProgressUseCase,
 ) : ViewModel() {
 
   private val downloadObservers = mutableMapOf<UUID, Job>()
@@ -43,14 +56,17 @@ constructor(
 
     viewModelScope.launch {
       try {
-        val result = downloadModelUseCase.downloadModel(modelId)
-        result
-          .onSuccess { taskId -> monitorDownloadTask(taskId, modelId) }
-          .onFailure { error ->
+        when (val result = queueModelDownloadUseCase(modelId)) {
+          is CommonNanoAIResult.Success -> monitorDownloadTask(result.value, modelId)
+          is CommonNanoAIResult.RecoverableError ->
             _errorEvents.emit(
-              LibraryError.DownloadFailed(modelId, error.message ?: "Unknown error")
+              LibraryError.DownloadFailed(modelId, result.message ?: "Unable to start download")
             )
-          }
+          is CommonNanoAIResult.FatalError ->
+            _errorEvents.emit(
+              LibraryError.DownloadFailed(modelId, result.message ?: "Unable to start download")
+            )
+        }
       } catch (cancellation: CancellationException) {
         throw cancellation
       } catch (error: Throwable) {
@@ -63,45 +79,65 @@ constructor(
 
   fun pauseDownload(taskId: UUID) {
     viewModelScope.launch {
-      runCatching { downloadModelUseCase.pauseDownload(taskId) }
-        .onFailure { error ->
+      when (val result = pauseModelDownloadUseCase(taskId)) {
+        is CommonNanoAIResult.Success -> Unit
+        is CommonNanoAIResult.RecoverableError ->
           _errorEvents.emit(
-            LibraryError.PauseFailed(taskId.toString(), error.message ?: "Failed to pause")
+            LibraryError.PauseFailed(taskId.toString(), result.message ?: "Failed to pause")
           )
-        }
+        is CommonNanoAIResult.FatalError ->
+          _errorEvents.emit(
+            LibraryError.PauseFailed(taskId.toString(), result.message ?: "Failed to pause")
+          )
+      }
     }
   }
 
   fun resumeDownload(taskId: UUID) {
     viewModelScope.launch {
-      runCatching { downloadModelUseCase.resumeDownload(taskId) }
-        .onFailure { error ->
+      when (val result = resumeModelDownloadUseCase(taskId)) {
+        is CommonNanoAIResult.Success -> Unit
+        is CommonNanoAIResult.RecoverableError ->
           _errorEvents.emit(
-            LibraryError.ResumeFailed(taskId.toString(), error.message ?: "Failed to resume")
+            LibraryError.ResumeFailed(taskId.toString(), result.message ?: "Failed to resume")
           )
-        }
+        is CommonNanoAIResult.FatalError ->
+          _errorEvents.emit(
+            LibraryError.ResumeFailed(taskId.toString(), result.message ?: "Failed to resume")
+          )
+      }
     }
   }
 
   fun cancelDownload(taskId: UUID) {
     viewModelScope.launch {
-      runCatching { downloadModelUseCase.cancelDownload(taskId) }
-        .onFailure { error ->
+      when (val result = cancelModelDownloadUseCase(taskId)) {
+        is CommonNanoAIResult.Success -> Unit
+        is CommonNanoAIResult.RecoverableError ->
           _errorEvents.emit(
-            LibraryError.CancelFailed(taskId.toString(), error.message ?: "Failed to cancel")
+            LibraryError.CancelFailed(taskId.toString(), result.message ?: "Failed to cancel")
           )
-        }
+        is CommonNanoAIResult.FatalError ->
+          _errorEvents.emit(
+            LibraryError.CancelFailed(taskId.toString(), result.message ?: "Failed to cancel")
+          )
+      }
     }
   }
 
   fun retryDownload(taskId: UUID) {
     viewModelScope.launch {
-      runCatching { downloadModelUseCase.retryFailedDownload(taskId) }
-        .onFailure { error ->
+      when (val result = retryModelDownloadUseCase(taskId)) {
+        is CommonNanoAIResult.Success -> Unit
+        is CommonNanoAIResult.RecoverableError ->
           _errorEvents.emit(
-            LibraryError.RetryFailed(taskId.toString(), error.message ?: "Failed to retry")
+            LibraryError.RetryFailed(taskId.toString(), result.message ?: "Failed to retry")
           )
-        }
+        is CommonNanoAIResult.FatalError ->
+          _errorEvents.emit(
+            LibraryError.RetryFailed(taskId.toString(), result.message ?: "Failed to retry")
+          )
+      }
     }
   }
 
@@ -110,9 +146,12 @@ constructor(
 
     viewModelScope.launch {
       try {
-        val result = manageModelUseCase.deleteModel(modelId)
-        result.onFailure { error ->
-          _errorEvents.emit(LibraryError.DeleteFailed(modelId, error.message ?: "Unknown error"))
+        when (val result = deleteModelUseCase(modelId)) {
+          is CommonNanoAIResult.Success -> Unit
+          is CommonNanoAIResult.RecoverableError ->
+            _errorEvents.emit(LibraryError.DeleteFailed(modelId, result.message ?: "Unknown error"))
+          is CommonNanoAIResult.FatalError ->
+            _errorEvents.emit(LibraryError.DeleteFailed(modelId, result.message ?: "Unknown error"))
         }
       } catch (cancellation: CancellationException) {
         throw cancellation
@@ -125,20 +164,16 @@ constructor(
   }
 
   fun observeDownloadProgress(taskId: UUID): StateFlow<Float> =
-    downloadModelUseCase
-      .getDownloadProgress(taskId)
-      .stateIn(viewModelScope, SharingStarted.Eagerly, 0f)
+    observeDownloadProgressUseCase(taskId).stateIn(viewModelScope, SharingStarted.Eagerly, 0f)
 
   fun observeDownloadTasks(): StateFlow<List<DownloadTask>> =
-    downloadModelUseCase
-      .observeDownloadTasks()
-      .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    observeDownloadTasksUseCase().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
   private fun monitorDownloadTask(taskId: UUID, modelId: String) {
     downloadObservers[taskId]?.cancel()
     val job =
       viewModelScope.launch launch@{
-        val taskFlow = downloadModelUseCase.observeDownloadTask(taskId)
+        val taskFlow = observeDownloadTaskUseCase(taskId)
         taskFlow.collect { task ->
           when (task?.status) {
             DownloadStatus.FAILED -> {

@@ -2,6 +2,7 @@ package com.vjaykrsna.nanoai.feature.library.presentation.state
 
 import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceModelSummary
 import com.vjaykrsna.nanoai.core.domain.model.library.ProviderType
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityStatus
 import com.vjaykrsna.nanoai.feature.library.presentation.model.HuggingFaceFilterState
 import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryFilterState
 import com.vjaykrsna.nanoai.feature.library.presentation.model.ModelLibrarySections
@@ -29,5 +30,6 @@ data class ModelLibraryUiState(
   val isLoading: Boolean = false,
   val isRefreshing: Boolean = false,
   val isHuggingFaceLoading: Boolean = false,
+  val connectivityStatus: ConnectivityStatus = ConnectivityStatus.ONLINE,
   val lastErrorMessage: String? = null,
 ) : NanoAIViewState

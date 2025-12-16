@@ -21,7 +21,8 @@ interface DownloadManager :
   DownloadTaskArtifacts {
 
   companion object {
-    const val DEFAULT_MAX_CONCURRENT_DOWNLOADS = 2
+    // Default to a single concurrent download per FR-023 to keep devices responsive.
+    const val DEFAULT_MAX_CONCURRENT_DOWNLOADS = 1
   }
 }
 

@@ -33,6 +33,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceModelSummary
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
 import com.vjaykrsna.nanoai.core.domain.model.library.ProviderType
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityBannerState
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityStatus
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryTab
 import com.vjaykrsna.nanoai.feature.library.presentation.ModelLibraryViewModel
 import com.vjaykrsna.nanoai.feature.library.presentation.model.HuggingFaceSortOption
@@ -40,6 +42,7 @@ import com.vjaykrsna.nanoai.feature.library.presentation.model.ModelLibraryUiEve
 import com.vjaykrsna.nanoai.feature.library.presentation.model.ModelSort
 import com.vjaykrsna.nanoai.feature.library.presentation.state.ModelLibraryUiState
 import com.vjaykrsna.nanoai.feature.library.ui.ModelLibraryUiConstants.LOADING_INDICATOR_TAG
+import com.vjaykrsna.nanoai.feature.uiux.ui.components.ConnectivityBanner
 import java.util.UUID
 import kotlinx.coroutines.flow.collectLatest
 
@@ -170,6 +173,15 @@ private fun ModelLibraryLayout(
         onSelectHuggingFaceLibrary = actions.onSelectHuggingFaceLibrary,
         onToggleCapability = actions.onToggleCapability,
       )
+
+      if (state.connectivityStatus != ConnectivityStatus.ONLINE) {
+        ConnectivityBanner(
+          state = ConnectivityBannerState(status = state.connectivityStatus),
+          onCtaClick = actions.onRefresh,
+          onDismiss = {},
+          modifier = Modifier.fillMaxWidth(),
+        )
+      }
 
       ModelLibraryTabs(selectedTab = state.filters.tab, onTabSelect = actions.onSelectTab)
 

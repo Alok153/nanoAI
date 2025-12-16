@@ -2,8 +2,7 @@ package com.vjaykrsna.nanoai.feature.library.presentation
 
 import app.cash.turbine.TurbineTestContext
 import com.google.common.truth.Truth.assertThat
-import com.vjaykrsna.nanoai.core.common.NanoAIResult
-import com.vjaykrsna.nanoai.core.domain.library.DownloadModelUseCase
+import com.vjaykrsna.nanoai.core.device.ConnectivityObserver
 import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceCatalogUseCase
 import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceModelCompatibilityChecker
 import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceToModelPackageConverter
@@ -11,8 +10,12 @@ import com.vjaykrsna.nanoai.core.domain.library.ModelCatalogUseCase
 import com.vjaykrsna.nanoai.core.domain.library.RefreshModelCatalogUseCase
 import com.vjaykrsna.nanoai.core.domain.model.DownloadTask
 import com.vjaykrsna.nanoai.core.domain.model.ModelPackage
+import com.vjaykrsna.nanoai.core.domain.model.library.DownloadStatus
 import com.vjaykrsna.nanoai.core.domain.model.library.InstallState
 import com.vjaykrsna.nanoai.core.domain.model.library.ProviderType
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityStatus
+import com.vjaykrsna.nanoai.core.model.NanoAIResult
+import com.vjaykrsna.nanoai.feature.library.domain.QueueModelDownloadUseCase
 import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryError
 import com.vjaykrsna.nanoai.feature.library.presentation.model.ModelLibraryUiEvent
 import com.vjaykrsna.nanoai.feature.library.presentation.state.ModelLibraryUiState
@@ -30,6 +33,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -46,10 +50,12 @@ class ModelLibraryViewModelTest {
   private lateinit var modelCatalogUseCase: ModelCatalogUseCase
   private lateinit var refreshModelCatalogUseCase: RefreshModelCatalogUseCase
   private lateinit var downloadCoordinator: DownloadUiCoordinator
-  private lateinit var downloadModelUseCase: DownloadModelUseCase
+  private lateinit var queueModelDownloadUseCase: QueueModelDownloadUseCase
   private lateinit var converter: HuggingFaceToModelPackageConverter
   private lateinit var huggingFaceCatalogUseCase: HuggingFaceCatalogUseCase
   private lateinit var compatibilityChecker: HuggingFaceModelCompatibilityChecker
+  private lateinit var connectivityObserver: ConnectivityObserver
+  private lateinit var connectivityFlow: MutableSharedFlow<ConnectivityStatus>
 
   private lateinit var allModelsFlow: MutableStateFlow<List<ModelPackage>>
   private lateinit var installedModelsFlow: MutableStateFlow<List<ModelPackage>>
@@ -64,10 +70,20 @@ class ModelLibraryViewModelTest {
     modelCatalogUseCase = mockk()
     refreshModelCatalogUseCase = mockk()
     downloadCoordinator = mockk(relaxed = true)
-    downloadModelUseCase = mockk()
+    queueModelDownloadUseCase = mockk()
     converter = mockk(relaxed = true)
     huggingFaceCatalogUseCase = mockk()
     compatibilityChecker = mockk()
+    connectivityFlow = MutableSharedFlow(replay = 1)
+    connectivityFlow.tryEmit(ConnectivityStatus.ONLINE)
+    connectivityObserver =
+      object : ConnectivityObserver {
+        override val status: SharedFlow<ConnectivityStatus> = connectivityFlow
+
+        override fun onStatusChanged(status: ConnectivityStatus) {
+          connectivityFlow.tryEmit(status)
+        }
+      }
 
     allModelsFlow = MutableStateFlow(emptyList())
     installedModelsFlow = MutableStateFlow(emptyList())
@@ -91,16 +107,8 @@ class ModelLibraryViewModelTest {
     justRun { downloadCoordinator.retryDownload(any()) }
     justRun { downloadCoordinator.deleteModel(any()) }
 
-    coEvery { downloadModelUseCase.downloadModel(any()) } returns
+    coEvery { queueModelDownloadUseCase.invoke(any()) } returns
       NanoAIResult.success(UUID.randomUUID())
-    coEvery { downloadModelUseCase.pauseDownload(any()) } returns NanoAIResult.success(Unit)
-    coEvery { downloadModelUseCase.resumeDownload(any()) } returns NanoAIResult.success(Unit)
-    coEvery { downloadModelUseCase.cancelDownload(any()) } returns NanoAIResult.success(Unit)
-    coEvery { downloadModelUseCase.retryFailedDownload(any()) } returns NanoAIResult.success(Unit)
-    every { downloadModelUseCase.getDownloadProgress(any()) } returns MutableStateFlow(0f)
-    every { downloadModelUseCase.observeDownloadTasks() } returns MutableStateFlow(emptyList())
-    coEvery { downloadModelUseCase.observeDownloadTask(any()) } returns
-      MutableStateFlow<DownloadTask?>(null)
 
     every { converter.convertIfCompatible(any()) } returns DomainTestBuilders.buildModelPackage()
 
@@ -204,7 +212,79 @@ class ModelLibraryViewModelTest {
       harness.viewModel.downloadModel("model-123")
       advanceUntilIdle()
 
-      coVerify { downloadModelUseCase.downloadModel("model-123") }
+      coVerify { downloadCoordinator.downloadModel("model-123") }
+    }
+
+  @Test
+  fun downloadProgressReflectedInSections() =
+    runTest(dispatcher) {
+      val downloadingModel =
+        DomainTestBuilders.buildModelPackage(
+          modelId = "downloading",
+          installState = InstallState.NOT_INSTALLED,
+        )
+      val pausedModel =
+        DomainTestBuilders.buildModelPackage(
+          modelId = "paused",
+          installState = InstallState.INSTALLED,
+        )
+      val downloadingTask =
+        DomainTestBuilders.buildDownloadTask(
+          modelId = downloadingModel.modelId,
+          status = DownloadStatus.DOWNLOADING,
+          progress = 0.4f,
+        )
+      val pausedTask =
+        DomainTestBuilders.buildDownloadTask(
+          modelId = pausedModel.modelId,
+          status = DownloadStatus.PAUSED,
+          progress = 0.9f,
+        )
+
+      allModelsFlow.value = listOf(downloadingModel, pausedModel)
+      installedModelsFlow.value = listOf(pausedModel)
+      downloadTasksFlow.value = listOf(pausedTask, downloadingTask)
+
+      val harness = createHarness()
+      advanceUntilIdle()
+
+      val state = harness.awaitState { it.localSections.downloads.size == 2 }
+      val modelIds = state.localSections.downloads.map { it.task.modelId }
+      assertThat(modelIds).containsExactly(downloadingModel.modelId, pausedModel.modelId).inOrder()
+      assertThat(state.curatedSections.downloads.map { it.task.modelId })
+        .containsExactlyElementsIn(modelIds)
+      assertThat(state.curatedSections.available).isEmpty()
+    }
+
+  @Test
+  fun downloadLoadingUpdatesStateFromCoordinator() =
+    runTest(dispatcher) {
+      val harness = createHarness()
+
+      downloadManagerLoading.value = true
+      advanceUntilIdle()
+
+      val state = harness.awaitState(predicate = { it.isLoading })
+      assertThat(state.isLoading).isTrue()
+    }
+
+  @Test
+  fun deleteModelFailureEmitsErrorAndMessage() =
+    runTest(dispatcher) {
+      val harness = createHarness()
+      advanceUntilIdle()
+
+      harness.testEvents {
+        downloadManagerErrors.tryEmit(
+          LibraryError.DeleteFailed(modelId = "model-789", message = "failed")
+        )
+        advanceUntilIdle()
+
+        val event = awaitItem() as ModelLibraryUiEvent.ErrorRaised
+        assertThat(event.error).isInstanceOf(LibraryError.DeleteFailed::class.java)
+        val state = harness.awaitState { it.lastErrorMessage != null }
+        assertThat(state.lastErrorMessage).contains("Unable to delete model")
+      }
     }
 
   @Test
@@ -217,16 +297,39 @@ class ModelLibraryViewModelTest {
       verify { downloadCoordinator.deleteModel("model-456") }
     }
 
+  @Test
+  fun offlineDownloadAttemptsEmitErrorAndSkipCoordinator() =
+    runTest(dispatcher) {
+      connectivityFlow.tryEmit(ConnectivityStatus.OFFLINE)
+      val harness = createHarness()
+
+      harness.awaitState { it.connectivityStatus == ConnectivityStatus.OFFLINE }
+
+      harness.testEvents {
+        harness.viewModel.downloadModel("model-offline")
+        advanceUntilIdle()
+
+        val event = awaitItem() as ModelLibraryUiEvent.ErrorRaised
+        assertThat(event.error).isInstanceOf(LibraryError.UnexpectedError::class.java)
+        assertThat(event.envelope.userMessage).contains("offline")
+      }
+
+      coVerify(exactly = 0) { downloadCoordinator.downloadModel(any()) }
+      val state = harness.awaitState { it.connectivityStatus == ConnectivityStatus.OFFLINE }
+      assertThat(state.connectivityStatus).isEqualTo(ConnectivityStatus.OFFLINE)
+    }
+
   private fun createHarness(): ModelLibraryHarness {
     val viewModel =
       ModelLibraryViewModel(
         modelCatalogUseCase = modelCatalogUseCase,
         refreshModelCatalogUseCase = refreshModelCatalogUseCase,
         downloadCoordinator = downloadCoordinator,
-        downloadModelUseCase = downloadModelUseCase,
+        queueModelDownloadUseCase = queueModelDownloadUseCase,
         hfToModelConverter = converter,
         huggingFaceCatalogUseCase = huggingFaceCatalogUseCase,
         compatibilityChecker = compatibilityChecker,
+        connectivityObserver = connectivityObserver,
         mainDispatcher = dispatcher,
       )
     val harness =

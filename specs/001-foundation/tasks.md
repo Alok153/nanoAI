@@ -35,14 +35,14 @@
 ## Phase 4: User Story 2 - Model Library Management (Priority: P1)
 
 ### Tests
-- [ ] T018 [P] [US2] Add download queue repository tests for pause/resume/concurrency=1 in [app/src/test/java/com/vjaykrsna/nanoai/feature/library/data/ModelDownloadRepositoryTest.kt](app/src/test/java/com/vjaykrsna/nanoai/feature/library/data/ModelDownloadRepositoryTest.kt) (depends on T008)
-- [ ] T019 [P] [US2] Add ViewModel tests for progress center and deletion safety in [app/src/test/java/com/vjaykrsna/nanoai/feature/library/ModelLibraryViewModelTest.kt](app/src/test/java/com/vjaykrsna/nanoai/feature/library/ModelLibraryViewModelTest.kt) (depends on T018)
-- [ ] T020 [US2] Add Compose UI test for download progress/pause/resume in [app/src/androidTest/java/com/vjaykrsna/nanoai/feature/library/ModelLibraryScreenTest.kt](app/src/androidTest/java/com/vjaykrsna/nanoai/feature/library/ModelLibraryScreenTest.kt) (depends on T019)
+- [x] T018 [P] [US2] Add download queue repository tests for pause/resume/concurrency=1 in [app/src/test/java/com/vjaykrsna/nanoai/feature/library/data/ModelDownloadRepositoryTest.kt](app/src/test/java/com/vjaykrsna/nanoai/feature/library/data/ModelDownloadRepositoryTest.kt) (depends on T008)
+- [x] T019 [P] [US2] Add ViewModel tests for progress center and deletion safety in [app/src/test/java/com/vjaykrsna/nanoai/feature/library/ModelLibraryViewModelTest.kt](app/src/test/java/com/vjaykrsna/nanoai/feature/library/ModelLibraryViewModelTest.kt) (depends on T018)
+- [x] T020 [US2] Add Compose UI test for download progress/pause/resume in [app/src/androidTest/java/com/vjaykrsna/nanoai/feature/library/ModelLibraryScreenTest.kt](app/src/androidTest/java/com/vjaykrsna/nanoai/feature/library/ModelLibraryScreenTest.kt) (depends on T019)
 
 ### Implementation
-- [ ] T021 [P] [US2] Implement model library domain use cases (queue download, pause, resume, delete) in [app/src/main/java/com/vjaykrsna/nanoai/feature/library/domain](app/src/main/java/com/vjaykrsna/nanoai/feature/library/domain) (depends on T005, T008)
-- [ ] T022 [P] [US2] Implement repository with checksum validation and concurrency limit in [app/src/main/java/com/vjaykrsna/nanoai/feature/library/data/ModelDownloadRepository.kt](app/src/main/java/com/vjaykrsna/nanoai/feature/library/data/ModelDownloadRepository.kt) (depends on T021)
-- [ ] T023 [US2] Update Model Library ViewModel and UI for progress center, delete safety, and connectivity handling in [app/src/main/java/com/vjaykrsna/nanoai/feature/library/presentation/ModelLibraryViewModel.kt](app/src/main/java/com/vjaykrsna/nanoai/feature/library/presentation/ModelLibraryViewModel.kt) and [app/src/main/java/com/vjaykrsna/nanoai/feature/library/presentation/ModelLibraryScreen.kt](app/src/main/java/com/vjaykrsna/nanoai/feature/library/presentation/ModelLibraryScreen.kt) (depends on T022, T010)
+- [x] T021 [P] [US2] Implement model library domain use cases (queue download, pause, resume, delete) in [app/src/main/java/com/vjaykrsna/nanoai/feature/library/domain](app/src/main/java/com/vjaykrsna/nanoai/feature/library/domain) (depends on T005, T008)
+- [x] T022 [P] [US2] Implement repository with checksum validation and concurrency limit in [app/src/main/java/com/vjaykrsna/nanoai/feature/library/data/ModelDownloadRepository.kt](app/src/main/java/com/vjaykrsna/nanoai/feature/library/data/ModelDownloadRepository.kt) (depends on T021)
+- [x] T023 [US2] Update Model Library ViewModel and UI for progress center, delete safety, and connectivity handling in [app/src/main/java/com/vjaykrsna/nanoai/feature/library/presentation/ModelLibraryViewModel.kt](app/src/main/java/com/vjaykrsna/nanoai/feature/library/presentation/ModelLibraryViewModel.kt) and [app/src/main/java/com/vjaykrsna/nanoai/feature/library/presentation/ModelLibraryScreen.kt](app/src/main/java/com/vjaykrsna/nanoai/feature/library/presentation/ModelLibraryScreen.kt) (depends on T022, T010)
 
 ## Phase 5: User Story 3 - Personas & Context Control (Priority: P2)
 

@@ -22,6 +22,8 @@ interface ModelDownloadRepository {
 
   suspend fun cancelDownload(taskId: UUID): NanoAIResult<Unit>
 
+  suspend fun retryDownload(taskId: UUID): NanoAIResult<Unit>
+
   suspend fun deleteModel(modelId: String): NanoAIResult<Unit>
 
   suspend fun verifyDownload(modelId: String): NanoAIResult<Boolean>
@@ -50,6 +52,12 @@ class CancelModelDownloadUseCase
 @Inject
 constructor(private val repository: ModelDownloadRepository) {
   suspend operator fun invoke(taskId: UUID): NanoAIResult<Unit> = repository.cancelDownload(taskId)
+}
+
+class RetryModelDownloadUseCase
+@Inject
+constructor(private val repository: ModelDownloadRepository) {
+  suspend operator fun invoke(taskId: UUID): NanoAIResult<Unit> = repository.retryDownload(taskId)
 }
 
 class DeleteModelUseCase @Inject constructor(private val repository: ModelDownloadRepository) {

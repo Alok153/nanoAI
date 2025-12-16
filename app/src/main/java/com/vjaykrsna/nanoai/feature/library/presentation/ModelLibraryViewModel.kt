@@ -7,7 +7,7 @@ import com.vjaykrsna.nanoai.core.common.error.NanoAIErrorEnvelope
 import com.vjaykrsna.nanoai.core.common.error.withFallbackMessage
 import com.vjaykrsna.nanoai.core.common.fold
 import com.vjaykrsna.nanoai.core.common.onFailure
-import com.vjaykrsna.nanoai.core.domain.library.DownloadModelUseCase
+import com.vjaykrsna.nanoai.core.device.ConnectivityObserver
 import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceCatalogUseCase
 import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceModelCompatibilityChecker
 import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceModelSummary
@@ -15,6 +15,8 @@ import com.vjaykrsna.nanoai.core.domain.library.HuggingFaceToModelPackageConvert
 import com.vjaykrsna.nanoai.core.domain.library.ModelCatalogUseCase
 import com.vjaykrsna.nanoai.core.domain.library.RefreshModelCatalogUseCase
 import com.vjaykrsna.nanoai.core.domain.model.library.ProviderType
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ConnectivityStatus
+import com.vjaykrsna.nanoai.feature.library.domain.QueueModelDownloadUseCase
 import com.vjaykrsna.nanoai.feature.library.presentation.model.HuggingFaceLibraryUiEvent
 import com.vjaykrsna.nanoai.feature.library.presentation.model.HuggingFaceSortOption
 import com.vjaykrsna.nanoai.feature.library.presentation.model.LibraryError
@@ -41,10 +43,11 @@ constructor(
   private val modelCatalogUseCase: ModelCatalogUseCase,
   private val refreshModelCatalogUseCase: RefreshModelCatalogUseCase,
   private val downloadCoordinator: DownloadUiCoordinator,
-  private val downloadModelUseCase: DownloadModelUseCase,
+  private val queueModelDownloadUseCase: QueueModelDownloadUseCase,
   private val hfToModelConverter: HuggingFaceToModelPackageConverter,
   private val huggingFaceCatalogUseCase: HuggingFaceCatalogUseCase,
   private val compatibilityChecker: HuggingFaceModelCompatibilityChecker,
+  private val connectivityObserver: ConnectivityObserver,
   @MainImmediateDispatcher private val mainDispatcher: CoroutineDispatcher,
 ) :
   ViewModelStateHost<ModelLibraryUiState, ModelLibraryUiEvent>(
@@ -62,18 +65,16 @@ constructor(
 
   private val downloadActions =
     ModelDownloadActionHandler(
-      downloadModelUseCase = downloadModelUseCase,
       downloadCoordinator = downloadCoordinator,
       dispatcher = mainDispatcher,
       scope = viewModelScope,
-      emitError = { error -> emitError(error) },
     )
 
   private val huggingFaceCoordinator =
     HuggingFaceDownloadCoordinator(
       converter = hfToModelConverter,
       modelCatalogUseCase = modelCatalogUseCase,
-      downloadModelUseCase = downloadModelUseCase,
+      queueModelDownloadUseCase = queueModelDownloadUseCase,
       emitError = { error -> emitError(error) },
     )
 
@@ -82,6 +83,7 @@ constructor(
     observeDownloadLoading()
     observeDownloadErrors()
     observeHuggingFaceState()
+    observeConnectivity()
     refreshCatalog()
   }
 
@@ -191,10 +193,22 @@ constructor(
   }
 
   fun downloadModel(modelId: String) {
+    if (state.value.connectivityStatus == ConnectivityStatus.OFFLINE) {
+      viewModelScope.launch(mainDispatcher) {
+        emitError(LibraryError.UnexpectedError("You're offline. Connect to download models."))
+      }
+      return
+    }
     downloadActions.downloadModel(modelId)
   }
 
   fun downloadHuggingFaceModel(model: HuggingFaceModelSummary) {
+    if (state.value.connectivityStatus == ConnectivityStatus.OFFLINE) {
+      viewModelScope.launch(mainDispatcher) {
+        emitError(LibraryError.UnexpectedError("You're offline. Connect to download models."))
+      }
+      return
+    }
     huggingFaceLibraryViewModel.requestDownload(model)
   }
 
@@ -256,6 +270,14 @@ constructor(
   private fun observeDownloadErrors() {
     viewModelScope.launch(mainDispatcher) {
       downloadCoordinator.errorEvents.collect { error -> emitError(error) }
+    }
+  }
+
+  private fun observeConnectivity() {
+    viewModelScope.launch(mainDispatcher) {
+      connectivityObserver.status.collect { status ->
+        updateState { copy(connectivityStatus = status) }
+      }
     }
   }
 

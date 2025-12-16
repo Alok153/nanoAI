@@ -47,6 +47,16 @@ class CoreModelDownloadDataSourceTest {
     assertThat(result).isInstanceOf(NanoAISuccess::class.java)
   }
 
+  @Test
+  fun retryDownload_delegatesToUseCase() = runTest {
+    val taskId = UUID.randomUUID()
+
+    val result = dataSource.retryDownload(taskId)
+
+    assertThat(fakeUseCase.retriedTasks).containsExactly(taskId)
+    assertThat(result).isInstanceOf(NanoAISuccess::class.java)
+  }
+
   private fun sampleTask(): DownloadTask =
     DownloadTask(
       taskId = UUID.randomUUID(),

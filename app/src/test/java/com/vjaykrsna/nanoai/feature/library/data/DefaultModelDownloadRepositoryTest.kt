@@ -14,6 +14,7 @@ import java.util.UUID
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Instant
 import org.junit.jupiter.api.Test
@@ -21,7 +22,9 @@ import org.junit.jupiter.api.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class DefaultModelDownloadRepositoryTest {
   private val fakeDataSource = FakeModelDownloadDataSource()
-  private val repository: ModelDownloadRepository = DefaultModelDownloadRepository(fakeDataSource)
+  private val dispatcher = StandardTestDispatcher()
+  private val repository: ModelDownloadRepository =
+    DefaultModelDownloadRepository(fakeDataSource, dispatcher)
   private val queueUseCase = QueueModelDownloadUseCase(repository)
   private val pauseUseCase = PauseModelDownloadUseCase(repository)
   private val cancelUseCase = CancelModelDownloadUseCase(repository)
@@ -86,6 +89,7 @@ private class FakeModelDownloadDataSource : ModelDownloadDataSource {
   val pausedTaskIds = mutableListOf<UUID>()
   val resumedTaskIds = mutableListOf<UUID>()
   val cancelledTaskIds = mutableListOf<UUID>()
+  val retriedTaskIds = mutableListOf<UUID>()
   val deletedModelIds = mutableListOf<String>()
   val verifiedModelIds = mutableListOf<String>()
 
@@ -114,6 +118,11 @@ private class FakeModelDownloadDataSource : ModelDownloadDataSource {
 
   override suspend fun cancelDownload(taskId: UUID): NanoAIResult<Unit> {
     cancelledTaskIds += taskId
+    return NanoAIResult.success(Unit)
+  }
+
+  override suspend fun retryDownload(taskId: UUID): NanoAIResult<Unit> {
+    retriedTaskIds += taskId
     return NanoAIResult.success(Unit)
   }
 
