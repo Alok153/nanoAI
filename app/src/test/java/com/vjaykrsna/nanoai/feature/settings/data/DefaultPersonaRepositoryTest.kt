@@ -33,10 +33,11 @@ class DefaultPersonaRepositoryTest {
   @Test
   fun switchPersona_delegatesToDataSource() = runTest {
     val personaId = UUID.randomUUID()
+    val threadId = UUID.randomUUID()
 
-    val result = repository.switchPersona(personaId, PersonaSwitchAction.CONTINUE_THREAD)
+    val result = repository.switchPersona(threadId, personaId, PersonaSwitchAction.CONTINUE_THREAD)
 
-    assertThat(fakeDataSource.switchedIds).containsExactly(personaId)
+    assertThat(fakeDataSource.switchedCalls).containsExactly(threadId to personaId)
     assertThat(result).isInstanceOf(NanoAISuccess::class.java)
   }
 
@@ -78,7 +79,7 @@ class DefaultPersonaRepositoryTest {
 
 private class FakePersonaDataSource : PersonaDataSource {
   val personas = MutableStateFlow<List<PersonaProfile>>(emptyList())
-  val switchedIds = mutableListOf<UUID>()
+  val switchedCalls = mutableListOf<Pair<UUID?, UUID>>()
   val loggedSwitches = mutableListOf<PersonaSwitchLog>()
 
   override fun observePersonas() = personas
@@ -87,10 +88,11 @@ private class FakePersonaDataSource : PersonaDataSource {
     NanoAIResult.success(personas.value.firstOrNull())
 
   override suspend fun switchPersona(
+    currentThreadId: UUID?,
     personaId: UUID,
     action: PersonaSwitchAction,
   ): NanoAIResult<UUID> {
-    switchedIds += personaId
+    switchedCalls += currentThreadId to personaId
     return NanoAIResult.success(personaId)
   }
 

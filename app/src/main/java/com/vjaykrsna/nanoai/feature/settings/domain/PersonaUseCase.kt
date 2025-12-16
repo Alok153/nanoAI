@@ -13,7 +13,11 @@ interface PersonaRepository {
 
   suspend fun getDefaultPersona(): NanoAIResult<PersonaProfile?>
 
-  suspend fun switchPersona(personaId: UUID, action: PersonaSwitchAction): NanoAIResult<UUID>
+  suspend fun switchPersona(
+    currentThreadId: UUID?,
+    personaId: UUID,
+    action: PersonaSwitchAction,
+  ): NanoAIResult<UUID>
 
   suspend fun savePersona(persona: PersonaProfile): NanoAIResult<Unit>
 
@@ -34,8 +38,11 @@ class PersonaUseCase @Inject constructor(private val repository: PersonaReposito
 
   suspend fun getDefaultPersona(): NanoAIResult<PersonaProfile?> = repository.getDefaultPersona()
 
-  suspend fun switchPersona(personaId: UUID, action: PersonaSwitchAction): NanoAIResult<UUID> =
-    repository.switchPersona(personaId, action)
+  suspend fun switchPersona(
+    currentThreadId: UUID?,
+    personaId: UUID,
+    action: PersonaSwitchAction,
+  ): NanoAIResult<UUID> = repository.switchPersona(currentThreadId, personaId, action)
 
   suspend fun savePersona(persona: PersonaProfile): NanoAIResult<Unit> =
     repository.savePersona(persona)

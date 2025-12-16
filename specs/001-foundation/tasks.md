@@ -47,12 +47,12 @@
 ## Phase 5: User Story 3 - Personas & Context Control (Priority: P2)
 
 ### Tests
-- [ ] T024 [P] [US3] Add persona repository/use case tests for switching and logging in [app/src/test/java/com/vjaykrsna/nanoai/feature/settings/domain/PersonaUseCaseTest.kt](app/src/test/java/com/vjaykrsna/nanoai/feature/settings/domain/PersonaUseCaseTest.kt) (depends on T005, T008)
-- [ ] T025 [US3] Add ViewModel tests for persona switch flow and thread continuation in [app/src/test/java/com/vjaykrsna/nanoai/feature/chat/PersonaSwitcherViewModelTest.kt](app/src/test/java/com/vjaykrsna/nanoai/feature/chat/PersonaSwitcherViewModelTest.kt) (depends on T024)
+- [x] T024 [P] [US3] Add persona repository/use case tests for switching and logging in [app/src/test/java/com/vjaykrsna/nanoai/feature/settings/domain/PersonaUseCaseTest.kt](app/src/test/java/com/vjaykrsna/nanoai/feature/settings/domain/PersonaUseCaseTest.kt) (depends on T005, T008)
+- [x] T025 [US3] Add ViewModel tests for persona switch flow and thread continuation in [app/src/test/java/com/vjaykrsna/nanoai/feature/chat/PersonaSwitcherViewModelTest.kt](app/src/test/java/com/vjaykrsna/nanoai/feature/chat/PersonaSwitcherViewModelTest.kt) (depends on T024)
 
 ### Implementation
-- [ ] T026 [P] [US3] Implement persona domain use cases and repository in [app/src/main/java/com/vjaykrsna/nanoai/feature/settings/domain](app/src/main/java/com/vjaykrsna/nanoai/feature/settings/domain) and [app/src/main/java/com/vjaykrsna/nanoai/feature/settings/data](app/src/main/java/com/vjaykrsna/nanoai/feature/settings/data) (depends on T005, T008)
-- [ ] T027 [US3] Wire persona switcher UI and state handling in [app/src/main/java/com/vjaykrsna/nanoai/feature/chat/presentation/PersonaSwitcher.kt](app/src/main/java/com/vjaykrsna/nanoai/feature/chat/presentation/PersonaSwitcher.kt) and [app/src/main/java/com/vjaykrsna/nanoai/feature/chat/presentation/ChatViewModel.kt](app/src/main/java/com/vjaykrsna/nanoai/feature/chat/presentation/ChatViewModel.kt) (depends on T026, T025)
+- [x] T026 [P] [US3] Implement persona domain use cases and repository in [app/src/main/java/com/vjaykrsna/nanoai/feature/settings/domain](app/src/main/java/com/vjaykrsna/nanoai/feature/settings/domain) and [app/src/main/java/com/vjaykrsna/nanoai/feature/settings/data](app/src/main/java/com/vjaykrsna/nanoai/feature/settings/data) (depends on T005, T008)
+- [x] T027 [US3] Wire persona switcher UI and state handling in [app/src/main/java/com/vjaykrsna/nanoai/feature/chat/presentation/PersonaSwitcher.kt](app/src/main/java/com/vjaykrsna/nanoai/feature/chat/presentation/PersonaSwitcher.kt) and [app/src/main/java/com/vjaykrsna/nanoai/feature/chat/presentation/ChatViewModel.kt](app/src/main/java/com/vjaykrsna/nanoai/feature/chat/presentation/ChatViewModel.kt) (depends on T026, T025)
 
 ## Phase 6: User Story 4 - Settings, Privacy & Backup (Priority: P2)
 

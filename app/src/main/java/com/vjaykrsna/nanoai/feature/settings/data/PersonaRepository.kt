@@ -22,7 +22,11 @@ interface PersonaDataSource {
 
   suspend fun getDefaultPersona(): NanoAIResult<PersonaProfile?>
 
-  suspend fun switchPersona(personaId: UUID, action: PersonaSwitchAction): NanoAIResult<UUID>
+  suspend fun switchPersona(
+    currentThreadId: UUID?,
+    personaId: UUID,
+    action: PersonaSwitchAction,
+  ): NanoAIResult<UUID>
 
   suspend fun savePersona(persona: PersonaProfile): NanoAIResult<Unit>
 
@@ -54,14 +58,39 @@ constructor(
     success(personaRepository.getDefaultPersona())
 
   override suspend fun switchPersona(
+    currentThreadId: UUID?,
     personaId: UUID,
     action: PersonaSwitchAction,
   ): NanoAIResult<UUID> =
     runCatching {
-        when (action) {
-          PersonaSwitchAction.CONTINUE_THREAD -> conversationRepository.createNewThread(personaId)
-          PersonaSwitchAction.START_NEW_THREAD -> conversationRepository.createNewThread(personaId)
-        }
+        val previousPersonaId =
+          currentThreadId?.let { threadId -> conversationRepository.getCurrentPersonaForThread(threadId) }
+
+        val targetThreadId =
+          when (action) {
+            PersonaSwitchAction.CONTINUE_THREAD -> {
+              val resolvedThreadId =
+                currentThreadId ?: conversationRepository.createNewThread(personaId)
+              if (currentThreadId != null) {
+                conversationRepository.updateThreadPersona(resolvedThreadId, personaId)
+              }
+              resolvedThreadId
+            }
+            PersonaSwitchAction.START_NEW_THREAD -> conversationRepository.createNewThread(personaId)
+          }
+
+        val log =
+          PersonaSwitchLog(
+            logId = UUID.randomUUID(),
+            threadId = targetThreadId,
+            previousPersonaId = previousPersonaId,
+            newPersonaId = personaId,
+            actionTaken = action,
+            createdAt = clock.now(),
+          )
+        personaSwitchLogRepository.logSwitch(log)
+
+        targetThreadId
       }
       .fold(
         onSuccess = { threadId -> success(threadId) },
@@ -123,9 +152,10 @@ class DefaultPersonaRepository @Inject constructor(private val dataSource: Perso
     dataSource.getDefaultPersona()
 
   override suspend fun switchPersona(
+    currentThreadId: UUID?,
     personaId: UUID,
     action: PersonaSwitchAction,
-  ): NanoAIResult<UUID> = dataSource.switchPersona(personaId, action)
+  ): NanoAIResult<UUID> = dataSource.switchPersona(currentThreadId, personaId, action)
 
   override suspend fun savePersona(persona: PersonaProfile): NanoAIResult<Unit> =
     dataSource.savePersona(persona)

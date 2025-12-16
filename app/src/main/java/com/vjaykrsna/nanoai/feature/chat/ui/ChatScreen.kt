@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,12 +16,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -52,12 +55,17 @@ import com.vjaykrsna.nanoai.core.domain.library.Model
 import com.vjaykrsna.nanoai.core.domain.model.Message
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
 import com.vjaykrsna.nanoai.core.model.MessageRole
+import com.vjaykrsna.nanoai.core.model.PersonaSwitchAction
 import com.vjaykrsna.nanoai.feature.chat.model.LocalInferenceMissingReason
 import com.vjaykrsna.nanoai.feature.chat.model.LocalInferenceUiState
 import com.vjaykrsna.nanoai.feature.chat.model.LocalInferenceUiStatus
 import com.vjaykrsna.nanoai.feature.chat.presentation.ChatError
 import com.vjaykrsna.nanoai.feature.chat.presentation.ChatUiEvent
 import com.vjaykrsna.nanoai.feature.chat.presentation.ChatViewModel
+import com.vjaykrsna.nanoai.feature.chat.presentation.PersonaSwitcher
+import com.vjaykrsna.nanoai.feature.chat.presentation.PersonaSwitcherEvent
+import com.vjaykrsna.nanoai.feature.chat.presentation.PersonaSwitcherUiState
+import com.vjaykrsna.nanoai.feature.chat.presentation.PersonaSwitcherViewModel
 import com.vjaykrsna.nanoai.feature.chat.presentation.state.ChatUiState
 import com.vjaykrsna.nanoai.feature.chat.ui.components.ModelPicker
 import com.vjaykrsna.nanoai.feature.uiux.presentation.ChatState
@@ -67,6 +75,7 @@ import com.vjaykrsna.nanoai.feature.uiux.ui.components.composer.NanoComposerBar
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.feedback.NanoErrorHandler
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoRadii
 import com.vjaykrsna.nanoai.feature.uiux.ui.components.foundation.NanoSpacing
+import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -103,6 +112,11 @@ fun ChatScreen(
   var activeError by remember { mutableStateOf<NanoError?>(null) }
   val latestOnUpdateChatState = rememberUpdatedState(onUpdateChatState)
 
+  val personaSwitcherViewModel: PersonaSwitcherViewModel = hiltViewModel()
+  val personaUiState by personaSwitcherViewModel.state.collectAsStateWithLifecycle()
+  val personaSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+  var isPersonaSheetVisible by rememberSaveable { mutableStateOf(false) }
+
   val launchImagePicker = rememberChatImagePicker { bitmap -> viewModel.onImageSelected(bitmap) }
 
   ChatScreenEffects(
@@ -112,6 +126,23 @@ fun ChatScreen(
     latestOnUpdateChatState = latestOnUpdateChatState,
     onError = { activeError = it },
   )
+
+  PersonaSwitcherEffects(
+    events = personaSwitcherViewModel.events,
+    snackbarHostState = snackbarHostState,
+    onThreadSelected = viewModel::selectThread,
+    onCloseSheet = { isPersonaSheetVisible = false },
+    personaLabelProvider = { personaId ->
+      personaUiState.personas.firstOrNull { it.personaId == personaId }?.name
+    },
+  )
+
+  LaunchedEffect(uiState.activeThreadId, uiState.activeThread?.personaId) {
+    personaSwitcherViewModel.setActiveThread(
+      uiState.activeThreadId,
+      uiState.activeThread?.personaId,
+    )
+  }
 
   val actions =
     remember(viewModel, launchImagePicker, onNavigate) {
@@ -138,12 +169,34 @@ fun ChatScreen(
 
   ChatScreenScaffold(
     uiState = uiState,
+    personaUiState = personaUiState,
     snackbarHostState = snackbarHostState,
     activeError = activeError,
     actions = actions,
     sheetState = sheetState,
+    onOpenPersonaSwitcher = { isPersonaSheetVisible = true },
     modifier = modifier,
   )
+
+  if (isPersonaSheetVisible) {
+    ModalBottomSheet(
+      onDismissRequest = { isPersonaSheetVisible = false },
+      sheetState = personaSheetState,
+    ) {
+      PersonaSwitcher(
+        uiState = personaUiState,
+        onDismiss = { isPersonaSheetVisible = false },
+        onContinueThread =
+          { personaId ->
+            personaSwitcherViewModel.switchPersona(personaId, PersonaSwitchAction.CONTINUE_THREAD)
+          },
+        onStartNewThread =
+          { personaId ->
+            personaSwitcherViewModel.switchPersona(personaId, PersonaSwitchAction.START_NEW_THREAD)
+          },
+      )
+    }
+  }
 }
 
 @Composable
@@ -186,13 +239,38 @@ private fun ChatScreenEffects(
 }
 
 @Composable
+private fun PersonaSwitcherEffects(
+  events: Flow<PersonaSwitcherEvent>,
+  snackbarHostState: SnackbarHostState,
+  onThreadSelected: (UUID) -> Unit,
+  onCloseSheet: () -> Unit,
+  personaLabelProvider: (UUID) -> String?,
+) {
+  LaunchedEffect(Unit) {
+    events.collectLatest { event ->
+      when (event) {
+        is PersonaSwitcherEvent.SwitchCompleted -> {
+          onThreadSelected(event.targetThreadId)
+          onCloseSheet()
+          val personaName = personaLabelProvider(event.personaId) ?: "persona"
+          snackbarHostState.showSnackbar("Switched to $personaName")
+        }
+        is PersonaSwitcherEvent.ErrorRaised -> snackbarHostState.showSnackbar(event.message)
+      }
+    }
+  }
+}
+
+@Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun ChatScreenScaffold(
   uiState: ChatUiState,
+  personaUiState: PersonaSwitcherUiState,
   snackbarHostState: SnackbarHostState,
   activeError: NanoError?,
   actions: ChatScreenActions,
   sheetState: SheetState,
+  onOpenPersonaSwitcher: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
   Box(
@@ -203,9 +281,11 @@ private fun ChatScreenScaffold(
   ) {
     ChatMessageContent(
       uiState = uiState,
+      personaUiState = personaUiState,
       snackbarHostState = snackbarHostState,
       activeError = activeError,
       actions = actions,
+      onOpenPersonaSwitcher = onOpenPersonaSwitcher,
     )
 
     SnackbarHost(
@@ -233,15 +313,24 @@ private fun ChatScreenScaffold(
 @Composable
 private fun ChatMessageContent(
   uiState: ChatUiState,
+  personaUiState: PersonaSwitcherUiState,
   snackbarHostState: SnackbarHostState,
   activeError: NanoError?,
   actions: ChatScreenActions,
+  onOpenPersonaSwitcher: () -> Unit,
 ) {
   Column(
     modifier =
       Modifier.fillMaxSize().padding(horizontal = NanoSpacing.lg, vertical = NanoSpacing.md),
     verticalArrangement = Arrangement.spacedBy(NanoSpacing.md),
   ) {
+    PersonaSwitcherSummary(
+      personaUiState = personaUiState,
+      activePersonaName = uiState.activePersonaSummary?.displayName,
+      onOpenPersonaSwitcher = onOpenPersonaSwitcher,
+      modifier = Modifier.fillMaxWidth(),
+    )
+
     uiState.connectivityBanner?.let { banner ->
       ConnectivityBanner(
         state = banner,
@@ -273,17 +362,82 @@ private fun ChatMessageContent(
         modifier = Modifier.size(128.dp),
       )
     }
+        onDismissConnectivityBanner = viewModel::dismissConnectivityBanner,
+        onOpenPersonaSwitcher = { isPersonaSheetVisible = true },
 
     ChatComposerBar(uiState = uiState, actions = actions)
   }
 }
 
 @Composable
+private fun PersonaSwitcherSummary(
+  personaUiState: PersonaSwitcherUiState,
+  activePersonaName: String?,
+  onOpenPersonaSwitcher: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  Card(
+    modifier =
+      modifier.semantics {
+        contentDescription =
+          activePersonaName?.let { "Active persona $it" } ?: "No persona selected"
+      },
+    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+  ) {
+    Row(
+      modifier = Modifier.fillMaxWidth().padding(NanoSpacing.md),
+      horizontalArrangement = Arrangement.SpaceBetween,
+      verticalAlignment = Alignment.CenterVertically,
+    ) {
+      Column(modifier = Modifier.weight(1f)) {
+        Text(text = "Persona", style = MaterialTheme.typography.labelSmall)
+        Text(
+          text = activePersonaName ?: "No persona selected",
+          style = MaterialTheme.typography.titleSmall,
+          color = MaterialTheme.colorScheme.onSurface,
+          modifier = Modifier.padding(top = NanoSpacing.xs),
+        )
+        Text(
+          text = "${personaUiState.personas.size} available",
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+          modifier = Modifier.padding(top = NanoSpacing.xs),
+        )
+      }
+
+      Button(onClick = onOpenPersonaSwitcher) { Text(text = "Switch persona") }
+    }
+  }
+}
+
+    personaUiState = personaUiState,
+@Composable
 private fun ChatComposerBar(uiState: ChatUiState, actions: ChatScreenActions) {
   NanoComposerBar(
     value = uiState.composerText,
+    onOpenPersonaSwitcher = { isPersonaSheetVisible = true },
     onValueChange = actions.onComposerTextChange,
     modifier = Modifier.fillMaxWidth(),
+
+  if (isPersonaSheetVisible) {
+    ModalBottomSheet(
+      onDismissRequest = { isPersonaSheetVisible = false },
+      sheetState = personaSheetState,
+    ) {
+      PersonaSwitcher(
+        uiState = personaUiState,
+        onDismiss = { isPersonaSheetVisible = false },
+        onContinueThread =
+          { personaId ->
+            personaSwitcherViewModel.switchPersona(personaId, PersonaSwitchAction.CONTINUE_THREAD)
+          },
+        onStartNewThread =
+          { personaId ->
+            personaSwitcherViewModel.switchPersona(personaId, PersonaSwitchAction.START_NEW_THREAD)
+          },
+      )
+    }
+  }
     placeholder = "Type a message…",
     enabled = !uiState.isSendingMessage && uiState.activeThread != null,
     onSend = actions.onSendMessage,
