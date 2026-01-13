@@ -50,14 +50,11 @@ internal fun PrivacyEncryptionCard(modifier: Modifier = Modifier) {
 }
 
 /**
- * Privacy Dashboard Card showing a summary of privacy-related settings.
- * Displays consent status, telemetry preference, and data retention policy.
+ * Privacy Dashboard Card showing a summary of privacy-related settings. Displays consent status,
+ * telemetry preference, and data retention policy.
  */
 @Composable
-internal fun PrivacyDashboardCard(
-  summary: PrivacyDashboardSummary,
-  modifier: Modifier = Modifier,
-) {
+internal fun PrivacyDashboardCard(summary: PrivacyDashboardSummary, modifier: Modifier = Modifier) {
   SettingsInteractiveCard(
     title = "Privacy Dashboard",
     modifier = modifier.semantics { contentDescription = "Privacy settings summary dashboard" },
@@ -69,18 +66,16 @@ internal fun PrivacyDashboardCard(
           style = MaterialTheme.typography.bodyMedium,
         )
         Text(
-          text = "All your data is stored locally on your device. " +
-            "nanoAI operates without cloud dependencies by default, " +
-            "ensuring your conversations remain private.",
+          text =
+            "All your data is stored locally on your device. " +
+              "nanoAI operates without cloud dependencies by default, " +
+              "ensuring your conversations remain private.",
           style = MaterialTheme.typography.bodySmall,
         )
       }
     },
   ) {
-    Column(
-      modifier = Modifier.fillMaxWidth(),
-      verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
+    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
       PrivacyStatusRow(
         label = "Privacy Consent",
         isEnabled = summary.isConsentAcknowledged,
@@ -113,8 +108,10 @@ internal fun PrivacyDashboardCard(
           color = MaterialTheme.colorScheme.onSurface,
         )
         Text(
-          text = summary.retentionPolicy.replace("_", " ").lowercase()
-            .replaceFirstChar { it.uppercase() },
+          text =
+            summary.retentionPolicy.replace("_", " ").lowercase().replaceFirstChar {
+              it.uppercase()
+            },
           style = MaterialTheme.typography.bodyMedium,
           color = MaterialTheme.colorScheme.primary,
         )
@@ -132,7 +129,8 @@ internal fun PrivacyDashboardCard(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
           )
           Text(
-            text = "${summary.disclaimerShownCount} time${if (summary.disclaimerShownCount == 1) "" else "s"}",
+            text =
+              "${summary.disclaimerShownCount} time${if (summary.disclaimerShownCount == 1) "" else "s"}",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
           )
@@ -167,20 +165,22 @@ private fun PrivacyStatusRow(
       Icon(
         imageVector = if (isEnabled) Icons.Filled.CheckCircle else Icons.Filled.Warning,
         contentDescription = null,
-        tint = if (isEnabled) {
-          MaterialTheme.colorScheme.primary
-        } else {
-          MaterialTheme.colorScheme.outline
-        },
+        tint =
+          if (isEnabled) {
+            MaterialTheme.colorScheme.primary
+          } else {
+            MaterialTheme.colorScheme.outline
+          },
       )
       Text(
         text = if (isEnabled) enabledText else disabledText,
         style = MaterialTheme.typography.bodyMedium,
-        color = if (isEnabled) {
-          MaterialTheme.colorScheme.primary
-        } else {
-          MaterialTheme.colorScheme.onSurfaceVariant
-        },
+        color =
+          if (isEnabled) {
+            MaterialTheme.colorScheme.primary
+          } else {
+            MaterialTheme.colorScheme.onSurfaceVariant
+          },
       )
     }
   }

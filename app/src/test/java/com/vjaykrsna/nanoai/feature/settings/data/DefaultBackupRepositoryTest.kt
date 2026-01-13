@@ -63,12 +63,13 @@ class DefaultBackupRepositoryTest {
     @Test
     @DisplayName("import with personas returns deterministic persona count")
     fun importBackup_withPersonas_returnsDeterministicPersonaCount() = runTest {
-      val expectedSummary = ImportSummary(
-        personasImported = 3,
-        personasUpdated = 2,
-        providersImported = 0,
-        providersUpdated = 0,
-      )
+      val expectedSummary =
+        ImportSummary(
+          personasImported = 3,
+          personasUpdated = 2,
+          providersImported = 0,
+          providersUpdated = 0,
+        )
       fakeDataSource.nextImportSummary = expectedSummary
 
       val result = useCase.importBackup("/tmp/personas-backup.json")
@@ -82,12 +83,13 @@ class DefaultBackupRepositoryTest {
     @Test
     @DisplayName("validation returns exact import summary without modifications")
     fun validateBackup_returnsDeterministicSummary() = runTest {
-      val expectedSummary = ImportSummary(
-        personasImported = 5,
-        personasUpdated = 1,
-        providersImported = 2,
-        providersUpdated = 3,
-      )
+      val expectedSummary =
+        ImportSummary(
+          personasImported = 5,
+          personasUpdated = 1,
+          providersImported = 2,
+          providersUpdated = 3,
+        )
       fakeDataSource.validationSummary = expectedSummary
 
       val result = useCase.validateBackup("/tmp/full-backup.json")
@@ -100,12 +102,13 @@ class DefaultBackupRepositoryTest {
     @Test
     @DisplayName("import and validation produce same counts for same backup")
     fun importAndValidation_produceSameCountsForSameBackup() = runTest {
-      val summary = ImportSummary(
-        personasImported = 4,
-        personasUpdated = 0,
-        providersImported = 1,
-        providersUpdated = 1,
-      )
+      val summary =
+        ImportSummary(
+          personasImported = 4,
+          personasUpdated = 0,
+          providersImported = 1,
+          providersUpdated = 1,
+        )
       fakeDataSource.validationSummary = summary
       fakeDataSource.nextImportSummary = summary
 
@@ -124,12 +127,13 @@ class DefaultBackupRepositoryTest {
     @Test
     @DisplayName("import with providers returns deterministic provider count")
     fun importBackup_withProviders_returnsDeterministicProviderCount() = runTest {
-      val expectedSummary = ImportSummary(
-        personasImported = 0,
-        personasUpdated = 0,
-        providersImported = 2,
-        providersUpdated = 3,
-      )
+      val expectedSummary =
+        ImportSummary(
+          personasImported = 0,
+          personasUpdated = 0,
+          providersImported = 2,
+          providersUpdated = 3,
+        )
       fakeDataSource.nextImportSummary = expectedSummary
 
       val result = useCase.importBackup("/tmp/providers-backup.json")
@@ -143,12 +147,13 @@ class DefaultBackupRepositoryTest {
     @Test
     @DisplayName("provider credentials are not exposed in summary")
     fun importBackup_providerCredentialsNotInSummary() = runTest {
-      val expectedSummary = ImportSummary(
-        personasImported = 1,
-        personasUpdated = 0,
-        providersImported = 1,
-        providersUpdated = 0,
-      )
+      val expectedSummary =
+        ImportSummary(
+          personasImported = 1,
+          personasUpdated = 0,
+          providersImported = 1,
+          providersUpdated = 0,
+        )
       fakeDataSource.nextImportSummary = expectedSummary
 
       val result = useCase.importBackup("/tmp/secure-backup.json")
@@ -162,12 +167,13 @@ class DefaultBackupRepositoryTest {
     @Test
     @DisplayName("full restore with personas and providers is deterministic")
     fun importBackup_fullRestore_isDeterministic() = runTest {
-      val expectedSummary = ImportSummary(
-        personasImported = 10,
-        personasUpdated = 5,
-        providersImported = 3,
-        providersUpdated = 2,
-      )
+      val expectedSummary =
+        ImportSummary(
+          personasImported = 10,
+          personasUpdated = 5,
+          providersImported = 3,
+          providersUpdated = 2,
+        )
       fakeDataSource.nextImportSummary = expectedSummary
 
       val result = useCase.importBackup("/tmp/full-restore.json")
@@ -186,44 +192,47 @@ class DefaultBackupRepositoryTest {
     @Test
     @DisplayName("export failure returns recoverable error")
     fun exportBackup_failure_returnsRecoverableError() = runTest {
-      fakeDataSource.nextExportResult = NanoAIResult.recoverable(
-        message = "Disk full",
-        telemetryId = "export-error-001",
-      )
+      fakeDataSource.nextExportResult =
+        NanoAIResult.recoverable(message = "Disk full", telemetryId = "export-error-001")
 
       val result = useCase.exportBackup("/tmp/backup.json", includeChatHistory = true)
 
-      assertThat(result).isInstanceOf(NanoAIResult.RecoverableError::class.java)
-      val error = result as NanoAIResult.RecoverableError
+      assertThat(result)
+        .isInstanceOf(com.vjaykrsna.nanoai.core.common.NanoAIResult.RecoverableError::class.java)
+      val error = result as com.vjaykrsna.nanoai.core.common.NanoAIResult.RecoverableError
       assertThat(error.message).isEqualTo("Disk full")
     }
 
     @Test
     @DisplayName("import failure returns recoverable error")
     fun importBackup_failure_returnsRecoverableError() = runTest {
-      fakeDataSource.nextImportResult = NanoAIResult.recoverable(
-        message = "Invalid backup format",
-        telemetryId = "import-error-001",
-      )
+      fakeDataSource.nextImportResult =
+        NanoAIResult.recoverable(
+          message = "Invalid backup format",
+          telemetryId = "import-error-001",
+        )
 
       val result = useCase.importBackup("/tmp/corrupt-backup.json")
 
-      assertThat(result).isInstanceOf(NanoAIResult.RecoverableError::class.java)
-      val error = result as NanoAIResult.RecoverableError
+      assertThat(result)
+        .isInstanceOf(com.vjaykrsna.nanoai.core.common.NanoAIResult.RecoverableError::class.java)
+      val error = result as com.vjaykrsna.nanoai.core.common.NanoAIResult.RecoverableError
       assertThat(error.message).isEqualTo("Invalid backup format")
     }
 
     @Test
     @DisplayName("validation failure does not corrupt state")
     fun validateBackup_failure_doesNotCorruptState() = runTest {
-      fakeDataSource.nextValidationResult = NanoAIResult.recoverable(
-        message = "Cannot read backup file",
-        telemetryId = "validation-error-001",
-      )
+      fakeDataSource.nextValidationResult =
+        NanoAIResult.recoverable(
+          message = "Cannot read backup file",
+          telemetryId = "validation-error-001",
+        )
 
       val result = useCase.validateBackup("/tmp/unreadable-backup.json")
 
-      assertThat(result).isInstanceOf(NanoAIResult.RecoverableError::class.java)
+      assertThat(result)
+        .isInstanceOf(com.vjaykrsna.nanoai.core.common.NanoAIResult.RecoverableError::class.java)
       assertThat(fakeDataSource.importCallCount).isEqualTo(0)
     }
   }
@@ -239,7 +248,7 @@ private class FakeBackupDataSource : BackupDataSource {
   var validationSummary: ImportSummary = ImportSummary(0, 0, 0, 0)
   var nextImportSummary: ImportSummary = ImportSummary(0, 0, 0, 0)
   var nextExportResult: NanoAIResult<String>? = null
-  var nextImportResult: NanoAIResult<Unit>? = null
+  var nextImportResult: NanoAIResult<ImportSummary>? = null
   var nextValidationResult: NanoAIResult<ImportSummary>? = null
 
   override suspend fun exportBackup(
@@ -251,7 +260,7 @@ private class FakeBackupDataSource : BackupDataSource {
     return nextExportResult ?: NanoAIResult.success(destinationPath)
   }
 
-  override suspend fun importBackup(sourcePath: String): NanoAIResult<Unit> {
+  override suspend fun importBackup(sourcePath: String): NanoAIResult<ImportSummary> {
     importedPaths += sourcePath
     importCallCount += 1
     return nextImportResult ?: NanoAIResult.success(nextImportSummary)

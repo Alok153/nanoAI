@@ -8,8 +8,8 @@ import javax.inject.Inject
  *
  * **Status: Pending Leap SDK Integration**
  *
- * This use case is prepared for Leap SDK function calling support. Currently returns an
- * unsupported operation result with telemetry context for tracking adoption readiness.
+ * This use case is prepared for Leap SDK function calling support. Currently returns an unsupported
+ * operation result with telemetry context for tracking adoption readiness.
  */
 class CallLeapFunctionUseCase @Inject constructor() {
   /**

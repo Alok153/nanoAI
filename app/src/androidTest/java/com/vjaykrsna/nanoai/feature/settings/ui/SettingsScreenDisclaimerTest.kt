@@ -1,6 +1,5 @@
 package com.vjaykrsna.nanoai.feature.settings.ui
 
-import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -13,8 +12,8 @@ import kotlinx.datetime.Instant
 import org.junit.Test
 
 /**
- * UI tests for Settings screen disclaimer, privacy dashboard, and consent handling.
- * Covers T029 requirements for disclaimer logging and privacy dashboard functionality.
+ * UI tests for Settings screen disclaimer, privacy dashboard, and consent handling. Covers T029
+ * requirements for disclaimer logging and privacy dashboard functionality.
  */
 @HiltAndroidTest
 class SettingsScreenDisclaimerTest : BaseSettingsScreenTest() {
@@ -53,9 +52,7 @@ class SettingsScreenDisclaimerTest : BaseSettingsScreenTest() {
   @Test
   fun settingsScreen_privacySection_telemetryToggle_callsViewModel() {
     updateState { current ->
-      current.copy(
-        privacyPreference = PrivacyPreference(telemetryOptIn = false)
-      )
+      current.copy(privacyPreference = PrivacyPreference(telemetryOptIn = false))
     }
     renderSettingsScreen()
 
@@ -109,9 +106,8 @@ class SettingsScreenDisclaimerTest : BaseSettingsScreenTest() {
   fun settingsScreen_privacySection_showsConsentAcknowledgedState() {
     updateState { current ->
       current.copy(
-        privacyPreference = PrivacyPreference(
-          consentAcknowledgedAt = Instant.parse("2024-01-01T00:00:00Z")
-        )
+        privacyPreference =
+          PrivacyPreference(consentAcknowledgedAt = Instant.parse("2024-01-01T00:00:00Z"))
       )
     }
     renderSettingsScreen()
@@ -176,9 +172,7 @@ class SettingsScreenDisclaimerTest : BaseSettingsScreenTest() {
   fun settingsScreen_exportWarningDismissed_skipsDialog() {
     // Set up state with export warnings dismissed
     updateState { current ->
-      current.copy(
-        privacyPreference = PrivacyPreference(exportWarningsDismissed = true)
-      )
+      current.copy(privacyPreference = PrivacyPreference(exportWarningsDismissed = true))
     }
     renderSettingsScreen()
 
@@ -204,9 +198,7 @@ class SettingsScreenDisclaimerTest : BaseSettingsScreenTest() {
   fun settingsScreen_exportWarningNotDismissed_showsDialog() {
     // Set up state with export warnings NOT dismissed
     updateState { current ->
-      current.copy(
-        privacyPreference = PrivacyPreference(exportWarningsDismissed = false)
-      )
+      current.copy(privacyPreference = PrivacyPreference(exportWarningsDismissed = false))
     }
     renderSettingsScreen()
 

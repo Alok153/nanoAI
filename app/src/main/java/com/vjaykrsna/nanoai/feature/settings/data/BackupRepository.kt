@@ -19,7 +19,7 @@ interface BackupDataSource {
     includeChatHistory: Boolean,
   ): NanoAIResult<String>
 
-  suspend fun importBackup(sourcePath: String): NanoAIResult<Unit>
+  suspend fun importBackup(sourcePath: String): NanoAIResult<ImportSummary>
 
   suspend fun validateBackup(sourcePath: String): NanoAIResult<ImportSummary>
 }
@@ -37,14 +37,17 @@ constructor(
     destinationPath: String,
     includeChatHistory: Boolean,
   ): NanoAIResult<String> {
-    Log.i(TAG, "Starting export backup to $destinationPath (includeChatHistory=$includeChatHistory)")
+    Log.i(
+      TAG,
+      "Starting export backup to $destinationPath (includeChatHistory=$includeChatHistory)",
+    )
     return exportBackupUseCase.invoke(destinationPath, includeChatHistory).also { result ->
       when (result) {
         is NanoAIResult.Success -> {
           Log.w(
             TAG,
             "ENCRYPTION_WARNING: Export completed to ${result.value}. " +
-              "Backup is NOT encrypted - user should store securely and delete when no longer needed."
+              "Backup is NOT encrypted - user should store securely and delete when no longer needed.",
           )
         }
         else -> Log.e(TAG, "Export backup failed: $result")
@@ -52,15 +55,15 @@ constructor(
     }
   }
 
-  override suspend fun importBackup(sourcePath: String): NanoAIResult<Unit> {
+  override suspend fun importBackup(sourcePath: String): NanoAIResult<ImportSummary> {
     Log.i(TAG, "Starting import backup from $sourcePath")
     return mapImportResult(importService.importBackup(BackupLocation(sourcePath))) { result ->
       Log.i(
         TAG,
         "Import completed: ${result.value.personasImported + result.value.personasUpdated} personas, " +
-          "${result.value.providersImported + result.value.providersUpdated} providers"
+          "${result.value.providersImported + result.value.providersUpdated} providers",
       )
-      success(Unit)
+      success(result.value)
     }
   }
 
@@ -70,7 +73,7 @@ constructor(
       Log.i(
         TAG,
         "Validation completed: ${result.value.personasImported + result.value.personasUpdated} personas, " +
-          "${result.value.providersImported + result.value.providersUpdated} providers would be restored"
+          "${result.value.providersImported + result.value.providersUpdated} providers would be restored",
       )
       success(result.value)
     }
@@ -108,7 +111,7 @@ class DefaultBackupRepository @Inject constructor(private val dataSource: Backup
     includeChatHistory: Boolean,
   ): NanoAIResult<String> = dataSource.exportBackup(destinationPath, includeChatHistory)
 
-  override suspend fun importBackup(sourcePath: String): NanoAIResult<Unit> =
+  override suspend fun importBackup(sourcePath: String): NanoAIResult<ImportSummary> =
     dataSource.importBackup(sourcePath)
 
   override suspend fun validateBackup(sourcePath: String): NanoAIResult<ImportSummary> =

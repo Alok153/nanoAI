@@ -206,13 +206,15 @@ internal class SettingsBackupActions(
         val location = BackupLocation(uri.toString())
         when (val validation = backupUseCase.validateBackup(location.value)) {
           is NanoAIResult.Success -> {
-            val summary = validation.value
             when (val result = backupUseCase.importBackup(location.value)) {
-              is NanoAIResult.Success -> emitEvent(SettingsUiEvent.ImportCompleted(summary))
+              is NanoAIResult.Success -> emitEvent(SettingsUiEvent.ImportCompleted(result.value))
               else -> emitError(result.toErrorEnvelope(IMPORT_FAILURE_MESSAGE))
             }
           }
-          else -> emitError(validation.toErrorEnvelope(IMPORT_VALIDATION_FAILURE_MESSAGE))
+          else -> {
+            val envelope = validation.toErrorEnvelope(IMPORT_VALIDATION_FAILURE_MESSAGE)
+            emitError(envelope.copy(userMessage = IMPORT_VALIDATION_FAILURE_MESSAGE))
+          }
         }
       } catch (error: Throwable) {
         emitError(error.toErrorEnvelope(IMPORT_FAILURE_MESSAGE))

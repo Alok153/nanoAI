@@ -1,100 +1,100 @@
-# Tasks: Offline Multimodal nanoAI Assistant
+---
 
-**Input**: Design documents from /specs/001-foundation/
-**Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/
+description: "Tasks for 001-foundation feature"
+
+---
+
+# Tasks: Offline Multimodal nanoAI Assistant
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-- [x] T001 Install repo hooks to enforce spotless/detekt via [scripts/hooks/install-hooks.sh](scripts/hooks/install-hooks.sh)
-- [x] T002 [P] Add `verifyCoverageThresholds` to local pre-commit guidance in [docs/development/BUILD_WORKFLOW.md](docs/development/BUILD_WORKFLOW.md)
-- [x] T003 [P] Refresh quality gate configs for feature branch in [config/quality/quality-gates.json](config/quality/quality-gates.json) and [config/quality/conventions.json](config/quality/conventions.json)
-- [x] T004 Ensure gradle plugin versions aligned with plan in [gradle/libs.versions.toml](gradle/libs.versions.toml) (no downgrades)
+- [ ] T001 [P] Document current prerequisite results from .specify/scripts/bash/check-prerequisites.sh in specs/001-foundation/research.md (capture FEATURE_DIR, AVAILABLE_DOCS)
+- [ ] T002 [P] Align feature scope with AGENTS.md and docs/architecture/ARCHITECTURE.md; note any conflicts in specs/001-foundation/research.md
+- [ ] T003 [P] Inventory current coverage gates and CI commands in config/testing/coverage and config/quality/quality-gates.json; summarize gating steps in specs/001-foundation/research.md
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
-- [x] T005 Create feature-owned domain module skeletons for audio, image, library, settings under [app/src/main/java/com/vjaykrsna/nanoai/feature/](app/src/main/java/com/vjaykrsna/nanoai/feature/) with `domain` and `data` packages respecting UseCase → Repository → DataSource
-- [x] T006 Add shared sealed result/error types for feature domains in [app/src/main/java/com/vjaykrsna/nanoai/core/model/NanoAIResult.kt](app/src/main/java/com/vjaykrsna/nanoai/core/model/NanoAIResult.kt) to be reused by feature modules (depends on T005)
-- [x] T007 [P] Wire Hilt bindings for new feature repositories in [app/src/main/java/com/vjaykrsna/nanoai/feature/di/FeatureRepositoryModule.kt](app/src/main/java/com/vjaykrsna/nanoai/feature/di/FeatureRepositoryModule.kt) (depends on T005)
-- [x] T008 [P] Add Room schema updates for ModelPackage/DownloadTask/PersonaProfile to match data-model.md in [app/src/main/java/com/vjaykrsna/nanoai/core/data/db](app/src/main/java/com/vjaykrsna/nanoai/core/data/db) with migrations and tests (depends on T005)
-- [x] T009 Establish MediaPipe runtime abstraction interface in [app/src/main/java/com/vjaykrsna/nanoai/core/runtime/LocalRuntimeGateway.kt](app/src/main/java/com/vjaykrsna/nanoai/core/runtime/LocalRuntimeGateway.kt) with IO dispatcher usage and tests
-- [x] T010 Add offline/online connectivity notifier shared flow in [app/src/main/java/com/vjaykrsna/nanoai/core/device/ConnectivityObserver.kt](app/src/main/java/com/vjaykrsna/nanoai/core/device/ConnectivityObserver.kt) with Turbine tests
+- [ ] T004 Audit chat persistence for plaintext storage by reviewing app/src/main/java/com/vjaykrsna/nanoai/core/data/db/entities/MessageEntity.kt and related DAOs to confirm text field handling; record findings in specs/001-foundation/research.md
+- [ ] T005 Assess encryption mechanisms available (EncryptedSecretStore, Room support) in app/src/main/java/com/vjaykrsna/nanoai/core/security and app/src/main/java/com/vjaykrsna/nanoai/core/data/db; propose options in specs/001-foundation/research.md (depends on T004)
+- [ ] T006 Define remediation plan for encrypted message storage and migration in specs/001-foundation/plan.md and data-model alignment in specs/001-foundation/data-model.md (depends on T005)
+- [ ] T007 [P] Profile build pipeline to validate over-engineering claim: measure clean build and incremental build times, attribute plugin/config impacts from build-logic/ and app/build.gradle.kts, and propose actions to reach <2 min local build; log bottlenecks and decisions in specs/001-foundation/research.md
+- [ ] T008 [P] Map use-case/repository indirections (e.g., ChatFeatureCoordinator, thin GetDefaultPersonaUseCase) across app/src/main/java/com/vjaykrsna/nanoai/feature/chat and core/domain to quantify redundancy; summarize counts, candidate merges, and layer-preserving options in specs/001-foundation/research.md
+- [ ] T009 Establish migration test scaffolding for encrypted chat storage in app/src/test/java/com/vjaykrsna/nanoai/core/data/db/MessageDaoMigrationTest.kt (failing test that expects ciphertext) (depends on T006)
+- [ ] T010 Update Room schema and migration plan documents in specs/001-foundation/contracts/model-manifest.json notes and docs/architecture/ARCHITECTURE.md section references (depends on T006)
+- [ ] T011 [P] Quantify thin use cases/coordinator redundancy (sample 200+ files) and propose consolidation that retains ViewModel → UseCase → Repository → DataSource flow; document keep/delete/merge rationale in specs/001-foundation/research.md (depends on T008)
+- [ ] T012 Add architecture guard: checklist in specs/001-foundation/plan.md to prevent direct ViewModel → Repository shortcuts during refactors; require code review gate noted in specs/001-foundation/research.md (depends on T011)
+- [ ] T013 [P] Validate export/import warning behavior and data classification (Secrets vs Sensitive) across settings and chat flows; add gaps and required warnings to specs/001-foundation/research.md (depends on T006)
+- [ ] T014 [P] Validate credential encryption and decryption paths with tests in app/src/test/java/com/vjaykrsna/nanoai/core/security/EncryptedSecretStoreTest.kt and app/src/test/java/com/vjaykrsna/nanoai/core/data/datastore/CredentialStoreTest.kt (depends on T005)
 
-## Phase 3: User Story 1 - Local-first Private Assistant (Priority: P1) 🎯
+## Phase 3: User Story 1 - Local-first Private Assistant (Priority: P1)
 
 ### Tests
-- [x] T011 [P] [US1] Add failing offline chat ViewModel tests covering local model selection and banner in [app/src/test/java/com/vjaykrsna/nanoai/feature/chat/ChatViewModelTest.kt](app/src/test/java/com/vjaykrsna/nanoai/feature/chat/ChatViewModelTest.kt) (depends on T005, T009, T010)
-- [x] T012 [P] [US1] Add repository/use case unit tests for local inference in [app/src/test/java/com/vjaykrsna/nanoai/feature/chat/domain/LocalInferenceUseCaseTest.kt](app/src/test/java/com/vjaykrsna/nanoai/feature/chat/domain/LocalInferenceUseCaseTest.kt) (depends on T005, T009)
-- [x] T013 [US1] Add Compose UI test for offline chat flow and accessibility labels in [app/src/androidTest/java/com/vjaykrsna/nanoai/feature/chat/ChatScreenTest.kt](app/src/androidTest/java/com/vjaykrsna/nanoai/feature/chat/ChatScreenTest.kt) (depends on T011)
+- [ ] T015 [P] [US1] Add offline chat integration test ensuring local inference with connectivity loss in app/src/androidTest/java/com/vjaykrsna/nanoai/feature/chat/ui/ChatScreenOfflineTest.kt (fails until wiring complete)
+- [ ] T016 [P] [US1] Add unit test covering encrypted message persistence path in app/src/test/java/com/vjaykrsna/nanoai/core/data/db/MessageDaoTest.kt (depends on T009)
 
 ### Implementation
-- [x] T014 [P] [US1] Implement `LocalInferenceUseCase` and repository using MediaPipe runtime in [app/src/main/java/com/vjaykrsna/nanoai/feature/chat/domain](app/src/main/java/com/vjaykrsna/nanoai/feature/chat/domain) (depends on T009)
-- [x] T015 [P] [US1] Add persona-aware chat state models and mappers in [app/src/main/java/com/vjaykrsna/nanoai/feature/chat/model](app/src/main/java/com/vjaykrsna/nanoai/feature/chat/model) (depends on T005)
-- [x] T016 [US1] Update `ChatViewModel` to route through use case and surface offline indicator in [app/src/main/java/com/vjaykrsna/nanoai/feature/chat/presentation/ChatViewModel.kt](app/src/main/java/com/vjaykrsna/nanoai/feature/chat/presentation/ChatViewModel.kt) (depends on T014, T015, T010)
-- [x] T017 [US1] Add chat screen UI for offline banner and error envelopes in [app/src/main/java/com/vjaykrsna/nanoai/feature/chat/presentation/ChatScreen.kt](app/src/main/java/com/vjaykrsna/nanoai/feature/chat/presentation/ChatScreen.kt) (depends on T016)
+- [ ] T017 [US1] Implement encrypted text field for MessageEntity in app/src/main/java/com/vjaykrsna/nanoai/core/data/db/entities/MessageEntity.kt with migration in app/src/main/java/com/vjaykrsna/nanoai/core/data/db/migrations (depends on T009)
+- [ ] T018 [US1] Wire encryption/decryption in MessageDao and repository layer app/src/main/java/com/vjaykrsna/nanoai/core/data/db/daos/MessageDao.kt and app/src/main/java/com/vjaykrsna/nanoai/core/data/repositories/MessageRepository.kt (depends on T017)
+- [ ] T019 [US1] Ensure ChatFeatureCoordinator and ChatUseCases in app/src/main/java/com/vjaykrsna/nanoai/feature/chat/domain/ use encrypted repository APIs and propagate errors (depends on T018)
+- [ ] T020 [US1] Update ChatViewModel and PersonaSwitcherViewModel in app/src/main/java/com/vjaykrsna/nanoai/feature/chat/presentation/ to show offline indicator and handle encrypted message failures gracefully (depends on T019)
 
 ## Phase 4: User Story 2 - Model Library Management (Priority: P1)
 
 ### Tests
-- [x] T018 [P] [US2] Add download queue repository tests for pause/resume/concurrency=1 in [app/src/test/java/com/vjaykrsna/nanoai/feature/library/data/ModelDownloadRepositoryTest.kt](app/src/test/java/com/vjaykrsna/nanoai/feature/library/data/ModelDownloadRepositoryTest.kt) (depends on T008)
-- [x] T019 [P] [US2] Add ViewModel tests for progress center and deletion safety in [app/src/test/java/com/vjaykrsna/nanoai/feature/library/ModelLibraryViewModelTest.kt](app/src/test/java/com/vjaykrsna/nanoai/feature/library/ModelLibraryViewModelTest.kt) (depends on T018)
-- [x] T020 [US2] Add Compose UI test for download progress/pause/resume in [app/src/androidTest/java/com/vjaykrsna/nanoai/feature/library/ModelLibraryScreenTest.kt](app/src/androidTest/java/com/vjaykrsna/nanoai/feature/library/ModelLibraryScreenTest.kt) (depends on T019)
+- [ ] T021 [P] [US2] Extend ModelLibraryViewModel tests for download queue/error surfacing in app/src/test/java/com/vjaykrsna/nanoai/feature/library/presentation/ModelLibraryViewModelTest.kt
+- [ ] T022 [P] [US2] Add instrumentation test for pause/resume/delete flows under connectivity changes in app/src/androidTest/java/com/vjaykrsna/nanoai/feature/library/ui/ModelLibraryFlowTest.kt
 
 ### Implementation
-- [x] T021 [P] [US2] Implement model library domain use cases (queue download, pause, resume, delete) in [app/src/main/java/com/vjaykrsna/nanoai/feature/library/domain](app/src/main/java/com/vjaykrsna/nanoai/feature/library/domain) (depends on T005, T008)
-- [x] T022 [P] [US2] Implement repository with checksum validation and concurrency limit in [app/src/main/java/com/vjaykrsna/nanoai/feature/library/data/ModelDownloadRepository.kt](app/src/main/java/com/vjaykrsna/nanoai/feature/library/data/ModelDownloadRepository.kt) (depends on T021)
-- [x] T023 [US2] Update Model Library ViewModel and UI for progress center, delete safety, and connectivity handling in [app/src/main/java/com/vjaykrsna/nanoai/feature/library/presentation/ModelLibraryViewModel.kt](app/src/main/java/com/vjaykrsna/nanoai/feature/library/presentation/ModelLibraryViewModel.kt) and [app/src/main/java/com/vjaykrsna/nanoai/feature/library/presentation/ModelLibraryScreen.kt](app/src/main/java/com/vjaykrsna/nanoai/feature/library/presentation/ModelLibraryScreen.kt) (depends on T022, T010)
+- [ ] T023 [US2] Harden DownloadTask handling and concurrency defaults in app/src/main/java/com/vjaykrsna/nanoai/core/data/download/ and related use cases app/src/main/java/com/vjaykrsna/nanoai/feature/library/domain/ (depends on T021)
+- [ ] T024 [US2] Improve model deletion safety notifications and inference stop hooks in app/src/main/java/com/vjaykrsna/nanoai/feature/library/presentation/ModelLibraryViewModel.kt and UI components app/src/main/java/com/vjaykrsna/nanoai/feature/library/ui/ (depends on T023)
+- [ ] T025 [US2] Enforce checksum/signature verification for downloads (FR-041) with tests in app/src/test/java/com/vjaykrsna/nanoai/core/data/download/DownloadVerifierTest.kt and instrumentation coverage in app/src/androidTest/java/com/vjaykrsna/nanoai/feature/library/ui/ModelDownloadIntegrityTest.kt (depends on T023)
+- [ ] T026 [US2] Remove nested sub-ViewModels inside ModelLibraryViewModel while keeping UseCase/Repository flow; consolidate state holders in app/src/main/java/com/vjaykrsna/nanoai/feature/library/presentation/ModelLibraryViewModel.kt and update corresponding tests (depends on T021)
 
 ## Phase 5: User Story 3 - Personas & Context Control (Priority: P2)
 
 ### Tests
-- [x] T024 [P] [US3] Add persona repository/use case tests for switching and logging in [app/src/test/java/com/vjaykrsna/nanoai/feature/settings/domain/PersonaUseCaseTest.kt](app/src/test/java/com/vjaykrsna/nanoai/feature/settings/domain/PersonaUseCaseTest.kt) (depends on T005, T008)
-- [x] T025 [US3] Add ViewModel tests for persona switch flow and thread continuation in [app/src/test/java/com/vjaykrsna/nanoai/feature/chat/PersonaSwitcherViewModelTest.kt](app/src/test/java/com/vjaykrsna/nanoai/feature/chat/PersonaSwitcherViewModelTest.kt) (depends on T024)
+- [ ] T027 [P] [US3] Add persona switch test covering continue vs new thread choice in app/src/androidTest/java/com/vjaykrsna/nanoai/feature/chat/ui/PersonaSwitchTest.kt
 
 ### Implementation
-- [x] T026 [P] [US3] Implement persona domain use cases and repository in [app/src/main/java/com/vjaykrsna/nanoai/feature/settings/domain](app/src/main/java/com/vjaykrsna/nanoai/feature/settings/domain) and [app/src/main/java/com/vjaykrsna/nanoai/feature/settings/data](app/src/main/java/com/vjaykrsna/nanoai/feature/settings/data) (depends on T005, T008)
-- [x] T027 [US3] Wire persona switcher UI and state handling in [app/src/main/java/com/vjaykrsna/nanoai/feature/chat/presentation/PersonaSwitcher.kt](app/src/main/java/com/vjaykrsna/nanoai/feature/chat/presentation/PersonaSwitcher.kt) and [app/src/main/java/com/vjaykrsna/nanoai/feature/chat/presentation/ChatViewModel.kt](app/src/main/java/com/vjaykrsna/nanoai/feature/chat/presentation/ChatViewModel.kt) (depends on T026, T025)
+- [ ] T028 [US3] Simplify persona switching flow in PersonaSwitcherViewModel and related use cases in app/src/main/java/com/vjaykrsna/nanoai/feature/chat/presentation/PersonaSwitcherViewModel.kt and app/src/main/java/com/vjaykrsna/nanoai/feature/chat/domain/PersonaUseCases.kt to reduce redundant indirection while keeping architecture contract (depends on T008)
+- [ ] T029 [US3] Persist persona switch choice per settings in app/src/main/java/com/vjaykrsna/nanoai/core/data/datastore/ and surface in chat UI (depends on T028)
+- [ ] T030 [US3] Consolidate fragmented chat UI state classes in app/src/main/java/com/vjaykrsna/nanoai/feature/chat/presentation/state/ to reduce duplication while preserving sealed-state patterns; update composables and tests accordingly (depends on T028)
 
 ## Phase 6: User Story 4 - Settings, Privacy & Backup (Priority: P2)
 
 ### Tests
-- [x] T028 [P] [US4] Add export/import unit tests for deterministic persona/provider restore in [app/src/test/java/com/vjaykrsna/nanoai/feature/settings/data/BackupRepositoryTest.kt](app/src/test/java/com/vjaykrsna/nanoai/feature/settings/data/BackupRepositoryTest.kt) (depends on T008)
-- [x] T029 [US4] Add UI test for disclaimer, export warning, and import success in [app/src/androidTest/java/com/vjaykrsna/nanoai/feature/settings/SettingsScreenTest.kt](app/src/androidTest/java/com/vjaykrsna/nanoai/feature/settings/SettingsScreenTest.kt) (depends on T028)
+- [ ] T031 [P] [US4] Add export/import round-trip test ensuring warning on unencrypted bundle in app/src/test/java/com/vjaykrsna/nanoai/feature/settings/export/ExportImportTest.kt
 
 ### Implementation
-- [x] T030 [P] [US4] Implement backup/export/import repository with encryption warnings in [app/src/main/java/com/vjaykrsna/nanoai/feature/settings/data/BackupRepository.kt](app/src/main/java/com/vjaykrsna/nanoai/feature/settings/data/BackupRepository.kt) (depends on T028)
-- [x] T031 [US4] Update Settings ViewModel and screen for disclaimer logging, privacy dashboard, and backup actions in [app/src/main/java/com/vjaykrsna/nanoai/feature/settings/presentation/SettingsViewModel.kt](app/src/main/java/com/vjaykrsna/nanoai/feature/settings/presentation/SettingsViewModel.kt) and [app/src/main/java/com/vjaykrsna/nanoai/feature/settings/presentation/SettingsScreen.kt](app/src/main/java/com/vjaykrsna/nanoai/feature/settings/presentation/SettingsScreen.kt) (depends on T030)
+- [ ] T032 [US4] Ensure first-launch disclaimer logging and privacy dashboard wiring in app/src/main/java/com/vjaykrsna/nanoai/feature/settings/presentation/SettingsViewModel.kt and UI in app/src/main/java/com/vjaykrsna/nanoai/feature/settings/ui/ (depends on T031)
+- [ ] T033 [US4] Harden API credential encryption paths in app/src/main/java/com/vjaykrsna/nanoai/core/security/EncryptedSecretStore.kt and related DataStore schemas app/src/main/java/com/vjaykrsna/nanoai/core/data/datastore/ (depends on T005)
+- [ ] T034 [US4] Enforce export/import warnings for unencrypted bundles across settings and chat entry points with tests in app/src/test/java/com/vjaykrsna/nanoai/feature/settings/export/ExportWarningTest.kt and instrumentation coverage in app/src/androidTest/java/com/vjaykrsna/nanoai/feature/settings/ui/ExportFlowTest.kt (depends on T031)
 
 ## Phase 7: User Story 5 - Robust Shell & Navigation (Priority: P3)
 
 ### Tests
-- [x] T032 [P] [US5] Add navigation shell ViewModel tests for connectivity banners and context preservation in [app/src/test/java/com/vjaykrsna/nanoai/feature/uiux/ShellViewModelTest.kt](app/src/test/java/com/vjaykrsna/nanoai/feature/uiux/ShellViewModelTest.kt) (depends on T010)
-- [x] T033 [US5] Add Compose UI test for Home/Chat/Library/Settings navigation with offline/online toggles in [app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/ShellNavigationTest.kt](app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/ShellNavigationTest.kt) (depends on T032)
+- [ ] T035 [P] [US5] Expand shell navigation tests for connectivity banners and progress center in app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/ShellNavigationTest.kt
 
 ### Implementation
-- [x] T034 [P] [US5] Implement connectivity-aware shell state and progress center integration in [app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/presentation/ShellViewModel.kt](app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/presentation/ShellViewModel.kt) (depends on T010)
-- [x] T035 [US5] Update shell UI for sidebar navigation, banners, and command palette hooks in [app/src/main/java/com/vjaykrsna/nanoai/shared/ui/shell/NanoShellScaffold.kt](app/src/main/java/com/vjaykrsna/nanoai/shared/ui/shell/NanoShellScaffold.kt) (depends on T034)
+- [ ] T036 [US5] Refine shell state handling for connectivity and queued jobs in app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/presentation/ShellViewModel.kt and UI components app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ui/ (depends on T035)
+- [ ] T037 [US5] Add connectivity-aware retry/backoff logic tests for shell progress center and queue resume behavior in app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/ShellRetryTest.kt (depends on T035)
 
 ## Phase 8: Polish & Cross-Cutting
 
-- [ ] T036 [P] Resolve at least 10 TODO/FIXME items focusing on image/audio/runtime placeholders in [app/src/main/java/com/vjaykrsna/nanoai](app/src/main/java/com/vjaykrsna/nanoai) with linked commits
-- [ ] T037 [P] Align architecture docs with feature-owned domain migration in [docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md) and [docs/architecture/project-structure.md](docs/architecture/project-structure.md) (depends on T005)
-- [ ] T038 [P] Add Roborazzi or screenshot baselines for critical screens in [app/src/androidTest/java/com/vjaykrsna/nanoai](app/src/androidTest/java/com/vjaykrsna/nanoai) to guard UI regressions
-- [ ] T039 Add macrobenchmark for cold start and navigation in [macrobenchmark/src/main/java/com/vjaykrsna/nanoai/macrobenchmark/StartupBenchmark.kt](macrobenchmark/src/main/java/com/vjaykrsna/nanoai/macrobenchmark/StartupBenchmark.kt)
-- [ ] T040 [P] Update quickstart validation steps to reflect offline-first flows in [specs/001-foundation/quickstart.md](specs/001-foundation/quickstart.md) and add acceptance traceability
-- [ ] T041 Run full gate: `./gradlew spotlessCheck detekt testDebugUnitTest verifyCoverageThresholds` and capture results in [app/build/reports](app/build/reports)
+- [ ] T038 [P] Update docs/architecture/ARCHITECTURE.md and specs/001-foundation/spec.md to reflect encryption, simplified indirections, and model library changes (depends on T017, T023, T028)
+- [ ] T039 [P] Refresh quickstart validation checklist in specs/001-foundation/quickstart.md with offline encryption checks and model deletion cases (depends on T038)
+- [ ] T040 Run gates: ./gradlew spotlessCheck detekt testDebugUnitTest verifyCoverageThresholds and capture summaries in specs/001-foundation/research.md (depends on T036)
+- [ ] T041 [P] Run coverage report, map gaps by layer (ViewModel/Domain, Data, UI), and add targeted test backfill tasks to meet ≥75/70/65 thresholds; record in specs/001-foundation/research.md
+- [ ] T042 [P] Replace manual fakes with MockK where applicable (prioritize chat/library tests) in app/src/test/java/... and document reductions in specs/001-foundation/research.md
+- [ ] T043 [P] Add accessibility audit and fixes (semantics, focus order, contrast, touch targets) for chat, model library, and shell screens; cover with UI tests in app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/AccessibilityTest.kt
+- [ ] T044 [P] Add performance validation via macrobenchmarks for startup and navigation budgets (<1.5s cold start, <5% jank) using macrobenchmark module; document results in specs/001-foundation/research.md
+- [ ] T045 [P] Validate provider gateway behaviors (config validation, status messaging, unsupported capability errors) with tests in app/src/test/java/com/vjaykrsna/nanoai/core/network/ProviderGatewayTest.kt and app/src/androidTest/java/com/vjaykrsna/nanoai/feature/settings/ui/ProviderStatusTest.kt
 
-## Dependencies & Execution Order
-- Phase 1 precedes all work; Phase 2 blocks stories.
-- Story phases can proceed after Phase 2; within each story, tests (T011/T012/T013, etc.) precede implementation.
-- Tasks touching the same files declare dependencies in descriptions; prefer [P] tasks in distinct paths for parallelism.
+---
+
+## Phase Dependencies
+- Setup → Foundational → User Stories (US1–US5 in priority order) → Polish
+- Foundational tasks T004–T010 block all story phases; US phases can proceed in parallel after Foundational completes, respecting per-task dependencies.
 
 ## Parallel Opportunities
-- [P] tasks across phases may run concurrently when file paths do not overlap (see [P] markers).
-
-## Suggested MVP Scope
-- Complete Phase 1–2 and User Stories 1–2 (P1) to deliver offline chat plus model library management.
-
-## Totals
-- Overall tasks: 41
-- Per story: US1 (7), US2 (6), US3 (4), US4 (4), US5 (4)
-- Parallel-capable tasks: 17
+- Tasks marked [P] can be executed in parallel where file paths do not overlap (e.g., T001–T003, T007–T008, T011–T012, T017–T018).

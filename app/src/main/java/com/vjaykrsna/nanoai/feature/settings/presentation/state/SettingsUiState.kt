@@ -24,22 +24,23 @@ data class SettingsUiState(
 ) : NanoAIViewState {
 
   /**
-   * Privacy dashboard summary derived from current state.
-   * Shows consent status, telemetry opt-in, and disclaimer exposure count.
+   * Privacy dashboard summary derived from current state. Shows consent status, telemetry opt-in,
+   * and disclaimer exposure count.
    */
   val privacyDashboardSummary: PrivacyDashboardSummary
-    get() = PrivacyDashboardSummary(
-      isConsentAcknowledged = privacyPreference.consentAcknowledgedAt != null,
-      isTelemetryEnabled = privacyPreference.telemetryOptIn,
-      disclaimerShownCount = privacyPreference.disclaimerShownCount,
-      exportWarningsDismissed = privacyPreference.exportWarningsDismissed,
-      retentionPolicy = privacyPreference.retentionPolicy.name,
-    )
+    get() =
+      PrivacyDashboardSummary(
+        isConsentAcknowledged = privacyPreference.consentAcknowledgedAt != null,
+        isTelemetryEnabled = privacyPreference.telemetryOptIn,
+        disclaimerShownCount = privacyPreference.disclaimerShownCount,
+        exportWarningsDismissed = privacyPreference.exportWarningsDismissed,
+        retentionPolicy = privacyPreference.retentionPolicy.name,
+      )
 }
 
 /**
- * Summary data for privacy dashboard display.
- * Provides an overview of current privacy-related settings.
+ * Summary data for privacy dashboard display. Provides an overview of current privacy-related
+ * settings.
  */
 data class PrivacyDashboardSummary(
   val isConsentAcknowledged: Boolean,

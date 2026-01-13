@@ -5,8 +5,8 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.CommandCategory
 import com.vjaykrsna.nanoai.core.domain.model.uiux.CommandPaletteState
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
 import com.vjaykrsna.nanoai.core.domain.model.uiux.PaletteSource
-import com.vjaykrsna.nanoai.core.domain.model.uiux.ShellWindowSizeClass
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ShellWindowHeightClass
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ShellWindowSizeClass
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ShellWindowWidthClass
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UndoPayload
 import com.vjaykrsna.nanoai.core.domain.repository.NavigationRepository

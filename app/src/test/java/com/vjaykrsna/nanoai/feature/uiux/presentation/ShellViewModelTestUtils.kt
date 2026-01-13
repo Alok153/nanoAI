@@ -29,7 +29,6 @@ import com.vjaykrsna.nanoai.core.domain.uiux.ProgressCenterCoordinator
 import com.vjaykrsna.nanoai.core.domain.uiux.QueueJobUseCase
 import com.vjaykrsna.nanoai.core.domain.uiux.ThemeOperationsUseCase
 import com.vjaykrsna.nanoai.core.domain.uiux.UndoActionUseCase
-import com.vjaykrsna.nanoai.core.domain.uiux.navigation.Screen
 import java.util.UUID
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -88,54 +87,6 @@ internal class NoopUserProfileRepository : UserProfileRepository {
 
   override fun observeUIStateSnapshot(userId: String): Flow<UIStateSnapshot?> = uiStateFlow
 
-  override suspend fun updateLeftDrawerOpen(userId: String, open: Boolean) {
-    val current =
-      uiStateFlow.value
-        ?: UIStateSnapshot(
-          userId = userId,
-          expandedPanels = emptyList(),
-          recentActions = emptyList(),
-          isSidebarCollapsed = false,
-        )
-    uiStateFlow.value = current.copy(isLeftDrawerOpen = open)
-  }
-
-  override suspend fun updateRightDrawerState(userId: String, open: Boolean, panel: String?) {
-    val current =
-      uiStateFlow.value
-        ?: UIStateSnapshot(
-          userId = userId,
-          expandedPanels = emptyList(),
-          recentActions = emptyList(),
-          isSidebarCollapsed = false,
-        )
-    uiStateFlow.value = current.copy(isRightDrawerOpen = open, activeRightPanel = panel)
-  }
-
-  override suspend fun updateActiveModeRoute(userId: String, route: String) {
-    val current =
-      uiStateFlow.value
-        ?: UIStateSnapshot(
-          userId = userId,
-          expandedPanels = emptyList(),
-          recentActions = emptyList(),
-          isSidebarCollapsed = false,
-        )
-    uiStateFlow.value = current.copy(activeModeRoute = route)
-  }
-
-  override suspend fun updateCommandPaletteVisibility(userId: String, visible: Boolean) {
-    val current =
-      uiStateFlow.value
-        ?: UIStateSnapshot(
-          userId = userId,
-          expandedPanels = emptyList(),
-          recentActions = emptyList(),
-          isSidebarCollapsed = false,
-        )
-    uiStateFlow.value = current.copy(isCommandPaletteVisible = visible)
-  }
-
   override suspend fun recordCommandPaletteRecent(commandId: String) = Unit
 
   override suspend fun setCommandPaletteRecents(commandIds: List<String>) = Unit
@@ -192,10 +143,8 @@ internal class FakeNavigationRepository(
   }
 
   override suspend fun openMode(modeId: ModeId) {
-    val route = Screen.fromModeId(modeId).route
-    userProfileRepository.updateActiveModeRoute("default", route)
-    userProfileRepository.updateLeftDrawerOpen("default", false)
-    userProfileRepository.updateCommandPaletteVisibility("default", false)
+    // No-op: navigation state is handled within the real repository; tests rely on flow updates
+    // emitted elsewhere.
   }
 
   override suspend fun toggleLeftDrawer() = Unit
@@ -203,7 +152,7 @@ internal class FakeNavigationRepository(
   override suspend fun setLeftDrawer(open: Boolean) = Unit
 
   override suspend fun toggleRightDrawer(panel: RightPanel) {
-    userProfileRepository.updateRightDrawerState("default", true, panel.name)
+    // No-op for simplified test repository
   }
 
   override suspend fun showCommandPalette(

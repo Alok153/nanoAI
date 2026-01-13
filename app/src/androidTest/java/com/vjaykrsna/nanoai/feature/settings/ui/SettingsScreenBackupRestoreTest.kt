@@ -1,6 +1,5 @@
 package com.vjaykrsna.nanoai.feature.settings.ui
 
-import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -348,9 +347,7 @@ class SettingsScreenBackupRestoreTest : BaseSettingsScreenTest() {
 
     composeTestRule.runOnIdle {
       emitEvent(
-        SettingsUiEvent.ErrorRaised(
-          NanoAIErrorEnvelope("Failed to export backup: Disk full")
-        )
+        SettingsUiEvent.ErrorRaised(NanoAIErrorEnvelope("Failed to export backup: Disk full"))
       )
     }
 

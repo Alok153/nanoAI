@@ -21,7 +21,7 @@ interface ModelDownloadsAndExportUseCaseInterface {
 
   suspend fun exportBackup(
     destinationPath: String,
-    includeChatHistory: Boolean,
+    includeChatHistory: Boolean = false,
   ): NanoAIResult<String>
 
   fun getDownloadProgress(taskId: UUID): Flow<Float>

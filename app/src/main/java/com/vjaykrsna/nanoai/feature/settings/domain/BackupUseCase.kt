@@ -11,7 +11,7 @@ interface BackupRepository {
     includeChatHistory: Boolean,
   ): NanoAIResult<String>
 
-  suspend fun importBackup(sourcePath: String): NanoAIResult<Unit>
+  suspend fun importBackup(sourcePath: String): NanoAIResult<ImportSummary>
 
   suspend fun validateBackup(sourcePath: String): NanoAIResult<ImportSummary>
 }
@@ -24,7 +24,7 @@ class BackupUseCase @Inject constructor(private val repository: BackupRepository
     includeChatHistory: Boolean,
   ): NanoAIResult<String> = repository.exportBackup(destinationPath, includeChatHistory)
 
-  suspend fun importBackup(sourcePath: String): NanoAIResult<Unit> =
+  suspend fun importBackup(sourcePath: String): NanoAIResult<ImportSummary> =
     repository.importBackup(sourcePath)
 
   suspend fun validateBackup(sourcePath: String): NanoAIResult<ImportSummary> =

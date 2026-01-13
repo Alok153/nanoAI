@@ -112,9 +112,7 @@ private fun LazyListScope.privacySettingsItems(
   state: SettingsUiState,
   actions: SettingsScreenActions,
 ) {
-  item {
-    PrivacyDashboardCard(summary = state.privacyDashboardSummary)
-  }
+  item { PrivacyDashboardCard(summary = state.privacyDashboardSummary) }
   item {
     PrivacySection(
       privacyPreferences = state.privacyPreference,
