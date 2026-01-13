@@ -25,11 +25,6 @@ data class UIStateSnapshotEntity(
   @ColumnInfo(name = "expanded_panels") val expandedPanels: List<String>,
   @ColumnInfo(name = "recent_actions") val recentActions: List<String>,
   @ColumnInfo(name = "sidebar_collapsed") val sidebarCollapsed: Boolean,
-  @ColumnInfo(name = "left_drawer_open") val leftDrawerOpen: Boolean,
-  @ColumnInfo(name = "right_drawer_open") val rightDrawerOpen: Boolean,
-  @ColumnInfo(name = "active_mode") val activeMode: String,
-  @ColumnInfo(name = "active_right_panel") val activeRightPanel: String?,
-  @ColumnInfo(name = "palette_visible") val paletteVisible: Boolean,
 )
 
 fun UIStateSnapshotEntity.toDomain(): UIStateSnapshot =
@@ -38,11 +33,6 @@ fun UIStateSnapshotEntity.toDomain(): UIStateSnapshot =
     expandedPanels = expandedPanels,
     recentActions = recentActions,
     isSidebarCollapsed = sidebarCollapsed,
-    isLeftDrawerOpen = leftDrawerOpen,
-    isRightDrawerOpen = rightDrawerOpen,
-    activeModeRoute = activeMode,
-    activeRightPanel = activeRightPanel,
-    isCommandPaletteVisible = paletteVisible,
   )
 
 fun UIStateSnapshot.toEntity(): UIStateSnapshotEntity =
@@ -51,9 +41,4 @@ fun UIStateSnapshot.toEntity(): UIStateSnapshotEntity =
     expandedPanels = expandedPanels,
     recentActions = recentActions,
     sidebarCollapsed = isSidebarCollapsed,
-    leftDrawerOpen = isLeftDrawerOpen,
-    rightDrawerOpen = isRightDrawerOpen,
-    activeMode = activeModeRoute,
-    activeRightPanel = activeRightPanel,
-    paletteVisible = isCommandPaletteVisible,
   )

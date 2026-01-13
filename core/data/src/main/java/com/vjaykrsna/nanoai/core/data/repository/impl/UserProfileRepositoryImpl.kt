@@ -85,22 +85,6 @@ constructor(
   override fun observeUIStateSnapshot(userId: String): Flow<UIStateSnapshot?> =
     local.observeUIStateSnapshot(userId)
 
-  override suspend fun updateLeftDrawerOpen(userId: String, open: Boolean) {
-    withContext(ioDispatcher) { local.setLeftDrawerOpen(userId, open) }
-  }
-
-  override suspend fun updateRightDrawerState(userId: String, open: Boolean, panel: String?) {
-    withContext(ioDispatcher) { local.setRightDrawerState(userId, open, panel) }
-  }
-
-  override suspend fun updateActiveModeRoute(userId: String, route: String) {
-    withContext(ioDispatcher) { local.setActiveModeRoute(userId, route) }
-  }
-
-  override suspend fun updateCommandPaletteVisibility(userId: String, visible: Boolean) {
-    withContext(ioDispatcher) { local.setCommandPaletteVisible(userId, visible) }
-  }
-
   override suspend fun recordCommandPaletteRecent(commandId: String) {
     withContext(ioDispatcher) { local.recordCommandPaletteRecent(commandId) }
   }

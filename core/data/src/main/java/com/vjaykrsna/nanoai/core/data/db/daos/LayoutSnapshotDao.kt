@@ -16,24 +16,13 @@ import kotlinx.coroutines.flow.Flow
  * synchronization for saved layout configurations.
  */
 @Dao
-interface LayoutSnapshotDao :
-  LayoutSnapshotObservationDao,
-  LayoutSnapshotReadDao,
-  LayoutSnapshotWriteDao,
-  LayoutSnapshotMutationDao,
-  LayoutSnapshotMaintenanceDao
-
-/** Observation helpers for layout snapshots. */
-interface LayoutSnapshotObservationDao {
+interface LayoutSnapshotDao {
   @Query("SELECT * FROM layout_snapshots WHERE user_id = :userId ORDER BY position ASC")
   fun observeByUserId(userId: String): Flow<List<LayoutSnapshotEntity>>
 
   @Query("SELECT * FROM layout_snapshots WHERE layout_id = :layoutId")
   fun observeById(layoutId: String): Flow<LayoutSnapshotEntity?>
-}
 
-/** Read helpers for layout snapshots. */
-interface LayoutSnapshotReadDao {
   @Query("SELECT * FROM layout_snapshots WHERE layout_id = :layoutId")
   suspend fun getById(layoutId: String): LayoutSnapshotEntity?
 
@@ -54,10 +43,7 @@ interface LayoutSnapshotReadDao {
         """
   )
   suspend fun findAllLayouts(userId: String): List<LayoutSnapshotEntity>
-}
 
-/** Write helpers for layout snapshots. */
-interface LayoutSnapshotWriteDao {
   @Insert(onConflict = OnConflictStrategy.REPLACE)
   suspend fun insert(snapshot: LayoutSnapshotEntity)
 
@@ -65,10 +51,7 @@ interface LayoutSnapshotWriteDao {
   suspend fun insertAll(snapshots: List<LayoutSnapshotEntity>)
 
   @Update suspend fun update(snapshot: LayoutSnapshotEntity): Int
-}
 
-/** Mutation helpers for layout snapshot attributes and ordering. */
-interface LayoutSnapshotMutationDao {
   @Query("UPDATE layout_snapshots SET name = :name WHERE layout_id = :layoutId")
   suspend fun updateName(layoutId: String, name: String): Int
 
@@ -85,10 +68,7 @@ interface LayoutSnapshotMutationDao {
   suspend fun reorderLayouts(userId: String, layoutIds: List<String>) {
     layoutIds.forEachIndexed { index, layoutId -> updatePosition(layoutId, index) }
   }
-}
 
-/** Cleanup helpers for layout snapshots. */
-interface LayoutSnapshotMaintenanceDao {
   @Query("DELETE FROM layout_snapshots WHERE layout_id = :layoutId")
   suspend fun deleteById(layoutId: String): Int
 

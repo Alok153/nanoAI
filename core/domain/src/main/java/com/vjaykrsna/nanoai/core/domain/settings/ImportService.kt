@@ -6,4 +6,7 @@ import com.vjaykrsna.nanoai.core.common.annotations.OneShot
 interface ImportService {
   @OneShot("Import backup bundle from local storage")
   suspend fun importBackup(location: BackupLocation): NanoAIResult<ImportSummary>
+
+  @OneShot("Validate backup bundle without applying changes")
+  suspend fun validateBackup(location: BackupLocation): NanoAIResult<ImportSummary>
 }

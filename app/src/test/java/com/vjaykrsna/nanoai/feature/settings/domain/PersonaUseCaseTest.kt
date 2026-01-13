@@ -29,12 +29,7 @@ class PersonaUseCaseTest {
     personaRepository = FakePersonaRepository()
     logRepository = RecordingPersonaSwitchLogRepository()
     val dataSource =
-      CorePersonaDataSource(
-        conversationRepository,
-        personaRepository,
-        logRepository,
-        Clock.System,
-      )
+      CorePersonaDataSource(conversationRepository, personaRepository, logRepository, Clock.System)
     val repository = DefaultPersonaRepository(dataSource)
     personaUseCase = PersonaUseCase(repository)
   }
@@ -105,5 +100,13 @@ class PersonaUseCaseTest {
 
     override suspend fun getSwitchHistory(threadId: UUID): List<PersonaSwitchLog> =
       logged.filter { it.threadId == threadId }
+
+    override suspend fun getLatestSwitch(threadId: UUID): PersonaSwitchLog? =
+      logged.filter { it.threadId == threadId }.lastOrNull()
+
+    override suspend fun getLogsByThreadId(
+      threadId: UUID
+    ): kotlinx.coroutines.flow.Flow<List<PersonaSwitchLog>> =
+      kotlinx.coroutines.flow.flowOf(logged.filter { it.threadId == threadId })
   }
 }

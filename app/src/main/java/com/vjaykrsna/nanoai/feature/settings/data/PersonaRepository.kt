@@ -64,7 +64,9 @@ constructor(
   ): NanoAIResult<UUID> =
     runCatching {
         val previousPersonaId =
-          currentThreadId?.let { threadId -> conversationRepository.getCurrentPersonaForThread(threadId) }
+          currentThreadId?.let { threadId ->
+            conversationRepository.getCurrentPersonaForThread(threadId)
+          }
 
         val targetThreadId =
           when (action) {
@@ -76,7 +78,8 @@ constructor(
               }
               resolvedThreadId
             }
-            PersonaSwitchAction.START_NEW_THREAD -> conversationRepository.createNewThread(personaId)
+            PersonaSwitchAction.START_NEW_THREAD ->
+              conversationRepository.createNewThread(personaId)
           }
 
         val log =

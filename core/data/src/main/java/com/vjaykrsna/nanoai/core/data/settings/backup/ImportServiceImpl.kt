@@ -49,12 +49,32 @@ constructor(
   override suspend fun importBackup(location: BackupLocation): NanoAIResult<ImportSummary> =
     runCatching {
         val bundle = readBundle(location)
-        applyBundle(bundle)
+        val plan = planImport(bundle)
+        applyPlan(plan)
       }
       .fold(
         onSuccess = { summary -> NanoAIResult.success(summary) },
         onFailure = { throwable ->
           Log.e(TAG, "Failed to import backup", throwable)
+          NanoAIResult.recoverable(
+            message = throwable.toErrorEnvelope(IMPORT_FAILURE_MESSAGE).userMessage,
+            cause = throwable,
+            context = mapOf("descriptor" to location.value),
+          )
+        },
+      )
+
+  @OneShot("Validate backup bundle without applying changes")
+  override suspend fun validateBackup(location: BackupLocation): NanoAIResult<ImportSummary> =
+    runCatching {
+        val bundle = readBundle(location)
+        val plan = planImport(bundle)
+        plan.toSummary()
+      }
+      .fold(
+        onSuccess = { summary -> NanoAIResult.success(summary) },
+        onFailure = { throwable ->
+          Log.e(TAG, "Failed to validate backup", throwable)
           NanoAIResult.recoverable(
             message = throwable.toErrorEnvelope(IMPORT_FAILURE_MESSAGE).userMessage,
             cause = throwable,
@@ -79,44 +99,68 @@ constructor(
       }
     }
 
-  private suspend fun applyBundle(bundle: BackupBundleDto): ImportSummary {
-    val personaResult = importPersonas(bundle.personas)
-    val providerResult = importProviders(bundle.apiProviders)
-    applySettings(bundle.settings)
-    return ImportSummary(
-      personasImported = personaResult.first,
-      personasUpdated = personaResult.second,
-      providersImported = providerResult.first,
-      providersUpdated = providerResult.second,
-    )
-  }
-
-  private suspend fun importPersonas(personas: List<BackupPersonaDto>): Pair<Int, Int> {
-    var imported = 0
-    var updated = 0
-    val now = Clock.System.now()
-    for (dto in personas) {
-      when (processPersona(dto, now)) {
-        PersonaImportAction.IMPORTED -> imported += 1
-        PersonaImportAction.UPDATED -> updated += 1
+  private suspend fun applyPlan(plan: ImportPlan): ImportSummary {
+    plan.personaImports.forEach { action ->
+      when (action.action) {
+        PersonaImportAction.IMPORTED -> personaRepository.createPersona(action.persona)
+        PersonaImportAction.UPDATED -> personaRepository.updatePersona(action.persona)
       }
     }
-    return imported to updated
+
+    plan.providerImports.forEach { action ->
+      when (action.action) {
+        ProviderImportAction.IMPORTED ->
+          apiProviderConfigRepository.addProvider(action.config, action.credentialMutation)
+        ProviderImportAction.UPDATED ->
+          apiProviderConfigRepository.updateProvider(action.config, action.credentialMutation)
+      }
+    }
+
+    applySettings(plan.settings)
+
+    return plan.toSummary()
   }
 
-  private suspend fun processPersona(
-    dto: BackupPersonaDto,
+  private suspend fun planImport(bundle: BackupBundleDto): ImportPlan {
+    val now = Clock.System.now()
+    val personaPlans = planPersonas(bundle.personas, now)
+    val providerPlans = planProviders(bundle.apiProviders)
+    return ImportPlan(personaPlans, providerPlans, bundle.settings)
+  }
+
+  private suspend fun planPersonas(
+    personas: List<BackupPersonaDto>,
     defaultTimestamp: Instant,
-  ): PersonaImportAction {
-    val personaId = dto.resolvePersonaId()
-    val existing = personaRepository.getPersona(personaId)
-    val persona = dto.toPersonaProfile(personaId, existing, defaultTimestamp)
-    return if (existing == null) {
-      personaRepository.createPersona(persona)
-      PersonaImportAction.IMPORTED
-    } else {
-      personaRepository.updatePersona(persona)
-      PersonaImportAction.UPDATED
+  ): List<PersonaImport> {
+    return personas.map { dto ->
+      val personaId = dto.resolvePersonaId()
+      val existing = personaRepository.getPersona(personaId)
+      val persona = dto.toPersonaProfile(personaId, existing, defaultTimestamp)
+      val action =
+        if (existing == null) PersonaImportAction.IMPORTED else PersonaImportAction.UPDATED
+      PersonaImport(persona = persona, action = action)
+    }
+  }
+
+  private suspend fun planProviders(providers: List<BackupApiProviderDto>): List<ProviderImport> {
+    return providers.map { dto ->
+      val providerId = dto.id.ifBlank { UUID.randomUUID().toString() }
+      val existing = apiProviderConfigRepository.getProvider(providerId)
+      val baseConfig =
+        existing?.copy(
+          providerName = dto.name,
+          baseUrl = dto.baseUrl,
+          apiType = dto.apiType?.let(::parseApiType) ?: existing.apiType,
+          isEnabled = dto.enabled ?: existing.isEnabled,
+        ) ?: buildNewProvider(providerId, dto)
+
+      val credentialMutation =
+        dto.apiKey?.let { ProviderCredentialMutation.Replace(it) }
+          ?: ProviderCredentialMutation.None
+
+      val action =
+        if (existing == null) ProviderImportAction.IMPORTED else ProviderImportAction.UPDATED
+      ProviderImport(config = baseConfig, credentialMutation = credentialMutation, action = action)
     }
   }
 
@@ -175,33 +219,34 @@ constructor(
     UPDATED,
   }
 
-  private suspend fun importProviders(providers: List<BackupApiProviderDto>): Pair<Int, Int> {
-    var imported = 0
-    var updated = 0
-    for (dto in providers) {
-      val providerId = dto.id.ifBlank { UUID.randomUUID().toString() }
-      val existing = apiProviderConfigRepository.getProvider(providerId)
-      val baseConfig =
-        existing?.copy(
-          providerName = dto.name,
-          baseUrl = dto.baseUrl,
-          apiType = dto.apiType?.let(::parseApiType) ?: existing.apiType,
-          isEnabled = dto.enabled ?: existing.isEnabled,
-        ) ?: buildNewProvider(providerId, dto)
+  private enum class ProviderImportAction {
+    IMPORTED,
+    UPDATED,
+  }
 
-      val credentialMutation =
-        dto.apiKey?.let { ProviderCredentialMutation.Replace(it) }
-          ?: ProviderCredentialMutation.None
+  private data class PersonaImport(val persona: PersonaProfile, val action: PersonaImportAction)
 
-      if (existing == null) {
-        apiProviderConfigRepository.addProvider(baseConfig, credentialMutation)
-        imported += 1
-      } else {
-        apiProviderConfigRepository.updateProvider(baseConfig, credentialMutation)
-        updated += 1
-      }
-    }
-    return imported to updated
+  private data class ProviderImport(
+    val config: APIProviderConfig,
+    val credentialMutation: ProviderCredentialMutation,
+    val action: ProviderImportAction,
+  )
+
+  private data class ImportPlan(
+    val personaImports: List<PersonaImport>,
+    val providerImports: List<ProviderImport>,
+    val settings: BackupSettingsDto?,
+  )
+
+  private fun ImportPlan.toSummary(): ImportSummary {
+    val personasImported = personaImports.count { it.action == PersonaImportAction.IMPORTED }
+    val providersImported = providerImports.count { it.action == ProviderImportAction.IMPORTED }
+    return ImportSummary(
+      personasImported = personasImported,
+      personasUpdated = personaImports.size - personasImported,
+      providersImported = providersImported,
+      providersUpdated = providerImports.size - providersImported,
+    )
   }
 
   private suspend fun applySettings(settings: BackupSettingsDto?) {

@@ -28,14 +28,13 @@ internal fun RecentActivitySection(
   recentActivity: List<RecentActivityItem>,
   modeById: Map<ModeId, ModeCard>,
   onRecentActivitySelect: (RecentActivityItem) -> Unit,
+  onViewHistoryClick: () -> Unit = {},
 ) {
   NanoSection(
     title = "Recent activity",
     action = {
       if (recentActivity.isNotEmpty()) {
-        TextButton(onClick = { /* placeholder until history navigation is wired */ }) {
-          Text("View history")
-        }
+        TextButton(onClick = onViewHistoryClick) { Text("View history") }
       }
     },
   ) {

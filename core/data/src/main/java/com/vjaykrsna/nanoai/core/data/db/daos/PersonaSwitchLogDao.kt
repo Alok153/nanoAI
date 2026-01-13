@@ -14,21 +14,14 @@ import kotlinx.coroutines.flow.Flow
  * Provides methods to track and query persona switching history.
  */
 @Dao
-interface PersonaSwitchLogDao :
-  PersonaSwitchLogWriteDao, PersonaSwitchLogQueryDao, PersonaSwitchLogMaintenanceDao
-
-/** Write operations for persona switch logging. */
-interface PersonaSwitchLogWriteDao {
+interface PersonaSwitchLogDao {
   @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insert(log: PersonaSwitchLogEntity)
 
   @Insert(onConflict = OnConflictStrategy.REPLACE)
   suspend fun insertAll(logs: List<PersonaSwitchLogEntity>)
 
   @Delete suspend fun delete(log: PersonaSwitchLogEntity)
-}
 
-/** Query helpers for persona switch histories. */
-interface PersonaSwitchLogQueryDao {
   @Query("SELECT * FROM persona_switch_logs WHERE thread_id = :threadId ORDER BY created_at ASC")
   suspend fun getByThreadId(threadId: String): List<PersonaSwitchLogEntity>
 
@@ -59,10 +52,7 @@ interface PersonaSwitchLogQueryDao {
 
   @Query("SELECT * FROM persona_switch_logs ORDER BY created_at DESC")
   suspend fun getAll(): List<PersonaSwitchLogEntity>
-}
 
-/** Cleanup helpers for persona switch logs. */
-interface PersonaSwitchLogMaintenanceDao {
   @Query("DELETE FROM persona_switch_logs WHERE thread_id = :threadId")
   suspend fun deleteByThreadId(threadId: String)
 

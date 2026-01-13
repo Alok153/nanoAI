@@ -5,10 +5,6 @@ import com.vjaykrsna.nanoai.core.domain.model.library.DeliveryType
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ScreenType
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
-import com.vjaykrsna.nanoai.core.maintenance.model.MaintenanceCategory
-import com.vjaykrsna.nanoai.core.maintenance.model.MaintenanceStatus
-import com.vjaykrsna.nanoai.core.maintenance.model.PriorityLevel
-import com.vjaykrsna.nanoai.core.maintenance.model.SeverityLevel
 import kotlinx.datetime.Instant
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -245,76 +241,6 @@ class TypeConvertersTest {
     fun `toScreenType is case insensitive`() {
       val result = UiPreferenceTypeConverters.toScreenType("home")
       assertThat(result).isEqualTo(ScreenType.HOME)
-    }
-  }
-
-  @Nested
-  inner class MaintenanceTypeConvertersTest {
-    @Test
-    fun `fromMaintenanceCategory converts to name`() {
-      val result =
-        MaintenanceTypeConverters.fromMaintenanceCategory(MaintenanceCategory.STATIC_ANALYSIS)
-      assertThat(result).isEqualTo("STATIC_ANALYSIS")
-    }
-
-    @Test
-    fun `fromMaintenanceCategory handles null`() {
-      val result = MaintenanceTypeConverters.fromMaintenanceCategory(null)
-      assertThat(result).isNull()
-    }
-
-    @Test
-    fun `toMaintenanceCategory converts name to enum`() {
-      val result = MaintenanceTypeConverters.toMaintenanceCategory("SECURITY")
-      assertThat(result).isEqualTo(MaintenanceCategory.SECURITY)
-    }
-
-    @Test
-    fun `toMaintenanceCategory handles null`() {
-      val result = MaintenanceTypeConverters.toMaintenanceCategory(null)
-      assertThat(result).isNull()
-    }
-
-    @Test
-    fun `toMaintenanceCategory handles invalid name`() {
-      val result = MaintenanceTypeConverters.toMaintenanceCategory("INVALID")
-      assertThat(result).isNull()
-    }
-
-    @Test
-    fun `fromPriorityLevel converts to name`() {
-      val result = MaintenanceTypeConverters.fromPriorityLevel(PriorityLevel.HIGH)
-      assertThat(result).isEqualTo("HIGH")
-    }
-
-    @Test
-    fun `toPriorityLevel converts name to enum`() {
-      val result = MaintenanceTypeConverters.toPriorityLevel("MEDIUM")
-      assertThat(result).isEqualTo(PriorityLevel.MEDIUM)
-    }
-
-    @Test
-    fun `fromMaintenanceStatus converts to name`() {
-      val result = MaintenanceTypeConverters.fromMaintenanceStatus(MaintenanceStatus.IN_PROGRESS)
-      assertThat(result).isEqualTo("IN_PROGRESS")
-    }
-
-    @Test
-    fun `toMaintenanceStatus converts name to enum`() {
-      val result = MaintenanceTypeConverters.toMaintenanceStatus("IN_PROGRESS")
-      assertThat(result).isEqualTo(MaintenanceStatus.IN_PROGRESS)
-    }
-
-    @Test
-    fun `fromSeverityLevel converts to name`() {
-      val result = MaintenanceTypeConverters.fromSeverityLevel(SeverityLevel.ERROR)
-      assertThat(result).isEqualTo("ERROR")
-    }
-
-    @Test
-    fun `toSeverityLevel converts name to enum`() {
-      val result = MaintenanceTypeConverters.toSeverityLevel("WARNING")
-      assertThat(result).isEqualTo(SeverityLevel.WARNING)
     }
   }
 

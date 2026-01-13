@@ -4,12 +4,10 @@ import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
 import com.vjaykrsna.nanoai.core.common.error.NanoAIErrorEnvelope
-import com.vjaykrsna.nanoai.core.domain.library.ModelDownloadsAndExportUseCase
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
 import com.vjaykrsna.nanoai.core.domain.model.ProviderCredentialMutation
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.settings.ApiProviderConfigUseCase
-import com.vjaykrsna.nanoai.core.domain.settings.ImportService
 import com.vjaykrsna.nanoai.core.domain.settings.huggingface.HuggingFaceAuthCoordinator
 import com.vjaykrsna.nanoai.core.domain.settings.huggingface.HuggingFaceOAuthConfig
 import com.vjaykrsna.nanoai.core.domain.settings.model.RetentionPolicy
@@ -20,6 +18,7 @@ import com.vjaykrsna.nanoai.core.domain.usecase.ObservePrivacyPreferencesUseCase
 import com.vjaykrsna.nanoai.core.domain.usecase.ObserveUiPreferencesUseCase
 import com.vjaykrsna.nanoai.core.domain.usecase.UpdatePrivacyPreferencesUseCase
 import com.vjaykrsna.nanoai.core.domain.usecase.UpdateUiPreferencesUseCase
+import com.vjaykrsna.nanoai.feature.settings.domain.BackupUseCase
 import com.vjaykrsna.nanoai.feature.settings.presentation.model.SettingsUiEvent
 import com.vjaykrsna.nanoai.feature.settings.presentation.state.SettingsUiState
 import com.vjaykrsna.nanoai.shared.state.ViewModelStateHost
@@ -33,12 +32,11 @@ class SettingsViewModel
 @Inject
 constructor(
   private val apiProviderConfigUseCase: ApiProviderConfigUseCase,
-  private val modelDownloadsAndExportUseCase: ModelDownloadsAndExportUseCase,
+  private val backupUseCase: BackupUseCase,
   private val observePrivacyPreferencesUseCase: ObservePrivacyPreferencesUseCase,
   private val observeUiPreferencesUseCase: ObserveUiPreferencesUseCase,
   private val updatePrivacyPreferencesUseCase: UpdatePrivacyPreferencesUseCase,
   private val updateUiPreferencesUseCase: UpdateUiPreferencesUseCase,
-  private val importService: ImportService,
   private val observeUserProfileUseCase: ObserveUserProfileUseCase,
   private val settingsOperationsUseCase: SettingsOperationsUseCase,
   private val toggleCompactModeUseCase: ToggleCompactModeUseCase,
@@ -76,8 +74,7 @@ constructor(
   private val backupActions =
     SettingsBackupActions(
       scope = viewModelScope,
-      modelDownloadsAndExportUseCase = modelDownloadsAndExportUseCase,
-      importService = importService,
+      backupUseCase = backupUseCase,
       setLoading = ::setLoading,
       emitEvent = { event -> emitEvent(event) },
       emitError = ::emitError,

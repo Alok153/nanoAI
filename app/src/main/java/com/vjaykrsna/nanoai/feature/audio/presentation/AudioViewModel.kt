@@ -39,8 +39,8 @@ constructor(@MainImmediateDispatcher mainDispatcher: CoroutineDispatcher) :
 
       updateState { copy(sessionState = AudioSessionState.ACTIVE, errorMessage = null) }
 
-      // TODO: Implement actual audio session logic
-      // Simulate waveform updates
+      // Simulated waveform updates - actual implementation requires AudioFeatureRepository
+      // integration with real audio capture via AudioSessionCoordinator
       try {
         while (state.value.sessionState == AudioSessionState.ACTIVE) {
           val waveform = generateSimulatedWaveform()

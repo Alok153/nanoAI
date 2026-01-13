@@ -4,7 +4,6 @@ import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.data.db.daos.LayoutSnapshotDao
 import com.vjaykrsna.nanoai.core.data.db.daos.UIStateSnapshotDao
 import com.vjaykrsna.nanoai.core.data.db.daos.UserProfileDao
-import com.vjaykrsna.nanoai.core.data.db.entities.UIStateSnapshotEntity
 import com.vjaykrsna.nanoai.core.data.preferences.UiPreferences
 import com.vjaykrsna.nanoai.core.data.preferences.UiPreferencesStore
 import com.vjaykrsna.nanoai.core.domain.model.uiux.DataStoreUiPreferences
@@ -108,47 +107,6 @@ class UserProfileLocalDataSourceTest {
   }
 
   @Test
-  fun `setLeftDrawerOpen should ensure snapshot and update the dao`() = runTest {
-    // Given
-    val userId = "testUser"
-    val open = true
-    coEvery { uiStateSnapshotDao.getByUserId(userId) } returns null
-
-    // When
-    dataSource.setLeftDrawerOpen(userId, open)
-
-    // Then
-    coVerify { uiStateSnapshotDao.insert(any()) }
-    coVerify { uiStateSnapshotDao.updateLeftDrawerOpen(userId, open) }
-  }
-
-  @Test
-  fun `setLeftDrawerOpen should skip insert when snapshot exists`() = runTest {
-    // Given
-    val userId = "testUser"
-    val existingEntity =
-      UIStateSnapshotEntity(
-        userId = userId,
-        activeMode = "home",
-        leftDrawerOpen = false,
-        rightDrawerOpen = false,
-        activeRightPanel = null,
-        paletteVisible = false,
-        sidebarCollapsed = false,
-        expandedPanels = emptyList(),
-        recentActions = emptyList(),
-      )
-    coEvery { uiStateSnapshotDao.getByUserId(userId) } returns existingEntity
-
-    // When
-    dataSource.setLeftDrawerOpen(userId, true)
-
-    // Then
-    coVerify(exactly = 0) { uiStateSnapshotDao.insert(any()) }
-    coVerify { uiStateSnapshotDao.updateLeftDrawerOpen(userId, true) }
-  }
-
-  @Test
   fun `updateCompactMode should update store, dao, and layout snapshots`() = runTest {
     // Given
     val userId = "testUser"
@@ -198,48 +156,6 @@ class UserProfileLocalDataSourceTest {
 
     // Then
     coVerify { uiStateSnapshotDao.updateSidebarCollapsed(userId, true) }
-  }
-
-  @Test
-  fun `setRightDrawerState should ensure snapshot and update dao`() = runTest {
-    // Given
-    val userId = "testUser"
-    coEvery { uiStateSnapshotDao.getByUserId(userId) } returns null
-
-    // When
-    dataSource.setRightDrawerState(userId, true, "history")
-
-    // Then
-    coVerify { uiStateSnapshotDao.insert(any()) }
-    coVerify { uiStateSnapshotDao.updateRightDrawerState(userId, true, "history") }
-  }
-
-  @Test
-  fun `setActiveModeRoute should ensure snapshot and update dao`() = runTest {
-    // Given
-    val userId = "testUser"
-    coEvery { uiStateSnapshotDao.getByUserId(userId) } returns null
-
-    // When
-    dataSource.setActiveModeRoute(userId, "chat")
-
-    // Then
-    coVerify { uiStateSnapshotDao.insert(any()) }
-    coVerify { uiStateSnapshotDao.updateActiveModeRoute(userId, "chat") }
-  }
-
-  @Test
-  fun `setCommandPaletteVisible should ensure snapshot and update dao`() = runTest {
-    // Given
-    val userId = "testUser"
-    coEvery { uiStateSnapshotDao.getByUserId(userId) } returns null
-
-    // When
-    dataSource.setCommandPaletteVisible(userId, true)
-
-    // Then
-    coVerify { uiStateSnapshotDao.insert(any()) }
-    coVerify { uiStateSnapshotDao.updateCommandPaletteVisible(userId, true) }
   }
 
   @Test

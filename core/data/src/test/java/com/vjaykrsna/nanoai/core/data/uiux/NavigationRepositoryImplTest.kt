@@ -1,15 +1,20 @@
 package com.vjaykrsna.nanoai.core.data.uiux
 
 import com.google.common.truth.Truth.assertThat
+import com.vjaykrsna.nanoai.core.domain.model.uiux.CommandCategory
+import com.vjaykrsna.nanoai.core.domain.model.uiux.CommandPaletteState
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ModeId
-import com.vjaykrsna.nanoai.core.domain.model.uiux.RightPanel
-import com.vjaykrsna.nanoai.core.domain.model.uiux.UIStateSnapshot
+import com.vjaykrsna.nanoai.core.domain.model.uiux.PaletteSource
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ShellWindowSizeClass
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ShellWindowHeightClass
+import com.vjaykrsna.nanoai.core.domain.model.uiux.ShellWindowWidthClass
+import com.vjaykrsna.nanoai.core.domain.model.uiux.UndoPayload
 import com.vjaykrsna.nanoai.core.domain.repository.NavigationRepository
 import com.vjaykrsna.nanoai.core.domain.repository.UserProfileRepository
 import com.vjaykrsna.nanoai.testing.MainDispatcherExtension
 import io.mockk.coEvery
-import io.mockk.coVerify
 import io.mockk.mockk
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -24,29 +29,22 @@ class NavigationRepositoryImplTest {
   private lateinit var userProfileRepository: UserProfileRepository
   private lateinit var repository: NavigationRepositoryImpl
 
-  private fun createTestSnapshot(
-    isLeftDrawerOpen: Boolean = false,
-    isRightDrawerOpen: Boolean = false,
-    activeRightPanel: String? = null,
-  ) =
-    UIStateSnapshot(
-      userId = "testUser",
-      expandedPanels = emptyList(),
-      recentActions = emptyList(),
-      isSidebarCollapsed = false,
-      isLeftDrawerOpen = isLeftDrawerOpen,
-      isRightDrawerOpen = isRightDrawerOpen,
-      activeRightPanel = activeRightPanel,
-    )
-
   @BeforeEach
   fun setUp() {
     userProfileRepository = mockk(relaxed = true)
-    repository = createRepository(createTestSnapshot())
+    repository = createRepository()
   }
 
-  private fun createRepository(initialState: UIStateSnapshot): NavigationRepositoryImpl {
-    coEvery { userProfileRepository.observeUIStateSnapshot(any()) } returns flowOf(initialState)
+  private fun createRepository(): NavigationRepositoryImpl {
+    coEvery { userProfileRepository.observeUIStateSnapshot(any()) } returns
+      flowOf(
+        com.vjaykrsna.nanoai.core.domain.model.uiux.UIStateSnapshot(
+          userId = "testUser",
+          expandedPanels = emptyList(),
+          recentActions = emptyList(),
+          isSidebarCollapsed = false,
+        )
+      )
     return NavigationRepositoryImpl(
       userProfileRepository = userProfileRepository,
       ioDispatcher = mainDispatcherExtension.dispatcher,
@@ -54,87 +52,55 @@ class NavigationRepositoryImplTest {
   }
 
   @Test
-  fun `openMode should update the active route and close drawers`() = runTest {
-    // Given
-    repository = createRepository(createTestSnapshot())
+  fun `showCommandPalette should expose populated state`() = runTest {
+    repository.showCommandPalette(PaletteSource.KEYBOARD_SHORTCUT)
+    advanceUntilIdle()
 
-    // When
+    val state = repository.commandPaletteState.first()
+    assertThat(state).isInstanceOf(CommandPaletteState::class.java)
+    assertThat(state.surfaceTarget).isEqualTo(CommandCategory.MODES)
+  }
+
+  @Test
+  fun `hideCommandPalette should reset state`() = runTest {
+    repository.showCommandPalette(PaletteSource.KEYBOARD_SHORTCUT)
+    advanceUntilIdle()
+
+    repository.hideCommandPalette()
+    advanceUntilIdle()
+
+    val state = repository.commandPaletteState.first()
+    assertThat(state).isEqualTo(CommandPaletteState.Empty)
+  }
+
+  @Test
+  fun `recordUndoPayload should publish to flow`() = runTest {
+    val payload = UndoPayload(actionId = "restore_defaults")
+    repository.recordUndoPayload(payload)
+    advanceUntilIdle()
+
+    val emitted = repository.undoPayload.first()
+    assertThat(emitted).isEqualTo(payload)
+  }
+
+  @Test
+  fun `updateWindowSizeClass should push new value`() = runTest {
+    val compactWidthMediumHeight =
+      ShellWindowSizeClass(
+        widthSizeClass = ShellWindowWidthClass.COMPACT,
+        heightSizeClass = ShellWindowHeightClass.MEDIUM,
+      )
+    repository.updateWindowSizeClass(compactWidthMediumHeight)
+    advanceUntilIdle()
+
+    assertThat(repository.windowSizeClass.first()).isEqualTo(compactWidthMediumHeight)
+  }
+
+  @Test
+  fun `openMode does not crash when switching modes`() = runTest {
     repository.openMode(ModeId.CHAT)
     advanceUntilIdle()
 
-    // Then
-    coVerify { userProfileRepository.updateActiveModeRoute(any(), "chat") }
-    coVerify { userProfileRepository.updateLeftDrawerOpen(any(), false) }
-    coVerify { userProfileRepository.updateCommandPaletteVisibility(any(), false) }
-  }
-
-  @Test
-  fun `toggleLeftDrawer should open the drawer when it is closed`() = runTest {
-    // Given
-    repository = createRepository(createTestSnapshot(isLeftDrawerOpen = false))
-
-    // When
-    repository.toggleLeftDrawer()
-    advanceUntilIdle()
-
-    // Then
-    coVerify { userProfileRepository.updateLeftDrawerOpen(any(), true) }
-  }
-
-  @Test
-  fun `toggleLeftDrawer should close the drawer when it is open`() = runTest {
-    // Given
-    repository = createRepository(createTestSnapshot(isLeftDrawerOpen = true))
-    advanceUntilIdle()
-
-    // When
-    repository.toggleLeftDrawer()
-    advanceUntilIdle()
-
-    // Then
-    coVerify { userProfileRepository.updateLeftDrawerOpen(any(), false) }
-  }
-
-  @Test
-  fun `toggleRightDrawer should open the drawer with the correct panel`() = runTest {
-    // Given
-    repository = createRepository(createTestSnapshot(isRightDrawerOpen = false))
-
-    // When
-    repository.toggleRightDrawer(RightPanel.MODEL_SELECTOR)
-    advanceUntilIdle()
-
-    // Then
-    coVerify { userProfileRepository.updateRightDrawerState(any(), true, "model_selector") }
-  }
-
-  @Test
-  fun `toggleRightDrawer should close the drawer if it is already open with the same panel`() =
-    runTest {
-      // Given
-      repository =
-        createRepository(
-          createTestSnapshot(isRightDrawerOpen = true, activeRightPanel = "model_selector")
-        )
-      advanceUntilIdle()
-
-      // When
-      repository.toggleRightDrawer(RightPanel.MODEL_SELECTOR)
-      advanceUntilIdle()
-
-      // Then
-      coVerify { userProfileRepository.updateRightDrawerState(any(), false, null) }
-    }
-
-  @Test
-  fun `repository should implement NavigationRepository interface`() {
-    // Then
     assertThat(repository).isInstanceOf(NavigationRepository::class.java)
-  }
-
-  @Test
-  fun `repository should be properly constructed`() {
-    // Verify that the repository can be constructed with dependencies
-    assertThat(repository).isNotNull()
   }
 }

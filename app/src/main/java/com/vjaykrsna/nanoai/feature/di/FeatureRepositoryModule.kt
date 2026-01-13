@@ -6,6 +6,8 @@ import com.vjaykrsna.nanoai.feature.audio.data.DefaultAudioFeatureRepository
 import com.vjaykrsna.nanoai.feature.audio.domain.AudioFeatureRepository
 import com.vjaykrsna.nanoai.feature.chat.data.DefaultLocalInferenceRepository
 import com.vjaykrsna.nanoai.feature.chat.domain.LocalInferenceRepository
+import com.vjaykrsna.nanoai.core.domain.library.ModelDownloadsAndExportUseCase
+import com.vjaykrsna.nanoai.core.domain.library.ModelDownloadsAndExportUseCaseInterface
 import com.vjaykrsna.nanoai.feature.image.data.CoreImageFeatureDataSource
 import com.vjaykrsna.nanoai.feature.image.data.DefaultImageFeatureRepository
 import com.vjaykrsna.nanoai.feature.image.data.ImageFeatureDataSource
@@ -57,6 +59,12 @@ abstract class FeatureRepositoryModule {
   abstract fun bindModelDownloadRepository(
     impl: DefaultModelDownloadRepository
   ): ModelDownloadRepository
+
+  @Binds
+  @Singleton
+  abstract fun bindModelDownloadsAndExportUseCase(
+    impl: ModelDownloadsAndExportUseCase
+  ): ModelDownloadsAndExportUseCaseInterface
 
   @Binds
   @Singleton

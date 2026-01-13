@@ -5,10 +5,6 @@ import com.vjaykrsna.nanoai.core.domain.model.library.DeliveryType
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ScreenType
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
-import com.vjaykrsna.nanoai.core.maintenance.model.MaintenanceCategory
-import com.vjaykrsna.nanoai.core.maintenance.model.MaintenanceStatus
-import com.vjaykrsna.nanoai.core.maintenance.model.PriorityLevel
-import com.vjaykrsna.nanoai.core.maintenance.model.SeverityLevel
 import kotlinx.datetime.Instant
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.MapSerializer
@@ -72,33 +68,6 @@ object UiPreferenceTypeConverters {
     name?.let { candidate ->
       ScreenType.values().firstOrNull { it.name.equals(candidate, ignoreCase = true) }
     } ?: ScreenType.UNKNOWN
-}
-
-object MaintenanceTypeConverters {
-  @TypeConverter
-  fun fromMaintenanceCategory(category: MaintenanceCategory?): String? = category?.name
-
-  @TypeConverter
-  fun toMaintenanceCategory(name: String?): MaintenanceCategory? =
-    name?.let { enumValueOfOrNull<MaintenanceCategory>(it) }
-
-  @TypeConverter fun fromPriorityLevel(priorityLevel: PriorityLevel?): String? = priorityLevel?.name
-
-  @TypeConverter
-  fun toPriorityLevel(name: String?): PriorityLevel? =
-    name?.let { enumValueOfOrNull<PriorityLevel>(it) }
-
-  @TypeConverter fun fromMaintenanceStatus(status: MaintenanceStatus?): String? = status?.name
-
-  @TypeConverter
-  fun toMaintenanceStatus(name: String?): MaintenanceStatus? =
-    name?.let { enumValueOfOrNull<MaintenanceStatus>(it) }
-
-  @TypeConverter fun fromSeverityLevel(severityLevel: SeverityLevel?): String? = severityLevel?.name
-
-  @TypeConverter
-  fun toSeverityLevel(name: String?): SeverityLevel? =
-    name?.let { enumValueOfOrNull<SeverityLevel>(it) }
 }
 
 object DeliveryTypeConverters {

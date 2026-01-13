@@ -16,7 +16,24 @@ import kotlinx.coroutines.flow.flowOf
 /**
  * Implementation of audio repository.
  *
- * TODO: Implement actual audio recording/playback logic
+ * **Status: Simulated Backend**
+ *
+ * This implementation provides a simulated audio backend for UI development and testing. Real-time
+ * waveform data is synthetically generated using harmonic wave composition with noise injection.
+ *
+ * Current capabilities:
+ * - Session start/stop state management
+ * - Mute and speaker toggle tracking
+ * - Synthetic waveform generation for UI visualization
+ * - Microphone permission status checking
+ *
+ * Requirements for production implementation:
+ * - Integration with Android MediaRecorder or AudioRecord APIs
+ * - Real-time audio level metering and waveform extraction
+ * - Audio focus management and interruption handling
+ * - Background audio service for ongoing sessions
+ *
+ * @see AudioRepository for the domain contract
  */
 class AudioRepositoryImpl @Inject constructor(private val context: Context) : AudioRepository {
 

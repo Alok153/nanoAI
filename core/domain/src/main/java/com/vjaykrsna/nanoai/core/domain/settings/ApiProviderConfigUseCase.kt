@@ -16,8 +16,7 @@ import kotlinx.coroutines.flow.Flow
 @Singleton
 class ApiProviderConfigUseCase
 @Inject
-constructor(private val apiProviderConfigRepository: ApiProviderConfigRepository) :
-  ApiProviderConfigUseCaseInterface {
+constructor(private val apiProviderConfigRepository: ApiProviderConfigRepository) {
   /** Observe all API providers. */
   @ReactiveStream("Observe configured API providers")
   fun observeAllProviders(): Flow<List<APIProviderConfig>> =
@@ -25,7 +24,7 @@ constructor(private val apiProviderConfigRepository: ApiProviderConfigRepository
 
   /** Get all API providers. */
   @OneShot("Fetch all API providers once")
-  override suspend fun getAllProviders(): NanoAIResult<List<APIProviderConfig>> =
+  suspend fun getAllProviders(): NanoAIResult<List<APIProviderConfig>> =
     guardRepositoryCall(message = "Failed to get all API providers") {
       val providers = apiProviderConfigRepository.getAllProviders()
       NanoAIResult.success(providers)
@@ -33,7 +32,7 @@ constructor(private val apiProviderConfigRepository: ApiProviderConfigRepository
 
   /** Get a specific provider by ID. */
   @OneShot("Fetch provider by identifier")
-  override suspend fun getProvider(providerId: String): NanoAIResult<APIProviderConfig?> =
+  suspend fun getProvider(providerId: String): NanoAIResult<APIProviderConfig?> =
     guardRepositoryCall(
       message = "Failed to get API provider $providerId",
       context = mapOf("providerId" to providerId),
@@ -44,7 +43,7 @@ constructor(private val apiProviderConfigRepository: ApiProviderConfigRepository
 
   /** Add a new API provider. */
   @OneShot("Add API provider configuration")
-  override suspend fun addProvider(
+  suspend fun addProvider(
     config: APIProviderConfig,
     credentialMutation: ProviderCredentialMutation,
   ): NanoAIResult<Unit> =
@@ -58,7 +57,7 @@ constructor(private val apiProviderConfigRepository: ApiProviderConfigRepository
 
   /** Update an existing API provider. */
   @OneShot("Update API provider configuration")
-  override suspend fun updateProvider(
+  suspend fun updateProvider(
     config: APIProviderConfig,
     credentialMutation: ProviderCredentialMutation,
   ): NanoAIResult<Unit> =
@@ -72,7 +71,7 @@ constructor(private val apiProviderConfigRepository: ApiProviderConfigRepository
 
   /** Delete an API provider. */
   @OneShot("Delete API provider configuration")
-  override suspend fun deleteProvider(providerId: String): NanoAIResult<Unit> =
+  suspend fun deleteProvider(providerId: String): NanoAIResult<Unit> =
     guardRepositoryCall(
       message = "Failed to delete API provider $providerId",
       context = mapOf("providerId" to providerId),

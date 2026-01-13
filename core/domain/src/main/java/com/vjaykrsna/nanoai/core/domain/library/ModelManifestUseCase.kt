@@ -9,16 +9,13 @@ import javax.inject.Singleton
 
 /** Use case facade for manifest operations ensuring callers stay within the domain layer. */
 @Singleton
-class ModelManifestUseCase @Inject constructor(private val repository: ModelManifestRepository) :
-  ModelManifestUseCaseInterface {
+class ModelManifestUseCase @Inject constructor(private val repository: ModelManifestRepository) {
   @OneShot("Refresh model download manifest")
-  override suspend fun refreshManifest(
-    modelId: String,
-    version: String,
-  ): NanoAIResult<DownloadManifest> = repository.refreshManifest(modelId, version)
+  suspend fun refreshManifest(modelId: String, version: String): NanoAIResult<DownloadManifest> =
+    repository.refreshManifest(modelId, version)
 
   @OneShot("Report manifest verification result")
-  override suspend fun reportVerification(
+  suspend fun reportVerification(
     modelId: String,
     version: String,
     checksumSha256: String,

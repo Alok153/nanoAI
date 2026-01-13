@@ -91,11 +91,11 @@ constructor(
 
       updateState { copy(isGenerating = true, errorMessage = null) }
 
-      // TODO: Implement actual image generation logic
-      // For now, simulate generation
+      // Simulated generation - actual implementation requires diffusion model integration
+      // See class documentation for implementation requirements
       delay(SIMULATION_DELAY_MS)
 
-      // TODO: Replace with actual generated image path
+      // Simulated path - actual implementation will write to app-specific storage
       val imagePath = "simulated_path_${UUID.randomUUID()}.png"
 
       // Save generated image with metadata
@@ -109,7 +109,7 @@ constructor(
           steps = snapshot.steps,
           guidanceScale = snapshot.guidanceScale,
           filePath = imagePath,
-          thumbnailPath = null, // TODO: Generate thumbnail
+          thumbnailPath = null, // Thumbnail generation requires image processing pipeline
           createdAt = Clock.System.now(),
         )
 

@@ -17,23 +17,22 @@ import kotlinx.coroutines.flow.Flow
 @Singleton
 class ConversationUseCase
 @Inject
-constructor(private val conversationRepository: ConversationRepository) :
-  ConversationUseCaseInterface {
+constructor(private val conversationRepository: ConversationRepository) {
   /** Observe all threads (reactive stream - not wrapped in NanoAIResult). */
   @ReactiveStream("Full chat thread catalog")
-  override fun getAllThreadsFlow(): Flow<List<ChatThread>> {
+  fun getAllThreadsFlow(): Flow<List<ChatThread>> {
     return conversationRepository.getAllThreadsFlow()
   }
 
   /** Observe messages for a specific thread (reactive stream - not wrapped in NanoAIResult). */
   @ReactiveStream("Messages for an individual thread")
-  override fun getMessagesFlow(threadId: UUID): Flow<List<Message>> {
+  fun getMessagesFlow(threadId: UUID): Flow<List<Message>> {
     return conversationRepository.getMessagesFlow(threadId)
   }
 
   /** Fetch all threads once (not reactive). */
   @OneShot("Snapshot all chat threads")
-  override suspend fun getAllThreads(): NanoAIResult<List<ChatThread>> =
+  suspend fun getAllThreads(): NanoAIResult<List<ChatThread>> =
     guardConversationOperation(
       message = "Failed to load chat history",
       context = mapOf("operation" to "getAllThreads"),
@@ -44,7 +43,7 @@ constructor(private val conversationRepository: ConversationRepository) :
 
   /** Create a new thread. */
   @OneShot("Create a chat thread")
-  override suspend fun createNewThread(personaId: UUID, title: String?): NanoAIResult<UUID> =
+  suspend fun createNewThread(personaId: UUID, title: String?): NanoAIResult<UUID> =
     guardConversationOperation(
       message = "Failed to create new thread",
       context = mapOf("personaId" to personaId.toString(), "title" to (title ?: "")),
@@ -55,7 +54,7 @@ constructor(private val conversationRepository: ConversationRepository) :
 
   /** Archive a thread. */
   @OneShot("Archive existing thread")
-  override suspend fun archiveThread(threadId: UUID): NanoAIResult<Unit> =
+  suspend fun archiveThread(threadId: UUID): NanoAIResult<Unit> =
     guardConversationOperation(
       message = "Failed to archive thread $threadId",
       context = mapOf("threadId" to threadId.toString()),
@@ -66,7 +65,7 @@ constructor(private val conversationRepository: ConversationRepository) :
 
   /** Delete a thread. */
   @OneShot("Delete existing thread")
-  override suspend fun deleteThread(threadId: UUID): NanoAIResult<Unit> =
+  suspend fun deleteThread(threadId: UUID): NanoAIResult<Unit> =
     guardConversationOperation(
       message = "Failed to delete thread $threadId",
       context = mapOf("threadId" to threadId.toString()),
@@ -77,7 +76,7 @@ constructor(private val conversationRepository: ConversationRepository) :
 
   /** Save a message. */
   @OneShot("Persist a chat message")
-  override suspend fun saveMessage(message: Message): NanoAIResult<Unit> =
+  suspend fun saveMessage(message: Message): NanoAIResult<Unit> =
     guardConversationOperation(
       message = "Failed to save message ${message.messageId}",
       context =
@@ -93,7 +92,7 @@ constructor(private val conversationRepository: ConversationRepository) :
 
   /** Get the current persona for a thread. */
   @OneShot("Resolve persona for a thread")
-  override suspend fun getCurrentPersonaForThread(threadId: UUID): NanoAIResult<UUID?> =
+  suspend fun getCurrentPersonaForThread(threadId: UUID): NanoAIResult<UUID?> =
     guardConversationOperation(
       message = "Failed to get current persona for thread $threadId",
       context = mapOf("threadId" to threadId.toString()),
@@ -104,7 +103,7 @@ constructor(private val conversationRepository: ConversationRepository) :
 
   /** Update a thread's persona. */
   @OneShot("Update persona on a thread")
-  override suspend fun updateThreadPersona(threadId: UUID, personaId: UUID?): NanoAIResult<Unit> =
+  suspend fun updateThreadPersona(threadId: UUID, personaId: UUID?): NanoAIResult<Unit> =
     guardConversationOperation(
       message = "Failed to update persona for thread $threadId",
       context =
@@ -116,7 +115,7 @@ constructor(private val conversationRepository: ConversationRepository) :
 
   /** Update a thread. */
   @OneShot("Update thread metadata")
-  override suspend fun updateThread(thread: ChatThread): NanoAIResult<Unit> =
+  suspend fun updateThread(thread: ChatThread): NanoAIResult<Unit> =
     guardConversationOperation(
       message = "Failed to update thread ${thread.threadId}",
       context = mapOf("threadId" to thread.threadId.toString()),

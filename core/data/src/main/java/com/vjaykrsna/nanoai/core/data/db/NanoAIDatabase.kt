@@ -31,10 +31,6 @@ import com.vjaykrsna.nanoai.core.data.library.daos.DownloadTaskDao
 import com.vjaykrsna.nanoai.core.data.library.entities.DownloadTaskEntity
 import com.vjaykrsna.nanoai.core.data.library.huggingface.dao.HuggingFaceModelCacheDao
 import com.vjaykrsna.nanoai.core.data.library.huggingface.entities.HuggingFaceModelCacheEntity
-import com.vjaykrsna.nanoai.core.maintenance.db.CodeQualityMetricDao
-import com.vjaykrsna.nanoai.core.maintenance.db.CodeQualityMetricEntity
-import com.vjaykrsna.nanoai.core.maintenance.db.RepoMaintenanceTaskDao
-import com.vjaykrsna.nanoai.core.maintenance.db.RepoMaintenanceTaskEntity
 
 /**
  * Room database for nanoAI application.
@@ -63,10 +59,6 @@ interface CoreDaoAccess {
   fun personaSwitchLogDao(): PersonaSwitchLogDao
 
   fun apiProviderConfigDao(): ApiProviderConfigDao
-
-  fun repoMaintenanceTaskDao(): RepoMaintenanceTaskDao
-
-  fun codeQualityMetricDao(): CodeQualityMetricDao
 }
 
 /** Model catalog and download feature DAOs. */
@@ -111,8 +103,6 @@ interface ImageDaoAccess {
       UserProfileEntity::class,
       LayoutSnapshotEntity::class,
       UIStateSnapshotEntity::class,
-      RepoMaintenanceTaskEntity::class,
-      CodeQualityMetricEntity::class,
       DownloadManifestEntity::class,
       GeneratedImageEntity::class,
       HuggingFaceModelCacheEntity::class,
@@ -124,7 +114,6 @@ interface ImageDaoAccess {
   TemporalTypeConverters::class,
   CollectionTypeConverters::class,
   UiPreferenceTypeConverters::class,
-  MaintenanceTypeConverters::class,
   DeliveryTypeConverters::class,
 )
 abstract class NanoAIDatabase :

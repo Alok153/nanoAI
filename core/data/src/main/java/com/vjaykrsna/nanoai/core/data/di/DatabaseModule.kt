@@ -20,8 +20,6 @@ import com.vjaykrsna.nanoai.core.data.library.daos.ModelPackageReadDao
 import com.vjaykrsna.nanoai.core.data.library.daos.ModelPackageRelationsDao
 import com.vjaykrsna.nanoai.core.data.library.daos.ModelPackageWriteDao
 import com.vjaykrsna.nanoai.core.data.library.huggingface.dao.HuggingFaceModelCacheDao
-import com.vjaykrsna.nanoai.core.maintenance.db.CodeQualityMetricDao
-import com.vjaykrsna.nanoai.core.maintenance.db.RepoMaintenanceTaskDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -121,21 +119,6 @@ object UiUxDaoModule {
   @Singleton
   fun provideUIStateSnapshotDao(database: NanoAIDatabase): UIStateSnapshotDao =
     database.uiStateSnapshotDao()
-}
-
-/** Provides DAOs for maintenance telemetry and generated content. */
-@Module
-@InstallIn(SingletonComponent::class)
-object MaintenanceDaoModule {
-  @Provides
-  @Singleton
-  fun provideRepoMaintenanceTaskDao(database: NanoAIDatabase): RepoMaintenanceTaskDao =
-    database.repoMaintenanceTaskDao()
-
-  @Provides
-  @Singleton
-  fun provideCodeQualityMetricDao(database: NanoAIDatabase): CodeQualityMetricDao =
-    database.codeQualityMetricDao()
 }
 
 /** Provides DAOs for the image generation feature set. */

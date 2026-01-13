@@ -4,7 +4,6 @@ import android.net.Uri
 import app.cash.turbine.TurbineTestContext
 import com.google.common.truth.Truth.assertThat
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
-import com.vjaykrsna.nanoai.core.domain.library.ModelDownloadsAndExportUseCase
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
 import com.vjaykrsna.nanoai.core.domain.model.uiux.DataStoreUiPreferences
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ScreenType
@@ -12,8 +11,6 @@ import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.model.uiux.UserProfile
 import com.vjaykrsna.nanoai.core.domain.model.uiux.VisualDensity
 import com.vjaykrsna.nanoai.core.domain.settings.ApiProviderConfigUseCase
-import com.vjaykrsna.nanoai.core.domain.settings.BackupLocation
-import com.vjaykrsna.nanoai.core.domain.settings.ImportService
 import com.vjaykrsna.nanoai.core.domain.settings.ImportSummary
 import com.vjaykrsna.nanoai.core.domain.settings.huggingface.HuggingFaceAuthCoordinator
 import com.vjaykrsna.nanoai.core.domain.settings.huggingface.HuggingFaceAuthState
@@ -27,6 +24,7 @@ import com.vjaykrsna.nanoai.core.domain.usecase.ObservePrivacyPreferencesUseCase
 import com.vjaykrsna.nanoai.core.domain.usecase.ObserveUiPreferencesUseCase
 import com.vjaykrsna.nanoai.core.domain.usecase.UpdatePrivacyPreferencesUseCase
 import com.vjaykrsna.nanoai.core.domain.usecase.UpdateUiPreferencesUseCase
+import com.vjaykrsna.nanoai.feature.settings.domain.BackupUseCase
 import com.vjaykrsna.nanoai.feature.settings.presentation.model.SettingsUiEvent
 import com.vjaykrsna.nanoai.feature.settings.presentation.state.SettingsUiState
 import com.vjaykrsna.nanoai.shared.state.ViewModelStateHostTestHarness
@@ -57,12 +55,11 @@ class SettingsViewModelTest {
   private val dispatcher: TestDispatcher = dispatcherExtension.dispatcher
 
   private lateinit var apiProviderConfigUseCase: ApiProviderConfigUseCase
-  private lateinit var modelDownloadsAndExportUseCase: ModelDownloadsAndExportUseCase
+  private lateinit var backupUseCase: BackupUseCase
   private lateinit var observePrivacyPreferencesUseCase: ObservePrivacyPreferencesUseCase
   private lateinit var observeUiPreferencesUseCase: ObserveUiPreferencesUseCase
   private lateinit var updatePrivacyPreferencesUseCase: UpdatePrivacyPreferencesUseCase
   private lateinit var updateUiPreferencesUseCase: UpdateUiPreferencesUseCase
-  private lateinit var importService: ImportService
   private lateinit var observeUserProfileUseCase: ObserveUserProfileUseCase
   private lateinit var settingsOperationsUseCase: SettingsOperationsUseCase
   private lateinit var toggleCompactModeUseCase: ToggleCompactModeUseCase
@@ -162,7 +159,7 @@ class SettingsViewModelTest {
   @Test
   fun exportBackupSuccessEmitsEvent() =
     runTest(dispatcher) {
-      coEvery { modelDownloadsAndExportUseCase.exportBackup(any(), any()) } returns
+      coEvery { backupUseCase.exportBackup(any(), any()) } returns
         NanoAIResult.success("/tmp/backup.json")
 
       harness.testEvents {
@@ -177,7 +174,7 @@ class SettingsViewModelTest {
   @Test
   fun exportBackupFailureEmitsErrorEvent() =
     runTest(dispatcher) {
-      coEvery { modelDownloadsAndExportUseCase.exportBackup(any(), any()) } returns
+      coEvery { backupUseCase.exportBackup(any(), any()) } returns
         NanoAIResult.recoverable("disk full")
 
       harness.testEvents {
@@ -200,7 +197,9 @@ class SettingsViewModelTest {
           providersUpdated = 0,
         )
       val importUri = mockk<Uri>()
-      coEvery { importService.importBackup(BackupLocation(importUri.toString())) } returns
+      coEvery { backupUseCase.validateBackup(importUri.toString()) } returns
+        NanoAIResult.success(summary)
+      coEvery { backupUseCase.importBackup(importUri.toString()) } returns
         NanoAIResult.success(summary)
 
       harness.testEvents {
@@ -209,6 +208,22 @@ class SettingsViewModelTest {
 
         val event = awaitItem()
         assertThat(event).isEqualTo(SettingsUiEvent.ImportCompleted(summary))
+      }
+    }
+
+  @Test
+  fun importBackupValidationFailureEmitsError() =
+    runTest(dispatcher) {
+      val importUri = mockk<Uri>()
+      coEvery { backupUseCase.validateBackup(importUri.toString()) } returns
+        NanoAIResult.recoverable("invalid bundle")
+
+      harness.testEvents {
+        viewModel.importBackup(importUri)
+        advanceUntilIdle()
+
+        val event = awaitItem() as SettingsUiEvent.ErrorRaised
+        assertThat(event.envelope.userMessage).isEqualTo("Failed to validate backup")
       }
     }
 
@@ -335,12 +350,11 @@ class SettingsViewModelTest {
 
   private fun initialiseMocks() {
     apiProviderConfigUseCase = mockk(relaxed = true)
-    modelDownloadsAndExportUseCase = mockk(relaxed = true)
+    backupUseCase = mockk(relaxed = true)
     observePrivacyPreferencesUseCase = mockk(relaxed = true)
     observeUiPreferencesUseCase = mockk(relaxed = true)
     updatePrivacyPreferencesUseCase = mockk(relaxed = true)
     updateUiPreferencesUseCase = mockk(relaxed = true)
-    importService = mockk(relaxed = true)
     observeUserProfileUseCase = mockk(relaxed = true)
     settingsOperationsUseCase = mockk(relaxed = true)
     toggleCompactModeUseCase = mockk(relaxed = true)
@@ -362,9 +376,11 @@ class SettingsViewModelTest {
     coEvery { toggleCompactModeUseCase.setCompactMode(any()) } returns NanoAIResult.success(Unit)
     coEvery { updateUiPreferencesUseCase.setHighContrastEnabled(any()) } returns
       NanoAIResult.success(Unit)
-    coEvery { modelDownloadsAndExportUseCase.exportBackup(any(), any()) } returns
+    coEvery { backupUseCase.exportBackup(any(), any()) } returns
       NanoAIResult.success("/tmp/backup.json")
-    coEvery { importService.importBackup(any()) } returns
+    coEvery { backupUseCase.validateBackup(any()) } returns
+      NanoAIResult.success(ImportSummary(0, 0, 0, 0))
+    coEvery { backupUseCase.importBackup(any()) } returns
       NanoAIResult.success(ImportSummary(0, 0, 0, 0))
     coEvery { huggingFaceAuthCoordinator.savePersonalAccessToken(any()) } returns
       NanoAIResult.success(HuggingFaceAuthState(isAuthenticated = false))
@@ -387,12 +403,11 @@ class SettingsViewModelTest {
     viewModel =
       SettingsViewModel(
         apiProviderConfigUseCase,
-        modelDownloadsAndExportUseCase,
+        backupUseCase,
         observePrivacyPreferencesUseCase,
         observeUiPreferencesUseCase,
         updatePrivacyPreferencesUseCase,
         updateUiPreferencesUseCase,
-        importService,
         observeUserProfileUseCase,
         settingsOperationsUseCase,
         toggleCompactModeUseCase,

@@ -1,10 +1,10 @@
 package com.vjaykrsna.nanoai.feature.chat.presentation
 
 import androidx.lifecycle.viewModelScope
+import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
 import com.vjaykrsna.nanoai.core.common.error.toErrorEnvelope
 import com.vjaykrsna.nanoai.core.common.onFailure
 import com.vjaykrsna.nanoai.core.common.onSuccess
-import com.vjaykrsna.nanoai.core.common.MainImmediateDispatcher
 import com.vjaykrsna.nanoai.core.domain.model.PersonaProfile
 import com.vjaykrsna.nanoai.core.model.PersonaSwitchAction
 import com.vjaykrsna.nanoai.feature.chat.domain.ChatFeatureCoordinator
@@ -41,10 +41,7 @@ constructor(
 
   fun setActiveThread(threadId: UUID?, personaId: UUID?) {
     updateState {
-      copy(
-        activeThreadId = threadId,
-        selectedPersonaId = personaId ?: selectedPersonaId,
-      )
+      copy(activeThreadId = threadId, selectedPersonaId = personaId ?: selectedPersonaId)
     }
   }
 
@@ -89,8 +86,7 @@ constructor(
     viewModelScope.launch(dispatcher) {
       chatFeatureCoordinator.observePersonas().collectLatest { personas ->
         updateState {
-          val persistedSelection =
-            selectedPersonaId ?: personas.firstOrNull()?.personaId
+          val persistedSelection = selectedPersonaId ?: personas.firstOrNull()?.personaId
           copy(personas = personas.toPersistentList(), selectedPersonaId = persistedSelection)
         }
       }

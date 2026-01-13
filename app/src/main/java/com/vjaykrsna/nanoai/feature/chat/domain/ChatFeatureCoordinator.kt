@@ -1,7 +1,7 @@
 package com.vjaykrsna.nanoai.feature.chat.domain
 
 import com.vjaykrsna.nanoai.core.common.NanoAIResult
-import com.vjaykrsna.nanoai.core.domain.chat.ConversationUseCaseInterface
+import com.vjaykrsna.nanoai.core.domain.chat.ConversationUseCase
 import com.vjaykrsna.nanoai.core.domain.chat.PromptAttachments
 import com.vjaykrsna.nanoai.core.domain.chat.SendPromptUseCase
 import com.vjaykrsna.nanoai.core.domain.chat.SwitchPersonaUseCase
@@ -63,7 +63,7 @@ class DefaultChatFeatureCoordinator
 constructor(
   private val sendPromptUseCase: SendPromptUseCase,
   private val switchPersonaUseCase: SwitchPersonaUseCase,
-  private val conversationUseCase: ConversationUseCaseInterface,
+  private val conversationUseCase: ConversationUseCase,
   private val observePersonasUseCase: ObservePersonasUseCase,
   private val getDefaultPersonaUseCase: GetDefaultPersonaUseCase,
   private val modelCatalogUseCase: ModelCatalogUseCase,

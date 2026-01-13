@@ -9,11 +9,10 @@ import javax.inject.Singleton
 @Singleton
 class HuggingFaceCatalogUseCase
 @Inject
-constructor(private val huggingFaceCatalogRepository: HuggingFaceCatalogRepository) :
-  HuggingFaceCatalogUseCaseInterface {
+constructor(private val huggingFaceCatalogRepository: HuggingFaceCatalogRepository) {
   /** List models from Hugging Face catalog. */
   @OneShot("List Hugging Face catalog models")
-  override suspend fun listModels(
+  suspend fun listModels(
     query: HuggingFaceCatalogQuery
   ): NanoAIResult<List<HuggingFaceModelSummary>> {
     return huggingFaceCatalogRepository.listModels(query)

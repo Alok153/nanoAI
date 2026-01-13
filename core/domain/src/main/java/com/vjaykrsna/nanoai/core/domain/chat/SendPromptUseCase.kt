@@ -31,8 +31,8 @@ constructor(
   private val personaRepository: PersonaRepository,
   private val promptInferenceGateway: PromptInferenceGateway,
   private val inferencePreferenceRepository: InferencePreferenceRepository,
-) : SendPromptUseCaseInterface {
-  override suspend operator fun invoke(
+) {
+  suspend operator fun invoke(
     threadId: UUID,
     prompt: String,
     personaId: UUID,

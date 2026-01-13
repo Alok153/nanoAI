@@ -62,9 +62,7 @@ fun PersonaSwitcher(
       }
     }
 
-    OutlinedButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
-      Text(text = "Close")
-    }
+    OutlinedButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) { Text(text = "Close") }
   }
 }
 
@@ -104,11 +102,7 @@ private fun PersonaSwitcherCard(
           Text(text = "Continue thread")
         }
 
-        Button(
-          enabled = !isSwitching,
-          onClick = onStartNewThread,
-          modifier = Modifier.weight(1f),
-        ) {
+        Button(enabled = !isSwitching, onClick = onStartNewThread, modifier = Modifier.weight(1f)) {
           Text(text = "New thread")
         }
       }

@@ -112,38 +112,6 @@ class UserProfileRepositoryImplTest {
     }
 
   @Test
-  fun `updateLeftDrawerOpen should call local data source`() =
-    runTest(dispatcher) {
-      val userId = "testUser"
-      repository.updateLeftDrawerOpen(userId, true)
-      coVerify { localDataSource.setLeftDrawerOpen(userId, true) }
-    }
-
-  @Test
-  fun `updateRightDrawerState should call local data source`() =
-    runTest(dispatcher) {
-      val userId = "testUser"
-      repository.updateRightDrawerState(userId, true, "testPanel")
-      coVerify { localDataSource.setRightDrawerState(userId, true, "testPanel") }
-    }
-
-  @Test
-  fun `updateActiveModeRoute should call local data source`() =
-    runTest(dispatcher) {
-      val userId = "testUser"
-      repository.updateActiveModeRoute(userId, "testRoute")
-      coVerify { localDataSource.setActiveModeRoute(userId, "testRoute") }
-    }
-
-  @Test
-  fun `updateCommandPaletteVisibility should call local data source`() =
-    runTest(dispatcher) {
-      val userId = "testUser"
-      repository.updateCommandPaletteVisibility(userId, true)
-      coVerify { localDataSource.setCommandPaletteVisible(userId, true) }
-    }
-
-  @Test
   fun `recordCommandPaletteRecent should call local data source`() =
     runTest(dispatcher) {
       val commandId = "command-1"

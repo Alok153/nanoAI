@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 8,
-    "identityHash": "b98b4d94972991332422cf8354400a26",
+    "identityHash": "ce2ae18a1cacca8105b52e3e5f5d1e4e",
     "entities": [
       {
         "tableName": "chat_threads",
@@ -744,7 +744,7 @@
       },
       {
         "tableName": "ui_state_snapshots",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`user_id` TEXT NOT NULL, `expanded_panels` TEXT NOT NULL, `recent_actions` TEXT NOT NULL, `sidebar_collapsed` INTEGER NOT NULL, `left_drawer_open` INTEGER NOT NULL, `right_drawer_open` INTEGER NOT NULL, `active_mode` TEXT NOT NULL, `active_right_panel` TEXT, `palette_visible` INTEGER NOT NULL, PRIMARY KEY(`user_id`), FOREIGN KEY(`user_id`) REFERENCES `user_profiles`(`user_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`user_id` TEXT NOT NULL, `expanded_panels` TEXT NOT NULL, `recent_actions` TEXT NOT NULL, `sidebar_collapsed` INTEGER NOT NULL, PRIMARY KEY(`user_id`), FOREIGN KEY(`user_id`) REFERENCES `user_profiles`(`user_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "userId",
@@ -767,35 +767,6 @@
           {
             "fieldPath": "sidebarCollapsed",
             "columnName": "sidebar_collapsed",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "leftDrawerOpen",
-            "columnName": "left_drawer_open",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "rightDrawerOpen",
-            "columnName": "right_drawer_open",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "activeMode",
-            "columnName": "active_mode",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "activeRightPanel",
-            "columnName": "active_right_panel",
-            "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "paletteVisible",
-            "columnName": "palette_visible",
             "affinity": "INTEGER",
             "notNull": true
           }
@@ -821,71 +792,30 @@
         ]
       },
       {
-        "tableName": "repo_maintenance_tasks",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`task_id` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT NOT NULL, `category` TEXT NOT NULL, `priority` TEXT NOT NULL, `status` TEXT NOT NULL, `owner` TEXT, `blocking_rules` TEXT NOT NULL, `linked_artifacts` TEXT NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`task_id`))",
+        "tableName": "ui_state_snapshots",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`user_id` TEXT NOT NULL, `expanded_panels` TEXT NOT NULL, `recent_actions` TEXT NOT NULL, `sidebar_collapsed` INTEGER NOT NULL, PRIMARY KEY(`user_id`), FOREIGN KEY(`user_id`) REFERENCES `user_profiles`(`user_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
-            "fieldPath": "id",
-            "columnName": "task_id",
+            "fieldPath": "userId",
+            "columnName": "user_id",
             "affinity": "TEXT",
             "notNull": true
           },
           {
-            "fieldPath": "title",
-            "columnName": "title",
+            "fieldPath": "expandedPanels",
+            "columnName": "expanded_panels",
             "affinity": "TEXT",
             "notNull": true
           },
           {
-            "fieldPath": "description",
-            "columnName": "description",
+            "fieldPath": "recentActions",
+            "columnName": "recent_actions",
             "affinity": "TEXT",
             "notNull": true
           },
           {
-            "fieldPath": "category",
-            "columnName": "category",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "priority",
-            "columnName": "priority",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "status",
-            "columnName": "status",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "owner",
-            "columnName": "owner",
-            "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "blockingRules",
-            "columnName": "blocking_rules",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "linkedArtifacts",
-            "columnName": "linked_artifacts",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "createdAt",
-            "columnName": "created_at",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "updatedAt",
-            "columnName": "updated_at",
+            "fieldPath": "sidebarCollapsed",
+            "columnName": "sidebar_collapsed",
             "affinity": "INTEGER",
             "notNull": true
           }
@@ -893,137 +823,19 @@
         "primaryKey": {
           "autoGenerate": false,
           "columnNames": [
-            "task_id"
+            "user_id"
           ]
         },
-        "indices": [
-          {
-            "name": "index_repo_maintenance_tasks_status",
-            "unique": false,
-            "columnNames": [
-              "status"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_repo_maintenance_tasks_status` ON `${TABLE_NAME}` (`status`)"
-          },
-          {
-            "name": "index_repo_maintenance_tasks_priority",
-            "unique": false,
-            "columnNames": [
-              "priority"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_repo_maintenance_tasks_priority` ON `${TABLE_NAME}` (`priority`)"
-          }
-        ]
-      },
-      {
-        "tableName": "code_quality_metrics",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`metric_id` TEXT NOT NULL, `task_id` TEXT, `rule_id` TEXT NOT NULL, `file_path` TEXT NOT NULL, `severity` TEXT NOT NULL, `occurrences` INTEGER NOT NULL, `threshold` INTEGER NOT NULL, `first_detected_at` INTEGER NOT NULL, `resolved_at` INTEGER, `notes` TEXT, PRIMARY KEY(`metric_id`), FOREIGN KEY(`task_id`) REFERENCES `repo_maintenance_tasks`(`task_id`) ON UPDATE CASCADE ON DELETE SET NULL )",
-        "fields": [
-          {
-            "fieldPath": "id",
-            "columnName": "metric_id",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "taskId",
-            "columnName": "task_id",
-            "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "ruleId",
-            "columnName": "rule_id",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "filePath",
-            "columnName": "file_path",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "severity",
-            "columnName": "severity",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "occurrences",
-            "columnName": "occurrences",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "threshold",
-            "columnName": "threshold",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "firstDetectedAt",
-            "columnName": "first_detected_at",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "resolvedAt",
-            "columnName": "resolved_at",
-            "affinity": "INTEGER"
-          },
-          {
-            "fieldPath": "notes",
-            "columnName": "notes",
-            "affinity": "TEXT"
-          }
-        ],
-        "primaryKey": {
-          "autoGenerate": false,
-          "columnNames": [
-            "metric_id"
-          ]
-        },
-        "indices": [
-          {
-            "name": "index_code_quality_metrics_task_id",
-            "unique": false,
-            "columnNames": [
-              "task_id"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_code_quality_metrics_task_id` ON `${TABLE_NAME}` (`task_id`)"
-          },
-          {
-            "name": "index_code_quality_metrics_rule_id",
-            "unique": false,
-            "columnNames": [
-              "rule_id"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_code_quality_metrics_rule_id` ON `${TABLE_NAME}` (`rule_id`)"
-          },
-          {
-            "name": "index_code_quality_metrics_file_path",
-            "unique": false,
-            "columnNames": [
-              "file_path"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_code_quality_metrics_file_path` ON `${TABLE_NAME}` (`file_path`)"
-          }
-        ],
         "foreignKeys": [
           {
-            "table": "repo_maintenance_tasks",
-            "onDelete": "SET NULL",
+            "table": "user_profiles",
+            "onDelete": "CASCADE",
             "onUpdate": "CASCADE",
             "columns": [
-              "task_id"
+              "user_id"
             ],
             "referencedColumns": [
-              "task_id"
+              "user_id"
             ]
           }
         ]
@@ -1363,7 +1175,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b98b4d94972991332422cf8354400a26')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ce2ae18a1cacca8105b52e3e5f5d1e4e')"
     ]
   }
 }

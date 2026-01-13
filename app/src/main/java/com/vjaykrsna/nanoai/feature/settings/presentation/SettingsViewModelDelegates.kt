@@ -6,13 +6,11 @@ import com.vjaykrsna.nanoai.core.common.error.NanoAIErrorEnvelope
 import com.vjaykrsna.nanoai.core.common.error.toErrorEnvelope
 import com.vjaykrsna.nanoai.core.common.onFailure
 import com.vjaykrsna.nanoai.core.common.onSuccess
-import com.vjaykrsna.nanoai.core.domain.library.ModelDownloadsAndExportUseCase
 import com.vjaykrsna.nanoai.core.domain.model.APIProviderConfig
 import com.vjaykrsna.nanoai.core.domain.model.ProviderCredentialMutation
 import com.vjaykrsna.nanoai.core.domain.model.uiux.ThemePreference
 import com.vjaykrsna.nanoai.core.domain.settings.ApiProviderConfigUseCase
 import com.vjaykrsna.nanoai.core.domain.settings.BackupLocation
-import com.vjaykrsna.nanoai.core.domain.settings.ImportService
 import com.vjaykrsna.nanoai.core.domain.settings.huggingface.HuggingFaceAuthCoordinator
 import com.vjaykrsna.nanoai.core.domain.settings.huggingface.HuggingFaceDeviceAuthState
 import com.vjaykrsna.nanoai.core.domain.settings.huggingface.HuggingFaceOAuthConfig
@@ -24,6 +22,7 @@ import com.vjaykrsna.nanoai.core.domain.usecase.ObservePrivacyPreferencesUseCase
 import com.vjaykrsna.nanoai.core.domain.usecase.ObserveUiPreferencesUseCase
 import com.vjaykrsna.nanoai.core.domain.usecase.UpdatePrivacyPreferencesUseCase
 import com.vjaykrsna.nanoai.core.domain.usecase.UpdateUiPreferencesUseCase
+import com.vjaykrsna.nanoai.feature.settings.domain.BackupUseCase
 import com.vjaykrsna.nanoai.feature.settings.presentation.model.SettingsUiEvent
 import com.vjaykrsna.nanoai.feature.settings.presentation.state.SettingsUiState
 import kotlinx.coroutines.CoroutineScope
@@ -181,8 +180,7 @@ internal class SettingsApiProviderActions(
 
 internal class SettingsBackupActions(
   private val scope: CoroutineScope,
-  private val modelDownloadsAndExportUseCase: ModelDownloadsAndExportUseCase,
-  private val importService: ImportService,
+  private val backupUseCase: BackupUseCase,
   private val setLoading: (Boolean) -> Unit,
   private val emitEvent: suspend (SettingsUiEvent) -> Unit,
   private val emitError: suspend (NanoAIErrorEnvelope) -> Unit,
@@ -191,10 +189,7 @@ internal class SettingsBackupActions(
     scope.launch {
       setLoading(true)
       try {
-        when (
-          val result =
-            modelDownloadsAndExportUseCase.exportBackup(destinationPath, includeChatHistory)
-        ) {
+        when (val result = backupUseCase.exportBackup(destinationPath, includeChatHistory)) {
           is NanoAIResult.Success -> emitEvent(SettingsUiEvent.ExportCompleted(result.value))
           else -> emitError(result.toErrorEnvelope(EXPORT_FAILURE_MESSAGE))
         }
@@ -209,9 +204,15 @@ internal class SettingsBackupActions(
       setLoading(true)
       try {
         val location = BackupLocation(uri.toString())
-        when (val result = importService.importBackup(location)) {
-          is NanoAIResult.Success -> emitEvent(SettingsUiEvent.ImportCompleted(result.value))
-          else -> emitError(result.toErrorEnvelope(IMPORT_FAILURE_MESSAGE))
+        when (val validation = backupUseCase.validateBackup(location.value)) {
+          is NanoAIResult.Success -> {
+            val summary = validation.value
+            when (val result = backupUseCase.importBackup(location.value)) {
+              is NanoAIResult.Success -> emitEvent(SettingsUiEvent.ImportCompleted(summary))
+              else -> emitError(result.toErrorEnvelope(IMPORT_FAILURE_MESSAGE))
+            }
+          }
+          else -> emitError(validation.toErrorEnvelope(IMPORT_VALIDATION_FAILURE_MESSAGE))
         }
       } catch (error: Throwable) {
         emitError(error.toErrorEnvelope(IMPORT_FAILURE_MESSAGE))
@@ -449,6 +450,7 @@ private const val PROVIDER_UPDATE_FAILURE = "Failed to update provider"
 private const val PROVIDER_DELETE_FAILURE = "Failed to delete provider"
 private const val EXPORT_FAILURE_MESSAGE = "Failed to export backup"
 private const val IMPORT_FAILURE_MESSAGE = "Failed to import backup"
+private const val IMPORT_VALIDATION_FAILURE_MESSAGE = "Failed to validate backup"
 private const val PRIVACY_UPDATE_FAILURE = "Failed to update preference"
 private const val CONSENT_ACK_FAILURE = "Failed to acknowledge consent"
 private const val RETENTION_POLICY_FAILURE = "Failed to set retention policy"

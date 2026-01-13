@@ -120,6 +120,7 @@ private fun HomeScreenSections(
         recentConfirmation = it.title
         onRecentActivitySelect(it)
       },
+      onViewHistoryClick = { onModeSelect(ModeId.HISTORY) },
     )
     RecentConfirmationBanner(recentConfirmation)
   }

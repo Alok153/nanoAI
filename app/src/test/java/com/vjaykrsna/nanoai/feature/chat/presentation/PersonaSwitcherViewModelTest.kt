@@ -37,7 +37,8 @@ class PersonaSwitcherViewModelTest {
   private lateinit var switchPersonaUseCase: SwitchPersonaUseCase
   private lateinit var chatFeatureCoordinator: ChatFeatureCoordinator
   private lateinit var viewModel: PersonaSwitcherViewModel
-  private lateinit var harness: ViewModelStateHostTestHarness<PersonaSwitcherUiState, PersonaSwitcherEvent>
+  private lateinit var harness:
+    ViewModelStateHostTestHarness<PersonaSwitcherUiState, PersonaSwitcherEvent>
 
   @BeforeEach
   fun setup() {
@@ -131,6 +132,15 @@ class PersonaSwitcherViewModelTest {
       logged += log
     }
 
-    override suspend fun getSwitchHistory(threadId: UUID) = logged.filter { it.threadId == threadId }
+    override suspend fun getSwitchHistory(threadId: UUID) =
+      logged.filter { it.threadId == threadId }
+
+    override suspend fun getLatestSwitch(threadId: UUID): PersonaSwitchLog? =
+      logged.filter { it.threadId == threadId }.lastOrNull()
+
+    override suspend fun getLogsByThreadId(
+      threadId: UUID
+    ): kotlinx.coroutines.flow.Flow<List<PersonaSwitchLog>> =
+      kotlinx.coroutines.flow.flowOf(logged.filter { it.threadId == threadId })
   }
 }

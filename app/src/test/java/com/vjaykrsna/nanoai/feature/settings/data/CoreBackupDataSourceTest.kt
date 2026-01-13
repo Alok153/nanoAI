@@ -39,11 +39,21 @@ class CoreBackupDataSourceTest {
 
   @Test
   fun validateBackup_propagatesRecoverable() = runTest {
-    fakeImport.nextResult = NanoAIResult.recoverable(message = "bad file", telemetryId = "x")
+    fakeImport.nextValidationResult =
+      NanoAIResult.recoverable(message = "bad file", telemetryId = "x")
 
     val result = dataSource.validateBackup("content://bad.zip")
 
     assertThat(result).isInstanceOf(NanoAIResult.RecoverableError::class.java)
+  }
+
+  @Test
+  fun validateBackup_doesNotInvokeImportPath() = runTest {
+    val result = dataSource.validateBackup("content://valid.zip")
+
+    assertThat(result).isInstanceOf(NanoAIResult.Success::class.java)
+    assertThat(fakeImport.validateCalls).isEqualTo(1)
+    assertThat(fakeImport.importCalls).isEqualTo(0)
   }
 
   private class FakeExportService : ExportService {
@@ -85,10 +95,21 @@ class CoreBackupDataSourceTest {
   private class FakeImportService : ImportService {
     val requestedLocations = mutableListOf<BackupLocation>()
     var nextResult: NanoAIResult<ImportSummary> = NanoAIResult.success(ImportSummary(0, 0, 0, 0))
+    var nextValidationResult: NanoAIResult<ImportSummary> =
+      NanoAIResult.success(ImportSummary(0, 0, 0, 0))
+    var importCalls: Int = 0
+    var validateCalls: Int = 0
 
     override suspend fun importBackup(location: BackupLocation): NanoAIResult<ImportSummary> {
       requestedLocations += location
+      importCalls += 1
       return nextResult
+    }
+
+    override suspend fun validateBackup(location: BackupLocation): NanoAIResult<ImportSummary> {
+      requestedLocations += location
+      validateCalls += 1
+      return nextValidationResult
     }
   }
 }

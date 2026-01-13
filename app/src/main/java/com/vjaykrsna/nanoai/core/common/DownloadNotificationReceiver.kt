@@ -4,7 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import com.vjaykrsna.nanoai.core.domain.library.ModelDownloadsAndExportUseCase
+import com.vjaykrsna.nanoai.core.domain.library.ModelDownloadsAndExportUseCaseInterface
 import dagger.hilt.android.AndroidEntryPoint
 import java.util.UUID
 import javax.inject.Inject
@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 class DownloadNotificationReceiver : BroadcastReceiver() {
 
-  @Inject lateinit var modelDownloadsUseCase: ModelDownloadsAndExportUseCase
+  @Inject lateinit var modelDownloadsUseCase: ModelDownloadsAndExportUseCaseInterface
 
   override fun onReceive(context: Context, intent: Intent) {
     val taskIdString = intent.getStringExtra(NotificationHelper.EXTRA_TASK_ID) ?: return

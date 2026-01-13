@@ -41,8 +41,8 @@ nanoAI implements **Clean Architecture** with strict separation of concerns acro
 ```
 🎯 Application Module (:app)
 ├── MainActivity - Single activity architecture
-├── Feature folders (presentation + UI only; domain/data live in :core)
-└── Core Infrastructure (Cross-cutting services)
+├── Feature folders (presentation + domain + data slices that wrap shared core services)
+└── Core Infrastructure (cross-cutting services, shared models, DI glue)
 
 ⚡ Benchmark Module (:macrobenchmark)
 ├── Performance validation suite
@@ -52,19 +52,23 @@ nanoAI implements **Clean Architecture** with strict separation of concerns acro
 
 ### Feature Organization
 
-Feature folders currently host UI and presentation only:
+Feature folders now own end-to-end slices while still leaning on shared core modules for
+primitives (models, gateways, dispatchers):
 
 ```
 feature/{name}/
-├── ui/ - Compose screens & components (Presentation Layer)
-└── presentation/ - ViewModels & UI state (Presentation Layer)
+├── ui/            - Compose screens & components (presentation)
+├── presentation/  - ViewModels & UI state hosts (presentation)
+├── domain/        - Feature-specific use cases + coordinators
+└── data/          - Repositories + data sources bound to core contracts
 ```
 
-Domain and data concerns for all features live in `:core:domain` and `:core:data` and are
-exposed through coordinators (for example `ChatFeatureCoordinator`) to keep presentation
-decoupled while feature Gradle modules are introduced incrementally.
+Each feature keeps the Clean Architecture chain intact: `Composable → ViewModel → UseCase →
+Repository → DataSource`. Shared, cross-feature contracts (e.g., connectivity, runtime,
+telemetry) remain in `:core` while feature-owned domain/data live beside the UI for tighter
+traceability and easier testing.
 
-**Active Feature Folders:** `chat/`, `library/`, `settings/`, `image/`, `uiux/`, `audio/`
+**Active Feature Folders:** `audio/`, `chat/`, `image/`, `library/`, `settings/`, `uiux/`
 
 ## Domain Layer: UseCases
 
@@ -72,23 +76,24 @@ The domain layer contains all business logic encapsulated in UseCases, each foll
 
 ### Core UseCases by Feature
 
+Feature-owned use cases now sit under `app/src/main/java/com/vjaykrsna/nanoai/feature/*/domain`
+with interfaces kept close to their repositories:
+
 **Chat Domain:**
-- `SendPromptUseCase` - Handles AI prompt submission and response generation
-- `SwitchPersonaUseCase` - Manages persona switching within conversations
-- `ConversationUseCase` - Handles conversation CRUD operations
+- `LocalInferenceUseCase` + `ChatFeatureCoordinator` for local-first prompts and persona-aware
+    routing
 
 **Library Domain:**
-- `ModelCatalogUseCase` - Model catalog operations and offline fallback
-- `DownloadModelUseCase` - Model download coordination and verification
-- `ExportBackupUseCase` - Data export and backup operations
-- `HuggingFaceCatalogUseCase` - Hugging Face model browsing
+- `QueueModelDownloadUseCase`, `PauseModelDownloadUseCase`, `VerifyModelDownloadUseCase`, and
+    `ObserveDownloadTasksUseCase` coordinating the download queue and checksum validation
 
 **Settings Domain:**
-- `ApiProviderConfigUseCase` - API provider configuration management
-- `ObserveUserProfileUseCase` - User profile observation and synchronization
+- `PersonaUseCase` and `BackupUseCase` covering persona switching/restoration and encrypted
+    backup/export
 
-**Image Domain:**
-- `ImageGalleryUseCase` - Image gallery operations and management
+**Image & Audio Domains:**
+- `ImageGalleryFeatureUseCase` and `AudioSessionCoordinator` encapsulate media flows while
+    delegating storage/runtime work to shared `:core` data sources
 
 ### Error Handling Architecture
 
@@ -128,11 +133,12 @@ The data layer provides abstraction over data sources with interface contracts.
 - `ThemeRepository` - Theme preferences and Material 3 settings
 - `ProgressRepository` - Background operation progress tracking
 
-**Feature Repositories:**
-- `ConversationRepository` - Chat thread and message management
-- `ModelCatalogRepository` - Model catalog and download state
-- `ApiProviderConfigRepository` - API provider configurations
-- `UserProfileRepository` - User preferences and profile data
+**Feature Repositories (feature-owned):**
+- `DefaultLocalInferenceRepository` (chat) - Installed model discovery + readiness checks
+- `ModelDownloadRepository` (library) - Queue, pause/resume, checksum verification, delete
+- `PersonaRepository` (settings) - Persona persistence and active persona selection logs
+- `BackupRepository` (settings) - Encrypted export/import with warnings surfaced to UI
+- `ImageFeatureRepository` / `AudioFeatureRepository` - Media scaffolding while runtimes mature
 
 ## Key Data Flows
 

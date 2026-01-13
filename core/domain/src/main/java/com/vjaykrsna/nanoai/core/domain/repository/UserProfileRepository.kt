@@ -17,7 +17,6 @@ interface UserProfileRepository :
   UserProfileObservationRepository,
   UserPreferenceWriteRepository,
   UserLayoutSnapshotRepository,
-  UserInterfaceStateRepository,
   UserCommandPaletteRepository,
   UserConnectivityRepository
 
@@ -50,17 +49,6 @@ interface UserLayoutSnapshotRepository {
   suspend fun saveLayoutSnapshot(userId: String, layout: LayoutSnapshot, position: Int)
 
   suspend fun deleteLayoutSnapshot(layoutId: String)
-}
-
-/** UI state persistence hooks for drawers, mode routing, and palette visibility. */
-interface UserInterfaceStateRepository {
-  suspend fun updateLeftDrawerOpen(userId: String, open: Boolean)
-
-  suspend fun updateRightDrawerState(userId: String, open: Boolean, panel: String?)
-
-  suspend fun updateActiveModeRoute(userId: String, route: String)
-
-  suspend fun updateCommandPaletteVisibility(userId: String, visible: Boolean)
 }
 
 /** Command palette recents coordination. */

@@ -113,6 +113,9 @@ private fun LazyListScope.privacySettingsItems(
   actions: SettingsScreenActions,
 ) {
   item {
+    PrivacyDashboardCard(summary = state.privacyDashboardSummary)
+  }
+  item {
     PrivacySection(
       privacyPreferences = state.privacyPreference,
       onTelemetryToggle = actions.onTelemetryToggle,

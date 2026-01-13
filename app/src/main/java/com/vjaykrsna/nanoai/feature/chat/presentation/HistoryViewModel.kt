@@ -6,7 +6,7 @@ import com.vjaykrsna.nanoai.core.common.NanoAIResult
 import com.vjaykrsna.nanoai.core.common.error.NanoAIErrorEnvelope
 import com.vjaykrsna.nanoai.core.common.error.toErrorEnvelope
 import com.vjaykrsna.nanoai.core.common.error.withFallbackMessage
-import com.vjaykrsna.nanoai.core.domain.chat.ConversationUseCaseInterface
+import com.vjaykrsna.nanoai.core.domain.chat.ConversationUseCase
 import com.vjaykrsna.nanoai.feature.chat.presentation.state.HistoryUiState
 import com.vjaykrsna.nanoai.shared.state.NanoAIViewEvent
 import com.vjaykrsna.nanoai.shared.state.ViewModelStateHost
@@ -28,7 +28,7 @@ import kotlinx.coroutines.launch
 class HistoryViewModel
 @Inject
 constructor(
-  private val conversationUseCase: ConversationUseCaseInterface,
+  private val conversationUseCase: ConversationUseCase,
   @MainImmediateDispatcher mainDispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
 ) :
   ViewModelStateHost<HistoryUiState, HistoryUiEvent>(

@@ -22,13 +22,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @Singleton
 class NavigationRepositoryImpl
@@ -42,11 +37,8 @@ constructor(
   private val userId: String = UIUX_DEFAULT_USER_ID
   private val hasAppliedHomeStartup = AtomicBoolean(false)
 
-  private val uiSnapshot: StateFlow<UIStateSnapshot> =
-    userProfileRepository
-      .observeUIStateSnapshot(userId)
-      .map { snapshot -> coerceInitialActiveMode(snapshot ?: defaultSnapshot(userId)) }
-      .stateIn(scope, SharingStarted.Eagerly, defaultSnapshot(userId))
+  private val _uiSnapshot = MutableStateFlow(defaultSnapshot(userId))
+  private val uiSnapshot: StateFlow<UIStateSnapshot> = _uiSnapshot.asStateFlow()
 
   private val _windowSizeClass = MutableStateFlow(defaultWindowSizeClass())
   private val _undoPayload = MutableStateFlow<UndoPayload?>(null)
@@ -67,11 +59,11 @@ constructor(
 
   override suspend fun openMode(modeId: ModeId) {
     val route = Screen.fromModeId(modeId).route
-    withContext(ioDispatcher) {
-      userProfileRepository.updateActiveModeRoute(userId, route)
-      userProfileRepository.updateLeftDrawerOpen(userId, false)
-      userProfileRepository.updateCommandPaletteVisibility(userId, false)
-    }
+    _uiSnapshot.value =
+      uiSnapshot.value
+        .updateActiveMode(route)
+        .toggleLeftDrawer(false)
+        .updatePaletteVisibility(false)
     commandPalette.value = CommandPaletteState.Empty
   }
 
@@ -85,12 +77,12 @@ constructor(
     if (current.isLeftDrawerOpen == open && !(open && current.isCommandPaletteVisible)) {
       return
     }
-    withContext(ioDispatcher) {
-      userProfileRepository.updateLeftDrawerOpen(userId, open)
-      if (open && current.isCommandPaletteVisible) {
-        userProfileRepository.updateCommandPaletteVisibility(userId, false)
+    _uiSnapshot.value =
+      current.toggleLeftDrawer(open).let {
+        if (open && it.isCommandPaletteVisible) {
+          it.updatePaletteVisibility(false)
+        } else it
       }
-    }
   }
 
   override suspend fun toggleRightDrawer(
@@ -101,27 +93,22 @@ constructor(
     val currentlyOpen = snapshot.isRightDrawerOpen && activePanel == panel
     val newOpen = !currentlyOpen
     val panelValue = if (newOpen) panel.toStorageValue() else null
-    withContext(ioDispatcher) {
-      userProfileRepository.updateRightDrawerState(userId, newOpen, panelValue)
-      if (newOpen && snapshot.isCommandPaletteVisible) {
-        userProfileRepository.updateCommandPaletteVisibility(userId, false)
+    _uiSnapshot.value =
+      snapshot.toggleRightDrawer(newOpen, panelValue).let {
+        if (newOpen && it.isCommandPaletteVisible) {
+          it.updatePaletteVisibility(false)
+        } else it
       }
-    }
   }
 
   override suspend fun showCommandPalette(source: PaletteSource) {
     commandPalette.value = CommandPaletteState(surfaceTarget = source.toCategory()).clearSelection()
-    withContext(ioDispatcher) {
-      userProfileRepository.updateLeftDrawerOpen(userId, false)
-      userProfileRepository.updateCommandPaletteVisibility(userId, true)
-    }
+    _uiSnapshot.value = uiSnapshot.value.toggleLeftDrawer(false).updatePaletteVisibility(true)
   }
 
   override suspend fun hideCommandPalette() {
     commandPalette.value = CommandPaletteState.Empty
-    withContext(ioDispatcher) {
-      userProfileRepository.updateCommandPaletteVisibility(userId, false)
-    }
+    _uiSnapshot.value = uiSnapshot.value.updatePaletteVisibility(false)
   }
 
   override suspend fun recordUndoPayload(payload: UndoPayload?) {
@@ -132,34 +119,10 @@ constructor(
 
   private fun coerceInitialActiveMode(snapshot: UIStateSnapshot): UIStateSnapshot {
     if (hasAppliedHomeStartup.compareAndSet(false, true)) {
-      val resetSnapshot =
-        snapshot
-          .updateActiveMode(UIStateSnapshot.DEFAULT_MODE_ROUTE)
-          .updatePaletteVisibility(visible = false)
-
-      // Persist the reset state asynchronously
-      scope.launch {
-        withContext(ioDispatcher) {
-          if (
-            !resetSnapshot.activeModeRoute.equals(
-              UIStateSnapshot.DEFAULT_MODE_ROUTE,
-              ignoreCase = true,
-            )
-          ) {
-            userProfileRepository.updateActiveModeRoute(
-              userId,
-              Screen.fromModeId(ModeId.HOME).route,
-            )
-          }
-          if (resetSnapshot.isCommandPaletteVisible) {
-            userProfileRepository.updateCommandPaletteVisibility(userId, false)
-          }
-        }
-      }
-
-      return resetSnapshot
+      return snapshot
+        .updateActiveMode(UIStateSnapshot.DEFAULT_MODE_ROUTE)
+        .updatePaletteVisibility(visible = false)
     }
-
     return snapshot
   }
 

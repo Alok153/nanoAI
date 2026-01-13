@@ -7,7 +7,6 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import com.vjaykrsna.nanoai.core.data.db.entities.UIStateSnapshotEntity
-import com.vjaykrsna.nanoai.core.domain.model.uiux.UIStateSnapshot
 import kotlinx.coroutines.flow.Flow
 
 private const val MAX_RECENT_ACTIONS = 5
@@ -19,26 +18,13 @@ private const val MAX_RECENT_ACTIONS = 5
  * recent actions tracking.
  */
 @Dao
-interface UIStateSnapshotDao :
-  UIStateSnapshotObservationDao,
-  UIStateSnapshotWriteDao,
-  UIStateSnapshotDrawerDao,
-  UIStateSnapshotPaletteDao,
-  UIStateSnapshotPanelDao,
-  UIStateSnapshotRecentActionsDao,
-  UIStateSnapshotResetDao
-
-/** Observation helpers for UI state snapshots. */
-interface UIStateSnapshotObservationDao {
+interface UIStateSnapshotDao {
   @Query("SELECT * FROM ui_state_snapshots WHERE user_id = :userId")
   fun observeByUserId(userId: String): Flow<UIStateSnapshotEntity?>
 
   @Query("SELECT * FROM ui_state_snapshots WHERE user_id = :userId")
   suspend fun getByUserId(userId: String): UIStateSnapshotEntity?
-}
 
-/** Write helpers for UI state snapshots. */
-interface UIStateSnapshotWriteDao {
   @Insert(onConflict = OnConflictStrategy.REPLACE)
   suspend fun insert(snapshot: UIStateSnapshotEntity)
 
@@ -46,38 +32,10 @@ interface UIStateSnapshotWriteDao {
 
   @Query("DELETE FROM ui_state_snapshots WHERE user_id = :userId")
   suspend fun deleteByUserId(userId: String): Int
-}
 
-/** Drawer and navigation state updates. */
-interface UIStateSnapshotDrawerDao {
   @Query("UPDATE ui_state_snapshots SET sidebar_collapsed = :collapsed WHERE user_id = :userId")
   suspend fun updateSidebarCollapsed(userId: String, collapsed: Boolean): Int
 
-  @Query("UPDATE ui_state_snapshots SET left_drawer_open = :open WHERE user_id = :userId")
-  suspend fun updateLeftDrawerOpen(userId: String, open: Boolean): Int
-
-  @Query(
-    """
-      UPDATE ui_state_snapshots
-      SET right_drawer_open = :open,
-          active_right_panel = :panel
-      WHERE user_id = :userId
-    """
-  )
-  suspend fun updateRightDrawerState(userId: String, open: Boolean, panel: String?): Int
-
-  @Query("UPDATE ui_state_snapshots SET active_mode = :route WHERE user_id = :userId")
-  suspend fun updateActiveModeRoute(userId: String, route: String): Int
-}
-
-/** Command palette state updates. */
-interface UIStateSnapshotPaletteDao {
-  @Query("UPDATE ui_state_snapshots SET palette_visible = :visible WHERE user_id = :userId")
-  suspend fun updateCommandPaletteVisible(userId: String, visible: Boolean): Int
-}
-
-/** Panel state updates, including transactional helpers. */
-interface UIStateSnapshotPanelDao : UIStateSnapshotObservationDao, UIStateSnapshotWriteDao {
   @Query("UPDATE ui_state_snapshots SET expanded_panels = :expandedPanels WHERE user_id = :userId")
   suspend fun updateExpandedPanels(userId: String, expandedPanels: List<String>): Int
 
@@ -106,10 +64,7 @@ interface UIStateSnapshotPanelDao : UIStateSnapshotObservationDao, UIStateSnapsh
       }
     }
   }
-}
 
-/** Recent action updates, including transactional helpers. */
-interface UIStateSnapshotRecentActionsDao : UIStateSnapshotObservationDao, UIStateSnapshotWriteDao {
   @Query("UPDATE ui_state_snapshots SET recent_actions = :recentActions WHERE user_id = :userId")
   suspend fun updateRecentActions(userId: String, recentActions: List<String>): Int
 
@@ -132,19 +87,11 @@ interface UIStateSnapshotRecentActionsDao : UIStateSnapshotObservationDao, UISta
           expandedPanels = emptyList(),
           recentActions = listOf(actionId),
           sidebarCollapsed = false,
-          leftDrawerOpen = false,
-          rightDrawerOpen = false,
-          activeMode = UIStateSnapshot.DEFAULT_MODE_ROUTE,
-          activeRightPanel = null,
-          paletteVisible = false,
         )
       )
     }
   }
-}
 
-/** Reset helpers for restoring baseline UI state. */
-interface UIStateSnapshotResetDao : UIStateSnapshotObservationDao, UIStateSnapshotWriteDao {
   @Transaction
   suspend fun resetToDefaults(userId: String) {
     val current = getByUserId(userId)
@@ -154,11 +101,6 @@ interface UIStateSnapshotResetDao : UIStateSnapshotObservationDao, UIStateSnapsh
           expandedPanels = emptyList(),
           recentActions = emptyList(),
           sidebarCollapsed = false,
-          leftDrawerOpen = false,
-          rightDrawerOpen = false,
-          activeMode = UIStateSnapshot.DEFAULT_MODE_ROUTE,
-          activeRightPanel = null,
-          paletteVisible = false,
         )
       )
     }

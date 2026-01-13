@@ -33,19 +33,21 @@ nanoAI/
 
 ### Features (`feature/`)
 
-Features currently focus on presentation logic and composables, while business logic and
-data orchestration for each feature live under `core/domain` and `core/data`. The present
-layout looks like:
+Features now own end-to-end slices (presentation + domain + data) while reusing shared
+contracts from `:core`. Current layout:
 
 ```
 feature/{name}/
-├── presentation/   # ViewModels & UI state containers
-└── ui/             # Compose components & screen graphs
+├── domain/        # Feature UseCases + coordinators
+├── data/          # Feature repositories + data sources
+├── presentation/  # ViewModels & UI state containers
+└── ui/            # Compose components & screen graphs
 ```
 
-This structure keeps UI code close together during the transition toward fully layered
-features. The medium-term goal is to re-introduce feature-scoped `domain/` and `data/`
-packages that wrap the shared `core` services once feature modules are split out of `:app`.
+Hilt modules in `feature/di` bind feature repositories to their interfaces and wire the shared
+dispatchers/runtime gateways provided by `:core`. This keeps the Clean Architecture chain
+(`Composable → ViewModel → UseCase → Repository → DataSource`) inside each feature folder while
+still sharing primitives (models, DB entities, runtime gateways) from the core modules.
 
 **Active Features:** `audio/`, `chat/`, `image/`, `library/`, `settings/`, `uiux/`
 

@@ -237,30 +237,6 @@ constructor(
     uiStateSnapshotDao.updateSidebarCollapsed(userId, collapsed)
   }
 
-  /** Persist the left drawer state, creating a snapshot if needed. */
-  suspend fun setLeftDrawerOpen(userId: String, open: Boolean) {
-    ensureUiStateSnapshot(userId)
-    uiStateSnapshotDao.updateLeftDrawerOpen(userId, open)
-  }
-
-  /** Persist the right drawer state and active panel. */
-  suspend fun setRightDrawerState(userId: String, open: Boolean, panel: String?) {
-    ensureUiStateSnapshot(userId)
-    uiStateSnapshotDao.updateRightDrawerState(userId, open, panel)
-  }
-
-  /** Persist the active mode route for restoration. */
-  suspend fun setActiveModeRoute(userId: String, route: String) {
-    ensureUiStateSnapshot(userId)
-    uiStateSnapshotDao.updateActiveModeRoute(userId, route)
-  }
-
-  /** Persist the command palette visibility flag. */
-  suspend fun setCommandPaletteVisible(userId: String, visible: Boolean) {
-    ensureUiStateSnapshot(userId)
-    uiStateSnapshotDao.updateCommandPaletteVisible(userId, visible)
-  }
-
   /**
    * Add a recent action to the UI state.
    *

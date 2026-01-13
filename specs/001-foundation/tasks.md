@@ -57,22 +57,22 @@
 ## Phase 6: User Story 4 - Settings, Privacy & Backup (Priority: P2)
 
 ### Tests
-- [ ] T028 [P] [US4] Add export/import unit tests for deterministic persona/provider restore in [app/src/test/java/com/vjaykrsna/nanoai/feature/settings/data/BackupRepositoryTest.kt](app/src/test/java/com/vjaykrsna/nanoai/feature/settings/data/BackupRepositoryTest.kt) (depends on T008)
-- [ ] T029 [US4] Add UI test for disclaimer, export warning, and import success in [app/src/androidTest/java/com/vjaykrsna/nanoai/feature/settings/SettingsScreenTest.kt](app/src/androidTest/java/com/vjaykrsna/nanoai/feature/settings/SettingsScreenTest.kt) (depends on T028)
+- [x] T028 [P] [US4] Add export/import unit tests for deterministic persona/provider restore in [app/src/test/java/com/vjaykrsna/nanoai/feature/settings/data/BackupRepositoryTest.kt](app/src/test/java/com/vjaykrsna/nanoai/feature/settings/data/BackupRepositoryTest.kt) (depends on T008)
+- [x] T029 [US4] Add UI test for disclaimer, export warning, and import success in [app/src/androidTest/java/com/vjaykrsna/nanoai/feature/settings/SettingsScreenTest.kt](app/src/androidTest/java/com/vjaykrsna/nanoai/feature/settings/SettingsScreenTest.kt) (depends on T028)
 
 ### Implementation
-- [ ] T030 [P] [US4] Implement backup/export/import repository with encryption warnings in [app/src/main/java/com/vjaykrsna/nanoai/feature/settings/data/BackupRepository.kt](app/src/main/java/com/vjaykrsna/nanoai/feature/settings/data/BackupRepository.kt) (depends on T028)
-- [ ] T031 [US4] Update Settings ViewModel and screen for disclaimer logging, privacy dashboard, and backup actions in [app/src/main/java/com/vjaykrsna/nanoai/feature/settings/presentation/SettingsViewModel.kt](app/src/main/java/com/vjaykrsna/nanoai/feature/settings/presentation/SettingsViewModel.kt) and [app/src/main/java/com/vjaykrsna/nanoai/feature/settings/presentation/SettingsScreen.kt](app/src/main/java/com/vjaykrsna/nanoai/feature/settings/presentation/SettingsScreen.kt) (depends on T030)
+- [x] T030 [P] [US4] Implement backup/export/import repository with encryption warnings in [app/src/main/java/com/vjaykrsna/nanoai/feature/settings/data/BackupRepository.kt](app/src/main/java/com/vjaykrsna/nanoai/feature/settings/data/BackupRepository.kt) (depends on T028)
+- [x] T031 [US4] Update Settings ViewModel and screen for disclaimer logging, privacy dashboard, and backup actions in [app/src/main/java/com/vjaykrsna/nanoai/feature/settings/presentation/SettingsViewModel.kt](app/src/main/java/com/vjaykrsna/nanoai/feature/settings/presentation/SettingsViewModel.kt) and [app/src/main/java/com/vjaykrsna/nanoai/feature/settings/presentation/SettingsScreen.kt](app/src/main/java/com/vjaykrsna/nanoai/feature/settings/presentation/SettingsScreen.kt) (depends on T030)
 
 ## Phase 7: User Story 5 - Robust Shell & Navigation (Priority: P3)
 
 ### Tests
-- [ ] T032 [P] [US5] Add navigation shell ViewModel tests for connectivity banners and context preservation in [app/src/test/java/com/vjaykrsna/nanoai/feature/uiux/ShellViewModelTest.kt](app/src/test/java/com/vjaykrsna/nanoai/feature/uiux/ShellViewModelTest.kt) (depends on T010)
-- [ ] T033 [US5] Add Compose UI test for Home/Chat/Library/Settings navigation with offline/online toggles in [app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/ShellNavigationTest.kt](app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/ShellNavigationTest.kt) (depends on T032)
+- [x] T032 [P] [US5] Add navigation shell ViewModel tests for connectivity banners and context preservation in [app/src/test/java/com/vjaykrsna/nanoai/feature/uiux/ShellViewModelTest.kt](app/src/test/java/com/vjaykrsna/nanoai/feature/uiux/ShellViewModelTest.kt) (depends on T010)
+- [x] T033 [US5] Add Compose UI test for Home/Chat/Library/Settings navigation with offline/online toggles in [app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/ShellNavigationTest.kt](app/src/androidTest/java/com/vjaykrsna/nanoai/feature/uiux/ShellNavigationTest.kt) (depends on T032)
 
 ### Implementation
-- [ ] T034 [P] [US5] Implement connectivity-aware shell state and progress center integration in [app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ShellViewModel.kt](app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ShellViewModel.kt) (depends on T010)
-- [ ] T035 [US5] Update shell UI for sidebar navigation, banners, and command palette hooks in [app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ShellScaffold.kt](app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/ShellScaffold.kt) (depends on T034)
+- [x] T034 [P] [US5] Implement connectivity-aware shell state and progress center integration in [app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/presentation/ShellViewModel.kt](app/src/main/java/com/vjaykrsna/nanoai/feature/uiux/presentation/ShellViewModel.kt) (depends on T010)
+- [x] T035 [US5] Update shell UI for sidebar navigation, banners, and command palette hooks in [app/src/main/java/com/vjaykrsna/nanoai/shared/ui/shell/NanoShellScaffold.kt](app/src/main/java/com/vjaykrsna/nanoai/shared/ui/shell/NanoShellScaffold.kt) (depends on T034)
 
 ## Phase 8: Polish & Cross-Cutting
 
