@@ -134,6 +134,9 @@ dependencies {
   // ProfileInstaller for baseline profiles
   implementation(libs.androidx.profileinstaller)
   implementation(libs.androidx.metrics.performance)
+  
+  // Nexa-sdk
+  implementation("ai.nexa:core:+")
 
   // Unit Testing
   testImplementation(kotlin("test-junit5"))
