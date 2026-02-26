@@ -1,8 +1,8 @@
-package com.vjaykrsna.nanoai // Package name fixed
+package com.vjaykrsna.nanoai
 
 import android.util.Log
 import com.nexa.sdk.LlmWrapper
-import com.nexa.sdk.LlmCreateInput
+import com.nexa.sdk.LlmInput
 import com.nexa.sdk.ModelConfig
 import com.nexa.sdk.GenerationConfig
 import kotlinx.coroutines.runBlocking
@@ -31,29 +31,32 @@ class ManagerAIEngine {
 
         runBlocking {
             try {
-                // Using the advanced 'cpu_gpu' plugin as per Nexa docs
+                // Fixed: Builder syntax for Nexa SDK Android
                 val llmWrapper = LlmWrapper.Builder()
-                    .setLlmCreateInput(
-                        LlmCreateInput(
+                    .setLlmInput(
+                        LlmInput(
                             modelPath = modelPath,
-                            pluginId = "cpu_gpu", // Hardware acceleration
+                            pluginId = "cpu_gpu", // Hardware acceleration for Snapdragon 8 Elite
                             config = ModelConfig().apply {
-                                device_id = "dev0" // Powers GGML Hexagon backend
+                                deviceId = "dev0" // GGML Hexagon backend as per docs
                             }
                         )
                     )
                     .build()
 
                 val fullPrompt = "$systemPrompt\n\nUser: \"$userInput\"\nTag:"
+                // Fixed: MaxTokens parameter name
                 val genConfig = GenerationConfig(maxTokens = 10, temperature = 0.1f)
                 
-                // Flow collect logic fixed for latest SDK
-                llmWrapper.generateStreamFlow(fullPrompt, genConfig).collect { token ->
+                Log.d(TAG, "Manager is thinking...")
+                
+                // Fixed: Explicit type for 'token' to resolve inference error
+                llmWrapper.generateStreamFlow(fullPrompt, genConfig).collect { token: String ->
                     generatedTag += token
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Critical Manager Error: ${e.message}")
-                generatedTag = "<CHAT>" // Fallback
+                generatedTag = "<CHAT>" // Safe fallback
             }
         }
 
