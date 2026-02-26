@@ -1,64 +1,70 @@
 package com.vjaykrsna.nanoai // Aapke package ka naam (build.gradle.kts ke according)
 
-import ai.nexa.core.LLM // Nexa SDK import
-import ai.nexa.core.ModelConfig
-import ai.nexa.core.GenerationConfig
 import android.util.Log
+import com.nexa.sdk.LlmWrapper
+import com.nexa.sdk.models.LlmCreateInput
+import com.nexa.sdk.models.ModelConfig
+import com.nexa.sdk.models.GenerationConfig
+import kotlinx.coroutines.runBlocking
 
 class ManagerAIEngine {
 
     private val TAG = "ManagerAI"
     
-    // The strict prompt that forces the AI to only output routing tags
+    // Naya Prompt (with Hindi/English Audio routing)
     private val systemPrompt = """
         You are the core Router for a multi-modal AI Android App. 
         Analyze the user's prompt and categorize it into exactly ONE of these categories. 
         Reply ONLY with the exact tag, nothing else:
         
         [TAGS]:
-        <CODE> - If the user wants software, programming, HTML, Python, debugging, or app logic.
-        <IMAGE> - If the user wants to generate a picture, drawing, art, photo, or Stable Diffusion.
-        <AUDIO> - If the user specifically asks to generate a voice, speech, or audio file.
-        <CHAT> - If the user just wants to talk, ask general questions, or needs text info.
+        <CODE> - If the user wants software, programming, or app logic.
+        <IMAGE> - If the user wants to generate a picture or Stable Diffusion.
+        <AUDIO_EN> - If the user specifically asks to generate English speech/audio.
+        <AUDIO_HI> - If the user specifically asks to generate Hindi speech/audio.
+        <CHAT> - If the user just wants to talk or needs text info.
     """.trimIndent()
 
-    /**
-     * Yeh function Manager AI (398MB GGUF) ko CPU par load karega, 
-     * user input process karega, aur routing tag return karke memory clear kar dega.
-     */
     fun routeUserRequest(userInput: String, modelPath: String): String {
         Log.d(TAG, "Loading Manager AI (CPU)...")
-        
-        // 1. Load Manager AI (ruvltra-claude-code)
-        // Note: Hum CPU use kar rahe hain taaki NPU Image/Code ke liye free rahe
-        val config = ModelConfig()
-        val managerLlm = LLM.from_(
-            model = modelPath, // Aapke phone mein 398MB gguf file ka path
-            plugin_id = "cpu", 
-            config = config
-        )
-
-        // 2. Format the prompt
-        val fullPrompt = "$systemPrompt\n\nUser Prompt: \"$userInput\"\nTag:"
-        
         var generatedTag = ""
-        Log.d(TAG, "Manager is thinking...")
 
-        // 3. Generate Output (It should be lightning fast)
-        val genConfig = GenerationConfig(max_tokens = 10, temperature = 0.1f)
-        for (token in managerLlm.generate_stream(fullPrompt, genConfig)) {
-            generatedTag += token
+        // Nexa SDK Flow use karta hai, isliye humein runBlocking chahiye
+        runBlocking {
+            val llmWrapperResult = LlmWrapper.builder()
+                .llmCreateInput(
+                    LlmCreateInput(
+                        model_name = "manager",
+                        model_path = modelPath,
+                        plugin_id = "cpu", 
+                        config = ModelConfig()
+                    )
+                )
+                .build()
+
+            llmWrapperResult.onSuccess { managerLlm ->
+                val fullPrompt = "$systemPrompt\n\nUser Prompt: \"$userInput\"\nTag:"
+                val genConfig = GenerationConfig(max_tokens = 10, temperature = 0.1f)
+                
+                Log.d(TAG, "Manager is thinking...")
+                
+                // FIXED: Using .collect instead of 'for' loop
+                managerLlm.generateStreamFlow(fullPrompt, genConfig).collect { token ->
+                    generatedTag += token
+                }
+                
+            }.onFailure { error ->
+                Log.e(TAG, "Manager AI failed to load: ${error.message}")
+            }
         }
 
-        // 4. Release Memory (CRITICAL: Taaki NPU models crash na ho)
-        managerLlm.release() 
-        Log.d(TAG, "Manager AI unloaded. Decision: $generatedTag")
+        Log.d(TAG, "Manager AI Decision: $generatedTag")
 
-        // 5. Clean up the response just in case the AI added extra spaces
         return when {
             generatedTag.contains("<CODE>", ignoreCase = true) -> "<CODE>"
             generatedTag.contains("<IMAGE>", ignoreCase = true) -> "<IMAGE>"
-            generatedTag.contains("<AUDIO>", ignoreCase = true) -> "<AUDIO>"
+            generatedTag.contains("<AUDIO_EN>", ignoreCase = true) -> "<AUDIO_EN>"
+            generatedTag.contains("<AUDIO_HI>", ignoreCase = true) -> "<AUDIO_HI>"
             else -> "<CHAT>"
         }
     }
