@@ -28,4 +28,3 @@ jobs:
       with:
         name: nanoAI-app
         path: app/build/outputs/apk/debug/app-debug.apk
-        
