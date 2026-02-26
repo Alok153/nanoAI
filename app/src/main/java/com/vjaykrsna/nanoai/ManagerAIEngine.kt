@@ -1,4 +1,4 @@
-package com.vjaykrsna.nanoai // Aapka confirmed package name
+package com.vjaykrsna.nanoai // Package name fixed
 
 import android.util.Log
 import com.nexa.sdk.LlmWrapper
@@ -10,55 +10,58 @@ import kotlinx.coroutines.flow.collect
 
 class ManagerAIEngine {
 
-    private val TAG = "ManagerAI"
+    private val TAG = "offlineAiHub_Manager"
     
     private val systemPrompt = """
-        You are the core Router for a multi-modal AI Android App. 
-        Analyze the user's prompt and categorize it into exactly ONE of these categories. 
-        Reply ONLY with the exact tag, nothing else:
+        You are the core Router for offlineAiHub. 
+        Analyze the user's prompt and categorize it. 
+        Reply ONLY with the exact tag:
         
         [TAGS]:
-        <CODE> - Programming or logic.
-        <IMAGE> - Generating pictures/art.
-        <AUDIO_EN> - English speech generation.
-        <AUDIO_HI> - Hindi speech generation.
-        <CHAT> - General conversation.
+        <CODE> - Programming/Logic.
+        <IMAGE> - Generating pictures.
+        <AUDIO_EN> - English TTS.
+        <AUDIO_HI> - Hindi TTS (Piper/Sherpa).
+        <CHAT> - General talk.
     """.trimIndent()
 
     fun routeUserRequest(userInput: String, modelPath: String): String {
-        Log.d(TAG, "Loading Manager AI (CPU)...")
+        Log.d(TAG, "Initializing Manager on Hexagon NPU...")
         var generatedTag = ""
 
         runBlocking {
-            // Updated syntax for LlmWrapper Builder
-            val llmWrapper = LlmWrapper.Builder()
-                .setLlmCreateInput(
-                    LlmCreateInput(
-                        modelPath = modelPath,
-                        pluginId = "cpu", // Routing manager runs on CPU
-                        config = ModelConfig()
+            try {
+                // Using the advanced 'cpu_gpu' plugin as per Nexa docs
+                val llmWrapper = LlmWrapper.Builder()
+                    .setLlmCreateInput(
+                        LlmCreateInput(
+                            modelPath = modelPath,
+                            pluginId = "cpu_gpu", // Hardware acceleration
+                            config = ModelConfig().apply {
+                                device_id = "dev0" // Powers GGML Hexagon backend
+                            }
+                        )
                     )
-                )
-                .build()
+                    .build()
 
-            val fullPrompt = "$systemPrompt\n\nUser Prompt: \"$userInput\"\nTag:"
-            val genConfig = GenerationConfig(maxTokens = 10, temperature = 0.1f)
-            
-            Log.d(TAG, "Manager is thinking...")
-            
-            // Fixed stream collection
-            llmWrapper.generateStreamFlow(fullPrompt, genConfig).collect { token ->
-                generatedTag += token
+                val fullPrompt = "$systemPrompt\n\nUser: \"$userInput\"\nTag:"
+                val genConfig = GenerationConfig(maxTokens = 10, temperature = 0.1f)
+                
+                // Flow collect logic fixed for latest SDK
+                llmWrapper.generateStreamFlow(fullPrompt, genConfig).collect { token ->
+                    generatedTag += token
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Critical Manager Error: ${e.message}")
+                generatedTag = "<CHAT>" // Fallback
             }
         }
 
-        Log.d(TAG, "Manager AI Decision: $generatedTag")
-
         return when {
-            generatedTag.contains("<CODE>", ignoreCase = true) -> "<CODE>"
-            generatedTag.contains("<IMAGE>", ignoreCase = true) -> "<IMAGE>"
-            generatedTag.contains("<AUDIO_EN>", ignoreCase = true) -> "<AUDIO_EN>"
-            generatedTag.contains("<AUDIO_HI>", ignoreCase = true) -> "<AUDIO_HI>"
+            generatedTag.contains("<CODE>") -> "<CODE>"
+            generatedTag.contains("<IMAGE>") -> "<IMAGE>"
+            generatedTag.contains("<AUDIO_EN>") -> "<AUDIO_EN>"
+            generatedTag.contains("<AUDIO_HI>") -> "<AUDIO_HI>"
             else -> "<CHAT>"
         }
     }
