@@ -1,4 +1,4 @@
-package com.nexa.demo // Aapke package ka naam (build.gradle.kts ke according)
+package com.vjaykrsna.nanoai // Aapke package ka naam (build.gradle.kts ke according)
 
 import ai.nexa.core.LLM // Nexa SDK import
 import ai.nexa.core.ModelConfig
